@@ -4,7 +4,7 @@ metadata:
   name: servicex
   namespace: servicex
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: servicex.mwt2.org
+    external-dns.alpha.kubernetes.io/hostname: servicex.slateci.net
   labels:
     k8s-app: servicex
 spec:
@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: servicex
-        image: servicex/servicex:latest
+        image: sslhep/servicex-server:latest
         ports:
           - containerPort: 443
           - containerPort: 80
