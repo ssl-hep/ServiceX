@@ -1,0 +1,55 @@
+doctype html
+html
+    include ./head.pug
+    body
+        include ./navigation.pug
+
+        section#gtco-header.gtco-cover.gtco-cover-xs.gtco-inner.bg-light
+        .gtco-container.container
+            .row
+                .col-lg-12.mx-auto
+                    h2 About
+                    p.lead
+                    | GATES is the product of the University of Chicago. It leverages software and
+                    | infrastructure from the ATLAS Midwest Tier2 Center.
+            .row
+                .col-lg-2.mx-auto
+                    .card(style='width: 12rem;')
+                    img.card-img-top(src='images/staff_1.jpg', alt='Card image')
+                    .card-body
+                        h4.card-title Ilija Vukotic
+                        p.card-text Physicist & Computational Scientist, UChicago
+                        a(href='https://www.facebook.com/ilija.vukotic', target='_blank')
+                            i.fab.fa-facebook.fa-1x
+                        a(href='https://www.twitter.com/ilija_vukotic', target='_blank')
+                            i.fab.fa-twitter.fa-1x
+                        a(href='https://www.linkedin.com/in/ilija-vukotic-233b083/', target='_blank')
+                            i.fab.fa-linkedin.fa-1x
+                        a(href='mailto:ivukotic@uchicago.edu', target='_blank')
+                            i.fas.fa-envelope-open-text.fa-1x
+                        a(href='https://goo.gl/maps/zsRWJS99Lht', target='_blank')
+                            i.fas.fa-map-marker.fa-1x(aria-hidden='true')
+                .col-lg-2.mx-auto
+                    .card(style='width: 12rem;')
+                    img.card-img-top(src='images/lincoln.png', alt='Card image')
+                    .card-body
+                        h4.card-title Lincoln Bryant
+                        p.card-text Systems Administrator & DevOps Engineer, UChicago
+                        a(href='mailto:lincolnb@uchicago.edu', target='_blank')
+                            i.fas.fa-envelope-open-text.fa-1x
+                        a(href='https://goo.gl/maps/zsRWJS99Lht', target='_blank')
+                            i.fas.fa-map-marker.fa-1x(aria-hidden='true')
+                .col-lg-2.mx-auto
+                    .card(style='width: 12rem;')
+                    img.card-img-top(src='images/jvanBW.jpg', alt='Card image')
+                    .card-body
+                        h4.card-title Jeremy Van
+                        p.card-text Web Developer, UChicago
+                        a(href='mailto:jeremyvan@uchicago.edu', target='_blank')
+                            i.fas.fa-envelope-open-text.fa-1x
+                        a(href='https://goo.gl/maps/zsRWJS99Lht', target='_blank')
+                            i.fas.fa-map-marker.fa-1x(aria-hidden='true')
+        
+        include ./footer.pug
+
+        script(src='js/main.js')
