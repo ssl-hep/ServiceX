@@ -1,0 +1,435 @@
+#%RAML 1.0
+title: "ServiceX API"
+description: "An API for client submitting requests for the data delivery, requesting\
+  \ event batches, returning processing status."
+version: "1.2.0"
+protocols:
+- "HTTPS"
+baseUri: "https://servicex.slateci.net"
+mediaType:
+- "application/json"
+annotationTypes:
+  x-restlet: "any"
+types:
+  Error:
+    type: "object"
+    description: "This general error structure is used throughout this API."
+    properties:
+      code:
+        type: "integer"
+        minimum: 400
+        maximum: 599
+      description:
+        type: "string"
+        required: false
+        examples:
+          example: "Bad query parameter [$size]: Invalid integer value [abc]"
+          example1: "The server understood the request, but is refusing to fulfill\
+            \ it"
+      reasonPhrase:
+        type: "string"
+        required: false
+        examples:
+          example: "Bad Request"
+          example1: "Forbidden"
+    example:
+      value: "{\n  \"code\": 400,\n  \"description\": \"Bad query parameter [$size]:\
+        \ Invalid integer value [abc]\",\n  \"reasonPhrase\": \"Bad Request\"\n}"
+      strict: false
+    (x-restlet):
+      section: "General"
+  Contact:
+    type: "object"
+    description: "A representation of a Contact."
+    properties:
+      id:
+        type: "string"
+        description: "Auto-generated primary key field"
+        example: "0e8ffb10-ad98-11e6-bf2e-47644ada7c0f"
+      firstName:
+        type: "string"
+        example: "Kurt"
+      lastName:
+        type: "string"
+        example: "Williams"
+      birthday:
+        type: "integer"
+        format: "int64"
+        description: "Birthday as unix timestamp (in ms)"
+        required: false
+        examples:
+          example: 173664000000
+          example1: 383270400000
+      active:
+        type: "boolean"
+        default: true
+        required: false
+      rank:
+        type: "integer"
+        format: "int32"
+        minimum: 1
+        required: false
+        examples:
+          example: 1
+          example1: 2
+          example2: 3
+      company:
+        type: "string"
+        description: "This property is a reference to a Company"
+        required: false
+        example: "0e8c9fb0-ad98-11e6-bf2e-47644ada7c0f"
+    example:
+      value: "{\n  \"id\": \"0e8dd830-ad98-11e6-bf2e-47644ada7c0f\",\n  \"firstName\"\
+        : \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\": 152755200000,\n \
+        \ \"active\": true,\n  \"rank\": 1,\n  \"company\": \"0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\
+        \n}"
+      strict: false
+    (x-restlet):
+      section: "Contacts"
+  DataSpec:
+    type: "object"
+    description: "it describes:\n* data user wants to access (did or tags)\n* how\
+      \ much events / MB to deliver\n* columns to deliver\n* filters to apply\n* in\
+      \ what format\n\nCan be expanded in future. "
+    properties:
+      did:
+        type: "string"
+        description: "Rucio did"
+        example: "mc18_13TeV:xAOD.ZMM.root"
+      tags:
+        type: "array"
+        description: "List of tags. Not implemented now."
+        uniqueItems: true
+        minItems: 1
+        maxItems: 64
+        required: false
+        items:
+          type: "string"
+        example:
+          value: "[ \"mc\",\"2018\", \"run_2342\"]"
+          strict: false
+      events_to_deliver:
+        type: "integer"
+        description: "Number of events to deliver"
+        minimum: 1
+        required: false
+        example: 123
+      mb_to_deliver:
+        type: "integer"
+        description: "MB to deliver"
+        required: false
+        example: 1
+      format:
+        type: "string"
+        default: "pandas dataframe"
+        enum:
+        - "pandas dataframe"
+        - "spark dataframe"
+        - "ntup"
+        required: false
+      columns:
+        type: "array"
+        description: "columns (branches) to deliver"
+        uniqueItems: true
+        minItems: 1
+        maxItems: 1000
+        items:
+          type: "string"
+        example:
+          value: "[\"event.no\",\"event.runnr\", \"event.lumiblock\",\"mu.pt\"]"
+          strict: false
+    (x-restlet):
+      section: "Data Request"
+  RequestStatus:
+    type: "object"
+    description: "returns status of the request"
+    properties:
+      token:
+        type: "string"
+        description: "unique token that identifies this data request"
+      status:
+        type: "string"
+        enum:
+        - "initializing"
+        - "prefetching"
+        - "serving"
+        - "finished"
+        - "terminated"
+      stats:
+        type: "object"
+        description: "details on data delivery"
+        required: false
+        properties:
+          data_requested:
+            type: "number"
+            description: "in MB"
+          events_requested:
+            type: "integer"
+          data_ready:
+            type: "number"
+            description: "amount of data ready for delivery in MB"
+          events_delivered:
+            type: "integer"
+            description: "events delivered to user (included retries)"
+          events_processed:
+            type: "integer"
+            description: "events client confirmed processed"
+          events_retried:
+            type: "integer"
+            description: "events retried"
+          resets:
+            type: "integer"
+            description: "how many times this request was reset to start from scratch."
+    (x-restlet):
+      section: "Data Request"
+securitySchemes:
+  HTTP_BASIC:
+    type: "Basic Authentication"
+    description: "All GET methods are public, meaning that *you can read all the data*.\
+      \ Write operations require authentication and therefore are forbidden to the\
+      \ general public."
+/healthz:
+  displayName: "for k8s deployment"
+  description: "always returns 200-OK"
+  get:
+    displayName: "for K8s deployment liveness probe"
+    responses:
+      200: {}
+  (x-restlet):
+    section: "General"
+/users/:
+  get:
+    displayName: "Get the list of Users"
+    description: "Loads a list of Contact"
+    queryParameters:
+      $size:
+        type: "integer"
+        description: "Size of the page to retrieve."
+        required: false
+        example: 10
+      $page:
+        type: "integer"
+        description: "Number of the page to retrieve."
+        required: false
+        examples:
+          example: 1
+          example1: 42
+      $sort:
+        type: "string"
+        description: "Order in which to retrieve the results. Multiple sort criteria\
+          \ can be passed."
+        required: false
+        examples:
+          example: "birthday DESC"
+          example1: "birthday ASC,rank DESC"
+      firstName:
+        type: "string"
+        description: "Allows to filter the collections of result by the value of field\
+          \ firstName"
+        required: false
+        example: "John"
+      lastName:
+        type: "string"
+        description: "Allows to filter the collections of result by the value of field\
+          \ lastName"
+        required: false
+        example: "Doe"
+      active:
+        type: "boolean"
+        description: "Allows to filter the collections of result by the value of field\
+          \ active"
+        required: false
+        examples:
+          example: true
+          example1: false
+      company:
+        type: "string"
+        description: "Allows to filter the collections of result by the value of field\
+          \ company"
+        required: false
+        example: "0e8c9fb0-ad98-11e6-bf2e-47644ada7c0f"
+    responses:
+      200:
+        description: "Status 200"
+        headers:
+          X-Page-Count:
+            type: "integer"
+            required: false
+            example: 1
+          X-Page-Number:
+            type: "integer"
+            required: false
+            example: 1
+          X-Page-Size:
+            type: "integer"
+            required: false
+            example: 25
+          X-Total-Count:
+            type: "integer"
+            required: false
+            example: 2
+        body:
+          type: "array"
+          items:
+            type: "Contact"
+          example:
+            value: "[{\n  \"id\": \"0e8dd830-ad98-11e6-bf2e-47644ada7c0f\",\n  \"\
+              firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\":\
+              \ 152755200000,\n  \"active\": true,\n  \"rank\": 1,\n  \"company\"\
+              : \"0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\n}]"
+            strict: false
+      400:
+        description: "Status 400"
+        body:
+          type: "Error"
+  post:
+    displayName: "Create a Contact"
+    description: "Adds a Contact"
+    body:
+      type: "Contact"
+      example:
+        value: "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\"\
+          : 152755200000,\n  \"active\": true,\n  \"rank\": 1,\n  \"company\": \"\
+          0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\n}"
+        strict: false
+    responses:
+      200:
+        description: "Status 200"
+        body:
+          type: "Contact"
+          example:
+            value: "{\n  \"id\": \"0e8dd830-ad98-11e6-bf2e-47644ada7c0f\",\n  \"firstName\"\
+              : \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\": 152755200000,\n\
+              \  \"active\": true,\n  \"rank\": 1,\n  \"company\": \"0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\
+              \n}"
+            strict: false
+    securedBy:
+    - "HTTP_BASIC"
+  (x-restlet):
+    section: "Contacts"
+/contacts/{contactid}:
+  uriParameters:
+    contactid:
+      type: "string"
+      description: "Identifier of the Contact"
+      required: false
+      example: "0e8dd830-ad98-11e6-bf2e-47644ada7c0f"
+  get:
+    displayName: "Load an individual Contact"
+    description: "Loads a Contact"
+    responses:
+      200:
+        description: "Status 200"
+        body:
+          type: "Contact"
+          example:
+            value: "{\n  \"id\": \"0e8dd830-ad98-11e6-bf2e-47644ada7c0f\",\n  \"firstName\"\
+              : \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\": 152755200000,\n\
+              \  \"active\": true,\n  \"rank\": 1,\n  \"company\": \"0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\
+              \n}"
+            strict: false
+      400:
+        description: "Status 400"
+        body:
+          type: "Error"
+  put:
+    displayName: "Update a Contact"
+    description: "Stores a Contact"
+    body:
+      type: "Contact"
+      example:
+        value: "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\"\
+          : 152755200000,\n  \"active\": true,\n  \"rank\": 1,\n  \"company\": \"\
+          0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\n}"
+        strict: false
+    responses:
+      200:
+        description: "Status 200"
+        body:
+          type: "Contact"
+          example:
+            value: "{\n  \"id\": \"0e8dd830-ad98-11e6-bf2e-47644ada7c0f\",\n  \"firstName\"\
+              : \"John\",\n  \"lastName\": \"Smith\",\n  \"birthday\": 152755200000,\n\
+              \  \"active\": true,\n  \"rank\": 1,\n  \"company\": \"0e8cedd0-ad98-11e6-bf2e-47644ada7c0f\"\
+              \n}"
+            strict: false
+    securedBy:
+    - "HTTP_BASIC"
+  delete:
+    displayName: "Delete a Contact"
+    description: "Deletes a Contact"
+    responses:
+      200:
+        description: "Status 200"
+    securedBy:
+    - "HTTP_BASIC"
+  (x-restlet):
+    section: "Contacts"
+/data:
+  displayName: "all data requests and responses"
+  post:
+    displayName: "Create a new data request"
+    body:
+      type: "DataSpec"
+    responses:
+      200:
+        description: "request token"
+        body:
+          type: "object"
+          properties:
+            request_id:
+              type: "string"
+      400: {}
+      401: {}
+  (x-restlet):
+    section: "Data Request"
+/data/{request_id}:
+  uriParameters:
+    request_id:
+      type: "string"
+  get:
+    displayName: "Request Status"
+    responses:
+      200:
+        body:
+          type: "RequestStatus"
+      400: {}
+  (x-restlet):
+    section: "Data Request"
+(x-restlet):
+  sections:
+    General: {}
+    Contacts:
+      description: ""
+    Data Request: {}
+  texts:
+    dpfogvi:
+      title: "Authentication"
+      content: "This API is secured using Basic Authentication.\n\nAll **read operations\
+        \ are open** and don't require authentication. However, all **write operations\
+        \ require authentication**. "
+      section: "General"
+    wb9ms4i:
+      title: "Error handling"
+      content: "This API uses standard HTTP status codes to indicate the status of\
+        \ a response.\n\nThere are two main categories of error responses. Each have\
+        \ a different response payload structure.\n\n* Simple errors\n* Detailed errors\n\
+        \n\n# Simple errors\n\n| Name | Code | Description |\n| -------- | --------\
+        \ | -------- |\n| Bad request     | 400     | The request was unacceptable\
+        \     |\n| Unauthorized     | 401     | The request has not been applied because\
+        \ it lacks valid authentication credentials for the target resource.     |\n\
+        | Forbidden     | 403     | The server understood the request, but is refusing\
+        \ to fulfill it     |\n| Not Found     | 404     | The server has not found\
+        \ anything matching the request URI     |\n| Not acceptable     | 406    \
+        \ | The server is unable to return a response in the format that was requested\
+        \ by the client     |\n| Unsupported Media Type     | 415     | The server\
+        \ is refusing to service the request because the entity of the request is\
+        \ in a format not supported by the requested resource for the requested method\
+        \     |\n| Too many requests     | 429     | Too many requests hit the API\
+        \ too quickly     |\n| Server error     | 500     | A technical error occured\
+        \ in Restlet Cloud     |\n\n\n\n\n\n\n# Detailed errors\n| Name | Code | Description\
+        \ |\n| -------- | -------- | -------- |\n| Unprocessable entity     | 422\
+        \     | The server understands the content type of the request entity, and\
+        \ the syntax of the request entity is correct, but was unable to process the\
+        \ contained instructions.     |\n\n\n\n\n"
+      section: "General"
