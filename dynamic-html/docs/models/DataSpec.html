@@ -1,0 +1,39 @@
+
+<h2>DataSpec</h2>
+<ul class="parameter">
+  <li class="param-required-true">did : String
+    <br/>Rucio did
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-false">tags : List
+    <br/>List of tags. Not implemented now.
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-false">events_to_deliver : Integer
+    <br/>Number of events to deliver
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-false">mb_to_deliver : Integer
+    <br/>MB to deliver
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-false">format : String
+    <br/>
+      <dl class="param-enum">
+        <dt>Enum:
+            <dd>pandas dataframe</dd>
+            <dd>spark dataframe</dd>
+            <dd>ntup</dd>
+        </dt>
+      </dl>
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-true">columns : List
+    <br/>columns (branches) to deliver
+  </li>
+</ul>
