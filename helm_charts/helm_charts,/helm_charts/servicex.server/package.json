@@ -1,0 +1,26 @@
+{
+  "name": "servicex",
+  "version": "1.0.0",
+  "description": "smarter data delivery service",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssl-hep/ServiceX.git"
+  },
+  "keywords": [
+    "data",
+    "delivery",
+    "frontend",
+    "k8s",
+    "HEP"
+  ],
+  "author": "Ilija Vukotic",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ssl-hep/ServiceX/issues"
+  },
+  "homepage": "https://github.com/ssl-hep/ServiceX#readme"
+}

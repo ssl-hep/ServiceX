@@ -18,3 +18,7 @@ preparation for multiple clustering frameworks (e.g. such as Spark).  It will be
 able to automatically unpack compressed formats, potentially including hardware
 accelerated techniques, and can prefilter events so that only useful data is
 transmitted to the user.
+
+* [Documentation](https://ssl-hep.github.io/ServiceX/)
+* [Kanban board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333)
+* [Service frontend](https://servicex.slateci.net)
