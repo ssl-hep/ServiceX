@@ -5,7 +5,7 @@ LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
 # Create app directory
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY ./package*.json ./
 # COPY start.sh ./
 RUN npm install
 
