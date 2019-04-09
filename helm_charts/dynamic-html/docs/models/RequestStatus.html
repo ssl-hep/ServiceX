@@ -1,0 +1,26 @@
+
+<h2>RequestStatus</h2>
+<ul class="parameter">
+  <li class="param-required-true">token : String
+    <br/>unique token that identifies this data request
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-true">status : String
+    <br/>
+      <dl class="param-enum">
+        <dt>Enum:
+            <dd>initializing</dd>
+            <dd>prefetching</dd>
+            <dd>serving</dd>
+            <dd>finished</dd>
+            <dd>terminated</dd>
+        </dt>
+      </dl>
+  </li>
+</ul>
+<ul class="parameter">
+  <li class="param-required-false">stats : RequestStatus_stats
+    <br/>
+  </li>
+</ul>
