@@ -1,16 +1,13 @@
 hr
-- var fo="| "
-- if (name) fo+=name;
-- if (team) if (team.name) fo+=" > "+team.name;
-- if (experiment) if (experiment.name) fo+=" > "+experiment.name;
-  p #{fo} 
-hr  
+- var fo=" "
+- if (name) fo+=name+" | ";
+  
 footer.py-7.bg-light
   .container
     .col-md-12.mx-auto
       small.m-0.text-left(<p='')
-        | © 2018 University of Chicago. This platform is supported by the Enrico Fermi Institute at the University of Chicago.
-        p
+        p #{fo}   © 2019 University of Chicago. This platform is supported by the Enrico Fermi Institute at the University of Chicago.
+      
 
 // for production 
 
@@ -26,11 +23,3 @@ script(src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bo
 
 // poppers management https://popper.js.org/
 script(src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha256-ZvOgfh+ptkpoa2Y4HkRY28ir89u/+VRyDE7sB7hEEcI=" crossorigin="anonymous")
-
-
-
-//- script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.compatibility.min.js')
-// development
-//- script(src='/js/jquery.easing.1.3.js')
-//- script(src='/js/jquery.magnific-popup.min.js')
-//- script(src='/js/magnific-popup-options.js')
