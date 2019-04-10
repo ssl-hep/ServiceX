@@ -7,12 +7,12 @@
  * body DataSpec 
  * returns inline_response_200
  **/
-exports.dataPOST = function(body) {
-  return new Promise(function(resolve, reject) {
+exports.dataPOST = function (body) {
+  return new Promise(function (resolve, reject) {
     var examples = {};
     examples['application/json'] = {
-  "request_id" : "request_id"
-};
+      "request_id": "request_id"
+    };
     if (Object.keys(examples).length > 0) {
       resolve(examples[Object.keys(examples)[0]]);
     } else {
@@ -28,8 +28,8 @@ exports.dataPOST = function(body) {
  * request_id String 
  * returns RequestStatus
  **/
-exports.dataRequest_idGET = function(request_id) {
-  return new Promise(function(resolve, reject) {
+exports.dataRequest_idGET = function (request_id) {
+  return new Promise(function (resolve, reject) {
     var examples = {};
     examples['application/json'] = {
   "stats" : {
@@ -59,8 +59,8 @@ exports.dataRequest_idGET = function(request_id) {
  *
  * no response value expected for this operation
  **/
-exports.healthzGET = function() {
-  return new Promise(function(resolve, reject) {
+exports.healthzGET = function () {
+  return new Promise(function (resolve, reject) {
     resolve();
   });
 }
