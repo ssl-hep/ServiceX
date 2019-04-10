@@ -148,6 +148,9 @@ definitions:
       token:
         type: "string"
         description: "unique token that identifies this data request"
+      delivery_service:
+        type: "string"
+        description: "URI to be used to access the data."
       status:
         type: "string"
         enum:
