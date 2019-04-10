@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "An API for client submitting requests for the data delivery, requesting\
     \ event batches, returning processing status."
-  version: "1.2.0"
+  version: "1.2.1"
   title: "ServiceX API"
   termsOfService: ""
   contact:
@@ -144,13 +144,14 @@ definitions:
     required:
     - "status"
     - "token"
+    - "uri"
     properties:
       token:
         type: "string"
         description: "unique token that identifies this data request"
-      delivery_service:
+      uri:
         type: "string"
-        description: "URI to be used to access the data."
+        description: "uri where the data will be delivered (access point)"
       status:
         type: "string"
         enum:
@@ -171,6 +172,7 @@ definitions:
         data_ready: 1.46581298050294517310021547018550336360931396484375
         events_retried: 2
         events_requested: 6
+      uri: "uri"
       token: "token"
       status: "initializing"
   inline_response_200:

@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   description: An API for client submitting requests for the data delivery, requesting event batches, returning processing status.
-  version: 1.2.0
+  version: 1.2.1
   title: ServiceX API
   termsOfService: ""
   contact:
@@ -137,10 +137,14 @@ definitions:
     required:
     - status
     - token
+    - uri
     properties:
       token:
         type: string
         description: unique token that identifies this data request
+      uri:
+        type: string
+        description: uri where the data will be delivered (access point)
       status:
         type: string
         enum:
