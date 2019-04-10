@@ -4,7 +4,8 @@
   "description": "smarter data delivery service",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prestart": "npm install",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -22,5 +23,15 @@
   "bugs": {
     "url": "https://github.com/ssl-hep/ServiceX/issues"
   },
-  "homepage": "https://github.com/ssl-hep/ServiceX#readme"
+  "homepage": "https://github.com/ssl-hep/ServiceX#readme",
+  "dependencies": {
+    "connect": "^3.6.6",
+    "js-yaml": "^3.13.1",
+    "swagger-tools": "0.10.4",
+    "elasticsearch": "15.4.1",
+    "kubernetes-client": "6.12.1",
+    "express": "4.16.4",
+    "express-session": "1.15.6",
+    "pug": "2.0.3"
+  }
 }

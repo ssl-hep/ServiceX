@@ -1,10 +1,15 @@
+'use strict';
+
+var swaggerTools = require('swagger-tools');
+var jsyaml = require('js-yaml');
+
 var fs = require('fs');
+var path = require('path');
+
 var express = require('express');
 var https = require('https');
 var http = require('http');
 var request = require('request');
-
-testing = false;
 
 console.log('ServiceX server starting ... ');
 
@@ -13,35 +18,36 @@ var privateKey;
 var certificate;
 var gConfig;
 
+var testing = true;
 if (testing) {
     config = require('./kube/config.json');
     config.TESTING = testing
-    privateKey = fs.readFileSync('./kube/secrets/certificates/gates.key.pem');//, 'utf8'
-    certificate = fs.readFileSync('./kube/secrets/certificates/gates.cert.cer');
-    config.SITENAME = 'localhost'
-    gConfig = require('./kube/secrets/globus-config.json');
+    privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem');//, 'utf8'
+    certificate = fs.readFileSync('./kube/secrets/servicex.cert.crt');
+    // gConfig = require('./kube/secrets/globus-config.json');
 }
 else {
     config = require('/etc/gates/config.json');
     config.TESTING = testing
     privateKey = fs.readFileSync('/etc/https-certs/key.pem');//, 'utf8'
     certificate = fs.readFileSync('/etc/https-certs/cert.pem');
-    gConfig = require('/etc/globus-conf/globus-config.json');
+    // gConfig = require('/etc/globus-conf/globus-config.json');
 }
 
-var auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
+// var auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
 
 console.log(config);
 
-var credentials = { key: privateKey, cert: certificate };
+// var credentials = { key: privateKey, cert: certificate };
 
 var elasticsearch = require('elasticsearch');
 var session = require('express-session');
 
-var cookie = require('cookie');
+// var cookie = require('cookie');
+// var app = require('connect')();
 
 const app = express();
-app.use(express.static(config.STATIC_BASE_PATH));
+app.use(express.static("web"));
 
 app.set('view engine', 'pug');
 app.use(express.json());       // to support JSON-encoded bodies
@@ -50,9 +56,41 @@ app.use(session({
     saveUninitialized: true, cookie: { secure: false, maxAge: 3600000 }
 }));
 
-const usr = require('./routes/user')(app, config);
-const tea = require('./routes/team')(app, config);
-const exp = require('./routes/experiment')(app, config);
+const drequest = require('./utils/drequest')(app, config);
+
+// swagger stuff ----------------
+
+// swaggerRouter configuration
+var options = {
+    swaggerUi: path.join(__dirname, '/swagger.json'),
+    controllers: path.join(__dirname, './controllers'),
+    useStubs: process.env.NODE_ENV === 'development' // Conditionally turn on stubs (mock mode)
+};
+
+// The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
+var spec = fs.readFileSync(path.join(__dirname, 'api/swagger.yaml'), 'utf8');
+var swaggerDoc = jsyaml.safeLoad(spec);
+
+// Initialize the Swagger middleware
+swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+
+    // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+    app.use(middleware.swaggerMetadata());
+
+    // Validate Swagger requests
+    app.use(middleware.swaggerValidator());
+
+    // Route validated requests to appropriate controller
+    app.use(middleware.swaggerRouter(options));
+
+    // Serve the Swagger documents and Swagger UI
+    app.use(middleware.swaggerUi());
+
+});
+//--------------------------------
+
+
+
 
 // k8s stuff
 const kClient = require('kubernetes-client').Client;
@@ -105,21 +143,21 @@ const requiresLogin = async (req, res, next) => {
 app.get('/', async function (request, response) {
     console.log("===========> / CALL");
     console.log(request.session);
-    if (request.session.user_id) {
-        u = new usr.User(request.session.user_id);
-        console.log("=====> refresh user info...");
-        await u.get();
-        console.log("=====> refresh teams list...");
-        request.session.teams = await u.get_teams();
-        if (request.session.team) {
-            console.log('=====> refresh experiments list...');
-            t = new tea.Team();
-            if (request.session.team.id) {
-                t.id = request.session.team.id;
-                request.session.team.experiments = await t.get_experiments();
-            }
-        }
-    }
+    // if (request.session.user_id) {
+    //     u = new usr.User(request.session.user_id);
+    //     console.log("=====> refresh user info...");
+    //     await u.get();
+    //     console.log("=====> refresh teams list...");
+    //     request.session.teams = await u.get_teams();
+    //     if (request.session.team) {
+    //         console.log('=====> refresh experiments list...');
+    //         t = new tea.Team();
+    //         if (request.session.team.id) {
+    //             t.id = request.session.team.id;
+    //             request.session.team.experiments = await t.get_experiments();
+    //         }
+    //     }
+    // }
     console.log("===========> / DONE");
     response.render("index", request.session)
 });
@@ -243,13 +281,21 @@ app.use((err, req, res, next) => {
 });
 
 
-var httpsServer = https.createServer(credentials, app).listen(443);
+if (!testing) {
+    var httpsServer = https.createServer(credentials, app).listen(443);
 
-// redirects if someone comes on http.
-http.createServer(function (req, res) {
-    res.writeHead(302, { 'Location': 'https://' + config.SITENAME });
-    res.end();
-}).listen(80);
+    // redirects if someone comes on http.
+    http.createServer(function (req, res) {
+        res.writeHead(302, { 'Location': 'https://' + config.SITENAME });
+        res.end();
+    }).listen(80);
+}
+else {
+    http.createServer(app).listen(8080, function () {
+        console.log('Your server is listening on port %d (http://localhost:%d)', 8080, 8080);
+        console.log('Swagger-ui is available on http://localhost:%d/docs', 8080);
+    });
+}
 
 
 async function main() {
