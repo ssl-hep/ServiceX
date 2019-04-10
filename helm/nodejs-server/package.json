@@ -1,6 +1,6 @@
 {
   "name": "servicex-api",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "An API for client submitting requests for the data delivery, requesting event batches, returning processing status.",
   "main": "index.js",
   "scripts": {
