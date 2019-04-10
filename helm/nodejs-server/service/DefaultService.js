@@ -41,6 +41,7 @@ exports.dataRequest_idGET = function(request_id) {
     "events_retried" : 2,
     "events_requested" : 6
   },
+  "uri" : "uri",
   "token" : "token",
   "status" : "initializing"
 };
