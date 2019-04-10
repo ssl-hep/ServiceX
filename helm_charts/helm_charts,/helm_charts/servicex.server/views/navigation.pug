@@ -1,0 +1,25 @@
+nav#mainNav.navbar.navbar-expand-lg.fixed-top(style='background-image: linear-gradient(#04519b, #044687 60%, #033769);')
+  .container
+    a.navbar-brand(href='/')
+      img.d-inline-block.align-top(src='/images/sx_logo.ico', width='32', height='32', alt='')
+      |  ServiceX
+    #navbarResponsive.collapse.navbar-collapse
+      ul.navbar-nav.ml-auto
+        
+        li.nav-item
+          a.nav-link(href='/about') About
+        
+        li.nav-item
+          a.nav-link(href='https://ssl-hep.github.io/ServiceX/') Docs
+        
+        if (loggedIn)
+          li.nav-item
+          a.nav-link(href='/manage_requests') Requests
+          
+        if (!loggedIn)
+          li#login_button.nav-item
+            a.nav-link(href='/login') Login
+        
+        if (loggedIn)
+          li#profile_button.nav-item
+            a.nav-link(href='/profile') Profile
