@@ -1,0 +1,195 @@
+---
+swagger: "2.0"
+info:
+  description: An API for client submitting requests for the data delivery, requesting event batches, returning processing status.
+  version: 1.2.1
+  title: ServiceX API
+  termsOfService: ""
+  contact:
+    name: Ilija Vukotic
+    email: ilijav@gmail.com
+host: servicex.slateci.net
+schemes:
+- https
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /healthz:
+    get:
+      summary: for K8s deployment liveness probe
+      parameters: []
+      responses:
+        200:
+          description: Status 200
+  /data:
+    post:
+      summary: Create a new data request
+      consumes: []
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/DataSpec'
+      responses:
+        200:
+          description: request token
+          schema:
+            type: object
+            required:
+            - request_id
+            properties:
+              request_id:
+                type: string
+        400:
+          description: Status 400
+        401:
+          description: Status 401
+  /data/{request_id}:
+    get:
+      summary: Request Status
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Status 200
+          schema:
+            $ref: '#/definitions/RequestStatus'
+        400:
+          description: Status 400
+securityDefinitions:
+  HTTP_BASIC:
+    description: All GET methods are public, meaning that *you can read all the data*. Write operations require authentication and therefore are forbidden to the general public.
+    type: basic
+definitions:
+  Error:
+    type: object
+    required:
+    - code
+    properties:
+      code:
+        type: integer
+        minimum: 400
+        maximum: 599
+      description:
+        type: string
+        example: 'Bad query parameter [$size]: Invalid integer value [abc]'
+      reasonPhrase:
+        type: string
+        example: Bad Request
+    description: This general error structure is used throughout this API.
+    example: |-
+      {
+        "code": 400,
+        "description": "Bad query parameter [$size]: Invalid integer value [abc]",
+        "reasonPhrase": "Bad Request"
+      }
+  DataSpec:
+    type: object
+    required:
+    - columns
+    - did
+    properties:
+      did:
+        type: string
+        example: mc18_13TeV:xAOD.ZMM.root
+        description: Rucio did
+      tags:
+        type: array
+        example: '[ "mc","2018", "run_2342"]'
+        description: List of tags. Not implemented now.
+        items:
+          type: string
+        maxItems: 64
+        minItems: 1
+      events_to_deliver:
+        type: integer
+        example: 123
+        description: Number of events to deliver
+        minimum: 1
+      mb_to_deliver:
+        type: integer
+        example: 1
+        description: MB to deliver
+      format:
+        type: string
+        default: pandas dataframe
+        enum:
+        - pandas dataframe
+        - spark dataframe
+        - ntup
+      columns:
+        type: array
+        example: '["event.no","event.runnr", "event.lumiblock","mu.pt"]'
+        description: columns (branches) to deliver
+        items:
+          type: string
+        maxItems: 1000
+        minItems: 1
+    description: "it describes:\n* data user wants to access (did or tags)\n* how much events / MB to deliver\n* columns to deliver\n* filters to apply\n* in what format\n\nCan be expanded in future. "
+  RequestStatus:
+    type: object
+    required:
+    - status
+    - token
+    - uri
+    properties:
+      token:
+        type: string
+        description: unique token that identifies this data request
+      uri:
+        type: string
+        description: uri where the data will be delivered (access point)
+      status:
+        type: string
+        enum:
+        - initializing
+        - prefetching
+        - serving
+        - finished
+        - terminated
+      stats:
+        $ref: '#/definitions/RequestStatus_stats'
+    description: returns status of the request
+  inline_response_200:
+    required:
+    - request_id
+    properties:
+      request_id:
+        type: string
+  RequestStatus_stats:
+    required:
+    - data_ready
+    - data_requested
+    - events_delivered
+    - events_processed
+    - events_requested
+    - events_retried
+    - resets
+    properties:
+      data_requested:
+        type: number
+        description: in MB
+      events_requested:
+        type: integer
+      data_ready:
+        type: number
+        description: amount of data ready for delivery in MB
+      events_delivered:
+        type: integer
+        description: events delivered to user (included retries)
+      events_processed:
+        type: integer
+        description: events client confirmed processed
+      events_retried:
+        type: integer
+        description: events retried
+      resets:
+        type: integer
+        description: how many times this request was reset to start from scratch.
+    description: details on data delivery
