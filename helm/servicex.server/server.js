@@ -27,7 +27,7 @@ if (testing) {
     // gConfig = require('./kube/secrets/globus-config.json');
 }
 else {
-    config = require('/etc/gates/config.json');
+    config = require('/etc/servicex/config.json');
     privateKey = fs.readFileSync('/etc/https-certs/key.pem');
     certificate = fs.readFileSync('/etc/https-certs/cert.pem');
     // gConfig = require('/etc/globus-conf/globus-config.json');
