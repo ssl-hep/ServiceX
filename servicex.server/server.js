@@ -22,7 +22,7 @@ var testing = false;
 
 if (testing) {
     config = require('./kube/config.json');
-    privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem'); '
+    privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem');
     certificate = fs.readFileSync('./kube/secrets/servicex.cert.crt');
     // gConfig = require('./kube/secrets/globus-config.json');
 }
