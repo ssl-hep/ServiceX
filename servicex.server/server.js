@@ -18,33 +18,32 @@ var privateKey;
 var certificate;
 var gConfig;
 
-var testing = true;
+var testing = false;
+
 if (testing) {
     config = require('./kube/config.json');
-    config.TESTING = testing
-    privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem');//, 'utf8'
+    privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem'); '
     certificate = fs.readFileSync('./kube/secrets/servicex.cert.crt');
     // gConfig = require('./kube/secrets/globus-config.json');
 }
 else {
     config = require('/etc/gates/config.json');
-    config.TESTING = testing
-    privateKey = fs.readFileSync('/etc/https-certs/key.pem');//, 'utf8'
+    privateKey = fs.readFileSync('/etc/https-certs/key.pem');
     certificate = fs.readFileSync('/etc/https-certs/cert.pem');
     // gConfig = require('/etc/globus-conf/globus-config.json');
 }
+config.TESTING = testing;
 
 // var auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
 
 console.log(config);
 
-// var credentials = { key: privateKey, cert: certificate };
+var credentials = { key: privateKey, cert: certificate };
 
 var elasticsearch = require('elasticsearch');
 var session = require('express-session');
 
 // var cookie = require('cookie');
-// var app = require('connect')();
 
 const app = express();
 app.use(express.static("web"));
