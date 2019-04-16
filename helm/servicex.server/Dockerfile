@@ -5,8 +5,7 @@ LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
 # Create app directory
 WORKDIR /usr/src/app
 
-RUN ls .
-COPY servicex.server/package.json ./
+# COPY ./package.json ./
 # COPY start.sh ./
 RUN npm install
 
