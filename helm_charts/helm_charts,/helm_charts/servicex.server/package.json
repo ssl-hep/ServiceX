@@ -25,13 +25,19 @@
   },
   "homepage": "https://github.com/ssl-hep/ServiceX#readme",
   "dependencies": {
+    "acorn": "^6.1.1",
     "connect": "^3.6.6",
-    "js-yaml": "^3.13.1",
-    "swagger-tools": "0.10.4",
     "elasticsearch": "15.4.1",
-    "kubernetes-client": "6.12.1",
     "express": "4.16.4",
     "express-session": "1.15.6",
-    "pug": "2.0.3"
+    "js-yaml": "^3.13.1",
+    "kubernetes-client": "6.12.1",
+    "pug": "2.0.3",
+    "swagger-tools": "0.10.4"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.2"
   }
 }

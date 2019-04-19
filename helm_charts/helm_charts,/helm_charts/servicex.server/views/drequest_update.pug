@@ -1,0 +1,81 @@
+extends ./index.pug
+
+block content
+    section#gtco-header.bg-light
+        .container
+            .row
+                .col-lg-5.mx-auto
+                    h2 Data requests
+
+                    if !drequest.id
+                        p.lead
+                        | Define your data. Once data request has been created, it will be in #[em Defined] state.
+                    
+                    if drequest.id
+                        p.lead
+                        | A request can be in following states:
+                        | #[em Defined], #[em Preparing], #[em Ready to Serve], #[em Serving], #[em Done].
+                        | </br>
+                        | </br>
+                        if drequest.status==='Defined'
+                            button#drequest_prepare_button.btn.btn-primary Prepare
+                            button#drequest_reset_button.btn.btn-primary Reset
+                        button#drequest_terminate_button.btn.btn-primary Terminate
+
+                .col-lg-6.mx-auto
+                    if drequest
+                        if drequest.id
+                            h2 Request
+                            p
+                            strong Name: 
+                            | #{drequest.name} </br>
+                            strong Description: 
+                            | #{drequest.description} </br>
+                            strong Dataset: 
+                            | #{drequest.dataset} </br>
+                            strong Variables: 
+                            | #{drequest.columns} </br>
+                            strong Events required: 
+                            | #{drequest.events} </br>
+                            | </br>
+                            strong Status: 
+                            | #[em #{drequest.status}] </br>
+                            strong Dataset size : 
+                            | #[em #{drequest.dataset_size}] </br>
+                            strong Dataset files : 
+                            | #[em #{drequest.dataset_files}] </br>
+                            strong Dataset events : 
+                            | #[em #{drequest.dataset_events}] </br>
+                            strong Events processed: 
+                            |#[em #{drequest.event_processed}] </br>
+
+                        else
+                            - var butt='CREATE'
+                            h2 Create Data Access Request
+                            form#drequest_update(action='#')
+                                .form-group
+                                    label(for='name') Name *
+                                    input#name.form-control(type='text',required='',value=drequest.name)
+                                    p#name_valid
+                                .form-group
+                                    label(for='description') Description * 
+                                    input#description.form-control(type='text',required='',value=drequest.description)
+                                    p#description_valid
+                                .form-group
+                                    label(for='dataset') File or Dataset (scope:name)
+                                    input#dataset.form-control(type='text', value=drequest.dataset)
+                                .form-group
+                                    label(for='columns') Branches (all branches, comma separated)
+                                    input#columns.form-control(type='text', value=drequest.columns)
+                                .form-group
+                                    label(for='events') Events required (0 means all)
+                                    input#events.form-control(type='text', value=drequest.events)
+
+                                .form-group
+                                    button#drequest_update_button.btn.btn-primary #{butt}  
+
+
+block extra_scripts
+    script(src='/js/drequests_update.js')
+
+

@@ -1,0 +1,31 @@
+extends ./index.pug
+
+block content
+    section#gtco-header.bg-light
+        .container
+            .row
+                .col-lg-5.mx-auto
+                    h2 Profile
+                    p.lead
+                    | Your profile information corresponds to globus account. 
+                    | It is possible to have multiple globus identities. 
+                    | Team membership is based on your username.
+                .col-lg-6.mx-auto
+                    div
+                        .card(style='width: 18rem;')
+                        .card-body
+                        | Name:
+                        p#name.card-text #{name}
+                        div                            
+                        | Username:
+                        p#username.card-text #{username}
+                        div
+                        | Email:
+                        p#email.card-text #{email}
+                        div
+                        | Organization:
+                        p#affiliation.card-text #{affiliation}
+                        
+                        button#logout_button.btn.btn-primary Logout 
+                        | &nbsp;
+                        button#user_delete_button.btn.btn-primary Delete

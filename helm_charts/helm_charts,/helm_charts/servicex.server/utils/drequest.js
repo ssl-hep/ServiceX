@@ -1,183 +1,160 @@
-module.exports = function (app, config) {
+const elasticsearch = require('elasticsearch');
 
-    var elasticsearch = require('elasticsearch');
-    var es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
+module.exports = function dreqmodule(app, config) {
+  const module = {};
 
-    var module = {}
+  module.DArequest = class DArequest {
+    // statuses: Defined, Preparing, Ready to Serve, Serving, Done
 
-    module.Drequest = class Drequest {
-
-        // statuses: stopped, running, paused, retired
-
-        constructor() {
-            this.created_at = new Date().getTime();
-            this.status = 'stopped';
-        }
-
-        async create(team_id) {
-            console.log("adding experiment to ES...");
-            try {
-                const response = await es.index({
-                    index: config.ES_INDEX, type: 'docs',
-                    refresh: true,
-                    body: {
-                        "kind": "experiment",
-                        "name": this.name,
-                        "description": this.description,
-                        "team": team_id,
-                        "status": this.status,
-                        "created_at": new Date().getTime()
-                    }
-                });
-                console.log(response);
-            } catch (err) {
-                console.error(err)
-            }
-            console.log("Done.");
-        };
-
-        async get(id) {
-            console.log("getting experiment's info...");
-            try {
-                const response = await es.search({
-                    index: config.ES_INDEX, type: 'docs',
-                    body: {
-                        query: {
-                            bool: {
-                                must: [
-                                    { match: { _id: id } }
-                                ]
-                            }
-                        }
-                    }
-                });
-                // console.log(response);
-                if (response.hits.total == 0) {
-                    console.log("experiment not found.");
-                    return false;
-                }
-                else {
-                    console.log("experiment found.");
-                    var obj = response.hits.hits[0]._source;
-                    // console.log(obj);
-                    this.id = response.hits.hits[0]._id;
-                    this.name = obj.name;
-                    this.description = obj.description;
-                    this.team = obj.team;
-                    this.status = obj.status;
-                    this.created_at = obj.created_at;
-                    return true;
-                };
-            } catch (err) {
-                console.error(err)
-            }
-            console.log('Done.');
-            return false;
-        };
-
-        async delete() {
-            console.log("deleting experiment from ES...");
-            try {
-                const response = await es.deleteByQuery({
-                    index: config.ES_INDEX, type: 'docs',
-                    refresh: true,
-                    body: { query: { match: { "_id": this.id } } }
-                });
-                console.log(response);
-            } catch (err) {
-                console.error(err)
-            }
-            console.log("Done.");
-        };
-
-        async update() {
-            console.log("Updating experiment info in ES...");
-            try {
-                const response = await es.update({
-                    index: config.ES_INDEX, type: 'docs', id: this.id,
-                    refresh: true,
-                    body: {
-                        doc: {
-                            "name": this.name,
-                            "description": this.description,
-                            "status": this.status
-                        }
-                    }
-                });
-                console.log(response);
-            } catch (err) {
-                console.error(err)
-            }
-            console.log("Done.");
-        };
+    constructor(id = null) {
+      this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
+      this.created_at = new Date().getTime();
+      this.status = 'Defined';
+      if (id) {
+        this.id = id;
+      }
     }
 
-    app.get('/experiment/test', async function (req, res) {
-        console.log('TESTING Experiment UI...');
-        req.session.experiment = {};
-        req.session.experiment.id = 'Exp_id';
-        req.session.experiment.name = 'Experiment Name';
-        req.session.experiment.description = 'Experiment Description';
-        req.session.experiment.status = 'Running';
-        res.render("experiment", req.session);
-    });
+    async create(userId) {
+      console.log('adding request to ES...');
+      try {
+        const response = await this.es.index({
+          index: 'servicex',
+          type: 'docs',
+          refresh: true,
+          body: {
+            name: this.name,
+            user: userId,
+            description: this.description,
+            dataset: this.dataset,
+            columns: this.columns,
+            events: this.events,
+            status: this.status,
+            created_at: new Date().getTime(),
+          },
+        });
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+    }
 
-    app.get('/experiment/new', function (req, res) {
-        console.log("New experiment");
-        ex = new module.Experiment();
-        req.session.experiment = {};
-        res.render("experiment", req.session);
-    });
-
-    app.get('/experiment/delete', async function (req, res) {
-        console.log('deleting experiment:', req.session.experiment.id);
-        ex = new module.Experiment();
-        ex.id = req.session.experiment.id;
-        await ex.delete();
-        req.session.experiment = {};
-        res.status(200).send('OK');
-    });
-
-    app.get('/experiment/use/:exp_id', async function (req, res) {
-        var exp_id = req.params.exp_id;
-        console.log("getting experiment ", exp_id);
-        if (exp_id === 'new') {
-            console.log('creating new experiment. ==> useless??');
-        } else {
-            console.log('getting existing experiment.');
-            var ex = new module.Experiment();
-            await ex.get(exp_id);
-            req.session.experiment = {
-                id: exp_id,
-                name: ex.name,
-                description: ex.description,
-                status: ex.status,
-                url: ex.url
-            }
-            console.log(req.session.experiment);
+    async get(id) {
+      console.log("getting darequest info...");
+      try {
+        const response = await this.es.search({
+          index: 'servicex',
+          type: 'docs',
+          body: {
+            query: {
+              bool: {
+                must: [
+                  { match: { _id: id } },
+                ],
+              },
+            },
+          },
+        });
+        // console.log(response);
+        if (response.hits.total === 0) {
+          console.log('data access request not found.');
+          return false;
         }
 
-        res.render("experiment", req.session);
-    });
+        console.log('data request found.');
+        const obj = response.hits.hits[0]._source;
+        // console.log(obj);
+        this.id = response.hits.hits[0]._id;
+        this.name = obj.name;
+        this.description = obj.description;
+        this.dataset = obj.dataset;
+        this.columns = obj.columns;
+        this.events = obj.events;
+        this.status = obj.status;
+        this.created_at = obj.created_at;
+        return true;
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+      return false;
+    }
 
-    app.post('/experiment/update', async function (req, res) {
-        var data = req.body;
-        console.log("updating experiment:", data);
-        var ex = new module.Experiment();
-        if (req.session.experiment.id) {
-            await ex.get(req.session.experiment.id);
-        }
-        ex.name = data.name;
-        ex.description = data.description;
-        ex.status = data.status;
-        ex.url = data.url;
-        if (req.session.experiment.id) {
-            await ex.update();
-        } else {
-            await ex.create(req.session.team.id);
-        }
-        res.status(200).send('OK');
-    });
+    async update() {
+      console.log('Updating experiment info in ES...');
+      try {
+        const response = await this.es.update({
+          index: config.ES_INDEX,
+          type: 'docs',
+          id: this.id,
+          refresh: true,
+          body: {
+            doc: {
+              name: this.name,
+              description: this.description,
+              status: this.status,
+            },
+          },
+        });
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+    }
+  };
 
-    return module;
-}
+  app.get('/drequest_update/:rid', async (req, res) => {
+    const rid = req.params.rid;
+    console.log('getting request ', rid);
+    req.session.drequest = {};
+    if (rid === 'new') {
+      console.log('New request');
+      res.render('drequest_update', req.session);
+    } else {
+      const dar = new module.DArequest();
+      await dar.get(rid);
+      req.session.drequest = {
+        id: rid,
+        name: dar.name,
+        description: dar.description,
+        dataset: dar.dataset,
+        columns: dar.columns,
+        events: dar.events,
+        status: dar.status,
+      };
+      res.render('drequest_update', req.session);
+    }
+  });
+
+  app.get('/drequest_manage', async (req, res) => {
+    console.log('manage requests called!');
+    res.render('./drequest_manage', req.session);
+  });
+
+  app.post('/drequest_update', async (req, res) => {
+    const data = req.body;
+    console.log('post updating data request:', data);
+    const darequest = new module.DArequest();
+    if (req.session.drequest.id) {
+      console.log('has id getting existing data.');
+      await darequest.get(req.session.drequest.id);
+    }
+    darequest.name = data.name;
+    darequest.description = data.description;
+    darequest.dataset = data.dataset;
+    darequest.columns = data.columns;
+    darequest.events = data.events;
+    if (req.session.drequest.id) {
+      console.log('has id - updating.');
+      await darequest.update();
+    } else {
+      console.log('no id - creating drequest.')
+      await darequest.create(req.session.user_id);
+    }
+    res.status(200).send('OK');
+  });
+
+  return module;
+};
