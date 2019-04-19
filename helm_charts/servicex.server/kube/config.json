@@ -1,4 +1,4 @@
 {
-    "TESTING": true,
+    "TESTING": false,
     "ES_HOST": "atlas-kibana.mwt2.org:9200"
 }
