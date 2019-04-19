@@ -19,13 +19,11 @@ header {
   padding: 154px 0 100px;
   background: url('https://rcc.uchicago.edu/sites/rcc.uchicago.edu/files/styles/slideshow-image/public/uploads/images/slideshows/20140430_RCC_8978.jpg?itok=BmRuJ-wq') no-repeat;
   background-size: cover;
-
 }
 header .container {
   background-color: rgba(0,0,0, 0.7);
   padding: 20px;
   /* width: 60%; */
-
 }
 
 header .container p {
@@ -33,6 +31,7 @@ header .container p {
   line-height: 1.33;
   opacity: 0.75;
 }
+
 header .container h1 {
   font-family: "HelveticaNeue-CondensedBold",
   "Helvetica Neue CE 600 Condensed",
@@ -74,6 +73,7 @@ hr {
 
 #gtco-header {
   padding-top: 100px;
+  padding-bottom: 50px;
 }
 /*--------------------------------------------------------------
 # Back to Top Button
@@ -112,5 +112,5 @@ hr {
 }
 
 xmp {
-white-space: pre-wrap;/* css-3 problematic browser support */
+  white-space: pre-wrap;/* css-3 problematic browser support */
 }
