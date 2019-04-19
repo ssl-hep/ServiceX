@@ -18,7 +18,7 @@ let privateKey;
 let certificate;
 let gConfig;
 
-const testing = true;
+const testing = false;
 
 if (testing) {
   config = require('./kube/config.json');
