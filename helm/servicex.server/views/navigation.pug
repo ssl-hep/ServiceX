@@ -14,12 +14,11 @@ nav#mainNav.navbar.navbar-expand-lg.fixed-top(style='background-image: linear-gr
         
         if (loggedIn)
           li.nav-item
-          a.nav-link(href='/manage_requests') Requests
+          a.nav-link(href='/drequest_manage') Requests
           
         if (!loggedIn)
           li#login_button.nav-item
             a.nav-link(href='/login') Login
-        
-        if (loggedIn)
+        else
           li#profile_button.nav-item
             a.nav-link(href='/profile') Profile
