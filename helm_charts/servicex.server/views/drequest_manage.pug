@@ -1,0 +1,32 @@
+extends ./index.pug
+
+block content
+    section#gtco-header.container
+        .row
+            .col-md-12.col-md-offset-0.text-left
+                .display-t
+                    .display-tc
+                        .col-md-8
+                            h1.no-margin Your data access requests
+                            p
+                                | From this page you can manage your data access requests. 
+                                | To check if a request status changed simply refresh this page.
+
+                a.btn.btn-primary(href='/drequest_update/new')
+                    | New data access request
+            
+        p
+
+        .col-md-12.col-md-offset-0.text-left
+            table#drequests_table.display()
+                thead
+                    tr
+                    th Name
+                    th Description
+                    th Created at
+                    th Status
+                    th Token
+                tbody
+
+block extra_scripts
+    script(src='js/drequests_manage.js')
