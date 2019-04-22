@@ -41,7 +41,7 @@ module.exports = function dreqmodule(app, config) {
     }
 
     async get(id) {
-      console.log("getting darequest info...");
+      console.log('getting darequest info...');
       try {
         const response = await this.es.search({
           index: 'servicex',
@@ -109,7 +109,7 @@ module.exports = function dreqmodule(app, config) {
   };
 
   app.get('/drequest_update/:rid', async (req, res) => {
-    const rid = req.params.rid;
+    const { rid } = req.params;
     console.log('getting request ', rid);
     req.session.drequest = {};
     if (rid === 'new') {
@@ -177,7 +177,7 @@ module.exports = function dreqmodule(app, config) {
       console.log('has id - updating.');
       await darequest.update();
     } else {
-      console.log('no id - creating drequest.')
+      console.log('no id - creating drequest.');
       await darequest.create(req.session.user_id);
     }
     res.status(200).send('OK');
