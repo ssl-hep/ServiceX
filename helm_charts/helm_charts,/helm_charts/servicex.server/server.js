@@ -24,16 +24,16 @@ if (testing) {
   config = require('./kube/config.json');
   privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem');
   certificate = fs.readFileSync('./kube/secrets/servicex.cert.crt');
-  // gConfig = require('./kube/secrets/globus-config.json');
+  gConfig = require('./kube/secrets/globus-config.json');
 } else {
   config = require('/etc/servicex/config.json');
   privateKey = fs.readFileSync('/etc/https-certs/key.pem');
   certificate = fs.readFileSync('/etc/https-certs/cert.pem');
-  // gConfig = require('/etc/globus-conf/globus-config.json');
+  gConfig = require('/etc/globus-conf/globus-config.json');
 }
 config.TESTING = testing;
 
-// var auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
+const auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
 
 console.log(config);
 
@@ -94,7 +94,7 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 const kClient = require('kubernetes-client').Client;
 const kConfig = require('kubernetes-client').config;
 
-var kclient;
+let kclient;
 
 async function configureKube() {
   try {
@@ -200,36 +200,36 @@ app.get('/authcallback', (req, res) => {
   let code = req.query.code;
   if (code) {
     console.log('there is a code. first time around.');
-    code = req.query.code;
-    let state = req.query.state;
-    console.log('AUTH CALLBACK code:', code, '\tstate:', state);
+    console.log('AUTH CALLBACK code:', req.query.code, '\tstate:', req.query.state);
   } else {
     console.log('NO CODE call...');
   }
 
-  red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
+  const red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
 
-  let requestOptions = {
+  const requestOptions = {
     uri: red, method: 'POST', headers: { 'Authorization': auth }, json: true,
   };
 
   // console.log(requestOptions);
 
-  request.post(requestOptions, function (error, response, body) {
+  request.post(requestOptions, (error, response, body) => {
     if (error) {
-      console.log('failure...', err);
+      console.log('failure...', error);
       res.render('index');
     }
     console.log('success');//, body);
 
     console.log('==========================\n getting name.');
-    id_red = 'https://auth.globus.org/v2/oauth2/userinfo';
-    let idrequestOptions = {
-      uri: id_red, method: 'POST', json: true,
-      headers: { 'Authorization': `Bearer ${body.access_token}` },
+    const id_red = 'https://auth.globus.org/v2/oauth2/userinfo';
+    const idrequestOptions = {
+      uri: id_red,
+      method: 'POST',
+      json: true,
+      headers: { Authorization: `Bearer ${body.access_token}` },
     };
 
-    request.post(idrequestOptions, async function (error, response, body) {
+    request.post(idrequestOptions, async (error, response, body) => {
       if (error) {
         console.log('error on geting username:\t', error);
       }
@@ -240,24 +240,21 @@ app.get('/authcallback', (req, res) => {
       user.affiliation = req.session.organization = body.organization;
       user.name = req.session.name = body.name;
       user.email = req.session.email = body.email;
-      var found = await user.get();
+      const found = await user.get();
       if (found === false) {
         await user.create();
-        var body = {
-          from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
-          to: user.email,
-          subject: 'GATES membership',
-          text: 'Dear ' + user.name + ', \n\n\t' +
-            ' Your have been added to GATES. You may create a new team and run experiments. To be added to an existing team ask one of its members to add you to it (provide your username).' +
-            '\n\nBest regards,\n\tGATES mailing system.',
-        }
-        user.send_mail_to_user(body);
+        // var body = {
+        //   from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
+        //   to: user.email,
+        //   subject: 'GATES membership',
+        //   text: 'Dear ' + user.name + ', \n\n\t' +
+        //     ' Your have been added to GATES. You may create a new team and run experiments. To be added to an existing team ask one of its members to add you to it (provide your username).' +
+        //     '\n\nBest regards,\n\tGATES mailing system.',
+        // }
+        // user.send_mail_to_user(body);
         await user.get(); // so user.id gets filled up
       }
       req.session.loggedIn = true;
-      req.session.teams = await user.get_teams();
-      req.session.selected_team = null;
-      req.session.selected_experiment = null;
       res.redirect('/');
     });
   });
