@@ -24,7 +24,7 @@ spec:
     args: ["36500000"]
     volumeMounts:
     - name: x509-certs-volume
-      mountPath: "~/.globus/"
+      mountPath: "/.globus/"
       readOnly: true
 
   restartPolicy: Never
