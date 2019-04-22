@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: did-finder
+  labels:
+    app: xcache-client
+spec:
+  volumes:
+  - name: x509-certs-volume
+    secret:
+      secretName: cert-secret
+      items:
+      - key: userkey
+        path: userkey.pem
+        mode: 256 
+      - key: usercert
+        path: usercert.pem
+
+  containers:
+  - name: did-finder
+    image: slateci/xcache:latest
+    command: ["sleep"]
+    args: ["36500000"]
+    volumeMounts:
+    - name: x509-certs-volume
+      mountPath: "~/.globus/"
+      readOnly: true
+
+  restartPolicy: Never
