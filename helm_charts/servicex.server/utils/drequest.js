@@ -82,18 +82,21 @@ module.exports = function dreqmodule(app, config) {
     }
 
     async update() {
-      console.log('Updating experiment info in ES...');
+      console.log('Updating data request info in ES...');
       try {
         const response = await this.es.update({
-          index: config.ES_INDEX,
+          index: 'servicex',
           type: 'docs',
           id: this.id,
           refresh: true,
           body: {
             doc: {
-              name: this.name,
-              description: this.description,
               status: this.status,
+              events: this.events,
+              dataset_size: this.dataset_size,
+              dataset_files: this.dataset_files,
+              dataset_events: this.dataset_events,
+              events_processed: this.events_processed,
             },
           },
         });
@@ -126,6 +129,30 @@ module.exports = function dreqmodule(app, config) {
       };
       res.render('drequest_update', req.session);
     }
+  });
+
+  app.get('/drequest_prepare', async (req, res) => {
+    console.log('prepare request called: ', req.session.drequest.id);
+    const darequest = new module.DArequest();
+    await darequest.get(req.session.drequest.id);
+    darequest.status = 'Preparing';
+    console.log('has id - updating.');
+    await darequest.update();
+    req.session.drequest = {};
+    console.log('Preparing done.');
+    res.render('./drequest_manage', req.session);
+  });
+
+  app.get('/drequest_terminate', async (req, res) => {
+    console.log('terminate request called: ', req.session.drequest.id);
+    const darequest = new module.DArequest();
+    await darequest.get(req.session.drequest.id);
+    darequest.status = 'Done';
+    console.log('has id - updating.');
+    await darequest.update();
+    req.session.drequest = {};
+    console.log('Terminate done.');
+    res.render('./drequest_manage', req.session);
   });
 
   app.get('/drequest_manage', async (req, res) => {
