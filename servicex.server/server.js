@@ -33,13 +33,13 @@ if (testing) {
 }
 config.TESTING = testing;
 
-const auth = "Basic " + new Buffer(gConfig.CLIENT_ID + ":" + gConfig.CLIENT_SECRET).toString("base64");
+const auth = 'Basic ' + new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
 
 const credentials = { key: privateKey, cert: certificate };
 
-var elasticsearch = require('elasticsearch');
+// var elasticsearch = require('elasticsearch');
 const session = require('express-session');
 
 // var cookie = require('cookie');
@@ -50,8 +50,10 @@ app.use(express.static('web'));
 app.set('view engine', 'pug');
 app.use(express.json()); // to support JSON-encoded bodies
 app.use(session({
-  secret: 'kujduhvbleflvpops', resave: false,
-  saveUninitialized: true, cookie: { secure: false, maxAge: 3600000 },
+  secret: 'kujduhvbleflvpops',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false, maxAge: 3600000 },
 }));
 
 // const drequest =
@@ -73,7 +75,8 @@ const swaggerDoc = jsyaml.safeLoad(spec);
 
 // Initialize the Swagger middleware
 swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
-  // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+  // Interpret Swagger resources and attach metadata to request
+  // must be first in swagger-tools middleware chain
   app.use(middleware.swaggerMetadata());
 
   // Validate Swagger requests
@@ -86,8 +89,6 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
   app.use(middleware.swaggerUi());
 });
 //--------------------------------
-
-
 
 
 // k8s stuff
@@ -158,7 +159,7 @@ app.get('/', async function (request, response) {
   //     }
   // }
   console.log('===========> / DONE');
-  response.render('index', request.session)
+  response.render('index', request.session);
 });
 
 app.get('/about', async (req, res) => {
@@ -197,10 +198,10 @@ app.get('/login', async (req, res) => {
 
 app.get('/authcallback', (req, res) => {
   console.log('AUTH CALLBACK query:', req.query);
-  let code = req.query.code;
+  const { code } = req.query;
   if (code) {
     console.log('there is a code. first time around.');
-    console.log('AUTH CALLBACK code:', req.query.code, '\tstate:', req.query.state);
+    console.log('AUTH CALLBACK code:', code, '\tstate:', req.query.state);
   } else {
     console.log('NO CODE call...');
   }
@@ -208,7 +209,7 @@ app.get('/authcallback', (req, res) => {
   const red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
 
   const requestOptions = {
-    uri: red, method: 'POST', headers: { 'Authorization': auth }, json: true,
+    uri: red, method: 'POST', headers: { Authorization: auth }, json: true,
   };
 
   // console.log(requestOptions);
@@ -235,14 +236,15 @@ app.get('/authcallback', (req, res) => {
       }
       console.log('body:\t', body);
       const user = new usr.User();
-      user.id = req.session.user_id = body.sub;
-      user.username = req.session.username = body.preferred_username;
-      user.affiliation = req.session.organization = body.organization;
-      user.name = req.session.name = body.name;
-      user.email = req.session.email = body.email;
-      const found = await user.get();
+      user.id = body.sub;
+      req.session.user_id = body.sub;
+      req.session.username = body.preferred_username;
+      req.session.organization = body.organization;
+      req.session.name = body.name;
+      req.session.email = body.email;
+      const found = await user.load();
       if (found === false) {
-        await user.create();
+        await user.write();
         // var body = {
         //   from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
         //   to: user.email,
@@ -252,7 +254,7 @@ app.get('/authcallback', (req, res) => {
         //     '\n\nBest regards,\n\tGATES mailing system.',
         // }
         // user.send_mail_to_user(body);
-        await user.get(); // so user.id gets filled up
+        await user.load(); // so user.id gets filled up
       }
       req.session.loggedIn = true;
       res.redirect('/');
