@@ -119,7 +119,7 @@ module.exports = function usermodule(app, config) {
           },
         });
         // console.log(response);
-        if (response.hits.total == 0) {
+        if (response.hits.total === 0) {
           console.log('user not found.');
           return false;
         }
@@ -137,7 +137,7 @@ module.exports = function usermodule(app, config) {
         this.approved_on = obj.approved_on;
         return true;
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
       console.log('Done.');
       return false;
@@ -154,7 +154,7 @@ module.exports = function usermodule(app, config) {
         text: 'Dear ' + this.name + ', \n\n\t' +
           ' your request for access to ' + config.NAMESPACE +
           ' ML front has been approved.\n\nBest regards,\n\tML front Approval system.',
-      }
+      };
       this.send_mail_to_user(body);
     }
 
@@ -176,10 +176,9 @@ module.exports = function usermodule(app, config) {
             ' requested access to ' + config.NAMESPACE +
             ' ML front.\n\tTo approve it use this link ' + link +
             '. To deny the request simply delete this mail.\n\nBest regards,\n\tML front Approval system',
-        }
+        };
         this.send_mail_to_user(data);
-      }
-      else {
+      } else {
         console.error("Approval person's mail or mailgun key not configured.");
       }
     }
@@ -196,7 +195,7 @@ module.exports = function usermodule(app, config) {
           console.log('from ES indexer:', resp);
         });
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
     }
 
@@ -248,7 +247,7 @@ module.exports = function usermodule(app, config) {
         }
         return toSend;
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
       return [];
     }
@@ -283,7 +282,7 @@ module.exports = function usermodule(app, config) {
             // console.log(obj);
             var created_at = new Date(obj.created_at).toUTCString();
             var approved_on = new Date(obj.approved_on).toUTCString();
-            var serv = [obj.user, obj.email, obj.affiliation, created_at, obj.approved, approved_on]
+            var serv = [obj.user, obj.email, obj.affiliation, created_at, obj.approved, approved_on];
             toSend.push(serv);
           }
         } else {
@@ -291,7 +290,7 @@ module.exports = function usermodule(app, config) {
         }
         return toSend;
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
       console.log('Done.');
     }
@@ -345,4 +344,4 @@ module.exports = function usermodule(app, config) {
   });
 
   return module;
-}
+};
