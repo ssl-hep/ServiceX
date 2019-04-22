@@ -1,4 +1,4 @@
-FROM rucio:rucio-clients
+FROM rucio/rucio-clients:latest
 
 LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
 

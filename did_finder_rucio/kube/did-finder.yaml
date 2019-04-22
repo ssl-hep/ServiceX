@@ -2,8 +2,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: did-finder
+  namespace: servicex
   labels:
-    app: xcache-client
+    app: did-finder
 spec:
   volumes:
   - name: x509-certs-volume
@@ -18,7 +19,7 @@ spec:
 
   containers:
   - name: did-finder
-    image: slateci/xcache:latest
+    image: sslhep/servicex-did-finder:latest
     command: ["sleep"]
     args: ["36500000"]
     volumeMounts:
