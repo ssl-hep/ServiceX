@@ -33,7 +33,8 @@
     "js-yaml": "^3.13.1",
     "kubernetes-client": "6.12.1",
     "pug": "2.0.3",
-    "swagger-tools": "0.10.4"
+    "swagger-tools": "0.10.4",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "eslint": "^5.16.0",

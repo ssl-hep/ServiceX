@@ -18,9 +18,13 @@ block content
                         | </br>
                         | </br>
                         if drequest.status==='Defined'
-                            button#drequest_prepare_button.btn.btn-primary Prepare
-                            button#drequest_reset_button.btn.btn-primary Reset
-                        button#drequest_terminate_button.btn.btn-primary Terminate
+                            a(href="/drequest_prepare")
+                                button#drequest_prepare_button.btn.btn-primary Prepare
+                            a(href="/drequest_reset")
+                                button#drequest_reset_button.btn.btn-primary Reset
+                        if drequest.status!=='Done'
+                            a(href="/drequest_terminate")
+                                button#drequest_terminate_button.btn.btn-primary Terminate
 
                 .col-lg-6.mx-auto
                     if drequest
@@ -47,7 +51,7 @@ block content
                             strong Dataset events : 
                             | #[em #{drequest.dataset_events}] </br>
                             strong Events processed: 
-                            |#[em #{drequest.event_processed}] </br>
+                            |#[em #{drequest.events_processed}] </br>
 
                         else
                             - var butt='CREATE'
