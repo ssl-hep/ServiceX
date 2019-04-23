@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Need to install this - it will create and populate directory /etc/grid-security/certificates
+mkdir /etc/grid-security/vomsdir 
 yum install osg-ca-certs voms-clients wlcg-voms-atlas fetch-crl -y
 
 CERTPATH=/etc/grid-certs
