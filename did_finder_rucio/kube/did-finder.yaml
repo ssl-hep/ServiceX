@@ -22,6 +22,12 @@ spec:
     image: sslhep/servicex-did-finder:latest
     command: ["sleep"]
     args: ["36500000"]
+    env:
+      - name: RUCIO_CFG_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: rucio-secret
+            key: password
     volumeMounts:
     - name: x509-certs-volume
       mountPath: "/.globus/"
