@@ -25,6 +25,7 @@ RUN yum install -y voms fetch-crl
 RUN pip install elasticsearch
 
 COPY run_x509_updater.sh /.
+COPY request_lookup.py /.
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
