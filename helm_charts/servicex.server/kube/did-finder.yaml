@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: did-finder
+  namespace: servicex
+  labels:
+    app: did-finder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: did-finder
+  template:
+    metadata:
+      labels:
+        app: did-finder
+    spec:
+      volumes:
+      - name: x509-data
+        emptyDir: {}
+      - name: x509-certs-volume
+        secret:
+          secretName: x509-secret
+          items:
+          - key: userkey
+            path: userkey.pem
+            mode: 256 
+          - key: usercert
+            path: usercert.pem
+
+      containers:
+      - name: did-finder
+        image: sslhep/servicex-did-finder:latest
+        imagePullPolicy: "Always"
+        command: ["sleep"]
+        args: ["36500000"]
+        volumeMounts:
+        - name: x509-data
+          mountPath: "/etc/grid-security/"
+          readOnly: false
+        - name: x509-certs-volume
+          mountPath: "/etc/grid-certs/"
+          readOnly: true
+
+      - name: x509
+        image: sslhep/servicex-did-finder:latest
+        imagePullPolicy: "Always"
+        command: ["/run_x509_updater.sh"]
+        volumeMounts:
+        - name: x509-data
+          mountPath: "/etc/grid-security/"
+          readOnly: false
+        - name: x509-certs-volume
+          mountPath: "/etc/grid-certs/"
+          readOnly: true
