@@ -72,6 +72,12 @@ module.exports = function dreqmodule(app, config) {
         this.columns = obj.columns;
         this.events = obj.events;
         this.status = obj.status;
+        this.info = obj.info;
+        this.dataset_size = obj.dataset_size;
+        this.dataset_files = obj.dataset_files;
+        this.dataset_events = obj.dataset_events;
+        this.events_served = obj.events_served;
+        this.events_processed = obj.events_processed;
         this.created_at = obj.created_at;
         return true;
       } catch (err) {
@@ -108,6 +114,7 @@ module.exports = function dreqmodule(app, config) {
     }
   };
 
+  // to do: avoid all this property reassigning.
   app.get('/drequest_update/:rid', async (req, res) => {
     const { rid } = req.params;
     console.log('getting request ', rid);
@@ -126,6 +133,12 @@ module.exports = function dreqmodule(app, config) {
         columns: dar.columns,
         events: dar.events,
         status: dar.status,
+        info: dar.info,
+        dataset_size: dar.dataset_size,
+        dataset_files: dar.dataset_files,
+        dataset_events: dar.dataset_events,
+        events_served: dar.events_served,
+        events_processed: dar.events_processed,
       };
       res.render('drequest_update', req.session);
     }
