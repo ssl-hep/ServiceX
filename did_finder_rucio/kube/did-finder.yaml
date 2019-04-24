@@ -16,6 +16,12 @@ spec:
         app: did-finder
     spec:
       volumes:
+      - name: conf-volume
+        secret:
+          secretName: config
+          items:
+          - key: conf
+            path: config.json  
       - name: x509-data
         emptyDir: {}
       - name: x509-certs-volume
@@ -35,6 +41,8 @@ spec:
         command: ["python"]
         args: ["/request_lookup.py"]
         volumeMounts:
+        - name: conf-volume
+          mountPath: "/etc/servicex/"
         - name: x509-data
           mountPath: "/etc/grid-security/"
           readOnly: false
@@ -54,4 +62,3 @@ spec:
           mountPath: "/etc/grid-certs/"
           readOnly: true
           
-

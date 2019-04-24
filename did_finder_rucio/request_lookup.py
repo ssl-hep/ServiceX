@@ -4,11 +4,14 @@ from rucio.client import ReplicaClient
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-
 with open('/etc/servicex/config.json') as json_file:
     conf = json.load(json_file)
 
 print('configuration:\n', conf)
+
+print('sleeping until CAs are there...')
+
+time.sleep(60)
 
 es = Elasticsearch([conf['ES_HOST']], timeout=60)
 
