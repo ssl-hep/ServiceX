@@ -20,7 +20,7 @@ spec:
         emptyDir: {}
       - name: x509-certs-volume
         secret:
-          secretName: cert-secret
+          secretName: x509-secret
           items:
           - key: userkey
             path: userkey.pem

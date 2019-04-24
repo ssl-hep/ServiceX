@@ -22,10 +22,14 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 RUN yum install -y voms fetch-crl 
 
+RUN pip install elasticsearch
+
 COPY run_x509_updater.sh /.
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
-CMD [ "/runme.sh" ]
+ENV X509_USER_PROXY /etc/grid-security/x509up
+
+CMD [ "python", "request_lookup.py" ]
 
