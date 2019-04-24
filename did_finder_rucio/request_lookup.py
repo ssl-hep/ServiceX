@@ -11,7 +11,7 @@ print('configuration:\n', conf)
 
 print('sleeping until CAs are there...')
 
-time.sleep(60)
+time.sleep(120)
 
 es = Elasticsearch([conf['ES_HOST']], timeout=60)
 
@@ -19,7 +19,11 @@ es = Elasticsearch([conf['ES_HOST']], timeout=60)
 while True:
     res = es.search(index="servicex", body={"query": {"match": {"status": "Defined"}}})
     if res['hits']['total']:
-        rc = ReplicaClient()
+        try:
+            rc = ReplicaClient()
+        except e:
+            print('problem in getting rucio client', e)
+            break
 
         print("Got %d Hits:" % res['hits']['total'])
         for hit in res['hits']['hits']:
