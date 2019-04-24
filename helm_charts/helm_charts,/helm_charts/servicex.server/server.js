@@ -111,16 +111,16 @@ async function configureKube() {
 }
 
 
-const requiresLogin = async (req, res, next) => {
-  // to be used as middleware
+// const requiresLogin = async (req, res, next) => {
+//   // to be used as middleware
 
-  if (req.session.loggedIn !== true) {
-    const error = new Error('You must be logged in to view this page.');
-    error.status = 403;
-    return next(error);
-  }
-  return next();
-};
+//   if (req.session.loggedIn !== true) {
+//     const error = new Error('You must be logged in to view this page.');
+//     error.status = 403;
+//     return next(error);
+//   }
+//   return next();
+// };
 
 // called on every path
 // app.use(function (req, res, next) {
@@ -219,12 +219,12 @@ app.get('/authcallback', (req, res) => {
       console.log('failure...', error);
       res.render('index');
     }
-    console.log('success');//, body);
+    console.log('success');
 
     console.log('==========================\n getting name.');
-    const id_red = 'https://auth.globus.org/v2/oauth2/userinfo';
+    const idRed = 'https://auth.globus.org/v2/oauth2/userinfo';
     const idrequestOptions = {
-      uri: id_red,
+      uri: idRed,
       method: 'POST',
       json: true,
       headers: { Authorization: `Bearer ${body.access_token}` },

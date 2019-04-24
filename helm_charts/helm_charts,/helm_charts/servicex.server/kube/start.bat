@@ -1,6 +1,10 @@
 echo "Creating namespace"
 kubectl create -f namespace.yaml
 
+echo "Adding x509 cert needed for data access"
+REM kubectl delete secret -n servicex x509-secret
+kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem
+
 echo "Adding site certs"
 kubectl delete secret -n servicex cert-secret
 kubectl create secret -n servicex generic cert-secret --from-file=key=secrets/servicex.key.pem --from-file=cert=secrets/servicex.cert.crt
@@ -21,3 +25,6 @@ kubectl create -f service_account.yaml
 
 echo "Deploying server"
 kubectl create -f frontend.yaml
+
+echo "Deploying did-finder"
+kubectl create -f did-finder.yaml
