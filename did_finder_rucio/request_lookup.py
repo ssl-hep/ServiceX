@@ -1,6 +1,7 @@
 import time
 import json
 from rucio.client import ReplicaClient
+from rucio.client import DIDClient
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
@@ -11,7 +12,7 @@ print('configuration:\n', conf)
 
 print('sleeping until CAs are there...')
 
-time.sleep(120)
+time.sleep(60)
 
 es = Elasticsearch([conf['ES_HOST']], timeout=60)
 
@@ -21,6 +22,7 @@ while True:
     if res['hits']['total']:
         try:
             rc = ReplicaClient()
+            dc = DIDClient()
         except e:
             print('problem in getting rucio client', e)
             break
@@ -32,35 +34,51 @@ while True:
             print("processing request:\n", doc)
             ds = doc['dataset']
             (scope, name) = ds.split(":")
-            gen = rc.list_replicas(dids=[{'scope': scope, 'name': name}], schemes=['root'], client_location={'site': conf['SITE']})
+
+            g_files = dc.list_files(scope, name)
+
             files = []
             files_skipped = 0
             dataset_size = 0
-            for i in gen:
-                # print(i)
-                sel_path = ''
-                if 'pfns' not in i:
-                    continue
-                for fpath, meta in i['pfns'].iteritems():
-                    if not meta['type'] == 'DISK':
+            dataset_events = 0
+
+            for f in g_files:
+                print(f)
+                f_scope = f['scope']
+                f_name = f['name']
+                dataset_size += f['bytes']
+                dataset_events += f['events']
+
+                g_replicas = rc.list_replicas(
+                    dids=[{'scope': f_scope, 'name': f_name}],
+                    schemes=['root'],
+                    client_location={'site': conf['SITE']})
+
+                for r in g_replicas:
+                    # print(r)
+                    sel_path = ''
+                    if 'pfns' not in r:
                         continue
-                    sel_path = fpath
-                    if meta['domain'] == 'lan':
-                        break
-                if sel_path == '':
-                    files_skipped += 1
-                    continue
-                dataset_size += i['bytes']
-                files.append({
-                    "_index": "servicex_paths",
-                    "_type": "docs",
-                    "_source": {
-                        'req_id': hit["_id"],
-                        'adler32': i['adler32'],
-                        'file_size': i['bytes'],
-                        'file_path': sel_path
-                    }
-                })
+                    for fpath, meta in r['pfns'].iteritems():
+                        if not meta['type'] == 'DISK':
+                            continue
+                        sel_path = fpath
+                        if meta['domain'] == 'lan':
+                            break
+                    if sel_path == '':
+                        files_skipped += 1
+                        continue
+                    files.append({
+                        "_index": "servicex_paths",
+                        "_type": "docs",
+                        "_source": {
+                            'req_id': hit["_id"],
+                            'adler32': f['adler32'],
+                            'file_size': f['bytes'],
+                            'file_events': f['events'],
+                            'file_path': sel_path
+                        }
+                    })
 
             print(files)
 

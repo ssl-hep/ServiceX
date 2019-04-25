@@ -40,6 +40,9 @@ spec:
         imagePullPolicy: "Always"
         command: ["python"]
         args: ["/request_lookup.py"]
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "0"
         volumeMounts:
         - name: conf-volume
           mountPath: "/etc/servicex/"
