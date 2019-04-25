@@ -100,6 +100,7 @@ while True:
                         'status': status,
                         'info': info,
                         'dataset_size': dataset_size,
+                        'dataset_events': dataset_events,
                         'dataset_files': len(files)
                     }
                 }
