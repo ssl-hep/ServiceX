@@ -5,7 +5,7 @@ from rucio.client import DIDClient
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-with open('/etc/servicex/config.json') as json_file:
+with open('config/config.json') as json_file:
     conf = json.load(json_file)
 
 print('configuration:\n', conf)

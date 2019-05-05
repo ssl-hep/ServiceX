@@ -21,7 +21,7 @@ spec:
           secretName: config
           items:
           - key: conf
-            path: config.json  
+            path: config.json      
       - name: x509-data
         emptyDir: {}
       - name: x509-certs-volume
@@ -45,7 +45,7 @@ spec:
           value: "0"
         volumeMounts:
         - name: conf-volume
-          mountPath: "/etc/servicex/"
+          mountPath: "/usr/src/app/config/"
         - name: x509-data
           mountPath: "/etc/grid-security/"
           readOnly: false
