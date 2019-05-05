@@ -68,10 +68,10 @@ spec:
           secretName: cert-secret
           items:
           - key: key
-            path: key.pem
+            path: servicex.key.pem
             mode: 256 
           - key: cert
-            path: cert.pem
+            path: servicex.cert.crt
       - name: frontend-conf-volume
         secret:
           secretName: config
