@@ -1,21 +1,21 @@
 echo "Creating namespace"
 kubectl create -f namespace.yaml
 
-echo "Adding x509 cert needed for data access"
+REM echo "Adding x509 cert needed for data access"
 REM kubectl delete secret -n servicex x509-secret
-kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem
+REM kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem
 
 echo "Adding site certs"
 kubectl delete secret -n servicex cert-secret
-kubectl create secret -n servicex generic cert-secret --from-file=key=secrets/servicex.key.pem --from-file=cert=secrets/servicex.cert.crt
+kubectl create secret -n servicex generic cert-secret --from-file=key=secrets/https-certs/servicex.key.pem --from-file=cert=secrets/https-certs/servicex.cert.crt
 
-echo "Adding site conf"
-kubectl delete secret -n servicex config
-kubectl create secret -n servicex generic config --from-file=conf=config.json
+REM echo "Adding site conf"
+REM kubectl delete secret -n servicex config
+REM kubectl create secret -n servicex generic config --from-file=conf=config.json
 
 echo "Adding globus secret"
 kubectl delete secret -n servicex globus-secret
-kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-config.json
+kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json
 
 REM echo "Adding MailGun secret"
 REM kubectl create secret -n servicex generic mg-config --from-file=mgconf=secrets/mg-config.json
