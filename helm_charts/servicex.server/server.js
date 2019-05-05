@@ -1,4 +1,5 @@
-'use strict';
+
+console.log('ServiceX server starting ... ');
 
 const swaggerTools = require('swagger-tools');
 const jsyaml = require('js-yaml');
@@ -7,42 +8,34 @@ const fs = require('fs');
 const path = require('path');
 
 const express = require('express');
+const session = require('express-session');
 const https = require('https');
 const http = require('http');
-const request = require('request');
+const rRequest = require('request');
 
-console.log('ServiceX server starting ... ');
+// k8s stuff
+const KClient = require('kubernetes-client').Client;
+const kConfig = require('kubernetes-client').config;
 
-let config;
-let privateKey;
-let certificate;
-let gConfig;
+const config = require('./config.json');
 
-const testing = false;
+let secretsPath = '/etc/';
 
-if (testing) {
-  config = require('./kube/config.json');
-  privateKey = fs.readFileSync('./kube/secrets/servicex.key.pem');
-  certificate = fs.readFileSync('./kube/secrets/servicex.cert.crt');
-  gConfig = require('./kube/secrets/globus-config.json');
-} else {
-  config = require('/etc/servicex/config.json');
-  privateKey = fs.readFileSync('/etc/https-certs/key.pem');
-  certificate = fs.readFileSync('/etc/https-certs/cert.pem');
-  gConfig = require('/etc/globus-conf/globus-config.json');
+if (config.TESTING) {
+  secretsPath = './kube/secrets/';
 }
-config.TESTING = testing;
 
-const auth = 'Basic ' + new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
+const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
+const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
+const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
+
+// const auth = new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
+const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
 
 const credentials = { key: privateKey, cert: certificate };
 
-// var elasticsearch = require('elasticsearch');
-const session = require('express-session');
-
-// var cookie = require('cookie');
 
 const app = express();
 app.use(express.static('web'));
@@ -56,7 +49,7 @@ app.use(session({
   cookie: { secure: false, maxAge: 3600000 },
 }));
 
-// const drequest =
+
 require('./utils/drequest')(app, config);
 const usr = require('./utils/user')(app, config);
 
@@ -74,7 +67,7 @@ const spec = fs.readFileSync(path.join(__dirname, 'api/swagger.yaml'), 'utf8');
 const swaggerDoc = jsyaml.safeLoad(spec);
 
 // Initialize the Swagger middleware
-swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+swaggerTools.initializeMiddleware(swaggerDoc, (middleware) => {
   // Interpret Swagger resources and attach metadata to request
   // must be first in swagger-tools middleware chain
   app.use(middleware.swaggerMetadata());
@@ -90,24 +83,18 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 });
 //--------------------------------
 
-
-// k8s stuff
-const kClient = require('kubernetes-client').Client;
-const kConfig = require('kubernetes-client').config;
-
-let kclient;
+let kClient;
 
 async function configureKube() {
   try {
     console.log('configuring k8s client');
-    kclient = new kClient({ config: kConfig.getInCluster() });
-    await kclient.loadSpec();
+    kClient = new KClient({ config: kConfig.getInCluster() });
+    await kClient.loadSpec();
     console.log('client configured');
-    return kclient;
   } catch (err) {
     console.log('error in configureKube\n', err);
-    process.exit(2);
   }
+  return kClient;
 }
 
 
@@ -140,7 +127,7 @@ async function configureKube() {
 //     response.render("podlog", { pod_name: podname, content: plog.body });
 // });
 
-app.get('/', async function (request, response) {
+app.get('/', async (request, response) => {
   console.log('===========> / CALL');
   console.log(request.session);
   // if (request.session.user_id) {
@@ -209,14 +196,14 @@ app.get('/authcallback', (req, res) => {
   const red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
 
   const requestOptions = {
-    uri: red, method: 'POST', headers: { Authorization: auth }, json: true,
+    uri: red, method: 'POST', headers: { Authorization: `Basic ${auth}` }, json: true,
   };
 
   // console.log(requestOptions);
 
-  request.post(requestOptions, (error, response, body) => {
-    if (error) {
-      console.log('failure...', error);
+  rRequest.post(requestOptions, (error1, response, body1) => {
+    if (error1) {
+      console.log('failure...', error1);
       res.render('index');
     }
     console.log('success');
@@ -227,10 +214,10 @@ app.get('/authcallback', (req, res) => {
       uri: idRed,
       method: 'POST',
       json: true,
-      headers: { Authorization: `Bearer ${body.access_token}` },
+      headers: { Authorization: `Bearer ${body1.access_token}` },
     };
 
-    request.post(idrequestOptions, async (error, response, body) => {
+    rRequest.post(idrequestOptions, async (error, _response, body) => {
       if (error) {
         console.log('error on geting username:\t', error);
       }
@@ -246,12 +233,12 @@ app.get('/authcallback', (req, res) => {
       if (found === false) {
         await user.write();
         // var body = {
-        //   from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
+        //   from: config.NAMESPACE + '<' + config.NAMESPACE + '@servicex.uchicago.edu>',
         //   to: user.email,
-        //   subject: 'GATES membership',
+        //   subject: 'ServiceX membership',
         //   text: 'Dear ' + user.name + ', \n\n\t' +
-        //     ' Your have been added to GATES. You may create a new team and run experiments. To be added to an existing team ask one of its members to add you to it (provide your username).' +
-        //     '\n\nBest regards,\n\tGATES mailing system.',
+        //     ' You've beed authorized.' +
+        //     '\n\nBest regards,\n\tServiceX mailing system.',
         // }
         // user.send_mail_to_user(body);
         await user.load(); // so user.id gets filled up
@@ -272,7 +259,7 @@ app.get('/logout', (req, res) => {
       json: true,
     };
 
-    request.get(requestOptions, (error, response, body) => {
+    rRequest.get(requestOptions, (error, response, body) => {
       if (error) {
         console.log('logout failure...', error);
       }
@@ -284,13 +271,13 @@ app.get('/logout', (req, res) => {
 });
 
 
-app.use((err, _req, res, _next) => {
+app.use((err, _req, res) => {
   console.error('Error in error handler: ', err.message);
   res.status(err.status).send(err.message);
 });
 
 
-if (!testing) {
+if (!config.TESTING) {
   https.createServer(credentials, app).listen(443);
 
   // redirects if someone comes on http.
@@ -308,8 +295,11 @@ if (!testing) {
 
 async function main() {
   try {
-    if (!testing) {
+    if (!config.TESTING) {
       await configureKube();
+      if (!kClient) {
+        process.exit(2);
+      }
     }
   } catch (err) {
     console.error('Error: ', err);

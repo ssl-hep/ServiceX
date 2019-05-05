@@ -53,6 +53,7 @@ POST /_template/servicex_paths
         "req_id": { "type": "keyword" },
         "adler32": {"type": "keyword" },
         "file_size": { "type": "long" },
+        "file_events": { "type": "long" },
         "file_path": { "type": "keyword" }
       }
     }
