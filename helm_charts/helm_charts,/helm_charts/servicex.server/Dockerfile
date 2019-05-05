@@ -8,7 +8,6 @@ WORKDIR /usr/src/app
 COPY . .
 
 # COPY ./package.json ./
-# COPY start.sh ./
 RUN npm install
 
 EXPOSE 80
