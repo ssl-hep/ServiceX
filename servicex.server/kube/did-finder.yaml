@@ -16,6 +16,12 @@ spec:
         app: did-finder
     spec:
       volumes:
+      - name: conf-volume
+        secret:
+          secretName: config
+          items:
+          - key: conf
+            path: config.json  
       - name: x509-data
         emptyDir: {}
       - name: x509-certs-volume
@@ -32,9 +38,14 @@ spec:
       - name: did-finder
         image: sslhep/servicex-did-finder:latest
         imagePullPolicy: "Always"
-        command: ["sleep"]
-        args: ["36500000"]
+        command: ["python"]
+        args: ["/request_lookup.py"]
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "0"
         volumeMounts:
+        - name: conf-volume
+          mountPath: "/etc/servicex/"
         - name: x509-data
           mountPath: "/etc/grid-security/"
           readOnly: false
@@ -53,3 +64,4 @@ spec:
         - name: x509-certs-volume
           mountPath: "/etc/grid-certs/"
           readOnly: true
+          
