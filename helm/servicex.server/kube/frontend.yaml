@@ -61,7 +61,7 @@ spec:
         # - name: mg-conf-volume
         #   mountPath: "/etc/mg-conf/"
         - name: frontend-conf-volume
-          mountPath: "/etc/servicex/"
+          mountPath: "/usr/src/app/config/"
       volumes:
       - name: https-certs-volume
         secret:

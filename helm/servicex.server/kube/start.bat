@@ -9,9 +9,9 @@ echo "Adding site certs"
 kubectl delete secret -n servicex cert-secret
 kubectl create secret -n servicex generic cert-secret --from-file=key=secrets/https-certs/servicex.key.pem --from-file=cert=secrets/https-certs/servicex.cert.crt
 
-REM echo "Adding site conf"
-REM kubectl delete secret -n servicex config
-REM kubectl create secret -n servicex generic config --from-file=conf=config.json
+echo "Adding site conf"
+kubectl delete secret -n servicex config
+kubectl create secret -n servicex generic config --from-file=conf=config.json
 
 echo "Adding globus secret"
 kubectl delete secret -n servicex globus-secret

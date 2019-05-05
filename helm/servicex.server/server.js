@@ -17,7 +17,7 @@ const rRequest = require('request');
 const KClient = require('kubernetes-client').Client;
 const kConfig = require('kubernetes-client').config;
 
-const config = require('./config.json');
+const config = require('./config/config.json');
 
 let secretsPath = '/etc/';
 

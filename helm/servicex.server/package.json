@@ -29,9 +29,9 @@
     "connect": "^3.6.6",
     "elasticsearch": "15.4.1",
     "express": "4.16.4",
-    "express-session": "1.15.6",
+    "express-session": "1.16.1",
     "js-yaml": "^3.13.1",
-    "kubernetes-client": "6.12.1",
+    "kubernetes-client": "7.0.0",
     "pug": "2.0.3",
     "swagger-tools": "0.10.4",
     "request": "^2.88.0"
