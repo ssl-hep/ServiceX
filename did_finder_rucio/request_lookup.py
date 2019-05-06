@@ -18,7 +18,7 @@ es = Elasticsearch([conf['ES_HOST']], timeout=60)
 
 
 while True:
-    res = es.search(index="servicex", body={"query": {"match": {"status": "Defined"}}})
+    res = es.search(index="servicex", body={"size": 1, "query": {"match": {"status": "Defined"}}})
     if res['hits']['total']:
         try:
             rc = ReplicaClient()
@@ -28,83 +28,83 @@ while True:
             break
 
         print("Got %d Hits:" % res['hits']['total'])
-        for hit in res['hits']['hits']:
-            doc = hit["_source"]
-            print("\n====================================\n")
-            print("processing request:\n", doc)
-            ds = doc['dataset']
-            (scope, name) = ds.split(":")
+        hit = res['hits']['hits'][0]
+        doc = hit["_source"]
+        print("\n====================================\n")
+        print("processing request:\n", doc)
+        ds = doc['dataset']
+        (scope, name) = ds.split(":")
 
-            g_files = dc.list_files(scope, name)
+        g_files = dc.list_files(scope, name)
 
-            files = []
-            files_skipped = 0
-            dataset_size = 0
-            dataset_events = 0
+        files = []
+        files_skipped = 0
+        dataset_size = 0
+        dataset_events = 0
 
-            for f in g_files:
-                print(f)
-                f_scope = f['scope']
-                f_name = f['name']
-                dataset_size += f['bytes']
-                dataset_events += f['events']
+        for f in g_files:
+            print(f)
+            f_scope = f['scope']
+            f_name = f['name']
+            dataset_size += f['bytes']
+            dataset_events += f['events']
 
-                g_replicas = rc.list_replicas(
-                    dids=[{'scope': f_scope, 'name': f_name}],
-                    schemes=['root'],
-                    client_location={'site': conf['SITE']})
+            g_replicas = rc.list_replicas(
+                dids=[{'scope': f_scope, 'name': f_name}],
+                schemes=['root'],
+                client_location={'site': conf['SITE']})
 
-                for r in g_replicas:
-                    # print(r)
-                    sel_path = ''
-                    if 'pfns' not in r:
+            for r in g_replicas:
+                # print(r)
+                sel_path = ''
+                if 'pfns' not in r:
+                    continue
+                for fpath, meta in r['pfns'].iteritems():
+                    if not meta['type'] == 'DISK':
                         continue
-                    for fpath, meta in r['pfns'].iteritems():
-                        if not meta['type'] == 'DISK':
-                            continue
-                        sel_path = fpath
-                        if meta['domain'] == 'lan':
-                            break
-                    if sel_path == '':
-                        files_skipped += 1
-                        continue
-                    files.append({
-                        "_index": "servicex_paths",
-                        "_type": "docs",
-                        "_source": {
-                            'req_id': hit["_id"],
-                            'adler32': f['adler32'],
-                            'file_size': f['bytes'],
-                            'file_events': f['events'],
-                            'file_path': sel_path
-                        }
-                    })
-
-            print(files)
-
-            status = 'Failed'
-            info = 'Request failed. No accessible files found for your dataset.'
-            if files:
-                status = 'Prescreened'
-                info = str(len(files)) + ' files can be accessed.\n' + \
-                    str(files_skipped) + " files can't be accessed.\n" + \
-                    'Total size: ' + str(dataset_size) + '.\n'
-                bulk(es, files)
-
-            es.update(
-                index='servicex',
-                doc_type='docs',
-                id=hit["_id"],
-                body={
-                    'doc': {
-                        'status': status,
-                        'info': info,
-                        'dataset_size': dataset_size,
-                        'dataset_events': dataset_events,
-                        'dataset_files': len(files)
+                    sel_path = fpath
+                    if meta['domain'] == 'lan':
+                        break
+                if sel_path == '':
+                    files_skipped += 1
+                    continue
+                files.append({
+                    "_index": "servicex_paths",
+                    "_type": "docs",
+                    "_source": {
+                        'req_id': hit["_id"],
+                        'adler32': f['adler32'],
+                        'file_size': f['bytes'],
+                        'file_events': f['events'],
+                        'file_path': sel_path
                     }
+                })
+
+        print(files)
+
+        status = 'Failed'
+        info = 'Request failed. No accessible files found for your dataset.'
+        if files:
+            status = 'Prescreened'
+            info = str(len(files)) + ' files can be accessed.\n' + \
+                str(files_skipped) + " files can't be accessed.\n" + \
+                'Total size: ' + str(dataset_size) + '.\n'
+            bulk(es, files)
+
+        es.update(
+            index='servicex',
+            doc_type='docs',
+            id=hit["_id"],
+            body={
+                'doc': {
+                    'status': status,
+                    'info': info,
+                    'dataset_size': dataset_size,
+                    'dataset_events': dataset_events,
+                    'dataset_files': len(files)
                 }
-            )
+            }
+        )
 
     time.sleep(10)
 
