@@ -1,8 +1,8 @@
 kubectl create namespace servicex
 
-echo "Adding conf"
-kubectl delete secret -n servicex config
-kubectl create secret -n servicex generic config --from-file=conf=../config/config.json
+REM echo "Adding conf"
+REM kubectl delete secret -n servicex config
+REM kubectl create secret -n servicex generic config --from-file=conf=../config/config.json
 
 echo "Adding x509 cert needed for data access"
 kubectl delete secret -n servicex x509-secret
