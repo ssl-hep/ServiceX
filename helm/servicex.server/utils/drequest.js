@@ -87,6 +87,37 @@ module.exports = function dreqmodule(app, config) {
       return false;
     }
 
+    async getWithStatus(status) {
+      console.log('getting darequest with status:', status);
+      try {
+        const response = await this.es.search({
+          index: 'servicex',
+          type: 'docs',
+          body: {
+            size: 1,
+            query: {
+              bool: {
+                must: [
+                  { match: { status } },
+                ],
+              },
+            },
+          },
+        });
+        // console.log(response);
+        if (response.hits.total === 0) {
+          console.log('data access request not found.');
+          return false;
+        }
+        console.log('data request found.');
+        return response.hits.hits[0];
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+      return false;
+    }
+
     async update() {
       console.log('Updating data request info in ES...');
       try {
@@ -114,9 +145,17 @@ module.exports = function dreqmodule(app, config) {
     }
   };
 
+  app.get('/drequest_get/:status', async (req, res) => {
+    const { status } = req.params;
+    console.log('getting a request in status: ', status);
+    const DAr = new module.DArequest();
+    const dar = await DAr.getWithStatus(status);
+    res.status(200).data(dar);
+  });
+
   // to do: avoid all this property reassigning.
   app.get('/drequest_update/:rid', async (req, res) => {
-    const { rid } = req.params;
+    const { rid } = req.params.rid;
     console.log('getting request ', rid);
     req.session.drequest = {};
     if (rid === 'new') {
