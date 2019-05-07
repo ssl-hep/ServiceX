@@ -58,6 +58,7 @@ while True:
                     client_location={'site': conf['SITE']})
             except Exception as e:
                 print('could not find file replica. Skipping file:', f_name, e)
+                files_skipped += 1
                 continue
 
             for r in g_replicas:
