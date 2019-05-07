@@ -107,7 +107,7 @@ module.exports = function dreqmodule(app, config) {
         // console.log(response);
         if (response.hits.total === 0) {
           console.log('data access request not found.');
-          return false;
+          return null;
         }
         console.log('data request found.');
         return response.hits.hits[0];
@@ -115,7 +115,7 @@ module.exports = function dreqmodule(app, config) {
         console.error(err);
       }
       console.log('Done.');
-      return false;
+      return null;
     }
 
     async update() {
@@ -150,7 +150,8 @@ module.exports = function dreqmodule(app, config) {
     console.log('getting a request in status: ', status);
     const DAr = new module.DArequest();
     const dar = await DAr.getWithStatus(status);
-    res.status(200).data(dar);
+    console.log('sending back:', dar);
+    res.status(200).json(dar);
   });
 
   // to do: avoid all this property reassigning.
