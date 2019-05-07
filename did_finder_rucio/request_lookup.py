@@ -34,8 +34,11 @@ while True:
         print("processing request:\n", doc)
         ds = doc['dataset']
         (scope, name) = ds.split(":")
-
-        g_files = dc.list_files(scope, name)
+        try:
+            g_files = dc.list_files(scope, name)
+        except Exception as e:
+            print('could not find dataset. Setting request to failed.', e)
+            g_files = []
 
         files = []
         files_skipped = 0
@@ -48,11 +51,14 @@ while True:
             f_name = f['name']
             dataset_size += f['bytes']
             dataset_events += f['events']
-
-            g_replicas = rc.list_replicas(
-                dids=[{'scope': f_scope, 'name': f_name}],
-                schemes=['root'],
-                client_location={'site': conf['SITE']})
+            try:
+                g_replicas = rc.list_replicas(
+                    dids=[{'scope': f_scope, 'name': f_name}],
+                    schemes=['root'],
+                    client_location={'site': conf['SITE']})
+            except Exception as e:
+                print('could not find file replica. Skipping file:', f_name, e)
+                continue
 
             for r in g_replicas:
                 # print(r)
