@@ -54,7 +54,9 @@ POST /_template/servicex_paths
         "adler32": {"type": "keyword" },
         "file_size": { "type": "long" },
         "file_events": { "type": "long" },
-        "file_path": { "type": "keyword" }
+        "file_path": { "type": "keyword" },
+        "created_at": {   "type": "date"  },
+        "last_accessed_at": {   "type": "date"  }          
       }
     }
   }
