@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import json
 from rucio.client import ReplicaClient
 from rucio.client import DIDClient
@@ -83,7 +84,9 @@ while True:
                         'adler32': f['adler32'],
                         'file_size': f['bytes'],
                         'file_events': f['events'],
-                        'file_path': sel_path
+                        'file_path': sel_path,
+                        'created_at': datetime.now(),
+                        'last_accessed_at': datetime.now()
                     }
                 })
 

@@ -4,10 +4,6 @@ For a given RUCIO DID and client site finds optimal access paths.
 
 Docker image is autobuilt here: https://cloud.docker.com/u/sslhep/repository/docker/sslhep/servicex-did-finder
 
-output consist of:
-* file in /data/request_name/did-finder/status.log
-* if request successful paths to files will be listed in /data/request_name/did-finder/paths.json
-
 To run it: 
 
 ``` docker run -it -d --name=did-finder sslhep/servicex-did-finder ```
@@ -22,5 +18,5 @@ An example command to run:
 
 
 ## NOTE
-* make python code that checks es for entries to process, looks up rucio data and fills back rucio info.
-* needs a config: elasticsearch instance, site where it runs, xcache to use to get data.
+* needs update of the README :) so it explains how to run it in k8s not docker. 
+* needs rewrite to use REST API and not ES directly
