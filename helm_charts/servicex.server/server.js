@@ -51,6 +51,7 @@ app.use(session({
 
 
 require('./utils/drequest')(app, config);
+require('./utils/dpath')(app, config);
 const usr = require('./utils/user')(app, config);
 
 // swagger stuff ----------------

@@ -156,7 +156,7 @@ module.exports = function dreqmodule(app, config) {
 
   // to do: avoid all this property reassigning.
   app.get('/drequest_update/:rid', async (req, res) => {
-    const { rid } = req.params.rid;
+    const { rid } = req.params;
     console.log('getting request ', rid);
     req.session.drequest = {};
     if (rid === 'new') {
