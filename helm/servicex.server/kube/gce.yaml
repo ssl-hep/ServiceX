@@ -1,14 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: servicex
+  name: servicex-service
   namespace: servicex
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: servicex.slateci.net
   labels:
     k8s-app: servicex
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
   - name: https
     protocol: TCP
@@ -20,6 +18,25 @@ spec:
     targetPort: 80
   selector:
     k8s-app: servicex
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: servicex-ingress
+  namespace: servicex
+spec:
+  tls:
+  - hosts:
+    - servicex.slateci.net
+    secretName: cert-secret
+  rules:
+    - host: servicex.slateci.net
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: servicex-service
+            servicePort: 443
 ---
 apiVersion: apps/v1
 kind: Deployment
