@@ -24,7 +24,11 @@ TODO:
 ### drequest
 
 * GET /drequest_get/:status
-* GET /drequest_update/:rid
+* PUT /drequest/status/:id/:status/:info?
+* GET /drequest_update/:rid 
+
+    WEB only
+
 * GET /drequest_prepare
 * GET /drequest_terminate
 * GET /drequest_manage
