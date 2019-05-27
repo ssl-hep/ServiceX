@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 
 console.log('ServiceX server starting ... ');
 
@@ -271,12 +272,10 @@ app.get('/logout', (req, res) => {
   res.render('index');
 });
 
-
-app.use((err, _req, res) => {
-  console.error('Error in error handler: ', err.message);
-  res.status(err.status).send(err.message);
+app.use((err, _req, res, _next) => {
+  console.error(err.stack);
+  res.status(500).send(err.message);
 });
-
 
 if (!config.TESTING) {
   https.createServer(credentials, app).listen(443);
