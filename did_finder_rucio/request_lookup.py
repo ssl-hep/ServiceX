@@ -37,7 +37,7 @@ while True:
         break
 
     doc = REQ["_source"]
-    ds = doc['dataset']
+    ds = doc['dataset'].strip()
     (scope, name) = ds.split(":")
     try:
         g_files = dc.list_files(scope, name)
@@ -84,19 +84,21 @@ while True:
             if sel_path == '':
                 files_skipped += 1
                 continue
-            files.append({
-                "_index": "servicex_paths",
-                "_type": "docs",
-                "_source": {
-                    'req_id': hit["_id"],
-                    'adler32': f['adler32'],
-                    'file_size': f['bytes'],
-                    'file_events': f['events'],
-                    'file_path': sel_path,
-                    'created_at': datetime.now(),
-                    'last_accessed_at': datetime.now()
-                }
-            })
+
+            data = {
+                'req_id': REQ["_id"],
+                'adler32': f['adler32'],
+                'file_size': f['bytes'],
+                'file_events': f['events'],
+                'file_path': sel_path,
+                'created_at': datetime.now(),
+                'last_accessed_at': datetime.now()
+            }
+
+            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create/', data=data, verify=False)
+            print('CR_STATUS:', CR_STATUS)
+            if CR_STATUS.status_code != 200:
+                continue
 
     print(files)
 
@@ -107,23 +109,18 @@ while True:
         info = str(len(files)) + ' files can be accessed.\n' + \
             str(files_skipped) + " files can't be accessed.\n" + \
             'Total size: ' + str(dataset_size) + '.\n'
-        bulk(es, files)
 
-    es.update(
-        index='servicex',
-        doc_type='docs',
-        id=hit["_id"],
-        body={
-            'doc': {
-                'status': status,
-                'info': info,
-                'dataset_size': dataset_size,
-                'dataset_events': dataset_events,
-                'dataset_files': len(files)
-            }
-        }
-    )
+    data = {
+        'id': REQ["_id"],
+        'status': status,
+        'info': info,
+        'dataset_size': dataset_size,
+        'dataset_events': dataset_events,
+        'dataset_files': len(files)
+    }
 
+    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update/', data=data, verify=False)
+    print('RU_STATUS:', RU_STATUS)
 
 # EXAMPLE RECORD
 # {u'adler32': u'a32c162e',
