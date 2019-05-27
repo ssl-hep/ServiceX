@@ -6,9 +6,6 @@ from rucio.client import DIDClient
 from rucio.common import exception as rucioe
 import requests
 
-# from elasticsearch import Elasticsearch
-# from elasticsearch.helpers import bulk
-
 with open('config/config.json') as json_file:
     conf = json.load(json_file)
 
@@ -41,7 +38,7 @@ while True:
     except e:
         print('problem in getting rucio client', e)
         break
-        
+
     doc = REQ["_source"]
     ds = doc['dataset']
     (scope, name) = ds.split(":")
