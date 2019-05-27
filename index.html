@@ -31,11 +31,27 @@
 
         <!-- Collapsed navigation -->
         <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
             <a class="navbar-brand" href=".">My Docs</a>
         </div>
 
         <!-- Expanded navigation -->
         <div class="navbar-collapse collapse">
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                    <li class="active">
+                        <a href=".">ServiceX</a>
+                    </li>
+                    <li >
+                        <a href="Implementation_reference/">Implementation reference</a>
+                    </li>
+                </ul>
 
             <ul class="nav navbar-nav navbar-right">
                 <li>
@@ -43,6 +59,16 @@
                         <i class="fa fa-search"></i> Search
                     </a>
                 </li>
+                    <li class="disabled">
+                        <a rel="next" >
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="Implementation_reference/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
             </ul>
         </div>
     </div>
@@ -79,6 +105,7 @@ transmitted to the user.</p>
 <li><a href="https://ssl-hep.github.io/ServiceX/">Documentation</a></li>
 <li><a href="https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333">Kanban board</a></li>
 <li><a href="https://servicex.slateci.net">Service frontend</a></li>
+<li><a href="https://app.swaggerhub.com/apis-docs/ivukotic/ServiceX/1.2.0">Service REST API</a></li>
 </ul></div>
         </div>
 
@@ -161,5 +188,5 @@ transmitted to the user.</p>
 
 <!--
 MkDocs version : 0.17.2
-Build Date UTC : 2019-04-09 15:23:26
+Build Date UTC : 2019-05-27 13:51:00
 -->

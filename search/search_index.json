@@ -2,13 +2,73 @@
     "docs": [
         {
             "location": "/",
-            "text": "ServiceX\n\n\nServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an\nexperiment-agnostic service to enable on-demand data delivery along the concepts\noriginally developed for ATLAS but specifically tailored for nearly-interactive,\nhigh performance, array based and pythonic analyses context. It will provide\nuniform backend interfaces to data storage services and  frontend\n(client-facing) service endpoints for multiple different data formats and\norganizational structures.  \n\n\nIt should be capable of retrieving and delivering\ndata from data lakes, as those systems and models evolve. It will depend on one\nor more data management systems (eg. Rucio) to find and access the data. The\nservice will be capable of on-the-fly data transformations to enable data\ndelivery in a variety of different formats, including streams of ROOT data,\nsmall ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,\nServiceX will include pre-processing functionality for event data and\npreparation for multiple clustering frameworks (e.g. such as Spark).  It will be\nable to automatically unpack compressed formats, potentially including hardware\naccelerated techniques, and can prefilter events so that only useful data is\ntransmitted to the user.\n\n\n\n\nDocumentation\n\n\nKanban board\n\n\nService frontend",
+            "text": "ServiceX\n\n\nServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an\nexperiment-agnostic service to enable on-demand data delivery along the concepts\noriginally developed for ATLAS but specifically tailored for nearly-interactive,\nhigh performance, array based and pythonic analyses context. It will provide\nuniform backend interfaces to data storage services and  frontend\n(client-facing) service endpoints for multiple different data formats and\norganizational structures.  \n\n\nIt should be capable of retrieving and delivering\ndata from data lakes, as those systems and models evolve. It will depend on one\nor more data management systems (eg. Rucio) to find and access the data. The\nservice will be capable of on-the-fly data transformations to enable data\ndelivery in a variety of different formats, including streams of ROOT data,\nsmall ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,\nServiceX will include pre-processing functionality for event data and\npreparation for multiple clustering frameworks (e.g. such as Spark).  It will be\nable to automatically unpack compressed formats, potentially including hardware\naccelerated techniques, and can prefilter events so that only useful data is\ntransmitted to the user.\n\n\n\n\nDocumentation\n\n\nKanban board\n\n\nService frontend\n\n\nService REST API",
             "title": "ServiceX"
         },
         {
             "location": "/#servicex",
-            "text": "ServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an\nexperiment-agnostic service to enable on-demand data delivery along the concepts\noriginally developed for ATLAS but specifically tailored for nearly-interactive,\nhigh performance, array based and pythonic analyses context. It will provide\nuniform backend interfaces to data storage services and  frontend\n(client-facing) service endpoints for multiple different data formats and\norganizational structures.    It should be capable of retrieving and delivering\ndata from data lakes, as those systems and models evolve. It will depend on one\nor more data management systems (eg. Rucio) to find and access the data. The\nservice will be capable of on-the-fly data transformations to enable data\ndelivery in a variety of different formats, including streams of ROOT data,\nsmall ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,\nServiceX will include pre-processing functionality for event data and\npreparation for multiple clustering frameworks (e.g. such as Spark).  It will be\nable to automatically unpack compressed formats, potentially including hardware\naccelerated techniques, and can prefilter events so that only useful data is\ntransmitted to the user.   Documentation  Kanban board  Service frontend",
+            "text": "ServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an\nexperiment-agnostic service to enable on-demand data delivery along the concepts\noriginally developed for ATLAS but specifically tailored for nearly-interactive,\nhigh performance, array based and pythonic analyses context. It will provide\nuniform backend interfaces to data storage services and  frontend\n(client-facing) service endpoints for multiple different data formats and\norganizational structures.    It should be capable of retrieving and delivering\ndata from data lakes, as those systems and models evolve. It will depend on one\nor more data management systems (eg. Rucio) to find and access the data. The\nservice will be capable of on-the-fly data transformations to enable data\ndelivery in a variety of different formats, including streams of ROOT data,\nsmall ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,\nServiceX will include pre-processing functionality for event data and\npreparation for multiple clustering frameworks (e.g. such as Spark).  It will be\nable to automatically unpack compressed formats, potentially including hardware\naccelerated techniques, and can prefilter events so that only useful data is\ntransmitted to the user.   Documentation  Kanban board  Service frontend  Service REST API",
             "title": "ServiceX"
+        },
+        {
+            "location": "/Implementation_reference/",
+            "text": "Implementation reference\n\n\nAPI\n\n\nTODO: \n\n make sure I list here only endpoints that don't return a web page.\n\n make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups\n* update file/path status\n\n\nuser\n\n\n\n\n\n\nGET /user maybe \n\n\nprobably not needed\n\n\n\n\n\n\nGET /users_data\n\n\n\n\n\n\nGET /profile\n\n\n\n\nGET /users\n\n\nGET /authorize/:user_id\n\n\nGET /get_requests\n\n\n\n\ndrequest\n\n\n\n\nGET /drequest/get/:status\n\n\nGET /drequest_update/:rid\n\n\nGET /drequest_prepare\n\n\nGET /drequest_terminate\n\n\nGET /drequest_manage\n\n\nPOST /drequest_update\n\n\n\n\ndpath\n\n\n\n\nGET /dpath/:id\n\n\nGET /dpath/last_used/:rid\n\n\nPOST /dpath/update\n\n\nGET /dpath/transform/\n\n\nPOST /dpath/transform/\n\n\n\n\nRequests\n\n\nStates\n\n\n\n\nDefined\n\n\nFailed\n\n\nPrescreened\n\n\n\n\nState transitions\n\n\n\n\n\n\n\n\nSingle file\n\n\nStates\n\n\nState transitions\n\n\n*",
+            "title": "Implementation reference"
+        },
+        {
+            "location": "/Implementation_reference/#implementation-reference",
+            "text": "",
+            "title": "Implementation reference"
+        },
+        {
+            "location": "/Implementation_reference/#api",
+            "text": "TODO:   make sure I list here only endpoints that don't return a web page.  make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups\n* update file/path status",
+            "title": "API"
+        },
+        {
+            "location": "/Implementation_reference/#user",
+            "text": "GET /user maybe   probably not needed    GET /users_data    GET /profile   GET /users  GET /authorize/:user_id  GET /get_requests",
+            "title": "user"
+        },
+        {
+            "location": "/Implementation_reference/#drequest",
+            "text": "GET /drequest/get/:status  GET /drequest_update/:rid  GET /drequest_prepare  GET /drequest_terminate  GET /drequest_manage  POST /drequest_update",
+            "title": "drequest"
+        },
+        {
+            "location": "/Implementation_reference/#dpath",
+            "text": "GET /dpath/:id  GET /dpath/last_used/:rid  POST /dpath/update  GET /dpath/transform/  POST /dpath/transform/",
+            "title": "dpath"
+        },
+        {
+            "location": "/Implementation_reference/#requests",
+            "text": "",
+            "title": "Requests"
+        },
+        {
+            "location": "/Implementation_reference/#states",
+            "text": "Defined  Failed  Prescreened",
+            "title": "States"
+        },
+        {
+            "location": "/Implementation_reference/#state-transitions",
+            "text": "",
+            "title": "State transitions"
+        },
+        {
+            "location": "/Implementation_reference/#single-file",
+            "text": "",
+            "title": "Single file"
+        },
+        {
+            "location": "/Implementation_reference/#states_1",
+            "text": "",
+            "title": "States"
+        },
+        {
+            "location": "/Implementation_reference/#state-transitions_1",
+            "text": "*",
+            "title": "State transitions"
         }
     ]
 }
