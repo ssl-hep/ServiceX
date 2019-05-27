@@ -6,13 +6,10 @@ module.exports = function dreqmodule(app, config) {
   module.DArequest = class DArequest {
     // statuses: Defined, Preparing, Ready to Serve, Serving, Done
 
-    constructor(id = null) {
+    constructor() {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Defined';
-      if (id) {
-        this.id = id;
-      }
     }
 
     async create(userId) {
