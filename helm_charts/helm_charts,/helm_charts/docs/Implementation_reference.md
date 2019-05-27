@@ -23,7 +23,7 @@ TODO:
 
 ### drequest
 
-* GET /drequest_get/:status
+* GET /drequest/status/:status
 * PUT /drequest/status/:id/:status/:info?
 * GET /drequest_update/:rid 
 
