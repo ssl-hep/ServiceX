@@ -126,6 +126,8 @@ module.exports = function dreqmodule(app, config) {
           body: {
             doc: {
               status: this.status,
+              description: this.description,
+              info: this.info,
               events: this.events,
               dataset_size: this.dataset_size,
               dataset_files: this.dataset_files,
@@ -162,6 +164,25 @@ module.exports = function dreqmodule(app, config) {
       DAr.info += req.params.info;
     }
     await DAr.update();
+    res.status(200).send('OK');
+  });
+
+  app.post('/drequest/update', async (req, res) => {
+    const data = req.body;
+    console.log('post updating data request:', data);
+    const darequest = new module.DArequest();
+    await darequest.get(data.id);
+    if (data.name) darequest.name = data.name;
+    if (data.description) darequest.description = data.description;
+    if (data.dataset) darequest.dataset = data.dataset;
+    if (data.columns) darequest.columns = data.columns;
+    if (data.events) darequest.events = data.events;
+    if (data.status) darequest.status = data.status;
+    if (data.dataset_size) darequest.dataset_size = data.dataset_size;
+    if (data.dataset_events) darequest.dataset_events = data.dataset_events;
+    if (data.dataset_files) darequest.dataset_files = data.dataset_files;
+    if (data.info) darequest.info += data.info;
+    await darequest.update();
     res.status(200).send('OK');
   });
 
