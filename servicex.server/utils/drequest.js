@@ -158,8 +158,8 @@ module.exports = function dreqmodule(app, config) {
     const { id } = req.params;
     const { status } = req.params;
     console.log('update request status: ', id, status);
-    const DAr = new module.DArequest(id);
-    await DAr.get();
+    const DAr = new module.DArequest();
+    await DAr.get(id);
     DAr.status = status;
     if (req.params.info) {
       DAr.info += req.params.info;
@@ -168,14 +168,6 @@ module.exports = function dreqmodule(app, config) {
     res.status(200);
   });
 
-  app.get('/drequest_get/:status', async (req, res) => {
-    const { status } = req.params;
-    console.log('getting a request in status: ', status);
-    const DAr = new module.DArequest();
-    const dar = await DAr.getWithStatus(status);
-    console.log('sending back:', dar);
-    res.status(200).json(dar);
-  });
 
   // to do: avoid all this property reassigning.
   app.get('/drequest_update/:rid', async (req, res) => {
