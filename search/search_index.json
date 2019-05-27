@@ -3,7 +3,7 @@
         {
             "location": "/",
             "text": "ServiceX\n\n\nServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an\nexperiment-agnostic service to enable on-demand data delivery along the concepts\noriginally developed for ATLAS but specifically tailored for nearly-interactive,\nhigh performance, array based and pythonic analyses context. It will provide\nuniform backend interfaces to data storage services and  frontend\n(client-facing) service endpoints for multiple different data formats and\norganizational structures.  \n\n\nIt should be capable of retrieving and delivering\ndata from data lakes, as those systems and models evolve. It will depend on one\nor more data management systems (eg. Rucio) to find and access the data. The\nservice will be capable of on-the-fly data transformations to enable data\ndelivery in a variety of different formats, including streams of ROOT data,\nsmall ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,\nServiceX will include pre-processing functionality for event data and\npreparation for multiple clustering frameworks (e.g. such as Spark).  It will be\nable to automatically unpack compressed formats, potentially including hardware\naccelerated techniques, and can prefilter events so that only useful data is\ntransmitted to the user.\n\n\n\n\nDocumentation\n\n\nKanban board\n\n\nService frontend\n\n\nService REST API",
-            "title": "ServiceX"
+            "title": "Home"
         },
         {
             "location": "/#servicex",
