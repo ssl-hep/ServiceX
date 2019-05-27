@@ -23,7 +23,7 @@ TODO:
 
 ### drequest
 
-* GET /drequest/get/:status
+* GET /drequest_get/:status
 * GET /drequest_update/:rid
 * GET /drequest_prepare
 * GET /drequest_terminate
@@ -42,7 +42,7 @@ TODO:
 
 ### States 
 
-* Defined
+* Defined -> Defining
 * Failed
 * Prescreened
 
@@ -55,6 +55,11 @@ TODO:
 
 
 ### States 
+
+* Defined
+* Located
+* Transforming
+* Transformed
 
 ### State transitions
 
