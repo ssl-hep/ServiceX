@@ -145,6 +145,29 @@ module.exports = function dreqmodule(app, config) {
     }
   };
 
+  app.get('/drequest/status/:status', async (req, res) => {
+    const { status } = req.params;
+    console.log('getting a request in status: ', status);
+    const DAr = new module.DArequest();
+    const dar = await DAr.getWithStatus(status);
+    console.log('sending back:', dar);
+    res.status(200).json(dar);
+  });
+
+  app.put('/drequest/status/:id/:status/:info?', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.params;
+    console.log('update request status: ', id, status);
+    const DAr = new module.DArequest(id);
+    await DAr.get();
+    DAr.status = status;
+    if (req.params.info) {
+      DAr.info += req.params.info;
+    }
+    await DAr.update();
+    res.status(200);
+  });
+
   app.get('/drequest_get/:status', async (req, res) => {
     const { status } = req.params;
     console.log('getting a request in status: ', status);
