@@ -25,10 +25,12 @@ TODO:
 
 * GET /drequest/status/:status
 * PUT /drequest/status/:id/:status/:info?
+* POST /drequest/update
+
+    updates all the posted info.
+
+#### WEB only
 * GET /drequest_update/:rid 
-
-    WEB only
-
 * GET /drequest_prepare
 * GET /drequest_terminate
 * GET /drequest_manage

@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: servicex
-        image: sslhep/servicex-server:latest
+        image: sslhep/servicex-server:dev
         ports:
           - containerPort: 443
           - containerPort: 80
