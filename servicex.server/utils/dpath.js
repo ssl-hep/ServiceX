@@ -4,32 +4,48 @@ module.exports = function dpath(app, config) {
   const module = {};
 
   module.DApath = class DApath {
-    constructor(id = null) {
+    constructor() {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.last_accessed_at = new Date().getTime();
-      if (id) {
-        this.id = id;
-      }
     }
 
-    // TODO - not finished.
     async create(data) {
       console.log('adding request path to ES...', data);
       try {
         const response = await this.es.index({
           index: 'servicex_paths',
           type: 'docs',
+          body: {
+            req_id: data.req_id,
+            status: data.status,
+            adler32: data.adler32,
+            file_size: data.file_size,
+            file_events: data.file_events,
+            file_path: data.file_path,
+            last_accessed_at: new Date().getTime(),
+          },
+        });
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+    }
+
+    async update() {
+      console.log('Updating data request path info in ES...');
+      try {
+        const response = await this.es.update({
+          index: 'servicex_paths',
+          type: 'docs',
+          id: this.id,
           refresh: true,
           body: {
-            //       name: this.name,
-            //       user: userId,
-            //       description: this.description,
-            //       dataset: this.dataset,
-            //       columns: this.columns,
-            //       events: this.events,
-            //       status: this.status,
-            //       created_at: new Date().getTime(),
+            doc: {
+              status: this.status,
+              last_accessed_at: this.last_accessed_at,
+            },
           },
         });
         console.log(response);
@@ -56,8 +72,35 @@ module.exports = function dpath(app, config) {
           console.log('data access path not found.');
           return false;
         }
-        console.log('data request found.');
+        console.log('data request path found.');
         const obj = response.hits.hits[0]._source;
+        return obj;
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+      return false;
+    }
+
+    async getLocated() {
+      console.log('getting any defined path that should be transformed');
+      try {
+        const response = await this.es.search({
+          index: 'servicex_paths',
+          type: 'docs',
+          body: {
+            query: {
+              match: { status: 'Located' },
+            },
+          },
+        });
+        // console.log(response);
+        if (response.hits.total === 0) {
+          console.log('data access path not found.');
+          return false;
+        }
+        console.log('data access path found.');
+        const obj = response.hits.hits[0];
         return obj;
       } catch (err) {
         console.error(err);
@@ -167,13 +210,22 @@ module.exports = function dpath(app, config) {
   // gets all the info needed for the transformer to run
   app.get('/dpath/transform/', async (req, res) => {
     const DApath = new module.DApath();
-    // const dap = await DApath.get(id);
-    // console.log('sending back:', dap);
-    res.status(200);//.json(dap);
+    const dap = await DApath.getLocated();
+    console.log('sending back:', dap);
+    res.status(200).json(dap);
   });
 
-  app.post('/dpath/transform', async (req, res) => {
-
+  app.put('/dpath/transform/:id/:status', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.params;
+    console.log('post /dpath/transform :', id, status);
+    const DApath = new module.DApath();
+    DApath.id = id;
+    await DApath.get();
+    DApath.status = status;
+    DApath.last_accessed_at = new Date().getTime();
+    DApath.update();
+    res.status(200).send('OK');
   });
 
   app.get('/dpath/:id', async (req, res) => {
@@ -194,26 +246,11 @@ module.exports = function dpath(app, config) {
     res.status(200).json(dap);
   });
 
-  app.post('/dpath/update', async (req, res) => {
+  app.post('/dpath/create', async (req, res) => {
     const data = req.body;
-    console.log('post updating data access path:', data);
-    // const darequest = new module.DArequest();
-    // if (req.session.drequest.id) {
-    //   console.log('has id getting existing data.');
-    //   await darequest.get(req.session.drequest.id);
-    // }
-    // darequest.name = data.name;
-    // darequest.description = data.description;
-    // darequest.dataset = data.dataset;
-    // darequest.columns = data.columns;
-    // darequest.events = data.events;
-    // if (req.session.drequest.id) {
-    //   console.log('has id - updating.');
-    //   await darequest.update();
-    // } else {
-    //   console.log('no id - creating drequest.');
-    //   await darequest.create(req.session.user_id);
-    // }
+    console.log('post /dpath/create :', data);
+    const DApath = new module.DApath();
+    await DApath.create(data);
     res.status(200).send('OK');
   });
 

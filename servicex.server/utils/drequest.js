@@ -162,7 +162,7 @@ module.exports = function dreqmodule(app, config) {
       DAr.info += req.params.info;
     }
     await DAr.update();
-    res.status(200);
+    res.status(200).send('OK');
   });
 
 

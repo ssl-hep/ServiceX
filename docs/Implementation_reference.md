@@ -36,11 +36,21 @@ TODO:
 
 ### dpath
 
+* POST /dpath/create
+
+    to be used by DID-finder
+
+* GET /dpath/transform/
+
+    to be used by transformer
+
+* PUT /dpath/transform/:id/:status
+
+    transformer returns :id, status
+
+#### Unused for now
 * GET /dpath/:id
 * GET /dpath/last_used/:rid
-* POST /dpath/update
-* GET /dpath/transform/
-* POST /dpath/transform/
 
 ## Requests 
 
