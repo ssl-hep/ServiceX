@@ -164,6 +164,18 @@ module.exports = function dpath(app, config) {
     }
   };
 
+  // gets all the info needed for the transformer to run
+  app.get('/dpath/transform/', async (req, res) => {
+    const DApath = new module.DApath();
+    // const dap = await DApath.get(id);
+    // console.log('sending back:', dap);
+    res.status(200);//.json(dap);
+  });
+
+  app.post('/dpath/transform', async (req, res) => {
+
+  });
+
   app.get('/dpath/:id', async (req, res) => {
     const { id } = req.params;
     console.log('getting a path with id: ', id);
@@ -182,7 +194,7 @@ module.exports = function dpath(app, config) {
     res.status(200).json(dap);
   });
 
-  app.post('/dpath_update', async (req, res) => {
+  app.post('/dpath/update', async (req, res) => {
     const data = req.body;
     console.log('post updating data access path:', data);
     // const darequest = new module.DArequest();
