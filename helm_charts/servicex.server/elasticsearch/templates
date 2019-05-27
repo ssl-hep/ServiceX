@@ -55,6 +55,7 @@ POST /_template/servicex_paths
         "file_size": { "type": "long" },
         "file_events": { "type": "long" },
         "file_path": { "type": "keyword" },
+        "status": {   "type": "keyword"  },
         "created_at": {   "type": "date"  },
         "last_accessed_at": {   "type": "date"  }          
       }
