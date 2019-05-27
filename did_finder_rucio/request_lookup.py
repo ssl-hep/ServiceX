@@ -15,9 +15,6 @@ print('sleeping until CAs are there...')
 
 time.sleep(60)
 
-# es = Elasticsearch([conf['ES_HOST']], timeout=60)
-
-
 while True:
     RES = requests.get('https://' + conf['SITENAME'] + '/drequest/status/Defined', verify=False)
     REQ = RES.json()
