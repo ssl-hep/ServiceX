@@ -145,7 +145,7 @@ module.exports = function dreqmodule(app, config) {
     }
   };
 
-  app.get('/drequest_get/:status', async (req, res) => {
+  app.get('/drequest/get/:status', async (req, res) => {
     const { status } = req.params;
     console.log('getting a request in status: ', status);
     const DAr = new module.DArequest();
