@@ -22,7 +22,7 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 RUN yum install -y voms fetch-crl 
 
-RUN pip install elasticsearch
+# RUN pip install elasticsearch
 
 COPY . .
 
