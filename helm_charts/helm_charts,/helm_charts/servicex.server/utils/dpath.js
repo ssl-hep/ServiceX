@@ -18,13 +18,13 @@ module.exports = function dpath(app, config) {
           type: 'docs',
           body: {
             req_id: data.req_id,
-            status: data.status,
+            status: 'Defined',
             adler32: data.adler32,
             file_size: data.file_size,
             file_events: data.file_events,
             file_path: data.file_path,
-            last_accessed_at: this.last_accessed_at,
             created_at: this.created_at,
+            last_accessed_at: this.last_accessed_at,
           },
         });
         console.log(response);
@@ -83,7 +83,7 @@ module.exports = function dpath(app, config) {
       return false;
     }
 
-    async getLocated() {
+    async getDefined() {
       console.log('getting any defined path that should be transformed');
       try {
         const response = await this.es.search({
@@ -91,7 +91,7 @@ module.exports = function dpath(app, config) {
           type: 'docs',
           body: {
             query: {
-              match: { status: 'Located' },
+              match: { status: 'Defined' },
             },
           },
         });
@@ -211,7 +211,7 @@ module.exports = function dpath(app, config) {
   // gets all the info needed for the transformer to run
   app.get('/dpath/transform/', async (req, res) => {
     const DApath = new module.DApath();
-    const dap = await DApath.getLocated();
+    const dap = await DApath.getDefined();
     console.log('sending back:', dap);
     res.status(200).json(dap);
   });
