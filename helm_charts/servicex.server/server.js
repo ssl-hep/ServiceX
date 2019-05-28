@@ -26,12 +26,6 @@ if (config.TESTING) {
   secretsPath = './kube/secrets/';
 }
 
-if (config.HTTPS) {
-  const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
-  const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
-  const credentials = { key: privateKey, cert: certificate };
-}
-
 const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
 
 // const auth = new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
@@ -279,6 +273,9 @@ app.use((err, _req, res, _next) => {
 });
 
 if (config.HTTPS) {
+  const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
+  const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
+  const credentials = { key: privateKey, cert: certificate };
   https.createServer(credentials, app).listen(443, () => {
     console.log('Your server is listening on port 443.');
   });
