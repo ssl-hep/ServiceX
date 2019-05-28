@@ -24,7 +24,7 @@ echo "Deploying frontend service"
 kubectl create -f gce-service.yaml
 
 echo "Deploying server"
-kubectl create -f frontend.yaml
+kubectl create -f gce-frontend.yaml
 
 echo "Deploying did-finder"
 kubectl create -f did-finder.yaml
