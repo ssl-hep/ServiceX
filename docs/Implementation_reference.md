@@ -30,11 +30,11 @@ TODO:
     updates all the posted info.
 
 #### WEB only
-* GET /drequest_update/:rid 
+* GET /wrequest_update/:rid 
 * GET /drequest_prepare
 * GET /drequest_terminate
 * GET /drequest_manage
-* POST /drequest_update
+* POST /wrequest_update
 
 ### dpath
 
