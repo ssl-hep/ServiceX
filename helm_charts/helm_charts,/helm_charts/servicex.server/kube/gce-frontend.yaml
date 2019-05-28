@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicex  
+  namespace: servicex
+  labels:
+    k8s-app: servicex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: servicex
+  template:
+    metadata:
+      labels:
+        k8s-app: servicex
+    spec:
+      containers:
+      - name: servicex
+        image: sslhep/servicex-server:latest
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 80
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /healthz
+            port: 80
+          periodSeconds: 60
+          initialDelaySeconds: 60
+          timeoutSeconds: 10
+        volumeMounts:
+        # - name: https-certs-volume
+        #   mountPath: "/etc/https-certs/"
+        #   readOnly: true
+        - name: globus-conf-volume
+          mountPath: "/etc/globus-conf/"
+        - name: frontend-conf-volume
+          mountPath: "/usr/src/app/config/"
+      volumes:
+      # - name: https-certs-volume
+      #   secret:
+      #     secretName: cert-secret
+      #     items:
+      #     - key: tls.key
+      #       path: servicex.key.pem
+      #       mode: 256 
+      #     - key: tls.crt
+      #       path: servicex.cert.crt
+      - name: frontend-conf-volume
+        secret:
+          secretName: config
+          items:
+          - key: conf
+            path: config.json      
+      - name: globus-conf-volume
+        secret:
+          secretName: globus-secret
+          items:
+          - key: gconf
+            path: globus-config.json
+      serviceAccountName: servicex-fronter
