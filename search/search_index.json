@@ -12,7 +12,7 @@
         },
         {
             "location": "/Implementation_reference/",
-            "text": "Implementation reference\n\n\nAPI\n\n\nTODO: \n\n make sure I list here only endpoints that don't return a web page.\n\n make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups\n* update file/path status\n\n\nuser\n\n\n\n\n\n\nGET /user maybe \n\n\nprobably not needed\n\n\n\n\n\n\nGET /users_data\n\n\n\n\n\n\nGET /profile\n\n\n\n\nGET /users\n\n\nGET /authorize/:user_id\n\n\nGET /get_requests\n\n\n\n\ndrequest\n\n\n\n\nGET /drequest/get/:status\n\n\nGET /drequest_update/:rid\n\n\nGET /drequest_prepare\n\n\nGET /drequest_terminate\n\n\nGET /drequest_manage\n\n\nPOST /drequest_update\n\n\n\n\ndpath\n\n\n\n\nGET /dpath/:id\n\n\nGET /dpath/last_used/:rid\n\n\nPOST /dpath/update\n\n\nGET /dpath/transform/\n\n\nPOST /dpath/transform/\n\n\n\n\nRequests\n\n\nStates\n\n\n\n\nDefined\n\n\nFailed\n\n\nPrescreened\n\n\n\n\nState transitions\n\n\n\n\n\n\n\n\nSingle file\n\n\nStates\n\n\nState transitions\n\n\n*",
+            "text": "Implementation reference\n\n\nAPI\n\n\nTODO: \n\n make sure I list here only endpoints that don't return a web page.\n\n make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups\n* update file/path status\n\n\nuser\n\n\n\n\n\n\nGET /user maybe \n\n\nprobably not needed\n\n\n\n\n\n\nGET /users_data\n\n\n\n\n\n\nGET /profile\n\n\n\n\nGET /users\n\n\nGET /authorize/:user_id\n\n\nGET /get_requests\n\n\n\n\ndrequest\n\n\n\n\nGET /drequest/status/:status\n\n\nPUT /drequest/status/:id/:status/:info?\n\n\n\n\nPOST /drequest/update\n\n\nupdates all the posted info.\n\n\n\n\n\n\nWEB only\n\n\n\n\nGET /wrequest_update/:rid \n\n\nGET /drequest_prepare\n\n\nGET /drequest_terminate\n\n\nGET /drequest_manage\n\n\nPOST /wrequest_update\n\n\n\n\ndpath\n\n\n\n\n\n\nPOST /dpath/create\n\n\nto be used by DID-finder\n\n\n\n\n\n\nGET /dpath/transform/\n\n\nto be used by transformer\n\n\n\n\n\n\nPUT /dpath/transform/:id/:status\n\n\ntransformer returns :id, status\n\n\n\n\n\n\nUnused for now\n\n\n\n\nGET /dpath/:id\n\n\nGET /dpath/last_used/:rid\n\n\n\n\nRequests\n\n\nStates\n\n\n\n\nDefined -> Defining\n\n\nFailed\n\n\nPrescreened\n\n\n\n\nState transitions\n\n\n\n\n\n\n\n\nSingle file\n\n\nStates\n\n\n\n\nDefined\n\n\nTransforming\n\n\nTransformed\n\n\n\n\nState transitions\n\n\n*",
             "title": "Implementation reference"
         },
         {
@@ -32,13 +32,23 @@
         },
         {
             "location": "/Implementation_reference/#drequest",
-            "text": "GET /drequest/get/:status  GET /drequest_update/:rid  GET /drequest_prepare  GET /drequest_terminate  GET /drequest_manage  POST /drequest_update",
+            "text": "GET /drequest/status/:status  PUT /drequest/status/:id/:status/:info?   POST /drequest/update  updates all the posted info.",
             "title": "drequest"
         },
         {
+            "location": "/Implementation_reference/#web-only",
+            "text": "GET /wrequest_update/:rid   GET /drequest_prepare  GET /drequest_terminate  GET /drequest_manage  POST /wrequest_update",
+            "title": "WEB only"
+        },
+        {
             "location": "/Implementation_reference/#dpath",
-            "text": "GET /dpath/:id  GET /dpath/last_used/:rid  POST /dpath/update  GET /dpath/transform/  POST /dpath/transform/",
+            "text": "POST /dpath/create  to be used by DID-finder    GET /dpath/transform/  to be used by transformer    PUT /dpath/transform/:id/:status  transformer returns :id, status",
             "title": "dpath"
+        },
+        {
+            "location": "/Implementation_reference/#unused-for-now",
+            "text": "GET /dpath/:id  GET /dpath/last_used/:rid",
+            "title": "Unused for now"
         },
         {
             "location": "/Implementation_reference/#requests",
@@ -47,7 +57,7 @@
         },
         {
             "location": "/Implementation_reference/#states",
-            "text": "Defined  Failed  Prescreened",
+            "text": "Defined -> Defining  Failed  Prescreened",
             "title": "States"
         },
         {
@@ -62,7 +72,7 @@
         },
         {
             "location": "/Implementation_reference/#states_1",
-            "text": "",
+            "text": "Defined  Transforming  Transformed",
             "title": "States"
         },
         {

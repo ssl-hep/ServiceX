@@ -109,25 +109,45 @@
 </ul>
 <h3 id="drequest">drequest</h3>
 <ul>
-<li>GET /drequest/get/:status</li>
-<li>GET /drequest_update/:rid</li>
+<li>GET /drequest/status/:status</li>
+<li>PUT /drequest/status/:id/:status/:info?</li>
+<li>
+<p>POST /drequest/update</p>
+<p>updates all the posted info.</p>
+</li>
+</ul>
+<h4 id="web-only">WEB only</h4>
+<ul>
+<li>GET /wrequest_update/:rid </li>
 <li>GET /drequest_prepare</li>
 <li>GET /drequest_terminate</li>
 <li>GET /drequest_manage</li>
-<li>POST /drequest_update</li>
+<li>POST /wrequest_update</li>
 </ul>
 <h3 id="dpath">dpath</h3>
 <ul>
+<li>
+<p>POST /dpath/create</p>
+<p>to be used by DID-finder</p>
+</li>
+<li>
+<p>GET /dpath/transform/</p>
+<p>to be used by transformer</p>
+</li>
+<li>
+<p>PUT /dpath/transform/:id/:status</p>
+<p>transformer returns :id, status</p>
+</li>
+</ul>
+<h4 id="unused-for-now">Unused for now</h4>
+<ul>
 <li>GET /dpath/:id</li>
 <li>GET /dpath/last_used/:rid</li>
-<li>POST /dpath/update</li>
-<li>GET /dpath/transform/</li>
-<li>POST /dpath/transform/</li>
 </ul>
 <h2 id="requests">Requests</h2>
 <h3 id="states">States</h3>
 <ul>
-<li>Defined</li>
+<li>Defined -&gt; Defining</li>
 <li>Failed</li>
 <li>Prescreened</li>
 </ul>
@@ -137,6 +157,11 @@
 </ul>
 <h2 id="single-file">Single file</h2>
 <h3 id="states_1">States</h3>
+<ul>
+<li>Defined</li>
+<li>Transforming</li>
+<li>Transformed</li>
+</ul>
 <h3 id="state-transitions_1">State transitions</h3>
 <p>*</p></div>
         </div>
