@@ -16,7 +16,13 @@ print('sleeping until CAs are there...')
 time.sleep(60)
 
 while True:
-    RES = requests.get('https://' + conf['SITENAME'] + '/drequest/status/Defined', verify=False)
+    try:
+        RES = requests.get('https://' + conf['SITENAME'] + '/drequest/status/Defined', verify=False)
+    except requests.exceptions.RequestException as e:
+        print('could not access the service:', e)
+        time.sleep(60)
+        continue
+
     REQ = RES.json()
     if REQ is None:
         time.sleep(10)
@@ -49,7 +55,7 @@ while True:
     except Exception as e:
         print('Unexpected error. Will retry. ', e)
 
-    files = []
+    files = 0
     files_skipped = 0
     dataset_size = 0
     dataset_events = 0
@@ -93,12 +99,15 @@ while True:
                 'file_path': sel_path
             }
 
-            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create/', json=data, verify=False)
+            files += 1
+            print(data)
+
+            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create', json=data, verify=False)
             print('CR_STATUS:', CR_STATUS)
             if CR_STATUS.status_code != 200:
                 continue
 
-    print(files)
+    print('files found:', files)
 
     status = 'Failed'
     info = 'Request failed. No accessible files found for your dataset.'
@@ -117,7 +126,9 @@ while True:
         'dataset_files': len(files)
     }
 
-    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update/', json=data, verify=False)
+    print(data)
+
+    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update', json=data, verify=False)
     print('RU_STATUS:', RU_STATUS)
 
 # EXAMPLE RECORD
