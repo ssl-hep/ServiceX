@@ -85,7 +85,7 @@ module.exports = function dreqmodule(app, config) {
     }
 
     async getWithStatus(status) {
-      console.log('getting darequest with status:', status);
+      // console.log('getting darequest with status:', status);
       try {
         const response = await this.es.search({
           index: 'servicex',
@@ -103,7 +103,7 @@ module.exports = function dreqmodule(app, config) {
         });
         // console.log(response);
         if (response.hits.total === 0) {
-          console.log('data access request not found.');
+          // console.log('data access request not found.');
           return null;
         }
         console.log('data request found.');
@@ -146,10 +146,10 @@ module.exports = function dreqmodule(app, config) {
 
   app.get('/drequest/status/:status', async (req, res) => {
     const { status } = req.params;
-    console.log('getting a request in status: ', status);
+    // console.log('getting a request in status: ', status);
     const DAr = new module.DArequest();
     const dar = await DAr.getWithStatus(status);
-    console.log('sending back:', dar);
+    // console.log('sending back:', dar);
     res.status(200).json(dar);
   });
 
