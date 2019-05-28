@@ -1,9 +1,9 @@
 echo "Creating namespace"
 kubectl create -f namespace.yaml
 
-REM echo "Adding x509 cert needed for data access"
-REM kubectl delete secret -n servicex x509-secret
-REM kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem
+echo "Adding x509 cert needed for data access"
+kubectl delete secret -n servicex x509-secret
+kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache/xcache.key.pem --from-file=usercert=secrets/xcache/xcache.crt.pem
 
 echo "Adding site certs"
 kubectl delete secret -n servicex cert-secret
@@ -19,6 +19,9 @@ kubectl create secret -n servicex generic globus-secret --from-file=gconf=secret
 
 echo "Create service account"
 kubectl create -f service_account.yaml
+
+echo "Deploying frontend service"
+kubectl create -f gce-service.yaml
 
 echo "Deploying server"
 kubectl create -f frontend.yaml
