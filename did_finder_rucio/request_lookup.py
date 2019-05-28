@@ -113,7 +113,7 @@ while True:
     info = 'Request failed. No accessible files found for your dataset.'
     if files:
         status = 'Prescreened'
-        info = str(len(files)) + ' files can be accessed.\n' + \
+        info = str(files) + ' files can be accessed.\n' + \
             str(files_skipped) + " files can't be accessed.\n" + \
             'Total size: ' + str(dataset_size) + '.\n'
 
@@ -123,7 +123,7 @@ while True:
         'info': info,
         'dataset_size': dataset_size,
         'dataset_events': dataset_events,
-        'dataset_files': len(files)
+        'dataset_files': files
     }
 
     print(data)
