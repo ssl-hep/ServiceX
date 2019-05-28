@@ -36,4 +36,4 @@ spec:
         - path: /
           backend:
             serviceName: servicex-service
-            servicePort: 443
+            servicePort: 80

@@ -26,17 +26,18 @@ if (config.TESTING) {
   secretsPath = './kube/secrets/';
 }
 
-const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
-const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
+if (config.HTTPS) {
+  const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
+  const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
+  const credentials = { key: privateKey, cert: certificate };
+}
+
 const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
 
 // const auth = new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
-
-const credentials = { key: privateKey, cert: certificate };
-
 
 const app = express();
 app.use(express.static('web'));
@@ -277,18 +278,13 @@ app.use((err, _req, res, _next) => {
   res.status(500).send(err.message);
 });
 
-if (!config.TESTING) {
-  https.createServer(credentials, app).listen(443);
-
-  // redirects if someone comes on http.
-  http.createServer((req, res) => {
-    res.writeHead(302, { Location: `https://${config.SITENAME}` });
-    res.end();
-  }).listen(80);
+if (config.HTTPS) {
+  https.createServer(credentials, app).listen(443, () => {
+    console.log('Your server is listening on port 443.');
+  });
 } else {
-  http.createServer(app).listen(8080, () => {
-    console.log('Your server is listening on port %d (http://localhost:%d)', 8080, 8080);
-    console.log('Swagger-ui is available on http://localhost:%d/docs', 8080);
+  http.createServer(app).listen(80, () => {
+    console.log('Your server is listening on port 80.');
   });
 }
 
