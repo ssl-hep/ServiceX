@@ -32,7 +32,7 @@ while True:
     try:
         rc = ReplicaClient()
         dc = DIDClient()
-    except e:
+    except Exception as e:
         print('problem in getting rucio client', e)
         break
 
@@ -90,12 +90,10 @@ while True:
                 'adler32': f['adler32'],
                 'file_size': f['bytes'],
                 'file_events': f['events'],
-                'file_path': sel_path,
-                'created_at': datetime.now(),
-                'last_accessed_at': datetime.now()
+                'file_path': sel_path
             }
 
-            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create/', data=data, verify=False)
+            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create/', json=data, verify=False)
             print('CR_STATUS:', CR_STATUS)
             if CR_STATUS.status_code != 200:
                 continue
@@ -119,7 +117,7 @@ while True:
         'dataset_files': len(files)
     }
 
-    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update/', data=data, verify=False)
+    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update/', json=data, verify=False)
     print('RU_STATUS:', RU_STATUS)
 
 # EXAMPLE RECORD
