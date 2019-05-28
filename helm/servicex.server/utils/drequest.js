@@ -167,7 +167,7 @@ module.exports = function dreqmodule(app, config) {
     res.status(200).send('OK');
   });
 
-  app.post('/drequest/update', async (req, res) => {
+  app.post('/drequest/update/', async (req, res) => {
     const data = req.body;
     console.log('post updating data request:', data);
     const darequest = new module.DArequest();
@@ -188,7 +188,7 @@ module.exports = function dreqmodule(app, config) {
 
 
   // to do: avoid all this property reassigning.
-  app.get('/drequest_update/:rid', async (req, res) => {
+  app.get('/wrequest_update/:rid', async (req, res) => {
     const { rid } = req.params;
     console.log('getting request ', rid);
     req.session.drequest = {};
@@ -246,7 +246,7 @@ module.exports = function dreqmodule(app, config) {
     res.render('./drequest_manage', req.session);
   });
 
-  app.post('/drequest_update', async (req, res) => {
+  app.post('/wrequest_update', async (req, res) => {
     const data = req.body;
     console.log('post updating data request:', data);
     const darequest = new module.DArequest();
