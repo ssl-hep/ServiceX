@@ -4,7 +4,6 @@ module.exports = function dreqmodule(app, config) {
   const module = {};
 
   module.DArequest = class DArequest {
-    // statuses: Defined, Preparing, Ready to Serve, Serving, Done
 
     constructor() {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
@@ -171,7 +170,11 @@ module.exports = function dreqmodule(app, config) {
     const data = req.body;
     console.log('post updating data request:', data);
     const darequest = new module.DArequest();
-    await darequest.get(data.id);
+    const found = await darequest.get(data.id);
+    if (!found) {
+      res.status(500).send('Bad request');
+      return;
+    }
     if (data.name) darequest.name = data.name;
     if (data.description) darequest.description = data.description;
     if (data.dataset) darequest.dataset = data.dataset;
@@ -185,7 +188,6 @@ module.exports = function dreqmodule(app, config) {
     await darequest.update();
     res.status(200).send('OK');
   });
-
 
   // to do: avoid all this property reassigning.
   app.get('/wrequest_update/:rid', async (req, res) => {
