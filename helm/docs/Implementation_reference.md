@@ -73,7 +73,6 @@ TODO:
 ### States 
 
 * Defined
-* Located
 * Transforming
 * Transformed
 
