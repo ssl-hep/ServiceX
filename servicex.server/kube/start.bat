@@ -21,8 +21,12 @@ kubectl create secret -n servicex generic globus-secret --from-file=gconf=secret
 echo "Create service account"
 kubectl create -f service_account.yaml
 
+echo "Deploying frontend service"
+kubectl create -f service.yaml
+
 echo "Deploying server"
 kubectl create -f frontend.yaml
 
 echo "Deploying did-finder"
 kubectl create -f did-finder.yaml
+
