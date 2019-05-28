@@ -58,7 +58,8 @@ module.exports = function usermodule(app, config) {
       console.log('deleting user from ES...');
       try {
         const response = await this.es.deleteByQuery({
-          index: 'servicex_users', type: 'docs',
+          index: 'servicex_users',
+          type: 'docs',
           body: { query: { match: { _id: this.id } } },
         });
         console.log(response);
@@ -310,7 +311,7 @@ module.exports = function usermodule(app, config) {
     });
   });
 
-  app.get('/users_data', async function (req, res) {
+  app.get('/users_data', async (req, res) => {
     console.log('Sending all users info...');
     var user = new module.User();
     var data = await user.get_all_users();
@@ -318,17 +319,17 @@ module.exports = function usermodule(app, config) {
     console.log('Done.');
   });
 
-  app.get('/profile', async function (req, res) {
+  app.get('/profile', async (req, res) => {
     console.log('profile called!');
     res.render('profile', req.session);
   });
 
-  app.get('/users', async function (req, res) {
+  app.get('/users', async (req, res) => {
     console.log('users called!');
     res.render('users', req.session);
   });
 
-  app.get('/authorize/:user_id', async function (req, res) {
+  app.get('/authorize/:user_id', async (req, res) => {
     console.log('Authorizing user...');
     var user = new module.User(req.params.user_id);
     await user.load();

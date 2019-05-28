@@ -6,13 +6,10 @@ module.exports = function dreqmodule(app, config) {
   module.DArequest = class DArequest {
     // statuses: Defined, Preparing, Ready to Serve, Serving, Done
 
-    constructor(id = null) {
+    constructor() {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Defined';
-      if (id) {
-        this.id = id;
-      }
     }
 
     async create(userId) {
@@ -88,7 +85,7 @@ module.exports = function dreqmodule(app, config) {
     }
 
     async getWithStatus(status) {
-      console.log('getting darequest with status:', status);
+      // console.log('getting darequest with status:', status);
       try {
         const response = await this.es.search({
           index: 'servicex',
@@ -106,7 +103,7 @@ module.exports = function dreqmodule(app, config) {
         });
         // console.log(response);
         if (response.hits.total === 0) {
-          console.log('data access request not found.');
+          // console.log('data access request not found.');
           return null;
         }
         console.log('data request found.');
@@ -129,6 +126,8 @@ module.exports = function dreqmodule(app, config) {
           body: {
             doc: {
               status: this.status,
+              description: this.description,
+              info: this.info,
               events: this.events,
               dataset_size: this.dataset_size,
               dataset_files: this.dataset_files,
@@ -147,10 +146,10 @@ module.exports = function dreqmodule(app, config) {
 
   app.get('/drequest/status/:status', async (req, res) => {
     const { status } = req.params;
-    console.log('getting a request in status: ', status);
+    // console.log('getting a request in status: ', status);
     const DAr = new module.DArequest();
     const dar = await DAr.getWithStatus(status);
-    console.log('sending back:', dar);
+    // console.log('sending back:', dar);
     res.status(200).json(dar);
   });
 
@@ -165,7 +164,26 @@ module.exports = function dreqmodule(app, config) {
       DAr.info += req.params.info;
     }
     await DAr.update();
-    res.status(200);
+    res.status(200).send('OK');
+  });
+
+  app.post('/drequest/update', async (req, res) => {
+    const data = req.body;
+    console.log('post updating data request:', data);
+    const darequest = new module.DArequest();
+    await darequest.get(data.id);
+    if (data.name) darequest.name = data.name;
+    if (data.description) darequest.description = data.description;
+    if (data.dataset) darequest.dataset = data.dataset;
+    if (data.columns) darequest.columns = data.columns;
+    if (data.events) darequest.events = data.events;
+    if (data.status) darequest.status = data.status;
+    if (data.dataset_size) darequest.dataset_size = data.dataset_size;
+    if (data.dataset_events) darequest.dataset_events = data.dataset_events;
+    if (data.dataset_files) darequest.dataset_files = data.dataset_files;
+    if (data.info) darequest.info += data.info;
+    await darequest.update();
+    res.status(200).send('OK');
   });
 
 

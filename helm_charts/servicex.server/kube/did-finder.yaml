@@ -39,13 +39,13 @@ spec:
         image: sslhep/servicex-did-finder:latest
         imagePullPolicy: "Always"
         command: ["python"]
-        args: ["/request_lookup.py"]
+        args: ["request_lookup.py"]
         env:
         - name: PYTHONUNBUFFERED
           value: "0"
         volumeMounts:
         - name: conf-volume
-          mountPath: "/etc/servicex/"
+          mountPath: "/usr/src/app/config/"
         - name: x509-data
           mountPath: "/etc/grid-security/"
           readOnly: false
@@ -56,7 +56,7 @@ spec:
       - name: x509
         image: sslhep/servicex-did-finder:latest
         imagePullPolicy: "Always"
-        command: ["/run_x509_updater.sh"]
+        command: ["./run_x509_updater.sh"]
         volumeMounts:
         - name: x509-data
           mountPath: "/etc/grid-security/"
