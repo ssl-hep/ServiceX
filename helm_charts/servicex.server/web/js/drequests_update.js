@@ -21,7 +21,7 @@ $(document).ready(() => {
     // call REST API to create a Data Access Request
     $.ajax({
       type: 'post',
-      url: '/drequest_update',
+      url: '/wrequest_update',
       contentType: 'application/json',
       data: JSON.stringify(data),
       success(link) {

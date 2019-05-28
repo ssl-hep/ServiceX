@@ -126,7 +126,7 @@ module.exports = function usermodule(app, config) {
         }
 
         console.log('User found.');
-        var obj = response.hits.hits[0]._source;
+        const obj = response.hits.hits[0]._source;
         // console.log(obj);
         // var created_at = new Date(obj.created_at).toUTCString();
         // var approved_on = new Date(obj.approved_on).toUTCString();
@@ -239,7 +239,7 @@ module.exports = function usermodule(app, config) {
             console.log(obj);
             const createdAt = new Date(obj.created_at).toUTCString();
             const lid = resp.hits.hits[i]._id;
-            const link = `<a href="/drequest_update/${lid}"> ${lid}</a>`;
+            const link = `<a href="/wrequest_update/${lid}"> ${lid}</a>`;
             const serv = [obj.name, obj.description, createdAt, obj.status, link];
             toSend.push(serv);
           }
