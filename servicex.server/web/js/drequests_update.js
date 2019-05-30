@@ -1,5 +1,4 @@
 $(document).ready(() => {
-
   $('#drequest_update_button').click((event) => {
     event.preventDefault();
     console.log('Data Access request creator called.');
