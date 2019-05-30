@@ -33,7 +33,7 @@ spec:
     - host: servicex.slateci.net
       http:
         paths:
-        - path: /
+        - path: /*
           backend:
             serviceName: servicex-service
             servicePort: 80
