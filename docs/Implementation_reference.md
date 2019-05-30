@@ -4,6 +4,9 @@
 
 TODO: 
 * make sure I list here only endpoints that don't return a web page.
+* rename endpoints for web to start with w
+* remove swagger endpoints
+* define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups
 * update file/path status
 
@@ -24,6 +27,7 @@ TODO:
 ### drequest
 
 * GET /drequest/status/:status
+* GET /drequest/:id
 * PUT /drequest/status/:id/:status/:info?
 * POST /drequest/update
 
@@ -80,3 +84,15 @@ TODO:
 
 *
 
+
+
+transformer workflow:
+
+1. gets dpath to process (_id, rid, path, file_events)
+1. gets drequest connected to that dpath (columns, events_transformed, events_transforming, events_requested )
+1. if transformation needed 
+    1. update dpath status to _Transforming_
+    1. update drequest events_transforming
+    else
+    1. update dpath status to NotNeeded
+1. once transformation done update dpath status to _Transformed_, update drequest events_tranformed, events_transforming, and if needed drequest status to _Transformed_.
