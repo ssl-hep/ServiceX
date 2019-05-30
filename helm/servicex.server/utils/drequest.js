@@ -151,6 +151,14 @@ module.exports = function dreqmodule(app, config) {
     res.status(200).json(dar);
   });
 
+  app.get('/drequest/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('lookup request : ', id);
+    const DAr = new module.DArequest();
+    const result = await DAr.get(id);
+    res.status(200).json(result);
+  });
+
   app.put('/drequest/status/:id/:status/:info?', async (req, res) => {
     const { id } = req.params;
     const { status } = req.params;
