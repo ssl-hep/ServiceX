@@ -74,7 +74,7 @@ module.exports = function dreqmodule(app, config) {
         this.events_served = obj.events_served;
         this.events_processed = obj.events_processed;
         this.created_at = obj.created_at;
-        return true;
+        return response.hits.hits[0];
       } catch (err) {
         console.error(err);
       }
