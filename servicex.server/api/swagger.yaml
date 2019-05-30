@@ -52,23 +52,23 @@ paths:
         401:
           description: "Status 401"
       x-swagger-router-controller: "Default"
-  /data/{request_id}:
-    get:
-      summary: "Request Status"
-      operationId: "dataRequest_idGET"
-      parameters:
-      - name: "request_id"
-        in: "path"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "Status 200"
-          schema:
-            $ref: "#/definitions/RequestStatus"
-        400:
-          description: "Status 400"
-      x-swagger-router-controller: "Default"
+  # /data/{request_id}:
+  #   get:
+  #     summary: "Request Status"
+  #     operationId: "dataRequest_idGET"
+  #     parameters:
+  #     - name: "request_id"
+  #       in: "path"
+  #       required: true
+  #       type: "string"
+  #     responses:
+  #       200:
+  #         description: "Status 200"
+  #         schema:
+  #           $ref: "#/definitions/RequestStatus"
+  #       400:
+  #         description: "Status 400"
+  #     x-swagger-router-controller: "Default"
 securityDefinitions:
   HTTP_BASIC:
     description: "All GET methods are public, meaning that *you can read all the data*.\
