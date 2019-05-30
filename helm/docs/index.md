@@ -23,4 +23,3 @@ transmitted to the user.
 * [Documentation](https://ssl-hep.github.io/ServiceX/)
 * [Kanban board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333)
 * [Service frontend](https://servicex.slateci.net)
-* [Service REST API](https://app.swaggerhub.com/apis-docs/ivukotic/ServiceX/1.2.0)

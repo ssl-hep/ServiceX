@@ -4,8 +4,6 @@
 
 TODO: 
 * make sure I list here only endpoints that don't return a web page.
-* columns should be stored and delivered as list of strings.
-* remove swagger endpoints
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups
 * update file/path status
