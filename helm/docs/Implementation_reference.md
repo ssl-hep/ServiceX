@@ -4,7 +4,7 @@
 
 TODO: 
 * make sure I list here only endpoints that don't return a web page.
-* rename endpoints for web to start with w
+* columns should be stored and delivered as list of strings.
 * remove swagger endpoints
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups
@@ -27,17 +27,24 @@ TODO:
 ### drequest
 
 * GET /drequest/status/:status
+
+    for a given request status (eg. Defined) it finds the oldest request in that status. Returns all of that drequest data in json format. 
+
 * GET /drequest/:id
+
+    for a given request_id it returns all drequest data in json format. 
+
 * PUT /drequest/status/:id/:status/:info?
+
 * POST /drequest/update
 
     updates all the posted info.
 
 #### WEB only
 * GET /wrequest_update/:rid 
-* GET /drequest_prepare
-* GET /drequest_terminate
-* GET /drequest_manage
+* GET /wrequest_prepare
+* GET /wrequest_terminate
+* GET /wrequest_manage
 * POST /wrequest_update
 
 ### dpath

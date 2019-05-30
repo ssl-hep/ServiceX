@@ -13,6 +13,8 @@ module.exports = function dreqmodule(app, config) {
     async create(userId) {
       console.log('adding request to ES...');
       try {
+        let cols = this.columns.replace(' ', '');
+        cols = cols.split(',');
         const response = await this.es.index({
           index: 'servicex',
           type: 'docs',
@@ -22,7 +24,7 @@ module.exports = function dreqmodule(app, config) {
             user: userId,
             description: this.description,
             dataset: this.dataset,
-            columns: this.columns,
+            columns: cols,
             events: this.events,
             status: this.status,
             created_at: new Date().getTime(),
@@ -226,7 +228,7 @@ module.exports = function dreqmodule(app, config) {
     }
   });
 
-  app.get('/drequest_prepare', async (req, res) => {
+  app.get('/wrequest_prepare', async (req, res) => {
     console.log('prepare request called: ', req.session.drequest.id);
     const darequest = new module.DArequest();
     await darequest.get(req.session.drequest.id);
@@ -238,7 +240,7 @@ module.exports = function dreqmodule(app, config) {
     res.render('./drequest_manage', req.session);
   });
 
-  app.get('/drequest_terminate', async (req, res) => {
+  app.get('/wrequest_terminate', async (req, res) => {
     console.log('terminate request called: ', req.session.drequest.id);
     const darequest = new module.DArequest();
     await darequest.get(req.session.drequest.id);
@@ -250,7 +252,7 @@ module.exports = function dreqmodule(app, config) {
     res.render('./drequest_manage', req.session);
   });
 
-  app.get('/drequest_manage', async (req, res) => {
+  app.get('/wrequest_manage', async (req, res) => {
     console.log('manage requests called!');
     res.render('./drequest_manage', req.session);
   });
