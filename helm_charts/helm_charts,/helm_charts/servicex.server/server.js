@@ -2,7 +2,6 @@
 
 console.log('ServiceX server starting ... ');
 
-const swaggerTools = require('swagger-tools');
 const jsyaml = require('js-yaml');
 
 const fs = require('fs');
@@ -49,36 +48,6 @@ app.use(session({
 require('./utils/drequest')(app, config);
 require('./utils/dpath')(app, config);
 const usr = require('./utils/user')(app, config);
-
-// swagger stuff ----------------
-
-// swaggerRouter configuration
-const options = {
-  swaggerUi: path.join(__dirname, '/swagger.json'),
-  controllers: path.join(__dirname, './controllers'),
-  useStubs: process.env.NODE_ENV === 'development', // Conditionally turn on stubs (mock mode)
-};
-
-// The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
-const spec = fs.readFileSync(path.join(__dirname, 'api/swagger.yaml'), 'utf8');
-const swaggerDoc = jsyaml.safeLoad(spec);
-
-// Initialize the Swagger middleware
-swaggerTools.initializeMiddleware(swaggerDoc, (middleware) => {
-  // Interpret Swagger resources and attach metadata to request
-  // must be first in swagger-tools middleware chain
-  app.use(middleware.swaggerMetadata());
-
-  // Validate Swagger requests
-  app.use(middleware.swaggerValidator());
-
-  // Route validated requests to appropriate controller
-  app.use(middleware.swaggerRouter(options));
-
-  // Serve the Swagger documents and Swagger UI
-  app.use(middleware.swaggerUi());
-});
-//--------------------------------
 
 let kClient;
 
