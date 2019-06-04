@@ -3,10 +3,21 @@
 ## API
 
 TODO: 
-* make sure I list here only endpoints that don't return a web page.
+
+# imediate
+
+* make web site use regular REST endpoints.
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
-* make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups
 * update file/path status
+
+# scaling
+
+* did-finder should update request from Defined to Defining when first encountered. Otherwise only one did-finder.
+
+# user friendliness
+
+* add icons to terminate request
+* add icons to clone request -> just opens create web page and prepopulates with values from the original request.
 
 ### user
 

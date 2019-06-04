@@ -2,6 +2,5 @@
     "TESTING": false,
     "SITENAME": "servicex.slateci.net",
     "HTTPS": false,
-    "ES_HOST": "atlas-kibana.mwt2.org:9200",
     "SITE": "MWT2"
 }

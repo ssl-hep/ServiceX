@@ -13,6 +13,10 @@ echo "Adding site conf"
 kubectl delete secret -n servicex config
 kubectl create secret -n servicex generic config --from-file=conf=../config/config.json
 
+echo "Adding elasticsearch conf"
+kubectl delete secret -n servicex es-secret
+kubectl create secret -n servicex generic es-secret --from-file=conf=secrets/elasticsearch/elasticsearch.json
+
 echo "Adding globus secret"
 kubectl delete secret -n servicex globus-secret
 kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json

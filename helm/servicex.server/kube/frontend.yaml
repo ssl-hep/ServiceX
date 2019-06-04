@@ -34,6 +34,9 @@ spec:
         - name: https-certs-volume
           mountPath: "/etc/https-certs/"
           readOnly: true
+        - name: es-secret-volume
+          mountPath: "/etc/es-config/"
+          readOnly: true
         - name: globus-conf-volume
           mountPath: "/etc/globus-conf/"
         - name: frontend-conf-volume
@@ -48,6 +51,9 @@ spec:
             mode: 256 
           - key: tls.crt
             path: servicex.cert.crt
+      - name: es-secret-volume
+        secret:
+          secretName: es-secret
       - name: frontend-conf-volume
         secret:
           secretName: config
