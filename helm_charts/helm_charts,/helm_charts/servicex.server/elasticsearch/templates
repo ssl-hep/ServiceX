@@ -12,6 +12,7 @@ POST /_template/servicex
         "dataset_events": {   "type": "long"  },  
         "columns": {   "type": "keyword"  },     
         "events": {"type": "long" },    
+        "events_transformed": {"type": "long" }, 
         "events_served": {"type": "long" }, 
         "events_processed": {"type": "long" }, 
         "created_at": {  "type": "date"  },
