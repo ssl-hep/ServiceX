@@ -209,10 +209,17 @@ module.exports = function dpath(app, config) {
   };
 
   // gets all the info needed for the transformer to run
+  // it changes state to Transforming
   app.get('/dpath/transform/', async (req, res) => {
     const DApath = new module.DApath();
     const dap = await DApath.getDefined();
     console.log('sending back:', dap);
+    if (dap) {
+      const id = dap._id;
+      await DApath.get(id);
+      DApath.status = 'Transforming';
+      await DApath.update();
+    }
     res.status(200).json(dap);
   });
 

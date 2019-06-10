@@ -96,8 +96,8 @@ async function configureKube() {
 // });
 
 app.get('/', async (request, response) => {
-  console.log('===========> / CALL');
-  console.log(request.session);
+  // console.log('===========> / CALL');
+  // console.log(request.session);
   // if (request.session.user_id) {
   //     u = new usr.User(request.session.user_id);
   //     console.log("=====> refresh user info...");
@@ -113,7 +113,7 @@ app.get('/', async (request, response) => {
   //         }
   //     }
   // }
-  console.log('===========> / DONE');
+  // console.log('===========> / DONE');
   response.render('index', request.session);
 });
 
