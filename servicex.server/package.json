@@ -1,6 +1,6 @@
 {
   "name": "servicex",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "smarter data delivery service",
   "main": "server.js",
   "scripts": {
@@ -30,8 +30,6 @@
     "elasticsearch": "16.1.1",
     "express": "4.17.1",
     "express-session": "1.16.1",
-    "js-yaml": "^3.13.1",
-    "kubernetes-client": "8.2.0",
     "pug": "2.0.3",
     "request": "^2.88.0"
   },

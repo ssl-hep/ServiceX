@@ -2,21 +2,13 @@
 
 console.log('ServiceX server starting ... ');
 
-const jsyaml = require('js-yaml');
-
 const fs = require('fs');
-const path = require('path');
 
 const express = require('express');
 const session = require('express-session');
 const https = require('https');
 const http = require('http');
 const rRequest = require('request');
-
-// k8s stuff
-const KClient = require('kubernetes-client').Client;
-const kConfig = require('kubernetes-client/backends/request').config;
-const KRequest = require('kubernetes-client/backends/request');
 
 const config = require('./config/config.json');
 
@@ -30,7 +22,6 @@ const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-con
 const esConfig = JSON.parse(fs.readFileSync(`${secretsPath}elasticsearch/elasticsearch.json`));
 
 config.ES_HOST = `http://${esConfig.ES_USER}:${esConfig.ES_PASS}@${esConfig.ES_HOST}:9200`;
-// const auth = new Buffer(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
@@ -51,21 +42,6 @@ app.use(session({
 require('./utils/drequest')(app, config);
 require('./utils/dpath')(app, config);
 const usr = require('./utils/user')(app, config);
-
-let kClient;
-
-async function configureKube() {
-  try {
-    console.log('configuring k8s client');
-    kClient = new KClient({ backend: new KRequest(kConfig) });
-    await kClient.loadSpec();
-    console.log('client configured');
-  } catch (err) {
-    console.log('error in configureKube\n', err);
-  }
-  return kClient;
-}
-
 
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware
@@ -256,19 +232,3 @@ if (config.HTTPS) {
     console.log('Your server is listening on port 80.');
   });
 }
-
-
-async function main() {
-  try {
-    if (!config.TESTING) {
-      await configureKube();
-      if (!kClient) {
-        process.exit(2);
-      }
-    }
-  } catch (err) {
-    console.error('Error: ', err);
-  }
-}
-
-main();

@@ -37,7 +37,8 @@ module.exports = function dpath(app, config) {
     async update() {
       console.log('Updating data request path info in ES...');
       try {
-        const response = await this.es.update({
+        // const response =
+        await this.es.update({
           index: 'servicex_paths',
           type: 'docs',
           id: this.id,
@@ -50,7 +51,7 @@ module.exports = function dpath(app, config) {
             },
           },
         });
-        console.log(response);
+        // console.log(response);
       } catch (err) {
         if (err.displayName === 'Conflict') {
           console.log('Conflict');
