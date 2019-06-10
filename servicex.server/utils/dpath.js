@@ -41,6 +41,7 @@ module.exports = function dpath(app, config) {
           index: 'servicex_paths',
           type: 'docs',
           id: this.id,
+          version: this.version,
           refresh: true,
           body: {
             doc: {
@@ -51,9 +52,15 @@ module.exports = function dpath(app, config) {
         });
         console.log(response);
       } catch (err) {
+        if (err.displayName === 'Conflict') {
+          console.log('Conflict');
+          return false;
+        }
         console.error(err);
+        return false;
       }
       console.log('Done.');
+      return true;
     }
 
     async get(id) {
@@ -63,6 +70,7 @@ module.exports = function dpath(app, config) {
           index: 'servicex_paths',
           type: 'docs',
           body: {
+            version: true,
             query: {
               match: { _id: id },
             },
@@ -75,6 +83,8 @@ module.exports = function dpath(app, config) {
         }
         console.log('data request path found.');
         const obj = response.hits.hits[0]._source;
+        this.id = response.hits.hits[0]._id;
+        this.version = response.hits.hits[0]._version;
         return obj;
       } catch (err) {
         console.error(err);
@@ -90,6 +100,7 @@ module.exports = function dpath(app, config) {
           index: 'servicex_paths',
           type: 'docs',
           body: {
+            version: true,
             query: {
               match: { status: 'Defined' },
             },
@@ -102,6 +113,8 @@ module.exports = function dpath(app, config) {
         }
         console.log('data access path found.');
         const obj = response.hits.hits[0];
+        this.id = obj._id;
+        this.version = obj._version;
         return obj;
       } catch (err) {
         console.error(err);
@@ -215,10 +228,11 @@ module.exports = function dpath(app, config) {
     const dap = await DApath.getDefined();
     console.log('sending back:', dap);
     if (dap) {
-      const id = dap._id;
-      await DApath.get(id);
       DApath.status = 'Transforming';
-      await DApath.update();
+      const succ = await DApath.update();
+      if (!succ) {
+        res.status(200).json({});
+      }
     }
     res.status(200).json(dap);
   });
@@ -229,11 +243,15 @@ module.exports = function dpath(app, config) {
     console.log('post /dpath/transform :', id, status);
     const DApath = new module.DApath();
     DApath.id = id;
-    await DApath.get(id);
-    DApath.status = status;
-    DApath.last_accessed_at = new Date().getTime();
-    DApath.update();
-    res.status(200).send('OK');
+    const found = await DApath.get(id);
+    if (!found) {
+      res.status(500).send('Bad request.');
+    } else {
+      DApath.status = status;
+      DApath.last_accessed_at = new Date().getTime();
+      DApath.update();
+      res.status(200).send('OK');
+    }
   });
 
   app.get('/dpath/:id', async (req, res) => {
