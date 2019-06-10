@@ -1535,8 +1535,6 @@ slate-app-logs
 
 testing_xrootd
 
-
-
 x1t-events-2017
 x1t-events-2017-backup
 x1t-rucio-2017
@@ -1576,30 +1574,10 @@ logs-rucio-hadoop-2018
 logs-rucio-residue-2017
 logs-rucio-residue-2018
 
-
 .kibana-dev_7
 .kibana-spare_7
 .kibana_2
 
-.monitoring-es-6-2019.05.20
-.monitoring-es-6-2019.05.21
-.monitoring-es-6-2019.05.22
-.monitoring-es-6-2019.05.23
-.monitoring-es-6-2019.05.24
-.monitoring-es-6-2019.05.25
-.monitoring-es-6-2019.05.26
-.monitoring-kibana-6-2019.05.20
-.monitoring-kibana-6-2019.05.21
-.monitoring-kibana-6-2019.05.22
-.monitoring-kibana-6-2019.05.23
-.monitoring-kibana-6-2019.05.24
-.monitoring-kibana-6-2019.05.25
-.monitoring-kibana-6-2019.05.26
-.reporting-2018.12.16
-.reporting-2019.01.06
-.reporting-2019.02.10
-.reporting-2019.03.31
-.reporting-2019.05.12
 .tasks
 
 amete-test
@@ -1607,5 +1585,4 @@ aqt
 
 caching-v1-reindexed-v5
 
-dailytests
 davids_events2
