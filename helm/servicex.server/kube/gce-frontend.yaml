@@ -38,7 +38,7 @@ spec:
         - name: frontend-conf-volume
           mountPath: "/usr/src/app/config/"
         - name: es-secret-volume
-          mountPath: "/etc/es-config/"
+          mountPath: "/etc/elasticsearch/"
           readOnly: true
       volumes:
       # - name: https-certs-volume
@@ -53,6 +53,9 @@ spec:
       - name: es-secret-volume
         secret:
           secretName: es-secret
+          items:
+          - key: es_conf
+            path: elasticsearch.json
       - name: frontend-conf-volume
         secret:
           secretName: config

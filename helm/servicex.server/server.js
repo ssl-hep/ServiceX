@@ -15,7 +15,7 @@ const rRequest = require('request');
 
 // k8s stuff
 const KClient = require('kubernetes-client').Client;
-const kConfig = require('kubernetes-client').config;
+const kConfig = require('kubernetes-client/backends/request').config;
 
 const config = require('./config/config.json');
 
