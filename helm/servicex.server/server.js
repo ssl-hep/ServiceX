@@ -57,7 +57,7 @@ let kClient;
 async function configureKube() {
   try {
     console.log('configuring k8s client');
-    kClient = new KClient({ backend: new KRequest(kConfig), version: '1.14' });
+    kClient = new KClient({ backend: new KRequest(kConfig) });
     await kClient.loadSpec();
     console.log('client configured');
   } catch (err) {
