@@ -16,6 +16,7 @@ const rRequest = require('request');
 // k8s stuff
 const KClient = require('kubernetes-client').Client;
 const kConfig = require('kubernetes-client/backends/request').config;
+const KRequest = require('kubernetes-client/backends/request');
 
 const config = require('./config/config.json');
 
@@ -56,7 +57,7 @@ let kClient;
 async function configureKube() {
   try {
     console.log('configuring k8s client');
-    kClient = new KClient({ config: kConfig.getInCluster() });
+    kClient = new KClient({ backend: new KRequest(kConfig), version: '1.14' });
     await kClient.loadSpec();
     console.log('client configured');
   } catch (err) {
