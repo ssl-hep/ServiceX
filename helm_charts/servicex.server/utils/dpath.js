@@ -222,7 +222,7 @@ module.exports = function dpath(app, config) {
     console.log('post /dpath/transform :', id, status);
     const DApath = new module.DApath();
     DApath.id = id;
-    await DApath.get();
+    await DApath.get(id);
     DApath.status = status;
     DApath.last_accessed_at = new Date().getTime();
     DApath.update();

@@ -35,7 +35,7 @@ spec:
           mountPath: "/etc/https-certs/"
           readOnly: true
         - name: es-secret-volume
-          mountPath: "/etc/es-config/"
+          mountPath: "/etc/elasticsearch/"
           readOnly: true
         - name: globus-conf-volume
           mountPath: "/etc/globus-conf/"
@@ -54,6 +54,9 @@ spec:
       - name: es-secret-volume
         secret:
           secretName: es-secret
+          items:
+          - key: es_conf
+            path: elasticsearch.json
       - name: frontend-conf-volume
         secret:
           secretName: config
