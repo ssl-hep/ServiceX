@@ -64,7 +64,7 @@ TODO:
 
 * GET /dpath/transform/
 
-    to be used by transformer
+    used by transformer. If there is a path that is in _Defined_ state it is updated to _Transforming_ and returned to the transformer.
 
 * PUT /dpath/transform/:id/:status
 
