@@ -45,6 +45,10 @@ TODO:
 
 * PUT /drequest/status/:id/:status/:info?
 
+* PUT /drequest/events_processed/:id/:events
+
+    for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
+
 * POST /drequest/update
 
     updates all the posted info.
