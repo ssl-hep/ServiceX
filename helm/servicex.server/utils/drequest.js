@@ -28,6 +28,7 @@ module.exports = function dreqmodule(app, config) {
             events: this.events,
             status: this.status,
             created_at: new Date().getTime(),
+            modified_at: new Date().getTime(),
           },
         });
         console.log(response);
@@ -133,6 +134,7 @@ module.exports = function dreqmodule(app, config) {
               dataset_files: this.dataset_files,
               dataset_events: this.dataset_events,
               events_processed: this.events_processed,
+              modified_at: new Date().getTime(),
             },
           },
         });
@@ -170,6 +172,21 @@ module.exports = function dreqmodule(app, config) {
     DAr.status = status;
     if (req.params.info) {
       DAr.info += req.params.info;
+    }
+    await DAr.update();
+    res.status(200).send('OK');
+  });
+
+  app.put('/drequest/events_processed/:id/:events', async (req, res) => {
+    const { id } = req.params;
+    const { events } = req.params;
+    console.log('request: ', id, ' had ', events, 'events processed.');
+    const DAr = new module.DArequest();
+    await DAr.get(id);
+    DAr.events_processed += events;
+    if (DAr.events_processed === DAr.events) {
+      DAr.status = 'Done';
+      DAr.info += 'All events processed.';
     }
     await DAr.update();
     res.status(200).send('OK');
