@@ -6,17 +6,17 @@ TODO:
 
 # imediate
 
+* make request buttons on web site correctly behave 
 * make web site use regular REST endpoints.
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * update file/path status
 
 # scaling
 
-* did-finder should update request from Defined to Defining when first encountered. Otherwise only one did-finder.
-
 # user friendliness
 
-* add icons to terminate request
+* add buttons to terminate request
+* add visualizations to show progress (kibana visualization)
 * add icons to clone request -> just opens create web page and prepopulates with values from the original request.
 
 ### user
@@ -78,31 +78,22 @@ TODO:
 * GET /dpath/:id
 * GET /dpath/last_used/:rid
 
-## Requests 
+## Requests states and transitions
 
-### States 
-
-* Defined -> Defining
-* Failed
-* Prescreened
-
-
-### State transitions
-
-* 
-
-## Single file 
+* After web or CLI request creation request is in *Created*
+* DID-finder will change it first to *LookingUp* and on finish to *LookedUp* or *Failed*
+* Validator will change it to *Validated* or *Failed*
+* First transformer will change state to *Processing* or *Failed*
+* Last transformer will change it to *Delivered*
+* Last processed will change it to *Processed*
 
 
-### States 
+## Single file states and transitions
 
-* Defined
-* Transforming
-* Transformed
-
-### State transitions
-
-*
+* DID-finder will create paths in state *Created*
+* Validator will change them to *Validated*
+* Transformer will first move them to *Transforming*
+* Transformer will change them to *Failed* or *Transformed*
 
 
 
