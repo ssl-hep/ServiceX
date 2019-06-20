@@ -6,10 +6,17 @@ from rucio.client import DIDClient
 from rucio.common import exception as rucioe
 import requests
 
-with open('config/config.json') as json_file:
-    conf = json.load(json_file)
+# needed for python2
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
-print('configuration:\n', conf)
+
+with open('config/config.json') as json_file:
+    CONF = json.load(json_file)
+
+print('configuration:\n', CONF)
 
 print('sleeping until CAs are there...')
 
@@ -17,30 +24,36 @@ time.sleep(60)
 
 while True:
     try:
-        RES = requests.get('https://' + conf['SITENAME'] + '/drequest/status/Defined', verify=False)
-    except requests.exceptions.RequestException as e:
-        print('could not access the service:', e)
+        RES = requests.get('https://' + CONF['SITENAME'] + '/drequest/status/Defined', verify=False)
+    except requests.exceptions.RequestException as re:
+        print('could not access the service:', re)
         time.sleep(60)
         continue
 
-    REQ = RES.json()
-    if REQ is None:
-        time.sleep(10)
+    try:
+        REQ = RES.json()
+    except JSONDecodeError:
+        print("N'est pas JSON: ", RES)
         continue
 
-    print("processing request:\n", REQ)
-
-    UPDATE_STATUS = requests.put('https://' + conf['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'Defining', verify=False)
-    print('UPDATE_STATUS:', UPDATE_STATUS)
-    if UPDATE_STATUS.status_code != 200:
+    if REQ is None:
+        time.sleep(10)
         continue
 
     try:
         rc = ReplicaClient()
         dc = DIDClient()
-    except Exception as e:
-        print('problem in getting rucio client', e)
-        break
+    except Exception as ge:
+        print('problem in getting rucio client', ge)
+        time.sleep(60)
+        continue
+
+    print("processing request:\n", REQ)
+
+    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'Defining', verify=False)
+    print('UPDATE_STATUS:', UPDATE_STATUS)
+    if UPDATE_STATUS.status_code != 200:
+        continue
 
     doc = REQ["_source"]
     ds = doc['dataset'].strip()
@@ -50,10 +63,10 @@ while True:
     except rucioe.DataIdentifierNotFound as didnf:
         print('could not find data set. Setting request to failed.', didnf)
         g_files = []
-    except re.CannotAuthenticate as ca:
-        print('cant authenticate', ca)
-    except Exception as e:
-        print('Unexpected error. Will retry. ', e)
+    except re.CannotAuthenticate as cau:
+        print('cant authenticate', cau)
+    except Exception as exc:
+        print('Unexpected error. Will retry. ', exc)
 
     files = 0
     files_skipped = 0
@@ -70,9 +83,9 @@ while True:
             g_replicas = rc.list_replicas(
                 dids=[{'scope': f_scope, 'name': f_name}],
                 schemes=['root'],
-                client_location={'site': conf['SITE']})
-        except Exception as e:
-            print('could not find file replica. Skipping file:', f_name, e)
+                client_location={'site': CONF['SITE']})
+        except Exception as exc:
+            print('could not find file replica. Skipping file:', f_name, exc)
             files_skipped += 1
             continue
 
@@ -102,7 +115,7 @@ while True:
             files += 1
             print(data)
 
-            CR_STATUS = requests.post('https://' + conf['SITENAME'] + '/dpath/create', json=data, verify=False)
+            CR_STATUS = requests.post('https://' + CONF['SITENAME'] + '/dpath/create', json=data, verify=False)
             print('CR_STATUS:', CR_STATUS)
             if CR_STATUS.status_code != 200:
                 continue
@@ -128,7 +141,7 @@ while True:
 
     print(data)
 
-    RU_STATUS = requests.post('https://' + conf['SITENAME'] + '/drequest/update', json=data, verify=False)
+    RU_STATUS = requests.post('https://' + CONF['SITENAME'] + '/drequest/update', json=data, verify=False)
     print('RU_STATUS:', RU_STATUS)
 
 # EXAMPLE RECORD

@@ -26,11 +26,6 @@ RUN yum install -y voms fetch-crl
 
 COPY . .
 
-# COPY run_x509_updater.sh /.
-# COPY request_lookup.py /.
-# RUN mkdir /usr/src/app/config
-# COPY config/config.json config/.
-
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
