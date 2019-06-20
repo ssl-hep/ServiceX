@@ -24,7 +24,7 @@ time.sleep(60)
 
 while True:
     try:
-        RES = requests.get('https://' + CONF['SITENAME'] + '/drequest/status/Defined', verify=False)
+        RES = requests.get('https://' + CONF['SITENAME'] + '/drequest/status/Created', verify=False)
     except requests.exceptions.RequestException as re:
         print('could not access the service:', re)
         time.sleep(60)
@@ -50,7 +50,7 @@ while True:
 
     print("processing request:\n", REQ)
 
-    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'Defining', verify=False)
+    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'LookingUp', verify=False)
     print('UPDATE_STATUS:', UPDATE_STATUS)
     if UPDATE_STATUS.status_code != 200:
         continue
@@ -125,7 +125,7 @@ while True:
     status = 'Failed'
     info = 'Request failed. No accessible files found for your dataset.'
     if files:
-        status = 'Prescreened'
+        status = 'LookedUp'
         info = str(files) + ' files can be accessed.\n' + \
             str(files_skipped) + " files can't be accessed.\n" + \
             'Total size: ' + str(dataset_size) + '.\n'
