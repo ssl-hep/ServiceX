@@ -25,11 +25,11 @@ $(document).ready(() => {
       data: JSON.stringify(data),
       success(link) {
         alert('It can take several minutes to get the data listed.');
-        window.location.href = '/drequest_manage';
+        window.location.href = '/wrequest_manage';
       },
       error(xhr, textStatus, errorThrown) {
         alert(`Error code:${xhr.status}.  ${xhr.responseText}`);
-        window.location.href = '/drequest_manage';
+        window.location.href = '/wrequest_manage';
       }
     });
 
