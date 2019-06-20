@@ -18,7 +18,7 @@ module.exports = function dpath(app, config) {
           type: 'docs',
           body: {
             req_id: data.req_id,
-            status: 'Defined',
+            status: 'Created',
             adler32: data.adler32,
             file_size: data.file_size,
             file_events: data.file_events,
@@ -94,8 +94,8 @@ module.exports = function dpath(app, config) {
       return false;
     }
 
-    async getDefined() {
-      console.log('getting any defined path that should be transformed');
+    async getFromRequest(req_id, status) {
+      console.log('getting path info for rid:', req_id, 'and status: ', status);
       try {
         const response = await this.es.search({
           index: 'servicex_paths',
@@ -103,7 +103,40 @@ module.exports = function dpath(app, config) {
           body: {
             version: true,
             query: {
-              match: { status: 'Defined' },
+              bool: [
+                { match: { req_id } },
+                { match: { status } },
+              ],
+            },
+          },
+        });
+        // console.log(response);
+        if (response.hits.total === 0) {
+          console.log('data access path not found.');
+          return false;
+        }
+        console.log('data request path found.');
+        const obj = response.hits.hits[0]._source;
+        this.id = response.hits.hits[0]._id;
+        this.version = response.hits.hits[0]._version;
+        return obj;
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+      return false;
+    }
+
+    async getValidated() {
+      console.log('getting any validate path that should be transformed');
+      try {
+        const response = await this.es.search({
+          index: 'servicex_paths',
+          type: 'docs',
+          body: {
+            version: true,
+            query: {
+              match: { status: 'Validated' },
             },
           },
         });
@@ -222,11 +255,24 @@ module.exports = function dpath(app, config) {
     }
   };
 
+  app.get('/dpath/:rid/:status?', async (req, res) => {
+    const { rid } = req.params;
+    let status = 'Created';
+    if (req.params.status) {
+      status = req.params.status;
+    }
+    console.log('getting a path belonging to request id: ', rid);
+    const DApath = new module.DApath();
+    const dap = await DApath.getFromRequest(rid, status);
+    console.log('sending back:', dap);
+    res.status(200).json(dap);
+  });
+
   // gets all the info needed for the transformer to run
   // it changes state to Transforming
   app.get('/dpath/transform/', async (req, res) => {
     const DApath = new module.DApath();
-    const dap = await DApath.getDefined();
+    const dap = await DApath.getValidated();
     console.log('sending back:', dap);
     if (dap) {
       DApath.status = 'Transforming';
@@ -238,10 +284,10 @@ module.exports = function dpath(app, config) {
     res.status(200).json(dap);
   });
 
-  app.put('/dpath/transform/:id/:status', async (req, res) => {
+  app.put('/dpath/status/:id/:status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.params;
-    console.log('post /dpath/transform :', id, status);
+    console.log('post /dpath/status :', id, status);
     const DApath = new module.DApath();
     DApath.id = id;
     const found = await DApath.get(id);

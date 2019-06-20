@@ -7,7 +7,7 @@ module.exports = function dreqmodule(app, config) {
     constructor() {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
-      this.status = 'Defined';
+      this.status = 'Created';
     }
 
     async create(userId) {
