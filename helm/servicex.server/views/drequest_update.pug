@@ -9,12 +9,12 @@ block content
 
                     if !drequest.id
                         p.lead
-                        | Define your data. Once data request has been created, it will be in #[em Defined] state.
+                        | Define your data. Once data request has been created, it will be in #[em Created] state.
                     
                     if drequest.id
                         p.lead
                         | A request can be in following states:
-                        | #[em Defined], #[em Preparing], #[em Ready to Serve], #[em Serving], #[em Done].
+                        | #[em Created], #[em LookingUp], #[em LookedUp], #[em Validated], #[em Processing], #[em Delivered], #[em Failed] and #[em Done].
                         | </br>
                         | </br>
                         if drequest.status==='Defined'
