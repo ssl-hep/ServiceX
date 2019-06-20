@@ -37,7 +37,7 @@ spec:
       containers:
       - name: did-finder
         image: sslhep/servicex-did-finder:latest
-        imagePullPolicy: "Always"
+        imagePullPolicy: Always
         command: ["python"]
         args: ["request_lookup.py"]
         env:
@@ -55,7 +55,7 @@ spec:
 
       - name: x509
         image: sslhep/servicex-did-finder:latest
-        imagePullPolicy: "Always"
+        imagePullPolicy: Always
         command: ["./run_x509_updater.sh"]
         volumeMounts:
         - name: x509-data
