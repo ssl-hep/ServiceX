@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformer
+  namespace: servicex
+  labels:
+    app: transformer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transformer
+  template:
+    metadata:
+      labels:
+        app: transformer
+    spec:
+      volumes:
+      - name: x509-data
+        emptyDir: {}
+      - name: x509-certs-volume
+        secret:
+          secretName: x509-secret
+          items:
+          - key: userkey
+            path: userkey.pem
+            mode: 256 
+          - key: usercert
+            path: usercert.pem
+
+      containers:
+      - name: transformer
+        image: sslhep/servicex-transformer:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "1000Mi"
+          requests:
+            cpu: "500m"
+            memory: "500Mi"
+        command: ["./xaod_branches.sh"]
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "0"
+        volumeMounts:
+        - name: x509-data
+          mountPath: "/etc/grid-security/"
+          readOnly: false
+        - name: x509-certs-volume
+          mountPath: "/etc/grid-certs/"
+          readOnly: true
+
+      - name: x509
+        image: sslhep/servicex-transformer:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "1500Mi"
+          requests:
+            cpu: "100m"
+            memory: "750Mi"
+        command: ["./run_x509_updater.sh"]
+        volumeMounts:
+        - name: x509-data
+          mountPath: "/etc/grid-security/"
+          readOnly: false
+        - name: x509-certs-volume
+          mountPath: "/etc/grid-certs/"
+          readOnly: true
+          
