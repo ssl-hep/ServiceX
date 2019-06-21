@@ -108,24 +108,9 @@ app.get('/healthz', (_req, res) => {
 
 app.get('/login', async (req, res) => {
   console.log('Logging in');
-  if (config.TESTING) {
-    const user = new usr.User('user.id');
-    await user.load();
-    console.log('fake loaded');
-    // user.write();
-    // console.log('fake written.');
-    req.session.user_id = user.id;
-    req.session.name = user.name;
-    req.session.username = user.username;
-    req.session.affiliation = user.affiliation;
-    req.session.email = user.email;
-    req.session.loggedIn = true;
-    res.render('index', req.session);
-  } else {
-    const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
-    // console.log('redirecting to:', red);
-    res.redirect(red);
-  }
+  const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
+  // console.log('redirecting to:', red);
+  res.redirect(red);
 });
 
 app.get('/authcallback', (req, res) => {
@@ -170,10 +155,6 @@ app.get('/authcallback', (req, res) => {
       const user = new usr.User();
       user.id = body.sub;
       req.session.user_id = body.sub;
-      // req.session.username = body.preferred_username; not expose all of these in session
-      // req.session.organization = body.organization;
-      // req.session.name = body.name;
-      // req.session.email = body.email;
       const found = await user.load();
       if (found === false) {
         user.username = body.preferred_username;

@@ -40,7 +40,7 @@ module.exports = function usermodule(app, config) {
           refresh: true,
           body: {
             username: this.username,
-            affiliation: this.affiliation,
+            organization: this.organization,
             user: this.name,
             email: this.email,
             created_at: new Date().getTime(),
@@ -117,7 +117,7 @@ module.exports = function usermodule(app, config) {
         // var approved_on = new Date(obj.approved_on).toUTCString();
         this.name = obj.user;
         this.email = obj.email;
-        this.affiliation = obj.affiliation;
+        this.organization = obj.organization;
         this.created_at = obj.created_at;
         this.approved = obj.approved;
         this.approved_on = obj.approved_on;
@@ -157,7 +157,7 @@ module.exports = function usermodule(app, config) {
           to: config.APPROVAL_EMAIL,
           subject: 'Authorization requested',
           text: `Dear Sir/Madamme, \n\n\t${this.name} 
-          affiliated with ${this.affiliation} 
+          affiliated with ${this.organization} 
           requested access to ${config.NAMESPACE} ML front.
           \n\tTo approve it use this link ${link}. 
           To deny the request simply delete this mail.\n\n
@@ -206,7 +206,7 @@ module.exports = function usermodule(app, config) {
       console.log('- user id', this.id);
       console.log('- user name', this.name);
       console.log('- email', this.email);
-      console.log('- affiliation', this.affiliation);
+      console.log('- organization', this.organization);
       console.log('- created at', this.created_at);
       console.log('- approved', this.approved);
       console.log('- approved on', this.approved_on);
@@ -235,7 +235,7 @@ module.exports = function usermodule(app, config) {
             const createdAt = new Date(obj.created_at).toUTCString();
             const approvedOn = new Date(obj.approved_on).toUTCString();
             const serv = [
-              obj.user, obj.email, obj.affiliation,
+              obj.user, obj.email, obj.organization,
               createdAt, obj.approved, approvedOn];
             toSend.push(serv);
           }
