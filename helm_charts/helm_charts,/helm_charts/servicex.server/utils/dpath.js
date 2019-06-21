@@ -118,10 +118,9 @@ module.exports = function dpath(app, config) {
           return false;
         }
         console.log('data request path found.');
-        const obj = response.hits.hits[0]._source;
         this.id = response.hits.hits[0]._id;
         this.version = response.hits.hits[0]._version;
-        return obj;
+        return response.hits.hits[0];
       } catch (err) {
         console.error(err);
       }
