@@ -12,11 +12,11 @@ nav#mainNav.navbar.navbar-expand-lg.fixed-top(style='background-image: linear-gr
         li.nav-item
           a.nav-link(href='https://ssl-hep.github.io/ServiceX/') Docs
         
-        if (loggedIn)
+        if (approved)
           li.nav-item
           a.nav-link(href='/wrequest_manage') Requests
           
-        if (!loggedIn)
+        if (!approved)
           li#login_button.nav-item
             a.nav-link(href='/login') Login
         else
