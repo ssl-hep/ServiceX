@@ -10,6 +10,7 @@ TODO:
 * make web site use regular REST endpoints.
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * update file/path status
+* validator dies on servicex restart
 
 # scaling
 

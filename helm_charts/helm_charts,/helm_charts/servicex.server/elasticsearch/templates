@@ -35,10 +35,9 @@ POST /_template/servicex_users
         "user": { "type": "keyword" },
         "email": {"type": "keyword" },
         "username": { "type": "keyword"},
-        "affiliation": {   "type": "keyword"  },
+        "organization": {   "type": "keyword"  },
         "created_at": {   "type": "date"  },        
         "approved_on": {  "type": "date"  },
-        "event": {  "type": "keyword"   },
         "approved": {   "type": "boolean"  } 
       }
     }
