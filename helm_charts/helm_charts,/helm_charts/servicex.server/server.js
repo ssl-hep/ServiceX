@@ -46,7 +46,7 @@ const usr = require('./utils/user')(app, config);
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware
 
-//   if (req.session.loggedIn !== true) {
+//   if (req.session.approved !== true) {
 //     const error = new Error('You must be logged in to view this page.');
 //     error.status = 403;
 //     return next(error);
@@ -172,14 +172,14 @@ app.get('/authcallback', (req, res) => {
         // }
         // user.sendMailToUser(mbody);
       }
-      req.session.loggedIn = true;
+      req.session.approved = true;
       res.redirect('/');
     });
   });
 });
 
 app.get('/logout', (req, res) => {
-  if (req.session.loggedIn) { // logout from Globus
+  if (req.session.approved) { // logout from Globus
     const requestOptions = {
       uri: `https://auth.globus.org/v2/web/logout?client_id=${gConfig.CLIENT_ID}`,
       headers: {
