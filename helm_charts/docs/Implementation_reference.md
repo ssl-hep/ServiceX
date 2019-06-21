@@ -22,15 +22,12 @@ TODO:
 
 ### user
 
-* GET /user maybe 
+* GET /profile - renders profile page. preloads users data from /user
+* GET /user - returns ES read user data.
 
-    probably not needed
-
+* GET /users - renders users page. ajax call get data from /users_data.
 * GET /users_data
 
-
-* GET /profile
-* GET /users
 * GET /authorize/:user_id
 * GET /get_requests
 

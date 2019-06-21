@@ -14,7 +14,9 @@ module.exports = function usermodule(app, config) {
   module.User = class User {
     constructor(id = null) {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
-      // this.mg = require('mailgun-js')({ apiKey: mg_config.APPROVAL_MG, domain: mg_config.MG_DOMAIN });
+      // this.mg = require('mailgun-js')({
+      // apiKey: mg_config.APPROVAL_MG,
+      // domain: mg_config.MG_DOMAIN });
       this.approved_on = 0;
       this.approved = false;
       if (!config.APPROVAL_REQUIRED) {
@@ -41,7 +43,6 @@ module.exports = function usermodule(app, config) {
             affiliation: this.affiliation,
             user: this.name,
             email: this.email,
-            event: config.NAMESPACE,
             created_at: new Date().getTime(),
             approved: this.approved,
             approved_on: this.approved_on,
@@ -145,78 +146,42 @@ module.exports = function usermodule(app, config) {
       this.approved_on = new Date().getTime();
       await this.update();
       const body = {
-        from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
+        from: `${config.NAMESPACE}<${config.NAMESPACE}@maniac.uchicago.edu>`,
         to: this.email,
         subject: 'Authorization approved',
-        text: 'Dear ' + this.name + ', \n\n\t' +
-          ' your request for access to ' + config.NAMESPACE +
-          ' ML front has been approved.\n\nBest regards,\n\tML front Approval system.',
+        text: `Dear ${this.name}, \n\n\t your request for access to ${config.NAMESPACE} 
+        ML front has been approved.\n\nBest regards,\n\tML front Approval system.`,
       };
       this.send_mail_to_user(body);
     }
 
-    send_mail_to_user(data) {
-      this.mg.messages().send(data, function (error, body) {
+    sendMailToUser(data) {
+      this.mg.messages().send(data, (error, body) => {
         console.log(body);
       });
     }
 
-    ask_for_approval() {
+    askForApproval() {
       if (config.hasOwnProperty('APPROVAL_EMAIL')) {
-        var link = 'https://' + config.SITENAME + '/authorize/' + this.id;
-        var data = {
-          from: config.NAMESPACE + '<' + config.NAMESPACE + '@maniac.uchicago.edu>',
+        const link = `https://${config.SITENAME}/authorize/${this.id}`;
+        const data = {
+          from: `${config.NAMESPACE}<${config.NAMESPACE}@maniac.uchicago.edu>`,
           to: config.APPROVAL_EMAIL,
           subject: 'Authorization requested',
-          text: 'Dear Sir/Madamme, \n\n\t' + this.name +
-            ' affiliated with ' + this.affiliation +
-            ' requested access to ' + config.NAMESPACE +
-            ' ML front.\n\tTo approve it use this link ' + link +
-            '. To deny the request simply delete this mail.\n\nBest regards,\n\tML front Approval system',
+          text: `Dear Sir/Madamme, \n\n\t${this.name} 
+          affiliated with ${this.affiliation} 
+          requested access to ${config.NAMESPACE} ML front.
+          \n\tTo approve it use this link ${link}. 
+          To deny the request simply delete this mail.\n\n
+          Best regards,\n\tML front Approval system`,
         };
-        this.send_mail_to_user(data);
+        this.sendMailToUser(data);
       } else {
         console.error("Approval person's mail or mailgun key not configured.");
       }
     }
 
-    async add_service(service) {
-      try {
-        service.owner = this.id;
-        service.timestamp = new Date().getTime();
-        service.user = this.name;
-        console.log('creating service in es: ', service);
-        await this.es.index({
-          index: 'ml_front', type: 'docs', body: service,
-        }, function (err, resp, status) {
-          console.log('from ES indexer:', resp);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    async terminate_service(name) {
-      console.log('terminating service in ES: ', name, 'owned by', this.id);
-      console.log('not implemented yet.');
-      // try {
-      //     const response = await this.es.update({
-      //         index: 'ml_front', type: 'docs', id: this.id,
-      //         body: {
-      //             doc: {
-      //                 "terminated_on": new Date().getTime(),
-      //                 "terminated": true
-      //             }
-      //         }
-      //     });
-      //     console.log(response);
-      // } catch (err) {
-      //     console.error(err)
-      // }
-      console.log('Done.');
-    }
-
-    async get_all_requests() {
+    async getAllRequests() {
       console.log('getting all requests of user:', this.id);
       try {
         const resp = await this.es.search({
@@ -231,7 +196,7 @@ module.exports = function usermodule(app, config) {
         if (resp.hits.total > 0) {
           // console.log(resp.hits.hits);
           for (let i = 0; i < resp.hits.hits.length; i++) {
-            let obj = resp.hits.hits[i]._source;
+            const obj = resp.hits.hits[i]._source;
             console.log(obj);
             const createdAt = new Date(obj.created_at).toUTCString();
             const lid = resp.hits.hits[i]._id;
@@ -259,11 +224,14 @@ module.exports = function usermodule(app, config) {
       console.log('- approved on', this.approved_on);
     }
 
-    async get_all_users() {
+    async getAllUsers() {
+      const toSend = [];
       console.log('getting all users info from es.');
+
       try {
         const resp = await this.es.search({
-          index: 'servicex_users', type: 'docs',
+          index: 'servicex_users',
+          type: 'docs',
           body: {
             size: 1000,
             query: { match_all: {} },
@@ -271,30 +239,29 @@ module.exports = function usermodule(app, config) {
           },
         });
         // console.log(resp);
-        var toSend = [];
         if (resp.hits.total > 0) {
           // console.log("Users found:", resp.hits.hits);
-          for (var i = 0; i < resp.hits.hits.length; i++) {
-            var obj = resp.hits.hits[i]._source;
+          for (let i = 0; i < resp.hits.hits.length; i++) {
+            const obj = resp.hits.hits[i]._source;
             // console.log(obj);
-            var created_at = new Date(obj.created_at).toUTCString();
-            var approved_on = new Date(obj.approved_on).toUTCString();
-            var serv = [obj.user, obj.email, obj.affiliation, created_at, obj.approved, approved_on];
+            const createdAt = new Date(obj.created_at).toUTCString();
+            const approvedOn = new Date(obj.approved_on).toUTCString();
+            const serv = [
+              obj.user, obj.email, obj.affiliation,
+              createdAt, obj.approved, approvedOn];
             toSend.push(serv);
           }
-        } else {
-          console.log('No users found.');
         }
-        return toSend;
       } catch (err) {
         console.error(err);
       }
       console.log('Done.');
+      return toSend;
     }
   };
 
-  //probably not needed.
-  app.get('/user', function (req, res) {
+  // probably not needed.
+  app.get('/user', (req, res) => {
     console.log('sending profile info back.');
     res.json({
       loggedIn: req.session.loggedIn,
@@ -307,27 +274,31 @@ module.exports = function usermodule(app, config) {
     });
   });
 
-  app.get('/users_data', async (req, res) => {
-    console.log('Sending all users info...');
-    var user = new module.User();
-    var data = await user.get_all_users();
-    res.status(200).send(data);
-    console.log('Done.');
-  });
-
   app.get('/profile', async (req, res) => {
     console.log('profile called!');
     res.render('profile', req.session);
   });
 
+  app.get('/users_data', async (req, res) => {
+    console.log('Sending all users info...');
+    const user = new module.User();
+    const data = await user.getAllUsers();
+    res.status(200).send(data);
+    console.log('Done.');
+  });
+
+  // simply renders users.pug which in turn gets data from /users_data
   app.get('/users', async (req, res) => {
     console.log('users called!');
-    res.render('users', req.session);
+    res.render('users');
   });
+
+
+
 
   app.get('/authorize/:user_id', async (req, res) => {
     console.log('Authorizing user...');
-    var user = new module.User(req.params.user_id);
+    const user = new module.User(req.params.user_id);
     await user.load();
     user.approve();
     res.render('users', req.session);
@@ -336,7 +307,7 @@ module.exports = function usermodule(app, config) {
   app.get('/get_requests', async (req, res) => {
     console.log('getting all requests!');
     const user = new module.User(req.session.user_id);
-    const data = await user.get_all_requests();
+    const data = await user.getAllRequests();
     res.status(200).send(data);
   });
 
