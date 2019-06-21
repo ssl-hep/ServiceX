@@ -170,10 +170,10 @@ app.get('/authcallback', (req, res) => {
       const user = new usr.User();
       user.id = body.sub;
       req.session.user_id = body.sub;
-      req.session.username = body.preferred_username;
-      req.session.organization = body.organization;
-      req.session.name = body.name;
-      req.session.email = body.email;
+      // req.session.username = body.preferred_username; not expose all of these in session
+      // req.session.organization = body.organization;
+      // req.session.name = body.name;
+      // req.session.email = body.email;
       const found = await user.load();
       if (found === false) {
         user.username = body.preferred_username;
@@ -185,7 +185,7 @@ app.get('/authcallback', (req, res) => {
         //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
         //   to: user.email,
         //   subject: 'ServiceX membership',
-        //   text: `Dear ${user.name}, \n\n\t 
+        //   text: `Dear ${user.name}, \n\n\t
         //   You have been authorized.\n\n
         //   Best regards,\n\tServiceX mailing system.`,
         // }
