@@ -3,22 +3,21 @@ extends ./index.pug
 block content
     section#gtco-header.bg-light
         .container
-            .row
-                .col-lg-5.mx-auto
+            .col-lg-12.mx-auto
                 h2 Users
-                p.lead
+                p.lead 
                 | Here a list of all the users of the platform.
-    .gtco-services.gtco-section
-        .col-md-12.col-md-offset-0.text-left
-            table#users_table.display(style='width:80%')
-                thead
-                    tr
-                    th Name
-                    th Email
-                    th Affiliation
-                    th Registered on
-                    th Authorized
-                    th Authorized on
+                
+            .col-md-12.col-md-offset-0.text-left
+                table#users_table.display()
+                    thead
+                        tr
+                        th Name
+                        th Email
+                        th Affiliation
+                        th Registered on
+                        th Authorized
+                        th Authorized on
 
 block extra_scripts
     script(src='/js/users.js')
