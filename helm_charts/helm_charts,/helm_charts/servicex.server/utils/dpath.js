@@ -104,8 +104,8 @@ module.exports = function dpath(app, config) {
             version: true,
             query: {
               bool: [
-                { match: { req_id } },
-                { match: { status } },
+                { match: { req_id: req_id } },
+                { match: { status: status } },
               ],
             },
           },
