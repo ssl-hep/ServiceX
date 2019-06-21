@@ -94,18 +94,6 @@ module.exports = function usermodule(app, config) {
     async load() {
       console.log("getting user's info...");
 
-      if (config.TESTING) {
-        this.name = 'Test User';
-        this.username = 'testUsername';
-        this.email = 'test@email.com';
-        this.affiliation = 'Test Institution';
-        this.created_at = new Date().getTime();
-        this.approved = true;
-        this.approved_on = new Date().getTime();
-        console.log('test user loaded.');
-        return true;
-      }
-
       try {
         const response = await this.es.search({
           index: 'servicex_users',
@@ -133,7 +121,7 @@ module.exports = function usermodule(app, config) {
         this.created_at = obj.created_at;
         this.approved = obj.approved;
         this.approved_on = obj.approved_on;
-        return true;
+        return obj;
       } catch (err) {
         console.error(err);
       }
@@ -261,22 +249,20 @@ module.exports = function usermodule(app, config) {
   };
 
   // probably not needed.
-  app.get('/user', (req, res) => {
+  app.get('/user', async (req, res) => {
     console.log('sending profile info back.');
-    res.json({
-      loggedIn: req.session.loggedIn,
-      name: req.session.name,
-      email: req.session.email,
-      username: req.session.username,
-      organization: req.session.organization,
-      user_id: req.session.user_id,
-      authorized: req.session.authorized,
-    });
+    const user = new module.User();
+    user.id = req.session.user_id;
+    const userInfo = await user.load();
+    res.json(userInfo);
   });
 
   app.get('/profile', async (req, res) => {
     console.log('profile called!');
-    res.render('profile', req.session);
+    const user = new module.User();
+    user.id = req.session.user_id;
+    const userInfo = await user.load();
+    res.render('profile', userInfo);
   });
 
   app.get('/users_data', async (req, res) => {

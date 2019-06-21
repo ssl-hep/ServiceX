@@ -22,7 +22,7 @@ TODO:
 
 ### user
 
-* GET /profile - renders profile page. preloads users data from /user
+* GET /profile - renders profile page. preloads users data from ES
 * GET /user - returns ES read user data.
 
 * GET /users - renders users page. ajax call get data from /users_data.
