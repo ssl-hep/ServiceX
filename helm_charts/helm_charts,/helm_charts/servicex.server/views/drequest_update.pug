@@ -26,6 +26,10 @@ block content
                             a(href="/wrequest_terminate")
                                 button#drequest_terminate_button.btn.btn-primary Terminate
 
+                    if drequest
+                        if drequest.id
+                            iframe( src="https://atlas-kibana.mwt2.org/s/servicex/app/kibana#/visualize/edit/749377a0-9465-11e9-a3fc-c94edec7954f?embed=true&_g=(refreshInterval:(pause:!t,value:0),time:(from:now-90d,mode:quick,to:now))&_a=(filters:!(),linked:!f,query:(language:lucene,query:'req_id:"+drequest.id+"'),uiState:(),vis:(aggs:!((enabled:!t,id:'1',params:(),schema:metric,type:count),(enabled:!t,id:'2',params:(field:status.keyword,missingBucket:!f,missingBucketLabel:Missing,order:desc,orderBy:'1',otherBucket:!f,otherBucketLabel:Other,size:10),schema:segment,type:terms)),params:(addLegend:!t,addTooltip:!t,isDonut:!t,labels:(last_level:!t,show:!f,truncate:100,values:!t),legendPosition:right,type:pie),title:'input+files+status',type:pie))" height="600" width="800")
+
                 .col-lg-6.mx-auto
                     if drequest
                         if drequest.id
