@@ -176,17 +176,20 @@ app.get('/authcallback', (req, res) => {
       req.session.email = body.email;
       const found = await user.load();
       if (found === false) {
+        user.username = body.preferred_username;
+        user.organization = body.organization;
+        user.name = body.name;
+        user.email = body.email;
         await user.write();
-        // var body = {
-        //   from: config.NAMESPACE + '<' + config.NAMESPACE + '@servicex.uchicago.edu>',
+        // const mbody = {
+        //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
         //   to: user.email,
         //   subject: 'ServiceX membership',
-        //   text: 'Dear ' + user.name + ', \n\n\t' +
-        //     ' You've beed authorized.' +
-        //     '\n\nBest regards,\n\tServiceX mailing system.',
+        //   text: `Dear ${user.name}, \n\n\t 
+        //   You have been authorized.\n\n
+        //   Best regards,\n\tServiceX mailing system.`,
         // }
-        // user.send_mail_to_user(body);
-        await user.load(); // so user.id gets filled up
+        // user.sendMailToUser(mbody);
       }
       req.session.loggedIn = true;
       res.redirect('/');
