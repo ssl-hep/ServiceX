@@ -18,6 +18,7 @@ TODO:
 * add buttons to terminate request
 * add visualizations to show progress (kibana visualization)
 * add icons to clone request -> just opens create web page and prepopulates with values from the original request.
+* get user info in ES. currently most not stored.
 
 ### user
 
