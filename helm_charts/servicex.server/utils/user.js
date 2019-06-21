@@ -111,11 +111,7 @@ module.exports = function usermodule(app, config) {
           type: 'docs',
           body: {
             query: {
-              bool: {
-                must: [
-                  { match: { _id: this.id } },
-                ],
-              },
+              match: { _id: this.id },
             },
           },
         });
