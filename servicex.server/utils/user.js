@@ -261,6 +261,7 @@ module.exports = function usermodule(app, config) {
     console.log('profile called!');
     const user = new module.User();
     user.id = req.session.user_id;
+    req.session.approved = true;
     const userInfo = await user.load();
     res.render('profile', userInfo);
   });
