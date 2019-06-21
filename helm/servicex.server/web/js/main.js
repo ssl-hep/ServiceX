@@ -87,7 +87,6 @@
 // };
 
 $('#users_button').click(() => {
-  // $.get('/users');
   window.location.replace('/users');
 });
 
