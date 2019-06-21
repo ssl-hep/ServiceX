@@ -94,8 +94,8 @@ module.exports = function dpath(app, config) {
       return false;
     }
 
-    async getFromRequest(req_id, status) {
-      console.log('getting path info for rid:', req_id, 'and status: ', status);
+    async getFromRequest(reqId, status) {
+      console.log('getting path info for rid:', reqId, 'and status: ', status);
       try {
         const response = await this.es.search({
           index: 'servicex_paths',
@@ -103,10 +103,12 @@ module.exports = function dpath(app, config) {
           body: {
             version: true,
             query: {
-              bool: [
-                { match: { req_id: req_id } },
-                { match: { status: status } },
-              ],
+              bool: {
+                must: [
+                  { match: { req_id: reqId } },
+                  { match: { status: status } },
+                ],
+              },
             },
           },
         });
