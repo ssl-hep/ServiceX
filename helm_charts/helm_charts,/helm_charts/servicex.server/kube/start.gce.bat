@@ -32,3 +32,9 @@ kubectl create -f gce-frontend.yaml
 
 echo "Deploying did-finder"
 kubectl create -f did-finder.yaml
+
+echo "Deploying validator"
+kubectl create -f validator.yaml
+
+echo "Deploying transformer"
+kubectl create -f transformer.yaml
