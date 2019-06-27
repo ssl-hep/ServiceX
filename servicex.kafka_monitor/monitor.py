@@ -1,7 +1,7 @@
+import time
 import requests
 
 from confluent_kafka import Consumer
-# , Producer
 from confluent_kafka import KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import TopicPartition
@@ -25,31 +25,33 @@ CONFIG = {
 
 A = AdminClient(CONFIG)
 
-CLUS_META = A.list_topics()
-print('Brokers:', CLUS_META.brokers)
+while True:
 
-TOPICS = CLUS_META.topics
-# print('Topics:', TOPICS)
+    CLUS_META = A.list_topics()
+    print('Brokers:', CLUS_META.brokers)
 
-C = Consumer(CONFIG)
+    TOPICS = CLUS_META.topics
+    # print('Topics:', TOPICS)
 
-current_usage = {}
-for topic_name in TOPICS:
-    if topic_name.startswith('__'):
-        continue
-    # print('Topic name:', topic_name)
-    current_usage[topic_name] = [0, 0]
-    tmds = TOPICS[topic_name].partitions
-    # print(tmds)
-    for tp in tmds:
-        (lwm, hwm) = C.get_watermark_offsets(TopicPartition(topic_name, tp))
-        current_usage[topic_name][0] += lwm
-        current_usage[topic_name][1] += hwm
+    C = Consumer(CONFIG)
 
-print(current_usage)
+    for topic_name in TOPICS:
+        if topic_name.startswith('__'):
+            continue
+        # print('Topic name:', topic_name)
+        current_usage = {'id': topic_name, 'kafka_lwm': 0, 'kafka_hwm': 0}
+        tmds = TOPICS[topic_name].partitions
+        # print(tmds)
+        for tp in tmds:
+            (lwm, hwm) = C.get_watermark_offsets(TopicPartition(topic_name, tp))
+            current_usage['kafka_lwm'] += lwm
+            current_usage['kafka_hwm'] += hwm
 
-res = requests.post('https://servicex.slateci.net/kafka/levels/', json=current_usage, verify=False)
-print('update status:', res.status_code)
+        print(current_usage)
+        res = requests.post('https://servicex.slateci.net/drequest/update/', json=current_usage, verify=False)
+        print('update status:', res.status_code)
+    time.sleep(10)
+
 
 # def create_topic(a, topic):
 #     new_topics = [NewTopic(topic, num_partitions=3, replication_factor=1)]
