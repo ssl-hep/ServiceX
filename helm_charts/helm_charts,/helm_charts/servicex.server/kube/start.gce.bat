@@ -38,3 +38,10 @@ kubectl create -f validator.yaml
 
 echo "Deploying transformer"
 kubectl create -f transformer.yaml
+
+echo "================"
+echo "1. get servicex IP and in amazon route53 change A record for servicex.slateci.net"
+echo "2. get kafka server IPs and in amazon route53 change A records for servicex-kafka-0/1/2.slateci.net "
+echo "   and kafka-manager.slateci.net "
+echo "3. open ES ports for servicex GCE nodes. (search for GCP-SERVICEX-K8S in uc2-puppet)"
+echo "================"

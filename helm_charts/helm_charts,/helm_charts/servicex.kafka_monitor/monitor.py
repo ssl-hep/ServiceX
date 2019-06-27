@@ -1,23 +1,55 @@
-from confluent_kafka import Consumer, Producer
+import requests
+
+from confluent_kafka import Consumer
+# , Producer
 from confluent_kafka import KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
-import json
+from confluent_kafka import TopicPartition
+# import json
+
+TOPIC_NAME = 'mytopic'
 
 
-def stats_cb(stats_json_str):
-    stats_json = json.loads(stats_json_str)
-    print('STATS:', stats_json)
+# def stats_cb(stats_json_str):
+#     stats_json = json.loads(stats_json_str)
+#     print('STATS:', stats_json)
 
 
 CONFIG = {
-    'bootstrap.servers': 'servicex-kafka-1.slateci.net:19092',
+    'bootstrap.servers': 'servicex-kafka-0.slateci.net:19092,servicex-kafka-1.slateci.net:19092',
     'group.id': 'monitor',
     'client.id': 'monitor',
     'session.timeout.ms': 5000,
-    'stats_cb': stats_cb
+    # 'stats_cb': stats_cb
 }
 
-# A = AdminClient(CONFIG)
+A = AdminClient(CONFIG)
+
+CLUS_META = A.list_topics()
+print('Brokers:', CLUS_META.brokers)
+
+TOPICS = CLUS_META.topics
+# print('Topics:', TOPICS)
+
+C = Consumer(CONFIG)
+
+current_usage = {}
+for topic_name in TOPICS:
+    if topic_name.startswith('__'):
+        continue
+    # print('Topic name:', topic_name)
+    current_usage[topic_name] = [0, 0]
+    tmds = TOPICS[topic_name].partitions
+    # print(tmds)
+    for tp in tmds:
+        (lwm, hwm) = C.get_watermark_offsets(TopicPartition(topic_name, tp))
+        current_usage[topic_name][0] += lwm
+        current_usage[topic_name][1] += hwm
+
+print(current_usage)
+
+res = requests.post('https://servicex.slateci.net/kafka/levels/', json=current_usage, verify=False)
+print('update status:', res.status_code)
 
 # def create_topic(a, topic):
 #     new_topics = [NewTopic(topic, num_partitions=3, replication_factor=1)]
@@ -33,38 +65,4 @@ CONFIG = {
 #                 return True
 #             else:
 #                 return False
-
-# create_topic(A, "example_topic")
-
-P = Producer(CONFIG)
-P.produce('mytopic', key='hello', value='world')
-P.flush(30)
-
-C = Consumer(CONFIG)
-
-CLUS_META = C.list_topics()
-print('Brokers:', CLUS_META.brokers)
-
-TOPICS = CLUS_META.topics
-
-print('Topics:', TOPICS)
-C.subscribe(['servicex'])
-
-try:
-    while True:
-        msg = C.poll(0.1)
-        if msg is None:
-            continue
-        elif not msg.error():
-            print('Received message: {0}'.format(msg.value()))
-        elif msg.error().code() == KafkaError._PARTITION_EOF:
-            print('End of partition reached {0}/{1}'
-                  .format(msg.topic(), msg.partition()))
-        else:
-            print('Error occured: {0}'.format(msg.error().str()))
-
-except KeyboardInterrupt:
-    pass
-
-finally:
-    C.close()
+# create_topic(A, TOPIC_NAME)
