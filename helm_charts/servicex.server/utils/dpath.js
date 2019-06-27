@@ -300,8 +300,6 @@ module.exports = function dpath(app, config) {
     res.status(200).json(dap);
   });
 
-
-
   app.put('/dpath/status/:id/:status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.params;
