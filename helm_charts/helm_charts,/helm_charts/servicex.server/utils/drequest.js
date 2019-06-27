@@ -126,14 +126,17 @@ module.exports = function dreqmodule(app, config) {
           refresh: true,
           body: {
             doc: {
-              status: this.status,
+              name: this.name,
               description: this.description,
+              status: this.status,
               info: this.info,
               events: this.events,
               dataset_size: this.dataset_size,
               dataset_files: this.dataset_files,
               dataset_events: this.dataset_events,
               events_processed: this.events_processed,
+              kafka_lwm: this.kafka_lwm,
+              kafka_hwm: this.kafka_hwm,
               modified_at: new Date().getTime(),
             },
           },
@@ -203,14 +206,16 @@ module.exports = function dreqmodule(app, config) {
     }
     if (data.name) darequest.name = data.name;
     if (data.description) darequest.description = data.description;
+    if (data.status) darequest.status = data.status;
     if (data.dataset) darequest.dataset = data.dataset;
     if (data.columns) darequest.columns = data.columns;
     if (data.events) darequest.events = data.events;
-    if (data.status) darequest.status = data.status;
     if (data.dataset_size) darequest.dataset_size = data.dataset_size;
     if (data.dataset_events) darequest.dataset_events = data.dataset_events;
     if (data.dataset_files) darequest.dataset_files = data.dataset_files;
     if (data.info) darequest.info += data.info;
+    if (data.kafka_lwm) darequest.kafka_lwm = data.kafka_lwm;
+    if (data.kafka_hwm) darequest.kafka_hwm = data.kafka_hwm;
     await darequest.update();
     res.status(200).send('OK');
   });

@@ -37,9 +37,12 @@ echo "Deploying validator"
 kubectl create -f validator.yaml
 
 echo "Deploying transformer"
+kubectl create -f kafka_monitor.yaml
+
+echo "Deploying transformer"
 kubectl create -f transformer.yaml
 
-echo "================"
+echo "========= if deploying from scratch ======="
 echo "1. get servicex IP and in amazon route53 change A record for servicex.slateci.net"
 echo "2. get kafka server IPs and in amazon route53 change A records for servicex-kafka-0/1/2.slateci.net "
 echo "   and kafka-manager.slateci.net "

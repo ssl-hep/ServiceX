@@ -20,7 +20,9 @@ POST /_template/servicex
         "user": {   "type": "keyword"  } ,
         "status": {   "type": "keyword"  } ,
         "info": {   "type": "keyword"  } ,
-	      "token": {   "type": "keyword"  }
+	      "token": {   "type": "keyword"  },
+        "kafka_hwm": {"type": "long" }, 
+        "kafka_lwm": {"type": "long" }
       }
     }
   }
