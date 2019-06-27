@@ -25,10 +25,10 @@ CONFIG = {
 
 A = AdminClient(CONFIG)
 
-while True:
+CLUS_META = A.list_topics()
+print('Brokers:', CLUS_META.brokers)
 
-    CLUS_META = A.list_topics()
-    print('Brokers:', CLUS_META.brokers)
+while True:
 
     TOPICS = CLUS_META.topics
     # print('Topics:', TOPICS)
