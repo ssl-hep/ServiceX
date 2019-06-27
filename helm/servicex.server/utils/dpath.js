@@ -256,19 +256,6 @@ module.exports = function dpath(app, config) {
     }
   };
 
-  app.get('/dpath/:rid/:status?', async (req, res) => {
-    const { rid } = req.params;
-    let status = 'Created';
-    if (req.params.status) {
-      status = req.params.status;
-    }
-    console.log('getting a path belonging to request id: ', rid);
-    const DApath = new module.DApath();
-    const dap = await DApath.getFromRequest(rid, status);
-    console.log('sending back:', dap);
-    res.status(200).json(dap);
-  });
-
   // gets all the info needed for the transformer to run
   // it changes state to Transforming
   app.get('/dpath/transform/', async (req, res) => {
@@ -285,6 +272,36 @@ module.exports = function dpath(app, config) {
     res.status(200).json(dap);
   });
 
+  app.get('/dpath/last_used/:rid', async (req, res) => {
+    const { rid } = req.params;
+    console.log('getting a last used path with rid: ', rid);
+    const DApath = new module.DApath();
+    const dap = await DApath.getLastUsed(rid);
+    console.log('sending back:', dap);
+    res.status(200).json(dap);
+  });
+
+  app.get('/dpath/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('getting a path with id: ', id);
+    const DApath = new module.DApath();
+    const dap = await DApath.get(id);
+    console.log('sending back:', dap);
+    res.status(200).json(dap);
+  });
+
+  app.get('/dpath/:rid/:status', async (req, res) => {
+    const { rid } = req.params;
+    const { status } = req.params;
+    console.log('getting a path belonging to request id: ', rid);
+    const DApath = new module.DApath();
+    const dap = await DApath.getFromRequest(rid, status);
+    console.log('sending back:', dap);
+    res.status(200).json(dap);
+  });
+
+
+
   app.put('/dpath/status/:id/:status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.params;
@@ -300,24 +317,6 @@ module.exports = function dpath(app, config) {
       DApath.update();
       res.status(200).send('OK');
     }
-  });
-
-  app.get('/dpath/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log('getting a path with id: ', id);
-    const DApath = new module.DApath();
-    const dap = await DApath.get(id);
-    console.log('sending back:', dap);
-    res.status(200).json(dap);
-  });
-
-  app.get('/dpath/last_used/:rid', async (req, res) => {
-    const { rid } = req.params;
-    console.log('getting a last used path with rid: ', rid);
-    const DApath = new module.DApath();
-    const dap = await DApath.getLastUsed(rid);
-    console.log('sending back:', dap);
-    res.status(200).json(dap);
   });
 
   app.post('/dpath/create', async (req, res) => {
