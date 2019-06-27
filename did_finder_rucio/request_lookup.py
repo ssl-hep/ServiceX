@@ -34,6 +34,7 @@ while True:
         REQ = RES.json()
     except JSONDecodeError:
         print("N'est pas JSON: ", RES)
+        time.sleep(10)
         continue
 
     if REQ is None:
