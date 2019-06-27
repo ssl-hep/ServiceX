@@ -7,6 +7,6 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN pip install confluent-kafka
+RUN pip install confluent-kafka requests
 
 CMD [ "python", "monitor.py" ]
