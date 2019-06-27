@@ -29,6 +29,8 @@ module.exports = function dreqmodule(app, config) {
             status: this.status,
             created_at: new Date().getTime(),
             modified_at: new Date().getTime(),
+            kafka_lwm: 0,
+            kafka_hwm: 0,
           },
         });
         console.log(response);

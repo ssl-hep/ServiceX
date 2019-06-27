@@ -29,13 +29,13 @@
     "connect": "^3.7.0",
     "elasticsearch": "16.1.1",
     "express": "4.17.1",
-    "express-session": "1.16.1",
-    "pug": "2.0.3",
+    "express-session": "1.16.2",
+    "pug": "2.0.4",
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
+    "eslint": "^6.0.1",
     "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.17.3"
+    "eslint-plugin-import": "^2.18.0"
   }
 }
