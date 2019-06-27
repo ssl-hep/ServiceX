@@ -1,5 +1,6 @@
 {
     "TESTING": false,
     "SITENAME": "servicex.slateci.net",
-    "HTTPS": false
+    "HTTPS": false,
+    "SITE": "MWT2"
 }
