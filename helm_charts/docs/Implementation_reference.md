@@ -11,6 +11,7 @@ TODO:
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * update file/path status
 * there is some mess with "approved." is it in session or in user.
+* split web and rest servers.
 
 # scaling
 
