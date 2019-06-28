@@ -8,6 +8,7 @@ module.exports = function dreqmodule(app, config) {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Created';
+      this.pausedTransforms = false;
     }
 
     async create(userId) {
@@ -31,6 +32,7 @@ module.exports = function dreqmodule(app, config) {
             modified_at: new Date().getTime(),
             kafka_lwm: 0,
             kafka_hwm: 0,
+            paused_transforms: this.pausedTransforms,
           },
         });
         console.log(response);
@@ -120,6 +122,14 @@ module.exports = function dreqmodule(app, config) {
 
     async update() {
       console.log('Updating data request info in ES...');
+      if ((this.kafka_hwm - this.kafka_lwm) > 10 && !this.pausedTransforms) {
+        this.pauseTransforms(true);
+        this.pausedTransforms = true;
+      }
+      if ((this.kafka_hwm - this.kafka_lwm) < 10 && this.pausedTransforms) {
+        this.pauseTransforms(false);
+        this.pausedTransforms = false;
+      }
       try {
         const response = await this.es.update({
           index: 'servicex',
@@ -139,7 +149,30 @@ module.exports = function dreqmodule(app, config) {
               events_processed: this.events_processed,
               kafka_lwm: this.kafka_lwm,
               kafka_hwm: this.kafka_hwm,
+              paused_transforms: this.pausedTransforms,
               modified_at: new Date().getTime(),
+            },
+          },
+        });
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+    }
+
+    async pauseTransforms(newState) {
+      console.log('Pausing request in ES...');
+      try {
+        const response = await this.es.updateByQuery({
+          index: 'servicex_paths',
+          type: 'docs',
+          id: this.id,
+          refresh: true,
+          body: {
+            query: { match: { req_id: this.id } },
+            script: {
+              inline: `ctx._source.pause_transform = ${newState}`,
             },
           },
         });
