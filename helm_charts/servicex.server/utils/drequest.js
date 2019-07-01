@@ -126,7 +126,7 @@ module.exports = function dreqmodule(app, config) {
         this.pauseTransforms(true);
         this.pausedTransforms = true;
       }
-      if ((this.kafka_hwm - this.kafka_lwm) < 10 && this.pausedTransforms) {
+      if ((this.kafka_hwm - this.kafka_lwm) < 8 && this.pausedTransforms) {
         this.pauseTransforms(false);
         this.pausedTransforms = false;
       }
