@@ -182,6 +182,30 @@ module.exports = function dreqmodule(app, config) {
       }
       console.log('Done.');
     }
+
+    async Terminate() {
+      console.log('Terminating request in ES...');
+      this.status = 'Terminated';
+      this.update();
+      try {
+        const response = await this.es.updateByQuery({
+          index: 'servicex_paths',
+          type: 'docs',
+          id: this.id,
+          refresh: true,
+          body: {
+            query: { match: { req_id: this.id } },
+            script: {
+              inline: 'ctx._source.pause_transform = "Terminated"',
+            },
+          },
+        });
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+      console.log('Done.');
+    }
   };
 
   app.get('/drequest/status/:status', async (req, res) => {
@@ -230,6 +254,15 @@ module.exports = function dreqmodule(app, config) {
     res.status(200).send('OK');
   });
 
+  app.put('/drequest/terminate/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('request: ', id, ' will be terminated. ');
+    const DAr = new module.DArequest();
+    await DAr.get(id);
+    DAr.Terminate();
+    res.status(200).send('OK');
+  });
+
   app.post('/drequest/update/', async (req, res) => {
     const data = req.body;
     console.log('post updating data request:', data);
@@ -254,6 +287,8 @@ module.exports = function dreqmodule(app, config) {
     await darequest.update();
     res.status(200).send('OK');
   });
+
+
 
   // to do: avoid all this property reassigning.
   app.get('/wrequest_update/:rid', async (req, res) => {
@@ -299,11 +334,9 @@ module.exports = function dreqmodule(app, config) {
 
   app.get('/wrequest_terminate', async (req, res) => {
     console.log('terminate request called: ', req.session.drequest.id);
-    const darequest = new module.DArequest();
-    await darequest.get(req.session.drequest.id);
-    darequest.status = 'Done';
-    console.log('has id - updating.');
-    await darequest.update();
+    const DAr = new module.DArequest();
+    await DAr.get(req.session.drequest.id);
+    DAr.Terminate();
     req.session.drequest = {};
     console.log('Terminate done.');
     res.render('./drequest_manage', req.session);
