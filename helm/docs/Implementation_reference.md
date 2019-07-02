@@ -45,6 +45,10 @@ TODO:
 
 * PUT /drequest/status/:id/:status/:info?
 
+* PUT /drequest/terminate/:id
+
+    Sets status to Terminated for a given request_id and all the related paths.
+
 * PUT /drequest/events_processed/:id/:events
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
