@@ -141,7 +141,7 @@ module.exports = function dpath(app, config) {
                 must: [
                   { match: { status: 'Validated' } },
                   { match: { pause_transform: false } },
-                ]
+                ],
               },
             },
           },
