@@ -9,6 +9,7 @@ module.exports = function dreqmodule(app, config) {
       this.created_at = new Date().getTime();
       this.status = 'Created';
       this.pausedTransforms = false;
+      this.events_processed = 0;
     }
 
     async create(userId) {
