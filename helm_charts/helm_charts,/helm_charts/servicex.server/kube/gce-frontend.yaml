@@ -68,4 +68,6 @@ spec:
           items:
           - key: gconf
             path: globus-config.json
+      nodeSelector:
+        es: capable
       serviceAccountName: servicex-fronter
