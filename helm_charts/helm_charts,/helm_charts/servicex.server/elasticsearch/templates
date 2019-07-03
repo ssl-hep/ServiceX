@@ -59,7 +59,8 @@ POST /_template/servicex_paths
         "file_path": { "type": "keyword" },
         "status": {   "type": "keyword"  },
         "created_at": {   "type": "date"  },
-        "last_accessed_at": {   "type": "date"  }          
+        "last_accessed_at": {   "type": "date"  },
+        "pause_transform":{"type":"boolean"}          
       }
     }
   }
