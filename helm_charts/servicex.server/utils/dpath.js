@@ -25,6 +25,7 @@ module.exports = function dpath(app, config) {
             file_path: data.file_path,
             created_at: this.created_at,
             last_accessed_at: this.last_accessed_at,
+            pause_transform: false,
           },
         });
         console.log(response);
