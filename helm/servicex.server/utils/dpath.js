@@ -137,10 +137,12 @@ module.exports = function dpath(app, config) {
           body: {
             version: true,
             query: {
-              bool: [
-                { match: { status: 'Validated' } },
-                { match: { pause_transform: false } },
-              ],
+              bool: {
+                must: [
+                  { match: { status: 'Validated' } },
+                  { match: { pause_transform: false } },
+                ]
+              },
             },
           },
         });
