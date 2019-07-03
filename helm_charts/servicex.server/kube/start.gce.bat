@@ -48,3 +48,6 @@ echo "2. get kafka server IPs and in amazon route53 change A records for service
 echo "   and kafka-manager.slateci.net "
 echo "3. open ES ports for servicex GCE nodes. (search for GCP-SERVICEX-K8S in uc2-puppet)"
 echo "================"
+
+echo "label a node as ES capable"
+kubectl label nodes gke-servicex-default-pool-d4908f66-xmc6 es=capable
