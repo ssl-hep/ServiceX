@@ -57,7 +57,7 @@ TODO:
 
 * PUT /drequest/status/:id/:status/:info?
 
-* PUT /drequest/terminate/:id __testing__ __NOT validated__
+* PUT /drequest/terminate/:id __validated__
 
     Sets status to Terminated for a given request_id and all the related paths.
 
@@ -78,7 +78,7 @@ TODO:
         "events":123456
     }
 
-* POST /drequest/update
+* POST /drequest/update __testing__
 
     updates all the posted info.
 
@@ -91,7 +91,7 @@ TODO:
 
 ### dpath
 
-* POST /dpath/create
+* POST /dpath/create __validated__
 
     to be used by DID-finder
 
@@ -99,7 +99,7 @@ TODO:
 
     used by transformer. If there is a path that is in _Validated_ state it is updated to _Transforming_ and returned to the transformer.
 
-* GET /dpath/transform/:rid/:status
+* GET /dpath/transform/:rid/:status __validated__
 
     returns data on a path belonging to _rid_ request and in certain status.
 
