@@ -198,7 +198,7 @@ module.exports = function dreqmodule(app, config) {
           body: {
             query: { match: { req_id: this.id } },
             script: {
-              inline: 'ctx._source.pause_transform = "Terminated"',
+              inline: 'ctx._source.status = "Terminated"',
             },
           },
         });
