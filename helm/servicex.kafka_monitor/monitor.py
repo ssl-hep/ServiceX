@@ -58,7 +58,7 @@ while True:
             print('request status:', res.status_code)
             if res.status_code == 200:
                 req = res.json()
-                if req == False:
+                if req is False:
                     print('request not found. Deleting topic:', topic_name)
                     A.delete_topics([topic_name])
                     continue
