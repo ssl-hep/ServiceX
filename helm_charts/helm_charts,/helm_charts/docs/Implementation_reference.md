@@ -33,9 +33,9 @@ TODO:
 * GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/
 
 
-* GET /user/:user_id
+* GET /user/:user_id?
         
-    returns json formated user profile data
+    returns json formated user profile data. if called from web interface and user is logged __user_id__ is not needed.
 
 * GET /users_data
 

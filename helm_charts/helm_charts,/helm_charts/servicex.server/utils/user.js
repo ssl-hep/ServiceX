@@ -112,10 +112,10 @@ module.exports = function usermodule(app, config) {
 
         console.log('User found.');
         const obj = response.hits.hits[0]._source;
+        obj.id = response.hits.hits[0]._id;
         // console.log(obj);
         // var created_at = new Date(obj.created_at).toUTCString();
         // var approved_on = new Date(obj.approved_on).toUTCString();
-        this.id = response.hits.hits[0]._id;
         this.name = obj.user;
         this.email = obj.email;
         this.organization = obj.organization;
@@ -168,6 +168,36 @@ module.exports = function usermodule(app, config) {
       } else {
         console.error("Approval person's mail or mailgun key not configured.");
       }
+    }
+
+    async getRequests() {
+      console.log('getting all requests of user:', this.id);
+      try {
+        const resp = await this.es.search({
+          index: 'servicex',
+          type: 'docs',
+          body: {
+            query: { match: { user: this.id } },
+            sort: { created_at: { order: 'desc' } },
+          },
+        });
+        const toSend = [];
+        if (resp.hits.total > 0) {
+          // console.log(resp.hits.hits);
+          for (let i = 0; i < resp.hits.hits.length; i++) {
+            const obj = resp.hits.hits[i]._source;
+            obj.id = resp.hits.hits[i]._id;
+            console.log(obj);
+            toSend.push(obj);
+          }
+        } else {
+          console.log('no requests found.');
+        }
+        return toSend;
+      } catch (err) {
+        console.error(err);
+      }
+      return [];
     }
 
     async getAllRequests() {
@@ -250,7 +280,6 @@ module.exports = function usermodule(app, config) {
   };
 
 
-
   app.get('/user/:user_id?', async (req, res) => {
     console.log('Returning user profile data...');
     let uid = null;
@@ -277,19 +306,10 @@ module.exports = function usermodule(app, config) {
   app.get('/user/requests/:user_id', async (req, res) => {
     console.log('Returning all user requests...');
     const user = new module.User(req.params.user_id);
-    const data = await user.getAllRequests();
+    const data = await user.getRequests();
     res.status(200).json(data);
   });
 
-
-  // // probably not needed.
-  // app.get('/user', async (req, res) => {
-  //   console.log('sending profile info back.');
-  //   const user = new module.User();
-  //   user.id = req.session.user_id;
-  //   const userInfo = await user.load();
-  //   res.json(userInfo);
-  // });
 
   app.get('/profile', async (req, res) => {
     console.log('profile called!');
@@ -300,15 +320,11 @@ module.exports = function usermodule(app, config) {
     res.render('profile', userInfo);
   });
 
-
-
   // simply renders users.pug which in turn gets data from /users_data
   app.get('/users', async (req, res) => {
     console.log('users called!');
     res.render('users');
   });
-
-
 
 
   app.get('/authorize/:user_id', async (req, res) => {
