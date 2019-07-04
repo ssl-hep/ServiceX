@@ -9,7 +9,7 @@ module.exports = function dreqmodule(app, config) {
       this.created_at = new Date().getTime();
       this.status = 'Created';
       this.info = '';
-      this.pausedTransforms = false;
+      this.paused_transforms = false;
       this.events_processed = 0;
       this.events_served = 0;
     }
@@ -35,7 +35,7 @@ module.exports = function dreqmodule(app, config) {
             events_served: 0,
             kafka_lwm: 0,
             kafka_hwm: 0,
-            paused_transforms: this.pausedTransforms,
+            paused_transforms: this.paused_transforms,
             info: 'Created\n',
           },
         });
@@ -78,6 +78,7 @@ module.exports = function dreqmodule(app, config) {
         this.columns = obj.columns;
         this.events = obj.events;
         this.status = obj.status;
+        this.paused_transforms = obj.paused_transforms;
         this.info = obj.info;
         this.dataset_size = obj.dataset_size;
         this.dataset_files = obj.dataset_files;
@@ -126,13 +127,13 @@ module.exports = function dreqmodule(app, config) {
 
     async update() {
       console.log('Updating data request info in ES...');
-      if ((this.kafka_hwm - this.kafka_lwm) > 10 && !this.pausedTransforms) {
+      if ((this.kafka_hwm - this.kafka_lwm) > 10 && !this.paused_transforms) {
         this.pauseTransforms(true);
-        this.pausedTransforms = true;
+        this.paused_transforms = true;
       }
-      if ((this.kafka_hwm - this.kafka_lwm) < 8 && this.pausedTransforms) {
+      if ((this.kafka_hwm - this.kafka_lwm) < 8 && this.paused_transforms) {
         this.pauseTransforms(false);
-        this.pausedTransforms = false;
+        this.paused_transforms = false;
       }
       try {
         const response = await this.es.update({
@@ -153,7 +154,7 @@ module.exports = function dreqmodule(app, config) {
               events_processed: this.events_processed,
               kafka_lwm: this.kafka_lwm,
               kafka_hwm: this.kafka_hwm,
-              paused_transforms: this.pausedTransforms,
+              paused_transforms: this.paused_transforms,
               modified_at: new Date().getTime(),
             },
           },
