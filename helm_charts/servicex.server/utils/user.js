@@ -115,6 +115,7 @@ module.exports = function usermodule(app, config) {
         // console.log(obj);
         // var created_at = new Date(obj.created_at).toUTCString();
         // var approved_on = new Date(obj.approved_on).toUTCString();
+        this.id = response.hits.hits[0]._id;
         this.name = obj.user;
         this.email = obj.email;
         this.organization = obj.organization;
@@ -248,14 +249,47 @@ module.exports = function usermodule(app, config) {
     }
   };
 
-  // probably not needed.
-  app.get('/user', async (req, res) => {
-    console.log('sending profile info back.');
-    const user = new module.User();
-    user.id = req.session.user_id;
+
+
+  app.get('/user/:user_id?', async (req, res) => {
+    console.log('Returning user profile data...');
+    let uid = null;
+    if (req.params.user_id) { // rest API
+      uid = req.params.user_id;
+    } else if (req.session.user_id) { // from web site
+      uid = req.session.user_id;
+    }
+    if (!uid) {
+      res.status(500).send('user ID needed.');
+    }
+    const user = new module.User(uid);
     const userInfo = await user.load();
     res.json(userInfo);
   });
+
+  app.get('/users_data', async (req, res) => {
+    console.log('Sending all users info...');
+    const user = new module.User();
+    const data = await user.getAllUsers();
+    res.status(200).send(data);
+  });
+
+  app.get('/user/requests/:user_id', async (req, res) => {
+    console.log('Returning all user requests...');
+    const user = new module.User(req.params.user_id);
+    const data = await user.getAllRequests();
+    res.status(200).json(data);
+  });
+
+
+  // // probably not needed.
+  // app.get('/user', async (req, res) => {
+  //   console.log('sending profile info back.');
+  //   const user = new module.User();
+  //   user.id = req.session.user_id;
+  //   const userInfo = await user.load();
+  //   res.json(userInfo);
+  // });
 
   app.get('/profile', async (req, res) => {
     console.log('profile called!');
@@ -266,13 +300,7 @@ module.exports = function usermodule(app, config) {
     res.render('profile', userInfo);
   });
 
-  app.get('/users_data', async (req, res) => {
-    console.log('Sending all users info...');
-    const user = new module.User();
-    const data = await user.getAllUsers();
-    res.status(200).send(data);
-    console.log('Done.');
-  });
+
 
   // simply renders users.pug which in turn gets data from /users_data
   app.get('/users', async (req, res) => {
