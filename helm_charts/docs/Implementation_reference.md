@@ -33,15 +33,15 @@ TODO:
 * GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/
 
 
-* GET /user/:user_id?
+* GET /user/:user_id?  __testing__ __NOT validated__
         
     returns json formated user profile data. if called from web interface and user is logged __user_id__ is not needed.
 
-* GET /users_data
+* GET /users_data  __validated__
 
     returns json formated data on all users
 
-* GET /user/requests/:user_id
+* GET /user/requests/:user_id __testing__  __validated__
     
     returns json formated info on all users requests
 
@@ -51,13 +51,13 @@ TODO:
 
     for a given request status (eg. Defined) it finds the oldest request in that status. Returns all of that drequest data in json format. 
 
-* GET /drequest/:id
+* GET /drequest/:id __validated__
 
     for a given request_id it returns all drequest data in json format. 
 
 * PUT /drequest/status/:id/:status/:info?
 
-* PUT /drequest/terminate/:id
+* PUT /drequest/terminate/:id __testing__
 
     Sets status to Terminated for a given request_id and all the related paths.
 

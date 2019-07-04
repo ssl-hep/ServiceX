@@ -194,7 +194,6 @@ module.exports = function dreqmodule(app, config) {
         const response = await this.es.updateByQuery({
           index: 'servicex_paths',
           type: 'docs',
-          id: this.id,
           refresh: true,
           body: {
             query: { match: { req_id: this.id } },
