@@ -33,7 +33,7 @@ TODO:
 * GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/
 
 
-* GET /user/:user_id?  __testing__ __NOT validated__
+* GET /user/:user_id?  __validated__
         
     returns json formated user profile data. if called from web interface and user is logged __user_id__ is not needed.
 
@@ -41,7 +41,7 @@ TODO:
 
     returns json formated data on all users
 
-* GET /user/requests/:user_id __testing__  __validated__
+* GET /user/requests/:user_id  __validated__
     
     returns json formated info on all users requests
 
@@ -57,15 +57,15 @@ TODO:
 
 * PUT /drequest/status/:id/:status/:info?
 
-* PUT /drequest/terminate/:id __testing__
+* PUT /drequest/terminate/:id __testing__ __NOT validated__
 
     Sets status to Terminated for a given request_id and all the related paths.
 
-* PUT /drequest/events_processed/:id/:events
+* PUT /drequest/events_processed/:id/:events __validated__
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
 
-* POST /drequest/create
+* POST /drequest/create __validated__
 
     json document must contain: userid, name, dataset, branches, events requested, optionaly: request description.
     eg.
@@ -97,14 +97,21 @@ TODO:
 
 * GET /dpath/transform/
 
-    used by transformer. If there is a path that is in _Defined_ state it is updated to _Transforming_ and returned to the transformer.
+    used by transformer. If there is a path that is in _Validated_ state it is updated to _Transforming_ and returned to the transformer.
+
+* GET /dpath/transform/:rid/:status
+
+    returns data on a path belonging to _rid_ request and in certain status.
 
 * PUT /dpath/transform/:id/:status
 
     transformer returns :id, status
 
 #### Unused for now
-* GET /dpath/:id
+* GET /dpath/:id  __validated__
+
+    returns all the data about path
+
 * GET /dpath/last_used/:rid
 
 ## Requests states and transitions
