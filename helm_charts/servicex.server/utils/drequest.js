@@ -248,7 +248,7 @@ module.exports = function dreqmodule(app, config) {
     console.log('request: ', id, ' had ', events, 'events processed.');
     const DAr = new module.DArequest();
     await DAr.get(id);
-    DAr.events_processed += events;
+    DAr.events_processed += parseInt(events, 10);
     if (DAr.events_processed === DAr.events) {
       DAr.status = 'Done';
       DAr.info += 'All events processed.';
@@ -323,7 +323,6 @@ module.exports = function dreqmodule(app, config) {
     await darequest.update();
     res.status(200).send('OK');
   });
-
 
 
   // to do: avoid all this property reassigning.
