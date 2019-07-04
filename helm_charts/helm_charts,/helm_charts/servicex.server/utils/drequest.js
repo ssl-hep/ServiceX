@@ -36,6 +36,7 @@ module.exports = function dreqmodule(app, config) {
             kafka_lwm: 0,
             kafka_hwm: 0,
             paused_transforms: this.pausedTransforms,
+            info: 'Created\n',
           },
         });
         console.log(response);
@@ -170,7 +171,6 @@ module.exports = function dreqmodule(app, config) {
         const response = await this.es.updateByQuery({
           index: 'servicex_paths',
           type: 'docs',
-          id: this.id,
           refresh: true,
           body: {
             query: { match: { req_id: this.id } },
