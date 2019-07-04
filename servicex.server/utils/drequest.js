@@ -17,8 +17,6 @@ module.exports = function dreqmodule(app, config) {
     async create(userId) {
       console.log('adding request to ES...');
       try {
-        let cols = this.columns.replace(' ', '');
-        cols = cols.split(',');
         const response = await this.es.index({
           index: 'servicex',
           type: 'docs',
@@ -28,7 +26,7 @@ module.exports = function dreqmodule(app, config) {
             user: userId,
             description: this.description,
             dataset: this.dataset,
-            columns: cols,
+            columns: this.columns,
             events: this.events,
             status: this.status,
             created_at: new Date().getTime(),
@@ -396,8 +394,10 @@ module.exports = function dreqmodule(app, config) {
     darequest.name = data.name;
     darequest.description = data.description;
     darequest.dataset = data.dataset;
-    darequest.columns = data.columns;
     darequest.events = data.events;
+    const cols = data.columns.replace(' ', '');
+    darequest.columns = cols.split(',');
+
     if (req.session.drequest.id) {
       console.log('has id - updating.');
       await darequest.update();
