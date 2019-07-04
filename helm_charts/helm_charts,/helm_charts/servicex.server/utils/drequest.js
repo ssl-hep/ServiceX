@@ -8,8 +8,10 @@ module.exports = function dreqmodule(app, config) {
       this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Created';
+      this.info = '';
       this.pausedTransforms = false;
       this.events_processed = 0;
+      this.events_served = 0;
     }
 
     async create(userId) {
@@ -31,6 +33,8 @@ module.exports = function dreqmodule(app, config) {
             status: this.status,
             created_at: new Date().getTime(),
             modified_at: new Date().getTime(),
+            events_processed: 0,
+            events_served: 0,
             kafka_lwm: 0,
             kafka_hwm: 0,
             paused_transforms: this.pausedTransforms,
@@ -261,6 +265,39 @@ module.exports = function dreqmodule(app, config) {
     const DAr = new module.DArequest();
     await DAr.get(id);
     DAr.Terminate();
+    res.status(200).send('OK');
+  });
+
+  app.post('/drequest/create/', async (req, res) => {
+    const data = req.body;
+    console.log('post creating data request:', data);
+    if (!data.name) {
+      res.status(500).send('Bad request. Request name missing.');
+      return;
+    }
+    if (!data.dataset) {
+      res.status(500).send('Bad request. Dataset name missing.');
+      return;
+    }
+    if (!data.columns) {
+      res.status(500).send('Bad request. Columns missing.');
+      return;
+    }
+    if (!data.events) {
+      res.status(500).send('Bad request. Events missing.');
+      return;
+    }
+    if (!data.userid) {
+      res.status(500).send('Bad request. userid missing.');
+      return;
+    }
+    const DAr = new module.DArequest();
+    DAr.name = data.name;
+    if (data.description) DAr.description = data.description;
+    DAr.dataset = data.dataset;
+    DAr.columns = data.columns;
+    DAr.events = data.events;
+    await DAr.create(data.userid);
     res.status(200).send('OK');
   });
 

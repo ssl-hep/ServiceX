@@ -25,14 +25,24 @@ TODO:
 
 ### user
 
-* GET /profile - renders profile page. preloads users data from ES
-* GET /user - returns ES read user data.
-
-* GET /users - renders users page. ajax call get data from /users_data.
-* GET /users_data
+* GET /profile - renders profile page. preloads users data from ES. will be simpler once ajax call gets data from /user
+* GET /users - renders users page. ajax call gets data from /users_data.
 
 * GET /authorize/:user_id
-* GET /get_requests
+* GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/
+
+
+* GET /user/:user_id
+        
+    returns json formated user profile data
+
+* GET /users_data
+
+    returns json formated data on all users
+
+* GET /user/requests/:user_id
+    
+    returns json formated info on all users requests
 
 ### drequest
 
@@ -53,6 +63,19 @@ TODO:
 * PUT /drequest/events_processed/:id/:events
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
+
+* POST /drequest/create
+
+    json document must contain: userid, name, dataset, branches, events requested, optionaly: request description.
+    eg.
+    {
+        "userid":"",
+        "name": "test x".
+        "dataset": "mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00",
+        "description": "just a test",
+        "branches":["Electrons.pt()","Electrons.eta()","Electrons.phi()"],
+        "events":123456
+    }
 
 * POST /drequest/update
 
