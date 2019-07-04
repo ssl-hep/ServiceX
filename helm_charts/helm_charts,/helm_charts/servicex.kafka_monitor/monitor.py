@@ -7,6 +7,7 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import TopicPartition
 # import json
 
+DOMAIN = 'https://servicex.slateci.net'
 TOPIC_NAME = 'mytopic'
 
 
@@ -25,11 +26,11 @@ CONFIG = {
 
 A = AdminClient(CONFIG)
 
-CLUS_META = A.list_topics()
-print('Brokers:', CLUS_META.brokers)
-
+counter = 0
 while True:
 
+    CLUS_META = A.list_topics()
+    # print('Brokers:', CLUS_META.brokers)
     TOPICS = CLUS_META.topics
     # print('Topics:', TOPICS)
 
@@ -48,8 +49,26 @@ while True:
             current_usage['kafka_hwm'] += hwm
 
         print(current_usage)
-        res = requests.post('https://servicex.slateci.net/drequest/update/', json=current_usage, verify=False)
+        res = requests.post(DOMAIN + '/drequest/update/', json=current_usage, verify=False)
         print('update status:', res.status_code)
+
+        if not counter % 100:
+            # delete all topics that are not found or in Done or Terminated state.
+            res = requests.get(DOMAIN + '/drequest/' + topic_name, verify=False)
+            print('request status:', res.status_code)
+            if res.status_code == 200:
+                req = res.json()
+                if req == False:
+                    print('request not found. Deleting topic:', topic_name)
+                    A.delete_topics([topic_name])
+                    continue
+                req = req['_source']
+                if req['status'] == 'Terminated' or req['status'] == 'Done':
+                    print('request done. deleting topic:', topic_name)
+                    A.delete_topics([topic_name])
+                    continue
+
+    counter += 1
     time.sleep(10)
 
 
