@@ -317,8 +317,8 @@ module.exports = function dreqmodule(app, config) {
     if (data.dataset_events) darequest.dataset_events = data.dataset_events;
     if (data.dataset_files) darequest.dataset_files = data.dataset_files;
     if (data.info) darequest.info += data.info;
-    if (data.kafka_lwm) darequest.kafka_lwm = data.kafka_lwm;
-    if (data.kafka_hwm) darequest.kafka_hwm = data.kafka_hwm;
+    if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
+    if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
     await darequest.update();
     res.status(200).send('OK');
   });
