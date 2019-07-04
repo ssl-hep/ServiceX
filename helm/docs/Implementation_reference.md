@@ -6,6 +6,7 @@ TODO:
 
 # imediate
 
+* make request update return specific code when request not there. Then kafka monitor can delete queue with such a return code. 
 * make request buttons on web site correctly behave 
 * check that terminate actually terminates paths. Does now really work when request has 10000 files.
 * make web site use regular REST endpoints.
@@ -69,11 +70,11 @@ TODO:
     json document must contain: userid, name, dataset, branches, events requested, optionaly: request description.
     eg.
     {
-        "userid":"",
-        "name": "test x".
+        "userid":"a51dbd7e-d274-11e5-9b11-9be347a09ce0",
+        "name": "test x",
         "dataset": "mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00",
         "description": "just a test",
-        "branches":["Electrons.pt()","Electrons.eta()","Electrons.phi()"],
+        "columns":["Electrons.pt()","Electrons.eta()","Electrons.phi()"],
         "events":123456
     }
 
