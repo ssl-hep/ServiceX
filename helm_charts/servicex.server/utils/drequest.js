@@ -151,6 +151,7 @@ module.exports = function dreqmodule(app, config) {
               dataset_size: this.dataset_size,
               dataset_files: this.dataset_files,
               dataset_events: this.dataset_events,
+              events_served: this.events_served,
               events_processed: this.events_processed,
               kafka_lwm: this.kafka_lwm,
               kafka_hwm: this.kafka_hwm,
@@ -238,6 +239,17 @@ module.exports = function dreqmodule(app, config) {
     if (req.params.info) {
       DAr.info += req.params.info;
     }
+    await DAr.update();
+    res.status(200).send('OK');
+  });
+
+  app.put('/drequest/events_served/:id/:events', async (req, res) => {
+    const { id } = req.params;
+    const { events } = req.params;
+    console.log('request: ', id, ' had ', events, 'events served.');
+    const DAr = new module.DArequest();
+    await DAr.get(id);
+    DAr.events_served += parseInt(events, 10);
     await DAr.update();
     res.status(200).send('OK');
   });
