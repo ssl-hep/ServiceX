@@ -78,7 +78,7 @@ TODO:
         "events":123456
     }
 
-* POST /drequest/update __testing__
+* POST /drequest/update __validated__
 
     updates all the posted info.
 
