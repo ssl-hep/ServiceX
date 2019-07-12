@@ -45,6 +45,7 @@ while True:
         # print(tmds)
         for tp in tmds:
             (lwm, hwm) = C.get_watermark_offsets(TopicPartition(topic_name, tp))
+            print(lwm,hwm)
             current_usage['kafka_lwm'] += lwm
             current_usage['kafka_hwm'] += hwm
 
