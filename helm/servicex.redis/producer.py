@@ -48,7 +48,7 @@ for i in range(100):
     sink = pa.BufferOutputStream()
     writer = pa.RecordBatchStreamWriter(sink, batch.schema)
     writer.write_batch(batch)
-    r.xadd(stream, {'pa': i, 'data': codecs.encode(sink.getvalue(), 'base64')})
+    r.xadd(stream, {'pa': i, 'data': codecs.encode(sink.getvalue(), 'bz2')})
     pause()
 
 

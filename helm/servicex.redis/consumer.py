@@ -35,7 +35,7 @@ while True:
     data = a[0][1][0][1][b'data']
     # print(evid)
     # print(data)
-    adata = codecs.decode(data, 'base64')
+    adata = codecs.decode(data, 'bz2')
 
     reader = pa.ipc.open_stream(adata)
     batches = [b for b in reader]
