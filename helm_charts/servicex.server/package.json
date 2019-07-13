@@ -31,7 +31,8 @@
     "express": "4.17.1",
     "express-session": "1.16.2",
     "pug": "2.0.4",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "lodash": ">=4.17.13"
   },
   "devDependencies": {
     "eslint": "^6.0.1",
