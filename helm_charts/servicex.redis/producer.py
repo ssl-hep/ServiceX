@@ -7,7 +7,7 @@ import pyarrow as pa
 import awkward
 import codecs
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 
 stream = 'my_py_stream'
 group = 'my_py_group'
