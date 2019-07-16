@@ -5,14 +5,18 @@ import codecs
 import pyarrow as pa
 import awkward
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 
 stream = 'my_py_stream'
 group = 'my_py_group'
 
+sInfo = None
+try:
+    sInfo = r.xinfo_groups(stream)
+    print(sInfo)
+except expression as identifier:
+    pass
 
-sInfo = r.xinfo_groups(stream)
-print(sInfo)
 
 if not sInfo:
     r.xgroup_create(stream, group, '0', mkstream=True)
