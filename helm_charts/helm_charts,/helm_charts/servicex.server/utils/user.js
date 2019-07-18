@@ -1,4 +1,4 @@
-const elasticsearch = require('elasticsearch');
+const elasticsearch = require('@elastic/elasticsearch');
 
 module.exports = function usermodule(app, config) {
   // if (!config.TESTING) {
@@ -13,7 +13,7 @@ module.exports = function usermodule(app, config) {
 
   module.User = class User {
     constructor(id = null) {
-      this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
+      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       // this.mg = require('mailgun-js')({
       // apiKey: mg_config.APPROVAL_MG,
       // domain: mg_config.MG_DOMAIN });
@@ -105,6 +105,7 @@ module.exports = function usermodule(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('user not found.');
           return false;
@@ -182,6 +183,7 @@ module.exports = function usermodule(app, config) {
           },
         });
         const toSend = [];
+        resp = resp.body;
         if (resp.hits.total > 0) {
           // console.log(resp.hits.hits);
           for (let i = 0; i < resp.hits.hits.length; i++) {
@@ -212,6 +214,7 @@ module.exports = function usermodule(app, config) {
           },
         });
         const toSend = [];
+        resp = resp.body;
         if (resp.hits.total > 0) {
           // console.log(resp.hits.hits);
           for (let i = 0; i < resp.hits.hits.length; i++) {
@@ -258,6 +261,7 @@ module.exports = function usermodule(app, config) {
           },
         });
         // console.log(resp);
+        resp = resp.body;
         if (resp.hits.total > 0) {
           // console.log("Users found:", resp.hits.hits);
           for (let i = 0; i < resp.hits.hits.length; i++) {

@@ -1,11 +1,11 @@
-const elasticsearch = require('elasticsearch');
+const elasticsearch = require('@elastic/elasticsearch');
 
 module.exports = function dpath(app, config) {
   const module = {};
 
   module.DApath = class DApath {
     constructor() {
-      this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
+      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.last_accessed_at = new Date().getTime();
     }
@@ -79,6 +79,7 @@ module.exports = function dpath(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('data access path not found.');
           return false;
@@ -114,6 +115,7 @@ module.exports = function dpath(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('data access path not found.');
           return false;
@@ -148,6 +150,7 @@ module.exports = function dpath(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('data access path not found.');
           return false;
@@ -182,6 +185,7 @@ module.exports = function dpath(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('no data access paths.');
           return [];
@@ -231,6 +235,7 @@ module.exports = function dpath(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('data access path not found.');
           return false;
