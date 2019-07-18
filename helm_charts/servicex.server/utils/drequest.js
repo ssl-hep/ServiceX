@@ -49,7 +49,7 @@ module.exports = function dreqmodule(app, config) {
     async get(id) {
       console.log('getting darequest info...');
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -98,7 +98,7 @@ module.exports = function dreqmodule(app, config) {
     async getWithStatus(status) {
       // console.log('getting darequest with status:', status);
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex',
           type: 'docs',
           body: {
