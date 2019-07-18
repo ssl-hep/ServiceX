@@ -95,7 +95,7 @@ module.exports = function usermodule(app, config) {
       console.log("getting user's info...");
 
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_users',
           type: 'docs',
           body: {
@@ -174,7 +174,7 @@ module.exports = function usermodule(app, config) {
     async getRequests() {
       console.log('getting all requests of user:', this.id);
       try {
-        const resp = await this.es.search({
+        var resp = await this.es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -205,7 +205,7 @@ module.exports = function usermodule(app, config) {
     async getAllRequests() {
       console.log('getting all requests of user:', this.id);
       try {
-        const resp = await this.es.search({
+        var resp = await this.es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -251,7 +251,7 @@ module.exports = function usermodule(app, config) {
       console.log('getting all users info from es.');
 
       try {
-        const resp = await this.es.search({
+        var resp = await this.es.search({
           index: 'servicex_users',
           type: 'docs',
           body: {

@@ -68,7 +68,7 @@ module.exports = function dpath(app, config) {
     async get(id) {
       console.log('getting path info for id:', id);
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -99,7 +99,7 @@ module.exports = function dpath(app, config) {
     async getFromRequest(reqId, status) {
       console.log('getting path info for rid:', reqId, 'and status: ', status);
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -134,7 +134,7 @@ module.exports = function dpath(app, config) {
     async getValidated() {
       console.log('getting any validate path that should be transformed');
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -171,7 +171,7 @@ module.exports = function dpath(app, config) {
     async getAll(rid) {
       console.log('getting ids of all paths of rid:', rid);
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -219,7 +219,7 @@ module.exports = function dpath(app, config) {
     async getLastUsed(rid) {
       console.log('getting path info for last used path of rid:', rid);
       try {
-        const response = await this.es.search({
+        var response = await this.es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
