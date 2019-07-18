@@ -1,11 +1,11 @@
-const elasticsearch = require('elasticsearch');
+const elasticsearch = require('@elastic/elasticsearch');
 
 module.exports = function dreqmodule(app, config) {
   const module = {};
 
   module.DArequest = class DArequest {
     constructor() {
-      this.es = new elasticsearch.Client({ host: config.ES_HOST, log: 'error' });
+      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Created';
       this.info = '';
@@ -63,6 +63,7 @@ module.exports = function dreqmodule(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           console.log('data access request not found.');
           return false;
@@ -112,6 +113,7 @@ module.exports = function dreqmodule(app, config) {
           },
         });
         // console.log(response);
+        response = response.body;
         if (response.hits.total === 0) {
           // console.log('data access request not found.');
           return null;
