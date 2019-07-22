@@ -1,6 +1,6 @@
-const elasticsearch = require('@elastic/elasticsearch');
+// const elasticsearch = require('@elastic/elasticsearch');
 
-module.exports = function usermodule(app, config) {
+module.exports = function usermodule(app, config, es) {
   // if (!config.TESTING) {
   //     // var mg_config = require('/etc/mg-conf/config.json');
   // }
@@ -13,7 +13,7 @@ module.exports = function usermodule(app, config) {
 
   module.User = class User {
     constructor(id = null) {
-      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
+      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       // this.mg = require('mailgun-js')({
       // apiKey: mg_config.APPROVAL_MG,
       // domain: mg_config.MG_DOMAIN });
@@ -33,7 +33,7 @@ module.exports = function usermodule(app, config) {
     async write() {
       console.log('adding user to ES...');
       try {
-        const response = await this.es.index({
+        const response = await es.index({
           index: 'servicex_users',
           type: 'docs',
           id: this.id,
@@ -58,7 +58,7 @@ module.exports = function usermodule(app, config) {
     async delete() {
       console.log('deleting user from ES...');
       try {
-        const response = await this.es.deleteByQuery({
+        const response = await es.deleteByQuery({
           index: 'servicex_users',
           type: 'docs',
           body: { query: { match: { _id: this.id } } },
@@ -73,7 +73,7 @@ module.exports = function usermodule(app, config) {
     async update() {
       console.log('Updating user info in ES...');
       try {
-        const response = await this.es.update({
+        const response = await es.update({
           index: 'servicex_users',
           type: 'docs',
           id: this.id,
@@ -95,7 +95,7 @@ module.exports = function usermodule(app, config) {
       console.log("getting user's info...");
 
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_users',
           type: 'docs',
           body: {
@@ -174,7 +174,7 @@ module.exports = function usermodule(app, config) {
     async getRequests() {
       console.log('getting all requests of user:', this.id);
       try {
-        var resp = await this.es.search({
+        var resp = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -205,7 +205,7 @@ module.exports = function usermodule(app, config) {
     async getAllRequests() {
       console.log('getting all requests of user:', this.id);
       try {
-        var resp = await this.es.search({
+        var resp = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -251,7 +251,7 @@ module.exports = function usermodule(app, config) {
       console.log('getting all users info from es.');
 
       try {
-        var resp = await this.es.search({
+        var resp = await es.search({
           index: 'servicex_users',
           type: 'docs',
           body: {

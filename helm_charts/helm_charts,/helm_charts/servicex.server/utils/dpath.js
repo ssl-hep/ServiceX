@@ -1,11 +1,11 @@
-const elasticsearch = require('@elastic/elasticsearch');
+// const elasticsearch = require('@elastic/elasticsearch');
 
-module.exports = function dpath(app, config) {
+module.exports = function dpath(app, config, es) {
   const module = {};
 
   module.DApath = class DApath {
     constructor() {
-      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
+      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.last_accessed_at = new Date().getTime();
       this.events_served = 0;
@@ -14,7 +14,7 @@ module.exports = function dpath(app, config) {
     async create(data) {
       console.log('adding request path to ES...', data);
       try {
-        const response = await this.es.index({
+        const response = await es.index({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -40,7 +40,7 @@ module.exports = function dpath(app, config) {
       console.log('Updating data request path info in ES...');
       try {
         // const response =
-        await this.es.update({
+        await es.update({
           index: 'servicex_paths',
           type: 'docs',
           id: this.id,
@@ -70,7 +70,7 @@ module.exports = function dpath(app, config) {
     async get(id) {
       console.log('getting path info for id:', id);
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -101,7 +101,7 @@ module.exports = function dpath(app, config) {
     async getFromRequest(reqId, status) {
       console.log('getting path info for rid:', reqId, 'and status: ', status);
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -136,7 +136,7 @@ module.exports = function dpath(app, config) {
     async getValidated() {
       console.log('getting any validate path that should be transformed');
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -173,7 +173,7 @@ module.exports = function dpath(app, config) {
     async getAll(rid) {
       console.log('getting ids of all paths of rid:', rid);
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -220,7 +220,7 @@ module.exports = function dpath(app, config) {
     async getLastUsed(rid) {
       console.log('getting path info for last used path of rid:', rid);
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
