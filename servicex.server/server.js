@@ -38,10 +38,12 @@ app.use(session({
   cookie: { secure: false, maxAge: 3600000 },
 }));
 
+const elasticsearch = require('@elastic/elasticsearch');
+const es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
 
-require('./utils/drequest')(app, config);
-require('./utils/dpath')(app, config);
-const usr = require('./utils/user')(app, config);
+require('./utils/drequest')(app, config, es);
+require('./utils/dpath')(app, config, es);
+const usr = require('./utils/user')(app, config, es);
 
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware

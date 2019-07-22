@@ -1,11 +1,11 @@
-const elasticsearch = require('@elastic/elasticsearch');
+// const elasticsearch = require('@elastic/elasticsearch');
 
-module.exports = function dreqmodule(app, config) {
+module.exports = function dreqmodule(app, config, es) {
   const module = {};
 
   module.DArequest = class DArequest {
     constructor() {
-      this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
+      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Created';
       this.info = '';
@@ -17,7 +17,7 @@ module.exports = function dreqmodule(app, config) {
     async create(userId) {
       console.log('adding request to ES...');
       try {
-        const response = await this.es.index({
+        const response = await es.index({
           index: 'servicex',
           type: 'docs',
           refresh: true,
@@ -49,7 +49,7 @@ module.exports = function dreqmodule(app, config) {
     async get(id) {
       console.log('getting darequest info...');
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -98,7 +98,7 @@ module.exports = function dreqmodule(app, config) {
     async getWithStatus(status) {
       // console.log('getting darequest with status:', status);
       try {
-        var response = await this.es.search({
+        var response = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -138,7 +138,7 @@ module.exports = function dreqmodule(app, config) {
         this.paused_transforms = false;
       }
       try {
-        const response = await this.es.update({
+        const response = await es.update({
           index: 'servicex',
           type: 'docs',
           id: this.id,
@@ -172,7 +172,7 @@ module.exports = function dreqmodule(app, config) {
     async pauseTransforms(newState) {
       console.log('Pausing request in ES...');
       try {
-        const response = await this.es.updateByQuery({
+        const response = await es.updateByQuery({
           index: 'servicex_paths',
           type: 'docs',
           refresh: true,
@@ -195,7 +195,7 @@ module.exports = function dreqmodule(app, config) {
       this.status = 'Terminated';
       this.update();
       try {
-        const response = await this.es.updateByQuery({
+        const response = await es.updateByQuery({
           index: 'servicex_paths',
           type: 'docs',
           refresh: true,
