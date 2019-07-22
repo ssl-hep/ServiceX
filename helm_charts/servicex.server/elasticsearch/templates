@@ -60,7 +60,8 @@ POST /_template/servicex_paths
         "status": {   "type": "keyword"  },
         "created_at": {   "type": "date"  },
         "last_accessed_at": {   "type": "date"  },
-        "pause_transform":{"type":"boolean"}          
+        "pause_transform":{"type":"boolean"}, 
+        "events_served": { "type": "long" }     
       }
     }
   }

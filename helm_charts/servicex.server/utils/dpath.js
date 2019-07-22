@@ -8,6 +8,7 @@ module.exports = function dpath(app, config) {
       this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.last_accessed_at = new Date().getTime();
+      this.events_served = 0;
     }
 
     async create(data) {
@@ -49,6 +50,7 @@ module.exports = function dpath(app, config) {
             doc: {
               status: this.status,
               last_accessed_at: this.last_accessed_at,
+              events_served: this.events_served
             },
           },
         });
@@ -206,7 +208,6 @@ module.exports = function dpath(app, config) {
         // this.dataset_files = obj.dataset_files;
         // this.dataset_events = obj.dataset_events;
         // this.events_served = obj.events_served;
-        // this.events_processed = obj.events_processed;
         // this.created_at = obj.created_at;
         // return true;
       } catch (err) {
@@ -256,7 +257,6 @@ module.exports = function dpath(app, config) {
         this.dataset_files = obj.dataset_files;
         this.dataset_events = obj.dataset_events;
         this.events_served = obj.events_served;
-        this.events_processed = obj.events_processed;
         this.created_at = obj.created_at;
         return true;
       } catch (err) {
@@ -322,6 +322,23 @@ module.exports = function dpath(app, config) {
       res.status(500).send('Bad request.');
     } else {
       DApath.status = status;
+      DApath.last_accessed_at = new Date().getTime();
+      DApath.update();
+      res.status(200).send('OK');
+    }
+  });
+
+  app.put('/dpath/events_served/:id/:events', async (req, res) => {
+    const { id } = req.params;
+    const { events } = req.params;
+    console.log('post /dpath/events_served :', id, events);
+    const DApath = new module.DApath();
+    DApath.id = id;
+    const found = await DApath.get(id);
+    if (!found) {
+      res.status(500).send('Bad request.');
+    } else {
+      DApath.events_served += events;
       DApath.last_accessed_at = new Date().getTime();
       DApath.update();
       res.status(200).send('OK');

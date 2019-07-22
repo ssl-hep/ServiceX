@@ -17,8 +17,8 @@ try:
     print(strInfo)
     if strInfo:
         r.xtrim(stream, 0)
-except Exception as e:
-    print(e)
+except redis.exceptions.ResponseError as re:
+    print(re)
     pass
 
 
