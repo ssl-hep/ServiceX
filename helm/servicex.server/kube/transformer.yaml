@@ -44,6 +44,10 @@ spec:
           value: "0"
         - name: PYTHONWARNINGS
           value: "ignore:Unverified HTTPS request"
+        - name: MAX_MESSAGES_PER_REQUEST
+          value: "100"
+        - name: EVENTS_PER_MESSAGE
+          value: "500"
         volumeMounts:
         - name: x509-data
           mountPath: "/etc/grid-security/"
