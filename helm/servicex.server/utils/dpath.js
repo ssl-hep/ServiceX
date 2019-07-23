@@ -336,7 +336,7 @@ module.exports = function dpath(app, config, es) {
     if (!found) {
       res.status(500).send('Bad request.');
     } else {
-      DApath.events_served += events;
+      DApath.events_served += parseInt(events, 10);
       DApath.last_accessed_at = new Date().getTime();
       DApath.update();
       res.status(200).send('OK');
