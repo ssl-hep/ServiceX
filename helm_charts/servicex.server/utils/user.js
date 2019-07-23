@@ -1,5 +1,3 @@
-// const elasticsearch = require('@elastic/elasticsearch');
-
 module.exports = function usermodule(app, config, es) {
   // if (!config.TESTING) {
   //     // var mg_config = require('/etc/mg-conf/config.json');
@@ -13,7 +11,6 @@ module.exports = function usermodule(app, config, es) {
 
   module.User = class User {
     constructor(id = null) {
-      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       // this.mg = require('mailgun-js')({
       // apiKey: mg_config.APPROVAL_MG,
       // domain: mg_config.MG_DOMAIN });

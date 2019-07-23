@@ -1,11 +1,8 @@
-// const elasticsearch = require('@elastic/elasticsearch');
-
 module.exports = function dpath(app, config, es) {
   const module = {};
 
   module.DApath = class DApath {
     constructor() {
-      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.last_accessed_at = new Date().getTime();
       this.events_served = 0;
@@ -90,6 +87,7 @@ module.exports = function dpath(app, config, es) {
         const obj = response.hits.hits[0]._source;
         this.id = response.hits.hits[0]._id;
         this.version = response.hits.hits[0]._version;
+        this.events_served = obj.events_served;
         return obj;
       } catch (err) {
         console.error(err);
