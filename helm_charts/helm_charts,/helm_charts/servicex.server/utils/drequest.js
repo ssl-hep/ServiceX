@@ -1,11 +1,8 @@
-// const elasticsearch = require('@elastic/elasticsearch');
-
 module.exports = function dreqmodule(app, config, es) {
   const module = {};
 
   module.DArequest = class DArequest {
     constructor() {
-      // this.es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
       this.created_at = new Date().getTime();
       this.status = 'Created';
       this.info = '';
