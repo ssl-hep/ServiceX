@@ -1,18 +1,23 @@
-import redis
 import time
 import codecs
+import redis
 
 import pyarrow as pa
-import awkward
+# import awkward
+import requests
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
-
-stream = '7HcbHGwBMWltPFRMkyC2'
-group = 'my_py_group'
+sx_host = "https://servicex.slateci.net"
+req_id = "Bq_JHGwBMWltPFRM8qz7"
+group = "my_py_group"
 
 sInfo = None
 try:
-    sInfo = r.xinfo_groups(stream)
+    sInfo = r.xinfo_groups(req_id)
     print(sInfo)
 except Exception as rex:
     print(rex)
@@ -20,13 +25,14 @@ except Exception as rex:
 
 
 if not sInfo:
-    r.xgroup_create(stream, group, '0', mkstream=True)
+    r.xgroup_create(req_id, group, '0', mkstream=True)
 
-# sInfo = r.xinfo_groups(stream)
+# sInfo = r.xinfo_groups(req_id)
 # print(sInfo)
 
+tot_processed = 0
 while True:
-    a = r.xreadgroup(group, 'Alice', {stream: '>'}, count=1, block=None, noack=False)
+    a = r.xreadgroup(group, 'Alice', {req_id: '>'}, count=1, block=None, noack=False)
     if not a:
         # print("Done.")
         time.sleep(.5)
@@ -47,13 +53,14 @@ while True:
     reader = pa.ipc.open_stream(adata)
     batches = [b for b in reader]
     batch = batches[0]
-    print('cols:', batch.num_columns, 'rows:', batch.num_rows)
     # print(batch.schema)
     # print(batch[1])
-    r.xack(stream, group, mid)
+    requests.put(sx_host + "/drequest/events_processed/" + req_id + "/" + str(batch.num_rows), verify=False)
+    tot_processed += batch.num_rows
+    print('cols:', batch.num_columns, 'rows:', batch.num_rows, 'processed:', tot_processed)
+    r.xack(req_id, group, mid)
+    r.xdel(req_id, mid)
 
-    r.xdel(stream, mid)
-
-print('consumers:', r.xinfo_consumers(stream, group))
-print('pending:', r.xpending(stream, group))
+print('consumers:', r.xinfo_consumers(req_id, group))
+print('pending:', r.xpending(req_id, group))
 # print(r.get('foo'))
