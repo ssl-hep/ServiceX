@@ -39,8 +39,8 @@ spec:
         image: redis:5.0.5
         resources:
           requests:
-            cpu: 100m
-            memory: 500Mi
+            cpu: 900m
+            memory: 200Gi
         env:
         - name: GET_HOSTS_FROM
           value: dns
