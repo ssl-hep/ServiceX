@@ -32,6 +32,8 @@ module.exports = function dreqmodule(app, config, es) {
             events_served: 0,
             kafka_lwm: 0,
             kafka_hwm: 0,
+            redis_messages: 0,
+            redis_consumers: 0,
             paused_transforms: this.paused_transforms,
             info: 'Created\n',
           },
@@ -126,14 +128,6 @@ module.exports = function dreqmodule(app, config, es) {
 
     async update() {
       console.log('Updating data request info in ES...');
-      if ((this.kafka_hwm - this.kafka_lwm) > 10 && !this.paused_transforms) {
-        this.pauseTransforms(true);
-        this.paused_transforms = true;
-      }
-      if ((this.kafka_hwm - this.kafka_lwm) < 8 && this.paused_transforms) {
-        this.pauseTransforms(false);
-        this.paused_transforms = false;
-      }
       try {
         const response = await es.update({
           index: 'servicex',
@@ -154,6 +148,8 @@ module.exports = function dreqmodule(app, config, es) {
               events_processed: this.events_processed,
               kafka_lwm: this.kafka_lwm,
               kafka_hwm: this.kafka_hwm,
+              redis_messages: this.redis_messages,
+              redis_consumers: this.redis_consumers,
               paused_transforms: this.paused_transforms,
               modified_at: new Date().getTime(),
             },
@@ -331,6 +327,18 @@ module.exports = function dreqmodule(app, config, es) {
     if (data.info) darequest.info += data.info;
     if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
     if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
+    if (data.redis_messages) darequest.redis_messages = data.redis_messages;
+    if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
+    if (typeof data.pause_it !== 'undefined') {
+      if (data.pause_it === true && !this.paused_transforms) {
+        darequest.pauseTransforms(true);
+        darequest.paused_transforms = true;
+      }
+      if (data.pause_it === false && this.paused_transforms) {
+        darequest.pauseTransforms(false);
+        darequest.paused_transforms = false;
+      }
+    }
     await darequest.update();
     res.status(200).send('OK');
   });
