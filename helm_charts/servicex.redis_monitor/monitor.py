@@ -23,7 +23,7 @@ while True:
         print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups, '\nrconsumers:', req_consumers)
 
         pause_it = False
-        if req_messages > 99 and req_consumers = 0:
+        if req_messages > 99 and req_consumers == 0:
             pause_it = True
 
         current_usage = {
