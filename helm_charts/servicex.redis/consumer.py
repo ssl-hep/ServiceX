@@ -12,24 +12,24 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 sx_host = "https://servicex.slateci.net"
-req_id = "Bq_JHGwBMWltPFRM8qz7"
-group = "my_py_group"
+req_id = "g3xJJWwBMWltPFRMX2Yn"
+group = "my_group"
 
 sInfo = None
 try:
     sInfo = r.xinfo_groups(req_id)
-    print(sInfo)
+    print('stream group info:', sInfo)
 except Exception as rex:
-    print(rex)
-    pass
+    print("stream info exception: ", rex)
 
 
 if not sInfo:
+    print("creating stream group")
     r.xgroup_create(req_id, group, '0', mkstream=True)
 
 # sInfo = r.xinfo_groups(req_id)
 # print(sInfo)
-
+print('start fetching data...')
 tot_processed = 0
 while True:
     a = r.xreadgroup(group, 'Alice', {req_id: '>'}, count=1, block=None, noack=False)
