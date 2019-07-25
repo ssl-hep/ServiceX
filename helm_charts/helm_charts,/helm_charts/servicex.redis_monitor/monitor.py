@@ -18,9 +18,11 @@ while True:
         sreq_id = str(req_id, 'utf-8')
         req_messages = r.xlen(req_id)
         req_groups = r.xinfo_groups(req_id)
-        req_consumers = []
+        req_consumers = 0
         if req_groups:
-            req_consumers = r.xinfo_consumers(req_id, req_groups[0]["name"])
+            print('consumers:\n', r.xinfo_consumers(req_id, req_groups[0]["name"]))
+            req_consumers = req_groups[0]["consumers"]
+
         print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups, '\nconsumers:', req_consumers)
 
         pause_it = False
@@ -30,7 +32,7 @@ while True:
         current_usage = {
             'id': sreq_id,
             'redis_messages': req_messages,
-            'redis_consumers': req_groups[0]["consumers"],
+            'redis_consumers': req_consumers,
             'pause_it': pause_it
         }
         res = requests.post(SX_HOST + '/drequest/update/', json=current_usage, verify=False)

@@ -1,4 +1,3 @@
-import sys
 import time
 import codecs
 import redis
@@ -12,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
-sx_host = "https://servicex.slateci.net"
+SX_HOST = "https://servicex.slateci.net"
 req_id = "dOz5JmwBMWltPFRMDURG"
 group = "my_group"
 
@@ -67,7 +66,7 @@ while True:
     batch = batches[0]
     # print(batch.schema)
     # print(batch[1])
-    requests.put(sx_host + "/drequest/events_processed/" + req_id + "/" + str(batch.num_rows), verify=False)
+    requests.put(SX_HOST + "/drequest/events_processed/" + req_id + "/" + str(batch.num_rows), verify=False)
     tot_processed += batch.num_rows
     print('cols:', batch.num_columns, 'rows:', batch.num_rows, 'processed:', tot_processed)
     r.xack(req_id, group, mid)
