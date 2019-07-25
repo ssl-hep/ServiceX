@@ -20,10 +20,10 @@ while True:
         req_groups = r.xinfo_groups(req_id)
         req_consumers = 0
         if req_groups:
-            print('consumers:\n', r.xinfo_consumers(req_id, req_groups[0]["name"]))
+            print('consumers:', r.xinfo_consumers(req_id, req_groups[0]["name"]))
             req_consumers = req_groups[0]["consumers"]
 
-        print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups, '\nconsumers:', req_consumers)
+        print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups)
 
         pause_it = False
         if req_messages > 99 and req_consumers == 0:
@@ -36,12 +36,14 @@ while True:
             'pause_it': pause_it
         }
         res = requests.post(SX_HOST + '/drequest/update/', json=current_usage, verify=False)
-        print('update status:', res.status_code)
+        if res.status_code != 200:
+            print('update status:', res.status_code)
 
         if not counter % 6:
             # delete all topics that are not found or in Done or Terminated state.
             res = requests.get(SX_HOST + '/drequest/' + sreq_id, verify=False)
-            print('request status:', res.status_code)
+            if res.status_code != 200:
+                print('request status:', res.status_code)
             if res.status_code == 200:
                 req = res.json()
                 if req is False:
