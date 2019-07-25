@@ -15,19 +15,20 @@ while True:
     db, req_ids = r.scan()
     print('Requests:', req_ids)
     for req_id in req_ids:
+        sreq_id = str(req_id, 'utf-8')
         req_messages = r.xlen(req_id)
         req_groups = r.xinfo_groups(req_id)
         req_consumers = []
         if req_groups:
             req_consumers = r.xinfo_consumers(req_id, req_groups[0]["name"])
-        print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups, '\nrconsumers:', req_consumers)
+        print('req_id:', req_id, 'messages:', req_messages, 'rgroups:', req_groups, '\nconsumers:', req_consumers)
 
         pause_it = False
         if req_messages > 99 and req_consumers == 0:
             pause_it = True
 
         current_usage = {
-            'id': req_id,
+            'id': sreq_id,
             'redis_messages': req_messages,
             'redis_consumers': req_groups[0]["consumers"],
             'pause_it': pause_it
@@ -37,7 +38,7 @@ while True:
 
         if not counter % 6:
             # delete all topics that are not found or in Done or Terminated state.
-            res = requests.get(SX_HOST + '/drequest/' + req_id, verify=False)
+            res = requests.get(SX_HOST + '/drequest/' + sreq_id, verify=False)
             print('request status:', res.status_code)
             if res.status_code == 200:
                 req = res.json()
