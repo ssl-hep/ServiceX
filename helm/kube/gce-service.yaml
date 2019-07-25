@@ -1,0 +1,39 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: servicex-service
+  namespace: servicex
+  labels:
+    k8s-app: servicex
+spec:
+  type: NodePort
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    k8s-app: servicex
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: servicex-ingress
+  namespace: servicex
+spec:
+  tls:
+  - hosts:
+    - servicex.slateci.net
+    secretName: cert-secret
+  rules:
+    - host: servicex.slateci.net
+      http:
+        paths:
+        - path: /*
+          backend:
+            serviceName: servicex-service
+            servicePort: 80
