@@ -172,7 +172,7 @@ module.exports = function dreqmodule(app, config, es) {
           body: {
             query: { match: { req_id: this.id } },
             script: {
-              inline: `ctx._source.pause_transform = ${newState}`,
+              source: `ctx._source.pause_transform = ${newState}`,
             },
           },
         });
@@ -196,7 +196,7 @@ module.exports = function dreqmodule(app, config, es) {
           body: {
             query: { match: { req_id: this.id } },
             script: {
-              inline: 'ctx._source.status = "Terminated"',
+              source: 'ctx._source.status = "Terminated"',
             },
           },
         });
