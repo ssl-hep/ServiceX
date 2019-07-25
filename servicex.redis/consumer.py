@@ -12,10 +12,12 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 SX_HOST = "https://servicex.slateci.net"
-req_id = "dOz5JmwBMWltPFRMDURG"
+SREQ_ID = "dOz5JmwBMWltPFRMDURG"
 group = "my_group"
 
+
 # check if stream is there
+req_id = 'req_id:' + SREQ_ID
 
 _db, streams = r.scan()
 print(streams)
@@ -66,7 +68,7 @@ while True:
     batch = batches[0]
     # print(batch.schema)
     # print(batch[1])
-    requests.put(SX_HOST + "/drequest/events_processed/" + req_id + "/" + str(batch.num_rows), verify=False)
+    requests.put(SX_HOST + "/drequest/events_processed/" + SREQ_ID + "/" + str(batch.num_rows), verify=False)
     tot_processed += batch.num_rows
     print('cols:', batch.num_columns, 'rows:', batch.num_rows, 'processed:', tot_processed)
     r.xack(req_id, group, mid)

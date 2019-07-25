@@ -16,6 +16,10 @@ while True:
     print('Requests:', req_ids)
     for req_id in req_ids:
         sreq_id = str(req_id, 'utf-8')
+        if not sreq_id.startswith('req_id:'):
+            print('Foreign key', sreq_id)
+            continue
+        sreq_id = sreq_id.replace('req_id:', '')
         req_messages = r.xlen(req_id)
         req_groups = r.xinfo_groups(req_id)
         req_consumers = 0
@@ -47,12 +51,12 @@ while True:
             if res.status_code == 200:
                 req = res.json()
                 if req is False:
-                    print('request not found. Deleting stream:', req_id)
+                    print('request not found. Deleting stream:', sreq_id)
                     r.delete(req_id)
                     continue
                 req = req['_source']
                 if req['status'] == 'Terminated' or req['status'] == 'Done':
-                    print('request done. deleting topic:', req_id)
+                    print('request done. deleting stream:', sreq_id)
                     r.delete(req_id)
                     continue
 
