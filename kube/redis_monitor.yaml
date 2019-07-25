@@ -18,9 +18,9 @@ spec:
       containers:
       - name: redis-monitor
         image: sslhep/servicex-server:redis_monitor
-        command: ["sleep"]
-        args: ["9999999999"]
-        # imagePullPolicy: Always
+        # command: ["sleep"]
+        # args: ["9999999999"]
+        imagePullPolicy: Always
         resources:
           limits:
             memory: "1000Mi"
