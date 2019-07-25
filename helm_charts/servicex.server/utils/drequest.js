@@ -163,7 +163,7 @@ module.exports = function dreqmodule(app, config, es) {
     }
 
     async pauseTransforms(newState) {
-      console.log('Pausing request in ES...');
+      console.log('Pausing request in ES. pause is now:', newState);
       try {
         const response = await es.updateByQuery({
           index: 'servicex_paths',
@@ -180,6 +180,7 @@ module.exports = function dreqmodule(app, config, es) {
       } catch (err) {
         console.error(err);
       }
+      this.paused_transforms = newState;
       console.log('Done.');
     }
 
@@ -330,13 +331,14 @@ module.exports = function dreqmodule(app, config, es) {
     if (data.redis_messages) darequest.redis_messages = data.redis_messages;
     if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
     if (typeof data.pause_it !== 'undefined') {
-      if (data.pause_it === true && !this.paused_transforms) {
-        darequest.pauseTransforms(true);
-        darequest.paused_transforms = true;
+      console.log('Pause is there.', data.pause_it, 'previous state', darequest.paused_transforms);
+      if (data.pause_it === true && !darequest.paused_transforms) {
+        console.log('REALLY PAUSING.');
+        await darequest.pauseTransforms(true);
       }
-      if (data.pause_it === false && this.paused_transforms) {
-        darequest.pauseTransforms(false);
-        darequest.paused_transforms = false;
+      if (data.pause_it === false && darequest.paused_transforms) {
+        console.log('REALLY UNPAUSING.');
+        await darequest.pauseTransforms(false);
       }
     }
     await darequest.update();
