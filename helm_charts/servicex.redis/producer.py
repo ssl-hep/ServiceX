@@ -9,7 +9,7 @@ import codecs
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 
-stream = 'my_py_stream'
+stream = 'req_id:my_py_stream'
 group = 'my_py_group'
 
 try:
