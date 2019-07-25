@@ -12,18 +12,17 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 SX_HOST = "https://servicex.slateci.net"
-SREQ_ID = "dOz5JmwBMWltPFRMDURG"
-group = "my_group"
+SREQ_ID = "Kso2KmwBMWltPFRMMgVl"
+group = "ilijas_group"
 
 
 # check if stream is there
 req_id = 'req_id:' + SREQ_ID
-
-_db, streams = r.scan()
-print(streams)
+print('looking for stream:', req_id)
 found = False
 while not found:
-    print('looking for stream:', req_id)
+    _db, streams = r.scan()
+    print(streams)
     for s in streams:
         if req_id == str(s, 'utf-8'):
             found = True
