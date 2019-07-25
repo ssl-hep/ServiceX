@@ -17,7 +17,8 @@ while True:
     for req_id in req_ids:
         sreq_id = str(req_id, 'utf-8')
         if not sreq_id.startswith('req_id:'):
-            print('Foreign key', sreq_id)
+            print('Foreign key. Deleting it.', sreq_id)
+            r.delete(req_id)
             continue
         sreq_id = sreq_id.replace('req_id:', '')
         req_messages = r.xlen(req_id)

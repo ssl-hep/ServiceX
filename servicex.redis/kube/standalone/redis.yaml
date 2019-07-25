@@ -44,3 +44,13 @@ spec:
             memory: 200Gi
         ports:
         - containerPort: 6379
+        volumeMounts:
+        - name: redis-conf-volume
+          mountPath: "/etc/redis/"
+      volumes:
+      - name: redis-conf-volume
+        secret:
+          secretName: redisconf
+          items:
+          - key: conf
+            path: redis.config      
