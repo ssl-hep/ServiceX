@@ -1,3 +1,4 @@
+import sys
 import time
 import codecs
 import redis
@@ -12,18 +13,29 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 sx_host = "https://servicex.slateci.net"
-req_id = "g3xJJWwBMWltPFRMX2Yn"
+req_id = "dOz5JmwBMWltPFRMDURG"
 group = "my_group"
 
-sInfo = None
+# check if stream is there
+
+_db, streams = r.scan()
+print(streams)
+found = False
+while not found:
+    print('looking for stream:', req_id)
+    for s in streams:
+        if req_id == str(s, 'utf-8'):
+            found = True
+    time.sleep(5)
+
+sGroup = None
 try:
-    sInfo = r.xinfo_groups(req_id)
-    print('stream group info:', sInfo)
+    sGroup = r.xinfo_groups(req_id)
+    print('stream group info:', sGroup[0])
 except Exception as rex:
-    print("stream info exception: ", rex)
+    print("stream group not there: ", rex)
 
-
-if not sInfo:
+if not sGroup:
     print("creating stream group")
     r.xgroup_create(req_id, group, '0', mkstream=True)
 
