@@ -13,8 +13,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 SX_HOST = "https://servicex.slateci.net"
-SREQ_ID = "Kso2KmwBMWltPFRMMgVl"
+SREQ_ID = "NVqaLGwBMWltPFRMxyTK"
 GROUP = "ilijas_group"
+MY_POD_NAME = "standalone"
 
 if 'REQ_ID' in os.environ:
     SREQ_ID = os.environ['REQ_ID']
@@ -22,6 +23,8 @@ if 'REQ_ID' in os.environ:
 if 'GROUP' in os.environ:
     GROUP = os.environ['GROUP']
 
+if 'MY_POD_NAME' in os.environ:
+    MY_POD_NAME = os.environ['MY_POD_NAME']
 
 # check if stream is there
 req_id = 'req_id:' + SREQ_ID
@@ -51,7 +54,7 @@ if not sGroup:
 print('start fetching data...')
 tot_processed = 0
 while True:
-    a = r.xreadgroup(GROUP, 'Alice', {req_id: '>'}, count=1, block=None, noack=False)
+    a = r.xreadgroup(GROUP, MY_POD_NAME, {req_id: '>'}, count=1, block=None, noack=False)
     if not a:
         # print("Done.")
         time.sleep(.5)
