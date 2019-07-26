@@ -12,4 +12,5 @@ spec:
   selector:
     app: redis
     tier: backend
+    role: master
   type: LoadBalancer
