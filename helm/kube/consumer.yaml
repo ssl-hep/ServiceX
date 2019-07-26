@@ -33,9 +33,9 @@ spec:
     spec:
       containers:
       - name: redis-consumer
-        image: sslhep/servicex-server:redis_monitor
-        command: ["python"]
-        args: ["consumer.py"]
+        image: sslhep/servicex-server:analysis
+        # command: ["python"]
+        # args: ["consumer.py"]
         resources:
           limits:
             memory: "1000Mi"
