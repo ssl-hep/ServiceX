@@ -230,7 +230,11 @@ module.exports = function dreqmodule(app, config, es) {
     const { status } = req.params;
     console.log('update request status: ', id, status);
     const DAr = new module.DArequest();
-    await DAr.get(id);
+    const found = await DAr.get(id);
+    if (!found) {
+      console.log(`request ${id} not found. Not updating.`);
+      res.status(500).send('request not found.');
+    }
     DAr.status = status;
     if (req.params.info) {
       DAr.info += req.params.info;
@@ -244,7 +248,11 @@ module.exports = function dreqmodule(app, config, es) {
     const { events } = req.params;
     console.log('request: ', id, ' had ', events, 'events served.');
     const DAr = new module.DArequest();
-    await DAr.get(id);
+    const found = await DAr.get(id);
+    if (!found) {
+      console.log(`request ${id} not found. Not updating.`);
+      res.status(500).send('request not found.');
+    }
     DAr.events_served += parseInt(events, 10);
     await DAr.update();
     res.status(200).send('OK');
@@ -255,7 +263,11 @@ module.exports = function dreqmodule(app, config, es) {
     const { events } = req.params;
     console.log('request: ', id, ' had ', events, 'events processed.');
     const DAr = new module.DArequest();
-    await DAr.get(id);
+    const res = await DAr.get(id);
+    if (!res) {
+      console.log(`request ${id} not found. Not updating.`);
+      res.status(500).send('request not found.');
+    }
     DAr.events_processed += parseInt(events, 10);
     if (DAr.events_processed === DAr.events) {
       DAr.status = 'Done';
@@ -269,7 +281,11 @@ module.exports = function dreqmodule(app, config, es) {
     const { id } = req.params;
     console.log('request: ', id, ' will be terminated. ');
     const DAr = new module.DArequest();
-    await DAr.get(id);
+    const found = await DAr.get(id);
+    if (!found) {
+      console.log(`request ${id} not found. Not updating.`);
+      res.status(500).send('request not found.');
+    }
     DAr.Terminate();
     res.status(200).send('OK');
   });
@@ -313,7 +329,8 @@ module.exports = function dreqmodule(app, config, es) {
     const darequest = new module.DArequest();
     const found = await darequest.get(data.id);
     if (!found) {
-      res.status(500).send('Bad request');
+      console.log(`request ${data.id} not found. Not updating.`);
+      res.status(500).send('request not found.');
       return;
     }
     if (data.name) darequest.name = data.name;
@@ -356,7 +373,11 @@ module.exports = function dreqmodule(app, config, es) {
       res.render('drequest_update', req.session);
     } else {
       const dar = new module.DArequest();
-      await dar.get(rid);
+      const found = await dar.get(rid);
+      if (!found) {
+        console.log(`request ${rid} not found. Not updating.`);
+        res.status(500).send('request not found.');
+      }
       req.session.drequest = {
         id: rid,
         name: dar.name,
@@ -379,7 +400,10 @@ module.exports = function dreqmodule(app, config, es) {
   app.get('/wrequest_prepare', async (req, res) => {
     console.log('prepare request called: ', req.session.drequest.id);
     const darequest = new module.DArequest();
-    await darequest.get(req.session.drequest.id);
+    const found = await darequest.get(req.session.drequest.id);
+    if (!found) {
+      console.log(`request ${req.session.drequest.id} not found.`);
+    }
     darequest.status = 'Preparing';
     console.log('has id - updating.');
     await darequest.update();
@@ -391,7 +415,11 @@ module.exports = function dreqmodule(app, config, es) {
   app.get('/wrequest_terminate', async (req, res) => {
     console.log('terminate request called: ', req.session.drequest.id);
     const DAr = new module.DArequest();
-    await DAr.get(req.session.drequest.id);
+    const found = await DAr.get(req.session.drequest.id);
+    if (!found) {
+      console.log(`request ${id} not found. Not updating.`);
+      res.status(500).send('request not found.');
+    }
     DAr.Terminate();
     req.session.drequest = {};
     console.log('Terminate done.');
@@ -409,7 +437,10 @@ module.exports = function dreqmodule(app, config, es) {
     const darequest = new module.DArequest();
     if (req.session.drequest.id) {
       console.log('has id getting existing data.');
-      await darequest.get(req.session.drequest.id);
+      const found = await darequest.get(req.session.drequest.id);
+      if (!found) {
+        console.log(`request ${id} not found.`);
+      }
     }
     darequest.name = data.name;
     darequest.description = data.description;
