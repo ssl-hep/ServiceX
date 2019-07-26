@@ -18,7 +18,14 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 
+# We need python3 which is not part of the Rucio docker image
+RUN yum install -y centos-release-scl && \
+     yum install -y rh-python36
+
 COPY . .
+
+# Install rucio client in the python3 packages
+RUN cat configure_python3.sh | scl enable rh-python36 --
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt

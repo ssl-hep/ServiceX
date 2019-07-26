@@ -51,11 +51,26 @@ After the container is started you can attach to it and start using the rucio co
 % docker exec -it did-finder rucio ping 
 ```
 
-An example command to run:
+### Reactive DID Finder
+Included in this image is a command line script for retrieving a list of XCached
+root files based on a list of DIDs. This script uses python3 which is not the 
+default python environment for the rucio docker image. In order to execute the
+script you have to enable the python3 Software Collection
 
-``` docker exec -it did-finder /bin/bash ./run.sh request_name mc15_13TeV:xAOD.root```
+```bash
+%  docker exec -it did-finder scl enable rh-python36 bash
+```
 
+Inside this shell you can launch the cli did finder
+```bash
+% env PYTHONPATH=./did_finder python scripts/did_finder.py [list of DIDs]
+```
 
-## NOTE
-* needs update of the README :) so it explains how to run it in k8s not docker. 
-* needs rewrite to use REST API and not ES directly
+Arguments to this script are:
+* `--staticfile` _path to a test file_ - This allows you to use did_finder to 
+drive a test process. It will generate output, but will only have a record to 
+a single file that you specify. This could be a local ROOT file and allow you 
+to avoid needing a grid cert since it never talks to Rucio
+* `--site` _XCache Site_ - This site is used to locate appropriate replicas. 
+Defaults to MWT2 
+
