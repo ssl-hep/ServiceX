@@ -26,7 +26,7 @@ spec:
       app: redis
       role: slave
       tier: backend
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -37,6 +37,9 @@ spec:
       containers:
       - name: slave
         image: redis:5.0.5
+        command: ["redis-server"]
+        # args: ["--slaveof","10.103.109.109","6379"]
+        args: ["/etc/redis/redis.conf"]
         resources:
           requests:
             cpu: 900m
@@ -57,7 +60,7 @@ spec:
       volumes:
       - name: redis-conf-volume
         secret:
-          secretName: redisconf
+          secretName: redis-slave-conf
           items:
           - key: conf
-            path: redis.config    
+            path: redis.conf   

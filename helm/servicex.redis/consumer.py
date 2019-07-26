@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 r = redis.Redis(host='redis.slateci.net', port=6379, db=0)
 SX_HOST = "https://servicex.slateci.net"
-SREQ_ID = "NVqaLGwBMWltPFRMxyTK"
+SREQ_ID = "LuqcL2wBMWltPFRM4Glp"
 GROUP = "ilijas_group"
 MY_POD_NAME = "standalone"
 
@@ -68,7 +68,7 @@ while True:
     # print(mess)
     evid = a[0][1][0][1][b'pa']
     data = a[0][1][0][1][b'data']
-    print(evid)
+    print(evid, sep=' ')
     # print(data)
     adata = codecs.decode(data, 'bz2')
 
