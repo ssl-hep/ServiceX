@@ -38,6 +38,9 @@ spec:
       containers:
       - name: master
         image: redis:5.0.5
+        command: ["redis-server"]
+        args: ["/etc/redis/redis.conf"]
+        # args: ["--save","\"\""]
         resources:
           requests:
             cpu: 900m
@@ -50,7 +53,7 @@ spec:
       volumes:
       - name: redis-conf-volume
         secret:
-          secretName: redisconf
+          secretName: redis-master-conf
           items:
           - key: conf
-            path: redis.config      
+            path: redis.conf   
