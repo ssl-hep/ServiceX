@@ -1,33 +1,6 @@
 module.exports = function dreqmodule(app, config, es) {
   const module = {};
 
-  const lRequests = {}
-
-  cRequest = class cRequest {
-    constructor() {
-      this.name = 'name Undefined';
-      this.user = 'user Undefined';
-      this.description = 'description Undefined';
-      this.dataset = 'dataset Undefined';
-      this.columns = 'columns Undefined';
-      this.created_at = new Date().getTime();
-      this.modified_at = new Date().getTime();
-      this.status = 'Created';
-      this.info = '';
-      this.paused_transforms = false;
-      this.events_processed = 0;
-      this.events_served = 0;
-      this.events = 0;
-      this.kafka_lwm = 0;
-      this.kafka_hwm = 0;
-      this.redis_messages = 0;
-      this.redis_consumers = 0;
-    }
-  }
-
-  module.cESbackend = class cESbackend {
-
-  }
 
   module.DArequest = class DArequest {
     constructor() {
