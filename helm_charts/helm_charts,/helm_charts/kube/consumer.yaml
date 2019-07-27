@@ -4,12 +4,12 @@ metadata:
   name: consumer
   namespace: analysis
   labels:
-    app: redis-consumer
+    app: consumer
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: redis-consumer
+    name: consumer
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 2
@@ -17,22 +17,22 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-consumer
+  name: consumer
   namespace: analysis
   labels:
-    app: redis-consumer
+    app: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-consumer
+      app: consumer
   template:
     metadata:
       labels:
-        app: redis-consumer
+        app: consumer
     spec:
       containers:
-      - name: redis-consumer
+      - name: consumer
         image: sslhep/servicex-server:analysis
         # command: ["python"]
         # args: ["consumer.py"]
@@ -46,7 +46,7 @@ spec:
         - name: PYTHONUNBUFFERED
           value: "0"
         - name: REQ_ID
-          value: "YfPLL2wBMWltPFRMzgjF"
+          value: "8j50MWwBMWltPFRMx1ia"
         - name: GROUP
           value: "Ilija_Group"
         - name: MY_POD_NAME
