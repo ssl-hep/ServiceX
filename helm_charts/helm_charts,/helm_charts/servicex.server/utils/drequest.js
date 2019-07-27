@@ -214,7 +214,7 @@ module.exports = function dreqmodule(app, config, es) {
       index: 'servicex',
       type: 'docs',
       id: reqId,
-      retry_on_conflict: 3,
+      retry_on_conflict: 10,
       _source: ['status', 'events_served', 'events_processed', 'events', 'dataset_events'],
       body: {
         script: {
@@ -226,11 +226,17 @@ module.exports = function dreqmodule(app, config, es) {
       },
     }, (err, resp, status) => {
       if (err) {
-        console.log('could not update events_served:', err);
+        console.log('could not update events_served:', err.meta.body.error);
+        return;
       }
-      console.log(resp);
-      // here add checks if events_processed > events or == dataset_events and if true 
-      // set request status to Done.
+      if (resp.body.result === 'updated') {
+        const cState = resp.body.get._source;
+        console.log(cState);
+        if (cState.events_served >= cState.events || cState.events_served >= cState.dataset_events) {
+          // this.ChangeStatus(reqID, 'Done', 'Done.');
+          // should be paused.
+        }
+      }
     });
   }
 
@@ -239,7 +245,8 @@ module.exports = function dreqmodule(app, config, es) {
       index: 'servicex',
       type: 'docs',
       id: reqId,
-      retry_on_conflict: 3,
+      retry_on_conflict: 10,
+      _source: ['status', 'events_served', 'events_processed', 'events', 'dataset_events'],
       body: {
         script: {
           source: 'ctx._source.events_processed += params.events',
@@ -248,9 +255,17 @@ module.exports = function dreqmodule(app, config, es) {
           },
         },
       },
-    }, (err, _resp, _status) => {
+    }, (err, resp, status) => {
       if (err) {
-        console.log('could not update events_processed:', err);
+        console.log('could not update events_processed:', err.meta.body.error);
+        return;
+      }
+      if (resp.body.result === 'updated') {
+        const cState = resp.body.get._source;
+        console.log(cState);
+        // if (cState.events_processed >= cState.events || cState.events_processed >= cState.dataset_events) {
+        //   this.ChangeStatus(reqId, 'Done', 'Done.');
+        // }
       }
     });
   }
