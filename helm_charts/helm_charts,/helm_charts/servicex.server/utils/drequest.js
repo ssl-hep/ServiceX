@@ -49,7 +49,7 @@ module.exports = function dreqmodule(app, config, es) {
     async get(id) {
       console.log('getting darequest info...');
       try {
-        var response = await es.search({
+        let response = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -98,7 +98,7 @@ module.exports = function dreqmodule(app, config, es) {
     async getWithStatus(status) {
       // console.log('getting darequest with status:', status);
       try {
-        var response = await es.search({
+        let response = await es.search({
           index: 'servicex',
           type: 'docs',
           body: {
@@ -209,6 +209,48 @@ module.exports = function dreqmodule(app, config, es) {
     }
   };
 
+  function AddEventsServed(reqId, events) {
+    es.update({
+      index: 'servicex',
+      type: 'docs',
+      id: reqId,
+      retry_on_conflict: 3,
+      _source: ['status', 'events_processed', 'events', 'dataset_events'],
+      body: {
+        script: 'ctx._source.events_served += events',
+        params: {
+          events: events,
+        },
+      },
+    }, (err, resp, status) => {
+      if (err) {
+        console.log('could not update events_processed:', err);
+      }
+      console.log(resp);
+      // here add checks if events_processed > events or == dataset_events and if true 
+      // set request status to Done.
+    });
+  }
+
+  function AddEventsProcessed(reqId, events) {
+    es.update({
+      index: 'servicex',
+      type: 'docs',
+      id: reqId,
+      retry_on_conflict: 3,
+      body: {
+        script: 'ctx._source.events_processed += events',
+        params: {
+          events: events,
+        },
+      },
+    }, (err, _resp, _status) => {
+      if (err) {
+        console.log('could not update events_processed:', err);
+      }
+    });
+  }
+
   app.get('/drequest/status/:status', async (req, res) => {
     const { status } = req.params;
     // console.log('getting a request in status: ', status);
@@ -246,35 +288,41 @@ module.exports = function dreqmodule(app, config, es) {
 
   app.put('/drequest/events_served/:id/:events', async (req, res) => {
     const { id } = req.params;
-    const { events } = req.params;
+    let { events } = req.params;
     console.log('request: ', id, ' had ', events, 'events served.');
-    const DAr = new module.DArequest();
-    const found = await DAr.get(id);
-    if (!found) {
-      console.log(`request ${id} not found. Not updating.`);
-      res.status(500).send('request not found.');
-    }
-    DAr.events_served += parseInt(events, 10);
-    await DAr.update();
+
+    events = parseInt(events, 10);
+    AddEventsServed(id, events);
+
+    // const DAr = new module.DArequest();
+    // const found = await DAr.get(id);
+    // if (!found) {
+    //   console.log(`request ${id} not found. Not updating.`);
+    //   res.status(500).send('request not found.');
+    // }
+    // DAr.events_served += parseInt(events, 10);
+    // await DAr.update();
     res.status(200).send('OK');
   });
 
   app.put('/drequest/events_processed/:id/:events', async (req, res) => {
     const { id } = req.params;
-    const { events } = req.params;
+    let { events } = req.params;
+    events = parseInt(events, 10);
     console.log('request: ', id, ' had ', events, 'events processed.');
-    const DAr = new module.DArequest();
-    const found = await DAr.get(id);
-    if (!found) {
-      console.log(`request ${id} not found. Not updating.`);
-      res.status(500).send('request not found.');
-    }
-    DAr.events_processed += parseInt(events, 10);
-    if (DAr.events_processed === DAr.events) {
-      DAr.status = 'Done';
-      DAr.info += 'All events processed.';
-    }
-    await DAr.update();
+    AddEventsProcessed(id, events);
+    // const DAr = new module.DArequest();
+    // const found = await DAr.get(id);
+    // if (!found) {
+    // console.log(`request ${id} not found. Not updating.`);
+    // res.status(500).send('request not found.');
+    // }
+    // DAr.events_processed += parseInt(events, 10);
+    // if (DAr.events_processed === DAr.events) {
+    // DAr.status = 'Done';
+    // DAr.info += 'All events processed.';
+    // }
+    // await DAr.update();
     res.status(200).send('OK');
   });
 
@@ -418,7 +466,7 @@ module.exports = function dreqmodule(app, config, es) {
     const DAr = new module.DArequest();
     const found = await DAr.get(req.session.drequest.id);
     if (!found) {
-      console.log(`request ${id} not found. Not updating.`);
+      console.log(`request ${req.session.drequest.id} not found. Not updating.`);
       res.status(500).send('request not found.');
     }
     DAr.Terminate();
@@ -440,7 +488,7 @@ module.exports = function dreqmodule(app, config, es) {
       console.log('has id getting existing data.');
       const found = await darequest.get(req.session.drequest.id);
       if (!found) {
-        console.log(`request ${id} not found.`);
+        console.log(`request ${req.session.drequest.id} not found.`);
       }
     }
     darequest.name = data.name;
