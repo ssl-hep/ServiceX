@@ -1,3 +1,19 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transformer
+  namespace: servicex
+  labels:
+    app: transformer
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transformer
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 2
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,7 +63,7 @@ spec:
         - name: MAX_MESSAGES_PER_REQUEST
           value: "100"
         - name: EVENTS_PER_MESSAGE
-          value: "500"
+          value: "1000"
         volumeMounts:
         - name: x509-data
           mountPath: "/etc/grid-security/"
