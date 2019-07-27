@@ -215,7 +215,7 @@ module.exports = function dreqmodule(app, config, es) {
       type: 'docs',
       id: reqId,
       retry_on_conflict: 3,
-      _source: ['status', 'events_processed', 'events', 'dataset_events'],
+      _source: ['status', 'events_served', 'events_processed', 'events', 'dataset_events'],
       body: {
         script: {
           source: 'ctx._source.events_served += events',
@@ -226,7 +226,7 @@ module.exports = function dreqmodule(app, config, es) {
       },
     }, (err, resp, status) => {
       if (err) {
-        console.log('could not update events_processed:', err);
+        console.log('could not update events_served:', err);
       }
       console.log(resp);
       // here add checks if events_processed > events or == dataset_events and if true 
