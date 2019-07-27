@@ -46,7 +46,7 @@ spec:
         - name: PYTHONUNBUFFERED
           value: "0"
         - name: REQ_ID
-          value: "8j50MWwBMWltPFRMx1ia"
+          value: "ok3MMWwBMWltPFRMFJOe"
         - name: GROUP
           value: "Ilija_Group"
         - name: MY_POD_NAME
