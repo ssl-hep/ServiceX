@@ -6,10 +6,9 @@ TODO:
 
 # imediate
 
-* make request update return specific code when request not there. Then kafka monitor can delete queue with such a return code. 
+* logic in request to make it DONE when events processed finished.
+* logic in request to stop transformers when events served > needed.
 * make request buttons on web site correctly behave 
-* check that terminate actually terminates paths. Does now really work when request has 10000 files.
-* make web site use regular REST endpoints.
 * define getters and setters for drequest and dpath variables. functions to go from es to local and back. 
 * update file/path status
 * there is some mess with "approved." is it in session or in user.

@@ -9,6 +9,7 @@ const session = require('express-session');
 const https = require('https');
 const http = require('http');
 const rRequest = require('request');
+const elasticsearch = require('@elastic/elasticsearch');
 
 const config = require('./config/config.json');
 
@@ -38,7 +39,6 @@ app.use(session({
   cookie: { secure: false, maxAge: 3600000 },
 }));
 
-const elasticsearch = require('@elastic/elasticsearch');
 const es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
 
 require('./utils/drequest')(app, config, es);
