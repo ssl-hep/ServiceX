@@ -1,6 +1,34 @@
 module.exports = function dreqmodule(app, config, es) {
   const module = {};
 
+  const lRequests = {}
+
+  cRequest = class cRequest {
+    constructor() {
+      this.name = 'name Undefined';
+      this.user = 'user Undefined';
+      this.description = 'description Undefined';
+      this.dataset = 'dataset Undefined';
+      this.columns = 'columns Undefined';
+      this.created_at = new Date().getTime();
+      this.modified_at = new Date().getTime();
+      this.status = 'Created';
+      this.info = '';
+      this.paused_transforms = false;
+      this.events_processed = 0;
+      this.events_served = 0;
+      this.events = 0;
+      this.kafka_lwm = 0;
+      this.kafka_hwm = 0;
+      this.redis_messages = 0;
+      this.redis_consumers = 0;
+    }
+  }
+
+  module.cESbackend = class cESbackend {
+
+  }
+
   module.DArequest = class DArequest {
     constructor() {
       this.created_at = new Date().getTime();
@@ -263,8 +291,8 @@ module.exports = function dreqmodule(app, config, es) {
     const { events } = req.params;
     console.log('request: ', id, ' had ', events, 'events processed.');
     const DAr = new module.DArequest();
-    const res = await DAr.get(id);
-    if (!res) {
+    const found = await DAr.get(id);
+    if (!found) {
       console.log(`request ${id} not found. Not updating.`);
       res.status(500).send('request not found.');
     }
