@@ -217,9 +217,11 @@ module.exports = function dreqmodule(app, config, es) {
       retry_on_conflict: 3,
       _source: ['status', 'events_processed', 'events', 'dataset_events'],
       body: {
-        script: 'ctx._source.events_served += events',
-        params: {
-          events: events,
+        script: {
+          source: 'ctx._source.events_served += events',
+          params: {
+            events: events,
+          },
         },
       },
     }, (err, resp, status) => {
@@ -239,9 +241,11 @@ module.exports = function dreqmodule(app, config, es) {
       id: reqId,
       retry_on_conflict: 3,
       body: {
-        script: 'ctx._source.events_processed += events',
-        params: {
-          events: events,
+        script: {
+          source: 'ctx._source.events_processed += events',
+          params: {
+            events: events,
+          },
         },
       },
     }, (err, _resp, _status) => {
