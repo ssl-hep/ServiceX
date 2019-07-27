@@ -22,6 +22,10 @@ if 'REQ_ID' in os.environ:
 if 'GROUP' in os.environ:
     GROUP = os.environ['GROUP']
 
+ANALYSER = 'anon'
+if 'MY_POD_NAME' in os.environ:
+    ANALYSER = os.environ['MY_POD_NAME']
+
 
 # check if stream is there
 req_id = 'req_id:' + SREQ_ID
@@ -51,7 +55,7 @@ if not sGroup:
 print('start fetching data...')
 tot_processed = 0
 while True:
-    a = r.xreadgroup(GROUP, 'Alice', {req_id: '>'}, count=1, block=None, noack=False)
+    a = r.xreadgroup(GROUP, ANALYSER, {req_id: '>'}, count=1, block=None, noack=False)
     if not a:
         # print("Done.")
         time.sleep(.5)
