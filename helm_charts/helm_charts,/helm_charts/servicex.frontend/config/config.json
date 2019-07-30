@@ -2,5 +2,7 @@
     "TESTING": true,
     "SITENAME": "servicex.slateci.net",
     "HTTPS": false,
-    "SECRETS_PATH": "./kube/secrets/"
+    "SECRETS_PATH": "./kube/secrets/",
+    "HWM": 100000,
+    "LWM": 80000
 }

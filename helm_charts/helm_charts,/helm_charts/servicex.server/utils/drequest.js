@@ -305,43 +305,21 @@ module.exports = function dreqmodule(app, config, es) {
     res.status(200).send('OK');
   });
 
-  app.put('/drequest/events_served/:id/:events', async (req, res) => {
+  app.put('/drequest/events_served/:id/:events', (req, res) => {
     const { id } = req.params;
     let { events } = req.params;
     console.log('request: ', id, ' had ', events, 'events served.');
-
     events = parseInt(events, 10);
     AddEventsServed(id, events);
-
-    // const DAr = new module.DArequest();
-    // const found = await DAr.get(id);
-    // if (!found) {
-    //   console.log(`request ${id} not found. Not updating.`);
-    //   res.status(500).send('request not found.');
-    // }
-    // DAr.events_served += parseInt(events, 10);
-    // await DAr.update();
     res.status(200).send('OK');
   });
 
-  app.put('/drequest/events_processed/:id/:events', async (req, res) => {
+  app.put('/drequest/events_processed/:id/:events', (req, res) => {
     const { id } = req.params;
     let { events } = req.params;
     events = parseInt(events, 10);
     console.log('request: ', id, ' had ', events, 'events processed.');
     AddEventsProcessed(id, events);
-    // const DAr = new module.DArequest();
-    // const found = await DAr.get(id);
-    // if (!found) {
-    // console.log(`request ${id} not found. Not updating.`);
-    // res.status(500).send('request not found.');
-    // }
-    // DAr.events_processed += parseInt(events, 10);
-    // if (DAr.events_processed === DAr.events) {
-    // DAr.status = 'Done';
-    // DAr.info += 'All events processed.';
-    // }
-    // await DAr.update();
     res.status(200).send('OK');
   });
 
