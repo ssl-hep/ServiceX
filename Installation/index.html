@@ -81,10 +81,10 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#installation">Installation</a></li>
-        <li class="main "><a href="#frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</a></li>
-        <li class="main "><a href="#did-finder-validator-and-transformer">did-finder, validator and transformer</a></li>
-        <li class="main "><a href="#redis">redis</a></li>
-        <li class="main "><a href="#kafka">kafka</a></li>
+            <li><a href="#frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</a></li>
+            <li><a href="#did-finder-validator-and-transformer">did-finder, validator and transformer</a></li>
+            <li><a href="#redis">redis</a></li>
+            <li><a href="#kafka">kafka</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -92,7 +92,7 @@
 <h1 id="installation">Installation</h1>
 <p>All the tools can be installed in different kubernetes clusters. Here instructions for each tool separately.
 Secrets are all known to Ilija Vukotic.</p>
-<h1 id="frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</h1>
+<h2 id="frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</h2>
 <p>Kubectl commands listed should be executed from subdirectory <em>kube</em>. </p>
 <p><strong>label the node to be used for the frontend</strong><br />
 <code>kubectl label nodes &lt;node name&gt; es=capable</code></p>
@@ -115,7 +115,7 @@ Secrets are all known to Ilija Vukotic.</p>
 <code>kubectl create -f service.yaml</code></p>
 <p><strong>deploy the frontend</strong><br />
 <code>kubectl create -f frontend.yaml</code></p>
-<h1 id="did-finder-validator-and-transformer">did-finder, validator and transformer</h1>
+<h2 id="did-finder-validator-and-transformer">did-finder, validator and transformer</h2>
 <p>While all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:<br />
 <code>kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem</code></p>
 <p><strong>deploy the did-finder</strong><br />
@@ -124,7 +124,7 @@ Secrets are all known to Ilija Vukotic.</p>
 <code>kubectl create -f validator.yaml</code></p>
 <p><strong>deploy the transformer</strong><br />
 <code>kubectl create -f did-finder.yaml</code></p>
-<h1 id="redis">redis</h1>
+<h2 id="redis">redis</h2>
 <p>Should be done from <em>servicex.redis/kube/standalone</em>.</p>
 <p><strong>create redis namespace</strong><br />
 <code>kubectl create ns redis</code></p>
@@ -139,7 +139,7 @@ Secrets are all known to Ilija Vukotic.</p>
 <code>kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf</code></p>
 <p><strong>deploy slave (optional)</strong><br />
 <code>kubectl create -f redis-slave.yaml</code></p>
-<h1 id="kafka">kafka</h1></div>
+<h2 id="kafka">kafka</h2></div>
         </div>
 
         <footer class="col-md-12">
