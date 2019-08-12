@@ -51,6 +51,9 @@
                     <li class="active">
                         <a href="./">Implementation reference</a>
                     </li>
+                    <li >
+                        <a href="../Installation/">Installation</a>
+                    </li>
                 </ul>
 
             <ul class="nav navbar-nav navbar-right">
@@ -64,8 +67,8 @@
                             <i class="fa fa-arrow-left"></i> Previous
                         </a>
                     </li>
-                    <li class="disabled">
-                        <a rel="prev" >
+                    <li >
+                        <a rel="prev" href="../Installation/">
                             Next <i class="fa fa-arrow-right"></i>
                         </a>
                     </li>
@@ -79,60 +82,124 @@
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#implementation-reference">Implementation reference</a></li>
             <li><a href="#api">API</a></li>
-            <li><a href="#requests">Requests</a></li>
-            <li><a href="#single-file">Single file</a></li>
+        <li class="main "><a href="#imediate">imediate</a></li>
+        <li class="main "><a href="#scaling">scaling</a></li>
+        <li class="main "><a href="#user-friendliness">user friendliness</a></li>
+            <li><a href="#user">user</a></li>
+            <li><a href="#drequest">drequest</a></li>
+            <li><a href="#dpath">dpath</a></li>
+            <li><a href="#requests-states-and-transitions">Requests states and transitions</a></li>
+            <li><a href="#single-file-states-and-transitions">Single file states and transitions</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
 <h1 id="implementation-reference">Implementation reference</h1>
 <h2 id="api">API</h2>
-<p>TODO: 
-<em> make sure I list here only endpoints that don't return a web page.
-</em> make rucio update paths in ES not at the end of the rucio lookup but every 10 file lookups
-* update file/path status</p>
+<p>TODO: </p>
+<h1 id="imediate">imediate</h1>
+<ul>
+<li>logic in request to make it DONE when events processed finished.</li>
+<li>logic in request to stop transformers when events served &gt; needed.</li>
+<li>make request buttons on web site correctly behave </li>
+<li>define getters and setters for drequest and dpath variables. functions to go from es to local and back. </li>
+<li>update file/path status</li>
+<li>there is some mess with "approved." is it in session or in user.</li>
+<li>split web and rest servers.</li>
+</ul>
+<h1 id="scaling">scaling</h1>
+<h1 id="user-friendliness">user friendliness</h1>
+<ul>
+<li>add buttons to terminate request</li>
+<li>add visualizations to show progress (kibana visualization)</li>
+<li>add icons to clone request -&gt; just opens create web page and prepopulates with values from the original request.</li>
+<li>get user info in ES. currently most not stored.</li>
+</ul>
 <h3 id="user">user</h3>
 <ul>
+<li>GET /profile - renders profile page. preloads users data from ES. will be simpler once ajax call gets data from /user</li>
 <li>
-<p>GET /user maybe </p>
-<p>probably not needed</p>
+<p>GET /users - renders users page. ajax call gets data from /users_data.</p>
 </li>
 <li>
-<p>GET /users_data</p>
+<p>GET /authorize/:user_id</p>
 </li>
 <li>
-<p>GET /profile</p>
+<p>GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/</p>
 </li>
-<li>GET /users</li>
-<li>GET /authorize/:user_id</li>
-<li>GET /get_requests</li>
+<li>
+<p>GET /user/:user_id?  <strong>validated</strong></p>
+<p>returns json formated user profile data. if called from web interface and user is logged <strong>user_id</strong> is not needed.</p>
+</li>
+<li>
+<p>GET /users_data  <strong>validated</strong></p>
+<p>returns json formated data on all users</p>
+</li>
+<li>
+<p>GET /user/requests/:user_id  <strong>validated</strong></p>
+<p>returns json formated info on all users requests</p>
+</li>
 </ul>
 <h3 id="drequest">drequest</h3>
 <ul>
-<li>GET /drequest/status/:status</li>
-<li>PUT /drequest/status/:id/:status/:info?</li>
 <li>
-<p>POST /drequest/update</p>
+<p>GET /drequest/status/:status</p>
+<p>for a given request status (eg. Defined) it finds the oldest request in that status. Returns all of that drequest data in json format. </p>
+</li>
+<li>
+<p>GET /drequest/:id <strong>validated</strong></p>
+<p>for a given request_id it returns all drequest data in json format. </p>
+</li>
+<li>
+<p>PUT /drequest/status/:id/:status/:info?</p>
+</li>
+<li>
+<p>PUT /drequest/terminate/:id <strong>validated</strong></p>
+<p>Sets status to Terminated for a given request_id and all the related paths.</p>
+</li>
+<li>
+<p>PUT /drequest/events_processed/:id/:events <strong>validated</strong></p>
+<p>for a given request_id increments number of events processed by <em>events</em>. If all the events were processed, request status is set to <em>Done</em>.</p>
+</li>
+<li>
+<p>POST /drequest/create <strong>validated</strong></p>
+<p>json document must contain: userid, name, dataset, branches, events requested, optionaly: request description.
+eg.
+{
+    "userid":"a51dbd7e-d274-11e5-9b11-9be347a09ce0",
+    "name": "test x",
+    "dataset": "mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00",
+    "description": "just a test",
+    "columns":["Electrons.pt()","Electrons.eta()","Electrons.phi()"],
+    "events":123456
+}</p>
+</li>
+<li>
+<p>POST /drequest/update <strong>validated</strong></p>
 <p>updates all the posted info.</p>
 </li>
 </ul>
 <h4 id="web-only">WEB only</h4>
 <ul>
 <li>GET /wrequest_update/:rid </li>
-<li>GET /drequest_prepare</li>
-<li>GET /drequest_terminate</li>
-<li>GET /drequest_manage</li>
+<li>GET /wrequest_prepare</li>
+<li>GET /wrequest_terminate</li>
+<li>GET /wrequest_manage</li>
 <li>POST /wrequest_update</li>
 </ul>
 <h3 id="dpath">dpath</h3>
 <ul>
 <li>
-<p>POST /dpath/create</p>
+<p>POST /dpath/create <strong>validated</strong></p>
 <p>to be used by DID-finder</p>
 </li>
 <li>
 <p>GET /dpath/transform/</p>
-<p>to be used by transformer</p>
+<p>used by transformer. If there is a path that is in <em>Validated</em> state it is updated to <em>Transforming</em> and returned to the transformer.</p>
+</li>
+<li>
+<p>GET /dpath/transform/:rid/:status <strong>validated</strong></p>
+<p>returns data on a path belonging to <em>rid</em> request and in certain status.</p>
 </li>
 <li>
 <p>PUT /dpath/transform/:id/:status</p>
@@ -141,29 +208,43 @@
 </ul>
 <h4 id="unused-for-now">Unused for now</h4>
 <ul>
-<li>GET /dpath/:id</li>
-<li>GET /dpath/last_used/:rid</li>
+<li>
+<p>GET /dpath/:id  <strong>validated</strong></p>
+<p>returns all the data about path</p>
+</li>
+<li>
+<p>GET /dpath/last_used/:rid</p>
+</li>
 </ul>
-<h2 id="requests">Requests</h2>
-<h3 id="states">States</h3>
+<h2 id="requests-states-and-transitions">Requests states and transitions</h2>
 <ul>
-<li>Defined -&gt; Defining</li>
-<li>Failed</li>
-<li>Prescreened</li>
+<li>After web or CLI request creation request is in <em>Created</em></li>
+<li>DID-finder will change it first to <em>LookingUp</em> and on finish to <em>LookedUp</em> or <em>Failed</em></li>
+<li>Validator will change it to <em>Validated</em> or <em>Failed</em></li>
+<li>First transformer will change state to <em>Processing</em> or <em>Failed</em></li>
+<li>Last transformer will change it to <em>Delivered</em></li>
+<li>Last processed will change it to <em>Processed</em></li>
 </ul>
-<h3 id="state-transitions">State transitions</h3>
+<h2 id="single-file-states-and-transitions">Single file states and transitions</h2>
 <ul>
-<li></li>
+<li>DID-finder will create paths in state <em>Created</em></li>
+<li>Validator will change them to <em>Validated</em></li>
+<li>Transformer will first move them to <em>Transforming</em></li>
+<li>Transformer will change them to <em>Failed</em> or <em>Transformed</em></li>
 </ul>
-<h2 id="single-file">Single file</h2>
-<h3 id="states_1">States</h3>
-<ul>
-<li>Defined</li>
-<li>Transforming</li>
-<li>Transformed</li>
-</ul>
-<h3 id="state-transitions_1">State transitions</h3>
-<p>*</p></div>
+<p>transformer workflow:</p>
+<ol>
+<li>gets dpath to process (_id, rid, path, file_events)</li>
+<li>gets drequest connected to that dpath (columns, events_transformed, events_transforming, events_requested )</li>
+<li>if transformation needed <ol>
+<li>update dpath status to <em>Transforming</em></li>
+<li>update drequest events_transforming
+else</li>
+<li>update dpath status to NotNeeded</li>
+</ol>
+</li>
+<li>once transformation done update dpath status to <em>Transformed</em>, update drequest events_tranformed, events_transforming, and if needed drequest status to <em>Transformed</em>.</li>
+</ol></div>
         </div>
 
         <footer class="col-md-12">
