@@ -93,7 +93,11 @@
 <p>All the tools can be installed in different kubernetes clusters. Here instructions for each tool separately.
 Kubectl commands listed should be executed from subdirectory <em>kube</em>.</p>
 <h1 id="frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</h1>
-<p><strong>label the node</strong></p>
+<p><strong>label the node to be used for the frontend</strong><br />
+<code>kubectl label nodes &lt;node name&gt; es=capable</code></p>
+<p><strong>ask Lincoln/Ilija/Judith to open ES firewall for that nodes IP. To get that IP look for external IP in output of :</strong><br />
+<code>kubectl describe node &lt;node name&gt;</code></p>
+<p><strong>in AWS Route53 change A record for <em><em>servicex.slateci.net</em></em> to that IP</strong></p>
 <p><strong>create namespace</strong><br />
 <code>kubectl create -f namespace.yaml</code></p>
 <p><strong>create secrets with site tls cert</strong><br />
@@ -104,7 +108,7 @@ Kubectl commands listed should be executed from subdirectory <em>kube</em>.</p>
 <code>kubectl create secret -n servicex generic es-secret --from-file=es_conf=secrets/elasticsearch/elasticsearch.json</code></p>
 <p><strong>create secret for Globus authentication</strong><br />
 <code>kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json</code></p>
-<p><strong>create service account (optional)</strong><br />
+<p><strong>create service account</strong><br />
 <code>kubectl create -f service_account.yaml</code></p>
 <p><strong>deploy service and ingress</strong><br />
 <code>kubectl create -f service.yaml</code></p>
@@ -129,6 +133,7 @@ Kubectl commands listed should be executed from subdirectory <em>kube</em>.</p>
 <code>kubectl create secret -n redis generic redis-master-conf --from-file=conf=../config/redis.conf</code></p>
 <p><strong>deploy master. The default configuration requires a node with 200GB of RAM.</strong><br />
 <code>kubectl create -f redis.yaml</code></p>
+<p><strong>get master node IP. In AWS Route53 change A record for <em><em>redis.slateci.net</em></em> to that IP</strong></p>
 <p><strong>create slave configuration secret</strong><br />
 <code>kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf</code></p>
 <p><strong>deploy slave (optional)</strong><br />
