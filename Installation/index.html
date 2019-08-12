@@ -132,13 +132,11 @@ Kubectl commands listed should be executed from subdirectory <em>kube</em>.</p>
 </ul>
 <h1 id="did-finder-validator-and-transformer">did-finder, validator and transformer</h1>
 <ul>
+<li>while all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:
+    kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem</li>
 <li>
-<p>while all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:</p>
-<p>kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem</p>
-</li>
-<li>
-<p>deploy the did-finder</p>
-<p>kubectl create -f did-finder.yaml</p>
+<p>deploy the did-finder
+    kubectl create -f did-finder.yaml</p>
 </li>
 <li>
 <p>deploy the validator</p>
