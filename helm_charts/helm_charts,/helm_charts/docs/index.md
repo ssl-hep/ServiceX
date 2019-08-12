@@ -21,5 +21,6 @@ accelerated techniques, and can prefilter events so that only useful data is
 transmitted to the user.
 
 * [Documentation](https://ssl-hep.github.io/ServiceX/)
-* [Kanban board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333)
+<!-- * [Kanban board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333) -->
 * [Service frontend](https://servicex.slateci.net)
+* [Service REST API](https://documenter.getpostman.com/view/7829270/SVYusJ4w?version=latest)
