@@ -93,46 +93,46 @@
 <p>All the tools can be installed in different kubernetes clusters. Here instructions for each tool separately.
 Kubectl commands listed should be executed from subdirectory <em>kube</em>.</p>
 <h1 id="frontend-atm-both-web-and-rest-api">Frontend (ATM both web and REST API)</h1>
-<p><strong>Label the node</strong></p>
-<p><strong>Create namespace</strong> </p>
-<p><code>kubectl create -f namespace.yaml</code></p>
-<p><strong>Create secrets with site tls cert</strong></p>
-<p><code>kubectl create secret -n servicex generic cert-secret --from-file=tls.key=secrets/https-certs/servicex.key.pem --from-file=tls.crt=secrets/https-certs/servicex.cert.crt</code></p>
-<p><strong>Create secret with configuration</strong></p>
-<p><code>kubectl create secret -n servicex generic config --from-file=conf=../config/config.json</code></p>
-<p><strong>create secret for Elasticsearch access</strong></p>
-<p><code>kubectl create secret -n servicex generic es-secret --from-file=es_conf=secrets/elasticsearch/elasticsearch.json</code></p>
-<p><strong>create secret for Globus authentication</strong></p>
-<p><code>kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json</code></p>
-<p><strong>create service account (optional)</strong></p>
-<p><code>kubectl create -f service_account.yaml</code></p>
-<p><strong>deploy service and ingress</strong></p>
-<p><code>kubectl create -f service.yaml</code></p>
-<p><strong>deploy the frontend</strong></p>
-<p><code>kubectl create -f frontend.yaml</code></p>
+<p><strong>label the node</strong></p>
+<p><strong>create namespace</strong><br />
+<code>kubectl create -f namespace.yaml</code></p>
+<p><strong>create secrets with site tls cert</strong><br />
+<code>kubectl create secret -n servicex generic cert-secret --from-file=tls.key=secrets/https-certs/servicex.key.pem --from-file=tls.crt=secrets/https-certs/servicex.cert.crt</code></p>
+<p><strong>create secret with configuration</strong><br />
+<code>kubectl create secret -n servicex generic config --from-file=conf=../config/config.json</code></p>
+<p><strong>create secret for Elasticsearch access</strong><br />
+<code>kubectl create secret -n servicex generic es-secret --from-file=es_conf=secrets/elasticsearch/elasticsearch.json</code></p>
+<p><strong>create secret for Globus authentication</strong><br />
+<code>kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json</code></p>
+<p><strong>create service account (optional)</strong><br />
+<code>kubectl create -f service_account.yaml</code></p>
+<p><strong>deploy service and ingress</strong><br />
+<code>kubectl create -f service.yaml</code></p>
+<p><strong>deploy the frontend</strong><br />
+<code>kubectl create -f frontend.yaml</code></p>
 <h1 id="did-finder-validator-and-transformer">did-finder, validator and transformer</h1>
-<p>__while all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:</p>
-<p><code>kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem</code></p>
-<p><strong>deploy the did-finder</strong></p>
-<p><code>kubectl create -f did-finder.yaml</code></p>
-<p><strong>deploy the validator</strong></p>
-<p><code>kubectl create -f validator.yaml</code></p>
-<p><strong>deploy the transformer</strong></p>
-<p><code>kubectl create -f did-finder.yaml</code></p>
+<p>While all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:<br />
+<code>kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem</code></p>
+<p><strong>deploy the did-finder</strong><br />
+<code>kubectl create -f did-finder.yaml</code></p>
+<p><strong>deploy the validator</strong><br />
+<code>kubectl create -f validator.yaml</code></p>
+<p><strong>deploy the transformer</strong><br />
+<code>kubectl create -f did-finder.yaml</code></p>
 <h1 id="redis">redis</h1>
-<p>Should be done from <em>servicex.redis/kube/standalone</em>.
-<strong>create redis namespace</strong></p>
-<p><code>kubectl create ns redis</code></p>
-<p><strong>create redis monitor (optional)</strong></p>
-<p><code>kubectl create kafka_monitor.yaml</code></p>
-<p><strong>create master configuration secret</strong></p>
-<p><code>kubectl create secret -n redis generic redis-master-conf --from-file=conf=../config/redis.conf</code></p>
-<p><strong>deploy master. The default configuration requires a node with 200GB of RAM.</strong></p>
-<p><code>kubectl create -f redis.yaml</code></p>
-<p><strong>create slave configuration secret</strong></p>
-<p><code>kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf</code></p>
-<p><strong>deploy slave (optional)</strong></p>
-<p><code>kubectl create -f redis-slave.yaml</code></p>
+<p>Should be done from <em>servicex.redis/kube/standalone</em>.</p>
+<p><strong>create redis namespace</strong><br />
+<code>kubectl create ns redis</code></p>
+<p><strong>create redis monitor (optional)</strong><br />
+<code>kubectl create kafka_monitor.yaml</code></p>
+<p><strong>create master configuration secret</strong><br />
+<code>kubectl create secret -n redis generic redis-master-conf --from-file=conf=../config/redis.conf</code></p>
+<p><strong>deploy master. The default configuration requires a node with 200GB of RAM.</strong><br />
+<code>kubectl create -f redis.yaml</code></p>
+<p><strong>create slave configuration secret</strong><br />
+<code>kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf</code></p>
+<p><strong>deploy slave (optional)</strong><br />
+<code>kubectl create -f redis-slave.yaml</code></p>
 <h1 id="kafka">kafka</h1></div>
         </div>
 
