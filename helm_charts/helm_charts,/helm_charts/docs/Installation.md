@@ -41,11 +41,8 @@ Kubectl commands listed should be executed from subdirectory _kube_.
 # did-finder, validator and transformer
 
 * while all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:
-
     kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem
-
 * deploy the did-finder
-
     kubectl create -f did-finder.yaml
 
 * deploy the validator
@@ -82,7 +79,7 @@ Should be done from _servicex.redis/kube/standalone_.
 * deploy slave (optional)
 
     kubectl create -f redis-slave.yaml
-    
+
 # kafka
 
 
