@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
 
 from rucio_ops import parse_did, list_files_for_did, \
     DIDSummary, find_replicas, get_sel_path
@@ -35,10 +36,12 @@ import argparse
 def process_did_list(dids, site, did_client, replica_client):
 
     for did in dids:
+        print("---->", did)
         files = list_files_for_did(parse_did(did), did_client)
         result = DIDSummary(did)
 
         for file in files:
+            print(file)
             result.accumulate(file)
 
             replicas = find_replicas(file, site, replica_client)
@@ -90,6 +93,10 @@ parser.add_argument('--staticfile', dest='static_file', action='store',
                     default=None,
                     help='Static Root file to serve up)')
 
+parser.add_argument('--outfile', dest='output_file', action='store',
+                    default=None,
+                    help='Filename to output list of Root files to')
+
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
 
@@ -101,6 +108,8 @@ site = args.site
 request_id = 'cli'
 
 
+# Is this a test run where we serve up a particular file instead of hitting the
+# real rucio service?
 if args.static_file:
     summary = process_static_file(args.static_file)
 else:
@@ -110,6 +119,11 @@ else:
     summary = process_did_list(args.did_list, site, dc, rc)
 
 print(summary)
-print(summary.file_results)
+
+if args.output_file:
+    with open(args.output_file, 'w') as f:
+        json.dump(summary.file_results, f)
+else:
+    print(summary.file_results)
 
 
