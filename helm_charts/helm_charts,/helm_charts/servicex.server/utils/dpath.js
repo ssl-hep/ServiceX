@@ -10,27 +10,28 @@ module.exports = function dpath(app, config, es) {
 
     async create(data) {
       console.log('adding request path to ES...', data);
-      try {
-        const response = await es.index({
-          index: 'servicex_paths',
-          type: 'docs',
-          body: {
-            req_id: data.req_id,
-            status: 'Created',
-            adler32: data.adler32,
-            file_size: data.file_size,
-            file_events: data.file_events,
-            file_path: data.file_path,
-            created_at: this.created_at,
-            last_accessed_at: this.last_accessed_at,
-            pause_transform: false,
-          },
-        });
-        console.log(response);
-      } catch (err) {
-        console.error(err);
-      }
-      console.log('Done.');
+      es.index({
+        index: 'servicex_paths',
+        type: 'docs',
+        body: {
+          req_id: data.req_id,
+          status: 'Created',
+          adler32: data.adler32,
+          file_size: data.file_size,
+          file_events: data.file_events,
+          file_path: data.file_path,
+          created_at: this.created_at,
+          last_accessed_at: this.last_accessed_at,
+          pause_transform: false,
+        },
+      }, (err, resp) => {
+        if (err) {
+          console.error('error in indexing new path:', err.meta.body.error);
+        }
+        // need to check what is resp
+        console.log(resp);
+        return null;
+      });
     }
 
     async update() {
@@ -47,7 +48,7 @@ module.exports = function dpath(app, config, es) {
             doc: {
               status: this.status,
               last_accessed_at: this.last_accessed_at,
-              events_served: this.events_served
+              events_served: this.events_served,
             },
           },
         });
@@ -67,7 +68,7 @@ module.exports = function dpath(app, config, es) {
     async get(id) {
       console.log('getting path info for id:', id);
       try {
-        var response = await es.search({
+        let response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -99,7 +100,7 @@ module.exports = function dpath(app, config, es) {
     async getFromRequest(reqId, status) {
       console.log('getting path info for rid:', reqId, 'and status: ', status);
       try {
-        var response = await es.search({
+        let response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -134,7 +135,7 @@ module.exports = function dpath(app, config, es) {
     async getValidated() {
       console.log('getting any validate path that should be transformed');
       try {
-        var response = await es.search({
+        let response = await es.search({
           index: 'servicex_paths',
           type: 'docs',
           body: {
@@ -347,7 +348,7 @@ module.exports = function dpath(app, config, es) {
     const data = req.body;
     console.log('post /dpath/create :', data);
     const DApath = new module.DApath();
-    await DApath.create(data);
+    DApath.create(data);
     res.status(200).send('OK');
   });
 
