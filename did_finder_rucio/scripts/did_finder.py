@@ -31,6 +31,9 @@ from rucio_ops import parse_did, list_files_for_did, \
     DIDSummary, find_replicas, get_sel_path
 from rucio.client import DIDClient, ReplicaClient
 import argparse
+import pika
+import requests
+import datetime
 
 
 def process_did_list(dids, site, did_client, replica_client):
@@ -84,6 +87,43 @@ def process_static_file(file_path):
     return summary
 
 
+def callback(channel, method, properties, body):
+    did_request = json.loads(body)
+    requests.post(did_request['status-endpoint'], data={
+        "request_id": did_request['request_id'],
+        "timestamp": datetime.datetime.now().isoformat(),
+        "status": "DID Request received"
+    })
+    print(did_request[u'did'].encode("ascii"))
+
+    did_summary = process_did_list([did_request['did'].encode("ascii")], site,
+                                   DIDClient(),
+                                   ReplicaClient())
+
+    requests.post(did_request['status-endpoint'], data={
+        "request_id": did_request['request_id'],
+        "timestamp": datetime.datetime.now().isoformat(),
+        "status": "DID Resolved to "+str(len(did_summary.file_results))+" files"
+    })
+
+    if len(did_summary.file_results):
+        channel.basic_publish(exchange='',
+                              routing_key='validation_requests',
+                              body=json.dumps({
+                                "request_id": did_request['request_id'],
+                                "file_entry": did_summary.file_results[0]
+                              }))
+        for file in did_summary.file_results:
+            channel.basic_publish(exchange='',
+                                  routing_key='transformation_requests',
+                                  body=json.dumps({
+                                      "request_id": did_request['request_id'],
+                                      "file_entry": file
+                                  }))
+
+    print(did_summary)
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--site', dest='site', action='store',
                     default="MWT2",
@@ -97,6 +137,9 @@ parser.add_argument('--outfile', dest='output_file', action='store',
                     default=None,
                     help='Filename to output list of Root files to')
 
+parser.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
+                    default='host.docker.internal')
+
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
 
@@ -107,6 +150,13 @@ site = args.site
 
 request_id = 'cli'
 
+if not args.did_list:
+    rabbitmq = pika.BlockingConnection(pika.ConnectionParameters(args.rabbit_uri))
+    channel = rabbitmq.channel()
+    channel.basic_consume(queue='did_requests',
+                          auto_ack=True,
+                          on_message_callback=callback)
+    channel.start_consuming()
 
 # Is this a test run where we serve up a particular file instead of hitting the
 # real rucio service?

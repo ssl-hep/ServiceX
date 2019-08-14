@@ -1,1 +1,2 @@
 rucio-clients
+pika
