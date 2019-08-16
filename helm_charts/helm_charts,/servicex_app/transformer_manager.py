@@ -25,17 +25,48 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-from kubernetes import client, config
-
-# Configs can be set in Configuration class directly or using helper utility
-config.load_kube_config()
+import kubernetes
+from kubernetes import client
 
 
-def launch_transformer_jobs():
-    v1 = client.CoreV1Api()
-    print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        print("%s\t%s\t%s" % (
-            i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+def config():
+    # Configs can be set in Configuration class directly or using helper utility
+    kubernetes.config.load_kube_config()
+
+
+def create_job_object(request_id):
+    # Configure Pod template container
+    container = client.V1Container(
+        name="transformer",
+        image="sslhep/servicex-transformer:latest",
+        command=["python", "xaod_branches.py", "--request-id", request_id])
+    # Create and Configure a spec section
+    template = client.V1PodTemplateSpec(
+        metadata=client.V1ObjectMeta(labels={"app": "transformer"}),
+        spec=client.V1PodSpec(restart_policy="Never", containers=[container]))
+    # Create the specification of deployment
+    spec = client.V1JobSpec(
+        template=template,
+        backoff_limit=4)
+    # Instantiate the job object
+    job = client.V1Job(
+        api_version="batch/v1",
+        kind="Job",
+        metadata=client.V1ObjectMeta(name="transformer"),
+        spec=spec)
+
+    return job
+
+
+def create_job(api_instance, job):
+    # Create job
+    api_response = api_instance.create_namespaced_job(
+        body=job,
+        namespace="default")
+    print("Job created. status='%s'" % str(api_response.status))
+
+
+def launch_transformer_jobs(request_id, num_instances):
+    batch_v1 = client.BatchV1Api()
+    job = create_job_object(request_id)
+    create_job(batch_v1, job)

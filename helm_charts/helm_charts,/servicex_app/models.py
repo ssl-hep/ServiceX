@@ -37,13 +37,23 @@ class TransformRequest(db.Model):
         return {
             'request_id': x.request_id,
             'did': x.did,
-            'columns': x.columns
+            'columns': x.columns,
+            'image': x.image,
+            'chunk-size': x.chunk_size,
+            'workers': x.workers,
+            'messaging-backend': x.messaging_backend,
+            'kafka-broker': x.kafka_broker
         }
 
     id = db.Column(db.Integer, primary_key=True)
     did = db.Column(db.String(120), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
+    image = db.Column(db.String(128), nullable=True)
+    chunk_size = db.Column(db.Integer, nullable=True)
+    workers = db.Column(db.Integer, nullable=True)
+    messaging_backend = db.Column(db.String(32), nullable=True)
+    kafka_broker = db.Column(db.String(128), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
@@ -53,9 +63,10 @@ class TransformRequest(db.Model):
     def return_all(cls):
         return {'requests': list(map(lambda x: cls.to_json(x),
                                      TransformRequest.query.all()))}
+
     @classmethod
     def return_request(cls, request_id):
-        return cls.to_json(cls.query.filter_by(request_id=request_id).first())
+        return cls.query.filter_by(request_id=request_id).first()
 
 
 class UserModel(db.Model):

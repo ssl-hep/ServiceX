@@ -6,9 +6,8 @@ from flask import Flask
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
-import pika
-from threading import Thread
-from kafka_topic_manager import create_topic
+
+import transformer_manager
 
 app = Flask(__name__)
 
@@ -19,34 +18,10 @@ app.config.from_envvar('APP_CONFIG_FILE')
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
+if app.config['TRANSFORMER_MANAGER_ENABLED']:
+    transformer_manager.config()
 
 import resources, servicex_resources
-
-
-def callback(channel, method, properties, body):
-    validated_request = json.loads(body)
-    create_topic(validated_request['request_id'],
-                 validated_request['info']['max_event_size'], 100)
-    print(validated_request)
-    print("Launch job against request_id "+ validated_request['request_id'])
-    # launch_transformer_jobs()
-
-
-def job_starting_thread():
-    _rabbitmq = pika.BlockingConnection(
-        pika.ConnectionParameters(app.config['RABBIT_MQ_URL']))
-    _channel = _rabbitmq.channel()
-
-    _channel.basic_consume(queue="validated_requests",
-                           auto_ack=False,
-                           on_message_callback=callback)
-    _channel.start_consuming()
-
-
-thread = Thread(target=job_starting_thread)
-thread.daemon = True
-thread.start()
-
 
 @app.before_first_request
 def create_tables():
@@ -68,4 +43,14 @@ api.add_resource(servicex_resources.QueryTransformationRequest,
 api.add_resource(servicex_resources.TransformationStatus,
                  '/servicex/transformation/<string:request_id>/status')
 
+api.add_resource(servicex_resources.AddFileToDataset,
+                 '/servicex/transformation/<string:request_id>/files')
 
+api.add_resource(servicex_resources.PreflightCheck,
+                 '/servicex/transformation/<string:request_id>/preflight')
+
+api.add_resource(servicex_resources.FilesetComplete,
+                 '/servicex/transformation/<string:request_id>/complete')
+
+api.add_resource(servicex_resources.TransformStart,
+                 '/servicex/transformation/<string:request_id>/start')
