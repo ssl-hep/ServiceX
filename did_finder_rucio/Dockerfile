@@ -22,15 +22,30 @@ RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 RUN yum install -y centos-release-scl && \
      yum install -y rh-python36
 
-COPY . .
+# Okay, change our shell to specifically use our software collections.
+# (default was SHELL [ "/bin/sh", "-c" ])
+# https://docs.docker.com/engine/reference/builder/#shell
+#
+# See also `scl` man page for enabling multiple packages if desired:
+# https://linux.die.net/man/1/scl
+SHELL [ "/usr/bin/scl", "enable", "rh-python36" ]
 
-# Install rucio client in the python3 packages
-RUN cat configure_python3.sh | scl enable rh-python36 --
+COPY requirements.txt requirements.txt
+
+RUN pip install -r requirements.txt
+#COPY bashrc /root/.bashrc
+
+COPY scl_enable /usr/bin/scl_enable
+ENV BASH_ENV="/usr/bin/scl_enable" \
+    ENV="/usr/bin/scl_enable" \
+    PROMPT_COMMAND=". /usr/bin/scl_enable"
+
+COPY . .
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
-CMD sh -c "/usr/src/app/run_x509_updater.sh & python /usr/src/app/request_lookup.py"
+CMD sh -c "/usr/src/app/run_x509_updater.sh"
 

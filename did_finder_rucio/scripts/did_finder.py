@@ -210,7 +210,7 @@ else:
 # If no DIDs on the command line then start up as server and await requests
 if not args.did_list:
     rabbitmq = pika.BlockingConnection(
-        pika.ConnectionParameters(args.rabbit_uri)
+        pika.URLParameters(args.rabbit_uri)
     )
     _channel = rabbitmq.channel()
     _channel.exchange_declare('transformation_requests')
