@@ -82,8 +82,8 @@ class DIDSummary:
             self.files_skipped))
 
     def accumulate(self, file_record):
-        self.total_bytes += file_record['bytes']
-        self.total_events += file_record['events']
+        self.total_bytes += file_record['file_size']
+        self.total_events += file_record['file_events']
 
     def add_file(self, file_record):
         self.files += 1

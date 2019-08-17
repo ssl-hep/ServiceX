@@ -34,6 +34,28 @@ import argparse
 import pika
 import requests
 import datetime
+import urllib
+
+global did_client, replica_client
+
+
+def file_replicas(request_id, did, _did_client, _replica_client):
+    files = list_files_for_did(parse_did(did), _did_client)
+    for file in files:
+        replicas = find_replicas(file, site, _replica_client)
+
+        for r in replicas:
+            sel_path = get_sel_path(r)
+
+            if sel_path:
+                data = {
+                    'req_id': request_id,
+                    'adler32': file['adler32'],
+                    'file_size': file['bytes'],
+                    'file_events': file['events'],
+                    'file_path': sel_path
+                }
+                yield data
 
 
 def process_did_list(dids, site, did_client, replica_client):
@@ -87,41 +109,67 @@ def process_static_file(file_path):
     return summary
 
 
+def post_status_update(endpoint, status_msg):
+    requests.post(endpoint+"/status", data={
+        "timestamp": datetime.datetime.now().isoformat(),
+        "status": status_msg
+    })
+
+
+def put_file_add(endpoint, file_info):
+    requests.put(endpoint + "/files", json={
+        "timestamp": datetime.datetime.now().isoformat(),
+        "file_path": file_info['file_path']
+    })
+
+
+def post_preflight_check(endpoint, file_entry):
+    requests.post(endpoint + "/preflight", json={
+        'file_path': file_entry['file_path']
+    })
+
+
+def put_fileset_complete(endpoint, summary):
+    requests.put(endpoint+"/complete", data={
+        'total-bytes': summary.total_bytes,
+        'total-events': summary.total_events,
+        'files': summary.files,
+        'files-skipped': summary.files_skipped
+    })
+
+
 def callback(channel, method, properties, body):
     did_request = json.loads(body)
-    requests.post(did_request['status-endpoint'], data={
-        "request_id": did_request['request_id'],
-        "timestamp": datetime.datetime.now().isoformat(),
-        "status": "DID Request received"
-    })
-    print(did_request[u'did'].encode("ascii"))
+    service_endpoint = did_request['service-endpoint']
+    did = did_request['did'].encode("ascii")
+    request_id = did_request['request_id']
 
-    did_summary = process_did_list([did_request['did'].encode("ascii")], site,
-                                   DIDClient(),
-                                   ReplicaClient())
+    post_status_update(service_endpoint, "DID Request received")
+    channel.queue_declare(request_id)
+    channel.queue_bind(exchange="transformation_requests",
+                       queue=request_id,
+                       routing_key=request_id)
 
-    requests.post(did_request['status-endpoint'], data={
-        "request_id": did_request['request_id'],
-        "timestamp": datetime.datetime.now().isoformat(),
-        "status": "DID Resolved to "+str(len(did_summary.file_results))+" files"
-    })
+    sample_file_submitted = False
+    did_summary = DIDSummary(did)
+    for root_file in file_replicas(request_id, did_request['did'].encode("ascii"),
+                                   did_client, replica_client):
+        print(root_file)
+        did_summary.accumulate(root_file)
 
-    if len(did_summary.file_results):
-        channel.basic_publish(exchange='',
-                              routing_key='validation_requests',
-                              body=json.dumps({
-                                "request_id": did_request['request_id'],
-                                "file_entry": did_summary.file_results[0]
-                              }))
-        for file in did_summary.file_results:
-            channel.basic_publish(exchange='',
-                                  routing_key='transformation_requests',
-                                  body=json.dumps({
-                                      "request_id": did_request['request_id'],
-                                      "file_entry": file
-                                  }))
+        post_status_update(service_endpoint, "Resolved " +
+                           root_file['file_path'])
 
-    print(did_summary)
+        if not sample_file_submitted:
+            post_preflight_check(service_endpoint, root_file)
+            sample_file_submitted = True
+
+        put_file_add(service_endpoint, root_file)
+
+    put_fileset_complete(service_endpoint, did_summary)
+    post_status_update(service_endpoint,
+                       "DID Resolved to " + str(
+                           len(did_summary.file_results)) + " files")
 
 
 parser = argparse.ArgumentParser()
@@ -145,26 +193,42 @@ parser.add_argument('did_list', nargs='*')
 
 args = parser.parse_args()
 
-
 site = args.site
 
-request_id = 'cli'
-
-if not args.did_list:
-    rabbitmq = pika.BlockingConnection(pika.ConnectionParameters(args.rabbit_uri))
-    channel = rabbitmq.channel()
-    channel.basic_consume(queue='did_requests',
-                          auto_ack=True,
-                          on_message_callback=callback)
-    channel.start_consuming()
+sample_request_id = 'cli'
 
 # Is this a test run where we serve up a particular file instead of hitting the
-# real rucio service?
+# real Rucio service?
 if args.static_file:
     summary = process_static_file(args.static_file)
+    did_client = None
+    replica_client = None
 else:
-    dc = DIDClient()
-    rc = ReplicaClient()
+    did_client = DIDClient()
+    replica_client = ReplicaClient()
+
+# If no DIDs on the command line then start up as server and await requests
+if not args.did_list:
+    rabbitmq = pika.BlockingConnection(
+        pika.ConnectionParameters(args.rabbit_uri)
+    )
+    _channel = rabbitmq.channel()
+    _channel.exchange_declare('transformation_requests')
+
+    _channel.basic_consume(queue='did_requests',
+                           auto_ack=False,
+                           on_message_callback=callback)
+    _channel.start_consuming()
+
+# Is this a test run where we serve up a particular file instead of hitting the
+# real Rucio service?
+if args.static_file:
+    summary = process_static_file(args.static_file)
+    did_client = None
+    replica_client = None
+else:
+    did_client = DIDClient()
+    replica_client = ReplicaClient()
 
     summary = process_did_list(args.did_list, site, dc, rc)
 
