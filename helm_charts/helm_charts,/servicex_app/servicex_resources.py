@@ -34,16 +34,17 @@ import uuid
 from models import TransformRequest
 from run import app
 from transformer_manager import launch_transformer_jobs
+from rabbit_adaptor import RabbitAdaptor
 
-rabbitmq = pika.BlockingConnection(
-    pika.ConnectionParameters(
-        app.config['RABBIT_MQ_URL']))
+rabbit_mq_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
+rabbit_mq_adaptor.connect()
 
-channel = rabbitmq.channel()
-channel.queue_declare(queue='did_requests')
-channel.queue_declare(queue='validation_requests')
-channel.queue_declare(queue='transformation_requests')
 
+# admin_channel = rabbit_mq_adaptor.blocking_connect().channel()
+# admin_channel.queue_declare(queue='did_requests')
+# admin_channel.queue_declare(queue='validation_requests')
+# admin_channel.exchange_declare(exchange='transformation_requests')
+# admin_channel.close()
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -57,39 +58,45 @@ parser.add_argument('messaging-backend', required=False)
 parser.add_argument('kafka-broker', required=False)
 
 
+def _generate_advertised_endpoint(endpoint):
+    return "http://" + app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+
+
 class SubmitTransformationRequest(Resource):
     def post(self):
-        request = parser.parse_args()
+        transformation_request = parser.parse_args()
         request_id = str(uuid.uuid4())
 
         request_rec = TransformRequest(
-            did=request['did'],
-            columns=request['columns'],
+            did=transformation_request['did'],
+            columns=transformation_request['columns'],
             request_id=str(request_id),
-            image=request['image'],
-            chunk_size=request['chunk-size'],
-            messaging_backend=request['messaging-backend'],
-            kafka_broker=request['kafka-broker'],
-            workers=request['workers']
+            image=transformation_request['image'],
+            chunk_size=transformation_request['chunk-size'],
+            messaging_backend=transformation_request['messaging-backend'],
+            kafka_broker=transformation_request['kafka-broker'],
+            workers=transformation_request['workers']
         )
 
         did_request = {
             "request_id": request_rec.request_id,
             "did": request_rec.did,
-            "service-endpoint":
-                "http://host.docker.internal:5000/servicex/transformation/" +
+            "service-endpoint": _generate_advertised_endpoint(
+                "servicex/transformation/" +
                 request_rec.request_id
+            )
         }
 
         try:
-            channel.queue_declare(request_id)
-            channel.queue_bind(exchange="transformation_requests",
-                               queue=request_id,
-                               routing_key=request_id)
+            rabbit_mq_adaptor.setup_queue(request_id)
 
-            channel.basic_publish(exchange='',
-                                  routing_key='did_requests',
-                                  body=json.dumps(did_request))
+            rabbit_mq_adaptor.bind_queue_to_exchange(
+                exchange="transformation_requests",
+                queue=request_id)
+
+            rabbit_mq_adaptor.basic_publish(exchange='',
+                                            routing_key='did_requests',
+                                            body=json.dumps(did_request))
 
             request_rec.save_to_db()
             return {
@@ -134,9 +141,9 @@ class AddFileToDataset(Resource):
             'request-id': submitted_request.request_id,
             'columns': submitted_request.columns,
             'file_path': add_file_request['file_path'],
-            "status-endpoint":
-                "http://host.docker.internal:5000/servicex/transformation/" +
-                submitted_request.request_id + "/status"
+            "status-endpoint": _generate_advertised_endpoint(
+                "servicex/transformation/" + request_id + "/status"
+            )
         }
 
         try:
@@ -163,9 +170,9 @@ class PreflightCheck(Resource):
             'request-id': submitted_request.request_id,
             'columns': submitted_request.columns,
             'file-path': body['file_path'],
-            "service-endpoint":
-                "http://host.docker.internal:5000/servicex/transformation/" +
-                request_id
+            "service-endpoint": _generate_advertised_endpoint(
+                "servicex/transformation/" + request_id
+            )
         }
 
         try:
