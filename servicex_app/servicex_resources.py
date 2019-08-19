@@ -147,9 +147,9 @@ class AddFileToDataset(Resource):
         }
 
         try:
-            channel.basic_publish(exchange='transformation_requests',
-                                  routing_key=request_id,
-                                  body=json.dumps(transform_request))
+            rabbit_mq_adaptor.basic_publish(exchange='transformation_requests',
+                                            routing_key=request_id,
+                                            body=json.dumps(transform_request))
 
             return {
                 "request-id": str(request_id),
@@ -176,9 +176,9 @@ class PreflightCheck(Resource):
         }
 
         try:
-            channel.basic_publish(exchange='',
-                                  routing_key='validation_requests',
-                                  body=json.dumps(preflight_request))
+            rabbit_mq_adaptor.basic_publish(exchange='',
+                                            routing_key='validation_requests',
+                                            body=json.dumps(preflight_request))
 
             return {
                 "request-id": str(request_id),
