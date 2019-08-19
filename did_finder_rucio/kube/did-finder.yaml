@@ -39,7 +39,7 @@ spec:
         image: sslhep/servicex-did-finder:latest
         imagePullPolicy: Always
         command: ["python"]
-        args: ["request_lookup.py"]
+        args: ["request_lookup_mt.py"]
         env:
         - name: PYTHONUNBUFFERED
           value: "0"
