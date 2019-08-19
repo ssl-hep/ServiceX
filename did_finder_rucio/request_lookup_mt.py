@@ -27,6 +27,7 @@ print('sleeping until CAs are there...')
 time.sleep(60)
 
 counters = {
+    'files': 0,
     'found': 0,
     'skipped': 0
 }
@@ -47,9 +48,9 @@ def get_replicas(i, q):
                 client_location={'site': CONF['SITE']})
         except rucioe.DatabaseException as rdbe:
             print('DatabaseException caught. Putting back in queue and slowing down.', rdbe)
-            q.task_done()
-            q.put(f)
             time.sleep(5)
+            q.put(f)
+            q.task_done()
             continue
         except Exception as exc:
             print('could not find file replica. Skipping file:', f_name, exc)
@@ -149,7 +150,6 @@ while True:
     }
     DATASET_SIZE = 0
     DATASET_EVENTS = 0
-    FILES = 0
     for f in g_files:
         print(f)
         DATASET_SIZE += f['bytes']
