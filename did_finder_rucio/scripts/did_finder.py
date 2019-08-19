@@ -140,8 +140,9 @@ def put_fileset_complete(endpoint, summary):
 
 def callback(channel, method, properties, body):
     did_request = json.loads(body)
+    print("----> ", did_request)
     service_endpoint = did_request['service-endpoint']
-    did = did_request['did'].encode("ascii")
+    did = did_request['did']
     request_id = did_request['request_id']
 
     post_status_update(service_endpoint, "DID Request received")
@@ -152,8 +153,7 @@ def callback(channel, method, properties, body):
 
     sample_file_submitted = False
     did_summary = DIDSummary(did)
-    for root_file in file_replicas(request_id, did_request['did'].encode("ascii"),
-                                   did_client, replica_client):
+    for root_file in file_replicas(request_id, did, did_client, replica_client):
         print(root_file)
         did_summary.accumulate(root_file)
 
@@ -170,6 +170,9 @@ def callback(channel, method, properties, body):
     post_status_update(service_endpoint,
                        "DID Resolved to " + str(
                            len(did_summary.file_results)) + " files")
+
+    channel.basic_ack(delivery_tag = method.delivery_tag)
+
 
 
 parser = argparse.ArgumentParser()
