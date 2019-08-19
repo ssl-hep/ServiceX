@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 if app.config['TRANSFORMER_MANAGER_ENABLED']:
-    transformer_manager.config()
+    transformer_manager.config(app.config['TRANSFORMER_MANAGER_MODE'])
 
 import resources, servicex_resources
 
