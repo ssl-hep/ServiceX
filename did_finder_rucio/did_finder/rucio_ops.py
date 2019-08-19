@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 def parse_did(did):
     """
     Parse a DID string into the scope and name
@@ -35,6 +36,7 @@ def parse_did(did):
     d = dict()
     d['scope'], d['name'] = did.split(":")
     return d
+
 
 def list_files_for_did(did, did_client):
     g_files = did_client.list_files(did['scope'], did['name'])
