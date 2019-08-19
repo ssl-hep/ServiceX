@@ -29,20 +29,30 @@ import kubernetes
 from kubernetes import client
 
 
-def config():
-    # Configs can be set in Configuration class directly or using helper utility
-    kubernetes.config.load_kube_config()
+def config(manager_mode):
+    if manager_mode=='internal-kubernetes':
+        kubernetes.config.load_incluster_config()
+    elif manager_mode=='external-kubernetes':
+        kubernetes.config.load_kube_config()
+    else:
+        raise ValueError('Manager mode '+manager_mode+' not valid')
 
 
-def create_job_object(request_id):
+def create_job_object(request_id, rabbitmq_uri):
     # Configure Pod template container
     container = client.V1Container(
-        name="transformer",
-        image="sslhep/servicex-transformer:latest",
-        command=["python", "xaod_branches.py", "--request-id", request_id])
+        name="transformer-" + request_id,
+        image="sslhep/servicex-transformer:rabbitmq",
+        image_pull_policy='Always',
+        command=["bash", "-c"],
+        env=[client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")],
+        args=["python xaod_branches.py "+
+              " --request-id " + request_id +
+              " --rabbit-uri " + rabbitmq_uri +
+              " --kafka"])
     # Create and Configure a spec section
     template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": "transformer"}),
+        metadata=client.V1ObjectMeta(labels={"app": "transformer-" + request_id}),
         spec=client.V1PodSpec(restart_policy="Never", containers=[container]))
     # Create the specification of deployment
     spec = client.V1JobSpec(
@@ -52,7 +62,7 @@ def create_job_object(request_id):
     job = client.V1Job(
         api_version="batch/v1",
         kind="Job",
-        metadata=client.V1ObjectMeta(name="transformer"),
+        metadata=client.V1ObjectMeta(name="transformer-" + request_id),
         spec=spec)
 
     return job
@@ -66,7 +76,7 @@ def create_job(api_instance, job):
     print("Job created. status='%s'" % str(api_response.status))
 
 
-def launch_transformer_jobs(request_id, num_instances):
+def launch_transformer_jobs(request_id, num_instances, rabbitmq_uri):
     batch_v1 = client.BatchV1Api()
-    job = create_job_object(request_id)
+    job = create_job_object(request_id, rabbitmq_uri)
     create_job(batch_v1, job)

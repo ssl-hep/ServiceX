@@ -39,12 +39,10 @@ from rabbit_adaptor import RabbitAdaptor
 rabbit_mq_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
 rabbit_mq_adaptor.connect()
 
-
-# admin_channel = rabbit_mq_adaptor.blocking_connect().channel()
-# admin_channel.queue_declare(queue='did_requests')
-# admin_channel.queue_declare(queue='validation_requests')
-# admin_channel.exchange_declare(exchange='transformation_requests')
-# admin_channel.close()
+# Insure the required queues and exchange exist in RabbitMQ broker
+rabbit_mq_adaptor.setup_queue('did_requests')
+rabbit_mq_adaptor.setup_queue('validation_requests')
+rabbit_mq_adaptor.setup_exchange('validation_requests')
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -200,4 +198,7 @@ class TransformStart(Resource):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
         if app.config['TRANSFORMER_MANAGER_ENABLED']:
-            launch_transformer_jobs(request_id, submitted_request.workers)
+            rabbitmq_uri = app.config['RABBIT_MQ_URL']
+            launch_transformer_jobs(request_id,
+                                    submitted_request.workers,
+                                    rabbitmq_uri)
