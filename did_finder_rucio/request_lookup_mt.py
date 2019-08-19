@@ -8,7 +8,7 @@ from rucio.common import exception as rucioe
 import requests
 
 
-N_THREADS = 5
+N_THREADS = 10
 file_queue = Queue()
 
 # needed for python2
@@ -35,8 +35,6 @@ counters = {
 def get_replicas(i, q):
     while True:
         f = q.get()
-        if f == 'last':
-            break
         print('%s: Looking up:' % i, f)
 
         f_scope = f['scope']
@@ -83,7 +81,6 @@ def get_replicas(i, q):
         counters['found'] += 1
 
         q.task_done()
-        time.sleep(1)
 
 
 while True:
@@ -150,9 +147,6 @@ while True:
         DATASET_SIZE += f['bytes']
         DATASET_EVENTS += f['events']
         file_queue.put(f)
-
-    for i in range(N_THREADS):
-        file_queue.put('last')
 
     file_queue.join()
     print('all threads done.')
