@@ -45,6 +45,12 @@ def get_replicas(i, q):
                 dids=[{'scope': f_scope, 'name': f_name}],
                 schemes=['root'],
                 client_location={'site': CONF['SITE']})
+        except rucioe.DatabaseException as rdbe:
+            print('DatabaseException caught. Putting back in queue and slowing down.', rdbe)
+            q.task_done()
+            q.put(f)
+            time.sleep(5)
+            continue
         except Exception as exc:
             print('could not find file replica. Skipping file:', f_name, exc)
             counters['skipped'] += 1
@@ -125,7 +131,7 @@ while True:
     except rucioe.DataIdentifierNotFound as didnf:
         print('could not find data set. Setting request to failed.', didnf)
         g_files = []
-    except re.CannotAuthenticate as cau:
+    except rucioe.CannotAuthenticate as cau:
         print('cant authenticate', cau)
     except Exception as exc:
         print('Unexpected error. Will retry. ', exc)
@@ -137,15 +143,18 @@ while True:
         worker.start()
 
     counters = {
+        'files': 0,
         'found': 0,
         'skipped': 0
     }
     DATASET_SIZE = 0
     DATASET_EVENTS = 0
+    FILES = 0
     for f in g_files:
         print(f)
         DATASET_SIZE += f['bytes']
         DATASET_EVENTS += f['events']
+        counters['files'] += 1
         file_queue.put(f)
 
     file_queue.join()
@@ -169,7 +178,7 @@ while True:
         'dataset_files': counters['files']
     }
 
-    print(req_data)
+    print(REQ_DATA)
 
     RU_STATUS = requests.post('https://' + CONF['SITENAME'] + '/drequest/update', json=REQ_DATA, verify=False)
     print('RU_STATUS:', RU_STATUS)
