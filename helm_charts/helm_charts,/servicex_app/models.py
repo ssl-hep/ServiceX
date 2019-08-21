@@ -106,14 +106,16 @@ class TransformationResult(db.Model):
             func.sum(TransformationResult.messages).label('total_msgs'),
             func.min(TransformationResult.transform_time).label('min_time'),
             func.max(TransformationResult.transform_time).label('max_time'),
-            func.avg(TransformationResult.transform_time).label('avg_time')
+            func.avg(TransformationResult.transform_time).label('avg_time'),
+            func.sum(TransformationResult.transform_time).label('total_time')
         ).filter_by(request_id=request_id).one()
 
         return {
             "total-messages": rslt.total_msgs,
             "min-time": rslt.min_time,
             "max-time": rslt.max_time,
-            "avg-time": rslt.avg_time
+            "avg-time": rslt.avg_time,
+            "total-time": rslt.total_time
         }
 
 

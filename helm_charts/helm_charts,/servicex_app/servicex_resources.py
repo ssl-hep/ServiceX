@@ -126,13 +126,16 @@ class TransformationStatus(Resource):
         print(status)
 
     def get(self, request_id):
-        submitted_request = TransformRequest.return_request(request_id)
         count = TransformationResult.count(request_id)
         stats = TransformationResult.statistics(request_id)
-        print(submitted_request.files)
         print(count, stats)
         print(_files_remaining(request_id))
-        return str(stats)
+        return str({
+            "request-id": request_id,
+            "files-processed": count,
+            "files-remaining": _files_remaining(request_id),
+            "stats": stats
+        })
 
 
 class QueryTransformationRequest(Resource):
@@ -222,11 +225,12 @@ class TransformStart(Resource):
         submitted_request = TransformRequest.return_request(request_id)
         if app.config['TRANSFORMER_MANAGER_ENABLED']:
             rabbitmq_uri = app.config['TRANSFORMER_RABBIT_MQ_URL']
+            namepsace = app.config['TRANSFORMER_NAMESPACE']
             print(rabbitmq_uri)
             launch_transformer_jobs(request_id,
                                     submitted_request.workers,
                                     submitted_request.chunk_size,
-                                    rabbitmq_uri)
+                                    rabbitmq_uri, namepsace)
 
 
 class TransformerFileComplete(Resource):
@@ -245,7 +249,8 @@ class TransformerFileComplete(Resource):
 
         files_remaining = _files_remaining(request_id)
         if files_remaining <= 0:
+            namepsace = app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
-            shutdown_transformer_job(request_id)
+            shutdown_transformer_job(request_id, namepsace)
         print(info)
         return "Ok"
