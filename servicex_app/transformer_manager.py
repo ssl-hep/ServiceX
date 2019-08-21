@@ -55,7 +55,7 @@ def create_job_object(request_id, chunk_size, rabbitmq_uri, workers):
     container = client.V1Container(
         name="transformer-" + request_id,
         image="sslhep/servicex-transformer:rabbitmq",
-        image_pull_policy='IfNotPresent',
+        image_pull_policy='Always',
         volume_mounts=volume_mounts,
         command=["bash", "-c"],
         env=[client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")],
@@ -86,21 +86,21 @@ def create_job_object(request_id, chunk_size, rabbitmq_uri, workers):
     return job
 
 
-def create_job(api_instance, job):
+def create_job(api_instance, job, namespace):
     # Create job
     api_response = api_instance.create_namespaced_job(
         body=job,
-        namespace="default")
+        namespace=namespace)
     print("Job created. status='%s'" % str(api_response.status))
 
 
-def launch_transformer_jobs(request_id, workers, chunk_size, rabbitmq_uri):
+def launch_transformer_jobs(request_id, workers, chunk_size, rabbitmq_uri, namespace):
     batch_v1 = client.BatchV1Api()
     job = create_job_object(request_id, chunk_size, rabbitmq_uri, workers)
-    create_job(batch_v1, job)
+    create_job(batch_v1, job, namespace)
 
 
-def shutdown_transformer_job(request_id):
+def shutdown_transformer_job(request_id, namespace):
     batch_v1 = client.BatchV1Api()
     batch_v1.delete_namespaced_job("transformer-" + request_id,
-                                   namespace="default")
+                                   namespace=namespace)
