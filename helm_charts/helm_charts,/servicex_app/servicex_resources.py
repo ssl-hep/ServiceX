@@ -31,9 +31,9 @@ import pika
 from flask import request
 from flask_restful import Resource, reqparse
 import uuid
-from models import TransformRequest
+from models import TransformRequest, TransformationResult
 from run import app
-from transformer_manager import launch_transformer_jobs
+from transformer_manager import launch_transformer_jobs, shutdown_transformer_job
 from rabbit_adaptor import RabbitAdaptor
 
 rabbit_mq_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
@@ -42,7 +42,7 @@ rabbit_mq_adaptor.connect()
 # Insure the required queues and exchange exist in RabbitMQ broker
 rabbit_mq_adaptor.setup_queue('did_requests')
 rabbit_mq_adaptor.setup_queue('validation_requests')
-rabbit_mq_adaptor.setup_exchange('validation_requests')
+rabbit_mq_adaptor.setup_exchange('transformation_requests')
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -58,6 +58,12 @@ parser.add_argument('kafka-broker', required=False)
 
 def _generate_advertised_endpoint(endpoint):
     return "http://" + app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+
+
+def _files_remaining(request_id):
+    submitted_request = TransformRequest.return_request(request_id)
+    count = TransformationResult.count(request_id)
+    return submitted_request.files - count
 
 
 class SubmitTransformationRequest(Resource):
@@ -119,6 +125,15 @@ class TransformationStatus(Resource):
         status.request_id = request_id
         print(status)
 
+    def get(self, request_id):
+        submitted_request = TransformRequest.return_request(request_id)
+        count = TransformationResult.count(request_id)
+        stats = TransformationResult.statistics(request_id)
+        print(submitted_request.files)
+        print(count, stats)
+        print(_files_remaining(request_id))
+        return str(stats)
+
 
 class QueryTransformationRequest(Resource):
     def get(self, request_id=None):
@@ -138,9 +153,9 @@ class AddFileToDataset(Resource):
         transform_request = {
             'request-id': submitted_request.request_id,
             'columns': submitted_request.columns,
-            'file_path': add_file_request['file_path'],
-            "status-endpoint": _generate_advertised_endpoint(
-                "servicex/transformation/" + request_id + "/status"
+            'file-path': add_file_request['file_path'],
+            "service-endpoint": _generate_advertised_endpoint(
+                "servicex/transformation/" + request_id
             )
         }
 
@@ -190,6 +205,14 @@ class PreflightCheck(Resource):
 
 class FilesetComplete(Resource):
     def put(self, request_id):
+        summary = request.get_json()
+        rec = TransformRequest.return_request(request_id)
+        rec.files = summary['files']
+        rec.files_skipped = summary['files-skipped']
+        rec.total_events = summary['total-events']
+        rec.total_bytes = summary['total-bytes']
+        rec.did_lookup_time = summary['elapsed-time']
+        TransformRequest.update_request(rec)
         print("Complete "+request_id)
 
 
@@ -198,7 +221,31 @@ class TransformStart(Resource):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
         if app.config['TRANSFORMER_MANAGER_ENABLED']:
-            rabbitmq_uri = app.config['RABBIT_MQ_URL']
+            rabbitmq_uri = app.config['TRANSFORMER_RABBIT_MQ_URL']
+            print(rabbitmq_uri)
             launch_transformer_jobs(request_id,
                                     submitted_request.workers,
+                                    submitted_request.chunk_size,
                                     rabbitmq_uri)
+
+
+class TransformerFileComplete(Resource):
+    def put(self, request_id):
+        info = request.get_json()
+        submitted_request = TransformRequest.return_request(request_id)
+        rec = TransformationResult(
+            did=submitted_request.did,
+            request_id=request_id,
+            file_path=info['file-path'],
+            transform_status=info['status'],
+            transform_time=info['total-time'],
+            messages=info['num-messages']
+        )
+        rec.save_to_db()
+
+        files_remaining = _files_remaining(request_id)
+        if files_remaining <= 0:
+            print("Job is all done... shutting down transformers")
+            shutdown_transformer_job(request_id)
+        print(info)
+        return "Ok"

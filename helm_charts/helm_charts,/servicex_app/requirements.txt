@@ -5,5 +5,6 @@ flask-restful
 flask-jwt-extended
 passlib
 flask-sqlalchemy
+Flask-Migrate
 confluent_kafka
 kubernetes

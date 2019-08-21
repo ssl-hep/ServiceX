@@ -3,11 +3,10 @@ import json
 import time
 
 from flask import Flask
+from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
-
-import transformer_manager
 
 app = Flask(__name__)
 
@@ -16,7 +15,11 @@ api = Api(app)
 app.config.from_envvar('APP_CONFIG_FILE')
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
 jwt = JWTManager(app)
+
+import transformer_manager
 
 if app.config['TRANSFORMER_MANAGER_ENABLED']:
     transformer_manager.config(app.config['TRANSFORMER_MANAGER_MODE'])
@@ -54,3 +57,6 @@ api.add_resource(servicex_resources.FilesetComplete,
 
 api.add_resource(servicex_resources.TransformStart,
                  '/servicex/transformation/<string:request_id>/start')
+
+api.add_resource(servicex_resources.TransformerFileComplete,
+                 '/servicex/transformation/<string:request_id>/file-complete')
