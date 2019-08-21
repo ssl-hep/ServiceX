@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import time
 
 from rucio_ops import parse_did, list_files_for_did, \
     DIDSummary, find_replicas, get_sel_path
@@ -89,11 +90,12 @@ def process_did_list(dids, site, did_client, replica_client):
         return result
 
 
-def process_static_file(file_path):
+def process_static_file(file_path, request_id):
     """
     For testing and demo purposes, bypass rucio and generate a fake entry for
     a local file
     :param file_path:
+    :param request_id:
     :return: A Summary object with the local file as the single entry
     """
     summary = DIDSummary("demo")
@@ -130,15 +132,29 @@ def post_preflight_check(endpoint, file_entry):
 
 
 def put_fileset_complete(endpoint, summary):
-    requests.put(endpoint+"/complete", data={
-        'total-bytes': summary.total_bytes,
-        'total-events': summary.total_events,
-        'files': summary.files,
-        'files-skipped': summary.files_skipped
-    })
+    print("-------->Complete------> "+str(summary))
+    requests.put(endpoint+"/complete", json=summary)
+
+
+def submit_static_file(service_endpoint, request_id):
+    root_file = {
+        "file_path": args.static_file
+    }
+    post_preflight_check(service_endpoint, root_file)
+
+    put_file_add(service_endpoint, root_file)
+
+    put_fileset_complete(service_endpoint, {
+                           "files": 1,
+                           "files-skipped": 0,
+                           "total-events": 1000,
+                           "total-bytes": 5000,
+                           "elapsed-time": 1
+                       })
 
 
 def callback(channel, method, properties, body):
+    start_time = time.time()
     did_request = json.loads(body)
     print("----> ", did_request)
     service_endpoint = did_request['service-endpoint']
@@ -146,33 +162,40 @@ def callback(channel, method, properties, body):
     request_id = did_request['request_id']
 
     post_status_update(service_endpoint, "DID Request received")
-    channel.queue_declare(request_id)
-    channel.queue_bind(exchange="transformation_requests",
-                       queue=request_id,
-                       routing_key=request_id)
 
     sample_file_submitted = False
-    did_summary = DIDSummary(did)
-    for root_file in file_replicas(request_id, did, did_client, replica_client):
-        print(root_file)
-        did_summary.accumulate(root_file)
+    if args.static_file:
+        submit_static_file(service_endpoint, request_id)
+    else:
+        did_summary = DIDSummary(did)
+        for root_file in file_replicas(request_id, did, did_client, replica_client):
+            print(root_file)
+            did_summary.accumulate(root_file)
+            did_summary.add_file(root_file)
 
-        post_status_update(service_endpoint, "Resolved " +
-                           root_file['file_path'])
+            post_status_update(service_endpoint, "Resolved " +
+                               root_file['file_path'])
 
-        if not sample_file_submitted:
-            post_preflight_check(service_endpoint, root_file)
-            sample_file_submitted = True
+            if not sample_file_submitted:
+                post_preflight_check(service_endpoint, root_file)
+                sample_file_submitted = True
 
-        put_file_add(service_endpoint, root_file)
+            put_file_add(service_endpoint, root_file)
 
-    put_fileset_complete(service_endpoint, did_summary)
-    post_status_update(service_endpoint,
-                       "DID Resolved to " + str(
-                           len(did_summary.file_results)) + " files")
+        end_time = time.time()
+        put_fileset_complete(service_endpoint, {
+                               "files": did_summary.files,
+                               "files-skipped": did_summary.files_skipped,
+                               "total-events": did_summary.total_events,
+                               "total-bytes": did_summary.total_bytes,
+                               "elapsed-time": end_time - start_time
+                           })
 
-    channel.basic_ack(delivery_tag = method.delivery_tag)
+        post_status_update(service_endpoint,
+                           "Fileset load complete in "+str(end_time-start_time) +
+                           " seconds")
 
+    channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 parser = argparse.ArgumentParser()
@@ -203,7 +226,6 @@ sample_request_id = 'cli'
 # Is this a test run where we serve up a particular file instead of hitting the
 # real Rucio service?
 if args.static_file:
-    summary = process_static_file(args.static_file)
     did_client = None
     replica_client = None
 else:
@@ -223,17 +245,7 @@ if not args.did_list:
                            on_message_callback=callback)
     _channel.start_consuming()
 
-# Is this a test run where we serve up a particular file instead of hitting the
-# real Rucio service?
-if args.static_file:
-    summary = process_static_file(args.static_file)
-    did_client = None
-    replica_client = None
-else:
-    did_client = DIDClient()
-    replica_client = ReplicaClient()
-
-    summary = process_did_list(args.did_list, site, dc, rc)
+    summary = process_did_list(args.did_list, site, did_client, replica_client)
 
 print(summary)
 
