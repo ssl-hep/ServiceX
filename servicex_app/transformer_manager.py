@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import kubernetes
 from kubernetes import client
+from run import app
 
 
 def config(manager_mode):
@@ -38,25 +39,42 @@ def config(manager_mode):
         raise ValueError('Manager mode '+manager_mode+' not valid')
 
 
-def create_job_object(request_id, rabbitmq_uri):
+def create_job_object(request_id, chunk_size, rabbitmq_uri, workers):
+    if "TRANSFORMER_LOCAL_PATH" in app.config:
+        path = app.config['TRANSFORMER_LOCAL_PATH']
+        volumes = [client.V1Volume(
+                name='rootfiles',
+                host_path=client.V1HostPathVolumeSource(
+                    path=app.config['TRANSFORMER_LOCAL_PATH']))]
+        volume_mounts = [client.V1VolumeMount(mount_path="/data", name='rootfiles')]
+    else:
+        volumes = []
+        volume_mounts = []
+
     # Configure Pod template container
     container = client.V1Container(
         name="transformer-" + request_id,
         image="sslhep/servicex-transformer:rabbitmq",
-        image_pull_policy='Always',
+        image_pull_policy='IfNotPresent',
+        volume_mounts=volume_mounts,
         command=["bash", "-c"],
         env=[client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")],
         args=["python xaod_branches.py "+
               " --request-id " + request_id +
               " --rabbit-uri " + rabbitmq_uri +
+              " --chunks " + str(chunk_size) +
               " --kafka"])
     # Create and Configure a spec section
     template = client.V1PodTemplateSpec(
         metadata=client.V1ObjectMeta(labels={"app": "transformer-" + request_id}),
-        spec=client.V1PodSpec(restart_policy="Never", containers=[container]))
+        spec=client.V1PodSpec(
+            restart_policy="Never",
+            containers=[container],
+            volumes=volumes))
     # Create the specification of deployment
     spec = client.V1JobSpec(
         template=template,
+        parallelism=workers,
         backoff_limit=4)
     # Instantiate the job object
     job = client.V1Job(
@@ -76,7 +94,13 @@ def create_job(api_instance, job):
     print("Job created. status='%s'" % str(api_response.status))
 
 
-def launch_transformer_jobs(request_id, num_instances, rabbitmq_uri):
+def launch_transformer_jobs(request_id, workers, chunk_size, rabbitmq_uri):
     batch_v1 = client.BatchV1Api()
-    job = create_job_object(request_id, rabbitmq_uri)
+    job = create_job_object(request_id, chunk_size, rabbitmq_uri, workers)
     create_job(batch_v1, job)
+
+
+def shutdown_transformer_job(request_id):
+    batch_v1 = client.BatchV1Api()
+    batch_v1.delete_namespaced_job("transformer-" + request_id,
+                                   namespace="default")
