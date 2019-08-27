@@ -63,7 +63,10 @@ def _generate_advertised_endpoint(endpoint):
 def _files_remaining(request_id):
     submitted_request = TransformRequest.return_request(request_id)
     count = TransformationResult.count(request_id)
-    return submitted_request.files - count
+    if submitted_request.files and count:
+        return submitted_request.files - count
+    else:
+        return None
 
 
 class SubmitTransformationRequest(Resource):
@@ -248,7 +251,7 @@ class TransformerFileComplete(Resource):
         rec.save_to_db()
 
         files_remaining = _files_remaining(request_id)
-        if files_remaining <= 0:
+        if files_remaining and  files_remaining <= 0:
             namepsace = app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
             shutdown_transformer_job(request_id, namepsace)
