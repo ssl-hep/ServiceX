@@ -56,13 +56,19 @@ TODO:
 
 * PUT /drequest/status/:id/:status/:info?
 
-* PUT /drequest/terminate/:id __validated__
+    updates request's status and optionally adds a line to its info log.
 
-    Sets status to Terminated for a given request_id and all the related paths.
+* PUT /drequest/events_served/:id/:events __validated__
+
+    for a given request_id increments number of events served by _events_.
 
 * PUT /drequest/events_processed/:id/:events __validated__
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
+
+* PUT /drequest/terminate/:id __validated__
+
+    Sets status to Terminated for a given request_id and all the related paths.
 
 * POST /drequest/create __validated__
 
@@ -94,6 +100,10 @@ TODO:
 
     to be used by DID-finder
 
+* PUT /dpath/transform/:id/:status
+
+    transformer returns :id, status
+
 * GET /dpath/transform/
 
     used by transformer. If there is a path that is in _Validated_ state it is updated to _Transforming_ and returned to the transformer.
@@ -102,9 +112,7 @@ TODO:
 
     returns data on a path belonging to _rid_ request and in certain status.
 
-* PUT /dpath/transform/:id/:status
 
-    transformer returns :id, status
 
 #### Unused for now
 * GET /dpath/:id  __validated__
@@ -142,3 +150,11 @@ transformer workflow:
     else
     1. update dpath status to NotNeeded
 1. once transformation done update dpath status to _Transformed_, update drequest events_tranformed, events_transforming, and if needed drequest status to _Transformed_.
+
+
+transformer periodically updates number of served events in both paths and requests.
+path goes automatically to Done if all events served.
+transformer can send path to Error (reverts status to Validated and increments retry counter). If retry counter goes to 3 autosets to Failed. 
+Paused is applied only to validated and transforming paths. Unpaused returns everything to validated. 
+transformer gets to transform first paths with least number of events left to serve. 
+

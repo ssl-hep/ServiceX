@@ -29,7 +29,8 @@ const backend = new ES(config);
 // require('./utils/dpath')(app, config, backend);
 // const usr = require('./utils/user')(app, config, backend);
 
-function UpdateState(reqId, cState) {
+async function UpdateState(reqId, cState) {
+  await cState;
   console.log(cState);
   if (cState.events_served > 0 && cState.status === 'Validated') {
     backend.ChangeStatus(reqId, 'Streaming', 'Started streaming at =date= <BR>');
@@ -37,22 +38,22 @@ function UpdateState(reqId, cState) {
   if (cState.events_processed >= cState.events
     || cState.events_processed >= cState.dataset_events) {
     backend.ChangeStatus(reqId, 'Done', 'Done at =date=.');
-    backend.ChangePathStatus(reqId, 'Done');
+    backend.ChangeAllPathStatus(reqId, 'Done');
     return;
   }
   if (cState.events_served >= cState.events
     || cState.events_served >= cState.dataset_events) {
-    backend.ChangePathStatus(reqId, 'Done');
+    backend.ChangeAllPathStatus(reqId, 'Done');
   }
   if ((cState.events_served - cState.events_processed) > config.HWM
     && cState.status !== 'Paused') {
     backend.ChangeStatus(reqId, 'Paused', 'Paused at =date=.<BR>');
-    backend.ChangePathStatus(reqId, 'Paused');
+    backend.PausePaths(reqId);
   }
   if ((cState.events_served - cState.events_processed) < config.LWM
     && cState.status === 'Paused') {
     backend.ChangeStatus(reqId, 'Streaming', 'Restarted at >date<.');
-    backend.ChangePathStatus(reqId, 'Validated');
+    backend.UnpausePaths(reqId);
   }
 }
 
@@ -63,6 +64,8 @@ app.get('/healthz', (_req, res) => {
     console.log('something wrong', err);
   }
 });
+
+// REQUEST endpoints
 
 app.get('/drequest/status/:status', async (req, res) => {
   const { status } = req.params;
@@ -91,23 +94,26 @@ app.put('/drequest/status/:reqId/:status/:info?', async (req, res) => {
   res.status(200).send('OK');
 });
 
-app.put('/drequest/events_served/:reqId/:events', (req, res) => {
+app.put('/events_served/:reqId/:pathId/:events', (req, res) => {
   const { reqId } = req.params;
+  const { pathId } = req.params;
   let { events } = req.params;
-  console.log('request: ', reqId, ' had ', events, 'events served.');
+  console.log('request: ', reqId, 'path:', pathId, 'had', events, 'events served.');
 
   events = parseInt(events, 10);
-  backend.AddEvents(reqId, 'served', events);
+  const cState = backend.EventsServed(reqId, pathId, events);
+  UpdateState(reqId, cState);
   res.status(200).send('OK');
 });
 
-app.put('/drequest/events_processed/:reqId/:events', (req, res) => {
+app.put('/events_processed/:reqId/:events', (req, res) => {
   const { reqId } = req.params;
   let { events } = req.params;
-  console.log('request: ', reqId, ' had ', events, 'events processed.');
+  console.log('request: ', reqId, 'had', events, 'events processed.');
 
   events = parseInt(events, 10);
-  backend.AddEvents(reqId, 'processed', events);
+  const cState = backend.EventsProcessed(reqId, events);
+  UpdateState(reqId, cState);
   res.status(200).send('OK');
 });
 
@@ -115,7 +121,7 @@ app.put('/drequest/terminate/:reqId', async (req, res) => {
   const { reqId } = req.params;
   console.log(`request: ${reqId} will be terminated.`);
   backend.ChangeStatus(reqId, 'Terminated', 'User terminated.');
-  backend.ChangePathStatus(reqId, 'Terminated');
+  backend.ChangeAllPathStatus(reqId, 'Terminated');
   res.status(200).send('OK');
 });
 
@@ -185,6 +191,16 @@ app.post('/drequest/update/', async (req, res) => {
   await darequest.update();
   res.status(200).send('OK');
 });
+
+// PATH endpoints
+
+app.post('/dpath/create', async (req, res) => {
+  const data = req.body;
+  console.log('creating path:', data);
+  backend.CreatePath(data);
+  res.status(200).send('OK');
+});
+
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);

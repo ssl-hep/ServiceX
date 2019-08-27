@@ -115,7 +115,7 @@ class ES {
     return cState;
   }
 
-  async ChangePathStatus(reqId, nstatus) {
+  async ChangeAllPathStatus(reqId, nstatus) {
     const sourceScript = `ctx._source.status = "${nstatus}"`;
     let updated = false;
     await this.es.updateByQuery({
@@ -140,15 +140,81 @@ class ES {
     return updated;
   }
 
-  AddEvents(reqId, type, nevents) {
-    const scriptSource = `ctx._source.events_${type} += params.events`;
-    let cState = false;
-    this.es.update({
-      index: 'servicex',
+  async PausePaths(reqId) {
+    const sourceScript = 'ctx._source.status = "Paused"';
+    let updated = false;
+    await this.es.updateByQuery({
+      index: 'servicex_paths',
       type: 'docs',
-      id: reqId,
+      refresh: true,
+      body: {
+        query: {
+          bool: {
+            must: [
+              { match: { req_id: reqId } },
+            ],
+            should: [
+              { match: { status: 'Validated' } },
+              { match: { req_id: 'Transforming' } },
+            ],
+          },
+        },
+        script: {
+          source: sourceScript,
+        },
+      },
+    }, (err, resp, status) => {
+      if (err) {
+        console.error('could not pause paths:', err.meta.body.error);
+        return;
+      }
+      if (resp.body.result === 'updated') {
+        updated = true;
+      }
+    });
+    return updated;
+  }
+
+  async UnpausePaths(reqId) {
+    const sourceScript = 'ctx._source.status = "Validated"';
+    let updated = false;
+    await this.es.updateByQuery({
+      index: 'servicex_paths',
+      type: 'docs',
+      refresh: true,
+      body: {
+        query: {
+          bool: {
+            must: [
+              { match: { req_id: reqId } },
+              { match: { status: 'Paused' } },
+            ],
+          },
+        },
+        script: {
+          source: sourceScript,
+        },
+      },
+    }, (err, resp, status) => {
+      if (err) {
+        console.error('could not unpause paths:', err.meta.body.error);
+        return;
+      }
+      if (resp.body.result === 'updated') {
+        updated = true;
+      }
+    });
+    return updated;
+  }
+
+  EventsServed(reqId, pathId, nevents) {
+    const scriptSource = 'ctx._source.events_served += params.events';
+    this.es.update({
+      index: 'servicex_path',
+      type: 'docs',
+      id: pathId,
       retry_on_conflict: 6,
-      _source: ['status', 'events_served', 'events_processed', 'events', 'dataset_events'],
+      _source: ['events_served'],
       body: {
         script: {
           source: scriptSource,
@@ -157,7 +223,27 @@ class ES {
       },
     }, (err, resp, status) => {
       if (err) {
-        console.error(`could not update events_${type}:`, err.meta.body.error);
+        console.error('could not update events_served for path:', err.meta.body.error);
+      }
+    });
+
+
+    let cState = false;
+    this.es.update({
+      index: 'servicex',
+      type: 'docs',
+      id: reqId,
+      retry_on_conflict: 6,
+      _source: ['status', 'events_processed', 'events_served', 'events', 'dataset_events'],
+      body: {
+        script: {
+          source: scriptSource,
+          params: { events: nevents },
+        },
+      },
+    }, (err, resp, status) => {
+      if (err) {
+        console.error('could not update events_served:', err.meta.body.error);
         return;
       }
       if (resp.body.result === 'updated') {
@@ -166,6 +252,58 @@ class ES {
     });
     return cState;
   }
+
+  EventsProcessed(reqId, type, nevents) {
+    const scriptSource = 'ctx._source.events_processed += params.events';
+    let cState = false;
+    this.es.update({
+      index: 'servicex',
+      type: 'docs',
+      id: reqId,
+      retry_on_conflict: 6,
+      _source: ['status', 'events_processed', 'events_served', 'events', 'dataset_events'],
+      body: {
+        script: {
+          source: scriptSource,
+          params: { events: nevents },
+        },
+      },
+    }, (err, resp, status) => {
+      if (err) {
+        console.error('could not update events_processed:', err.meta.body.error);
+        return;
+      }
+      if (resp.body.result === 'updated') {
+        cState = resp.body.get._source;
+      }
+    });
+    return cState;
+  }
+
+  async CreatePath(path) {
+    this.es.index({
+      index: 'servicex_paths',
+      type: 'docs',
+      body: {
+        req_id: path.req_id,
+        status: 'Created',
+        adler32: path.adler32,
+        file_size: path.file_size,
+        file_events: path.file_events,
+        file_path: path.file_path,
+        created_at: new Date().getTime(),
+        last_accessed_at: new Date().getTime(),
+        pause_transform: false,
+      },
+    }, (err, resp) => {
+      if (err) {
+        console.error('error in indexing new path:', err.meta.body.error);
+      }
+      console.log(resp);
+    });
+  }
+
+
 }
 
 module.exports = ES;
