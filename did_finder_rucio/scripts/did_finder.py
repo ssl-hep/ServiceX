@@ -245,7 +245,7 @@ if not args.did_list:
                            on_message_callback=callback)
     _channel.start_consuming()
 
-    summary = process_did_list(args.did_list, site, did_client, replica_client)
+summary = process_did_list(args.did_list, site, did_client, replica_client)
 
 print(summary)
 

@@ -42,7 +42,8 @@ docker run --rm -d \
     --mount type=bind,source="$(pwd)"/config/rucio.cfg,target=/opt/rucio/etc/rucio.cfg \
     --mount type=bind,source="$(pwd)"/secrets/secrets.txt,target=/servicex/secrets.txt \
     --mount type=bind,source="$(pwd)"/config/config.json,target=/usr/src/app/config/config.json \
-    --name=did-finder sslhep/servicex-did-finder:dev 
+    --mount type=bind,source="$(pwd)"/,target=/code \
+    --name=did-finder sslhep/servicex-did-finder:reactive 
 ```
 
 After the container is started you can attach to it and start using the rucio commands:
@@ -74,3 +75,7 @@ to avoid needing a grid cert since it never talks to Rucio
 * `--site` _XCache Site_ - This site is used to locate appropriate replicas. 
 Defaults to MWT2 
 
+
+## NOTE
+* needs update of the README :) so it explains how to run it in k8s not docker. 
+* needs rewrite to use REST API and not ES directly
