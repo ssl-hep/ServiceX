@@ -1,26 +1,24 @@
-kubectl create ns redis
+kubectl create ns servicex
 
 # echo "Adding redis conf"
-kubectl delete secret -n redis redis-master-conf
-kubectl create secret -n redis generic redis-master-conf --from-file=conf=../config/redis.conf
+kubectl delete secret -n servicex redis-master-conf
+kubectl create secret -n servicex generic redis-master-conf --from-file=conf=../config/redis.conf
 
 kubectl delete -f redis.yaml
 kubectl create -f redis.yaml
 
-kubectl delete secret -n redis redis-slave-conf
-kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf
+kubectl delete secret -n servicex redis-slave-conf
+kubectl create secret -n servicex generic redis-slave-conf --from-file=conf=../config/redis-slave.conf
 
 kubectl delete -f redis-slave.yaml
 kubectl create -f redis-slave.yaml
 
-kubectl get pods -n redis
-
-# Deploy Redis.
-kubectl create -f redis.yaml
-kubectl create -f redis-slave.yaml
+kubectl get pods -n servicex
 
 # create loadbalancer
 kubectl create -f redis-loadbalancer.yaml
+
+kubectl get services -n servicex
 
 # test
 kubectl run -it redis-cli --image=redis --restart=Never /bin/bash
