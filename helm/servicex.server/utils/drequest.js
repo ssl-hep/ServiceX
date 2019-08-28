@@ -36,7 +36,7 @@ module.exports = function dreqmodule(app, config, es) {
             redis_messages: 0,
             redis_consumers: 0,
             paused_transforms: this.paused_transforms,
-            info: 'Created\n',
+            info: 'Created',
           },
         });
         console.log(response);
