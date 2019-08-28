@@ -5,20 +5,15 @@ console.log('ServiceX REST API starting ... ');
 // const fs = require('fs');
 
 const express = require('express');
-// const session = require('express-session');
 const https = require('https');
 const http = require('http');
 // const rRequest = require('request');
 
 const config = require('./config/config.json');
 
-// const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
-// const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
-
 console.log(config);
 
 const app = express();
-app.use(express.static('web'));
 
 app.use(express.json()); // to support JSON-encoded bodies
 
@@ -29,33 +24,6 @@ const backend = new ES(config);
 // require('./utils/dpath')(app, config, backend);
 // const usr = require('./utils/user')(app, config, backend);
 
-async function UpdateState(reqId, cState) {
-  await cState;
-  console.log(cState);
-  if (cState.events_served > 0 && cState.status === 'Validated') {
-    backend.ChangeStatus(reqId, 'Streaming', 'Started streaming at =date= <BR>');
-  }
-  if (cState.events_processed >= cState.events
-    || cState.events_processed >= cState.dataset_events) {
-    backend.ChangeStatus(reqId, 'Done', 'Done at =date=.');
-    backend.ChangeAllPathStatus(reqId, 'Done');
-    return;
-  }
-  if (cState.events_served >= cState.events
-    || cState.events_served >= cState.dataset_events) {
-    backend.ChangeAllPathStatus(reqId, 'Done');
-  }
-  if ((cState.events_served - cState.events_processed) > config.HWM
-    && cState.status !== 'Paused') {
-    backend.ChangeStatus(reqId, 'Paused', 'Paused at =date=.<BR>');
-    backend.PausePaths(reqId);
-  }
-  if ((cState.events_served - cState.events_processed) < config.LWM
-    && cState.status === 'Paused') {
-    backend.ChangeStatus(reqId, 'Streaming', 'Restarted at >date<.');
-    backend.UnpausePaths(reqId);
-  }
-}
 
 app.get('/healthz', (_req, res) => {
   try {
@@ -69,7 +37,7 @@ app.get('/healthz', (_req, res) => {
 
 app.get('/drequest/status/:status', async (req, res) => {
   const { status } = req.params;
-  // console.log('getting a request in status: ', status);
+  console.log(`getting a request in status: ${status}`);
   const request = await backend.GetReqInStatus(status);
   // console.log('sending back:', request);
   res.status(200).json(request);
@@ -79,7 +47,11 @@ app.get('/drequest/:reqId', async (req, res) => {
   const { reqId } = req.params;
   console.log('lookup request : ', reqId);
   const request = await backend.GetReq(reqId);
-  res.status(200).json(request);
+  if (request) {
+    res.status(200).json(request);
+  } else {
+    res.status(500).send(`request ${reqId} not found.`);
+  }
 });
 
 app.put('/drequest/status/:reqId/:status/:info?', async (req, res) => {
@@ -101,8 +73,7 @@ app.put('/events_served/:reqId/:pathId/:events', (req, res) => {
   console.log('request: ', reqId, 'path:', pathId, 'had', events, 'events served.');
 
   events = parseInt(events, 10);
-  const cState = backend.EventsServed(reqId, pathId, events);
-  UpdateState(reqId, cState);
+  backend.EventsServed(reqId, pathId, events);
   res.status(200).send('OK');
 });
 
@@ -112,8 +83,7 @@ app.put('/events_processed/:reqId/:events', (req, res) => {
   console.log('request: ', reqId, 'had', events, 'events processed.');
 
   events = parseInt(events, 10);
-  const cState = backend.EventsProcessed(reqId, events);
-  UpdateState(reqId, cState);
+  backend.EventsProcessed(reqId, events);
   res.status(200).send('OK');
 });
 
@@ -152,45 +122,50 @@ app.post('/drequest/create/', async (req, res) => {
     data.description = null;
   }
   const reqId = await backend.CreateRequest(data);
-  res.status(200).send(reqId);
+  if (reqId) {
+    console.log('sending back reqId:', reqId);
+    res.status(200).send(reqId);
+  }
+  else {
+    req.status(500).send('Error in creating request.');
+  }
 });
 
-app.post('/drequest/update/', async (req, res) => {
-  const data = req.body;
-  console.log('post updating data request:', data);
-  const darequest = new module.DArequest();
-  const found = await darequest.get(data.id);
-  if (!found) {
-    console.log(`request ${data.id} not found. Not updating.`);
-    res.status(500).send('request not found.');
-    return;
-  }
-  if (data.status) darequest.status = data.status;
-  if (data.dataset) darequest.dataset = data.dataset;
-  if (data.columns) darequest.columns = data.columns;
-  if (data.events) darequest.events = data.events;
-  if (data.dataset_size) darequest.dataset_size = data.dataset_size;
-  if (data.dataset_events) darequest.dataset_events = data.dataset_events;
-  if (data.dataset_files) darequest.dataset_files = data.dataset_files;
-  if (data.info) darequest.info += data.info;
-  if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
-  if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
-  if (data.redis_messages) darequest.redis_messages = data.redis_messages;
-  if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
-  if (typeof data.pause_it !== 'undefined') {
-    console.log('Pause is there.', data.pause_it, 'previous state', darequest.paused_transforms);
-    if (data.pause_it === true && !darequest.paused_transforms) {
-      console.log('REALLY PAUSING.');
-      await darequest.pauseTransforms(true);
-    }
-    if (data.pause_it === false && darequest.paused_transforms) {
-      console.log('REALLY UNPAUSING.');
-      await darequest.pauseTransforms(false);
-    }
-  }
-  await darequest.update();
-  res.status(200).send('OK');
-});
+// app.post('/drequest/update/', async (req, res) => {
+//   const data = req.body;
+//   console.log('post updating data request:', data);
+//   const found = await darequest.get(data.id);
+//   if (!found) {
+//     console.log(`request ${data.id} not found. Not updating.`);
+//     res.status(500).send('request not found.');
+//     return;
+//   }
+//   if (data.status) darequest.status = data.status;
+//   if (data.dataset) darequest.dataset = data.dataset;
+//   if (data.columns) darequest.columns = data.columns;
+//   if (data.events) darequest.events = data.events;
+//   if (data.dataset_size) darequest.dataset_size = data.dataset_size;
+//   if (data.dataset_events) darequest.dataset_events = data.dataset_events;
+//   if (data.dataset_files) darequest.dataset_files = data.dataset_files;
+//   if (data.info) darequest.info += data.info;
+//   if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
+//   if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
+//   if (data.redis_messages) darequest.redis_messages = data.redis_messages;
+//   if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
+//   if (typeof data.pause_it !== 'undefined') {
+//     console.log('Pause is there.', data.pause_it, 'previous state', darequest.paused_transforms);
+//     if (data.pause_it === true && !darequest.paused_transforms) {
+//       console.log('REALLY PAUSING.');
+//       await darequest.pauseTransforms(true);
+//     }
+//     if (data.pause_it === false && darequest.paused_transforms) {
+//       console.log('REALLY UNPAUSING.');
+//       await darequest.pauseTransforms(false);
+//     }
+//   }
+//   await darequest.update();
+//   res.status(200).send('OK');
+// });
 
 // PATH endpoints
 

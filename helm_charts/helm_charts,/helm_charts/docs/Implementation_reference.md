@@ -46,31 +46,31 @@ TODO:
 
 ### drequest
 
-* GET /drequest/status/:status
+* GET /drequest/status/:status __validated_NEW__
 
-    for a given request status (eg. Defined) it finds the oldest request in that status. Returns all of that drequest data in json format. 
+    for a given request status (eg. Defined) it finds the oldest request in that status. Returns all of that drequest data in json format. response includes request id as __reqId__. If nothing found returns nothing.
 
-* GET /drequest/:id __validated__
+* GET /drequest/:reqId __validated_NEW__
 
-    for a given request_id it returns all drequest data in json format. 
+    for a given request_id it returns all drequest data in json format. If not found returns code 500 and a message.  
 
 * PUT /drequest/status/:id/:status/:info?
 
     updates request's status and optionally adds a line to its info log.
 
-* PUT /drequest/events_served/:id/:events __validated__
+* PUT /events_served/:reqId/:pathId/:events __validated__
 
-    for a given request_id increments number of events served by _events_.
+    for a given request_id and path_id increments number of events served by _events_.
 
-* PUT /drequest/events_processed/:id/:events __validated__
+* PUT /events_processed/:id/:events __validated__
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
 
-* PUT /drequest/terminate/:id __validated__
+* PUT /drequest/terminate/:reqId __validated_NEW__
 
     Sets status to Terminated for a given request_id and all the related paths.
 
-* POST /drequest/create __validated__
+* POST /drequest/create __validated_NEW__
 
     json document must contain: userid, name, dataset, branches, events requested, optionaly: request description.
     eg.
@@ -82,6 +82,7 @@ TODO:
         "columns":["Electrons.pt()","Electrons.eta()","Electrons.phi()"],
         "events":123456
     }
+    returns request_id (token) if successfull, code 500 and a message in case of error.
 
 * POST /drequest/update __validated__
 
