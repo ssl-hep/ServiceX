@@ -59,7 +59,7 @@ app.put('/drequest/status/:reqId/:status/:info?', async (req, res) => {
   const { status } = req.params;
   let info = '';
   if (req.params.info) {
-    info = req.params;
+    info = req.params.info;
   }
   console.log('update request status: ', reqId, status, info);
   await backend.ChangeStatus(reqId, status, info);
@@ -176,7 +176,106 @@ app.post('/dpath/create', async (req, res) => {
   res.status(200).send('OK');
 });
 
+app.put('/dpath/status/:pathId/:status/:info?', async (req, res) => {
+  const { pathId } = req.params;
+  const { status } = req.params;
+  let info = '';
+  if (req.params.info) {
+    info = req.params.info;
+  }
+  console.log('update path status: ', pathId, status, info);
+  await backend.ChangePathStatus(pathId, status, info);
+  res.status(200).send('OK');
+});
 
+app.get('/dpath/to_transform', async (req, res) => {
+  console.log('getting path to transform');
+  const path = await backend.GetPathToTransform();
+  if (path) {
+    res.status(200).json(path);
+  } else {
+    res.status(200).send(false);
+  }
+});
+
+app.get('/dpath/:pathId', async (req, res) => {
+  const { pathId } = req.params;
+  console.log('lookup path:', pathId);
+  const path = await backend.GetPath(pathId);
+  if (path) {
+    res.status(200).json(path);
+  } else {
+    res.status(500).send(`request ${pathId} not found.`);
+  }
+});
+
+app.get('/dpath/:reqId/:status', async (req, res) => {
+  const { reqId } = req.params;
+  const { status } = req.params;
+  console.log(`finding path belonging to request ${reqId} in status: ${status}`);
+  const path = await backend.GetPath(reqId, status);
+  if (path) {
+    res.status(200).json(path);
+  } else {
+    res.status(500).send('no such path');
+  }
+});
+
+// USER endpoints
+
+app.post('/user/create', async (req, res) => {
+  const data = req.body;
+  console.log('post creating user:', data);
+  if (!data.user) {
+    res.status(500).send('Bad request. user missing.');
+    return;
+  }
+  if (!data.username) {
+    res.status(500).send('Bad request. username missing.');
+    return;
+  }
+  if (!data.userid) {
+    res.status(500).send('Bad request. userid missing.');
+    return;
+  }
+  if (!data.organization) {
+    res.status(500).send('Bad request. organization missing.');
+    return;
+  }
+  if (!data.email) {
+    res.status(500).send('Bad request. email missing.');
+    return;
+  }
+  data.approved = !config.APPROVAL_REQUIRED;
+
+  const result = await backend.CreateUser(data);
+  if (result) {
+    console.log('User created.');
+    res.status(200).send('OK');
+  }
+  else {
+    req.status(500).send('Error in creating request.');
+  }
+});
+
+app.get('/user/requests/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log('lookup requests of user : ', userId);
+  res.status(200).json(await backend.GetUserRequests(userId));
+});
+
+app.get('/users', async (req, res) => {
+  console.log('lookup all users.');
+  res.status(200).json(await backend.GetUsers());
+});
+
+app.get('/user/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log('lookup user: ', userId);
+  res.status(200).json(await backend.GetUser(userId));
+});
+
+// THE REST
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).send(err.message);

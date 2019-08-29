@@ -1,8 +1,9 @@
 {
-    "TESTING": true,
-    "SITENAME": "servicex.slateci.net",
+    "TESTING": false,
+    "SITENAME": "servicex-backend.slateci.net",
     "HTTPS": false,
     "SECRETS_PATH": "./kube/secrets/",
+    "APPROVAL_REQUIRED": false,
     "HWM": 100000,
     "LWM": 80000
 }
