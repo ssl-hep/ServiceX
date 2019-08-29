@@ -57,10 +57,12 @@ POST /_template/servicex_paths
         "file_events": { "type": "long" },
         "file_path": { "type": "keyword" },
         "status": {   "type": "keyword"  },
+        "info": {   "type": "keyword"  },
         "created_at": {   "type": "date"  },
         "last_accessed_at": {   "type": "date"  },
         "pause_transform":{"type":"boolean"}, 
-        "events_served": { "type": "long" }     
+        "events_served": { "type": "long" }, 
+        "retries": { "type": "integer" }     
       }
     }
   }

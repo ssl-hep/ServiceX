@@ -26,23 +26,39 @@ TODO:
 ### user
 
 * GET /profile - renders profile page. preloads users data from ES. will be simpler once ajax call gets data from /user
-* GET /users - renders users page. ajax call gets data from /users_data.
+* GET /users - renders users page. ajax call gets data from /users.
 
-* GET /authorize/:user_id
 * GET /get_requests - returns requests data for a user. web called. should not be needed once page makes ajax call to /user/requests/
 
+* POST /user/create __validated_NEW__
 
-* GET /user/:user_id?  __validated__
+    json document must contain: userid, username, organization, user, email.
+    eg.
+    { 
+        "userid": "a51dbd7e-d274-11e5-9b11-9be347a09ce0",
+        "username": "ivukotic@globusid.org",
+        "organization": "University of Chicago",
+        "user": "Ilija Vukotic",
+        "email": "ivukotic@cern.ch"
+    }
+
+    returns OK if successfull, code 500 and a message in case of error.
+
+* PUT /user/approve/:userId __NOT_implemented_NEw__
+
+* DELETE /user/:userId __NOT_implemented_NEw__
+
+* GET /user/:userId  __validated_NEW__
         
-    returns json formated user profile data. if called from web interface and user is logged __user_id__ is not needed.
+    returns json formated user profile data.
 
-* GET /users_data  __validated__
+* GET /users  __validated_NEW__
 
     returns json formated data on all users
 
-* GET /user/requests/:user_id  __validated__
+* GET /user/requests/:user_id  __validated_NEW__
     
-    returns json formated info on all users requests
+    returns json formated info on all users requests. Each request gets __reqId__ added. Requests are ordered in descending created_at time.
 
 ### drequest
 
@@ -54,15 +70,15 @@ TODO:
 
     for a given request_id it returns all drequest data in json format. If not found returns code 500 and a message.  
 
-* PUT /drequest/status/:id/:status/:info?
+* PUT /drequest/status/:reqId/:status/:info? __validated_NEW__
 
     updates request's status and optionally adds a line to its info log.
 
-* PUT /events_served/:reqId/:pathId/:events __validated__
+* PUT /events_served/:reqId/:pathId/:events __validated_NEW__
 
     for a given request_id and path_id increments number of events served by _events_.
 
-* PUT /events_processed/:id/:events __validated__
+* PUT /events_processed/:reqId/:events __validated_NEW__
 
     for a given request_id increments number of events processed by _events_. If all the events were processed, request status is set to _Done_.
 
@@ -97,30 +113,34 @@ TODO:
 
 ### dpath
 
-* POST /dpath/create __validated__
+* POST /dpath/create __validated_NEW__
 
-    to be used by DID-finder
+    to be used by DID-finder. send json object like this:
+    {
+	"req_id":"{{req_id}}",
+	"adler32":"heusadbasd",
+	"file_size":1024,
+	"file_events":1000,
+	"file_path":"root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/4a/ad/DAOD_STDM3.05630052._000017.pool.root.1"
+    }
 
-* PUT /dpath/transform/:id/:status
+* PUT /dpath/status/:pathId/:status/:info? __validated_NEW__
 
-    transformer returns :id, status
+    used by transformer to update path status. Requires path id, new status, optional info
 
-* GET /dpath/transform/
-
-    used by transformer. If there is a path that is in _Validated_ state it is updated to _Transforming_ and returned to the transformer.
-
-* GET /dpath/transform/:rid/:status __validated__
-
-    returns data on a path belonging to _rid_ request and in certain status.
-
-
-
-#### Unused for now
-* GET /dpath/:id  __validated__
+* GET /dpath/:pathId  __validated_NEW__
 
     returns all the data about path
 
-* GET /dpath/last_used/:rid
+* GET /dpath/to_transform __validated_NEW__
+
+    used by transformer. If there is a path that is in _Validated_ state it is updated to _Transforming_ and returned to the transformer. pathId is added to returned object.
+
+* GET /dpath/:rid/:status __validated_NEW__
+
+    returns path belonging to _rid_ request and in certain status. Used for example by Validator.
+
+
 
 ## Requests states and transitions
 
@@ -143,19 +163,13 @@ TODO:
 
 transformer workflow:
 
-1. gets dpath to process (_id, rid, path, file_events)
+1. gets dpath to process (_id, rid, path, file_events). This automatically sets that dpath to _Transforming_.
 1. gets drequest connected to that dpath (columns, events_transformed, events_transforming, events_requested )
-1. if transformation needed 
-    1. update dpath status to _Transforming_
-    1. update drequest events_transforming
-    else
-    1. update dpath status to NotNeeded
-1. once transformation done update dpath status to _Transformed_, update drequest events_tranformed, events_transforming, and if needed drequest status to _Transformed_.
+1. after each batch of events served it updates events_served.
+1. once transformation done update dpath status to _Transformed_ or _Error_.
 
-
-transformer periodically updates number of served events in both paths and requests.
-path goes automatically to Done if all events served.
-transformer can send path to Error (reverts status to Validated and increments retry counter). If retry counter goes to 3 autosets to Failed. 
-Paused is applied only to validated and transforming paths. Unpaused returns everything to validated. 
-transformer gets to transform first paths with least number of events left to serve. 
+logic in servicex:
+1. transformer can send path to Error (reverts status to Validated and increments retry counter). If retry counter goes to 3 autosets to Failed. 
+1. Paused is applied only to validated and transforming paths. Unpaused returns everything to validated. 
+1. Transformer gets to transform first paths with least number of events left to serve. 
 
