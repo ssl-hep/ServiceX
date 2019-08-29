@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicex  
+  namespace: servicex
+  labels:
+    k8s-app: servicex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: servicex
+  template:
+    metadata:
+      labels:
+        k8s-app: servicex
+    spec:
+      containers:
+      - name: servicex
+        image: sslhep/servicex-frontend:latest
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 80
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /healthz
+            port: 80
+          periodSeconds: 60
+          initialDelaySeconds: 60
+          timeoutSeconds: 10
+        volumeMounts:
+        - name: frontend-conf-volume
+          mountPath: "/usr/src/app/config/"
+        - name: es-secret-volume
+          mountPath: "/etc/elasticsearch/"
+          readOnly: true
+      volumes:
+      - name: es-secret-volume
+        secret:
+          secretName: es-secret
+          items:
+          - key: es_conf
+            path: elasticsearch.json
+      - name: frontend-conf-volume
+        secret:
+          secretName: config
+          items:
+          - key: conf
+            path: config.json
