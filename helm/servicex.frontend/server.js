@@ -9,7 +9,7 @@ const https = require('https');
 const http = require('http');
 // const rRequest = require('request');
 
-const config = require('./config/config.json');
+const config = require('./config/config-local.json');
 
 console.log(config);
 
@@ -275,6 +275,17 @@ app.get('/user/:userId', async (req, res) => {
   res.status(200).json(await backend.GetUser(userId));
 });
 
+app.put('/user/approve/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log('approving user: ', userId);
+  res.status(200).json(await backend.ApproveUser(userId));
+});
+
+app.delete('/user/:userId', async (req, res) => {
+  const { userId } = req.params;
+  console.log('deleting user: ', userId);
+  res.status(200).json(await backend.DeleteUser(userId));
+});
 // THE REST
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
