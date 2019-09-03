@@ -44,7 +44,7 @@ TODO:
 
     returns OK if successfull, code 500 and a message in case of error.
 
-* PUT /user/approve/:userId __NOT_implemented_NEw__
+* PUT /user/approve/:userId __validated_NEw__
 
 * DELETE /user/:userId __validated_NEW__
 
