@@ -9,7 +9,7 @@ const https = require('https');
 const http = require('http');
 // const rRequest = require('request');
 
-const config = require('./config/config-local.json');
+const config = require('./config/config.json');
 
 console.log(config);
 
