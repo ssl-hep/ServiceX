@@ -597,6 +597,41 @@ class ES {
     }
   }
 
+  async ApproveUser(userId) {
+    try {
+      const response = await this.es.update({
+        index: this.esConfig.USER_TABLE,
+        type: 'docs',
+        id: userId,
+        body: {
+          script: {
+            source: 'ctx._source.approved=true;',
+          },
+        },
+      });
+      console.log('result:', response.body.result);
+      return 'Approved.';
+    } catch (err) {
+      console.error('error in approving user with an userId:', userId, err);
+      return `Not approved: ${err}`;
+    }
+  }
+
+  async DeleteUser(userId) {
+    try {
+      const response = await this.es.delete({
+        index: this.esConfig.USER_TABLE,
+        type: 'docs',
+        id: userId,
+      });
+      console.log('result:', response.body.result);
+      return 'Deleted.';
+    } catch (err) {
+      console.error('error in deleting with an userId:', userId, err);
+      return `Not deleted: ${err}`;
+    }
+  }
+
 }
 
 module.exports = ES;

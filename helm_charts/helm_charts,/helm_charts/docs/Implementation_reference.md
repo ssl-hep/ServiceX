@@ -46,7 +46,7 @@ TODO:
 
 * PUT /user/approve/:userId __NOT_implemented_NEw__
 
-* DELETE /user/:userId __NOT_implemented_NEw__
+* DELETE /user/:userId __validated_NEW__
 
 * GET /user/:userId  __validated_NEW__
         

@@ -4,20 +4,20 @@ metadata:
   name: servicex  
   namespace: servicex
   labels:
-    k8s-app: servicex
+    k8s-app: servicex-frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: servicex
+      k8s-app: servicex-frontend
   template:
     metadata:
       labels:
-        k8s-app: servicex
+        k8s-app: servicex-frontend
     spec:
       containers:
       - name: servicex
-        image: sslhep/servicex-frontend:latest
+        image: sslhep/servicex-server:servicex-frontend
         imagePullPolicy: Always
         ports:
           - containerPort: 80
