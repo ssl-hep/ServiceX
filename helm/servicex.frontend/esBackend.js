@@ -65,6 +65,9 @@ class ES {
     request.events_processed = 0;
     request.events_served = 0;
     request.events_ready = 0;
+    request.dataset_events = 0;
+    request.dataset_files = 0;
+    request.dataset_size = 0;
     request.consumers = 0;
     request.paused_transforms = false;
     request.info = 'Created';
@@ -82,6 +85,36 @@ class ES {
     } catch (err) {
       console.error('error in indexing new request:', err.meta.body.error);
       return null;
+    }
+  }
+
+  async UpdateRequest(update_body) {
+    const reqId = update_body.reqId;
+    delete update_body.reqId;
+    console.log('update doc:', update_body);
+
+    try {
+      const resp = await this.es.update({
+        index: this.esConfig.REQ_TABLE,
+        type: 'docs',
+        id: reqId,
+        retry_on_conflict: 3,
+        body: {
+          doc: update_body,
+        },
+      });
+
+      if (resp.body.result === 'updated') {
+        console.log('Updated.');
+        return true;
+      }
+
+      console.error('did not update request?!');
+      return false;
+
+    } catch (err) {
+      console.error('could not update request:', err);
+      return false;
     }
   }
 

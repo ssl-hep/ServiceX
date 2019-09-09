@@ -100,16 +100,9 @@ TODO:
     }
     returns request_id (token) if successfull, code 500 and a message in case of error.
 
-* POST /drequest/update __validated__
+* POST /drequest/update __validated_NEW__
 
-    updates all the posted info.
-
-#### WEB only
-* GET /wrequest_update/:rid 
-* GET /wrequest_prepare
-* GET /wrequest_terminate
-* GET /wrequest_manage
-* POST /wrequest_update
+    updates info on: status, dataset_files, dataset_events, dataset_size.
 
 ### dpath
 

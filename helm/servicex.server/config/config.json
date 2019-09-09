@@ -1,6 +1,6 @@
 {
-    "TESTING": false,
-    "SITENAME": "servicex.slateci.net",
+    "TESTING": true,
+    "SITENAME": "servicex-frontend.uc.ssl-hep.org:80",
     "HTTPS": false,
     "SITE": "MWT2"
 }
