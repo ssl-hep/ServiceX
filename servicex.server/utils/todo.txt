@@ -1584,5 +1584,3 @@ amete-test
 aqt
 
 caching-v1-reindexed-v5
-
-davids_events2
