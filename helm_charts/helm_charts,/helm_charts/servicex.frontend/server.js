@@ -131,41 +131,44 @@ app.post('/drequest/create/', async (req, res) => {
   }
 });
 
-// app.post('/drequest/update/', async (req, res) => {
-//   const data = req.body;
-//   console.log('post updating data request:', data);
-//   const found = await darequest.get(data.id);
-//   if (!found) {
-//     console.log(`request ${data.id} not found. Not updating.`);
-//     res.status(500).send('request not found.');
-//     return;
-//   }
-//   if (data.status) darequest.status = data.status;
-//   if (data.dataset) darequest.dataset = data.dataset;
-//   if (data.columns) darequest.columns = data.columns;
-//   if (data.events) darequest.events = data.events;
-//   if (data.dataset_size) darequest.dataset_size = data.dataset_size;
-//   if (data.dataset_events) darequest.dataset_events = data.dataset_events;
-//   if (data.dataset_files) darequest.dataset_files = data.dataset_files;
-//   if (data.info) darequest.info += data.info;
-//   if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
-//   if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
-//   if (data.redis_messages) darequest.redis_messages = data.redis_messages;
-//   if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
-//   if (typeof data.pause_it !== 'undefined') {
-//     console.log('Pause is there.', data.pause_it, 'previous state', darequest.paused_transforms);
-//     if (data.pause_it === true && !darequest.paused_transforms) {
-//       console.log('REALLY PAUSING.');
-//       await darequest.pauseTransforms(true);
-//     }
-//     if (data.pause_it === false && darequest.paused_transforms) {
-//       console.log('REALLY UNPAUSING.');
-//       await darequest.pauseTransforms(false);
-//     }
-//   }
-//   await darequest.update();
-//   res.status(200).send('OK');
-// });
+// to be used by did-finder and validator
+app.post('/drequest/update/', async (req, res) => {
+  const data = req.body;
+  console.log('post updating data request:', data);
+  if (!data.req_id) {
+    res.status(500).send('request has not req_id.');
+  }
+
+  const current_request = await backend.GetReq(data.req_id);
+  if (current_request) {
+    console.log('request found:', current_request);
+    update_body = { reqId: data.req_id };
+    if (data.status != current_request.status) update_body.status = data.status;
+    if (data.dataset_size != current_request.dataset_size) update_body.dataset_size = data.dataset_size;
+    if (data.dataset_events != current_request.dataset_events) update_body.dataset_events = data.dataset_events;
+    if (data.dataset_files != current_request.dataset_files) update_body.dataset_files = data.dataset_files;
+    if (data.info) update_body.info = `${current_request.info}\n${new Date().toLocaleString()} ${data.info}`;
+    update_body.modified_at = new Date().getTime();
+    const update_res = await backend.UpdateRequest(update_body);
+    console.log('Update result:', update_res);
+    if (update_res) {
+      res.status(200).send('OK');
+    } else {
+      res.status(400).send('could not update request.');
+    }
+  } else {
+    res.status(500).send(`request ${data.req_id} not found.`);
+  }
+
+  //   if (data.status) darequest.status = data.status;
+  //   if (data.dataset) darequest.dataset = data.dataset;
+  //   if (data.columns) darequest.columns = data.columns;
+  //   if (data.events) darequest.events = data.events;
+  //   if (data.kafka_lwm > -1) darequest.kafka_lwm = data.kafka_lwm;
+  //   if (data.kafka_hwm > -1) darequest.kafka_hwm = data.kafka_hwm;
+  //   if (data.redis_messages) darequest.redis_messages = data.redis_messages;
+  //   if (data.redis_consumers) darequest.redis_consumers = data.redis_consumers;
+});
 
 // PATH endpoints
 
