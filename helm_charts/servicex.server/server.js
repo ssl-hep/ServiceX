@@ -9,20 +9,20 @@ const session = require('express-session');
 const https = require('https');
 const http = require('http');
 const rRequest = require('request');
-const elasticsearch = require('@elastic/elasticsearch');
+// const elasticsearch = require('@elastic/elasticsearch');
 
 const config = require('./config/config.json');
 
 let secretsPath = '/etc/';
 
 if (config.TESTING) {
-  secretsPath = './kube/secrets/';
+  secretsPath = '../kube/secrets/';
 }
 
 const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
-const esConfig = JSON.parse(fs.readFileSync(`${secretsPath}elasticsearch/elasticsearch.json`));
+// const esConfig = JSON.parse(fs.readFileSync(`${secretsPath}elasticsearch/elasticsearch.json`));
 
-config.ES_HOST = `http://${esConfig.ES_USER}:${esConfig.ES_PASS}@${esConfig.ES_HOST}:9200`;
+// config.ES_HOST = `http://${esConfig.ES_USER}:${esConfig.ES_PASS}@${esConfig.ES_HOST}:9200`;
 const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
@@ -39,15 +39,14 @@ app.use(session({
   cookie: { secure: false, maxAge: 3600000 },
 }));
 
-const es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
+// const es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
 
-require('./utils/drequest')(app, config, es);
-require('./utils/dpath')(app, config, es);
-const usr = require('./utils/user')(app, config, es);
+// require('./utils/drequest')(app, config, es);
+// require('./utils/dpath')(app, config, es);
+// const usr = require('./utils/user')(app, config, es);
 
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware
-
 //   if (req.session.approved !== true) {
 //     const error = new Error('You must be logged in to view this page.');
 //     error.status = 403;
@@ -56,23 +55,6 @@ const usr = require('./utils/user')(app, config, es);
 //   return next();
 // };
 
-// called on every path
-// app.use(function (req, res, next) {
-//     next();
-// })
-
-// app.get('/delete/:jservice', requiresLogin, function (request, response) {
-//     var jservice = request.params.jservice;
-//     cleanup(jservice);
-//     response.redirect("/index.html");
-// });
-
-// app.get('/log/:podname', requiresLogin, async function (request, response) {
-//     var podname = request.params.podname;
-//     plog = await get_log(podname);
-//     console.log(plog.body);
-//     response.render("podlog", { pod_name: podname, content: plog.body });
-// });
 
 app.get('/', async (request, response) => {
   // console.log('===========> / CALL');
@@ -154,8 +136,20 @@ app.get('/authcallback', (req, res) => {
         console.log('error on geting username:\t', error);
       }
       console.log('body:\t', body);
-      const user = new usr.User();
-      user.id = body.sub;
+      user_id = body.sub;
+
+      // get info on this user.
+      rRequest.get(config.SITENAME + '/user/' + user_id, async (error, response, body) => {
+        if (error) {
+          console.log('error on looking up user in ES:\t', error);
+        }
+        console.log('response:\t', response);
+        console.log('body:\t', body);
+        // if not found create it.
+      });
+
+      // const user = new usr.User();
+      // user.id = body.sub;
       req.session.user_id = body.sub;
       const found = await user.load();
       if (found === false) {
