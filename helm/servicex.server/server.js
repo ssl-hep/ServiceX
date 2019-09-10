@@ -56,7 +56,7 @@ app.use(session({
 // };
 
 
-app.get('/web/', async (request, response) => {
+app.get('/', async (request, response) => {
   // console.log('===========> / CALL');
   // console.log(request.session);
   // if (request.session.user_id) {
@@ -78,11 +78,11 @@ app.get('/web/', async (request, response) => {
   response.render('index', request.session);
 });
 
-app.get('/web/about', async (req, res) => {
+app.get('/about', async (req, res) => {
   res.render('about', req.session);
 });
 
-app.get('/web/profile', async (req, res) => {
+app.get('/profile', async (req, res) => {
   console.log('profile called!');
   user.id = req.session.user_id;
   req.session.approved = true;
@@ -90,12 +90,12 @@ app.get('/web/profile', async (req, res) => {
   res.render('profile', userInfo);
 });
 
-app.get('/web/users', async (req, res) => {
+app.get('/users', async (req, res) => {
   console.log('users called!');
   res.render('users');
 });
 
-app.get('/web/healthz', (_req, res) => {
+app.get('/healthz', (_req, res) => {
   try {
     res.status(200).send('OK');
   } catch (err) {
@@ -103,14 +103,14 @@ app.get('/web/healthz', (_req, res) => {
   }
 });
 
-app.get('/web/login', async (req, res) => {
+app.get('/login', async (req, res) => {
   console.log('Logging in');
   const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
   // console.log('redirecting to:', red);
   res.redirect(red);
 });
 
-app.get('/web/authcallback', (req, res) => {
+app.get('/authcallback', (req, res) => {
   console.log('AUTH CALLBACK query:', req.query);
   const { code } = req.query;
   if (code) {
@@ -187,7 +187,7 @@ app.get('/web/authcallback', (req, res) => {
   });
 });
 
-app.get('/web/logout', (req, res) => {
+app.get('/logout', (req, res) => {
   if (req.session.approved) { // logout from Globus
     const requestOptions = {
       uri: `https://auth.globus.org/v2/web/logout?client_id=${gConfig.CLIENT_ID}`,
