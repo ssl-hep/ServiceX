@@ -20,10 +20,12 @@ app.use(express.json()); // to support JSON-encoded bodies
 const ES = require('./esBackend');
 
 const backend = new ES(config);
-// require('./utils/drequest')(app, config, backend);
-// require('./utils/dpath')(app, config, backend);
-// const usr = require('./utils/user')(app, config, backend);
 
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", config.SITENAME);
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.get('/healthz', (_req, res) => {
   try {

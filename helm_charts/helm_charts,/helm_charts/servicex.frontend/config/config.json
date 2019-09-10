@@ -1,5 +1,5 @@
 {
-    "SITENAME": "servicex-frontend.slateci.net",
+    "SITENAME": "https://servicex.slateci.net",
     "HTTPS": false,
     "SECRETS_PATH": "/etc/",
     "APPROVAL_REQUIRED": false,

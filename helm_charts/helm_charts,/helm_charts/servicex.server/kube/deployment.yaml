@@ -20,34 +20,21 @@ spec:
         image: sslhep/servicex-server:latest
         imagePullPolicy: Always
         ports:
-          - containerPort: 443
           - containerPort: 80
         livenessProbe:
           httpGet:
             scheme: HTTPS
-            path: /healthz
-            port: 443
+            path: /web/healthz
+            port: 80
           periodSeconds: 60
           initialDelaySeconds: 60
           timeoutSeconds: 10
         volumeMounts:
-        - name: https-certs-volume
-          mountPath: "/etc/https-certs/"
-          readOnly: true
         - name: globus-conf-volume
           mountPath: "/etc/globus-conf/"
         - name: frontend-conf-volume
           mountPath: "/usr/src/app/config/"
       volumes:
-      - name: https-certs-volume
-        secret:
-          secretName: cert-secret
-          items:
-          - key: tls.key
-            path: servicex.key.pem
-            mode: 256 
-          - key: tls.crt
-            path: servicex.cert.crt
       - name: frontend-conf-volume
         secret:
           secretName: config
@@ -60,4 +47,3 @@ spec:
           items:
           - key: gconf
             path: globus-config.json
-      serviceAccountName: servicex-fronter
