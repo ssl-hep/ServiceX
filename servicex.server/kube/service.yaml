@@ -28,13 +28,13 @@ metadata:
 spec:
   tls:
   - hosts:
-    - servicex-frontend.uc.ssl-hep.org
+    - servicex.uc.ssl-hep.org
     secretName: sxfe-cert
   rules:
-    - host: servicex-frontend.uc.ssl-hep.org
+    - host: servicex.uc.ssl-hep.org
       http:
         paths:
-        - path: /web/
+        - path: /
           backend:
             serviceName: servicex-web
             servicePort: 80

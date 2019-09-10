@@ -23,8 +23,8 @@ spec:
           - containerPort: 80
         livenessProbe:
           httpGet:
-            scheme: HTTPS
-            path: /web/healthz
+            scheme: HTTP
+            path: /healthz
             port: 80
           periodSeconds: 60
           initialDelaySeconds: 60
