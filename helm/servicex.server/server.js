@@ -84,10 +84,8 @@ app.get('/about', async (req, res) => {
 
 app.get('/profile', async (req, res) => {
   console.log('profile called!');
-  user.id = req.session.user_id;
   req.session.approved = true;
-  const userInfo = await user.load();
-  res.render('profile', userInfo);
+  res.render('profile', req.session);
 });
 
 app.get('/users', async (req, res) => {
@@ -146,7 +144,7 @@ app.get('/authcallback', (req, res) => {
 
     rRequest.post(idrequestOptions, async (error, _response, body) => {
       if (error) {
-        console.log('error on geting username:\t', error);
+        console.error('error on geting username:\t', error);
       }
       console.log('body:\t', body);
       user_id = body.sub;
@@ -154,34 +152,31 @@ app.get('/authcallback', (req, res) => {
       // get info on this user.
       rRequest.get(config.SITENAME + '/user/' + user_id, async (error, response, body) => {
         if (error) {
-          console.log('error on looking up user in ES:\t', error);
+          console.error('error on looking up user in ES:\t', error);
         }
         console.log('response:\t', response);
         console.log('body:\t', body);
         // if not found create it.
+        req.session.user_id = body.sub;
+        req.session.approved = true;
       });
 
-      // const user = new usr.User();
-      // user.id = body.sub;
-      req.session.user_id = body.sub;
-      const found = await user.load();
-      if (found === false) {
-        user.username = body.preferred_username;
-        user.organization = body.organization;
-        user.name = body.name;
-        user.email = body.email;
-        await user.write();
-        // const mbody = {
-        //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
-        //   to: user.email,
-        //   subject: 'ServiceX membership',
-        //   text: `Dear ${user.name}, \n\n\t
-        //   You have been authorized.\n\n
-        //   Best regards,\n\tServiceX mailing system.`,
-        // }
-        // user.sendMailToUser(mbody);
-      }
-      req.session.approved = true;
+      // if (found === false) {
+      //   user.username = body.preferred_username;
+      //   user.organization = body.organization;
+      //   user.name = body.name;
+      //   user.email = body.email;
+      // const mbody = {
+      //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
+      //   to: user.email,
+      //   subject: 'ServiceX membership',
+      //   text: `Dear ${user.name}, \n\n\t
+      //   You have been authorized.\n\n
+      //   Best regards,\n\tServiceX mailing system.`,
+      // }
+      // user.sendMailToUser(mbody);
+      // }
+
       res.redirect('/');
     });
   });
