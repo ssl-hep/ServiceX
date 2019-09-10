@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-    $.getJSON('/users_data', function (data) {
+    $.getJSON('http://servicex-frontend.uc.ssl-hep.org/users_data', function (data) {
         console.log(data);
         var table = $('#users_table').DataTable({
             data: data,

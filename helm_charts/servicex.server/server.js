@@ -56,7 +56,7 @@ app.use(session({
 // };
 
 
-app.get('/', async (request, response) => {
+app.get('/web/', async (request, response) => {
   // console.log('===========> / CALL');
   // console.log(request.session);
   // if (request.session.user_id) {
@@ -78,11 +78,24 @@ app.get('/', async (request, response) => {
   response.render('index', request.session);
 });
 
-app.get('/about', async (req, res) => {
+app.get('/web/about', async (req, res) => {
   res.render('about', req.session);
 });
 
-app.get('/healthz', (_req, res) => {
+app.get('/web/profile', async (req, res) => {
+  console.log('profile called!');
+  user.id = req.session.user_id;
+  req.session.approved = true;
+  const userInfo = await user.load();
+  res.render('profile', userInfo);
+});
+
+app.get('/web/users', async (req, res) => {
+  console.log('users called!');
+  res.render('users');
+});
+
+app.get('/web/healthz', (_req, res) => {
   try {
     res.status(200).send('OK');
   } catch (err) {
@@ -90,14 +103,14 @@ app.get('/healthz', (_req, res) => {
   }
 });
 
-app.get('/login', async (req, res) => {
+app.get('/web/login', async (req, res) => {
   console.log('Logging in');
   const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
   // console.log('redirecting to:', red);
   res.redirect(red);
 });
 
-app.get('/authcallback', (req, res) => {
+app.get('/web/authcallback', (req, res) => {
   console.log('AUTH CALLBACK query:', req.query);
   const { code } = req.query;
   if (code) {
@@ -174,7 +187,7 @@ app.get('/authcallback', (req, res) => {
   });
 });
 
-app.get('/logout', (req, res) => {
+app.get('/web/logout', (req, res) => {
   if (req.session.approved) { // logout from Globus
     const requestOptions = {
       uri: `https://auth.globus.org/v2/web/logout?client_id=${gConfig.CLIENT_ID}`,
@@ -200,15 +213,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).send(err.message);
 });
 
-if (config.HTTPS) {
-  const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
-  const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
-  const credentials = { key: privateKey, cert: certificate };
-  https.createServer(credentials, app).listen(443, () => {
-    console.log('Your server is listening on port 443.');
-  });
-} else {
-  http.createServer(app).listen(80, () => {
-    console.log('Your server is listening on port 80.');
-  });
-}
+http.createServer(app).listen(80, () => {
+  console.log('Your server is listening on port 80.');
+});
