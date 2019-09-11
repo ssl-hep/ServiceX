@@ -21,11 +21,11 @@ const ES = require('./esBackend');
 
 const backend = new ES(config);
 
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", config.SITENAME);
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Origin", config.SITENAME);
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });
 
 app.get('/healthz', (_req, res) => {
   try {
@@ -251,7 +251,8 @@ app.post('/user/create', async (req, res) => {
     res.status(500).send('Bad request. email missing.');
     return;
   }
-  data.approved = !config.APPROVAL_REQUIRED;
+
+  if (!data.approved) data.approved = false;
 
   const result = await backend.CreateUser(data);
   if (result) {
@@ -291,21 +292,13 @@ app.delete('/user/:userId', async (req, res) => {
   console.log('deleting user: ', userId);
   res.status(200).json(await backend.DeleteUser(userId));
 });
+
 // THE REST
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).send(err.message);
 });
 
-if (config.HTTPS) {
-  // const privateKey = fs.readFileSync(`${secretsPath}https-certs/servicex.key.pem`);
-  // const certificate = fs.readFileSync(`${secretsPath}https-certs/servicex.cert.crt`);
-  // const credentials = { key: privateKey, cert: certificate };
-  // https.createServer(credentials, app).listen(443, () => {
-  //   console.log('Your server is listening on port 443.');
-  // });
-} else {
-  http.createServer(app).listen(80, () => {
-    console.log('Your server is listening on port 80.');
-  });
-}
+http.createServer(app).listen(80, () => {
+  console.log('Your server is listening on port 80.');
+});
