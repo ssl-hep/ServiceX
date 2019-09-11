@@ -44,7 +44,7 @@ spec:
             path: elasticsearch.json
       - name: frontend-conf-volume
         secret:
-          secretName: config
+          secretName: config-frontend
           items:
           - key: conf
             path: config.json
