@@ -79,8 +79,16 @@ app.get('/about', async (req, res) => {
 
 app.get('/profile', async (req, res) => {
   console.log('profile called!');
+  console.log('for user:', req.session.user_id)
   req.session.approved = true;
-  res.render('profile', req.session);
+  rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
+    if (error) {
+      console.error('error on looking up user in ES:\t', error);
+    }
+    // console.log('response:\t', response);
+    console.log('ES body:\t', body);
+    res.render('profile', body);
+  });
 });
 
 app.get('/users', async (req, res) => {
@@ -144,33 +152,36 @@ app.get('/authcallback', (req, res) => {
       console.log('body:\t', body);
       user_id = body.sub;
 
-      // get info on this user.
+      // get info on this user (from frontend).
       rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
         if (error) {
           console.error('error on looking up user in ES:\t', error);
         }
-        console.log('response:\t', response);
-        console.log('body:\t', body);
+        // console.log('response:\t', response);
+        console.log('ES body:\t', body);
         // if not found create it.
         req.session.user_id = body.sub;
         req.session.approved = true;
+
+        // if (found === false) {
+        //   user.username = body.preferred_username;
+        //   user.organization = body.organization;
+        //   user.name = body.name;
+        //   user.email = body.email;
+        // const mbody = {
+        //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
+        //   to: user.email,
+        //   subject: 'ServiceX membership',
+        //   text: `Dear ${user.name}, \n\n\t
+        //   You have been authorized.\n\n
+        //   Best regards,\n\tServiceX mailing system.`,
+        // }
+        // user.sendMailToUser(mbody);
+        // }
+
       });
 
-      // if (found === false) {
-      //   user.username = body.preferred_username;
-      //   user.organization = body.organization;
-      //   user.name = body.name;
-      //   user.email = body.email;
-      // const mbody = {
-      //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
-      //   to: user.email,
-      //   subject: 'ServiceX membership',
-      //   text: `Dear ${user.name}, \n\n\t
-      //   You have been authorized.\n\n
-      //   Best regards,\n\tServiceX mailing system.`,
-      // }
-      // user.sendMailToUser(mbody);
-      // }
+
 
       res.redirect('/');
     });
