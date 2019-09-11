@@ -1,5 +1,5 @@
 {
     "TESTING": false,
-    "SITENAME": "https://servicex-frontend.uc.ssl-hep.org",
+    "FRONTEND": "https://servicex-frontend.uc.ssl-hep.org",
     "SITE": "MWT2"
 }

@@ -20,9 +20,6 @@ if (config.TESTING) {
 }
 
 const gConfig = JSON.parse(fs.readFileSync(`${secretsPath}globus-conf/globus-config.json`));
-// const esConfig = JSON.parse(fs.readFileSync(`${secretsPath}elasticsearch/elasticsearch.json`));
-
-// config.ES_HOST = `http://${esConfig.ES_USER}:${esConfig.ES_PASS}@${esConfig.ES_HOST}:9200`;
 const auth = Buffer.from(`${gConfig.CLIENT_ID}:${gConfig.CLIENT_SECRET}`).toString('base64');
 
 console.log(config);
@@ -38,8 +35,6 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false, maxAge: 3600000 },
 }));
-
-// const es = new elasticsearch.Client({ node: config.ES_HOST, log: 'error' });
 
 // require('./utils/drequest')(app, config, es);
 // require('./utils/dpath')(app, config, es);
@@ -150,7 +145,7 @@ app.get('/authcallback', (req, res) => {
       user_id = body.sub;
 
       // get info on this user.
-      rRequest.get(config.SITENAME + '/user/' + user_id, async (error, response, body) => {
+      rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
         if (error) {
           console.error('error on looking up user in ES:\t', error);
         }
