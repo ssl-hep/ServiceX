@@ -74,7 +74,7 @@ class ES {
     try {
       const response = await this.es.index({
         index: this.esConfig.REQ_TABLE,
-        refresh: true,
+        refresh: 'true',
         body: request,
       });
       // console.log(response);
@@ -160,7 +160,7 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.REQ_TABLE,
-      refresh: true,
+      refresh: 'true',
       id: reqId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
@@ -191,7 +191,7 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      refresh: true,
+      refresh: 'true',
       body: {
         query: { match: { req_id: reqId } },
         script: {
@@ -215,7 +215,7 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      refresh: true,
+      refresh: 'true',
       body: {
         query: {
           bool: {
@@ -250,7 +250,7 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      refresh: true,
+      refresh: 'true',
       body: {
         query: {
           bool: {
@@ -374,7 +374,7 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.PATH_TABLE,
-      refresh: true,
+      refresh: 'true',
       id: pathId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
@@ -489,7 +489,7 @@ class ES {
       const response = await this.es.update({
         index: this.esConfig.PATH_TABLE,
         id: id,
-        refresh: true,
+        refresh: 'true',
         if_seq_no: seq,
         if_primary_term: primary,
         body: {
@@ -523,7 +523,7 @@ class ES {
       const response = await this.es.index({
         index: this.esConfig.USER_TABLE,
         id: uid,
-        refresh: true,
+        refresh: 'true',
         body: user,
       });
       // console.log(response);
