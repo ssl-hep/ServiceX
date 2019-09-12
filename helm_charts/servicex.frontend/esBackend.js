@@ -146,7 +146,7 @@ class ES {
       if (response.body.hits.total.value > 0) {
         let hit = response.body.hits.hits[0];
         hit._source.reqId = hit._id;
-        console.log(hit._source);
+        console.log('found req_id: ', hit._id);
         return hit._source;
       }
     } catch (err) {
@@ -160,6 +160,7 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.REQ_TABLE,
+      refresh: true,
       id: reqId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
@@ -358,7 +359,7 @@ class ES {
         last_accessed_at: new Date().getTime(),
         pause_transform: false,
         retries: 0,
-        info: '${new Date().toLocaleString()} Created.'
+        info: `${new Date().toLocaleString()} Created.`
       },
     }, (err, resp) => {
       if (err) {
@@ -373,6 +374,7 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.PATH_TABLE,
+      refresh: true,
       id: pathId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
