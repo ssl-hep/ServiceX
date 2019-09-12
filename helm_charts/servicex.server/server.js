@@ -70,7 +70,7 @@ app.get('/', async (req, res) => {
   //     }
   // }
   // console.log('===========> / DONE');
-  response.render('index', req.session);
+  res.render('index', req.session);
 });
 
 app.get('/about', async (req, res) => {
