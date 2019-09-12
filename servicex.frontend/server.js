@@ -138,7 +138,8 @@ app.post('/drequest/update/', async (req, res) => {
   const data = req.body;
   console.log('post updating data request:', data);
   if (!data.req_id) {
-    res.status(500).send('request has not req_id.');
+    res.status(500).send('request has no req_id.');
+    return;
   }
 
   const current_request = await backend.GetReq(data.req_id);
