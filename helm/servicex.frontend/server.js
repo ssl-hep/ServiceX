@@ -188,7 +188,7 @@ app.put('/dpath/status/:pathId/:status/:info?', async (req, res) => {
   if (req.params.info) {
     info = req.params.info;
   }
-  console.log('update path status: ', pathId, status, info);
+  console.log(`update path status. id: ${pathId} status: ${status} info:${info}`);
   await backend.ChangePathStatus(pathId, status, info);
   res.status(200).send('OK');
 });
