@@ -119,7 +119,8 @@ while True:
 
     print("processing request:\n", REQ)
 
-    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'LookingUp', verify=False)
+    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' +
+                                 REQ['_id'] + '/' + 'LookingUp/did-finder_started', verify=False)
     print('UPDATE_STATUS:', UPDATE_STATUS)
     if UPDATE_STATUS.status_code != 200:
         continue
@@ -173,8 +174,8 @@ while True:
         'id': REQ["_id"],
         'status': status,
         'info': info,
-        'DATASET_SIZE': DATASET_SIZE,
-        'DATASET_EVENTS': DATASET_EVENTS,
+        'dataset_size': DATASET_SIZE,
+        'dataset_events': DATASET_EVENTS,
         'dataset_files': counters['files']
     }
 
