@@ -79,14 +79,15 @@ app.get('/about', async (req, res) => {
 
 app.get('/profile', async (req, res) => {
   console.log('profile called!');
-  console.log('for user:', req.session.user_id)
+  user_id = req.session.user_id;
+  console.log('for user:', user_id)
   req.session.approved = true;
   rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
     if (error) {
       console.error('error on looking up user in ES:\t', error);
     }
     // console.log('response:\t', response);
-    req.session.user = body;
+    req.session.user = JSON.parse(body);
     console.log('ES user data:\t', req.session);
     res.render('profile', req.session);
   });
@@ -154,14 +155,14 @@ app.get('/authcallback', (req, res) => {
       user_id = body.sub;
 
       // get info on this user (from frontend).
-      rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
+      rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, _response, esbody) => {
         if (error) {
           console.error('error on looking up user in ES:\t', error);
         }
         // console.log('response:\t', response);
-        console.log('ES body:\t', body);
+        console.log('ES body:\t', esbody);
         // if not found create it.
-        req.session.user_id = body.sub;
+        req.session.user_id = user_id;
         req.session.approved = true;
 
         // if (found === false) {
