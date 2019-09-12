@@ -355,7 +355,6 @@ class ES {
       events_served: 0,
       created_at: new Date().getTime(),
       last_accessed_at: new Date().getTime(),
-      pause_transform: false,
       retries: 0,
       info: new Date().toLocaleString() + ' Created.'
     };
