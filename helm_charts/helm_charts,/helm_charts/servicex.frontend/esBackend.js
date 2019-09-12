@@ -74,7 +74,6 @@ class ES {
     try {
       const response = await this.es.index({
         index: this.esConfig.REQ_TABLE,
-        type: 'docs',
         refresh: true,
         body: request,
       });
@@ -96,7 +95,6 @@ class ES {
     try {
       const resp = await this.es.update({
         index: this.esConfig.REQ_TABLE,
-        type: 'docs',
         id: reqId,
         retry_on_conflict: 3,
         body: {
@@ -122,7 +120,6 @@ class ES {
     try {
       const response = await this.es.get({
         index: this.esConfig.REQ_TABLE,
-        type: 'docs',
         id: reqId,
       });
       console.log(response.body._source);
@@ -137,7 +134,6 @@ class ES {
     try {
       const response = await this.es.search({
         index: this.esConfig.REQ_TABLE,
-        type: 'docs',
         body: {
           size: 1,
           query: {
@@ -147,7 +143,7 @@ class ES {
           },
         },
       });
-      if (response.body.hits.total > 0) {
+      if (response.body.hits.total.value > 0) {
         let hit = response.body.hits.hits[0];
         hit._source.reqId = hit._id;
         console.log(hit._source);
@@ -164,7 +160,6 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.REQ_TABLE,
-      type: 'docs',
       id: reqId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
@@ -195,7 +190,6 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       refresh: true,
       body: {
         query: { match: { req_id: reqId } },
@@ -220,7 +214,6 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       refresh: true,
       body: {
         query: {
@@ -256,7 +249,6 @@ class ES {
     let updated = false;
     await this.es.updateByQuery({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       refresh: true,
       body: {
         query: {
@@ -287,7 +279,6 @@ class ES {
     const scriptSource = 'ctx._source.events_served += params.events';
     this.es.update({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       id: pathId,
       retry_on_conflict: 6,
       _source: ['events_served'],
@@ -305,7 +296,6 @@ class ES {
 
     this.es.update({
       index: this.esConfig.REQ_TABLE,
-      type: 'docs',
       id: reqId,
       retry_on_conflict: 6,
       _source: ['status', 'events_processed', 'events_served', 'events', 'dataset_events'],
@@ -331,7 +321,6 @@ class ES {
     const scriptSource = 'ctx._source.events_processed += params.events';
     this.es.update({
       index: this.esConfig.REQ_TABLE,
-      type: 'docs',
       id: reqId,
       retry_on_conflict: 6,
       _source: ['status', 'events_processed', 'events_served', 'events', 'dataset_events'],
@@ -357,7 +346,6 @@ class ES {
   async CreatePath(path) {
     this.es.index({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       body: {
         req_id: path.req_id,
         status: 'Created',
@@ -384,7 +372,6 @@ class ES {
     ainfo = `\n${new Date().toLocaleString()} ${ainfo}`;
     await this.es.update({
       index: this.esConfig.PATH_TABLE,
-      type: 'docs',
       id: pathId,
       retry_on_conflict: 3,
       _source: ['status', 'info'],
@@ -414,7 +401,6 @@ class ES {
     try {
       const response = await this.es.get({
         index: this.esConfig.PATH_TABLE,
-        type: 'docs',
         id: pathId,
       });
       console.log(response.body._source);
@@ -429,7 +415,6 @@ class ES {
     try {
       const response = await this.es.search({
         index: this.esConfig.PATH_TABLE,
-        type: 'docs',
         body: {
           size: 1,
           query: {
@@ -442,8 +427,8 @@ class ES {
           },
         }
       });
-      console.log('paths found:', response.body.hits.total);
-      if (response.body.hits.total > 0) {
+      console.log('paths found:', response.body.hits.total.value);
+      if (response.body.hits.total.value > 0) {
         let hit = response.body.hits.hits[0];
         hit._source.pathId = hit._id;
         // console.log(hit._source);
@@ -465,7 +450,6 @@ class ES {
     try {
       let response = await this.es.search({
         index: this.esConfig.PATH_TABLE,
-        type: 'docs',
         size: 1,
         body: {
           seq_no_primary_term: true,
@@ -480,7 +464,7 @@ class ES {
       });
       // console.log(response);
       response = response.body;
-      if (response.hits.total === 0) {
+      if (response.hits.total.value === 0) {
         console.log('data access path not found.');
         return false;
       }
@@ -501,7 +485,6 @@ class ES {
     try {
       const response = await this.es.update({
         index: this.esConfig.PATH_TABLE,
-        type: 'docs',
         id: id,
         refresh: true,
         if_seq_no: seq,
@@ -536,7 +519,6 @@ class ES {
     try {
       const response = await this.es.index({
         index: this.esConfig.USER_TABLE,
-        type: 'docs',
         id: uid,
         refresh: true,
         body: user,
@@ -554,7 +536,6 @@ class ES {
     try {
       var resp = await this.es.search({
         index: this.esConfig.REQ_TABLE,
-        type: 'docs',
         size: 1000,
         body: {
           query: { match: { userid: userId } },
@@ -563,7 +544,7 @@ class ES {
       });
       const toSend = [];
       resp = resp.body;
-      if (resp.hits.total > 0) {
+      if (resp.hits.total.value > 0) {
         // console.log(resp.hits.hits);
         for (let i = 0; i < resp.hits.hits.length; i++) {
           const obj = resp.hits.hits[i]._source;
@@ -587,7 +568,6 @@ class ES {
     try {
       var resp = await this.es.search({
         index: this.esConfig.USER_TABLE,
-        type: 'docs',
         body: {
           size: 1000,
           query: { match_all: {} },
@@ -596,8 +576,8 @@ class ES {
       });
       // console.log(resp);
       resp = resp.body;
-      console.log("Users found:", resp.hits.total);
-      if (resp.hits.total > 0) {
+      console.log("Users found:", resp.hits.total.value);
+      if (resp.hits.total.value > 0) {
         for (let i = 0; i < resp.hits.hits.length; i++) {
           const obj = resp.hits.hits[i]._source;
           // console.log(obj);
@@ -619,7 +599,6 @@ class ES {
     try {
       const response = await this.es.get({
         index: this.esConfig.USER_TABLE,
-        type: 'docs',
         id: userId,
       });
       console.log(response.body._source);
@@ -634,7 +613,6 @@ class ES {
     try {
       const response = await this.es.update({
         index: this.esConfig.USER_TABLE,
-        type: 'docs',
         id: userId,
         body: {
           script: {
@@ -654,7 +632,6 @@ class ES {
     try {
       const response = await this.es.delete({
         index: this.esConfig.USER_TABLE,
-        type: 'docs',
         id: userId,
       });
       console.log('result:', response.body.result);
