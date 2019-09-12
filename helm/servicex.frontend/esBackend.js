@@ -74,10 +74,10 @@ class ES {
     try {
       const response = await this.es.index({
         index: this.esConfig.REQ_TABLE,
-        refresh: 'true',
+        // refresh: 'true',
         body: request,
       });
-      // console.log(response);
+      console.log(response);
       const reqId = response.body._id;
       // console.log('created request with reqId: ', reqId);
       return reqId;
