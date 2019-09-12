@@ -74,7 +74,7 @@ def get_replicas(i, q):
                 continue
 
             data = {
-                'req_id': REQ["_id"],
+                'req_id': REQ["reqId"],
                 'adler32': f['adler32'],
                 'file_size': f['bytes'],
                 'file_events': f['events'],
@@ -120,13 +120,12 @@ while True:
     print("processing request:\n", REQ)
 
     UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' +
-                                 REQ['_id'] + '/' + 'LookingUp/did-finder_started', verify=False)
+                                 REQ['reqId'] + '/' + 'LookingUp/did-finder_started', verify=False)
     print('UPDATE_STATUS:', UPDATE_STATUS)
     if UPDATE_STATUS.status_code != 200:
         continue
 
-    doc = REQ["_source"]
-    ds = doc['dataset'].strip()
+    ds = REQ['dataset'].strip()
     (scope, name) = ds.split(":")
     try:
         g_files = dc.list_files(scope, name)
@@ -171,7 +170,7 @@ while True:
             'Total size: ' + str(DATASET_SIZE) + '.\n'
 
     REQ_DATA = {
-        'id': REQ["_id"],
+        'id': REQ["reqId"],
         'status': status,
         'info': info,
         'dataset_size': DATASET_SIZE,
