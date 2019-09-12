@@ -51,10 +51,10 @@ app.use(session({
 // };
 
 
-app.get('/', async (request, response) => {
+app.get('/', async (req, res) => {
   // console.log('===========> / CALL');
-  // console.log(request.session);
-  // if (request.session.user_id) {
+  console.log(req.session);
+  // if (req.session.user_id) {
   //     u = new usr.User(request.session.user_id);
   //     console.log("=====> refresh user info...");
   //     await u.get();
@@ -70,7 +70,7 @@ app.get('/', async (request, response) => {
   //     }
   // }
   // console.log('===========> / DONE');
-  response.render('index', request.session);
+  response.render('index', req.session);
 });
 
 app.get('/about', async (req, res) => {
@@ -95,7 +95,7 @@ app.get('/profile', async (req, res) => {
 
 app.get('/users', async (req, res) => {
   console.log('users called!');
-  res.render('users');
+  res.render('users', req.session);
 });
 
 app.get('/healthz', (_req, res) => {
@@ -134,7 +134,7 @@ app.get('/authcallback', (req, res) => {
   rRequest.post(requestOptions, (error1, response, body1) => {
     if (error1) {
       console.log('failure...', error1);
-      res.render('index');
+      res.render('index', req.session);
     }
     console.log('success');
 
@@ -183,7 +183,7 @@ app.get('/authcallback', (req, res) => {
 
       });
 
-      res.render('index');
+      res.render('index', req.session);
     });
   });
 });
@@ -206,7 +206,7 @@ app.get('/logout', (req, res) => {
     });
   }
   req.session.destroy();
-  res.render('index');
+  res.render('index', req.session);
 });
 
 app.use((err, _req, res, _next) => {
