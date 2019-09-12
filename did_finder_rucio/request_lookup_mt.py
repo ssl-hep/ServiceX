@@ -170,7 +170,7 @@ while True:
             'Total size: ' + str(DATASET_SIZE) + '.\n'
 
     REQ_DATA = {
-        'id': REQ["reqId"],
+        'req_id': REQ["reqId"],
         'status': status,
         'info': info,
         'dataset_size': DATASET_SIZE,
