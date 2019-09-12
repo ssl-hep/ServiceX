@@ -74,7 +74,7 @@ class ES {
     try {
       const response = await this.es.index({
         index: this.esConfig.REQ_TABLE,
-        // refresh: 'true',
+        refresh: 'true',
         body: request,
       });
       console.log(response);
@@ -345,28 +345,32 @@ class ES {
   // PATH STUFF
 
   async CreatePath(path) {
-    this.es.index({
-      index: this.esConfig.PATH_TABLE,
-      body: {
-        req_id: path.req_id,
-        status: 'Created',
-        adler32: path.adler32,
-        file_size: path.file_size,
-        file_events: path.file_events,
-        file_path: path.file_path,
-        events_served: 0,
-        created_at: new Date().getTime(),
-        last_accessed_at: new Date().getTime(),
-        pause_transform: false,
-        retries: 0,
-        info: `${new Date().toLocaleString()} Created.`
-      },
-    }, (err, resp) => {
-      if (err) {
-        console.error('error in indexing new path:', err.meta.body.error);
-      }
-      console.log('path created with _id:', resp.body._id);
-    });
+    const bpath = {
+      req_id: path.req_id,
+      status: 'Created',
+      adler32: path.adler32,
+      file_size: path.file_size,
+      file_events: path.file_events,
+      file_path: path.file_path,
+      events_served: 0,
+      created_at: new Date().getTime(),
+      last_accessed_at: new Date().getTime(),
+      pause_transform: false,
+      retries: 0,
+      info: new Date().toLocaleString() + ' Created.'
+    };
+    console.log('creating path:', bpath);
+    try {
+      const response = await this.es.index({
+        index: this.esConfig.PATH_TABLE,
+        refresh: 'true',
+        body: bpath,
+      });
+      console.log('path created with _id:', response.body._id);
+    } catch (err) {
+      console.error('error in indexing new path:', err.meta.body.error);
+      return null;
+    }
   }
 
   async ChangePathStatus(pathId, nstatus, ainfo) {
