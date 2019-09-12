@@ -353,6 +353,7 @@ class ES {
         file_size: path.file_size,
         file_events: path.file_events,
         file_path: path.file_path,
+        events_served: 0,
         created_at: new Date().getTime(),
         last_accessed_at: new Date().getTime(),
         pause_transform: false,
