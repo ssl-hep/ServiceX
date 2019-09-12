@@ -52,7 +52,8 @@ app.get('/drequest/:reqId', async (req, res) => {
   if (request) {
     res.status(200).json(request);
   } else {
-    res.status(500).json({}).send(`request ${reqId} not found.`);
+    console.error(`request ${reqId} not found.`);
+    res.status(500).json({});
   }
 });
 
@@ -200,7 +201,7 @@ app.get('/dpath/to_transform', async (req, res) => {
   if (path) {
     res.status(200).json(path);
   } else {
-    res.status(200).json({}).send(false);
+    res.status(200).json({});
   }
 });
 
@@ -211,7 +212,7 @@ app.get('/dpath/:pathId', async (req, res) => {
   if (path) {
     res.status(200).json(path);
   } else {
-    res.status(500).json({}).send(`request ${pathId} not found.`);
+    res.status(500).json({});
   }
 });
 
@@ -223,7 +224,7 @@ app.get('/dpath/:reqId/:status', async (req, res) => {
   if (path) {
     res.status(200).json(path);
   } else {
-    res.status(500).json({}).send('no such path');
+    res.status(500).json({});
   }
 });
 
