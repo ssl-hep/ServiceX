@@ -164,7 +164,7 @@ app.get('/authcallback', (req, res) => {
         // if not found create it.
         req.session.user_id = user_id;
         req.session.approved = true;
-
+        console.log('new session:', req.session);
         // if (found === false) {
         //   user.username = body.preferred_username;
         //   user.organization = body.organization;
@@ -183,9 +183,7 @@ app.get('/authcallback', (req, res) => {
 
       });
 
-
-
-      res.redirect('/');
+      res.render('index');
     });
   });
 });
