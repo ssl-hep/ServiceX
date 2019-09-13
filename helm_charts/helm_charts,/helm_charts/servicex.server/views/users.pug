@@ -18,8 +18,11 @@ block content
                         th Registered on
                         th Authorized
                         th Authorized on
-                    for user in users_data
-                        tr user
-
-block extra_scripts
-    script(src='/js/users.js')
+                    each user in users
+                        tr
+                            td= user[0]
+                            td= user[1]
+                            td= user[2]
+                            td= user[3]
+                            td= user[4]
+                            td= user[5]
