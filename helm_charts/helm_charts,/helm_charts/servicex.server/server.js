@@ -107,16 +107,59 @@ app.get('/users', async (req, res) => {
 
 app.get('/requests', async (req, res) => {
   console.log('requests called!');
+  // req.session.user_id = 'c51dbd7e-d274-11e5-9b11-9be347a09ce0';
   rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user_id, async (error, response, body) => {
     if (error) {
       console.error('error on looking up all users requests in ES:\t', error);
     }
-    // console.log('response:\t', response);
-    const requests_data = JSON.parse(body);
+
+    let requests_data = JSON.parse(body);
+    for (re in requests_data) {
+      requests_data[re].created_at = new Date(requests_data[re].created_at).toLocaleString();
+    }
     console.log('all users requests:\t', requests_data);
+
     res.render('drequests', { reqs: requests_data });
   });
 });
+
+app.get('/request/:reqId', async (req, res) => {
+  console.log('request managing called!');
+  const { reqId } = req.params;
+  rRequest.get(config.FRONTEND + '/drequest/' + reqId, async (error, response, body) => {
+    if (error) {
+      console.error('error on looking up req_data in ES:\t', error);
+    }
+    // console.log('response:\t', response);
+    let req_data = JSON.parse(body);
+    req_data.reqId = reqId;
+    console.log('req data:\t', req_data);
+    res.render('drequest', { drequest: req_data });
+  });
+});
+
+app.get('/create_drequest', async (req, res) => {
+  console.log('request creation called!');
+  res.render('create_drequest', { user_id: req.session.user_id });
+});
+
+app.post('/request_send', async (req, res) => {
+  console.log('request sending off called!');
+  let data = req.body;
+  data.userid = req.session.user_id;
+  console.log(' data:\t', data);
+
+  rRequest.post(config.FRONTEND + '/drequest/create', async (error, response, body) => {
+    if (error) {
+      console.error('error on creating new request in ES:\t', error);
+    }
+    // console.log('response:\t', response);
+    console.log(body);
+    // let req_data = JSON.parse(body);
+    res.render('requests');
+  });
+});
+
 
 app.get('/healthz', (_req, res) => {
   try {
@@ -128,7 +171,7 @@ app.get('/healthz', (_req, res) => {
 
 app.get('/login', async (req, res) => {
   console.log('Logging in');
-  const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
+  const red = `${gConfig.AUTHORIZE_URI} ? scope = urn % 3Aglobus % 3Aauth % 3Ascope % 3Aauth.globus.org % 3Aview_identities + openid + email + profile & state=garbageString & redirect_uri=${gConfig.redirect_link} & response_type=code & client_id=${gConfig.CLIENT_ID}`;
   // console.log('redirecting to:', red);
   res.redirect(red);
 });
@@ -143,7 +186,7 @@ app.get('/authcallback', (req, res) => {
     console.log('NO CODE call...');
   }
 
-  const red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
+  const red = `${gConfig.TOKEN_URI} ? grant_type = authorization_code & redirect_uri=${gConfig.redirect_link} & code=${code}`;
 
   const requestOptions = {
     uri: red, method: 'POST', headers: { Authorization: `Basic ${auth}` }, json: true,
@@ -192,10 +235,10 @@ app.get('/authcallback', (req, res) => {
         //   user.name = body.name;
         //   user.email = body.email;
         // const mbody = {
-        //   from: `${config.NAMESPACE}<${config.NAMESPACE}@servicex.uchicago.edu>`,
+        //   from: `${ config.NAMESPACE } < ${ config.NAMESPACE }@servicex.uchicago.edu> `,
         //   to: user.email,
         //   subject: 'ServiceX membership',
-        //   text: `Dear ${user.name}, \n\n\t
+        //   text: `Dear ${ user.name }, \n\n\t
         //   You have been authorized.\n\n
         //   Best regards,\n\tServiceX mailing system.`,
         // }

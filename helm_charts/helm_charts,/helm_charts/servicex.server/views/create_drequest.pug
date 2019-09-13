@@ -1,0 +1,34 @@
+extends ./index.pug
+
+block content
+    section#gtco-header.bg-light
+        .container
+            .row
+                .col-lg-5.mx-auto
+                    h2 Data request
+
+                .col-lg-6.mx-auto
+                    h2 Create Data Access Request
+                    form#drequest_update(action='#')
+                        .form-group
+                            label(for='name') Name *
+                            input#name.form-control(type='text',required='')
+                            p#name_valid
+                        .form-group
+                            label(for='description') Description * 
+                            input#description.form-control(type='text',required='')
+                            p#description_valid
+                        .form-group
+                            label(for='dataset') File or Dataset (scope:name)
+                            input#dataset.form-control(type='text')
+                        .form-group
+                            label(for='columns') Branches (all branches, comma separated)
+                            input#columns.form-control(type='text')
+                        .form-group
+                            label(for='events') Events required (0 means all)
+                            input#events.form-control(type='text')
+
+                        .form-group
+                            button#drequest_update_button.btn.btn-primary CREATE 
+
+

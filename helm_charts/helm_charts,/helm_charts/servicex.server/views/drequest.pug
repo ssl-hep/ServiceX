@@ -1,0 +1,54 @@
+extends ./index.pug
+
+block content
+    section#gtco-header.bg-light
+        .container
+            .row
+                .col-lg-5.mx-auto
+                    h2 Data request
+
+                    p.lead
+                    | A request can be in following states:
+                    | #[em Created], #[em LookingUp], #[em LookedUp], #[em Validated], #[em Processing], #[em Delivered], #[em Failed] and #[em Done].
+                    | </br>
+                    | </br>
+                    if drequest.status==='Defined'
+                        a(href="/wrequest_prepare")
+                            button#drequest_prepare_button.btn.btn-primary Prepare
+                        a(href="/drequest_reset")
+                            button#drequest_reset_button.btn.btn-primary Reset
+                    if drequest.status!=='Done'
+                        a(href="/wrequest_terminate")
+                            button#drequest_terminate_button.btn.btn-primary Terminate
+
+                    iframe( src="https://atlas-kibana.mwt2.org/s/servicex/app/kibana#/visualize/edit/749377a0-9465-11e9-a3fc-c94edec7954f?embed=true&_g=(refreshInterval:(pause:!t,value:0),time:(from:now-90d,mode:quick,to:now))&_a=(filters:!(),linked:!f,query:(language:lucene,query:'req_id:"+drequest.reqId+"'),uiState:(),vis:(aggs:!((enabled:!t,id:'1',params:(),schema:metric,type:count),(enabled:!t,id:'2',params:(field:status,missingBucket:!f,missingBucketLabel:Missing,order:desc,orderBy:'1',otherBucket:!f,otherBucketLabel:Other,size:10),schema:segment,type:terms)),params:(addLegend:!t,addTooltip:!t,isDonut:!t,labels:(last_level:!t,show:!f,truncate:100,values:!t),legendPosition:right,type:pie),title:'input+files+status',type:pie))" height="400" width="400")
+
+                .col-lg-6.mx-auto
+                    h2 Request
+                    p
+                    strong Name: 
+                    | #{drequest.name} </br>
+                    strong Description: 
+                    | #{drequest.description} </br>
+                    strong Dataset: 
+                    | #{drequest.dataset} </br>
+                    strong Variables: 
+                    | #{drequest.columns} </br>
+                    strong Events required: 
+                    | #{drequest.events} </br>
+                    | </br>
+                    strong Status: 
+                    | #[em #{drequest.status}] </br>
+                    strong Dataset size : 
+                    | #[em #{drequest.dataset_size}] </br>
+                    strong Dataset files : 
+                    | #[em #{drequest.dataset_files}] </br>
+                    strong Dataset events : 
+                    | #[em #{drequest.dataset_events}] </br>
+                    strong Events served: 
+                    |#[em #{drequest.events_served}] </br>
+                    strong Events processed: 
+                    |#[em #{drequest.events_processed}] </br>
+                    strong Info: 
+                    |#[em #{drequest.info}] </br>
+
