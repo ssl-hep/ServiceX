@@ -101,7 +101,7 @@ app.get('/users', async (req, res) => {
     // console.log('response:\t', response);
     const users_data = JSON.parse(body);
     console.log('all ES user data:\t', users_data);
-    res.render('users', users_data);
+    res.render('users', { users: users_data });
   });
 });
 
@@ -113,8 +113,8 @@ app.get('/requests', async (req, res) => {
     }
     // console.log('response:\t', response);
     const requests_data = JSON.parse(body);
-    console.log('all ES user data:\t', requests_data);
-    res.render('drequests', requests_data);
+    console.log('all users requests:\t', requests_data);
+    res.render('drequests', { reqs: requests_data });
   });
 });
 

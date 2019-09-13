@@ -27,6 +27,10 @@ block content
                     th Status
                     th Token
                 tbody
-
-block extra_scripts
-    script(src='js/drequests_manage.js')
+                    each req in reqs
+                        tr
+                            td= req.name
+                            td= req.description
+                            td= req.created_at
+                            td= req.status
+                            td= req.reqId
