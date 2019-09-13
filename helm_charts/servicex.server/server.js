@@ -94,7 +94,15 @@ app.get('/profile', async (req, res) => {
 
 app.get('/users', async (req, res) => {
   console.log('users called!');
-  res.render('users', req.session);
+  rRequest.get(config.FRONTEND + '/users/', async (error, response, body) => {
+    if (error) {
+      console.error('error on looking up all users in ES:\t', error);
+    }
+    // console.log('response:\t', response);
+    const users_data = JSON.parse(body);
+    console.log('all ES user data:\t', users_data);
+    res.render('users', users_data);
+  });
 });
 
 app.get('/healthz', (_req, res) => {

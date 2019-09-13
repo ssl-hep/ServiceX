@@ -1,8 +1,4 @@
-
-* get new separate ingress for the WEB server
-* get GLOBUS to point to the new address
 * write all the needed javascripts in one file
-* fix authcallback
 
 #### WEB only
 * GET /wrequest_update/:rid 
