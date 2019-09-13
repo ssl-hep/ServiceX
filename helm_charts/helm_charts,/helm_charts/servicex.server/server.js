@@ -105,6 +105,19 @@ app.get('/users', async (req, res) => {
   });
 });
 
+app.get('/requests', async (req, res) => {
+  console.log('requests called!');
+  rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user_id, async (error, response, body) => {
+    if (error) {
+      console.error('error on looking up all users requests in ES:\t', error);
+    }
+    // console.log('response:\t', response);
+    const requests_data = JSON.parse(body);
+    console.log('all ES user data:\t', requests_data);
+    res.render('drequests', requests_data);
+  });
+});
+
 app.get('/healthz', (_req, res) => {
   try {
     res.status(200).send('OK');
