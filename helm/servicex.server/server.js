@@ -81,7 +81,6 @@ app.get('/profile', async (req, res) => {
   console.log('profile called!');
   user_id = req.session.user_id;
   console.log('for user:', user_id)
-  req.session.approved = true;
   rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
     if (error) {
       console.error('error on looking up user in ES:\t', error);
@@ -154,6 +153,9 @@ app.get('/authcallback', (req, res) => {
       console.log('body:\t', body);
       user_id = body.sub;
 
+      req.session.user_id = user_id;
+      req.session.approved = true;
+
       // get info on this user (from frontend).
       rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, _response, esbody) => {
         if (error) {
@@ -162,8 +164,6 @@ app.get('/authcallback', (req, res) => {
         // console.log('response:\t', response);
         console.log('ES body:\t', esbody);
         // if not found create it.
-        req.session.user_id = user_id;
-        req.session.approved = true;
         console.log('new session:', req.session);
         // if (found === false) {
         //   user.username = body.preferred_username;
@@ -183,7 +183,9 @@ app.get('/authcallback', (req, res) => {
 
       });
 
-      res.render('index', req.session);
+      // res.render('index', req.session);
+
+      res.redirect('/');
     });
   });
 });
