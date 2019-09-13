@@ -110,7 +110,7 @@ $(document).ready(() => {
       { mData: 1, sTitle: 'Description', sWidth: '30%' },
       { mData: 2, sTitle: 'Created at', sWidth: '20%' },
       { mData: 3, sTitle: 'Status', sWidth: '10%' },
-      { mData: 4, sTitle: 'Token', sWidth: '10%' }
+      { mData: 4, sTitle: 'Token', sWidth: '20%' }
     ],
   });
 
@@ -126,5 +126,43 @@ $(document).ready(() => {
       { mData: 5, sTitle: "Authorized on", sWidth: "20%" }
     ],
   });
+
+
+  $('#drequest_update_button').click((event) => {
+    event.preventDefault();
+    console.log('Data Access request creator called.');
+
+    $('#name_valid').text('').show();
+
+    const data = {};
+    if ($('#name').val() === '') {
+      $('#name_valid').text('Name is mandatory!').show();
+      return;
+    }
+
+    data.name = $('#name').val();
+    data.description = $('#description').val();
+    data.dataset = $('#dataset').val();
+    data.columns = $('#columns').val();
+    data.events = $('#events').val();
+    console.log(data);
+    // call REST API to create a Data Access Request
+    $.ajax({
+      type: 'post',
+      url: '/request_send',
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      success(link) {
+        alert('It can take several minutes to get the data listed.');
+        window.location.href = '/requests';
+      },
+      error(xhr, textStatus, errorThrown) {
+        alert(`Error code:${xhr.status}.  ${xhr.responseText}`);
+        window.location.href = '/requests';
+      }
+    });
+
+  });
+
 
 });
