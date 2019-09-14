@@ -154,11 +154,11 @@ $(document).ready(() => {
       data: JSON.stringify(data),
       success(link) {
         alert('It can take several minutes to get the data listed.');
-        window.location.href = '/requests';
+        window.location.href = '/drequests';
       },
       error(xhr, textStatus, errorThrown) {
         alert(`Error code:${xhr.status}.  ${xhr.responseText}`);
-        window.location.href = '/requests';
+        window.location.href = '/drequests';
       }
     });
 
