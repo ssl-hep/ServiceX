@@ -19,6 +19,7 @@ nav#mainNav.navbar.navbar-expand-lg.fixed-top(style='background-image: linear-gr
         if user && !user.approved
           li#login_button.nav-item
             a.nav-link(href='/login') Login
-        else
+        
+        if user
           li#profile_button.nav-item
             a.nav-link(href='/profile') Profile
