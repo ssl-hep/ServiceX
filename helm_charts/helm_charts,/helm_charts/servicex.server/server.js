@@ -9,7 +9,6 @@ const session = require('express-session');
 const https = require('https');
 const http = require('http');
 const rRequest = require('request');
-// const elasticsearch = require('@elastic/elasticsearch');
 
 const config = require('./config/config.json');
 
@@ -36,10 +35,6 @@ app.use(session({
   cookie: { secure: false, maxAge: 3600000 },
 }));
 
-// require('./utils/drequest')(app, config, es);
-// require('./utils/dpath')(app, config, es);
-// const usr = require('./utils/user')(app, config, es);
-
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware
 //   if (req.session.approved !== true) {
@@ -49,7 +44,6 @@ app.use(session({
 //   }
 //   return next();
 // };
-
 
 app.get('/', async (req, res) => {
   // console.log('===========> / CALL');
@@ -171,7 +165,7 @@ app.get('/healthz', (_req, res) => {
 
 app.get('/login', async (req, res) => {
   console.log('Logging in');
-  const red = `${gConfig.AUTHORIZE_URI} ? scope = urn % 3Aglobus % 3Aauth % 3Ascope % 3Aauth.globus.org % 3Aview_identities + openid + email + profile & state=garbageString & redirect_uri=${gConfig.redirect_link} & response_type=code & client_id=${gConfig.CLIENT_ID}`;
+  const red = `${gConfig.AUTHORIZE_URI}?scope=urn%3Aglobus%3Aauth%3Ascope%3Aauth.globus.org%3Aview_identities+openid+email+profile&state=garbageString&redirect_uri=${gConfig.redirect_link}&response_type=code&client_id=${gConfig.CLIENT_ID}`;
   // console.log('redirecting to:', red);
   res.redirect(red);
 });
@@ -186,7 +180,7 @@ app.get('/authcallback', (req, res) => {
     console.log('NO CODE call...');
   }
 
-  const red = `${gConfig.TOKEN_URI} ? grant_type = authorization_code & redirect_uri=${gConfig.redirect_link} & code=${code}`;
+  const red = `${gConfig.TOKEN_URI}?grant_type=authorization_code&redirect_uri=${gConfig.redirect_link}&code=${code}`;
 
   const requestOptions = {
     uri: red, method: 'POST', headers: { Authorization: `Basic ${auth}` }, json: true,
