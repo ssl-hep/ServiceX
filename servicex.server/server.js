@@ -211,9 +211,7 @@ app.get('/authcallback', (req, res) => {
       }
       console.log('body:\t', body);
       user_id = body.sub;
-
-      req.session.user.user_id = user_id;
-      req.session.user.approved = true;
+      req.session.user = { user_id: user_id, approved: true };
 
       // get info on this user (from frontend).
       rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, _response, esbody) => {
