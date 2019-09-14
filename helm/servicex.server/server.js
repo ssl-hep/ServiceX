@@ -64,11 +64,11 @@ app.get('/', async (req, res) => {
   //     }
   // }
   // console.log('===========> / DONE');
-  res.render('index', req.session);
+  res.render('index', { user: req.session.user });
 });
 
 app.get('/about', async (req, res) => {
-  res.render('about', req.session);
+  res.render('about', { user: req.session.user });
 });
 
 app.get('/profile', async (req, res) => {
@@ -82,7 +82,7 @@ app.get('/profile', async (req, res) => {
     // console.log('response:\t', response);
     req.session.user = JSON.parse(body);
     console.log('ES user data:\t', req.session);
-    res.render('profile', req.session);
+    res.render('profile', { user: req.session.user });
   });
 });
 
@@ -95,13 +95,13 @@ app.get('/users', async (req, res) => {
     // console.log('response:\t', response);
     const users_data = JSON.parse(body);
     console.log('all ES user data:\t', users_data);
-    res.render('users', { users: users_data });
+    res.render('users', { user: req.session.user, users: users_data });
   });
 });
 
 app.get('/requests', async (req, res) => {
   console.log('requests called!');
-  // req.session.user_id = 'c51dbd7e-d274-11e5-9b11-9be347a09ce0';
+  // req.session.user.user_id = 'c51dbd7e-d274-11e5-9b11-9be347a09ce0';
   rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user_id, async (error, response, body) => {
     if (error) {
       console.error('error on looking up all users requests in ES:\t', error);
@@ -113,7 +113,7 @@ app.get('/requests', async (req, res) => {
     }
     console.log('all users requests:\t', requests_data);
 
-    res.render('drequests', { reqs: requests_data });
+    res.render('drequests', { user: req.session.user, reqs: requests_data });
   });
 });
 
@@ -128,13 +128,13 @@ app.get('/request/:reqId', async (req, res) => {
     let req_data = JSON.parse(body);
     req_data.reqId = reqId;
     console.log('req data:\t', req_data);
-    res.render('drequest', { drequest: req_data });
+    res.render('drequest', { user: req.session.user, drequest: req_data });
   });
 });
 
 app.get('/create_drequest', async (req, res) => {
   console.log('request creation called!');
-  res.render('create_drequest', { user_id: req.session.user_id });
+  res.render('create_drequest', { user: req.session.user });
 });
 
 app.post('/request_send', async (req, res) => {
@@ -150,7 +150,7 @@ app.post('/request_send', async (req, res) => {
     // console.log('response:\t', response);
     console.log(body);
     // let req_data = JSON.parse(body);
-    res.render('requests');
+    res.render('requests', { user: req.session.user });
   });
 });
 
@@ -191,7 +191,8 @@ app.get('/authcallback', (req, res) => {
   rRequest.post(requestOptions, (error1, response, body1) => {
     if (error1) {
       console.log('failure...', error1);
-      res.render('index', req.session);
+      req.session.user = {};
+      res.render('index', { user: req.session.user });
     }
     console.log('success');
 
@@ -211,8 +212,8 @@ app.get('/authcallback', (req, res) => {
       console.log('body:\t', body);
       user_id = body.sub;
 
-      req.session.user_id = user_id;
-      req.session.approved = true;
+      req.session.user.user_id = user_id;
+      req.session.user.approved = true;
 
       // get info on this user (from frontend).
       rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, _response, esbody) => {
@@ -249,7 +250,7 @@ app.get('/authcallback', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  if (req.session.approved) { // logout from Globus
+  if (req.session.user.approved) { // logout from Globus
     const requestOptions = {
       uri: `https://auth.globus.org/v2/web/logout?client_id=${gConfig.CLIENT_ID}`,
       headers: {
@@ -266,7 +267,7 @@ app.get('/logout', (req, res) => {
     });
   }
   req.session.destroy();
-  res.render('index', req.session);
+  res.render('index', { user: req.session.user });
 });
 
 app.use((err, _req, res, _next) => {
