@@ -1,8 +1,0 @@
-* write all the needed javascripts in one file
-
-#### WEB only
-* GET /wrequest_update/:rid 
-* GET /wrequest_prepare
-* GET /wrequest_terminate
-* GET /wrequest_manage
-* POST /wrequest_update
