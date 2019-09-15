@@ -150,7 +150,7 @@ app.post('/request_send', async (req, res) => {
     // console.log('response:\t', response);
     console.log(body);
     // let req_data = JSON.parse(body);
-    res.render('requests', { user: req.session.user });
+    res.render('index', { user: req.session.user });
   });
 });
 
