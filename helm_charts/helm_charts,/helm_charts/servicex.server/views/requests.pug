@@ -12,7 +12,7 @@ block content
                                 | From this page you can manage your data access requests. 
                                 | To check if a request status changed simply refresh this page.
 
-                a.btn.btn-primary(href='/create_drequest')
+                a.btn.btn-primary(href='/request_create')
                     | New data access request
             
         p
@@ -33,4 +33,4 @@ block content
                             td #{req.description}
                             td #{req.created_at}
                             td #{req.status}
-                            td: a(href=`request/${req.reqId}`) #{req.reqId}
+                            td: a(href=`request_view/${req.reqId}`) #{req.reqId}
