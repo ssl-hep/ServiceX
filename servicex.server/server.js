@@ -37,7 +37,7 @@ app.use(session({
 
 // const requiresLogin = async (req, res, next) => {
 //   // to be used as middleware
-//   if (req.session.approved !== true) {
+//   if (req.session.user.approved !== true) {
 //     const error = new Error('You must be logged in to view this page.');
 //     error.status = 403;
 //     return next(error);
@@ -73,7 +73,7 @@ app.get('/about', async (req, res) => {
 
 app.get('/profile', async (req, res) => {
   console.log('profile called!');
-  user_id = req.session.user_id;
+  user_id = req.session.user.user_id;
   console.log('for user:', user_id)
   rRequest.get(config.FRONTEND + '/user/' + user_id, async (error, response, body) => {
     if (error) {
@@ -81,7 +81,7 @@ app.get('/profile', async (req, res) => {
     }
     // console.log('response:\t', response);
     req.session.user = JSON.parse(body);
-    console.log('ES user data:\t', req.session);
+    console.log('ES user data:\t', req.session.user);
     res.render('profile', { user: req.session.user });
   });
 });
@@ -102,7 +102,7 @@ app.get('/users', async (req, res) => {
 app.get('/requests', async (req, res) => {
   console.log('requests called!');
   // req.session.user.user_id = 'c51dbd7e-d274-11e5-9b11-9be347a09ce0';
-  rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user_id, async (error, response, body) => {
+  rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user.user_id, async (error, response, body) => {
     if (error) {
       console.error('error on looking up all users requests in ES:\t', error);
     }
@@ -140,7 +140,7 @@ app.get('/create_drequest', async (req, res) => {
 app.post('/request_send', async (req, res) => {
   console.log('request sending off called!');
   let data = req.body;
-  data.userid = req.session.user_id;
+  data.userid = req.session.user.user_id;
   console.log(' data:\t', data);
 
   rRequest.post(config.FRONTEND + '/drequest/create', async (error, response, body) => {
