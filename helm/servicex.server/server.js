@@ -100,7 +100,7 @@ app.get('/users', async (req, res) => {
 });
 
 app.get('/requests', async (req, res) => {
-  console.log('requests called!');
+  console.log('requests called for user:', req.session.user);
   // req.session.user.user_id = 'c51dbd7e-d274-11e5-9b11-9be347a09ce0';
   rRequest.get(config.FRONTEND + '/user/requests/' + req.session.user.user_id, async (error, response, body) => {
     if (error) {
@@ -150,7 +150,7 @@ app.post('/request_send', async (req, res) => {
     // console.log('response:\t', response);
     console.log(body);
     // let req_data = JSON.parse(body);
-    res.render('requests', { user: req.session.user });
+    res.render('drequests', { user: req.session.user });
   });
 });
 
