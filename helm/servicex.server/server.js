@@ -111,9 +111,9 @@ app.get('/requests', async (req, res) => {
     for (re in requests_data) {
       requests_data[re].created_at = new Date(requests_data[re].created_at).toLocaleString();
     }
-    console.log('all users requests:\t', requests_data);
+    console.log('all users requests:\t', requests_data.length);
 
-    res.render('drequests', { user: req.session.user, reqs: requests_data });
+    res.render('requests', { user: req.session.user, reqs: requests_data });
   });
 });
 
@@ -128,13 +128,13 @@ app.get('/request/:reqId', async (req, res) => {
     let req_data = JSON.parse(body);
     req_data.reqId = reqId;
     console.log('req data:\t', req_data);
-    res.render('drequest', { user: req.session.user, drequest: req_data });
+    res.render('request_view', { user: req.session.user, drequest: req_data });
   });
 });
 
-app.get('/create_drequest', async (req, res) => {
+app.get('/request_create', async (req, res) => {
   console.log('request creation called!');
-  res.render('create_drequest', { user: req.session.user });
+  res.render('request_create', { user: req.session.user });
 });
 
 app.post('/request_send', async (req, res) => {
@@ -150,7 +150,7 @@ app.post('/request_send', async (req, res) => {
     // console.log('response:\t', response);
     console.log(body);
     // let req_data = JSON.parse(body);
-    res.render('drequests', { user: req.session.user });
+    res.render('requests', { user: req.session.user });
   });
 });
 
