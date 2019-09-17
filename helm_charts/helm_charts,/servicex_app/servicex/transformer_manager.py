@@ -27,25 +27,25 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import kubernetes
 from kubernetes import client
-from run import app
+from flask import current_app, g
 
 
 def config(manager_mode):
-    if manager_mode=='internal-kubernetes':
+    if manager_mode == 'internal-kubernetes':
         kubernetes.config.load_incluster_config()
-    elif manager_mode=='external-kubernetes':
+    elif manager_mode == 'external-kubernetes':
         kubernetes.config.load_kube_config()
     else:
         raise ValueError('Manager mode '+manager_mode+' not valid')
 
 
 def create_job_object(request_id, chunk_size, rabbitmq_uri, workers):
-    if "TRANSFORMER_LOCAL_PATH" in app.config:
-        path = app.config['TRANSFORMER_LOCAL_PATH']
+    if "TRANSFORMER_LOCAL_PATH" in current_app.config:
+        path = current_app.config['TRANSFORMER_LOCAL_PATH']
         volumes = [client.V1Volume(
                 name='rootfiles',
                 host_path=client.V1HostPathVolumeSource(
-                    path=app.config['TRANSFORMER_LOCAL_PATH']))]
+                    path=current_app.config['TRANSFORMER_LOCAL_PATH']))]
         volume_mounts = [client.V1VolumeMount(mount_path="/data", name='rootfiles')]
     else:
         volumes = []

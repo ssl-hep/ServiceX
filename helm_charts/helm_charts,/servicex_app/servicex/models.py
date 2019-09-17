@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from sqlalchemy import func
-
-from run import db
 from passlib.hash import pbkdf2_sha256 as sha256
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
 class TransformRequest(db.Model):

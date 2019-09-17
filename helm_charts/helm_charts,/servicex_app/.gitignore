@@ -1,3 +1,5 @@
 sqlite
 .idea
 __pycache__/
+servicex.egg-info/
+
