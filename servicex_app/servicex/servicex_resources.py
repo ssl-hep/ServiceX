@@ -27,16 +27,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
-import pika
 from flask import request
 from flask_restful import Resource, reqparse
 import uuid
-from models import TransformRequest, TransformationResult
-from run import app
-from transformer_manager import launch_transformer_jobs, shutdown_transformer_job
-from rabbit_adaptor import RabbitAdaptor
+from servicex.models import TransformRequest, TransformationResult
+from servicex.transformer_manager import launch_transformer_jobs, shutdown_transformer_job
+from servicex.rabbit_adaptor import RabbitAdaptor
+from flask import current_app, g
 
-rabbit_mq_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
+
+rabbit_mq_adaptor = RabbitAdaptor(current_app.config['RABBIT_MQ_URL'])
 rabbit_mq_adaptor.connect()
 
 # Insure the required queues and exchange exist in RabbitMQ broker
@@ -57,7 +57,7 @@ parser.add_argument('kafka-broker', required=False)
 
 
 def _generate_advertised_endpoint(endpoint):
-    return "http://" + app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+    return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
 
 def _files_remaining(request_id):
@@ -226,9 +226,9 @@ class TransformStart(Resource):
     def post(self, request_id):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
-        if app.config['TRANSFORMER_MANAGER_ENABLED']:
-            rabbitmq_uri = app.config['TRANSFORMER_RABBIT_MQ_URL']
-            namepsace = app.config['TRANSFORMER_NAMESPACE']
+        if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+            rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
+            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print(rabbitmq_uri)
             launch_transformer_jobs(request_id,
                                     submitted_request.workers,
@@ -252,7 +252,7 @@ class TransformerFileComplete(Resource):
 
         files_remaining = _files_remaining(request_id)
         if files_remaining and  files_remaining <= 0:
-            namepsace = app.config['TRANSFORMER_NAMESPACE']
+            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
             shutdown_transformer_job(request_id, namepsace)
         print(info)
