@@ -29,16 +29,46 @@
 import os
 from flask import Flask
 from flask_restful import Api
+
+from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
+from servicex.transformer_manager import TransformerManager
 
 
-def create_app(test_config=None):
+def _init_rabbit_mq(rabbitmq_url):
+    rabbit_mq_adaptor = RabbitAdaptor(rabbitmq_url)
+    rabbit_mq_adaptor.connect()
+
+    # Insure the required queues and exchange exist in RabbitMQ broker
+    rabbit_mq_adaptor.setup_queue('did_requests')
+    rabbit_mq_adaptor.setup_queue('validation_requests')
+    rabbit_mq_adaptor.setup_exchange('transformation_requests')
+
+
+def create_app(test_config=None, provided_transformer_manager=None, provided_rabbit_adaptor=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_envvar('APP_CONFIG_FILE')
-    api = Api(app)
+
+    if not test_config:
+        app.config.from_envvar('APP_CONFIG_FILE')
+    else:
+        app.config.from_mapping(test_config)
+        print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
+
+        if app.config['TRANSFORMER_MANAGER_ENABLED'] and not provided_transformer_manager:
+            transformer_manager = TransformerManager(app.config['TRANSFORMER_MANAGER_MODE'])
+        else:
+            transformer_manager = provided_transformer_manager
+
+        if not provided_rabbit_adaptor:
+            rabbit_adaptor = _init_rabbit_mq(app.config['RABBIT_MQ_URL'])
+        else:
+            rabbit_adaptor = provided_rabbit_adaptor
+
+        api = Api(app)
+
         from servicex import servicex_resources
 
         # ensure the instance folder exists
@@ -53,11 +83,6 @@ def create_app(test_config=None):
             db.init_app(app)
             db.create_all()
 
-        with app.app_context():
-            add_routes(api)
-
-            if app.config['TRANSFORMER_MANAGER_ENABLED']:
-                from servicex import transformer_manager
-                transformer_manager.config(app.config['TRANSFORMER_MANAGER_MODE'])
+        add_routes(api, transformer_manager, rabbit_adaptor)
 
     return app

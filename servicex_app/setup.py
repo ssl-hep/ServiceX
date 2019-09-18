@@ -54,13 +54,13 @@ setup(
         'flask-sqlalchemy',
         'Flask-Migrate',
         'confluent_kafka',
-        'kubernetes',
-        'sqlalchemy'
+        'kubernetes'
     ],
     extras_require={
         'test': [
-            'pytest',
+            'pytest-flask',
             'coverage',
+            'pytest-mock'
         ],
     },
 )
