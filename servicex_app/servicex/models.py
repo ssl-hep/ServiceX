@@ -135,11 +135,9 @@ class UserModel(db.Model):
     def generate_hash(password):
         return sha256.hash(password)
 
-
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
-
 
     @classmethod
     def find_by_username(cls, username):
@@ -161,6 +159,5 @@ class UserModel(db.Model):
             num_rows_deleted = db.session.query(cls).delete()
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except:
+        except Exception:
             return {'message': 'Something went wrong'}
-

@@ -44,9 +44,8 @@ class TransformerManager:
         if "TRANSFORMER_LOCAL_PATH" in current_app.config:
             path = current_app.config['TRANSFORMER_LOCAL_PATH']
             volumes = [client.V1Volume(
-                    name='rootfiles',
-                    host_path=client.V1HostPathVolumeSource(
-                        path=current_app.config['TRANSFORMER_LOCAL_PATH']))]
+                name='rootfiles',
+                host_path=client.V1HostPathVolumeSource(path=path))]
             volume_mounts = [client.V1VolumeMount(mount_path="/data", name='rootfiles')]
         else:
             volumes = []
@@ -60,7 +59,7 @@ class TransformerManager:
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
             env=[client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")],
-            args=["python xaod_branches.py "+
+            args=["python xaod_branches.py " +
                   " --request-id " + request_id +
                   " --rabbit-uri " + rabbitmq_uri +
                   " --chunks " + str(chunk_size) +

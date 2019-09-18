@@ -35,7 +35,7 @@ with io.open('README.rst', 'rt', encoding='utf8') as f:
 setup(
     name='servicex',
     version='1.0.0',
-    url='https://indico.cern.ch/event/822074/contributions/3471452/attachments/1865411/3067262/ServiceX_For_AS_Workshop.pdf',
+    url='https://iris-hep.org',
     license='BSD',
     maintainer='ServiceX Team',
     maintainer_email='bengal1@illinois.edu',
@@ -60,7 +60,8 @@ setup(
         'test': [
             'pytest-flask',
             'coverage',
-            'pytest-mock'
+            'pytest-mock',
+            'flake8'
         ],
     },
 )

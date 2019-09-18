@@ -39,6 +39,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     api.add_resource(servicex_resources.TransformationStatus,
                      '/servicex/transformation/<string:request_id>/status')
 
+    servicex_resources.AddFileToDataset.make_api(rabbit_mq_adaptor)
     api.add_resource(servicex_resources.AddFileToDataset,
                      '/servicex/transformation/<string:request_id>/files')
 
@@ -53,5 +54,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     api.add_resource(servicex_resources.TransformStart,
                      '/servicex/transformation/<string:request_id>/start')
 
+    servicex_resources.TransformerFileComplete.make_api(transformer_manager)
     api.add_resource(servicex_resources.TransformerFileComplete,
                      '/servicex/transformation/<string:request_id>/file-complete')

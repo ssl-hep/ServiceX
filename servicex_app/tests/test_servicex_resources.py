@@ -57,7 +57,8 @@ def _generate_transform_request():
 class TestServiceXResources:
 
     @staticmethod
-    def _test_client(mocker, additional_config=None, transformation_manager=None, rabbit_adaptor=None):
+    def _test_client(additional_config=None, transformation_manager=None,
+                     rabbit_adaptor=None):
         config = _app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -74,7 +75,7 @@ class TestServiceXResources:
         return mocker.MagicMock(RabbitAdaptor)
 
     def test_submit_transformation_request_bad(self, mocker, mock_rabbit_adaptor):
-        client = TestServiceXResources._test_client(mocker, rabbit_adaptor=mock_rabbit_adaptor)
+        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
                                json={'foo': 'bar'})
         assert response.status_code == 400
@@ -90,7 +91,7 @@ class TestServiceXResources:
 
     def test_submit_transformation_request_throws_exception(self, mocker, mock_rabbit_adaptor):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = TestServiceXResources._test_client(mocker, rabbit_adaptor=mock_rabbit_adaptor)
+        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
@@ -98,7 +99,7 @@ class TestServiceXResources:
         assert response.json == {"message": "Something went wrong"}
 
     def test_submit_transformation(self, mocker, mock_rabbit_adaptor):
-        client = TestServiceXResources._test_client(mocker, rabbit_adaptor=mock_rabbit_adaptor)
+        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
 
@@ -121,6 +122,8 @@ class TestServiceXResources:
         mock_rabbit_adaptor.bind_queue_to_exchange.assert_called_with(
                 exchange="transformation_requests",
                 queue=request_id)
+
+        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
                                              routing_key='did_requests',
@@ -128,7 +131,7 @@ class TestServiceXResources:
                                                  {
                                                      "request_id": request_id,
                                                      "did": "123-45-678",
-                                                     "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/" + request_id}
+                                                     "service-endpoint": service_endpoint}
                                              ))
 
     def test_transform_start(self, mocker, mock_rabbit_adaptor):
@@ -136,16 +139,17 @@ class TestServiceXResources:
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-        mocker.patch('servicex.transformer_manager.TransformerManager', return_value= mock_transformer_manager)
+        mocker.patch('servicex.transformer_manager.TransformerManager',
+                     return_value=mock_transformer_manager)
         mock_transform_request_read = mocker.Mock(return_value=_generate_transform_request())
         servicex.models.TransformRequest.return_request = mock_transform_request_read
 
-        client = TestServiceXResources._test_client(mocker,
-                                                    {
-                                                        'TRANSFORMER_MANAGER_ENABLED': True
-                                                    },
-                                                    mock_transformer_manager,
-                                                    mock_rabbit_adaptor)
+        client = TestServiceXResources._test_client(
+            {
+                'TRANSFORMER_MANAGER_ENABLED': True
+            },
+            mock_transformer_manager,
+            mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation/1234/start')
         assert response.status_code == 200
@@ -162,17 +166,17 @@ class TestServiceXResources:
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
         mocker.patch('servicex.transformer_manager.TransformerManager',
-                     return_value= mock_transformer_manager)
+                     return_value=mock_transformer_manager)
         mock_transform_request_read = mocker.Mock(
             return_value=_generate_transform_request())
         servicex.models.TransformRequest.return_request = mock_transform_request_read
 
-        client = TestServiceXResources._test_client(mocker,
-                                                    {
-                                                        'TRANSFORMER_MANAGER_ENABLED': False
-                                                    },
-                                                    mock_transformer_manager,
-                                                    mock_rabbit_adaptor)
+        client = TestServiceXResources._test_client(
+            {
+                'TRANSFORMER_MANAGER_ENABLED': False
+            },
+            mock_transformer_manager,
+            mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation/1234/start')
         assert response.status_code == 200

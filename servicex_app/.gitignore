@@ -4,4 +4,8 @@ __pycache__/
 servicex.egg-info/
 .coverage
 htmlcov/
+coverage.xml
+build/
+dist/
+.cache
 

@@ -29,7 +29,7 @@
 # pylint: disable=C0111,C0103,R0205
 
 import pika
-from flask import current_app, g
+from flask import current_app
 
 
 class RabbitAdaptor(object):
@@ -204,4 +204,3 @@ class RabbitAdaptor(object):
         if self._connection is not None:
             current_app.logger.info('Closing connection')
             self._connection.close()
-
