@@ -27,10 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-def add_routes(api):
+def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     from servicex import servicex_resources
 
+    servicex_resources.SubmitTransformationRequest.make_api(rabbit_mq_adaptor)
     api.add_resource(servicex_resources.SubmitTransformationRequest, '/servicex/transformation')
+
     api.add_resource(servicex_resources.QueryTransformationRequest,
                      '/servicex/transformation/<string:request_id>',
                      '/servicex/transformation')
@@ -40,12 +42,14 @@ def add_routes(api):
     api.add_resource(servicex_resources.AddFileToDataset,
                      '/servicex/transformation/<string:request_id>/files')
 
+    servicex_resources.PreflightCheck.make_api(rabbit_mq_adaptor)
     api.add_resource(servicex_resources.PreflightCheck,
                      '/servicex/transformation/<string:request_id>/preflight')
 
     api.add_resource(servicex_resources.FilesetComplete,
                      '/servicex/transformation/<string:request_id>/complete')
 
+    servicex_resources.TransformStart.make_api(transformer_manager)
     api.add_resource(servicex_resources.TransformStart,
                      '/servicex/transformation/<string:request_id>/start')
 

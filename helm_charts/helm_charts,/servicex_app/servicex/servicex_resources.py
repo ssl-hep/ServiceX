@@ -31,18 +31,8 @@ from flask import request
 from flask_restful import Resource, reqparse
 import uuid
 from servicex.models import TransformRequest, TransformationResult
-from servicex.transformer_manager import launch_transformer_jobs, shutdown_transformer_job
-from servicex.rabbit_adaptor import RabbitAdaptor
 from flask import current_app, g
 
-
-rabbit_mq_adaptor = RabbitAdaptor(current_app.config['RABBIT_MQ_URL'])
-rabbit_mq_adaptor.connect()
-
-# Insure the required queues and exchange exist in RabbitMQ broker
-rabbit_mq_adaptor.setup_queue('did_requests')
-rabbit_mq_adaptor.setup_queue('validation_requests')
-rabbit_mq_adaptor.setup_exchange('transformation_requests')
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -70,6 +60,11 @@ def _files_remaining(request_id):
 
 
 class SubmitTransformationRequest(Resource):
+    @classmethod
+    def make_api(cls, rabbitmq_adaptor):
+        cls.rabbitmq_adaptor = rabbitmq_adaptor
+        return cls
+
     def post(self):
         transformation_request = parser.parse_args()
         request_id = str(uuid.uuid4())
@@ -95,13 +90,13 @@ class SubmitTransformationRequest(Resource):
         }
 
         try:
-            rabbit_mq_adaptor.setup_queue(request_id)
+            self.rabbitmq_adaptor.setup_queue(request_id)
 
-            rabbit_mq_adaptor.bind_queue_to_exchange(
+            self.rabbitmq_adaptor.bind_queue_to_exchange(
                 exchange="transformation_requests",
                 queue=request_id)
 
-            rabbit_mq_adaptor.basic_publish(exchange='',
+            self.rabbitmq_adaptor.basic_publish(exchange='',
                                             routing_key='did_requests',
                                             body=json.dumps(did_request))
 
@@ -181,6 +176,11 @@ class AddFileToDataset(Resource):
 
 
 class PreflightCheck(Resource):
+    @classmethod
+    def make_api(cls, rabbitmq_adaptor):
+        cls.rabbitmq_adaptor = rabbitmq_adaptor
+        return cls
+
     def post(self, request_id):
         body = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
@@ -195,7 +195,7 @@ class PreflightCheck(Resource):
         }
 
         try:
-            rabbit_mq_adaptor.basic_publish(exchange='',
+            self.rabbit_mq_adaptor.basic_publish(exchange='',
                                             routing_key='validation_requests',
                                             body=json.dumps(preflight_request))
 
@@ -223,6 +223,11 @@ class FilesetComplete(Resource):
 
 
 class TransformStart(Resource):
+    @classmethod
+    def make_api(cls, transformer_manager):
+        cls.transformer_manager = transformer_manager
+        return cls
+
     def post(self, request_id):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
@@ -230,10 +235,10 @@ class TransformStart(Resource):
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print(rabbitmq_uri)
-            launch_transformer_jobs(request_id,
-                                    submitted_request.workers,
-                                    submitted_request.chunk_size,
-                                    rabbitmq_uri, namepsace)
+            self.transformer_manager.launch_transformer_jobs(request_id,
+                                                             submitted_request.workers,
+                                                             submitted_request.chunk_size,
+                                                             rabbitmq_uri, namepsace)
 
 
 class TransformerFileComplete(Resource):
