@@ -161,10 +161,10 @@ app.post('/request_send', async (req, res) => {
 });
 
 app.get('/request_terminate/:reqId', async (req, res) => {
-  console.log('request termination called!');
   const { reqId } = req.params;
+  console.log('request termination called for reqId:', reqId);
   var options = {
-    uri: config.FRONTEND + 'drequest/terminate/' + reqId,
+    uri: config.FRONTEND + '/drequest/terminate/' + reqId,
     method: 'PUT'
   };
 
