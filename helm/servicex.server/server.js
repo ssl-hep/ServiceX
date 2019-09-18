@@ -143,7 +143,13 @@ app.post('/request_send', async (req, res) => {
   data.userid = req.session.user.user_id;
   console.log(' data:\t', data);
 
-  rRequest.post(config.FRONTEND + '/drequest/create', async (error, response, body) => {
+  var options = {
+    uri: config.FRONTEND + '/drequest/create',
+    method: 'POST',
+    json: data,
+  };
+
+  rRequest(options, async (error, response, body) => {
     if (error) {
       console.error('error on creating new request in ES:\t', error);
     }
