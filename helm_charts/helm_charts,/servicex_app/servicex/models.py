@@ -81,6 +81,15 @@ class TransformRequest(db.Model):
     def update_request(cls, request_obj):
         db.session.commit()
 
+    @classmethod
+    def files_remaining(cls, request_id):
+        submitted_request = cls.return_request(request_id)
+        count = TransformationResult.count(request_id)
+        if submitted_request.files and count:
+            return submitted_request.files - count
+        else:
+            return None
+
 
 class TransformationResult(db.Model):
     __tablename__ = 'transform_result'

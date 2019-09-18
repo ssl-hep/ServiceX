@@ -49,41 +49,6 @@ def _generate_advertised_endpoint(endpoint):
     return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
 
-def _files_remaining(request_id):
-    submitted_request = TransformRequest.return_request(request_id)
-    count = TransformationResult.count(request_id)
-    if submitted_request.files and count:
-        return submitted_request.files - count
-    else:
-        return None
-
-
-status_parser = reqparse.RequestParser()
-status_parser.add_argument('timestamp', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('status', help='This field cannont be blank',
-                           required=True)
-
-
-class TransformationStatus(Resource):
-    def post(self, request_id):
-        status = status_parser.parse_args()
-        status.request_id = request_id
-        print(status)
-
-    def get(self, request_id):
-        count = TransformationResult.count(request_id)
-        stats = TransformationResult.statistics(request_id)
-        print(count, stats)
-        print(_files_remaining(request_id))
-        return str({
-            "request-id": request_id,
-            "files-processed": count,
-            "files-remaining": _files_remaining(request_id),
-            "stats": stats
-        })
-
-
 class QueryTransformationRequest(Resource):
     def get(self, request_id=None):
         if request_id:
@@ -194,7 +159,7 @@ class TransformerFileComplete(Resource):
         )
         rec.save_to_db()
 
-        files_remaining = _files_remaining(request_id)
+        files_remaining = TransformRequest.files_remaining(request_id)
         if files_remaining and files_remaining <= 0:
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")

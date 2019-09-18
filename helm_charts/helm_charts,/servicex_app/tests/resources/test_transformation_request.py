@@ -36,7 +36,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_request_bad(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
-                               json={'foo': 'bar'})
+                               json={'timestamp': '20190101'})
         assert response.status_code == 400
 
     @staticmethod
