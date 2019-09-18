@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.6"
+
+install:
+  - pip install -e .
+  - pip install ".[test]"
+  - pip install pytest
+  - pip install coverage
+
+script:
+  - coverage run -m pytest -s
+
