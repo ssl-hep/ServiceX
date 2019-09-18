@@ -69,8 +69,6 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
 
         api = Api(app)
 
-        from servicex import servicex_resources
-
         # ensure the instance folder exists
         try:
             os.makedirs(app.instance_path)

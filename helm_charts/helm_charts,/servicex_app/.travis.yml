@@ -5,8 +5,9 @@ python:
 install:
   - pip install -e .
   - pip install ".[test]"
-  - pip install pytest coverage codecov
+  - pip install pytest coverage codecov flake8
 
 script:
+  - flake8
   - coverage run -m pytest -s
   - codecov

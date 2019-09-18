@@ -56,4 +56,3 @@ def create_topic(topic_name, max_message_size,  num_partitions):
             k_error = k_execpt.args[0]
             print(k_error.str())
             return k_error.code() == 36
-
