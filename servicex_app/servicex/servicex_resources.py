@@ -49,16 +49,6 @@ def _generate_advertised_endpoint(endpoint):
     return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
 
-class QueryTransformationRequest(Resource):
-    def get(self, request_id=None):
-        if request_id:
-            return TransformRequest.to_json(
-                TransformRequest.return_request(request_id)
-            )
-        else:
-            return TransformRequest.return_all()
-
-
 class AddFileToDataset(Resource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor):
