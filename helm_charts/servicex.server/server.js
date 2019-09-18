@@ -80,8 +80,8 @@ app.get('/profile', async (req, res) => {
       console.error('error on looking up user in ES:\t', error);
     }
     // console.log('response:\t', response);
-    req.session.user = JSON.parse(body);
-    console.log('ES user data:\t', req.session.user);
+    req.session.user.details = JSON.parse(body);
+    console.log('session user data:\t', req.session.user);
     res.render('profile', { user: req.session.user });
   });
 });
