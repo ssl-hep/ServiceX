@@ -1,1 +1,0 @@
-visiting "users" cleans session data?
