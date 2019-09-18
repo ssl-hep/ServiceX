@@ -27,12 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
+from flask import current_app
 from flask import request
 from flask_restful import Resource, reqparse
-import uuid
-from servicex.models import TransformRequest, TransformationResult
-from flask import current_app
 
+from servicex.models import TransformRequest, TransformationResult
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -57,57 +56,6 @@ def _files_remaining(request_id):
         return submitted_request.files - count
     else:
         return None
-
-
-class SubmitTransformationRequest(Resource):
-    @classmethod
-    def make_api(cls, rabbitmq_adaptor):
-        cls.rabbitmq_adaptor = rabbitmq_adaptor
-        return cls
-
-    def post(self):
-        transformation_request = parser.parse_args()
-        request_id = str(uuid.uuid4())
-
-        request_rec = TransformRequest(
-            did=transformation_request['did'],
-            columns=transformation_request['columns'],
-            request_id=str(request_id),
-            image=transformation_request['image'],
-            chunk_size=transformation_request['chunk-size'],
-            messaging_backend=transformation_request['messaging-backend'],
-            kafka_broker=transformation_request['kafka-broker'],
-            workers=transformation_request['workers']
-        )
-
-        did_request = {
-            "request_id": request_rec.request_id,
-            "did": request_rec.did,
-            "service-endpoint": _generate_advertised_endpoint(
-                "servicex/transformation/" +
-                request_rec.request_id
-            )
-        }
-
-        try:
-            self.rabbitmq_adaptor.setup_queue(request_id)
-
-            self.rabbitmq_adaptor.bind_queue_to_exchange(
-                exchange="transformation_requests",
-                queue=request_id)
-
-            self.rabbitmq_adaptor.basic_publish(exchange='',
-                                                routing_key='did_requests',
-                                                body=json.dumps(did_request))
-
-            request_rec.save_to_db()
-            return {
-                "request_id": str(request_id)
-            }
-
-        except Exception as eek:
-            print(eek)
-            return {'message': 'Something went wrong'}, 500
 
 
 status_parser = reqparse.RequestParser()
@@ -225,24 +173,6 @@ class FilesetComplete(Resource):
         rec.did_lookup_time = summary['elapsed-time']
         TransformRequest.update_request(rec)
         print("Complete "+request_id)
-
-
-class TransformStart(Resource):
-    @classmethod
-    def make_api(cls, transformer_manager):
-        cls.transformer_manager = transformer_manager
-        return cls
-
-    def post(self, request_id):
-        submitted_request = TransformRequest.return_request(request_id)
-        if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-            rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
-            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
-            print(rabbitmq_uri)
-            self.transformer_manager.launch_transformer_jobs(request_id,
-                                                             submitted_request.workers,
-                                                             submitted_request.chunk_size,
-                                                             rabbitmq_uri, namepsace)
 
 
 class TransformerFileComplete(Resource):

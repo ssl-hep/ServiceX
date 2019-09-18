@@ -27,55 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
-from pytest import fixture
-
-from servicex import create_app
 from servicex.models import TransformRequest
-from servicex.rabbit_adaptor import RabbitAdaptor
+from tests.resources.resource_test_base import ResourceTestBase
 
 
-def _app_config():
-    return {
-        'TESTING': True,
-        'RABBIT_MQ_URL': 'amqp://foo.com',
-        'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:",
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
-        'TRANSFORMER_NAMESPACE': "my-ws",
-        'TRANSFORMER_MANAGER_ENABLED': False,
-        'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000'
-    }
-
-
-def _generate_transform_request():
-    transform_request = TransformRequest()
-    transform_request.chunk_size = 1000
-    transform_request.workers = 42
-    return transform_request
-
-
-class TestServiceXResources:
-
-    @staticmethod
-    def _test_client(additional_config=None, transformation_manager=None,
-                     rabbit_adaptor=None):
-        config = _app_config()
-        config['TRANSFORMER_MANAGER_ENABLED'] = False
-        config['TRANSFORMER_MANAGER_MODE'] = 'external'
-
-        if additional_config:
-            config.update(additional_config)
-
-        app = create_app(config, transformation_manager, rabbit_adaptor)
-
-        return app.test_client()
-
-    @fixture
-    def mock_rabbit_adaptor(self, mocker):
-        return mocker.MagicMock(RabbitAdaptor)
+class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_request_bad(self, mocker, mock_rabbit_adaptor):
-        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
                                json={'foo': 'bar'})
         assert response.status_code == 400
@@ -91,7 +50,7 @@ class TestServiceXResources:
 
     def test_submit_transformation_request_throws_exception(self, mocker, mock_rabbit_adaptor):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
@@ -99,7 +58,7 @@ class TestServiceXResources:
         assert response.json == {"message": "Something went wrong"}
 
     def test_submit_transformation(self, mocker, mock_rabbit_adaptor):
-        client = TestServiceXResources._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
 
@@ -133,54 +92,3 @@ class TestServiceXResources:
                                                      "did": "123-45-678",
                                                      "service-endpoint": service_endpoint}
                                              ))
-
-    def test_transform_start(self, mocker, mock_rabbit_adaptor):
-        import servicex
-        from servicex.transformer_manager import TransformerManager
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-        mocker.patch('servicex.transformer_manager.TransformerManager',
-                     return_value=mock_transformer_manager)
-        mock_transform_request_read = mocker.Mock(return_value=_generate_transform_request())
-        servicex.models.TransformRequest.return_request = mock_transform_request_read
-
-        client = TestServiceXResources._test_client(
-            {
-                'TRANSFORMER_MANAGER_ENABLED': True
-            },
-            mock_transformer_manager,
-            mock_rabbit_adaptor)
-
-        response = client.post('/servicex/transformation/1234/start')
-        assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-
-        mock_transformer_manager.\
-            launch_transformer_jobs.assert_called_with('1234', 42,
-                                                       1000, 'amqp://trans.rabbit',
-                                                       'my-ws')
-
-    def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):
-        import servicex
-        from servicex.transformer_manager import TransformerManager
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-        mocker.patch('servicex.transformer_manager.TransformerManager',
-                     return_value=mock_transformer_manager)
-        mock_transform_request_read = mocker.Mock(
-            return_value=_generate_transform_request())
-        servicex.models.TransformRequest.return_request = mock_transform_request_read
-
-        client = TestServiceXResources._test_client(
-            {
-                'TRANSFORMER_MANAGER_ENABLED': False
-            },
-            mock_transformer_manager,
-            mock_rabbit_adaptor)
-
-        response = client.post('/servicex/transformation/1234/start')
-        assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-
-        mock_transformer_manager.\
-            launch_transformer_jobs.assert_not_called()
