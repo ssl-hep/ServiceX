@@ -160,6 +160,23 @@ app.post('/request_send', async (req, res) => {
   });
 });
 
+app.get('/request_terminate/:reqId', async (req, res) => {
+  console.log('request termination called!');
+  const { reqId } = req.params;
+  var options = {
+    uri: config.FRONTEND + 'drequest/terminate/' + reqId,
+    method: 'PUT'
+  };
+
+  rRequest(options, async (error, response, body) => {
+    if (error) {
+      console.error('error on terminating request:\t', error);
+    }
+    // console.log('response:\t', response);
+    console.log(body);
+    res.render('index', { user: req.session.user });
+  });
+});
 
 app.get('/healthz', (_req, res) => {
   try {
