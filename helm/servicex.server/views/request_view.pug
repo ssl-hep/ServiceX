@@ -9,16 +9,11 @@ block content
 
                     p.lead
                     | A request can be in following states:
-                    | #[em Created], #[em LookingUp], #[em LookedUp], #[em Validated], #[em Processing], #[em Delivered], #[em Failed] and #[em Done].
+                    | #[em Created], #[em LookingUp], #[em LookedUp], #[em Validated], #[em Streaming], #[em Failed], #[em Terminated] and #[em Done].
                     | </br>
                     | </br>
-                    if drequest.status==='Defined'
-                        a(href="/wrequest_prepare")
-                            button#drequest_prepare_button.btn.btn-primary Prepare
-                        a(href="/drequest_reset")
-                            button#drequest_reset_button.btn.btn-primary Reset
                     if drequest.status!=='Done'
-                        a(href="/wrequest_terminate")
+                        a(href="/request_terminate/"+drequest.reqId)
                             button#drequest_terminate_button.btn.btn-primary Terminate
 
                     iframe( src="https://atlas-kibana.mwt2.org/s/servicex/app/kibana#/visualize/edit/749377a0-9465-11e9-a3fc-c94edec7954f?embed=true&_g=(refreshInterval:(pause:!t,value:0),time:(from:now-90d,mode:quick,to:now))&_a=(filters:!(),linked:!f,query:(language:lucene,query:'req_id:"+drequest.reqId+"'),uiState:(),vis:(aggs:!((enabled:!t,id:'1',params:(),schema:metric,type:count),(enabled:!t,id:'2',params:(field:status,missingBucket:!f,missingBucketLabel:Missing,order:desc,orderBy:'1',otherBucket:!f,otherBucketLabel:Other,size:10),schema:segment,type:terms)),params:(addLegend:!t,addTooltip:!t,isDonut:!t,labels:(last_level:!t,show:!f,truncate:100,values:!t),legendPosition:right,type:pie),title:'input+files+status',type:pie))" height="400" width="400")
