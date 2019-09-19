@@ -64,8 +64,14 @@ class ResourceTestBase:
     @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
+        transform_request.request_id = 'BR549'
+        transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.chunk_size = 1000
         transform_request.workers = 42
+        transform_request.did = '123-456-789'
+        transform_request.image = 'ssl-hep/foo:latest'
+        transform_request.messaging_backend = 'kafka'
+        transform_request.kafka_broker = 'http://ssl-hep.org.kafka:12345'
         return transform_request
 
     @fixture

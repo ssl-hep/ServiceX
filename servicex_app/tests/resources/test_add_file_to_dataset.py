@@ -25,27 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+
 from tests.resources.resource_test_base import ResourceTestBase
 
 
-class TestQueryTransformationRequest(ResourceTestBase):
-    def test_query_all(self, mocker, mock_rabbit_adaptor):
-        import servicex
-        mock_transform_request_read_all = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'return_all',
-            return_value=[
-                {'request_id': '123'},
-                {'request_id': '456'}
-            ])
-
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation')
-        assert response.status_code == 200
-        assert response.json == [{'request_id': '123'}, {'request_id': '456'}]
-        mock_transform_request_read_all.assert_called()
-
-    def test_query_single_request(self, mocker, mock_rabbit_adaptor):
+class TestAddFileToDataset(ResourceTestBase):
+    def test_put_new_file(self, mocker,  mock_rabbit_adaptor):
         import servicex
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
@@ -53,13 +39,35 @@ class TestQueryTransformationRequest(ResourceTestBase):
             return_value=self._generate_transform_request())
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation/1234')
+        response = client.put('/servicex/transformation/1234/files',
+                              json={'file_path': '/foo/bar.root'})
         assert response.status_code == 200
-        print(response.json)
-        assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
-                                 'columns': 'electron.eta(), muon.pt()',
-                                 'image': 'ssl-hep/foo:latest', 'chunk-size': 1000,
-                                 'workers': 42, 'messaging-backend': 'kafka',
-                                 'kafka-broker': 'http://ssl-hep.org.kafka:12345'}
-
         mock_transform_request_read.assert_called_with('1234')
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='transformation_requests',
+            routing_key='1234',
+            body=json.dumps(
+                {"request-id": 'BR549',
+                 "columns": 'electron.eta(), muon.pt()',
+                 "file-path": "/foo/bar.root",
+                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234"
+                 }))
+
+        assert response.json == {
+            "request-id": '1234',
+            "file-id": 42
+        }
+
+    def test_put_new_file_with_exception(self, mocker, mock_rabbit_adaptor):
+        import servicex
+        mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=self._generate_transform_request())
+
+        mock_rabbit_adaptor.basic_publish = mocker.Mock(side_effect=Exception('Test'))
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        response = client.put('/servicex/transformation/1234/files',
+                              json={'file_path': '/foo/bar.root'})
+        assert response.status_code == 500
+        assert response.json == {'message': 'Something went wrong'}

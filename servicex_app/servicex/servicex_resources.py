@@ -49,40 +49,6 @@ def _generate_advertised_endpoint(endpoint):
     return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
 
-class AddFileToDataset(Resource):
-    @classmethod
-    def make_api(cls, rabbitmq_adaptor):
-        cls.rabbitmq_adaptor = rabbitmq_adaptor
-        return cls
-
-    def put(self, request_id):
-        add_file_request = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
-
-        transform_request = {
-            'request-id': submitted_request.request_id,
-            'columns': submitted_request.columns,
-            'file-path': add_file_request['file_path'],
-            "service-endpoint": _generate_advertised_endpoint(
-                "servicex/transformation/" + request_id
-            )
-        }
-
-        try:
-            self.rabbit_mq_adaptor.basic_publish(exchange='transformation_requests',
-                                                 routing_key=request_id,
-                                                 body=json.dumps(transform_request))
-
-            return {
-                "request-id": str(request_id),
-                "file-id": 42
-            }
-
-        except Exception as eek:
-            print(eek)
-            return {'message': 'Something went wrong'}, 500
-
-
 class PreflightCheck(Resource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor):
