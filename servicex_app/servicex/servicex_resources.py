@@ -25,8 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
-
 from flask import current_app
 from flask import request
 from flask_restful import Resource, reqparse
@@ -47,40 +45,6 @@ parser.add_argument('kafka-broker', required=False)
 
 def _generate_advertised_endpoint(endpoint):
     return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
-
-
-class PreflightCheck(Resource):
-    @classmethod
-    def make_api(cls, rabbitmq_adaptor):
-        cls.rabbitmq_adaptor = rabbitmq_adaptor
-        return cls
-
-    def post(self, request_id):
-        body = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
-
-        preflight_request = {
-            'request-id': submitted_request.request_id,
-            'columns': submitted_request.columns,
-            'file-path': body['file_path'],
-            "service-endpoint": _generate_advertised_endpoint(
-                "servicex/transformation/" + request_id
-            )
-        }
-
-        try:
-            self.rabbit_mq_adaptor.basic_publish(exchange='',
-                                                 routing_key='validation_requests',
-                                                 body=json.dumps(preflight_request))
-
-            return {
-                "request-id": str(request_id),
-                "file-id": 42
-            }
-
-        except Exception as eek:
-            print(eek)
-            return {'message': 'Something went wrong'}, 500
 
 
 class FilesetComplete(Resource):
