@@ -34,6 +34,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     from servicex.resources.transform_status import TransformationStatus
     from servicex.resources.query_transformation_request import QueryTransformationRequest
     from servicex.resources.add_file_to_dataset import AddFileToDataset
+    from servicex.resources.preflight_check import PreflightCheck
 
     SubmitTransformationRequest.make_api(rabbit_mq_adaptor)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
@@ -42,16 +43,13 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
                      '/servicex/transformation/<string:request_id>',
                      '/servicex/transformation')
 
-    api.add_resource(TransformationStatus,
-                     '/servicex/transformation/<string:request_id>/status')
+    api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
 
     AddFileToDataset.make_api(rabbit_mq_adaptor)
-    api.add_resource(AddFileToDataset,
-                     '/servicex/transformation/<string:request_id>/files')
+    api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
 
-    servicex_resources.PreflightCheck.make_api(rabbit_mq_adaptor)
-    api.add_resource(servicex_resources.PreflightCheck,
-                     '/servicex/transformation/<string:request_id>/preflight')
+    PreflightCheck.make_api(rabbit_mq_adaptor)
+    api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
 
     api.add_resource(servicex_resources.FilesetComplete,
                      '/servicex/transformation/<string:request_id>/complete')
