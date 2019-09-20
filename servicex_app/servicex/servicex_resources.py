@@ -47,19 +47,6 @@ def _generate_advertised_endpoint(endpoint):
     return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
 
-class FilesetComplete(Resource):
-    def put(self, request_id):
-        summary = request.get_json()
-        rec = TransformRequest.return_request(request_id)
-        rec.files = summary['files']
-        rec.files_skipped = summary['files-skipped']
-        rec.total_events = summary['total-events']
-        rec.total_bytes = summary['total-bytes']
-        rec.did_lookup_time = summary['elapsed-time']
-        TransformRequest.update_request(rec)
-        print("Complete "+request_id)
-
-
 class TransformerFileComplete(Resource):
     @classmethod
     def make_api(cls, transformer_manager):

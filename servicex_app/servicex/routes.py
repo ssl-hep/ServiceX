@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from servicex.resources.fileset_complete import FilesetComplete
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor):
@@ -51,8 +52,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     PreflightCheck.make_api(rabbit_mq_adaptor)
     api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
 
-    api.add_resource(servicex_resources.FilesetComplete,
-                     '/servicex/transformation/<string:request_id>/complete')
+    api.add_resource(FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
 
     TransformStart.make_api(transformer_manager)
     api.add_resource(TransformStart, '/servicex/transformation/<string:request_id>/start')
