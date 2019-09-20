@@ -1,6 +1,14 @@
 ServiceX REST Server
 ====================
 
+.. image:: https://travis-ci.org/ssl-hep/ServiceX_transformer.svg?branch=pytest
+    :target: https://travis-ci.org/ssl-hep/ServiceX_transformer
+.. image:: https://codecov.io/gh/BenGalewsky/ServiceX_App/branch/pytest/graph/badge.svg
+  :target: https://codecov.io/gh/BenGalewsky/ServiceX_App
+.. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
+   :target: https://opensource.org/licenses/BSD-3-Clause
+
+
 Building Docker Image
 ---------------------
 
