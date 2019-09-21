@@ -25,29 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app
-from flask import request
-from flask_restful import Resource, reqparse
+from flask import request, current_app
 
 from servicex.models import TransformRequest, TransformationResult
-
-parser = reqparse.RequestParser()
-parser.add_argument('did', help='This field cannot be blank',
-                    required=True)
-parser.add_argument('columns', help='This field cannot be blank',
-                    required=True)
-parser.add_argument('image', required=False)
-parser.add_argument('chunk-size', required=False, type=int)
-parser.add_argument('workers', required=False, type=int)
-parser.add_argument('messaging-backend', required=False)
-parser.add_argument('kafka-broker', required=False)
+from servicex.resources.servicex_resource import ServiceXResource
 
 
-def _generate_advertised_endpoint(endpoint):
-    return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
-
-
-class TransformerFileComplete(Resource):
+class TransformerFileComplete(ServiceXResource):
     @classmethod
     def make_api(cls, transformer_manager):
         cls.transformer_manager = transformer_manager
@@ -67,9 +51,9 @@ class TransformerFileComplete(Resource):
         rec.save_to_db()
 
         files_remaining = TransformRequest.files_remaining(request_id)
-        if files_remaining and files_remaining <= 0:
-            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
+        if files_remaining <= 0:
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
-            self.transformer_manager.shutdown_transformer_job(request_id, namepsace)
+            self.transformer_manager.shutdown_transformer_job(request_id, namespace)
         print(info)
         return "Ok"
