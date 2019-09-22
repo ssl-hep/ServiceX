@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
-from tests.resources.resource_test_base import ResourceTestBase
+from tests.resource_test_base import ResourceTestBase
 
 
 class TestPreflightCheck(ResourceTestBase):
