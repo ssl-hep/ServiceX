@@ -43,6 +43,7 @@ def _init_rabbit_mq(rabbitmq_url):
     rabbit_mq_adaptor.setup_queue('did_requests')
     rabbit_mq_adaptor.setup_queue('validation_requests')
     rabbit_mq_adaptor.setup_exchange('transformation_requests')
+    return rabbit_mq_adaptor
 
 
 def create_app(test_config=None, provided_transformer_manager=None, provided_rabbit_adaptor=None):

@@ -28,7 +28,7 @@
 import json
 
 from servicex.models import TransformRequest
-from tests.resources.resource_test_base import ResourceTestBase
+from tests.resource_test_base import ResourceTestBase
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):

@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex import TransformerManager
 from servicex.models import TransformRequest
-from tests.resources.resource_test_base import ResourceTestBase
+from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformFileComplete(ResourceTestBase):
