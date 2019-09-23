@@ -26,9 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from sqlalchemy import func
-
-from run import db
 from passlib.hash import pbkdf2_sha256 as sha256
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
 class TransformRequest(db.Model):
@@ -79,6 +80,15 @@ class TransformRequest(db.Model):
     @classmethod
     def update_request(cls, request_obj):
         db.session.commit()
+
+    @classmethod
+    def files_remaining(cls, request_id):
+        submitted_request = cls.return_request(request_id)
+        count = TransformationResult.count(request_id)
+        if submitted_request.files and count:
+            return submitted_request.files - count
+        else:
+            return None
 
 
 class TransformationResult(db.Model):
@@ -134,11 +144,9 @@ class UserModel(db.Model):
     def generate_hash(password):
         return sha256.hash(password)
 
-
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
-
 
     @classmethod
     def find_by_username(cls, username):
@@ -160,6 +168,5 @@ class UserModel(db.Model):
             num_rows_deleted = db.session.query(cls).delete()
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except:
+        except Exception:
             return {'message': 'Something went wrong'}
-
