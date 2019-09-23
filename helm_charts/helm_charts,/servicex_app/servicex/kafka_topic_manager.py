@@ -54,8 +54,9 @@ class KafkaTopicManager:
         try:
             response = self.admin.create_topics(new_topics, request_timeout=15.0)
             for topic, res in response.items():
-                    res.result()   # The result itself is None
-                    print("Topic {} created".format(topic))
+                res.result()  # The result itself is None
+                print("Topic {} created with {} partitions and {} max.message.syze".
+                      format(topic, num_partitions, max_message_size))
         except KafkaException as k_execpt:
             print(k_execpt)
             return False

@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app
+from flask import current_app, request
 
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
@@ -38,8 +38,15 @@ class TransformStart(ServiceXResource):
         return cls
 
     def post(self, request_id):
+        from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.return_request(request_id)
+
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+            # Setup the kafka topic with the correct number of partitions and max
+            # message size
+            max_event_size = request.json['info']['max-event-size']*submitted_request.chunk_size
+            kafka = KafkaTopicManager(submitted_request.kafka_broker)
+            kafka.create_topic(request_id, max_message_size=max_event_size, num_partitions=100)
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print(rabbitmq_uri)
