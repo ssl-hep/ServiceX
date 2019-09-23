@@ -11,6 +11,6 @@ script:
 - flake8
 - coverage run -m pytest -s
 - codecov
-- docker build -t sslhep/servicex_app:pytest
+- docker build -t sslhep/servicex_app:$TRAVIS_BRANCH .
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
 
