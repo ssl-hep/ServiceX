@@ -79,7 +79,6 @@ class TestTransformerManager(ResourceTestBase):
             def _arg_value(argstr, param):
                 return re.search(param + ' (\\S+)', args[0]).group(1)
 
-            print(args)
             assert _arg_value(args, '--rabbit-uri') == 'ampq://test.com'
             assert _arg_value(args, '--chunks') == '5000'
 
@@ -105,7 +104,6 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             assert container.volume_mounts[0].mount_path == '/data'
             assert called_job.spec.template.spec.volumes[0].host_path.path == '/tmp/foo'
-            print(called_job)
 
     def test_shutdown_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes
