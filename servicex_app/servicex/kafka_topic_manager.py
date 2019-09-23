@@ -25,34 +25,37 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from confluent_kafka import KafkaException
-from confluent_kafka.admin import AdminClient, NewTopic
-
-CONFIG = {
-    'bootstrap.servers': 'servicex-kafka-1.slateci.net:19092',
-    'group.id': 'monitor',
-    'client.id': 'monitor',
-    'session.timeout.ms': 5000,
-}
-
-admin = AdminClient(CONFIG)
+from confluent_kafka.cimpl import KafkaException
 
 
-def create_topic(topic_name, max_message_size,  num_partitions):
-    config = {
-        'compression.type': 'lz4',
-        'max.message.bytes': max_message_size
-    }
+class KafkaTopicManager:
+    def __init__(self, bootstrap_server='servicex-kafka-1.slateci.net:19092'):
+        from confluent_kafka.admin import AdminClient
+        self.config = {
+            'bootstrap.servers': bootstrap_server,
+            'group.id': 'monitor',
+            'client.id': 'monitor',
+            'session.timeout.ms': 5000
+        }
 
-    new_topics = [NewTopic(topic_name, num_partitions=num_partitions,
-                           replication_factor=1, config=config)]
+        self.admin = AdminClient(self.config)
 
-    response = admin.create_topics(new_topics, request_timeout=15.0)
-    for topic, res in response.items():
+    def create_topic(self, topic_name, max_message_size,  num_partitions):
+        from confluent_kafka.admin import NewTopic
+
+        config = {
+            'compression.type': 'lz4',
+            'max.message.bytes': max_message_size
+        }
+
+        new_topics = [NewTopic(topic_name, num_partitions=num_partitions,
+                               replication_factor=1, config=config)]
+
         try:
-            res.result()   # The result itself is None
-            print("Topic {} created".format(topic))
+            response = self.admin.create_topics(new_topics, request_timeout=15.0)
+            for topic, res in response.items():
+                    res.result()   # The result itself is None
+                    print("Topic {} created".format(topic))
         except KafkaException as k_execpt:
-            k_error = k_execpt.args[0]
-            print(k_error.str())
-            return k_error.code() == 36
+            print(k_execpt)
+            return False
