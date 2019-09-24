@@ -61,9 +61,12 @@ class TestTransformationStart(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
 
         mock_transformer_manager.\
-            launch_transformer_jobs.assert_called_with('1234', 42,
-                                                       1000, 'amqp://trans.rabbit',
-                                                       'my-ws')
+            launch_transformer_jobs.assert_called_with(image='ssl-hep/foo:latest',
+                                                             request_id='1234',
+                                                             workers=42,
+                                                             chunk_size=1000,
+                                                             rabbitmq_uri='amqp://trans.rabbit',
+                                                             namespace='my-ws')
 
         mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
 

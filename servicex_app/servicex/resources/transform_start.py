@@ -50,7 +50,10 @@ class TransformStart(ServiceXResource):
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             print(rabbitmq_uri)
-            self.transformer_manager.launch_transformer_jobs(request_id,
-                                                             submitted_request.workers,
-                                                             submitted_request.chunk_size,
-                                                             rabbitmq_uri, namepsace)
+            self.transformer_manager.launch_transformer_jobs(
+                image=submitted_request.image,
+                request_id=request_id,
+                workers=submitted_request.workers,
+                chunk_size=submitted_request.chunk_size,
+                rabbitmq_uri=rabbitmq_uri,
+                namespace=namepsace)
