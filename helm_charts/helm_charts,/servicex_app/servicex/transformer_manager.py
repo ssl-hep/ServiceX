@@ -100,5 +100,11 @@ class TransformerManager:
 
     def shutdown_transformer_job(self, request_id, namespace):
         batch_v1 = client.BatchV1Api()
-        batch_v1.delete_namespaced_job("transformer-" + request_id,
+
+        # Make sure when we delete the job, the pods go away too
+        # https://github.com/kubernetes-client/python/issues/234
+        body = client.V1DeleteOptions(propagation_policy='Background')
+
+        batch_v1.delete_namespaced_job(name="transformer-" + request_id,
+                                       body=body,
                                        namespace=namespace)
