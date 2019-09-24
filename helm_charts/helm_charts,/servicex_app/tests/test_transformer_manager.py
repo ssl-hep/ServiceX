@@ -67,12 +67,16 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs('1234', 17, 5000, 'ampq://test.com', 'my-ns')
+            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
+                                                request_id='1234',
+                                                workers=17, chunk_size=5000,
+                                                rabbitmq_uri='ampq://test.com',
+                                                namespace='my-ns')
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             assert called_job.spec.parallelism == 17
             assert len(called_job.spec.template.spec.containers) == 1
             container = called_job.spec.template.spec.containers[0]
-            assert container.image == 'sslhep/servicex-transformer:rabbitmq'
+            assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
             args = container.args
 
@@ -99,7 +103,12 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs('1234', 17, 5000, 'ampq://test.com', 'my-ns')
+            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
+                                                request_id='1234',
+                                                workers=17, chunk_size=5000,
+                                                rabbitmq_uri='ampq://test.com',
+                                                namespace='my-ns')
+
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             assert container.volume_mounts[0].mount_path == '/data'
