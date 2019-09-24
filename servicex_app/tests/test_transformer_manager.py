@@ -121,7 +121,13 @@ class TestTransformerManager(ResourceTestBase):
         mocker.patch.object(kubernetes.client, 'BatchV1Api',
                             return_value=mock_api)
 
+        mock_delete_options = mocker.MagicMock()
+        md = mocker.patch.object(kubernetes.client, 'V1DeleteOptions',
+                                 return_value=mock_delete_options)
+
         transformer = TransformerManager('external-kubernetes')
         transformer.shutdown_transformer_job('1234', 'my-ns')
-        mock_api.delete_namespaced_job.assert_called_with('transformer-1234',
+        md.assert_called_with(propagation_policy='Background')
+        mock_api.delete_namespaced_job.assert_called_with(name='transformer-1234',
+                                                          body=mock_delete_options,
                                                           namespace='my-ns')
