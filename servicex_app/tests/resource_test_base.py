@@ -45,6 +45,7 @@ class ResourceTestBase:
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
+            'TRANSFORMER_PULL_POLICY': 'Always',
             'OBJECT_STORE_ENABLED': False,
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
@@ -76,7 +77,8 @@ class ResourceTestBase:
         transform_request.workers = 42
         transform_request.did = '123-456-789'
         transform_request.image = 'ssl-hep/foo:latest'
-        transform_request.messaging_backend = 'kafka'
+        transform_request.result_destination = 'kafka'
+        transform_request.result_format = 'arrow'
         transform_request.kafka_broker = 'http://ssl-hep.org.kafka:12345'
         return transform_request
 

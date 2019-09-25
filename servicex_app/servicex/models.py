@@ -44,7 +44,8 @@ class TransformRequest(db.Model):
             'image': x.image,
             'chunk-size': x.chunk_size,
             'workers': x.workers,
-            'messaging-backend': x.messaging_backend,
+            'result-destination': x.result_destination,
+            'result-format': x.result_format,
             'kafka-broker': x.kafka_broker
         }
 
@@ -55,7 +56,8 @@ class TransformRequest(db.Model):
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
     workers = db.Column(db.Integer, nullable=True)
-    messaging_backend = db.Column(db.String(32), nullable=True)
+    result_destination = db.Column(db.String(32), nullable=False)
+    result_format = db.Column(db.String(32), nullable=False)
     kafka_broker = db.Column(db.String(128), nullable=True)
 
     files = db.Column(db.Integer, nullable=True)
