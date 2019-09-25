@@ -40,7 +40,8 @@ class TransformerManager:
         else:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
-    def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers):
+    def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers,
+                          result_destination, result_format):
         if "TRANSFORMER_LOCAL_PATH" in current_app.config:
             path = current_app.config['TRANSFORMER_LOCAL_PATH']
             volumes = [client.V1Volume(
@@ -51,19 +52,34 @@ class TransformerManager:
             volumes = []
             volume_mounts = []
 
+        # Compute Environment Vars
+        env = [client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")]
+
+        if result_destination == 'object-store':
+            env = env + [
+                client.V1EnvVar(name='MINIO_URL',
+                                value=current_app.config['MINIO_URL_TRANSFORMER']),
+                client.V1EnvVar(name='MINIO_ACCESS_KEY',
+                                value=current_app.config['MINIO_ACCESS_KEY']),
+                client.V1EnvVar(name='MINIO_SECRET_KEY',
+                                value=current_app.config['MINIO_SECRET_KEY'])
+            ]
+
         # Configure Pod template container
         container = client.V1Container(
             name="transformer-" + request_id,
             image=image,
-            image_pull_policy='Always',
+            image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
-            env=[client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")],
+            env=env,
             args=["python xaod_branches.py " +
                   " --request-id " + request_id +
                   " --rabbit-uri " + rabbitmq_uri +
                   " --chunks " + str(chunk_size) +
-                  " --kafka"])
+                  " --result-destination " + result_destination +
+                  " --result-format "+result_format]
+        )
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": "transformer-" + request_id}),
@@ -93,9 +109,10 @@ class TransformerManager:
         print("Job created. status='%s'" % str(api_response.status))
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
-                                rabbitmq_uri, namespace):
+                                rabbitmq_uri, namespace, result_destination, result_format):
         batch_v1 = client.BatchV1Api()
-        job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers)
+        job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
+                                     result_destination, result_format)
         self.create_job(batch_v1, job, namespace)
 
     def shutdown_transformer_job(self, request_id, namespace):

@@ -25,17 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from servicex import ObjectStoreManager
 
 
-class ObjectStoreManager:
+class TestObjectStoreManager:
+    def test_init(self, mocker):
+        mock_minio = mocker.patch('minio.Minio')
+        ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        called_config = mock_minio.call_args[1]
+        assert called_config['endpoint'] == 'localhost:9999'
+        assert called_config['access_key'] == 'foo'
+        assert called_config['secret_key'] == 'bar'
+        assert not called_config['secure']
 
-    def __init__(self, url, username, password):
-        from minio import Minio
-        self.minio_client = Minio(endpoint=url, access_key=username,
-                                  secret_key=password, secure=False)
+    def test_add_bucket(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mocker.patch('minio.Minio', return_value=mock_minio)
+        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        result.create_bucket("123-455")
+        mock_minio.make_bucket.assert_called_with("123-455")
 
-    def create_bucket(self, bucket_name):
-        self.minio_client.make_bucket(bucket_name)
-
-    def list_buckets(self):
-        return self.minio_client.list_buckets()
+    def test_list_buckets(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mock_minio.list_buckets = mocker.Mock(return_value=['a', 'b'])
+        mocker.patch('minio.Minio', return_value=mock_minio)
+        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        bucket_list = result.list_buckets()
+        mock_minio.list_buckets.assert_called()
+        assert bucket_list == ['a', 'b']

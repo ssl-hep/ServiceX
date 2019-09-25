@@ -59,7 +59,8 @@ class TestQueryTransformationRequest(ResourceTestBase):
         assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
                                  'columns': 'electron.eta(), muon.pt()',
                                  'image': 'ssl-hep/foo:latest', 'chunk-size': 1000,
-                                 'workers': 42, 'messaging-backend': 'kafka',
+                                 'workers': 42, 'result-destination': 'kafka',
+                                 'result-format': 'arrow',
                                  'kafka-broker': 'http://ssl-hep.org.kafka:12345'}
 
         mock_transform_request_read.assert_called_with('1234')

@@ -41,8 +41,13 @@ parser.add_argument('columns', help='This field cannot be blank',
 parser.add_argument('image', required=False)
 parser.add_argument('chunk-size', required=False, type=int)
 parser.add_argument('workers', required=False, type=int)
-parser.add_argument('messaging-backend', required=False)
-parser.add_argument('kafka-broker', required=False)
+parser.add_argument('result-destination', required=True, choices=['kafka', 'object-store'])
+parser.add_argument('result-format', required=False,
+                    choices=['arrow', 'parquet'], default='arrow')
+parser.add_argument('kafka', required=False, type=dict)
+
+kafka_parser = reqparse.RequestParser()
+kafka_parser.add_argument('broker', required=False, location=('kafka'))
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -59,14 +64,20 @@ class SubmitTransformationRequest(ServiceXResource):
         if self.object_store:
             self.object_store.create_bucket(request_id)
 
+        if transformation_request['result-destination'] == 'kafka':
+            broker = transformation_request['kafka']['broker']
+        else:
+            broker = None
+
         request_rec = TransformRequest(
             did=transformation_request['did'],
             columns=transformation_request['columns'],
             request_id=str(request_id),
             image=transformation_request['image'],
             chunk_size=transformation_request['chunk-size'],
-            messaging_backend=transformation_request['messaging-backend'],
-            kafka_broker=transformation_request['kafka-broker'],
+            result_destination=transformation_request['result-destination'],
+            result_format=transformation_request['result-format'],
+            kafka_broker=broker,
             workers=transformation_request['workers']
         )
 

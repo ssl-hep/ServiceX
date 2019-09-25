@@ -44,9 +44,26 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         return {'did': '123-45-678',
                 'columns': "e.e, e.p",
                 'image': 'ssl-hep/foo:latest',
-                'kafka-broker': 'ssl.hep.kafka:12332',
+                'result-destination': 'kafka',
+                'kafka': {
+                    'broker': 'ssl.hep.kafka:12332'
+                },
                 'chunk-size': 500,
                 'workers': 10}
+
+    def test_submit_transformation_bad_result_dest(self, mocker, mock_rabbit_adaptor):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        request = self._generate_transformation_request()
+        request['result-destination'] = 'foo'
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
+
+    def test_submit_transformation_bad_result_format(self, mocker, mock_rabbit_adaptor):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        request = self._generate_transformation_request()
+        request['result-format'] = 'foo'
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
 
     def test_submit_transformation_request_throws_exception(self, mocker, mock_rabbit_adaptor):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
@@ -75,7 +92,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.image == 'ssl-hep/foo:latest'
             assert saved_obj.chunk_size == 500
             assert saved_obj.workers == 10
-            assert not saved_obj.messaging_backend
+            assert saved_obj.result_destination == 'kafka'
             assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
         mock_rabbit_adaptor.setup_queue.assert_called_with(request_id)
         mock_rabbit_adaptor.bind_queue_to_exchange.assert_called_with(
@@ -102,14 +119,28 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1'
         }
+
+        transformation_request = {'did': '123-45-678',
+                                  'columns': "e.e, e.p",
+                                  'image': 'ssl-hep/foo:latest',
+                                  'result-destination': 'object-store',
+                                  'result-format': 'parquet',
+                                  'chunk-size': 500,
+                                  'workers': 10}
+
         mock_object_store = mocker.MagicMock(ObjectStoreManager)
         client = self._test_client(additional_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    object_store=mock_object_store)
         response = client.post('/servicex/transformation',
-                               json=self._generate_transformation_request())
+                               json=transformation_request)
         assert response.status_code == 200
 
         request_id = response.json['request_id']
 
         mock_object_store.create_bucket.assert_called_with(request_id)
+        with client.application.app_context():
+            saved_obj = TransformRequest.return_request(request_id)
+            assert saved_obj
+            assert saved_obj.result_destination == 'object-store'
+            assert saved_obj.result_format == 'parquet'
