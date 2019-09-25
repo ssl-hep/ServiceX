@@ -40,7 +40,7 @@ class TransformerManager:
         else:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
-    def create_job_object(self, request_id, chunk_size, rabbitmq_uri, workers):
+    def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers):
         if "TRANSFORMER_LOCAL_PATH" in current_app.config:
             path = current_app.config['TRANSFORMER_LOCAL_PATH']
             volumes = [client.V1Volume(
@@ -54,7 +54,7 @@ class TransformerManager:
         # Configure Pod template container
         container = client.V1Container(
             name="transformer-" + request_id,
-            image="sslhep/servicex-transformer:rabbitmq",
+            image=image,
             image_pull_policy='Always',
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
@@ -92,12 +92,19 @@ class TransformerManager:
             namespace=namespace)
         print("Job created. status='%s'" % str(api_response.status))
 
-    def launch_transformer_jobs(self, request_id, workers, chunk_size, rabbitmq_uri, namespace):
+    def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
+                                rabbitmq_uri, namespace):
         batch_v1 = client.BatchV1Api()
-        job = self.create_job_object(request_id, chunk_size, rabbitmq_uri, workers)
+        job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers)
         self.create_job(batch_v1, job, namespace)
 
     def shutdown_transformer_job(self, request_id, namespace):
         batch_v1 = client.BatchV1Api()
-        batch_v1.delete_namespaced_job("transformer-" + request_id,
+
+        # Make sure when we delete the job, the pods go away too
+        # https://github.com/kubernetes-client/python/issues/234
+        body = client.V1DeleteOptions(propagation_policy='Background')
+
+        batch_v1.delete_namespaced_job(name="transformer-" + request_id,
+                                       body=body,
                                        namespace=namespace)

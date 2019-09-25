@@ -1,13 +1,25 @@
 language: python
+services:
+  - docker
 python:
-  - "3.6"
-
+- '3.6'
 install:
-  - pip install -e .
-  - pip install ".[test]"
-  - pip install pytest coverage codecov flake8
-
+- pip install -e .
+- pip install ".[test]"
+- pip install pytest coverage codecov flake8
 script:
-  - flake8
-  - coverage run -m pytest -s
-  - codecov
+- flake8
+- coverage run -m pytest -s
+- codecov
+- docker build -t sslhep/servicex_app:${TRAVIS_BRANCH} .
+
+after_script:
+  - docker images
+
+before_deploy:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+deploy:
+  provider: script
+  script: docker push sslhep/servicex_app:${TRAVIS_BRANCH}
+  on:
+      all_branches: true
