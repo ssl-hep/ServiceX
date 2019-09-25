@@ -67,19 +67,22 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs('1234', 17, 5000, 'ampq://test.com', 'my-ns')
+            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
+                                                request_id='1234',
+                                                workers=17, chunk_size=5000,
+                                                rabbitmq_uri='ampq://test.com',
+                                                namespace='my-ns')
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             assert called_job.spec.parallelism == 17
             assert len(called_job.spec.template.spec.containers) == 1
             container = called_job.spec.template.spec.containers[0]
-            assert container.image == 'sslhep/servicex-transformer:rabbitmq'
+            assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
             args = container.args
 
             def _arg_value(argstr, param):
                 return re.search(param + ' (\\S+)', args[0]).group(1)
 
-            print(args)
             assert _arg_value(args, '--rabbit-uri') == 'ampq://test.com'
             assert _arg_value(args, '--chunks') == '5000'
 
@@ -100,12 +103,16 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs('1234', 17, 5000, 'ampq://test.com', 'my-ns')
+            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
+                                                request_id='1234',
+                                                workers=17, chunk_size=5000,
+                                                rabbitmq_uri='ampq://test.com',
+                                                namespace='my-ns')
+
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             assert container.volume_mounts[0].mount_path == '/data'
             assert called_job.spec.template.spec.volumes[0].host_path.path == '/tmp/foo'
-            print(called_job)
 
     def test_shutdown_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes
@@ -114,7 +121,13 @@ class TestTransformerManager(ResourceTestBase):
         mocker.patch.object(kubernetes.client, 'BatchV1Api',
                             return_value=mock_api)
 
+        mock_delete_options = mocker.MagicMock()
+        md = mocker.patch.object(kubernetes.client, 'V1DeleteOptions',
+                                 return_value=mock_delete_options)
+
         transformer = TransformerManager('external-kubernetes')
         transformer.shutdown_transformer_job('1234', 'my-ns')
-        mock_api.delete_namespaced_job.assert_called_with('transformer-1234',
+        md.assert_called_with(propagation_policy='Background')
+        mock_api.delete_namespaced_job.assert_called_with(name='transformer-1234',
+                                                          body=mock_delete_options,
                                                           namespace='my-ns')

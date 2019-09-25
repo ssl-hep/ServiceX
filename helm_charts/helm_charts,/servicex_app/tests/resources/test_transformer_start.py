@@ -39,6 +39,12 @@ class TestTransformationStart(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
+        from servicex.kafka_topic_manager import KafkaTopicManager
+        mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
+        mock_kafka_constructor = mocker.patch(
+            'servicex.kafka_topic_manager.KafkaTopicManager',
+            return_value=mock_kafka_topic_manager)
+
         client = self._test_client(
             {
                 'TRANSFORMER_MANAGER_ENABLED': True
@@ -46,20 +52,36 @@ class TestTransformationStart(ResourceTestBase):
             mock_transformer_manager,
             mock_rabbit_adaptor)
 
-        response = client.post('/servicex/transformation/1234/start')
+        response = client.post('/servicex/transformation/1234/start',
+                               json={
+                                   'info': {
+                                       'max-event-size': 4567}
+                               })
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
 
         mock_transformer_manager.\
-            launch_transformer_jobs.assert_called_with('1234', 42,
-                                                       1000, 'amqp://trans.rabbit',
-                                                       'my-ws')
+            launch_transformer_jobs.assert_called_with(image='ssl-hep/foo:latest',
+                                                             request_id='1234',
+                                                             workers=42,
+                                                             chunk_size=1000,
+                                                             rabbitmq_uri='amqp://trans.rabbit',
+                                                             namespace='my-ws')
+
+        mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
+
+        mock_kafka_topic_manager.create_topic.assert_called_with('1234',
+                                                                 max_message_size=4567 * 1000,
+                                                                 num_partitions=100)
 
     def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):
         import servicex
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
+        from servicex.kafka_topic_manager import KafkaTopicManager
+        mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
+
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
@@ -72,9 +94,11 @@ class TestTransformationStart(ResourceTestBase):
             mock_transformer_manager,
             mock_rabbit_adaptor)
 
-        response = client.post('/servicex/transformation/1234/start')
+        response = client.post('/servicex/transformation/1234/start',
+                               json={'max-event-size': 4567})
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
 
         mock_transformer_manager.\
             launch_transformer_jobs.assert_not_called()
+        mock_kafka_topic_manager.assert_not_called()
