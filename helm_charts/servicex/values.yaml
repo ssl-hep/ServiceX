@@ -5,7 +5,7 @@
 rabbitmq:
   service:
     type: NodePort
-    nodePort: 5672
+    nodePort: 30672
   rabbitmq:
     password: leftfoot1
 
