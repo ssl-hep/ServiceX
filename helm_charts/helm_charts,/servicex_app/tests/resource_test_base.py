@@ -44,12 +44,18 @@ class ResourceTestBase:
             'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
-            'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000'
+            'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
+            'OBJECT_STORE_ENABLED': False,
+            'MINIO_URL': 'localhost:9000',
+            'MINIO_ACCESS_KEY': 'miniouser',
+            'MINIO_SECRET_KEY': 'leftfoot1'
         }
 
     @staticmethod
-    def _test_client(additional_config=None, transformation_manager=None,
-                     rabbit_adaptor=None):
+    def _test_client(additional_config=None,
+                     transformation_manager=None,
+                     rabbit_adaptor=None,
+                     object_store=None):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -57,7 +63,7 @@ class ResourceTestBase:
         if additional_config:
             config.update(additional_config)
 
-        app = create_app(config, transformation_manager, rabbit_adaptor)
+        app = create_app(config, transformation_manager, rabbit_adaptor, object_store)
 
         return app.test_client()
 
