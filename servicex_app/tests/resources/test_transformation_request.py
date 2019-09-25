@@ -92,3 +92,24 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                      "did": "123-45-678",
                                                      "service-endpoint": service_endpoint}
                                              ))
+
+    def test_submit_transformation_with_object_store(self, mocker, mock_rabbit_adaptor):
+        from servicex import ObjectStoreManager
+
+        local_config = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL': 'localhost:9000',
+            'MINIO_ACCESS_KEY': 'miniouser',
+            'MINIO_SECRET_KEY': 'leftfoot1'
+        }
+        mock_object_store = mocker.MagicMock(ObjectStoreManager)
+        client = self._test_client(additional_config=local_config,
+                                   rabbit_adaptor=mock_rabbit_adaptor,
+                                   object_store=mock_object_store)
+        response = client.post('/servicex/transformation',
+                               json=self._generate_transformation_request())
+        assert response.status_code == 200
+
+        request_id = response.json['request_id']
+
+        mock_object_store.create_bucket.assert_called_with(request_id)

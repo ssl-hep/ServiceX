@@ -47,13 +47,17 @@ parser.add_argument('kafka-broker', required=False)
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor):
+    def make_api(cls, rabbitmq_adaptor, object_store):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
+        cls.object_store = object_store
         return cls
 
     def post(self):
         transformation_request = parser.parse_args()
         request_id = str(uuid.uuid4())
+
+        if self.object_store:
+            self.object_store.create_bucket(request_id)
 
         request_rec = TransformRequest(
             did=transformation_request['did'],
