@@ -37,7 +37,54 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
+					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 6000,\n\t\"workers\": 17\n}"
+				},
+				"url": {
+					"raw": "{{host}}/servicex/transformation",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"servicex",
+						"transformation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "submit big transformation",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "12b3c129-2d3c-4bd4-aa5c-e3ee15056a9b",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+							"",
+							"// example using pm.response.to.have",
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 25\n}"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
@@ -90,7 +137,7 @@
 					"variable": [
 						{
 							"key": "request_id",
-							"value": "c84a7fe0-220f-4a31-bb18-ae85c3d0f305"
+							"value": "{{token}}"
 						}
 					]
 				}
@@ -99,6 +146,22 @@
 		},
 		{
 			"name": "Get All Transformations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "15c51ed2-8434-42e3-bff7-b50a009fca7c",
+						"exec": [
+							"// example using pm.response.to.have",
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -116,26 +179,19 @@
 					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
 				},
 				"url": {
-					"raw": "{{host}}/servicex/transformation/:request_id",
+					"raw": "{{host}}/servicex/transformation",
 					"host": [
 						"{{host}}"
 					],
 					"path": [
 						"servicex",
-						"transformation",
-						":request_id"
+						"transformation"
 					],
 					"query": [
 						{
 							"key": "",
 							"value": "",
 							"disabled": true
-						}
-					],
-					"variable": [
-						{
-							"key": "request_id",
-							"value": "c84a7fe0-220f-4a31-bb18-ae85c3d0f305"
 						}
 					]
 				}
@@ -333,7 +389,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"timestamp\": \"2019-08-16T17:52:39.451950\",\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
+					"raw": "{\n\t\"max-event-size\": 1024,\n\t\"timestamp\": \"2019-08-16T17:52:39.451950\",\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation/:request_id/start",
@@ -345,6 +401,113 @@
 						"transformation",
 						":request_id",
 						"start"
+					],
+					"variable": [
+						{
+							"key": "request_id",
+							"value": "{{token}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "File Complete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "2910da52-de0e-44e1-a649-da65e5e8cfc6",
+						"exec": [
+							"// example using pm.response.to.have",
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t'status': 'success', \n\t'num-messages': 10, \n\t'total-time': 33.43976902961731, \n\t'file-path': '/data/AOD.11182705._000001.pool.root.1'\n}"
+				},
+				"url": {
+					"raw": "{{host}}/servicex/transformation/:request_id/file-complete",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"servicex",
+						"transformation",
+						":request_id",
+						"file-complete"
+					],
+					"variable": [
+						{
+							"key": "request_id",
+							"value": "{{token}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "2910da52-de0e-44e1-a649-da65e5e8cfc6",
+						"exec": [
+							"// example using pm.response.to.have",
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t'status': 'success', \n\t'num-messages': 10, \n\t'total-time': 33.43976902961731, \n\t'file-path': '/data/AOD.11182705._000001.pool.root.1'\n}"
+				},
+				"url": {
+					"raw": "{{host}}/servicex/transformation/:request_id/status",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"servicex",
+						"transformation",
+						":request_id",
+						"status"
 					],
 					"variable": [
 						{
