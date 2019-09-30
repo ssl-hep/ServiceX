@@ -16,6 +16,8 @@ Building Docker Image
 
    docker build -t servicex_app .
 
+.. image:: doc/sequence_diagram.png
+
 Running Docker
 --------------
 
