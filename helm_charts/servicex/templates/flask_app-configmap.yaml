@@ -31,7 +31,19 @@ data:
 
     TRANSFORMER_NAMESPACE="{{ .Release.Namespace }}"
 
+    TRANSFORMER_PULL_POLICY = '{{ .Values.transformer.pullPolicy }}'
+
     TRANSFORMER_MANAGER_ENABLED = True
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
 
     TRANSFORMER_MESSAGING = 'none'
+
+    {{ if .Values.objectStore.enabled }}
+    OBJECT_STORE_ENABLED = True
+    MINIO_URL = '{{ .Release.Name }}-minio:9000'
+    MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:9000'
+    MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
+    MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
+    {{ else }}
+    OBJECT_STORE_ENABLED = True
+    {{ end }}
