@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 secrets
 site
+servicex/charts
 
 __pycache__/
 *.py[cod]
