@@ -2,3 +2,7 @@ dependencies:
   - name: rabbitmq
     version: 6.1.*
     repository: https://kubernetes-charts.storage.googleapis.com/
+  - name: minio
+    version: 2.5.*
+    repository: https://kubernetes-charts.storage.googleapis.com/
+    condition: objectStore.enabled
