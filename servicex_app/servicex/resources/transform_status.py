@@ -47,11 +47,13 @@ class TransformationStatus(ServiceXResource):
     def get(self, request_id):
         count = TransformationResult.count(request_id)
         stats = TransformationResult.statistics(request_id)
+        failures = TransformationResult.failed_files(request_id)
         print(count, stats)
         print(TransformRequest.files_remaining(request_id))
         return jsonify({
             "request-id": request_id,
-            "files-processed": count,
+            "files-processed": count - failures,
+            "files-skipped": failures,
             "files-remaining": TransformRequest.files_remaining(request_id),
             "stats": stats
         })
