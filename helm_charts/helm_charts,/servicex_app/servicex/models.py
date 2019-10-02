@@ -113,6 +113,11 @@ class TransformationResult(db.Model):
         return cls.query.filter_by(request_id=request_id).count()
 
     @classmethod
+    def failed_files(cls, request_id):
+        return cls.query.filter(TransformationResult.request_id == request_id,
+                                TransformationResult.transform_status != 'success').count()
+
+    @classmethod
     def statistics(cls, request_id):
         rslt = cls.query.add_columns(
             func.sum(TransformationResult.messages).label('total_msgs'),
