@@ -98,9 +98,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
-        mock_rabbit_adaptor.bind_queue_to_exchange.assert_called_with(
-                exchange="transformation_requests",
-                queue=request_id)
+
+        bind_to_exchange_calls = [
+            call(exchange="transformation_requests", queue=request_id),
+            call(exchange="transformation_failures", queue=request_id+"_errors"),
+
+        ]
+
+        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
         service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
         mock_rabbit_adaptor. \
