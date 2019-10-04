@@ -18,17 +18,17 @@ minio:
 
 app:
   image: sslhep/servicex_app
-  tag: develop
+  tag: 0.1
   pullPolicy: IfNotPresent
 
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: rabbitmq
+  tag: 0.1
   pullPolicy: IfNotPresent
 
 preflight:
   image: sslhep/servicex-transformer
-  tag: rabbitmq
+  tag: 0.1
   pullPolicy: IfNotPresent
 
 transformer:
