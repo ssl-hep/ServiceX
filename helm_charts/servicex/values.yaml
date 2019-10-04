@@ -3,6 +3,9 @@
 # Declare variables to be passed into your templates.
 
 rabbitmq:
+  service:
+    type: NodePort
+    nodePort: 30672
   rabbitmq:
     password: leftfoot1
 
