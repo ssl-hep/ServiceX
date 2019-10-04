@@ -9,6 +9,12 @@ rabbitmq:
   rabbitmq:
     password: leftfoot1
 
+objectStore:
+    enabled: true
+
+minio:
+  accessKey: miniouser
+  secretKey: leftfoot1
 
 app:
   image: sslhep/servicex_app
@@ -23,6 +29,9 @@ didFinder:
 preflight:
   image: sslhep/servicex-transformer
   tag: rabbitmq
+  pullPolicy: IfNotPresent
+
+transformer:
   pullPolicy: IfNotPresent
 
 rbacEnabled: True
