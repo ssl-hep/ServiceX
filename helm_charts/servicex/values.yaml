@@ -25,6 +25,7 @@ didFinder:
   image: sslhep/servicex-did-finder
   tag: 0.1
   pullPolicy: IfNotPresent
+  staticFile:
 
 preflight:
   image: sslhep/servicex-transformer
@@ -36,7 +37,9 @@ transformer:
 
 rbacEnabled: True
 
-gridPassword:
+gridAccount: <your account>
+
+gridPassword: <your password>
 
 usercert: |+
   -----BEGIN CERTIFICATE-----

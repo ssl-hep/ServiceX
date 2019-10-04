@@ -16,7 +16,7 @@ data:
     # client_cert = /.globus/usercert.pem
     # client_key = /.globus/userkey.pem
     ca_cert = /etc/pki/tls/certs/ca-bundle.crt
-    account = bgalewsk
+    account = {{ .Values.gridAccount }}
     client_x509_proxy = $X509_USER_PROXY
     request_retries = 3
 
