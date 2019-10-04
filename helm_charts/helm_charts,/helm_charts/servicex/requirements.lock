@@ -2,5 +2,8 @@ dependencies:
 - name: rabbitmq
   repository: https://kubernetes-charts.storage.googleapis.com/
   version: 6.1.6
-digest: sha256:04ccba741b3221de2ac33230cee3d3656be49773c887f8aa5e6e862f8959796a
-generated: "2019-07-29T11:47:51.855842-05:00"
+- name: minio
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 2.5.15
+digest: sha256:423dd26c98cce1de2fb430ed93edf17fb2ef9d48ab90187e6514c169dc6cf71a
+generated: "2019-09-25T10:45:20.628323-05:00"
