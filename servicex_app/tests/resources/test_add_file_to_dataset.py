@@ -50,7 +50,42 @@ class TestAddFileToDataset(ResourceTestBase):
                 {"request-id": 'BR549',
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "/foo/bar.root",
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234"
+                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234",
+                 'result-destination': 'kafka',
+                 'kafka-broker': 'http://ssl-hep.org.kafka:12345'
+                 }))
+
+        assert response.json == {
+            "request-id": '1234',
+            "file-id": 42
+        }
+
+    def test_put_new_file_root_dest(self, mocker,  mock_rabbit_adaptor):
+        import servicex
+
+        root_file_transform_request = self._generate_transform_request()
+        root_file_transform_request.result_destination = 'root'
+        root_file_transform_request.kafka_broker = None
+
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=root_file_transform_request)
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        response = client.put('/servicex/transformation/1234/files',
+                              json={'file_path': '/foo/bar.root'})
+        assert response.status_code == 200
+        mock_transform_request_read.assert_called_with('1234')
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='transformation_requests',
+            routing_key='1234',
+            body=json.dumps(
+                {"request-id": 'BR549',
+                 "columns": 'electron.eta(), muon.pt()',
+                 "file-path": "/foo/bar.root",
+                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234",
+                 'result-destination': 'root'
                  }))
 
         assert response.json == {

@@ -32,6 +32,14 @@ from servicex import TransformerManager
 from tests.resource_test_base import ResourceTestBase
 
 
+def _arg_value(args, param):
+    return re.search(param + ' (\\S+)', args[0]).group(1)
+
+
+def _env_value(env_list, env_name):
+    return [x for x in env_list if x.name == env_name][0].value
+
+
 class TestTransformerManager(ResourceTestBase):
 
     def test_init_external_kubernetes(self, mocker):
@@ -67,11 +75,10 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
-                                                request_id='1234',
-                                                workers=17, chunk_size=5000,
-                                                rabbitmq_uri='ampq://test.com',
-                                                namespace='my-ns')
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka', result_format='arrow')
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             assert called_job.spec.parallelism == 17
             assert len(called_job.spec.template.spec.containers) == 1
@@ -80,11 +87,9 @@ class TestTransformerManager(ResourceTestBase):
             assert container.image_pull_policy == 'Always'
             args = container.args
 
-            def _arg_value(argstr, param):
-                return re.search(param + ' (\\S+)', args[0]).group(1)
-
             assert _arg_value(args, '--rabbit-uri') == 'ampq://test.com'
             assert _arg_value(args, '--chunks') == '5000'
+            assert _arg_value(args, '--result-destination') == 'kafka'
 
             assert mock_kubernetes.mock_calls[1][2]['namespace'] == 'my-ns'
 
@@ -103,16 +108,50 @@ class TestTransformerManager(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         with client.application.app_context():
-            transformer.launch_transformer_jobs(image='sslhep/servicex-transformer:pytest',
-                                                request_id='1234',
-                                                workers=17, chunk_size=5000,
-                                                rabbitmq_uri='ampq://test.com',
-                                                namespace='my-ns')
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka', result_format='arrow')
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             assert container.volume_mounts[0].mount_path == '/data'
             assert called_job.spec.template.spec.volumes[0].host_path.path == '/tmp/foo'
+
+    def test_launch_transformer_jobs_with_object_store(self, mocker, mock_rabbit_adaptor):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+
+        transformer = TransformerManager('external-kubernetes')
+        my_config = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh'
+        }
+
+        client = self._test_client(additional_config=my_config,
+                                   transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor)
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store',
+                result_format='parquet')
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, '--result-destination') == 'object-store'
+            assert _arg_value(args, '--result-format') == 'parquet'
+
+            env = container.env
+            assert _env_value(env, 'MINIO_URL') == 'rolling-snail-minio:9000'
+            assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
+            assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
 
     def test_shutdown_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes

@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-def add_routes(api, transformer_manager, rabbit_mq_adaptor):
+def add_routes(api, transformer_manager, rabbit_mq_adaptor, object_store):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
@@ -37,7 +37,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor):
     from servicex.resources.fileset_complete import FilesetComplete
     from servicex.resources.transformer_file_complete import TransformerFileComplete
 
-    SubmitTransformationRequest.make_api(rabbit_mq_adaptor)
+    SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
+                                         object_store=object_store)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,

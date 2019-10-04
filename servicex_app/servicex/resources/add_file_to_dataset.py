@@ -49,8 +49,14 @@ class AddFileToDataset(ServiceXResource):
             'file-path': add_file_request['file_path'],
             "service-endpoint": self._generate_advertised_endpoint(
                 "servicex/transformation/" + request_id
-            )
+            ),
+            "result-destination": submitted_request.result_destination
         }
+
+        if submitted_request.result_destination == 'kafka':
+            transform_request.update(
+                {'kafka-broker': submitted_request.kafka_broker}
+            )
 
         try:
             self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',

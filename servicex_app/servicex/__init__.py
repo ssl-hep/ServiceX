@@ -33,6 +33,7 @@ from flask_restful import Api
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
+from servicex.object_store_manager import ObjectStoreManager
 
 
 def _init_rabbit_mq(rabbitmq_url):
@@ -46,7 +47,10 @@ def _init_rabbit_mq(rabbitmq_url):
     return rabbit_mq_adaptor
 
 
-def create_app(test_config=None, provided_transformer_manager=None, provided_rabbit_adaptor=None):
+def create_app(test_config=None,
+               provided_transformer_manager=None,
+               provided_rabbit_adaptor=None,
+               provided_object_store=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -57,6 +61,16 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
+
+        if app.config['OBJECT_STORE_ENABLED']:
+            if not provided_object_store:
+                object_store = ObjectStoreManager(app.config['MINIO_URL'],
+                                                  username=app.config['MINIO_ACCESS_KEY'],
+                                                  password=app.config['MINIO_SECRET_KEY'])
+            else:
+                object_store = provided_object_store
+        else:
+            object_store = None
 
         if app.config['TRANSFORMER_MANAGER_ENABLED'] and not provided_transformer_manager:
             transformer_manager = TransformerManager(app.config['TRANSFORMER_MANAGER_MODE'])
@@ -82,6 +96,6 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor)
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store)
 
     return app
