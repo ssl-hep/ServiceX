@@ -25,45 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import io
+from servicex import ObjectStoreManager
 
-from setuptools import find_packages, setup
 
-with io.open('README.rst', 'rt', encoding='utf8') as f:
-    readme = f.read()
+class TestObjectStoreManager:
+    def test_init(self, mocker):
+        mock_minio = mocker.patch('minio.Minio')
+        ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        called_config = mock_minio.call_args[1]
+        assert called_config['endpoint'] == 'localhost:9999'
+        assert called_config['access_key'] == 'foo'
+        assert called_config['secret_key'] == 'bar'
+        assert not called_config['secure']
 
-setup(
-    name='servicex',
-    version='1.0.0',
-    url='https://iris-hep.org',
-    license='BSD',
-    maintainer='ServiceX Team',
-    maintainer_email='bengal1@illinois.edu',
-    description='REST Frontend to ServiceX.',
-    long_description=readme,
-    packages=find_packages(),
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=[
-        'flask',
-        'Flask-WTF',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio'
-    ],
-    extras_require={
-        'test': [
-            'pytest>=3.6',
-            'pytest-flask',
-            'coverage',
-            'pytest-mock',
-            'flake8'
-        ],
-    },
-)
+    def test_add_bucket(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mocker.patch('minio.Minio', return_value=mock_minio)
+        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        result.create_bucket("123-455")
+        mock_minio.make_bucket.assert_called_with("123-455")
+
+    def test_list_buckets(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mock_minio.list_buckets = mocker.Mock(return_value=['a', 'b'])
+        mocker.patch('minio.Minio', return_value=mock_minio)
+        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        bucket_list = result.list_buckets()
+        mock_minio.list_buckets.assert_called()
+        assert bucket_list == ['a', 'b']

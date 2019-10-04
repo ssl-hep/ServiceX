@@ -66,7 +66,9 @@ class TestTransformationStart(ResourceTestBase):
                                                              workers=42,
                                                              chunk_size=1000,
                                                              rabbitmq_uri='amqp://trans.rabbit',
-                                                             namespace='my-ws')
+                                                             namespace='my-ws',
+                                                             result_destination='kafka',
+                                                             result_format='arrow')
 
         mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
 
