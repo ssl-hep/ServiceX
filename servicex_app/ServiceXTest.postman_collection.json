@@ -37,7 +37,54 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 6000,\n\t\"workers\": 17\n}"
+					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:downloadable\",\n\t\"result-destination\": \"kafka\",\n\t\"kafka\":{\n\t\t\"broker\": \"servicex-kafka-1.slateci.net:19092\"\n\t},\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+				},
+				"url": {
+					"raw": "{{host}}/servicex/transformation",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"servicex",
+						"transformation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "submit transformation to h5",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "12b3c129-2d3c-4bd4-aa5c-e3ee15056a9b",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+							"",
+							"// example using pm.response.to.have",
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:downloadable\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 0\n}\t"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
