@@ -1,74 +1,31 @@
 # ServiceX
-ServiceX, a component of the IRIS-HEP DOMA group's iDDS, will be an
+ServiceX, a component of the IRIS-HEP DOMA group's iDDS, is an
 experiment-agnostic service to enable on-demand data delivery along the concepts
 originally developed for ATLAS but specifically tailored for nearly-interactive,
-high performance, array based and pythonic analyses context. It will provide
+high performance, array based and pythonic analyses context. It provides
 uniform backend interfaces to data storage services and  frontend
 (client-facing) service endpoints for multiple different data formats and
 organizational structures.  
 
-It should be capable of retrieving and delivering
-data from data lakes, as those systems and models evolve. It will depend on one
-or more data management systems (eg. Rucio) to find and access the data. The
-service will be capable of on-the-fly data transformations to enable data
+It is capable of retrieving and delivering data from data lakes, as those 
+systems and models evolve. It depends on Rucio to find and access the data. The
+service is capable of on-the-fly data transformations to enable data
 delivery in a variety of different formats, including streams of ROOT data,
 small ROOT files, HDF5, and Apache Arrow buffers as examples. In addition,
-ServiceX will include pre-processing functionality for event data and
-preparation for multiple clustering frameworks (e.g. such as Spark).  It will be
-able to automatically unpack compressed formats, potentially including hardware
-accelerated techniques, and can prefilter events so that only useful data is
-transmitted to the user.
+ServiceX includes pre-processing functionality for event data and
+preparation for multiple clustering frameworks (e.g. such as Spark). 
+Eventually, it will be able to automatically unpack compressed formats, 
+potentially including hardware accelerated techniques, and can prefilter events 
+so that only useful data is transmitted to the user.
 
 ## Installing with Helm
 The entire serviceX stack can be installed using the helm chart contained in 
-this repo. It currently has not been deployed to a helm repo, so you will need
-to checkout this repo and use the chart locally.
-
-### TLDR;
-```bash
-% helm dependency build
-% helm install servicex
-```
+this repo. The chart has been deployed to the ssl-hep helm repo.
 
 ### Introduction
-This will install rabbitMQ, the DID Finder, the preflight check service, and the
-flask REST service. 
+This will install rabbitMQ, the DID Finder, the preflight check service, the
+flask REST service and optionally a minio object store. 
 
-### Installing the Chart
-To install the chart with the release name `my-release`:
-
-```bash
-% helm dependency build
-% helm install --name my-release servicex
-```
-
-The command deploys RabbitMQ on the Kubernetes cluster in the default 
-configuration. The [configuration](###configuration) section lists the 
-parameters that can be configured during installation.
-
-### Using The Service
-You can access the REST service on your desktop with 
-```bash
-kubectl port-forward <<app pod>> 5000:5000
-```
-
-Once you have exposed port 5000 of the REST app, you can use the included 
-[postman](https://www.getpostman.com/products) collection to submit a 
-transformation request, and check on the status of a running job.
-
-
-> **Tip**: List all releases using `helm list`
-
-### Uninstalling the Chart
-
-To uninstall/delete the `my-release` deployment:
-
-```bash
-$ helm delete my-release
-```
-
-The command removes all the Kubernetes components associated with the chart and 
-deletes the release.
 
 ### Grid Certification
 The DID Finder will need to talk to CERN's Rucio service which requires grid
@@ -87,6 +44,84 @@ ConfigMap for the PEM files and a Secret for the passcode.
 This works reliably, but may not be best practice for securing sensitive 
 information. Suggestions are welcome.
 
+## Configuration
+The following table lists the configurable parameters of the ServiceX chart and 
+their default values. Note that you may wish to change some of the default 
+parameters for the dependent [rabbitMQ](https://github.com/helm/charts/tree/master/stable/rabbitmq#configuration)
+or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
+
+
+
+| Parameter                            | Description                                      | Default                                                 |
+| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
+| `app.tag`                            | ServiceX image tag                               | `0.1`                                               |
+| `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
+| `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
+| `didFinder.tag`                      | DID Finder image tag                             | `0.1`                                              |
+| `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
+| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | - 
+| `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
+| `preflight.tag`                      | Preflight image tag                              | `0.1`                                              |
+| `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
+| `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
+| `hostMount`                          | Optional path to mount in transformers as /data  | - 
+| `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
+| `usercert`                           | Copy of the contents of your `~/.globus/usercert.pem` file | - 
+| `userkey`                            | Copy of the contents of your `~/.globus/userkey.pem` file | -
+| `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
+| `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
+| `minio.accessKey`                    | Access key to log into minio                     | miniouser |
+| `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
+| `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
+
+
+### Installing the Chart
+To install the chart with the release name `my-release` and your custom 
+parameters in `my-values.yaml`:
+
+```bash
+% helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
+% helm repo update
+% helm install -f my-values.yaml --name my-release ssl-hep/servicex 
+```
+
+The command deploys RabbitMQ on the Kubernetes cluster in the default 
+configuration. The [configuration](###configuration) section lists the 
+parameters that can be configured during installation.
+
+### Using The Service
+You can access the REST service on your desktop with 
+```bash
+% kubectl port-forward <<app pod>> 5000:5000
+```
+
+You can access a minio browser with:
+```bash
+% kubectl port-forward <minio pod> 9000:9000
+```
+Log in to this as `miniouser`, password is `leftfoot1`
+
+Once you have exposed port 5000 of the REST app, you can use the included 
+[postman](https://www.getpostman.com/products) collection to submit a 
+transformation request, and check on the status of a running job. You can 
+import the collection from the [ServiceX REST App](https://raw.githubusercontent.com/ssl-hep/ServiceX_App/develop/ServiceXTest.postman_collection.json) repo
+
+
+> **Tip**: List all releases using `helm list`
+
+### Uninstalling the Chart
+
+To uninstall/delete the `my-release` deployment:
+
+```bash
+$ helm delete my-release
+```
+
+The command removes all the Kubernetes components associated with the chart and 
+deletes the release.
+
+
 ### Debugging Tips
 Microservice architectures can be difficult to test and debug. Here are some 
 helpful hints to make this easier.
@@ -103,30 +138,6 @@ your laptop and log into the Rabbit admin console using the username: `user` and
 password `leftfoot1`. From here you can monitor the queues, purge old messages
 and inject your own messages
 
-## Configuration
-
-The following table lists the configurable parameters of the ServiceX chart and 
-their default values.
-
-| Parameter                            | Description                                      | Default                                                 |
-| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
-| `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
-| `app.tag`                            | ServiceX image tag                               | `develop`                                               |
-| `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
-| `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
-| `didFinder.tag`                      | DID Finder image tag                             | `rabbitmq`                                              |
-| `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | - 
-| `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
-| `preflight.tag`                      | Preflight image tag                              | `rabbitmq`                                              |
-| `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
-| `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
-| `hostMount`                          | Optional path to mount in transformers as /data  | - 
-| `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
-| `usercert`                           | Copy of the contents of your `~/.globus/usercert.pem` file | - 
-| `userkey`                            | Copy of the contents of your `~/.globus/userkey.pem` file | -
-| `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
- 
 
 
 * [Documentation](https://ssl-hep.github.io/ServiceX/)
