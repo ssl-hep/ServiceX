@@ -104,6 +104,22 @@ class TransformationResult(db.Model):
     transform_time = db.Column(db.Integer, nullable=True)
     messages = db.Column(db.Integer, nullable=True)
 
+    @classmethod
+    def to_json_list(cls, a_list):
+        return [TransformationResult.to_json(msg) for msg in a_list]
+
+    @classmethod
+    def to_json(cls, x):
+        return {
+            'id': x.id,
+            'request-id': x.request_id,
+            'did': x.did,
+            'file-path': x.file_path,
+            'transform_status': x.transform_status,
+            'transform_time': x.transform_time,
+            'messages': x.messages
+        }
+
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
@@ -116,6 +132,10 @@ class TransformationResult(db.Model):
     def failed_files(cls, request_id):
         return cls.query.filter(TransformationResult.request_id == request_id,
                                 TransformationResult.transform_status != 'success').count()
+
+    @classmethod
+    def get_all_status(cls, request_id):
+        return cls.query.filter(TransformationResult.request_id == request_id).all()
 
     @classmethod
     def statistics(cls, request_id):

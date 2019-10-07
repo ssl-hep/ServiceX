@@ -83,7 +83,8 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_files_remaining.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234', 'my-ws')
 
-    def test_put_transform_file_complete_unknown_files_remaining(self, mocker,  mock_rabbit_adaptor):
+    def test_put_transform_file_complete_unknown_files_remaining(self, mocker,
+                                                                 mock_rabbit_adaptor):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
