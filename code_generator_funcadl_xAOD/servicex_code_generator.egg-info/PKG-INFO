@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: servicex-code-generator
+Version: 0.2.0
+Summary: ServiceX Code Generator Service
+Home-page: https://iris-hep.org
+Maintainer: ServiceX Team
+Maintainer-email: bengal1@illinois.edu
+License: BSD
+Description: ServiceX Code Generator
+        -----------------------
+        This microservice is used to generate code from Select statements.
+        
+        
+Platform: UNKNOWN
+Provides-Extra: test

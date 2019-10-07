@@ -1,0 +1,15 @@
+LICENSE
+README.rst
+setup.cfg
+setup.py
+servicex/__init__.py
+servicex/code_generator_service/__init__.py
+servicex/code_generator_service/generate_code.py
+servicex_code_generator.egg-info/PKG-INFO
+servicex_code_generator.egg-info/SOURCES.txt
+servicex_code_generator.egg-info/dependency_links.txt
+servicex_code_generator.egg-info/not-zip-safe
+servicex_code_generator.egg-info/requires.txt
+servicex_code_generator.egg-info/top_level.txt
+tests/__init__.py
+tests/test_generate_code.py
