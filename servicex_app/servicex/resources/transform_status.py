@@ -37,6 +37,11 @@ status_parser.add_argument('status', help='This field cannot be blank',
                            required=True)
 
 
+status_request_parser = reqparse.RequestParser()
+status_request_parser.add_argument('details', type=bool, default=False,
+                                   required=False, location='args')
+
+
 class TransformationStatus(ServiceXResource):
 
     def post(self, request_id):
@@ -45,15 +50,24 @@ class TransformationStatus(ServiceXResource):
         print(status)
 
     def get(self, request_id):
+        print("\n\n-------->.", request_id)
+        status_request = status_request_parser.parse_args()
+
         count = TransformationResult.count(request_id)
         stats = TransformationResult.statistics(request_id)
         failures = TransformationResult.failed_files(request_id)
         print(count, stats)
         print(TransformRequest.files_remaining(request_id))
-        return jsonify({
+        result_dict = {
             "request-id": request_id,
             "files-processed": count - failures,
             "files-skipped": failures,
             "files-remaining": TransformRequest.files_remaining(request_id),
             "stats": stats
-        })
+        }
+
+        if status_request.details:
+            result_dict['details'] = TransformationResult.to_json_list(
+                TransformationResult.get_all_status(request_id))
+
+        return jsonify(result_dict)
