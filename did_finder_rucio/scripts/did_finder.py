@@ -26,6 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+from concurrent.futures import ThreadPoolExecutor
+
 import time
 
 from rucio_ops import parse_did, list_files_for_did, \
@@ -35,14 +37,13 @@ import argparse
 import pika
 import requests
 import datetime
-import urllib
-
+import queue
 global did_client, replica_client
 
 
-def file_replicas(request_id, did, _did_client, _replica_client):
-    files = list_files_for_did(parse_did(did), _did_client)
-    for file in files:
+def _replica_lookup_worker(input_queue, output_queue, request_id,  _replica_client):
+    while not input_queue.empty():
+        file = input_queue.get()
         replicas = find_replicas(file, site, _replica_client)
 
         for r in replicas:
@@ -56,7 +57,26 @@ def file_replicas(request_id, did, _did_client, _replica_client):
                     'file_events': file['events'],
                     'file_path': sel_path
                 }
-                yield data
+                output_queue.put(data)
+
+
+def file_replicas(request_id, did, _did_client, _replica_client, max_workers = 10):
+    replica_lookup_queue = queue.Queue()
+    replica_output_queue = queue.Queue()
+    files = list_files_for_did(parse_did(did), _did_client)
+
+
+    num_files = 0
+    for file in files:
+        replica_lookup_queue.put(file)
+        num_files = num_files + 1
+    print("Rucio Request returned {} Files".format(num_files))
+
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    x = executor.submit(_replica_lookup_worker, replica_lookup_queue, replica_output_queue, request_id, _replica_client)
+
+    while x.running() or not replica_output_queue.empty():
+        yield replica_output_queue.get()
 
 
 def process_did_list(dids, site, did_client, replica_client):
@@ -154,48 +174,52 @@ def submit_static_file(service_endpoint, request_id):
 
 
 def callback(channel, method, properties, body):
-    start_time = time.time()
-    did_request = json.loads(body)
-    print("----> ", did_request)
-    service_endpoint = did_request['service-endpoint']
-    did = did_request['did']
-    request_id = did_request['request_id']
+    try:
+        start_time = time.time()
+        did_request = json.loads(body)
+        print("----> ", did_request)
+        service_endpoint = did_request['service-endpoint']
+        did = did_request['did']
+        request_id = did_request['request_id']
 
-    post_status_update(service_endpoint, "DID Request received")
+        post_status_update(service_endpoint, "DID Request received")
 
-    sample_file_submitted = False
-    if args.static_file:
-        submit_static_file(service_endpoint, request_id)
-    else:
-        did_summary = DIDSummary(did)
-        for root_file in file_replicas(request_id, did, did_client, replica_client):
-            print(root_file)
-            did_summary.accumulate(root_file)
-            did_summary.add_file(root_file)
+        sample_file_submitted = False
+        if args.static_file:
+            submit_static_file(service_endpoint, request_id)
+        else:
+            did_summary = DIDSummary(did)
+            for root_file in file_replicas(request_id, did, did_client,
+                                           replica_client, max_workers=args.max_workers):
+                print(root_file)
+                did_summary.accumulate(root_file)
+                did_summary.add_file(root_file)
 
-            post_status_update(service_endpoint, "Resolved " +
-                               root_file['file_path'])
+                post_status_update(service_endpoint, "Resolved " +
+                                   root_file['file_path'])
 
-            if not sample_file_submitted:
-                post_preflight_check(service_endpoint, root_file)
-                sample_file_submitted = True
+                if not sample_file_submitted:
+                    post_preflight_check(service_endpoint, root_file)
+                    sample_file_submitted = True
 
-            put_file_add(service_endpoint, root_file)
+                put_file_add(service_endpoint, root_file)
 
-        end_time = time.time()
-        put_fileset_complete(service_endpoint, {
-                               "files": did_summary.files,
-                               "files-skipped": did_summary.files_skipped,
-                               "total-events": did_summary.total_events,
-                               "total-bytes": did_summary.total_bytes,
-                               "elapsed-time": end_time - start_time
-                           })
+            end_time = time.time()
+            put_fileset_complete(service_endpoint, {
+                                   "files": did_summary.files,
+                                   "files-skipped": did_summary.files_skipped,
+                                   "total-events": did_summary.total_events,
+                                   "total-bytes": did_summary.total_bytes,
+                                   "elapsed-time": end_time - start_time
+                               })
 
-        post_status_update(service_endpoint,
-                           "Fileset load complete in "+str(end_time-start_time) +
-                           " seconds")
-
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+            post_status_update(service_endpoint,
+                               "Fileset load complete in "+str(end_time-start_time) +
+                               " seconds")
+    except Exception as eek:
+        print("\n\nShutting down due to error ", eek)
+    finally:
+        channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 parser = argparse.ArgumentParser()
@@ -213,6 +237,9 @@ parser.add_argument('--outfile', dest='output_file', action='store',
 
 parser.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
                     default='host.docker.internal')
+
+parser.add_argument('--max-workers', dest='max_workers', action='store',
+                    default=10, type=int)
 
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
