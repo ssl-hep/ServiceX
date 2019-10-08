@@ -39,15 +39,26 @@ def parse_did(did):
 
 
 def list_files_for_did(did, did_client):
-    g_files = did_client.list_files(did['scope'], did['name'])
+    g_files = None
+    while not g_files:
+        try:
+            g_files = did_client.list_files(did['scope'], did['name'])
+        except Exception as eek:
+            print("\n\n\n\n\nERROR LISTING FILES ", eek)
     return g_files
 
 
 def find_replicas(file, site, replica_client):
-    g_replicas = replica_client.list_replicas(
-        dids=[{'scope': file['scope'], 'name': file['name']}],
-        schemes=['root'],
-        client_location={'site': site})
+    g_replicas = None
+    while not g_replicas:
+        try:
+            g_replicas = replica_client.list_replicas(
+                dids=[{'scope': file['scope'], 'name': file['name']}],
+                schemes=['root'],
+                client_location={'site': site})
+
+        except Exception as eek:
+            print("\n\n\n\n\nERROR READING REPLICA ", eek)
     return g_replicas
 
 
