@@ -51,7 +51,7 @@ class TransformerFileComplete(ServiceXResource):
         rec.save_to_db()
 
         files_remaining = TransformRequest.files_remaining(request_id)
-        if files_remaining <= 0:
+        if files_remaining is not None and files_remaining <= 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
