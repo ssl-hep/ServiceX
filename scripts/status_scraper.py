@@ -40,10 +40,14 @@ status_list = sorted([(status['file-path'], status['transform_status']) for stat
 print(doc['files-processed'], len(status_list))
 print(doc['files-remaining'])
 
+duplicates = 0
 prev = None
+prev_status = None
 for s in status_list:
     if s[0] == prev:
-        print("Duplicate ",prev)
+        print("Duplicate ",prev, s[1], prev_status)
+        duplicates = duplicates + 1
     prev = s[0]
+    prev_status = s[1]
 
-print(sorted(status_list))
+print("{} duplicates".format(duplicates))
