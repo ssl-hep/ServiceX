@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import time
@@ -64,7 +65,6 @@ def file_replicas(request_id, did, _did_client, _replica_client, max_workers = 1
     replica_lookup_queue = queue.Queue()
     replica_output_queue = queue.Queue()
     files = list_files_for_did(parse_did(did), _did_client)
-
 
     num_files = 0
     for file in files:
@@ -173,9 +173,39 @@ def submit_static_file(service_endpoint, request_id):
                        })
 
 
+def process_did_request(request_id, did, max_workers, service_endpoint):
+    start_time = time.time()
+    sample_file_submitted = False
+
+    did_summary = DIDSummary(did)
+    for root_file in file_replicas(request_id, did, did_client,
+                                   replica_client, max_workers=max_workers):
+        print(root_file)
+        did_summary.accumulate(root_file)
+        did_summary.add_file(root_file)
+
+        if not sample_file_submitted:
+            post_preflight_check(service_endpoint, root_file)
+            sample_file_submitted = True
+
+        put_file_add(service_endpoint, root_file)
+
+    end_time = time.time()
+    put_fileset_complete(service_endpoint, {
+        "files": did_summary.files,
+        "files-skipped": did_summary.files_skipped,
+        "total-events": did_summary.total_events,
+        "total-bytes": did_summary.total_bytes,
+        "elapsed-time": end_time - start_time
+    })
+
+    post_status_update(service_endpoint,
+                       "Fileset load complete in " + str(end_time - start_time) +
+                       " seconds")
+
+
 def callback(channel, method, properties, body):
     try:
-        start_time = time.time()
         did_request = json.loads(body)
         print("----> ", did_request)
         service_endpoint = did_request['service-endpoint']
@@ -184,38 +214,12 @@ def callback(channel, method, properties, body):
 
         post_status_update(service_endpoint, "DID Request received")
 
-        sample_file_submitted = False
         if args.static_file:
             submit_static_file(service_endpoint, request_id)
         else:
-            did_summary = DIDSummary(did)
-            for root_file in file_replicas(request_id, did, did_client,
-                                           replica_client, max_workers=args.max_workers):
-                print(root_file)
-                did_summary.accumulate(root_file)
-                did_summary.add_file(root_file)
-
-                post_status_update(service_endpoint, "Resolved " +
-                                   root_file['file_path'])
-
-                if not sample_file_submitted:
-                    post_preflight_check(service_endpoint, root_file)
-                    sample_file_submitted = True
-
-                put_file_add(service_endpoint, root_file)
-
-            end_time = time.time()
-            put_fileset_complete(service_endpoint, {
-                                   "files": did_summary.files,
-                                   "files-skipped": did_summary.files_skipped,
-                                   "total-events": did_summary.total_events,
-                                   "total-bytes": did_summary.total_bytes,
-                                   "elapsed-time": end_time - start_time
-                               })
-
-            post_status_update(service_endpoint,
-                               "Fileset load complete in "+str(end_time-start_time) +
-                               " seconds")
+            t = threading.Thread(target=process_did_request, args=(request_id, did,
+                              args.max_workers, service_endpoint))
+            t.start()
     except Exception as eek:
         print("\n\nShutting down due to error ", eek)
     finally:
