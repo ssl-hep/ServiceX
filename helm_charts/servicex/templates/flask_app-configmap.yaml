@@ -45,5 +45,5 @@ data:
     MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
     MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
     {{ else }}
-    OBJECT_STORE_ENABLED = True
+    OBJECT_STORE_ENABLED = False
     {{ end }}
