@@ -61,7 +61,8 @@ class SubmitTransformationRequest(ServiceXResource):
         transformation_request = parser.parse_args()
         request_id = str(uuid.uuid4())
 
-        if self.object_store:
+        if self.object_store and \
+                transformation_request['result-destination'] == 'object-store':
             self.object_store.create_bucket(request_id)
 
         if transformation_request['result-destination'] == 'kafka':
