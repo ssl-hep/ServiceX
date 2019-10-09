@@ -82,3 +82,30 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
         mock_files_remaining.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234', 'my-ws')
+
+    def test_put_transform_file_complete_unknown_files_remaining(self, mocker,
+                                                                 mock_rabbit_adaptor):
+        import servicex
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=self._generate_transform_request())
+
+        mock_files_remaining = mocker.patch.object(TransformRequest, 'files_remaining',
+                                                   return_value=None)
+
+        client = self._test_client(transformation_manager=mock_transformer_manager,
+                                   rabbit_adaptor=mock_rabbit_adaptor)
+        response = client.put('/servicex/transformation/1234/file-complete',
+                              json={
+                                  'file-path': '/foo/bar.root',
+                                  'status': 'OK',
+                                  'total-time': 100,
+                                  'num-messages': 1024
+                              })
+        assert response.status_code == 200
+        mock_transform_request_read.assert_called_with('1234')
+        mock_files_remaining.assert_called_with('1234')
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()

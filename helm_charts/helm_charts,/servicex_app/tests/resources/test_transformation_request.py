@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+from unittest.mock import call
 
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
@@ -94,10 +95,17 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'kafka'
             assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
-        mock_rabbit_adaptor.setup_queue.assert_called_with(request_id)
-        mock_rabbit_adaptor.bind_queue_to_exchange.assert_called_with(
-                exchange="transformation_requests",
-                queue=request_id)
+
+        setup_queue_calls = [call(request_id), call(request_id+"_errors")]
+        mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+
+        bind_to_exchange_calls = [
+            call(exchange="transformation_requests", queue=request_id),
+            call(exchange="transformation_failures", queue=request_id+"_errors"),
+
+        ]
+
+        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
         service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
         mock_rabbit_adaptor. \
