@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-class Elasticsearch_monitoring:
+class ElasticSearchAdapter:
 
     def __init__(self, url, port, username, password):
         from elasticsearch import Elasticsearch
