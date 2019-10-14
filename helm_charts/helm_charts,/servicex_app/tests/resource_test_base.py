@@ -56,7 +56,8 @@ class ResourceTestBase:
     def _test_client(additional_config=None,
                      transformation_manager=None,
                      rabbit_adaptor=None,
-                     object_store=None):
+                     object_store=None,
+                     elasticsearch_adapter=None):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -64,7 +65,8 @@ class ResourceTestBase:
         if additional_config:
             config.update(additional_config)
 
-        app = create_app(config, transformation_manager, rabbit_adaptor, object_store)
+        app = create_app(config, transformation_manager, rabbit_adaptor,
+                         object_store, elasticsearch_adapter)
 
         return app.test_client()
 

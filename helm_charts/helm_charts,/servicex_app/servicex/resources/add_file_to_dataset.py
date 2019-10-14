@@ -29,43 +29,59 @@ import json
 
 from flask import request
 
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, DatasetFile
 from servicex.resources.servicex_resource import ServiceXResource
 
 
 class AddFileToDataset(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor):
+    def make_api(cls, rabbitmq_adaptor, elasticsearch_adaptor):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
+        cls.elasticsearch_adaptor = elasticsearch_adaptor
         return cls
 
     def put(self, request_id):
-        add_file_request = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
-
-        transform_request = {
-            'request-id': submitted_request.request_id,
-            'columns': submitted_request.columns,
-            'file-path': add_file_request['file_path'],
-            "service-endpoint": self._generate_advertised_endpoint(
-                "servicex/transformation/" + request_id
-            ),
-            "result-destination": submitted_request.result_destination
-        }
-
-        if submitted_request.result_destination == 'kafka':
-            transform_request.update(
-                {'kafka-broker': submitted_request.kafka_broker}
-            )
-
         try:
+            add_file_request = request.get_json()
+            submitted_request = TransformRequest.return_request(request_id)
+
+            db_record = DatasetFile(request_id=request_id,
+                                    file_path=add_file_request['file_path'],
+                                    adler32=add_file_request['adler32'],
+                                    file_events=add_file_request['file_events'],
+                                    file_size=add_file_request['file_size'])
+            db_record.save_to_db()
+
+            transform_request = {
+                'request-id': submitted_request.request_id,
+                'file-id': db_record.id,
+                'columns': submitted_request.columns,
+                'file-path': add_file_request['file_path'],
+                "service-endpoint": self._generate_advertised_endpoint(
+                    "servicex/transformation/" + request_id
+                ),
+                "result-destination": submitted_request.result_destination
+            }
+
+            if submitted_request.result_destination == 'kafka':
+                transform_request.update(
+                    {'kafka-broker': submitted_request.kafka_broker}
+                )
+
             self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                                 routing_key=request_id,
                                                 body=json.dumps(transform_request))
 
+            if self.elasticsearch_adaptor:
+                self.elasticsearch_adaptor.create_update_path(
+                    db_record.get_path_id(),
+                    self._generate_file_status_record(
+                        db_record, "located")
+                )
+
             return {
                 "request-id": str(request_id),
-                "file-id": 42
+                "file-id": db_record.id
             }
 
         except Exception as eek:

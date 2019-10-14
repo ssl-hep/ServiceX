@@ -27,10 +27,29 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_restful import Resource
 from flask import current_app
+from datetime import datetime
+from datetime import timezone
 
 
 class ServiceXResource(Resource):
-
     @staticmethod
     def _generate_advertised_endpoint(endpoint):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+
+    @staticmethod
+    def _generate_file_status_record(dataset_file, status):
+        time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+
+        return {
+            "req_id": dataset_file.request_id,
+            "adler32": dataset_file.adler32,
+            "file_size": dataset_file.file_size,
+            "file_events": dataset_file.file_events,
+            "file_path": dataset_file.file_path,
+            "status": status,
+            "info": 'info',
+            "created_at": time,
+            "last_accessed_at": time,
+            "events_served": 0,
+            "retries": 0
+        }

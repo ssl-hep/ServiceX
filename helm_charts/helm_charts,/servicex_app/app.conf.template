@@ -27,3 +27,9 @@ OBJECT_STORE_ENABLED = False
 MINIO_URL = 'localhost:9000'
 MINIO_ACCESS_KEY = 'miniouser'
 MINIO_SECRET_KEY = 'leftfoot1'
+
+ELASTIC_SEARCH_LOGGING_ENABLED = False
+ES_HOST = 'host'
+ES_PORT = '9200'
+ES_USER = 'user'
+ES_PASS = 'pass'
