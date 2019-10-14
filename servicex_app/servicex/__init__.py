@@ -30,6 +30,7 @@ import os
 from flask import Flask
 from flask_restful import Api
 
+from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
@@ -51,7 +52,8 @@ def _init_rabbit_mq(rabbitmq_url):
 def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
-               provided_object_store=None):
+               provided_object_store=None,
+               provided_elasticsearch_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -83,6 +85,18 @@ def create_app(test_config=None,
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 
+        if 'ELASTIC_SEARCH_LOGGING_ENABLED' in app.config \
+                and app.config['ELASTIC_SEARCH_LOGGING_ENABLED']\
+                and not provided_elasticsearch_adapter:
+            elasticsearch_adaptor = ElasticSearchAdapter(
+                app.config['ES_HOST'],
+                app.config['ES_PORT'],
+                app.config['ES_USER'],
+                app.config['ES_PASS']
+            )
+        else:
+            elasticsearch_adaptor = provided_elasticsearch_adapter
+
         api = Api(app)
 
         # ensure the instance folder exists
@@ -97,6 +111,7 @@ def create_app(test_config=None,
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store)
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
+                   elasticsearch_adaptor)
 
     return app

@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from sqlalchemy import func
+from sqlalchemy import func, ForeignKey
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_sqlalchemy import SQLAlchemy
 
@@ -98,10 +98,14 @@ class TransformationResult(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     did = db.Column(db.String(120), unique=False, nullable=False)
+    file_id = db.Column(db.Integer, ForeignKey('files.id'))
     file_path = db.Column(db.String(120), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=False, nullable=False)
     transform_status = db.Column(db.String(10), nullable=False)
     transform_time = db.Column(db.Integer, nullable=True)
+    total_events = db.Column(db.Integer, nullable=True)
+    total_bytes = db.Column(db.Integer, nullable=True)
+    avg_rate = db.Column(db.Float, nullable=True)
     messages = db.Column(db.Integer, nullable=True)
 
     @classmethod
@@ -114,9 +118,13 @@ class TransformationResult(db.Model):
             'id': x.id,
             'request-id': x.request_id,
             'did': x.did,
+            'file-id': x.id,
             'file-path': x.file_path,
             'transform_status': x.transform_status,
             'transform_time': x.transform_time,
+            'total-events': x.total_events,
+            'total-bytes': x.total_bytes,
+            'avg-rate': x.avg_rate,
             'messages': x.messages
         }
 
@@ -144,7 +152,11 @@ class TransformationResult(db.Model):
             func.min(TransformationResult.transform_time).label('min_time'),
             func.max(TransformationResult.transform_time).label('max_time'),
             func.avg(TransformationResult.transform_time).label('avg_time'),
-            func.sum(TransformationResult.transform_time).label('total_time')
+            func.sum(TransformationResult.transform_time).label('total_time'),
+            func.avg(TransformationResult.avg_rate).label('avg_rate'),
+            func.sum(TransformationResult.total_bytes).label('total_bytes'),
+            func.sum(TransformationResult.total_events).label('total_events')
+
         ).filter_by(request_id=request_id).one()
 
         return {
@@ -152,8 +164,35 @@ class TransformationResult(db.Model):
             "min-time": rslt.min_time,
             "max-time": rslt.max_time,
             "avg-time": rslt.avg_time,
-            "total-time": rslt.total_time
+            "total-time": rslt.total_time,
+            "avg-rate": rslt.avg_rate,
+            "total-bytes": rslt.total_bytes,
+            "total-events": rslt.total_events
         }
+
+
+class DatasetFile(db.Model):
+    __tablename__ = 'files'
+
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.String(48), ForeignKey('requests.request_id'),
+                           unique=False, nullable=False)
+    file_path = db.Column(db.String(120), unique=False, nullable=False)
+
+    adler32 = db.Column(db.String(48), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True)
+    file_events = db.Column(db.Integer, nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def get_by_id(cls, dataset_file_id):
+        return cls.query.filter_by(id=dataset_file_id).one()
+
+    def get_path_id(self):
+        return self.request_id+":"+str(self.id)
 
 
 class UserModel(db.Model):
