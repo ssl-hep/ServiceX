@@ -56,7 +56,8 @@ setup(
         'confluent_kafka',
         'kubernetes',
         'minio',
-        'elasticsearch'
+        'elasticsearch',
+        'psycopg2'
     ],
     extras_require={
         'test': [
