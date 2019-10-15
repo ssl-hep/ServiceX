@@ -15,8 +15,12 @@ data:
     # details are beyond the scope of this example
     SECRET_KEY = 'abc123!'
 
-    # Based on https://codeburst.io/jwt-authorization-in-flask-c63c1acf4eeb
+    {{ if .Values.postgres.enabled }}
+    SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+    {{ else }}
     SQLALCHEMY_DATABASE_URI = 'sqlite:////sqlite/app.db'
+    {{ end }}
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'some-secret-string'
     JWT_SECRET_KEY = 'jwt-secret-string'
@@ -46,4 +50,14 @@ data:
     MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
     {{ else }}
     OBJECT_STORE_ENABLED = False
+    {{ end }}
+
+    {{ if .Values.elasticsearchLogging.enabled }}
+    ELASTIC_SEARCH_LOGGING_ENABLED = True
+    ES_HOST = '{{ .Values.elasticsearchLogging.host }}'
+    ES_PORT = '{{ .Values.elasticsearchLogging.port }}'
+    ES_USER = '{{ .Values.elasticsearchLogging.user }}'
+    ES_PASS = '{{ .Values.elasticsearchLogging.password }}'
+    {{ else }}
+    ELASTIC_SEARCH_LOGGING_ENABLED = False
     {{ end }}
