@@ -141,7 +141,10 @@ def post_status_update(endpoint, status_msg):
 def put_file_add(endpoint, file_info):
     requests.put(endpoint + "/files", json={
         "timestamp": datetime.datetime.now().isoformat(),
-        "file_path": file_info['file_path']
+        "file_path": file_info['file_path'],
+        'adler32': file_info['adler32'],
+        'file_size': file_info['file_size'],
+        'file_events': file_info['file_events']
     })
 
 
