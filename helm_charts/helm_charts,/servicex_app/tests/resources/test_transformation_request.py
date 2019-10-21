@@ -28,6 +28,7 @@
 import json
 from unittest.mock import call
 
+from servicex import ElasticSearchAdapter
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
 
@@ -152,3 +153,39 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'parquet'
+
+    def test_submit_transformation_with_elasticsearch(self, mocker, mock_rabbit_adaptor):
+
+        transformation_request = {'did': '123-45-678',
+                                  'columns': 'electron.eta(), muon.pt()',
+                                  'image': 'ssl-hep/foo:latest',
+                                  'result-destination': 'object-store',
+                                  'result-format': 'parquet',
+                                  'chunk-size': 500,
+                                  'workers': 10}
+
+        mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   elasticsearch_adapter=mock_elasticsearch_adapter)
+
+        response = client.post('/servicex/transformation',
+                               json=transformation_request)
+        assert response.status_code == 200
+
+        path_call = mock_elasticsearch_adapter.create_update_request.mock_calls[0]
+        record_body = path_call[1][1]
+
+        assert record_body['name'] == 'Transformation Request'
+        assert record_body['description'] == 'Transformation Request'
+        assert record_body['dataset'] == '123-45-678'
+        assert record_body['dataset_size'] == 0
+        assert record_body['dataset_files'] == 0
+        assert record_body['dataset_events'] == 0
+        assert record_body['columns'] == 'electron.eta(), muon.pt()'
+        assert record_body['events'] == 0
+        assert record_body['events_transformed'] == 0
+        assert record_body['events_served'] == 0
+        assert record_body['events_processed'] == 0
+        assert record_body['status'] == 'locating DID'
+        assert record_body['info'] == ' '

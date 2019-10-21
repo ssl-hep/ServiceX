@@ -39,7 +39,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.transformer_file_complete import TransformerFileComplete
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
-                                         object_store=object_store)
+                                         object_store=object_store,
+                                         elasticsearch_adapter=elasticsearch_adapter)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,

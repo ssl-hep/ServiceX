@@ -29,8 +29,6 @@ from flask import request, current_app
 
 from servicex.models import TransformRequest, TransformationResult, DatasetFile
 from servicex.resources.servicex_resource import ServiceXResource
-from datetime import datetime
-from datetime import timezone
 
 
 class TransformerFileComplete(ServiceXResource):
@@ -39,29 +37,6 @@ class TransformerFileComplete(ServiceXResource):
         cls.transformer_manager = transformer_manager
         cls.elasticsearch_adapter = elasticsearch_adapter
         return cls
-
-    def _generate_transformation_record(self, transformation_result, submitted_request):
-        request_id = submitted_request.request_id
-        count = TransformationResult.count(request_id)
-        time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
-
-        return {
-            "name": 'Transformation Request',
-            "description": 'Transformation Request',
-            "dataset": submitted_request.did,
-            "dataset_size": 0,
-            "dataset_files": count,
-            "dataset_events": 0,
-            "columns": submitted_request.columns,
-            "events": 0,
-            "events_transformed": 0,
-            "events_served": 0,
-            "events_processed": 0,
-            "created_at": time,
-            "modified_at": time,
-            "status": 'complete',
-            "info": ' '
-        }
 
     def put(self, request_id):
         info = request.get_json()
@@ -83,12 +58,13 @@ class TransformerFileComplete(ServiceXResource):
         rec.save_to_db()
 
         if self.elasticsearch_adapter:
-            import uuid
-            path_id = str(uuid.uuid4())
-
             self.elasticsearch_adapter.create_update_path(
-                path_id,
+                dataset_file.get_path_id(),
                 self._generate_file_status_record(dataset_file, info['status']))
+
+            self.elasticsearch_adapter.create_update_request(
+                request_id,
+                self._generate_transformation_record(submitted_request, 'transforming'))
 
         files_remaining = TransformRequest.files_remaining(request_id)
         if files_remaining is not None and files_remaining <= 0:
@@ -99,7 +75,7 @@ class TransformerFileComplete(ServiceXResource):
             if self.elasticsearch_adapter:
                 self.elasticsearch_adapter.create_update_request(
                     request_id,
-                    self._generate_transformation_record(rec, submitted_request))
+                    self._generate_transformation_record(submitted_request, 'complete'))
 
         print(info)
         return "Ok"

@@ -73,6 +73,7 @@ class ResourceTestBase:
     @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
+        transform_request.submit_time = 1000
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.chunk_size = 1000
@@ -82,6 +83,8 @@ class ResourceTestBase:
         transform_request.result_destination = 'kafka'
         transform_request.result_format = 'arrow'
         transform_request.kafka_broker = 'http://ssl-hep.org.kafka:12345'
+        transform_request.total_events = 10000
+        transform_request.total_bytes = 1203
         return transform_request
 
     @fixture
