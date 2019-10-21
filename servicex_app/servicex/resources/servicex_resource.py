@@ -30,6 +30,8 @@ from flask import current_app
 from datetime import datetime
 from datetime import timezone
 
+from servicex.models import TransformationResult
+
 
 class ServiceXResource(Resource):
     @staticmethod
@@ -52,4 +54,29 @@ class ServiceXResource(Resource):
             "last_accessed_at": time,
             "events_served": 0,
             "retries": 0
+        }
+
+    def _generate_transformation_record(self, submitted_request, status):
+        request_id = submitted_request.request_id
+        count = TransformationResult.count(request_id)
+        time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+        current_stats = TransformationResult.statistics(request_id)
+
+        events_transformed = 0 if not current_stats else current_stats['total-events']
+        return {
+            "name": 'Transformation Request',
+            "description": 'Transformation Request',
+            "dataset": submitted_request.did,
+            "dataset_size": int(submitted_request.total_bytes or 0),
+            "dataset_files": count,
+            "dataset_events": int(submitted_request.total_events or 0),
+            "columns": submitted_request.columns,
+            "events": 0,
+            "events_transformed": events_transformed,
+            "events_served": 0,
+            "events_processed": 0,
+            "created_at": submitted_request.submit_time,
+            "modified_at": time,
+            "status": status,
+            "info": ' '
         }

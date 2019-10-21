@@ -144,6 +144,16 @@ class TestTransformFileComplete(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
+        mocker.patch.object(
+            servicex.models.TransformationResult, 'statistics', return_value={
+                "total-messages": 123,
+                "min-time": 1,
+                "max-time": 30,
+                "avg-time": 15.55,
+                "total-time": 1024,
+                "total-events": 4000
+            })
+
         mocker.patch.object(TransformRequest, 'files_remaining',
                             return_value=1)
 
@@ -158,7 +168,7 @@ class TestTransformFileComplete(ResourceTestBase):
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
-        mock_elasticsearch_adapter.create_update_request.assert_not_called()
+        mock_elasticsearch_adapter.create_update_request.assert_called()
         call = mock_elasticsearch_adapter.create_update_path.mock_calls[0]
         record_body = call[1][1]
         assert record_body['req_id'] == 'BR549'
@@ -183,6 +193,16 @@ class TestTransformFileComplete(ResourceTestBase):
                             return_value=self._generate_dataset_file())
         mocker.patch.object(TransformationResult, "save_to_db")
 
+        mocker.patch.object(
+            servicex.models.TransformationResult, 'statistics', return_value={
+                "total-messages": 123,
+                "min-time": 1,
+                "max-time": 30,
+                "avg-time": 15.55,
+                "total-time": 1024,
+                "total-events": 4000
+            })
+
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
 
@@ -194,6 +214,16 @@ class TestTransformFileComplete(ResourceTestBase):
 
         mocker.patch.object(TransformRequest, 'files_remaining',
                             return_value=0)
+
+        mocker.patch.object(
+            servicex.models.TransformationResult, 'statistics', return_value={
+                "total-messages": 123,
+                "min-time": 1,
+                "max-time": 30,
+                "avg-time": 15.55,
+                "total-time": 1024,
+                "total-events": 4000
+            })
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor,
@@ -208,13 +238,18 @@ class TestTransformFileComplete(ResourceTestBase):
         assert record_body['name'] == 'Transformation Request'
         assert record_body['description'] == 'Transformation Request'
         assert record_body['dataset'] == '123-456-789'
-        assert record_body['dataset_size'] == 0
+        assert record_body['dataset_size'] == 1203
         assert record_body['dataset_files'] == 17
-        assert record_body['dataset_events'] == 0
+        assert record_body['dataset_events'] == 10000
         assert record_body['columns'] == 'electron.eta(), muon.pt()'
         assert record_body['events'] == 0
-        assert record_body['events_transformed'] == 0
+        assert record_body['events_transformed'] == 4000
         assert record_body['events_served'] == 0
         assert record_body['events_processed'] == 0
-        assert record_body['status'] == 'complete'
+        assert record_body['status'] == 'transforming'
         assert record_body['info'] == ' '
+
+        path_call2 = mock_elasticsearch_adapter.create_update_request.mock_calls[1]
+        record_body2 = path_call2[1][1]
+
+        assert record_body2['status'] == 'complete'
