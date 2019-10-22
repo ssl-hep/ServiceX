@@ -1,6 +1,0 @@
-{
-    "TESTING": true,
-    "SITENAME": "servicex.slateci.net",
-    "HTTPS": false,
-    "SECRETS_PATH": "./kube/secrets/"
-}
