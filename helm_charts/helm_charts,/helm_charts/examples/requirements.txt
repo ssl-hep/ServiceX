@@ -1,0 +1,6 @@
+jupyter
+request
+minio
+pyarrow
+requests
+pandas
