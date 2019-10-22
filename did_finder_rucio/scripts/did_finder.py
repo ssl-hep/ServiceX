@@ -161,7 +161,10 @@ def put_fileset_complete(endpoint, summary):
 
 def submit_static_file(service_endpoint, request_id):
     root_file = {
-        "file_path": args.static_file
+        "file_path": args.static_file,
+        'adler32': '123456',
+        'file_size': 102444,
+        'file_events': 10000
     }
     post_preflight_check(service_endpoint, root_file)
 
