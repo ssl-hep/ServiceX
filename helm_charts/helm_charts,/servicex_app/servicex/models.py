@@ -87,8 +87,8 @@ class TransformRequest(db.Model):
     def files_remaining(cls, request_id):
         submitted_request = cls.return_request(request_id)
         count = TransformationResult.count(request_id)
-        if submitted_request.files and count:
-            return submitted_request.files - count
+        if submitted_request.files:
+            return submitted_request.files - int(count or 0)
         else:
             return None
 
