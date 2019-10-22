@@ -27,7 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-def add_routes(api, transformer_manager, rabbit_mq_adaptor, object_store):
+def add_routes(api, transformer_manager, rabbit_mq_adaptor,
+               object_store, elasticsearch_adapter):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
@@ -38,7 +39,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor, object_store):
     from servicex.resources.transformer_file_complete import TransformerFileComplete
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
-                                         object_store=object_store)
+                                         object_store=object_store,
+                                         elasticsearch_adapter=elasticsearch_adapter)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,
@@ -47,7 +49,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor, object_store):
 
     api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
 
-    AddFileToDataset.make_api(rabbit_mq_adaptor)
+    AddFileToDataset.make_api(rabbit_mq_adaptor, elasticsearch_adapter)
     api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
 
     PreflightCheck.make_api(rabbit_mq_adaptor)
@@ -58,6 +60,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor, object_store):
     TransformStart.make_api(transformer_manager)
     api.add_resource(TransformStart, '/servicex/transformation/<string:request_id>/start')
 
-    TransformerFileComplete.make_api(transformer_manager)
+    TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
     api.add_resource(TransformerFileComplete,
                      '/servicex/transformation/<string:request_id>/file-complete')
