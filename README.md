@@ -18,14 +18,130 @@ Eventually, it will be able to automatically unpack compressed formats,
 potentially including hardware accelerated techniques, and can prefilter events 
 so that only useful data is transmitted to the user.
 
-## Installing with Helm
+## Try out ServiceX
 The entire serviceX stack can be installed using the helm chart contained in 
-this repo. The chart has been deployed to the ssl-hep helm repo.
+this repo. The chart has been deployed to the ssl-hep helm repo. The default
+values for the chart have been set up so you can run the service with a 
+public xAOD file without any grid credentials. 
 
-### Introduction
-This will install rabbitMQ, the DID Finder, the preflight check service, the
-flask REST service and optionally a minio object store. 
+There is also an included Jupyter notebook for driving the system and getting
+some simple plots back.
 
+### Step 0 - Preperation
+ServiceX requires an installation of Kubernetes. If you have access to a 
+cluster you can use that. Otherwise, you can enable a
+single node kubernetes cluster on your desktop 
+[using Docker-Desktop](https://www.docker.com/blog/kubernetes-is-now-available-in-docker-desktop-stable-channel/).
+
+The service is published as a helm chart. You will need a version of helm 
+[installed on your desktop](https://helm.sh/docs/using_helm/).
+
+Once installed you will need to initilize the connection between helm and your
+cluster. 
+```bash
+% helm init --history-max 200
+``` 
+
+
+### Step 1 - Deploy a Demo Version of ServiceX
+ServiceX will use your CERN grid certificates to communicate with Rucio. We've
+set up a simplified deployment that will just use a public xAOD file so you 
+try out ServiceX with minimal fuss.
+```bash
+% helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
+% helm repo update
+% helm install ssl-hep/servicex 
+```
+
+The notes at the end give you some helpful tips on interacting with the pods in 
+your deployment. It takes about one minute for RabbitMQ to complete its 
+initialization and all of the other pods are able to register and start up.
+Note that it is normal for some pods to enter a "Crash Loop Backoff" during
+this time.
+
+You can check on the status of the deployment with the command
+```bash
+% kubectl get pod
+```
+
+Eventually your setup should resemble this:
+```
+NAME                                             READY   STATUS    RESTARTS   AGE
+exegetical-mouse-did-finder-868484f5b5-8pwdk     1/1     Running   3          2m24s
+exegetical-mouse-minio-57cbd595b5-77426          1/1     Running   0          2m24s
+exegetical-mouse-preflight-64c5b6b647-5ctlb      1/1     Running   4          2m24s
+exegetical-mouse-rabbitmq-0                      1/1     Running   0          2m23s
+exegetical-mouse-servicex-app-6fdd5bf7b6-dcwwd   1/1     Running   3          2m24s
+```
+
+The name of your release will be different.
+
+
+#### What are these Services?
+The default values for the ServiceX helm chart deploy the following services:
+
+|Service|Purpose|
+|-------|-------|
+| servicex-app | This is the REST service that receives your requests and manages interactions with the other services. It also uses the kubernetes API to launch transformer jobs |
+| rabbitmq | This is a [popular queue messaging system](https://www.rabbitmq.com) it provides a transaction mechanism for distributing work to the asynchronous components of the service |
+| minio | An [opensource implementation](https://min.io) of Amazon's S3 object store. It is not required for ServiceX, but makes it easy to deliver results from smaller transformations as downloadable files. |
+| did-finder | This service accepts DIDs and consults Rucio to find replicas of the constituaent ROOT files. It sends these files back to the REST server so the transformers can access them |
+| preflight | This service accepts the first ROOT file found by the DID-Finder and does a quick validation of your request to make sure the columns are valid. Only after passing this test do the transformer jobs get started |
+
+### Step 2 - Forward Ports to Your Desktop
+Kubernetes offers some sophisticated ways to expose deployed services for 
+external connections. For this demo, we will just use the simplest possible way
+expose the services to your desktop: port forwarding. 
+
+We will need to expose port 5000 of the REST server so transform requests can be
+submitted. We will also expose port 9000 of the Minio server so we can browse 
+and download generated files.
+
+The notes at the end of helm deployment provide some nice generic commands to do 
+this. You can also look at the list of pods and then issue commands like this
+to tell kubernetes to forward their ports. Here are examples based on the 
+pod names shown above. Your pod names will be different:
+
+```bash
+% kubectl port-forward exegetical-mouse-servicex-app-6fdd5bf7b6-dcwwd 5000:5000
+% kubectl port-forward exegetical-mouse-minio-57cbd595b5-77426 9000:9000
+```
+
+*Note* the port-forward command doesn't return when you run it. It blocks in 
+the terminal so long as the port is being forwarded. You can stop it at any time
+with ^C. You will need to enter each of these commands in different terminals 
+since port forwarding will be needed during the demo.
+
+### Step 3 Run the Jupyter Notebook
+We have a notebook that submits a sample request to your serviceX, waits for 
+the transformation to complete and downloads the results.
+
+First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/)
+
+```bash
+% virtualenv ~/.virtualenvs/servicex_demo
+% source ~/.virtualenvs/servicex_demo/bin/activate
+```
+
+Now install the dependent python packages
+
+```bash
+% pip install -r examples/requirements.txt
+```
+
+Then you can start Jupyter server
+
+```bash
+% jupyter notebook
+```
+
+Once that launches it should open up a browser window for you. Vist the 
+`examples` folder of this repo and open up the `ServiceXDemo` notebook.
+
+
+## Next Steps
+Now that you have tried out the demo, you will certainly want to take the 
+training wheels off and run ServiceX against a real dataset.
 
 ### Grid Certification
 The DID Finder will need to talk to CERN's Rucio service which requires grid
