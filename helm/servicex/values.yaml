@@ -12,13 +12,22 @@ rabbitmq:
 objectStore:
     enabled: true
 
+postgres:
+    enabled: false
+
+
+postgresql:
+  postgresqlDatabase: servicex
+  postgresqlPassword: leftfoot1
+  persistence:
+    enabled: false
 minio:
   accessKey: miniouser
   secretKey: leftfoot1
 
 app:
   image: sslhep/servicex_app
-  tag: 0.1
+  tag: elasticsearch-logging
   pullPolicy: IfNotPresent
 
 didFinder:
@@ -34,6 +43,14 @@ preflight:
 
 transformer:
   pullPolicy: IfNotPresent
+
+elasticsearchLogging:
+  enabled: False
+  host: 'host'
+  port: 9200
+  user: 'user account'
+  password: 'password'
+
 
 rbacEnabled: True
 

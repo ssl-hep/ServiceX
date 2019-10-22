@@ -6,3 +6,8 @@ dependencies:
     version: 2.5.*
     repository: https://kubernetes-charts.storage.googleapis.com/
     condition: objectStore.enabled
+  - name: postgresql
+    version: 6.3
+    repository: https://kubernetes-charts.storage.googleapis.com/
+    condition: postgres.enabled
+
