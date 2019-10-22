@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+from datetime import timezone
 import json
 import uuid
 
@@ -52,14 +54,16 @@ kafka_parser.add_argument('broker', required=False, location=('kafka'))
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, object_store):
+    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
+        cls.elasticsearch_adapter = elasticsearch_adapter
         return cls
 
     def post(self):
         transformation_request = parser.parse_args()
         request_id = str(uuid.uuid4())
+        time = datetime.now(tz=timezone.utc)
 
         if self.object_store and \
                 transformation_request['result-destination'] == 'object-store':
@@ -72,6 +76,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
         request_rec = TransformRequest(
             did=transformation_request['did'],
+            submit_time=time,
             columns=transformation_request['columns'],
             request_id=str(request_id),
             image=transformation_request['image'],
@@ -111,6 +116,12 @@ class SubmitTransformationRequest(ServiceXResource):
                                                 body=json.dumps(did_request))
 
             request_rec.save_to_db()
+
+            if self.elasticsearch_adapter:
+                self.elasticsearch_adapter.create_update_request(
+                    request_id,
+                    self._generate_transformation_record(request_rec, "locating DID"))
+
             return {
                 "request_id": str(request_id)
             }

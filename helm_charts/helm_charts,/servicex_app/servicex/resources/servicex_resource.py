@@ -27,10 +27,56 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_restful import Resource
 from flask import current_app
+from datetime import datetime
+from datetime import timezone
+
+from servicex.models import TransformationResult
 
 
 class ServiceXResource(Resource):
-
     @staticmethod
     def _generate_advertised_endpoint(endpoint):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+
+    @staticmethod
+    def _generate_file_status_record(dataset_file, status):
+        time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+
+        return {
+            "req_id": dataset_file.request_id,
+            "adler32": dataset_file.adler32,
+            "file_size": dataset_file.file_size,
+            "file_events": dataset_file.file_events,
+            "file_path": dataset_file.file_path,
+            "status": status,
+            "info": 'info',
+            "created_at": time,
+            "last_accessed_at": time,
+            "events_served": 0,
+            "retries": 0
+        }
+
+    def _generate_transformation_record(self, submitted_request, status):
+        request_id = submitted_request.request_id
+        count = TransformationResult.count(request_id)
+        time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+        current_stats = TransformationResult.statistics(request_id)
+
+        events_transformed = 0 if not current_stats else current_stats['total-events']
+        return {
+            "name": 'Transformation Request',
+            "description": 'Transformation Request',
+            "dataset": submitted_request.did,
+            "dataset_size": int(submitted_request.total_bytes or 0),
+            "dataset_files": count,
+            "dataset_events": int(submitted_request.total_events or 0),
+            "columns": submitted_request.columns,
+            "events": 0,
+            "events_transformed": events_transformed,
+            "events_served": 0,
+            "events_processed": 0,
+            "created_at": submitted_request.submit_time,
+            "modified_at": time,
+            "status": status,
+            "info": ' '
+        }

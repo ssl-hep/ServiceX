@@ -50,7 +50,6 @@ class TransformationStatus(ServiceXResource):
         print(status)
 
     def get(self, request_id):
-        print("\n\n-------->.", request_id)
         status_request = status_request_parser.parse_args()
 
         count = TransformationResult.count(request_id)

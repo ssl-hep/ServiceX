@@ -27,33 +27,55 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import TransformRequest, TransformationResult
+from servicex.models import TransformRequest, TransformationResult, DatasetFile
 from servicex.resources.servicex_resource import ServiceXResource
 
 
 class TransformerFileComplete(ServiceXResource):
     @classmethod
-    def make_api(cls, transformer_manager):
+    def make_api(cls, transformer_manager, elasticsearch_adapter):
         cls.transformer_manager = transformer_manager
+        cls.elasticsearch_adapter = elasticsearch_adapter
         return cls
 
     def put(self, request_id):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
+        dataset_file = DatasetFile.get_by_id(info['file-id'])
+
         rec = TransformationResult(
             did=submitted_request.did,
+            file_id=dataset_file.id,
             request_id=request_id,
             file_path=info['file-path'],
             transform_status=info['status'],
             transform_time=info['total-time'],
+            total_bytes=info['total-bytes'],
+            total_events=info['total-events'],
+            avg_rate=info['avg-rate'],
             messages=info['num-messages']
         )
         rec.save_to_db()
+
+        if self.elasticsearch_adapter:
+            self.elasticsearch_adapter.create_update_path(
+                dataset_file.get_path_id(),
+                self._generate_file_status_record(dataset_file, info['status']))
+
+            self.elasticsearch_adapter.create_update_request(
+                request_id,
+                self._generate_transformation_record(submitted_request, 'transforming'))
 
         files_remaining = TransformRequest.files_remaining(request_id)
         if files_remaining is not None and files_remaining <= 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
+
+            if self.elasticsearch_adapter:
+                self.elasticsearch_adapter.create_update_request(
+                    request_id,
+                    self._generate_transformation_record(submitted_request, 'complete'))
+
         print(info)
         return "Ok"
