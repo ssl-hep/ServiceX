@@ -46,8 +46,7 @@ class TransformStart(ServiceXResource):
             if submitted_request.result_destination == 'kafka':
                 # Setup the kafka topic with the correct number of partitions and max
                 # message size
-                max_event_size = request.json['info']['max-event-size']
-                max_message_size = max_event_size * submitted_request.chunk_size
+                max_message_size = 1920000
                 kafka = KafkaTopicManager(submitted_request.kafka_broker)
                 kafka.create_topic(request_id,
                                    max_message_size=max_message_size,
