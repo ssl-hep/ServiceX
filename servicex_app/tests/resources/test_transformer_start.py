@@ -73,7 +73,7 @@ class TestTransformationStart(ResourceTestBase):
         mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
 
         mock_kafka_topic_manager.create_topic.assert_called_with('1234',
-                                                                 max_message_size=4567 * 1000,
+                                                                 max_message_size=1920000,
                                                                  num_partitions=100)
 
     def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):
