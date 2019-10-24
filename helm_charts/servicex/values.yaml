@@ -59,6 +59,10 @@ elasticsearchLogging:
 rabbitmq:
   rabbitmq:
     password: leftfoot1
+  # This is needed for Windows users
+  volumePermissions:
+      enabled: true
+
 
 # Values for the Postgresql Chart
 postgresql:
