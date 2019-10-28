@@ -114,7 +114,8 @@ since port forwarding will be needed during the demo.
 
 ### Step 3 Run the Jupyter Notebook
 We have a notebook that submits a sample request to your serviceX, waits for 
-the transformation to complete and downloads the results.
+the transformation to complete and downloads the results. The notebook is 
+found in the `examples` folder of this repo.
 
 First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/)
 
@@ -171,14 +172,14 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | Parameter                            | Description                                      | Default                                                 |
 | ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
-| `app.tag`                            | ServiceX image tag                               | `0.1`                                               |
+| `app.tag`                            | ServiceX image tag                               | `latest`                                               |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
-| `didFinder.tag`                      | DID Finder image tag                             | `0.1`                                              |
+| `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                   |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | - 
+| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           | 
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
-| `preflight.tag`                      | Preflight image tag                              | `0.1`                                              |
+| `preflight.tag`                      | Preflight image tag                              | `latest`                                              |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
@@ -187,24 +188,16 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `userkey`                            | Copy of the contents of your `~/.globus/userkey.pem` file | -
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
+| `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
 | `minio.accessKey`                    | Access key to log into minio                     | miniouser |
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
+| `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
+| `elasticsearchLogging.host`          | Hostname for external ElasticSearch server | |
+| `elasticsearchLogging.port`          | Port for external ElasticSearch Server           | 9200 |
+| `elasticsearchLogging.user`          | Username to connect to external ElasticSearch Server | |
+| `elasticsearchLogging.password`      | Password to connect to external ElasticSearch Server | |
 
-
-### Installing the Chart
-To install the chart with the release name `my-release` and your custom 
-parameters in `my-values.yaml`:
-
-```bash
-% helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
-% helm repo update
-% helm install -f my-values.yaml --name my-release ssl-hep/servicex 
-```
-
-The command deploys RabbitMQ on the Kubernetes cluster in the default 
-configuration. The [configuration](###configuration) section lists the 
-parameters that can be configured during installation.
 
 ### Using The Service
 You can access the REST service on your desktop with 
@@ -238,6 +231,20 @@ The command removes all the Kubernetes components associated with the chart and
 deletes the release.
 
 
+## Contributing to ServiceX
+ServiceX is a community effort. The architecture lends itself to orchestrating 
+different types of workflows and generating different outputs. Fork us on 
+github and make a contribution!
+
+### Issues
+Please submit issues for bugs and feature requests to this repo.
+
+We manage project priorities with a [zenhub board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333,180236972,185614791,182823774,202592339)
+
+### Join us on Slack
+We coordinate effort on the [IRIS-HEP slack](http://iris-hep.slack.com).
+Come join this intellectual hub.
+
 ### Debugging Tips
 Microservice architectures can be difficult to test and debug. Here are some 
 helpful hints to make this easier.
@@ -255,7 +262,10 @@ password `leftfoot1`. From here you can monitor the queues, purge old messages
 and inject your own messages
 
 
-
-* [Documentation](https://ssl-hep.github.io/ServiceX/)
-* [Kanban board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333)
-* [Service frontend](https://servicex.slateci.net)
+## Acknowledgements
+![https://iris-hep.org/assets/logos/Iris-hep-5-just-graphic.png]
+![https://iris-hep.org/assets/images/nsf-logo-128.png]
+This project is supported by National Science Foundation under Cooperative 
+Agreement OAC-1836650. Any opinions, findings, conclusions or recommendations 
+expressed in this material are those of the authors and do not necessarily 
+reflect the views of the National Science Foundation.
