@@ -263,8 +263,9 @@ and inject your own messages
 
 
 ## Acknowledgements
-![https://iris-hep.org/assets/logos/Iris-hep-5-just-graphic.png]
-![https://iris-hep.org/assets/images/nsf-logo-128.png]
+![](https://iris-hep.org/assets/logos/Iris-hep-5-just-graphic.png)
+![](https://iris-hep.org/assets/images/nsf-logo-128.png)
+
 This project is supported by National Science Foundation under Cooperative 
 Agreement OAC-1836650. Any opinions, findings, conclusions or recommendations 
 expressed in this material are those of the authors and do not necessarily 
