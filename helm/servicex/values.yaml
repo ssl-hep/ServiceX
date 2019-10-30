@@ -1,0 +1,116 @@
+# Default values for servicex.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+
+# Enable deployment of Minio Object Store with this chart - use this if you
+# want to have the option of delivering results as parquet files
+objectStore:
+    enabled: true
+
+# Enable deployment of a full postgres sql database. This is advisable for
+# bigger clusters where there will be several workers hitting the database
+# at the same time. If not, the service will use sqlite
+postgres:
+    enabled: false
+
+
+# Settings for the Flask App
+app:
+  image: sslhep/servicex_app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Settings for the DID Finder
+didFinder:
+  image: sslhep/servicex-did-finder
+  tag: latest
+  pullPolicy: IfNotPresent
+
+  # For easy testing, we set this to be a publicly accessable xAOD File
+  # The DID Finder will always just return this file instead of connecting
+  # To rucio to actually resolve the dataset
+  # Set this to empty to actually use the DID Finder
+  staticFile: 'https://recastwww.web.cern.ch/recastwww/data/reana-recast-demo/mc15_13TeV.123456.cap_recast_demo_signal_one.root'
+
+# Settings for the preflight checker - this usually uses the same image as
+# the transformer
+preflight:
+  image: sslhep/servicex-transformer
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Pull policy for the worker pods - the image and version are specified as
+# part of the transform request
+transformer:
+  pullPolicy: IfNotPresent
+
+
+# Settings for sending logging messages to an elasticsearch service
+elasticsearchLogging:
+  enabled: False
+  host: 'host'
+  port: 9200
+  user: 'user account'
+  password: 'password'
+
+# Values for the RabbitMQ Chart
+rabbitmq:
+  rabbitmq:
+    password: leftfoot1
+  # This is needed for Windows users
+  volumePermissions:
+      enabled: true
+
+
+# Values for the Postgresql Chart
+postgresql:
+  postgresqlDatabase: servicex
+  postgresqlPassword: leftfoot1
+  persistence:
+    enabled: false
+
+
+# Values for Minio Chart
+minio:
+  accessKey: miniouser
+  secretKey: leftfoot1
+
+
+
+###### Settings for Authenticating with the CERN Infrastructure #######
+
+gridAccount: <your account>
+
+gridPassword: <your password>
+
+usercert: |+
+  -----BEGIN CERTIFICATE-----
+
+  -----END CERTIFICATE-----
+
+userkey: |+
+  -----BEGIN ENCRYPTED PRIVATE KEY-----
+
+  -----END ENCRYPTED PRIVATE KEY-----
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+rbacEnabled: True

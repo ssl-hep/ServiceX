@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-flask-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  app.conf: |
+    #SERVER_NAME = '127.0.0.1:5000'
+    # this is the session secret, used to protect the Flask session. You should
+    # use a longer secret string known only to your application
+    # details are beyond the scope of this example
+    SECRET_KEY = 'abc123!'
+
+    {{ if .Values.postgres.enabled }}
+    SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+    {{ else }}
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////sqlite/app.db'
+    {{ end }}
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = 'some-secret-string'
+    JWT_SECRET_KEY = 'jwt-secret-string'
+    RABBIT_MQ_URL= 'amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F'
+    TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
+    ADVERTISED_HOSTNAME= '{{ .Release.Name }}-servicex-app:8000'
+
+    {{ if .Values.hostMount }}
+    # This will be mounted into the transformer pod's /data directory
+    TRANSFORMER_LOCAL_PATH="{{ .Values.hostMount }}"
+    {{ end }}
+
+    TRANSFORMER_NAMESPACE="{{ .Release.Namespace }}"
+
+    TRANSFORMER_PULL_POLICY = '{{ .Values.transformer.pullPolicy }}'
+
+    TRANSFORMER_MANAGER_ENABLED = True
+    TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
+
+    TRANSFORMER_MESSAGING = 'none'
+
+    {{ if .Values.objectStore.enabled }}
+    OBJECT_STORE_ENABLED = True
+    MINIO_URL = '{{ .Release.Name }}-minio:9000'
+    MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:9000'
+    MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
+    MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
+    {{ else }}
+    OBJECT_STORE_ENABLED = False
+    {{ end }}
+
+    {{ if .Values.elasticsearchLogging.enabled }}
+    ELASTIC_SEARCH_LOGGING_ENABLED = True
+    ES_HOST = '{{ .Values.elasticsearchLogging.host }}'
+    ES_PORT = '{{ .Values.elasticsearchLogging.port }}'
+    ES_USER = '{{ .Values.elasticsearchLogging.user }}'
+    ES_PASS = '{{ .Values.elasticsearchLogging.password }}'
+    {{ else }}
+    ELASTIC_SEARCH_LOGGING_ENABLED = False
+    {{ end }}

@@ -1,4 +1,0 @@
-* terminate button
-* better kibana visualizations
-* line breaks in info
-* 
