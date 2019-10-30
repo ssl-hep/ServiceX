@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-servicex-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-servicex-app
+    spec:
+      serviceAccountName: {{ template "servicex.fullname" . }}
+      containers:
+      - name: {{ .Release.Name }}-servicex-app
+        image: {{ .Values.app.image }}:{{ .Values.app.tag }}
+        env:
+        - name: APP_CONFIG_FILE
+          value: "/opt/servicex/app.conf"
+
+        tty: true
+        stdin: true
+        imagePullPolicy: {{ .Values.app.pullPolicy }}
+        volumeMounts:
+          - name: app-cfg
+            mountPath: /opt/servicex
+          - name: sqlite
+            mountPath: /sqlite
+        ports:
+          - containerPort: 5000
+
+      volumes:
+        - name: app-cfg
+          configMap:
+            name:  {{ .Release.Name }}-flask-config
+        - name: sqlite
+          emptyDir: {}

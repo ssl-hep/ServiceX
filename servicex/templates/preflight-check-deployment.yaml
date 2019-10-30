@@ -1,0 +1,35 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-preflight
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-preflight
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-preflight
+        image: {{ .Values.preflight.image }}:{{ .Values.preflight.tag }}
+        command: ["bash","-c"]
+        env:
+          - name: "BASH_ENV"
+            value: "/home/atlas/.bashrc"
+        args: ["python validate_requests.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+        tty: true
+        stdin: true
+        imagePullPolicy: {{ .Values.preflight.pullPolicy }}
+        {{ if .Values.hostMount }}
+        volumeMounts:
+          - name: rootfiles
+            mountPath: /data
+        {{ end }}
+      {{ if .Values.hostMount }}
+      volumes:
+        - name: rootfiles
+          hostPath:
+            path: {{ .Values.hostMount }}
+        {{ end }}
+
