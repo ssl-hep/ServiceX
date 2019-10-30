@@ -1,0 +1,40 @@
+# Welcome to ServiceX
+It will take up to one minute for RabbitMQ to start up and allow the other pods
+to be able to start successfully.
+
+You can monitor the status with
+    kubectl get pods --namespace {{ .Release.Namespace }}
+and wait for 1/1 to be ready for the rabbitmq pod.
+
+To access the REST server you will need to run a Kubernetes Port-Forward:
+
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Release.Name }}-servicex-app" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $POD_NAME 5000:5000
+
+Optionally, you can use a port forward to access the RabbitMQ Dashboard:
+  kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-rabbitmq-0 15672:15672
+and then visit http://localhost:15672
+Log in with
+    username: {{ .Values.rabbitmq.rabbitmq.username }}
+    password: {{ .Values.rabbitmq.rabbitmq.password }}
+
+{{ if .Values.postgres.enabled }}
+You can also connect to the deployed postgres server with your favorite SQL client
+  kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-postgresql-0 5432:5432
+
+and connect with this JDBC Connection String:
+    postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql-0:5432/{{ .Values.postgresql.postgresqlDatabase }}
+{{ end }}
+
+{{ if .Values.objectStore.enabled }}
+Finaly, you can interact with the minio object store with another Port-Forward:
+  export MINIO_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app=minio,release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $MINIO_POD_NAME 9000:9000
+
+You can use the minio browser by visiting:
+    http://localhost:9000
+
+Log in with
+    Access Key: {{ .Values.minio.accessKey }}
+    Secret Key: {{ .Values.minio.secretKey }}
+{{ end }}
