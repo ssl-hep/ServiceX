@@ -1,5 +1,0 @@
-{
-    "SECRETS_PATH": "./kube/secrets/",
-    "HWM": 100000,
-    "LWM": 80000
-}
