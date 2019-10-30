@@ -1,10 +1,15 @@
 import time
-from datetime import datetime
+from Queue import Queue
+from threading import Thread
 import json
 from rucio.client import ReplicaClient
 from rucio.client import DIDClient
 from rucio.common import exception as rucioe
 import requests
+
+
+N_THREADS = 10
+file_queue = Queue()
 
 # needed for python2
 try:
@@ -12,14 +17,78 @@ try:
 except ImportError:
     JSONDecodeError = ValueError
 
-
 with open('config/config.json') as json_file:
     CONF = json.load(json_file)
 
 print('configuration:\n', CONF)
+
 print('sleeping until CAs are there...')
+
 time.sleep(60)
-print('waiting for request to did-find.')
+
+counters = {
+    'files': 0,
+    'found': 0,
+    'skipped': 0
+}
+
+
+def get_replicas(i, q):
+    while True:
+        f = q.get()
+        print('%s: Looking up:' % i, f)
+
+        f_scope = f['scope']
+        f_name = f['name']
+
+        try:
+            g_replicas = rc.list_replicas(
+                dids=[{'scope': f_scope, 'name': f_name}],
+                schemes=['root'],
+                client_location={'site': CONF['SITE']})
+        except rucioe.DatabaseException as rdbe:
+            print('DatabaseException caught. Putting back in queue and slowing down.', rdbe)
+            time.sleep(5)
+            q.put(f)
+            q.task_done()
+            continue
+        except Exception as exc:
+            print('could not find file replica. Skipping file:', f_name, exc)
+            counters['skipped'] += 1
+            q.task_done()
+            continue
+
+        for r in g_replicas:
+            # print(r)
+            sel_path = ''
+            if 'pfns' not in r:
+                continue
+            for fpath, meta in r['pfns'].iteritems():
+                if not meta['type'] == 'DISK':
+                    continue
+                sel_path = fpath
+                if meta['domain'] == 'lan':
+                    break
+            if sel_path == '':
+                counters['skipped'] += 1
+                continue
+
+            data = {
+                'req_id': REQ["reqId"],
+                'adler32': f['adler32'],
+                'file_size': f['bytes'],
+                'file_events': f['events'],
+                'file_path': sel_path
+            }
+            print(data)
+            break
+
+        cr_status = requests.post('https://' + CONF['SITENAME'] + '/dpath/create', json=data, verify=False)
+        print('cr_status:', cr_status)
+        counters['found'] += 1
+
+        q.task_done()
+
 
 while True:
     try:
@@ -50,98 +119,68 @@ while True:
 
     print("processing request:\n", REQ)
 
-    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' + REQ['_id'] + '/' + 'LookingUp', verify=False)
+    UPDATE_STATUS = requests.put('https://' + CONF['SITENAME'] + '/drequest/status/' +
+                                 REQ['reqId'] + '/' + 'LookingUp/did-finder_started', verify=False)
     print('UPDATE_STATUS:', UPDATE_STATUS)
     if UPDATE_STATUS.status_code != 200:
         continue
 
-    doc = REQ["_source"]
-    ds = doc['dataset'].strip()
+    ds = REQ['dataset'].strip()
     (scope, name) = ds.split(":")
     try:
         g_files = dc.list_files(scope, name)
     except rucioe.DataIdentifierNotFound as didnf:
         print('could not find data set. Setting request to failed.', didnf)
         g_files = []
-    except re.CannotAuthenticate as cau:
+    except rucioe.CannotAuthenticate as cau:
         print('cant authenticate', cau)
     except Exception as exc:
         print('Unexpected error. Will retry. ', exc)
 
-    files = 0
-    files_skipped = 0
-    dataset_size = 0
-    dataset_events = 0
+    # Set up threads to fetch replicas
+    for i in range(N_THREADS):
+        worker = Thread(target=get_replicas, args=(i, file_queue,))
+        worker.setDaemon(True)
+        worker.start()
 
+    counters = {
+        'files': 0,
+        'found': 0,
+        'skipped': 0
+    }
+    DATASET_SIZE = 0
+    DATASET_EVENTS = 0
     for f in g_files:
         print(f)
-        f_scope = f['scope']
-        f_name = f['name']
-        dataset_size += f['bytes']
-        dataset_events += f['events']
-        try:
-            g_replicas = rc.list_replicas(
-                dids=[{'scope': f_scope, 'name': f_name}],
-                schemes=['root'],
-                client_location={'site': CONF['SITE']})
-        except Exception as exc:
-            print('could not find file replica. Skipping file:', f_name, exc)
-            files_skipped += 1
-            continue
+        DATASET_SIZE += f['bytes']
+        DATASET_EVENTS += f['events']
+        counters['files'] += 1
+        file_queue.put(f)
 
-        for r in g_replicas:
-            # print(r)
-            sel_path = ''
-            if 'pfns' not in r:
-                continue
-            for fpath, meta in r['pfns'].iteritems():
-                if not meta['type'] == 'DISK':
-                    continue
-                sel_path = fpath
-                if meta['domain'] == 'lan':
-                    break
-            if sel_path == '':
-                files_skipped += 1
-                continue
-
-            data = {
-                'req_id': REQ["_id"],
-                'adler32': f['adler32'],
-                'file_size': f['bytes'],
-                'file_events': f['events'],
-                'file_path': sel_path
-            }
-
-            files += 1
-            print(data)
-
-            CR_STATUS = requests.post('https://' + CONF['SITENAME'] + '/dpath/create', json=data, verify=False)
-            print('CR_STATUS:', CR_STATUS)
-            if CR_STATUS.status_code != 200:
-                continue
-
-    print('files found:', files)
+    file_queue.join()
+    print('all threads done.')
+    print('totals:', counters)
 
     status = 'Failed'
     info = 'Request failed. No accessible files found for your dataset.'
-    if files:
+    if counters['found'] > 0:
         status = 'LookedUp'
-        info = str(files) + ' files can be accessed.\n' + \
-            str(files_skipped) + " files can't be accessed.\n" + \
-            'Total size: ' + str(dataset_size) + '.\n'
+        info = str(counters['found']) + ' files can be accessed.\n' + \
+            str(counters['skipped']) + " files can't be accessed.\n" + \
+            'Total size: ' + str(DATASET_SIZE) + '.\n'
 
-    data = {
-        'id': REQ["_id"],
+    REQ_DATA = {
+        'req_id': REQ["reqId"],
         'status': status,
         'info': info,
-        'dataset_size': dataset_size,
-        'dataset_events': dataset_events,
-        'dataset_files': files
+        'dataset_size': DATASET_SIZE,
+        'dataset_events': DATASET_EVENTS,
+        'dataset_files': counters['files']
     }
 
-    print(data)
+    print(REQ_DATA)
 
-    RU_STATUS = requests.post('https://' + CONF['SITENAME'] + '/drequest/update', json=data, verify=False)
+    RU_STATUS = requests.post('https://' + CONF['SITENAME'] + '/drequest/update', json=REQ_DATA, verify=False)
     print('RU_STATUS:', RU_STATUS)
 
 # EXAMPLE RECORD
