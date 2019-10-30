@@ -1,0 +1,12 @@
+dependencies:
+- name: rabbitmq
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 6.1.6
+- name: minio
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 2.5.16
+- name: postgresql
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 6.3.0
+digest: sha256:7ad624b5f30b1c036aee0bd044be04be95948422bf760847cc70b841ee3eb08c
+generated: "2019-10-15T15:34:24.423305-05:00"

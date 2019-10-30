@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-rucio-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  rucio.cfg: |
+    [client]
+    rucio_host = https://voatlasrucio-server-prod.cern.ch:443
+    auth_host = https://voatlasrucio-auth-prod.cern.ch:443
+    auth_type = x509_proxy
+    # client_cert = /.globus/usercert.pem
+    # client_key = /.globus/userkey.pem
+    ca_cert = /etc/pki/tls/certs/ca-bundle.crt
+    account = {{ .Values.gridAccount }}
+    client_x509_proxy = $X509_USER_PROXY
+    request_retries = 3
+
+    [policy]
+    permission = atlas
+    schema = atlas
+    lfn2pfn_algorithm_default = hash
+    support = hn-atlas-dist-analysis-help@cern.ch
+    support_rucio = https://github.com/rucio/rucio/issues/
+
