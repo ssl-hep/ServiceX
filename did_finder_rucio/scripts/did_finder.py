@@ -97,7 +97,7 @@ def process_did_list(dids, site, did_client, replica_client):
 
                 if sel_path:
                     data = {
-                        'req_id': request_id,
+                        'req_id': "sample-request",
                         'adler32': file['adler32'],
                         'file_size': file['bytes'],
                         'file_events': file['events'],

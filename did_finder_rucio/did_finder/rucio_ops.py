@@ -34,6 +34,7 @@ def parse_did(did):
     :return: Dictionary with keys "scope" and "name"
     """
     d = dict()
+    print("--->",did)
     d['scope'], d['name'] = did.split(":")
     return d
 
@@ -95,8 +96,11 @@ class DIDSummary:
             self.files_skipped))
 
     def accumulate(self, file_record):
-        self.total_bytes += file_record['file_size']
-        self.total_events += file_record['file_events']
+        file_size_key = 'file_size' if 'file_size' in file_record else 'bytes'
+        file_events_key = 'file_events' if 'file_events' in file_record else 'events'
+
+        self.total_bytes += int(file_record[file_size_key] or 0)
+        self.total_events += int(file_record[file_events_key] or 0)
 
     def add_file(self, file_record):
         self.files += 1
