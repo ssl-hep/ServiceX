@@ -33,11 +33,15 @@ import kubernetes
 from kubernetes import client
 import base64
 
-secret_name = sys.argv[1]
-print("Configuring "+secret_name)
+if len(sys.argv) == 2:
+    secret_name = sys.argv[1]
+    print("Configuring "+secret_name)
+    kubernetes.config.load_incluster_config()
+    # kubernetes.config.load_kube_config()
+else:
+    secret_name = None
+    print("Saving to docker volume")
 
-kubernetes.config.load_incluster_config()
-# kubernetes.config.load_kube_config()
 
 myCmd = """
  voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
@@ -48,30 +52,33 @@ myCmd = """
 os.system(myCmd)
 f = "/etc/grid-security/x509up"
 
-# Delete existing secret if present
-try:
-    client.CoreV1Api().delete_namespaced_secret(namespace='default', name=secret_name)
-except kubernetes.client.rest.ApiException as api_exception:
-    print("Ok ", api_exception)
+if secret_name:
+    # Delete existing secret if present
+    try:
+        client.CoreV1Api().delete_namespaced_secret(namespace='default', name=secret_name)
+    except kubernetes.client.rest.ApiException as api_exception:
+        print("Ok ", api_exception)
 
 while True:
+    if secret_name:
+        with open(f, 'rb') as proxy_file:
+            secret_created = False
+            data = {'x509up': base64.b64encode(proxy_file.read()).decode("ascii")}
+            secret = client.V1Secret(data=data,
+                                     kind='Secret',
+                                     type='Opaque',
+                                     metadata=client.V1ObjectMeta(
+                                         name=secret_name))
 
-    with open(f, 'rb') as proxy_file:
-        secret_created = False
-        data = {'x509up': base64.b64encode(proxy_file.read()).decode("ascii")}
-        secret = client.V1Secret(data=data,
-                                 kind='Secret',
-                                 type='Opaque',
-                                 metadata=client.V1ObjectMeta(
-                                     name=secret_name))
+            if secret_created:
+                client.CoreV1Api().patch_namespaced_secret(name=secret_name,
+                                                           namespace='default', body=secret)
+            else:
+                client.CoreV1Api().create_namespaced_secret(namespace='default', body=secret)
+                secret_created = True
 
-        if secret_created:
-            client.CoreV1Api().patch_namespaced_secret(name=secret_name,
-                                                       namespace='default', body=secret)
-        else:
-            client.CoreV1Api().create_namespaced_secret(namespace='default', body=secret)
-            secret_created = True
-
+    # Update crls
+    os.system("/usr/sbin/fetch-crl")
     time.sleep(6*60*60)
 
 
