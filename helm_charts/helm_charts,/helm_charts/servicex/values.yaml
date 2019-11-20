@@ -46,6 +46,11 @@ preflight:
 transformer:
   pullPolicy: IfNotPresent
 
+x509Secrets:
+  image: sslhep/x509-secrets
+  tag: latest
+  pullPolicy: IfNotPresent
+
 
 # Settings for sending logging messages to an elasticsearch service
 elasticsearchLogging:
