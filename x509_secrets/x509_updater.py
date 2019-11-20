@@ -38,6 +38,7 @@ if len(sys.argv) == 2:
     print("Configuring "+secret_name)
     kubernetes.config.load_incluster_config()
     # kubernetes.config.load_kube_config()
+    pod_namespace = os.environ['MY_POD_NAMESPACE']
 else:
     secret_name = None
     print("Saving to docker volume")
@@ -55,7 +56,7 @@ f = "/etc/grid-security/x509up"
 if secret_name:
     # Delete existing secret if present
     try:
-        client.CoreV1Api().delete_namespaced_secret(namespace='default', name=secret_name)
+        client.CoreV1Api().delete_namespaced_secret(namespace=pod_namespace, name=secret_name)
     except kubernetes.client.rest.ApiException as api_exception:
         print("Ok ", api_exception)
 
@@ -72,9 +73,9 @@ while True:
 
             if secret_created:
                 client.CoreV1Api().patch_namespaced_secret(name=secret_name,
-                                                           namespace='default', body=secret)
+                                                           namespace=pod_namespace, body=secret)
             else:
-                client.CoreV1Api().create_namespaced_secret(namespace='default', body=secret)
+                client.CoreV1Api().create_namespaced_secret(namespace=pod_namespace, body=secret)
                 secret_created = True
 
     # Update crls
