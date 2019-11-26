@@ -78,7 +78,7 @@ class TestTransformerManager(ResourceTestBase):
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow')
+                result_destination='kafka', result_format='arrow', x509_secret='x509')
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             assert called_job.spec.parallelism == 17
             assert len(called_job.spec.template.spec.containers) == 1
@@ -111,12 +111,15 @@ class TestTransformerManager(ResourceTestBase):
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow')
+                result_destination='kafka', result_format='arrow', x509_secret='x509')
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
-            assert container.volume_mounts[0].mount_path == '/data'
-            assert called_job.spec.template.spec.volumes[0].host_path.path == '/tmp/foo'
+            assert container.volume_mounts[0].mount_path == '/etc/grid-security-ro'
+            assert called_job.spec.template.spec.volumes[0].secret.secret_name == 'x509'
+
+            assert container.volume_mounts[1].mount_path == '/data'
+            assert called_job.spec.template.spec.volumes[1].host_path.path == '/tmp/foo'
 
     def test_launch_transformer_jobs_with_object_store(self, mocker, mock_rabbit_adaptor):
         import kubernetes
@@ -141,7 +144,7 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
-                result_format='parquet')
+                result_format='parquet', x509_secret='x509')
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args

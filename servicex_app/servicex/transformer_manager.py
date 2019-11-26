@@ -41,16 +41,27 @@ class TransformerManager:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
     def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers,
-                          result_destination, result_format):
+                          result_destination, result_format, x509_secret):
+        volume_mounts = [
+            client.V1VolumeMount(
+                name='x509-secret',
+                mount_path='/etc/grid-security-ro')
+        ]
+
+        volumes = [
+            client.V1Volume(
+                name='x509-secret',
+                secret=client.V1SecretVolumeSource(secret_name=x509_secret)
+            )
+        ]
+
         if "TRANSFORMER_LOCAL_PATH" in current_app.config:
             path = current_app.config['TRANSFORMER_LOCAL_PATH']
-            volumes = [client.V1Volume(
+            volumes.append(client.V1Volume(
                 name='rootfiles',
-                host_path=client.V1HostPathVolumeSource(path=path))]
-            volume_mounts = [client.V1VolumeMount(mount_path="/data", name='rootfiles')]
-        else:
-            volumes = []
-            volume_mounts = []
+                host_path=client.V1HostPathVolumeSource(path=path)))
+            volume_mounts.append(
+                client.V1VolumeMount(mount_path="/data", name='rootfiles'))
 
         # Compute Environment Vars
         env = [client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")]
@@ -73,7 +84,8 @@ class TransformerManager:
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
             env=env,
-            args=["python xaod_branches.py " +
+            args=["/home/atlas/proxy-exporter.sh & sleep 5 && " +
+                  "python xaod_branches.py " +
                   " --request-id " + request_id +
                   " --rabbit-uri " + rabbitmq_uri +
                   " --chunks " + str(chunk_size) +
@@ -109,10 +121,11 @@ class TransformerManager:
         print("Job created. status='%s'" % str(api_response.status))
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
-                                rabbitmq_uri, namespace, result_destination, result_format):
+                                rabbitmq_uri, namespace, x509_secret,
+                                result_destination, result_format):
         batch_v1 = client.BatchV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
-                                     result_destination, result_format)
+                                     result_destination, result_format, x509_secret)
         self.create_job(batch_v1, job, namespace)
 
     def shutdown_transformer_job(self, request_id, namespace):

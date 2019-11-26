@@ -47,7 +47,8 @@ class TestTransformationStart(ResourceTestBase):
 
         client = self._test_client(
             {
-                'TRANSFORMER_MANAGER_ENABLED': True
+                'TRANSFORMER_MANAGER_ENABLED': True,
+                'TRANSFORMER_X509_SECRET': 'my-x509-secret'
             },
             mock_transformer_manager,
             mock_rabbit_adaptor)
@@ -68,7 +69,8 @@ class TestTransformationStart(ResourceTestBase):
                                                              rabbitmq_uri='amqp://trans.rabbit',
                                                              namespace='my-ws',
                                                              result_destination='kafka',
-                                                             result_format='arrow')
+                                                             result_format='arrow',
+                                                             x509_secret='my-x509-secret')
 
         mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
 
