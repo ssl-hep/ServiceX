@@ -15,7 +15,8 @@ TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@host.docker.internal:30672/%2F
 
 # This will be mounted into the transformer pod's /data directory
 TRANSFORMER_LOCAL_PATH="/Users/bengal1/dev/IRIS-HEP/data"
-
+TRANSFORMER_NAMESPACE="default"
+TRANSFORMER_X509_SECRET="aspiring-mole-x509-proxy"
 
 ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 
