@@ -41,7 +41,7 @@ class TransformerManager:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
     def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers,
-                          result_destination, result_format, x509_secret):
+                          result_destination, result_format, x509_secret, kafka_broker):
         volume_mounts = [
             client.V1VolumeMount(
                 name='x509-secret',
@@ -76,6 +76,15 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY'])
             ]
 
+        python_args = [" --request-id " + request_id +
+                       " --rabbit-uri " + rabbitmq_uri +
+                       " --chunks " + str(chunk_size) +
+                       " --result-destination " + result_destination +
+                       " --result-format " + result_format]
+
+        if kafka_broker:
+            python_args.append(" --brokerlist "+kafka_broker)
+
         # Configure Pod template container
         container = client.V1Container(
             name="transformer-" + request_id,
@@ -85,12 +94,7 @@ class TransformerManager:
             command=["bash", "-c"],
             env=env,
             args=["/home/atlas/proxy-exporter.sh & sleep 5 && " +
-                  "python xaod_branches.py " +
-                  " --request-id " + request_id +
-                  " --rabbit-uri " + rabbitmq_uri +
-                  " --chunks " + str(chunk_size) +
-                  " --result-destination " + result_destination +
-                  " --result-format "+result_format]
+                  "python xaod_branches.py " + " ".join(python_args)]
         )
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
@@ -122,10 +126,11 @@ class TransformerManager:
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
                                 rabbitmq_uri, namespace, x509_secret,
-                                result_destination, result_format):
+                                result_destination, result_format, kafka_broker=None):
         batch_v1 = client.BatchV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
-                                     result_destination, result_format, x509_secret)
+                                     result_destination, result_format,
+                                     x509_secret, kafka_broker)
         self.create_job(batch_v1, job, namespace)
 
     def shutdown_transformer_job(self, request_id, namespace):

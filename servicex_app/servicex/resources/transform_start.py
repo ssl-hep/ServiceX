@@ -63,4 +63,5 @@ class TransformStart(ServiceXResource):
                 namespace=namepsace,
                 x509_secret=x509_secret,
                 result_destination=submitted_request.result_destination,
-                result_format=submitted_request.result_format)
+                result_format=submitted_request.result_format,
+                kafka_broker=submitted_request.kafka_broker)
