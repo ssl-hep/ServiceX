@@ -14,8 +14,7 @@ The latest image is also available on [dockerhub](https://cloud.docker.com/u/ssl
 ## Running
 The service and the x509 proxy require several files and folders to be mounted
 in the running container:
-* `/etc/grid-certs`: Folder with your usercert and userkey pem files
-* `/servicex/secrets.txt `: File containing your private key passphrase
+* `/etc/grid-security-ro/x509up`: File with valid X509 Proxy
 * `/usr/src/app/config/config.json` - JSON config file that controls the request
 lookup service
 
@@ -26,6 +25,7 @@ repos `config` directory. Copy this file as `config/rucio.cfg` and update the
 `account` property. 
 
 ### Grid Certs
+*This section is out of date*
 Rucio requires access to your CERN grid cert to access the service. If you 
 don't already have these, follow 
 these [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) .
