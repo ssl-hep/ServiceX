@@ -117,7 +117,8 @@ We have a notebook that submits a sample request to your serviceX, waits for
 the transformation to complete and downloads the results. The notebook is 
 found in the `examples` folder of this repo.
 
-First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/)
+First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/). Note that the notebooks
+(and package requirements) are currently configured to work for Python 3.
 
 ```bash
 % virtualenv ~/.virtualenvs/servicex_demo
