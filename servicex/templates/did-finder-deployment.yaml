@@ -24,7 +24,7 @@ spec:
       - name: {{ .Release.Name }}-did-finder
         image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
         command: ["bash","-c"]
-        args: ["/usr/src/app/run_x509_updater.sh & sleep 10 && env PYTHONPATH=./did_finder python scripts/did_finder.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.staticFile }} --staticfile {{ .Values.didFinder.staticFile }} {{ end }}"]
+        args: ["/usr/src/app/run_x509_updater.sh & sleep 10 && env PYTHONPATH=./did_finder python scripts/did_finder.py --rabbit-uri amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.staticFile }} --staticfile {{ .Values.didFinder.staticFile }} {{ end }}"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
