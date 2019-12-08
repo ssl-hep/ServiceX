@@ -1,0 +1,13 @@
+{
+    "cSpell.words": [
+        "Dlib",
+        "gwatts",
+        "localds",
+        "pytest",
+        "servicex",
+        "xaod"
+    ],
+    "pyright.openFilesOnly": false,
+    "python.linting.flake8Enabled": true,
+    "python.pythonPath": "C:\\Users\\gordo\\Anaconda3\\envs\\servicex_codegenn\\python.exe"
+}

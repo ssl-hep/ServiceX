@@ -27,13 +27,46 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, Response
 from flask_restful import Resource
+from ast_language import text_ast_to_python_ast
+from func_adl_xAOD.backend import use_executor_xaod_hash_cache
+from tempfile import TemporaryDirectory
+import zipfile
+import os
+import base64
+
+
+def zipdir(path: str, zip_handle: zipfile.ZipFile):
+    # zip_handle is zipfile handle
+    for root, _, files in os.walk(path):
+        for file in files:
+            zip_handle.write(os.path.join(root, file), file)
 
 
 class GenerateCode(Resource):
     def post(self):
         code = request.data.decode('utf8')
+
+        # Turn the ast-language into a python AST we can easily process
+        a = text_ast_to_python_ast(code).body[0].value
+
+        # Generate the C++ code
+        with TemporaryDirectory() as tempdir:
+            r = use_executor_xaod_hash_cache(a, tempdir)
+
+            # Zip up everything in the directory - we are going to ship it as back as part
+            # of the message.
+            z_filename = os.path.join(str(tempdir), f'{r.hash}.zip')
+            zip_h = zipfile.ZipFile(z_filename, 'w', zipfile.ZIP_DEFLATED)
+            zipdir(os.path.join(str(tempdir), r.hash), zip_h)
+            zip_h.close()
+
+            with open(z_filename, 'rb') as b_in:
+                zip_data = b_in.read()
+            zip_data_b64 = bytes.decode(base64.b64encode(zip_data))
+
+        # Send the response back to you-know-what.
         response = Response(
-            response=code,
+            response=zip_data_b64,
             status=200, mimetype='application/text')
         print("Func Code = ", code)
         return response

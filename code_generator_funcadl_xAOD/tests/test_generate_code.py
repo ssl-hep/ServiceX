@@ -29,14 +29,27 @@ from servicex.code_generator_service import create_app
 
 
 class TestGenerateCode():
-    def test_post(self, mocker):
+    def test_post_good_query(self, mocker):
+        'Produce code for a simple good query'
         config = {
+            # TODO: What does this do?
             'TestConfig': True
         }
         app = create_app(config)
         client = app.test_client()
         response = client.post("/servicex/generated-code",
-                               data=b"Electrons.pt(), Electrons.phi(), Muons.e()")
-
+                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
         print(response.data)
         assert response.data.decode("utf8") == "Electrons.pt(), Electrons.phi(), Muons.e()"
+
+    def test_post_empty_query(self, mocker):
+        'Post an empyt query - should get back an error'
+        assert False
+
+    def test_post_syntax_error_query(self, mocker):
+        'Post a query that contains a ast-language syntax error'
+        assert False
+
+    def test_post_codegen_error_query(self, mocker):
+        'Post a query with a code-gen level error'
+        assert False

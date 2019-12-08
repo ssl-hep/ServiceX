@@ -34,12 +34,12 @@ with io.open('README.rst', 'rt', encoding='utf8') as f:
 
 setup(
     name='servicex_code_generator',
-    version='0.2.0',
+    version='0.1.0a1',
     url='https://iris-hep.org',
     license='BSD',
     maintainer='ServiceX Team',
-    maintainer_email='bengal1@illinois.edu',
-    description='ServiceX Code Generator Service',
+    maintainer_email='gwatts@uw.edu',
+    description='ServiceX Code funcADL ATLAS xAOD Generator Service',
     long_description=readme,
     packages=find_packages(),
     include_package_data=True,
@@ -47,7 +47,8 @@ setup(
     install_requires=[
         'flask',
         'Flask-WTF',
-        'flask-restful'
+        'flask-restful',
+        'func-adl-xAOD.backend'
     ],
     extras_require={
         'test': [
