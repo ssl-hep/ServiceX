@@ -32,6 +32,13 @@ from flask_restful import Api
 from servicex.code_generator_service.generate_code import GenerateCode
 
 
+def handle_invalid_usage(error: BaseException):
+    from flask import jsonify
+    response = jsonify({"message": str(error)})
+    response.status_code = 400
+    return response
+
+
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
@@ -51,5 +58,7 @@ def create_app(test_config=None):
         api = Api(app)
 
         api.add_resource(GenerateCode, '/servicex/generated-code')
+
+    app.errorhandler(Exception)(handle_invalid_usage)
 
     return app

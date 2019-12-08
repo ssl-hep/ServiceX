@@ -32,7 +32,6 @@ from func_adl_xAOD.backend import use_executor_xaod_hash_cache
 from tempfile import TemporaryDirectory
 import zipfile
 import os
-import base64
 
 
 def zipdir(path: str, zip_handle: zipfile.ZipFile) -> None:
