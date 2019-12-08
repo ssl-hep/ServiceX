@@ -49,7 +49,7 @@ def zipdir(path: str, zip_handle: zipfile.ZipFile) -> None:
 
 class GenerateCodeException(BaseException):
     'Custom exception for top level code generation exceptions'
-    def __init__ (self, message: str):
+    def __init__(self, message: str):
         BaseException.__init__(self, message)
 
 
