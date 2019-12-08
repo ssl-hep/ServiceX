@@ -35,11 +35,22 @@ import os
 import base64
 
 
-def zipdir(path: str, zip_handle: zipfile.ZipFile):
-    # zip_handle is zipfile handle
+def zipdir(path: str, zip_handle: zipfile.ZipFile) -> None:
+    '''Given a `path` to a directory, zip up its contents into a zip file.
+
+    Arguments:
+        path        Path to a local directory. The contents will be put into the zip file
+        zip_handle  The zip file handle to write into.
+    '''
     for root, _, files in os.walk(path):
         for file in files:
             zip_handle.write(os.path.join(root, file), file)
+
+
+class GenerateCodeException(BaseException):
+    'Custom exception for top level code generation exceptions'
+    def __init__ (self, message: str):
+        BaseException.__init__(self, message)
 
 
 class GenerateCode(Resource):
@@ -47,7 +58,12 @@ class GenerateCode(Resource):
         code = request.data.decode('utf8')
 
         # Turn the ast-language into a python AST we can easily process
-        a = text_ast_to_python_ast(code).body[0].value
+        if len(code) == 0:
+            raise GenerateCodeException("Requested codegen for an empty string.")
+        body = text_ast_to_python_ast(code).body
+        if len(body) != 1:
+            raise GenerateCodeException(f'Requested codegen for "{code}" yielded no code statements (or too many).')
+        a = body[0].value
 
         # Generate the C++ code
         with TemporaryDirectory() as tempdir:
@@ -62,7 +78,6 @@ class GenerateCode(Resource):
 
             with open(z_filename, 'rb') as b_in:
                 zip_data = b_in.read()
-            # zip_data_b64 = bytes.decode(base64.b64encode(zip_data))
 
         # Send the response back to you-know-what.
         response = Response(
