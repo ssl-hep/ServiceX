@@ -26,6 +26,23 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex.code_generator_service import create_app
+import io
+import zipfile
+
+
+def get_zipfile_data(zip_data: bytes):
+    with zipfile.ZipFile(io.BytesIO(zip_data)) as thezip:
+        for zipinfo in thezip.infolist():
+            with thezip.open(zipinfo) as thefile:
+                yield zipinfo.filename, thefile
+
+
+def check_zip_file(zip_data: bytes):
+    names = []
+    for name, data in get_zipfile_data(zip_data):
+        names.append(name)
+        print(name)
+    assert len(names) == 6
 
 
 class TestGenerateCode():
@@ -40,7 +57,8 @@ class TestGenerateCode():
         response = client.post("/servicex/generated-code",
                                data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
         print(response.data)
-        assert response.data.decode("utf8") == "Electrons.pt(), Electrons.phi(), Muons.e()"
+        check_zip_file(response.data)
+        # assert response.data.decode("utf8") == "Electrons.pt(), Electrons.phi(), Muons.e()"
 
     def test_post_empty_query(self, mocker):
         'Post an empyt query - should get back an error'

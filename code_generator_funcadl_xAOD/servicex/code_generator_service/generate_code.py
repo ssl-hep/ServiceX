@@ -62,11 +62,10 @@ class GenerateCode(Resource):
 
             with open(z_filename, 'rb') as b_in:
                 zip_data = b_in.read()
-            zip_data_b64 = bytes.decode(base64.b64encode(zip_data))
+            # zip_data_b64 = bytes.decode(base64.b64encode(zip_data))
 
         # Send the response back to you-know-what.
         response = Response(
-            response=zip_data_b64,
-            status=200, mimetype='application/text')
-        print("Func Code = ", code)
+            response=zip_data,
+            status=200, mimetype='application/octet-stream')
         return response
