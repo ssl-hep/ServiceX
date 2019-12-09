@@ -7,3 +7,14 @@ Usage
 
 Development
 -----------
+
+Debugging & Tools
+-----------------
+
+Sometimes it is useful to generate C++ from the `ast-language` text. There is a utility in `scripts/from_ast_to_zip.py` that will do this for you. For example:
+```
+ echo "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') 
+''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" | python .\scripts\from_ast_to_zip.py -z junk.zip
+```
+
+This will generate a zip file that contains the C++ source code.
