@@ -74,7 +74,7 @@ def translate_text_ast_to_zip(code: str) -> bytes:
 
         # Zip up everything in the directory - we are going to ship it as back as part
         # of the message.
-        z_filename = os.path.join(str(tempdir), f'{r.hash}.zip')
+        z_filename = os.path.join(str(tempdir), f'joined.zip')
         zip_h = zipfile.ZipFile(z_filename, 'w', zipfile.ZIP_DEFLATED)
         zipdir(os.path.join(str(tempdir), r.hash), zip_h)
         zip_h.close()
