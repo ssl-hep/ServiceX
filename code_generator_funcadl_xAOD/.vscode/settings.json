@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "Codecov",
         "Dlib",
         "envvar",
         "gwatts",
@@ -7,6 +8,7 @@
         "localds",
         "pytest",
         "servicex",
+        "setuptools",
         "xaod"
     ],
     "pyright.openFilesOnly": false,
