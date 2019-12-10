@@ -96,4 +96,7 @@ class GenerateCode(Resource):
             return response
         except BaseException as e:
             print(str(e))
+            import traceback
+            import sys
+            traceback.print_exc(file=sys.stdout)
             return {'Message': str(e)}, 500
