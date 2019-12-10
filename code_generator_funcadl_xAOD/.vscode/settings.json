@@ -14,5 +14,6 @@
     "python.pythonPath": "C:\\Users\\gordo\\Anaconda3\\envs\\servicex_codegenn\\python.exe",
     "python.linting.flake8Args": [
         "--ignore=E501"
-    ]
+    ],
+    "restructuredtext.confPath": ""
 }
