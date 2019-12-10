@@ -27,7 +27,6 @@ jobs:
         pip install git+https://github.com/iris-hep/ast-language.git@e6470deb68529e1885a4bc46f781e2fe43a6f4c8
         pip install --no-cache-dir -e .[test]
         pip list
-        find / -name R21Code -print
     - name: Lint with Flake8
       run: |
         flake8 --exclude=tests/* --ignore=E501
