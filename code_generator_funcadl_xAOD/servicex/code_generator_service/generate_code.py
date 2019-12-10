@@ -95,4 +95,5 @@ class GenerateCode(Resource):
                 status=200, mimetype='application/octet-stream')
             return response
         except BaseException as e:
+            print(str(e))
             return {'Message': str(e)}, 500
