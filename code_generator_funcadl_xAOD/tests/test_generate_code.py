@@ -56,6 +56,7 @@ class TestGenerateCode():
         client = app.test_client()
         response = client.post("/servicex/generated-code",
                                data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
+        assert response.status_code == 200
         check_zip_file(response.data)
 
     def test_post_empty_query(self, mocker):
@@ -66,12 +67,10 @@ class TestGenerateCode():
         }
         app = create_app(config)
         client = app.test_client()
-        try:
-            client.post("/servicex/generated-code",
-                        data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root'))")
-            assert False
-        except BaseException:
-            pass
+        response = client.post("/servicex/generated-code",
+                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root'))")
+        assert response.status_code == 500
+        assert 'Message' in response.json
 
     def test_post_syntax_error_query(self, mocker):
         'Post a query that contains a ast-language syntax error'
@@ -82,12 +81,10 @@ class TestGenerateCode():
         }
         app = create_app(config)
         client = app.test_client()
-        try:
-            client.post("/servicex/generated-code",
-                        data=b"")
-            assert False
-        except BaseException:
-            pass
+        response = client.post("/servicex/generated-code",
+                               data=b"")
+        assert response.status_code == 500
+        assert 'Message' in response.json
 
     def test_post_codegen_error_query(self, mocker):
         'Post a query with a code-gen level error'
@@ -97,9 +94,7 @@ class TestGenerateCode():
         }
         app = create_app(config)
         client = app.test_client()
-        try:
-            client.post("/servicex/generated-code",
-                        data=b"(call ResultAwkwardArray (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
-            assert False
-        except BaseException:
-            pass
+        response = client.post("/servicex/generated-code",
+                               data=b"(call ResultAwkwardArray (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
+        assert response.status_code == 500
+        assert 'Message' in response.json

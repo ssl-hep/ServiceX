@@ -85,11 +85,14 @@ def translate_text_ast_to_zip(code: str) -> bytes:
 
 class GenerateCode(Resource):
     def post(self):
-        code = request.data.decode('utf8')
-        zip_data = translate_text_ast_to_zip(code)
+        try:
+            code = request.data.decode('utf8')
+            zip_data = translate_text_ast_to_zip(code)
 
-        # Send the response back to you-know-what.
-        response = Response(
-            response=zip_data,
-            status=200, mimetype='application/octet-stream')
-        return response
+            # Send the response back to you-know-what.
+            response = Response(
+                response=zip_data,
+                status=200, mimetype='application/octet-stream')
+            return response
+        except BaseException as e:
+            return {'Message': str(e)}, 500
