@@ -13,7 +13,7 @@
     ],
     "pyright.openFilesOnly": false,
     "python.linting.flake8Enabled": true,
-    "python.pythonPath": "C:\\Users\\gordo\\Anaconda3\\envs\\servicex_codegenn\\python.exe",
+    "python.pythonPath": "C:\\Users\\gordo\\Anaconda3\\envs\\servicex_codegen\\python.exe",
     "python.linting.flake8Args": [
         "--ignore=E501"
     ],
