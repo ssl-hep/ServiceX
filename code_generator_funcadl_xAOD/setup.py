@@ -59,7 +59,8 @@ setup(
             'pytest-mock',
             'autopep8',
             'flake8',
-            'coverage'
+            'coverage',
+            'codecov'
         ],
     },
 )
