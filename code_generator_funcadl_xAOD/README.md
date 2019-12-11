@@ -8,7 +8,27 @@ This microservice is a REST API that will generate C++ source code that runs in 
 
 Usage
 -----
-This repo builds a container to be used in the `ServiceX` application.
+This repo builds a container to be used in the `ServiceX` application. You can see the containers on docker hub.
+
+### Running the web service
+
+The default is to run a web service that will take a `qastle` as input and return a binary zip file as output. To start that up, use the following docker command:
+
+```
+ docker run -it --rm -p 5000:5000  servicexcodegeneratorfuncadlxaod:latest
+```
+
+You can now make queries against port 5000.
+
+### Translating a `qastle` into code
+
+For debugging purposes you sometimes want to translate an `ast` into a zip file. This container will also do that for you:
+
+```
+echo "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" |  docker run -i --rm -v ${PWD}:/zip  servicexcodegeneratorfuncadlxaod:latest translate -z /zip/junk.zip
+```
+
+After running, that will leave a `zip` file in your home directory that contains the 6 or so files necessary to run the requested transform. The only thing missing are the input files.
 
 Development
 -----------
