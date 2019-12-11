@@ -7,7 +7,7 @@ RUN mkdir ./servicex
 
 COPY setup.py setup.py
 COPY setup.cfg setup.cfg
-COPY README.rst README.rst
+COPY README.md README.md
 RUN pip install -e .
 RUN pip install gunicorn
 
