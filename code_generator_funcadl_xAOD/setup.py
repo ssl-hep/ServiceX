@@ -49,15 +49,17 @@ setup(
         'flask',
         'Flask-WTF',
         'flask-restful',
-        'func-adl-xAOD.backend==1.0.0a16'
+        'func-adl-xAOD.backend'
     ],
     extras_require={
         'test': [
             'pytest>=3.6',
             'pytest-flask',
-            'coverage',
+            'pytest-cov',
             'pytest-mock',
-            'flake8'
+            'autopep8',
+            'flake8',
+            'coverage'
         ],
     },
 )

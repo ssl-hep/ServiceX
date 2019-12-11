@@ -10,8 +10,6 @@ COPY setup.cfg setup.cfg
 COPY README.rst README.rst
 RUN pip install -e .
 RUN pip install gunicorn
-RUN pip install git+https://github.com/iris-hep/ast-language.git@e6470deb68529e1885a4bc46f781e2fe43a6f4c8
-
 
 COPY boot.sh ./
 COPY app.conf ./
