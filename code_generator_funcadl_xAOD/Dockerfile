@@ -14,6 +14,7 @@ RUN pip install gunicorn
 COPY boot.sh ./
 COPY app.conf ./
 COPY servicex/ ./servicex
+COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
