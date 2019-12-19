@@ -72,7 +72,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_bad_root_format(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         request = self._generate_transformation_request()
-        request['result-format'] = 'root-file'
+        request['result-format'] = 'root-fileXX'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
@@ -143,10 +143,13 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                      "service-endpoint": service_endpoint}
                                              ))
 
-    def test_submit_transformation_with_root_file(self, mocker, mock_rabbit_adaptor):
+    def test_submit_transformation_with_root_file(self, mocker,
+                                                  mock_rabbit_adaptor,
+                                                  mock_code_gen_service):
         request = self._generate_transformation_request_xAOD_root_file()
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_code_gen_service)
         response = client.post('/servicex/transformation',
                                json=request)
 
@@ -169,6 +172,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+        mock_code_gen_service.generate_code_for_selection("test-string")
 
         bind_to_exchange_calls = [
             call(exchange="transformation_requests", queue=request_id),
