@@ -40,18 +40,21 @@ class TransformRequest(db.Model):
             'request_id': x.request_id,
             'did': x.did,
             'columns': x.columns,
+            'selection': x.selection,
             'image': x.image,
             'chunk-size': x.chunk_size,
             'workers': x.workers,
             'result-destination': x.result_destination,
             'result-format': x.result_format,
-            'kafka-broker': x.kafka_broker
+            'kafka-broker': x.kafka_broker,
+            'workflow-name': x.workflow_name
         }
 
     id = db.Column(db.Integer, primary_key=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
-    columns = db.Column(db.String(1024), unique=False, nullable=False)
+    columns = db.Column(db.String(1024), unique=False, nullable=True)
+    selection = db.Column(db.String(1024), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
@@ -59,6 +62,7 @@ class TransformRequest(db.Model):
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
     kafka_broker = db.Column(db.String(128), nullable=True)
+    workflow_name = db.Column(db.String(40), nullable=False)
 
     files = db.Column(db.Integer, nullable=True)
     files_skipped = db.Column(db.Integer, nullable=True)
