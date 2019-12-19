@@ -62,17 +62,20 @@ def _workflow_name(transform_request):
         return 'straight_transform'
     if not has_columns and has_selection:
         return 'selection_codegen'
-    raise BaseException('Cannot determine workflow from argument - selection or columns must be given, and not both')
+    raise BaseException('Cannot determine workflow from argument - '
+                        'selection or columns must be given, and not both')
 
 
 def _perform_codegen(transform_rec):
     '''Call out to the code gen and return a zipped data containing the resulting C++ files
 
     Arguments:
-        transform_rec       The transform request - we currently only need the selection property of this guy
+        transform_rec       The transform request - we currently only need the selection
+                            property of this guy
 
     Returns:
-        zip_data            A zip file, as bytes, loaded into memory. Use ZipFile and io.BytesIO to extract the files individually.
+        zip_data            A zip file, as bytes, loaded into memory. Use ZipFile and
+                            io.BytesIO to extract the files individually.
                             There is an example in the test cases in the CodeGen repo for ServiceX.
     '''
     import requests
@@ -85,10 +88,11 @@ def _perform_codegen(transform_rec):
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter):
+    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter, code_gen_service):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.elasticsearch_adapter = elasticsearch_adapter
+        cls.code_gen_service = code_gen_service
         return cls
 
     def post(self):
@@ -132,11 +136,10 @@ class SubmitTransformationRequest(ServiceXResource):
         }
 
         try:
-            # If we are doing the xaod_cpp workflow, then the first thing to do is make sure
-            # the requested selection is correct, and generate the C++ files
+            # If we are doing the xaod_cpp workflow, then the first thing to do is make
+            # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
-                zip_files = _perform_codegen(request_rec)
-                print('done zip files')
+                self.code_gen_service.generate_code_for_selection(request_rec.selection)
 
             # Create queue for transformers to read from
             self.rabbitmq_adaptor.setup_queue(request_id)
