@@ -53,10 +53,34 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 'chunk-size': 500,
                 'workers': 10}
 
+    @staticmethod
+    def _generate_transformation_request_xAOD_root_file():
+        return {'did': '123-45-678',
+                'selection': "test-string",
+                'image': 'ssl-hep/func_adl:latest',
+                'result-destination': 'object-store',
+                'result-format': 'root-file',
+                'workers': 10}
+
     def test_submit_transformation_bad_result_dest(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         request = self._generate_transformation_request()
         request['result-destination'] = 'foo'
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
+
+    def test_submit_transformation_bad_root_format(self, mocker, mock_rabbit_adaptor):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        request = self._generate_transformation_request()
+        request['result-format'] = 'root-file'
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
+
+    def test_submit_transformation_bad_wrong_dest_for_format(self, mocker, mock_rabbit_adaptor):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        request = self._generate_transformation_request()
+        request['result-format'] = 'root-file'
+        request['result-destination'] = 'minio'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
@@ -96,6 +120,52 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'kafka'
             assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
+
+        setup_queue_calls = [call(request_id), call(request_id+"_errors")]
+        mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+
+        bind_to_exchange_calls = [
+            call(exchange="transformation_requests", queue=request_id),
+            call(exchange="transformation_failures", queue=request_id+"_errors"),
+
+        ]
+
+        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
+
+        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
+        mock_rabbit_adaptor. \
+            basic_publish.assert_called_with(exchange='',
+                                             routing_key='did_requests',
+                                             body=json.dumps(
+                                                 {
+                                                     "request_id": request_id,
+                                                     "did": "123-45-678",
+                                                     "service-endpoint": service_endpoint}
+                                             ))
+
+    def test_submit_transformation_with_root_file(self, mocker, mock_rabbit_adaptor):
+        request = self._generate_transformation_request_xAOD_root_file()
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        response = client.post('/servicex/transformation',
+                               json=request)
+
+        assert response.status_code == 200
+
+        request_id = response.json['request_id']
+
+        with client.application.app_context():
+            saved_obj = TransformRequest.return_request(request_id)
+            assert saved_obj
+            assert saved_obj.did == '123-45-678'
+            assert saved_obj.request_id == request_id
+            assert saved_obj.columns is None
+            assert saved_obj.selection == 'test-string'
+            assert saved_obj.image == 'ssl-hep/func_adl:latest'
+            assert saved_obj.chunk_size is None
+            assert saved_obj.workers == 10
+            assert saved_obj.result_destination == 'object-store'
+            assert saved_obj.result_format == 'root-file'
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
