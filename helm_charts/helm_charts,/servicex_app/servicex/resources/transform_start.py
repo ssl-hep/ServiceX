@@ -55,6 +55,7 @@ class TransformStart(ServiceXResource):
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
             x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
+            generated_code_cm = submitted_request.generated_code_cm
 
             self.transformer_manager.launch_transformer_jobs(
                 image=submitted_request.image, request_id=request_id,
@@ -62,6 +63,7 @@ class TransformStart(ServiceXResource):
                 chunk_size=submitted_request.chunk_size, rabbitmq_uri=rabbitmq_uri,
                 namespace=namepsace,
                 x509_secret=x509_secret,
+                generated_code_cm=generated_code_cm,
                 result_destination=submitted_request.result_destination,
                 result_format=submitted_request.result_format,
                 kafka_broker=submitted_request.kafka_broker)

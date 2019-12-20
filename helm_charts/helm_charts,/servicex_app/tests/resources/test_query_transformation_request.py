@@ -63,6 +63,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'workers': 42, 'result-destination': 'kafka',
                                  'result-format': 'arrow',
                                  'kafka-broker': 'http://ssl-hep.org.kafka:12345',
-                                 'workflow-name': None}
+                                 'workflow-name': None,
+                                 'generated-code-cm': None}
 
         mock_transform_request_read.assert_called_with('1234')

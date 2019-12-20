@@ -47,7 +47,8 @@ class TransformRequest(db.Model):
             'result-destination': x.result_destination,
             'result-format': x.result_format,
             'kafka-broker': x.kafka_broker,
-            'workflow-name': x.workflow_name
+            'workflow-name': x.workflow_name,
+            'generated-code-cm': x.generated_code_cm
         }
 
     id = db.Column(db.Integer, primary_key=True)
@@ -69,6 +70,7 @@ class TransformRequest(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
+    generated_code_cm = db.Column(db.String(40), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)

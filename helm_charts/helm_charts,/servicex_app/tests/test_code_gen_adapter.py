@@ -28,28 +28,44 @@
 import pytest
 
 from servicex.code_gen_adapter import CodeGenAdapter
+from servicex.models import TransformRequest
 
 
 class TestCodeGenAdapter:
+    def _generate_test_request(self):
+        transform_request = TransformRequest()
+        transform_request.request_id = "462-33"
+        transform_request.selection = "test-string"
+        return transform_request
+
     def test_init(self, mocker):
-        service = CodeGenAdapter("http://foo.com")
+        mock_transformer_manager = mocker.Mock()
+        service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
         assert service.code_gen_url == "http://foo.com"
 
     def test_generate_code_for_selection(self, mocker):
         mock_response = mocker.Mock()
         mock_response.status_code = 200
         mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
-        service = CodeGenAdapter("http://foo.com")
-        service.generate_code_for_selection("test-tring")
+        mock_transformer_manager = mocker.Mock()
+        mock_zip = mocker.patch("zipfile.ZipFile")
+        mocker.patch("io.BytesIO")
+        service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
+        service.generate_code_for_selection(self._generate_test_request(), "servicex")
         mock_requests_post.assert_called()
+
+        mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
+                                                                              "462-33",
+                                                                              "servicex")
 
     def test_generate_code_bad_response(self, mocker):
         mock_response = mocker.Mock()
         mock_response.status_code = 500
         mock_response.json = {"Message": "Ooops"}
         mocker.patch('requests.post', return_value=mock_response)
-        service = CodeGenAdapter("http://foo.com")
+        mock_transformer_manager = mocker.Mock()
+        service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
 
         with pytest.raises(BaseException) as eek:
-            service.generate_code_for_selection("test-tring")
+            service.generate_code_for_selection(self._generate_test_request(), "servicex")
         assert str(eek.value) == 'Failed to generate translation code: Ooops'
