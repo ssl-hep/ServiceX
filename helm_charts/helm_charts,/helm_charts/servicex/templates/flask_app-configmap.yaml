@@ -63,3 +63,8 @@ data:
     {{ else }}
     ELASTIC_SEARCH_LOGGING_ENABLED = False
     {{ end }}
+
+    {{ if .Values.codeGen.enabled }}
+    CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
+    {{ end }}
+
