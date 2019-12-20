@@ -30,6 +30,7 @@ from datetime import timezone
 import json
 import uuid
 
+from flask import current_app
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest
@@ -64,26 +65,6 @@ def _workflow_name(transform_request):
         return 'selection_codegen'
     raise BaseException('Cannot determine workflow from argument - '
                         'selection or columns must be given, and not both')
-
-
-def _perform_codegen(transform_rec):
-    '''Call out to the code gen and return a zipped data containing the resulting C++ files
-
-    Arguments:
-        transform_rec       The transform request - we currently only need the selection
-                            property of this guy
-
-    Returns:
-        zip_data            A zip file, as bytes, loaded into memory. Use ZipFile and
-                            io.BytesIO to extract the files individually.
-                            There is an example in the test cases in the CodeGen repo for ServiceX.
-    '''
-    import requests
-    r = requests.post("/servicex/generated-code", data=transform_rec.selection)
-    if r.status_code != 200:
-        msg = r.json['Message']
-        raise BaseException(f'Failed to generate translation code: {msg}')
-    return r.data
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -124,7 +105,6 @@ class SubmitTransformationRequest(ServiceXResource):
             workers=transformation_request['workers'],
             workflow_name=_workflow_name(transformation_request)
         )
-        print('got request (build request_rec)')
 
         did_request = {
             "request_id": request_rec.request_id,
@@ -139,7 +119,9 @@ class SubmitTransformationRequest(ServiceXResource):
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
-                self.code_gen_service.generate_code_for_selection(request_rec.selection)
+                namespace = current_app.config['TRANSFORMER_NAMESPACE']
+                request_rec.generated_code_cm = \
+                    self.code_gen_service.generate_code_for_selection(request_rec, namespace)
 
             # Create queue for transformers to read from
             self.rabbitmq_adaptor.setup_queue(request_id)

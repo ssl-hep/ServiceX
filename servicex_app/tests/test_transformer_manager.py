@@ -25,6 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import base64
+import zipfile
+
 import pytest
 import re
 from servicex import TransformerManager
@@ -78,7 +81,8 @@ class TestTransformerManager(ResourceTestBase):
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret='x509')
+                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                generated_code_cm=None)
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             assert called_job.spec.parallelism == 17
             assert len(called_job.spec.template.spec.containers) == 1
@@ -111,7 +115,8 @@ class TestTransformerManager(ResourceTestBase):
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret='x509')
+                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                generated_code_cm=None)
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -120,6 +125,33 @@ class TestTransformerManager(ResourceTestBase):
 
             assert container.volume_mounts[1].mount_path == '/data'
             assert called_job.spec.template.spec.volumes[1].host_path.path == '/tmp/foo'
+
+    def test_launch_transformer_jobs_with_generated_code(self, mocker, mock_rabbit_adaptor):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+
+        transformer = TransformerManager('external-kubernetes')
+        client = self._test_client(transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor)
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka',
+                result_format='parquet', x509_secret='x509',
+                generated_code_cm="my-config-map")
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            config_map_vol_mount = container.volume_mounts[1]
+            assert config_map_vol_mount.name == 'generated-code'
+            assert config_map_vol_mount.mount_path == '/generated'
+
+            config_map_vol = called_job.spec.template.spec.volumes[1]
+            assert config_map_vol.name == 'generated-code'
+            assert config_map_vol.config_map.name == 'my-config-map'
 
     def test_launch_transformer_jobs_with_object_store(self, mocker, mock_rabbit_adaptor):
         import kubernetes
@@ -144,7 +176,8 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
-                result_format='parquet', x509_secret='x509')
+                result_format='parquet', x509_secret='x509',
+                generated_code_cm=None)
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -172,7 +205,8 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='kafka', result_format='arrow',
-                kafka_broker='kafka.servicex.org', x509_secret='x509')
+                kafka_broker='kafka.servicex.org', x509_secret='x509',
+                generated_code_cm=None)
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -196,3 +230,32 @@ class TestTransformerManager(ResourceTestBase):
         mock_api.delete_namespaced_job.assert_called_with(name='transformer-1234',
                                                           body=mock_delete_options,
                                                           namespace='my-ns')
+
+    def test_create_configmap_from_zip(self, mocker):
+        import kubernetes
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, 'CoreV1Api',
+                            return_value=mock_api)
+
+        mock_create_namespaced_config_map = mocker.Mock()
+        mock_api.create_namespaced_config_map = mock_create_namespaced_config_map
+
+        transformer = TransformerManager('external-kubernetes')
+        mock_zip = mocker.MagicMock(zipfile.ZipFile)
+        mock_zip_ext = mocker.Mock()
+        mock_zip_ext.filename = 'foo.sh'
+        mock_zip.filelist = [mock_zip_ext]
+        mock_open = mocker.Mock()
+        mock_open.read = mocker.Mock(return_value=b'hi there')
+        mock_zip.open = mocker.Mock(return_value=mock_open)
+
+        transformer.create_configmap_from_zip(mock_zip, "my-request", "servicex")
+
+        mock_create_namespaced_config_map.assert_called()
+        calls = mock_create_namespaced_config_map.call_args
+        "foo.sh" in calls[1]['body'].binary_data.keys()
+        assert calls[1]['body'].binary_data['foo.sh'] == \
+            base64.b64encode(b"hi there").decode("ascii")
+        assert calls[1]['namespace'] == 'servicex'
+        assert calls[1]['body'].metadata.name == 'my-request-generated-source'

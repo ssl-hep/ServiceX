@@ -25,18 +25,27 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import requests
 
 
 class CodeGenAdapter:
-    def __init__(self, code_gen_url):
+    def __init__(self, code_gen_url, transformer_manager):
         self.code_gen_url = code_gen_url
+        self.transformer_manager = transformer_manager
 
-    def generate_code_for_selection(self, selection):
+    def generate_code_for_selection(self, request_record, namespace):
+        from io import BytesIO
+        from zipfile import ZipFile
+
         result = requests.post(self.code_gen_url + "/servicex/generated-code",
-                               data=selection)
+                               data=request_record.selection)
 
         if result.status_code != 200:
             msg = result.json['Message']
             raise BaseException(f'Failed to generate translation code: {msg}')
-        print(result)
+
+        zipfile = ZipFile(BytesIO(result.content))
+        return self.transformer_manager.create_configmap_from_zip(zipfile,
+                                                                  request_record.request_id,
+                                                                  namespace)
