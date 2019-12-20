@@ -63,8 +63,8 @@ def _workflow_name(transform_request):
         return 'straight_transform'
     if not has_columns and has_selection:
         return 'selection_codegen'
-    raise BaseException('Cannot determine workflow from argument - '
-                        'selection or columns must be given, and not both')
+    raise ValueError('Cannot determine workflow from argument - '
+                     'selection or columns must be given, and not both')
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -77,45 +77,49 @@ class SubmitTransformationRequest(ServiceXResource):
         return cls
 
     def post(self):
-        transformation_request = parser.parse_args()
-        request_id = str(uuid.uuid4())
-        time = datetime.now(tz=timezone.utc)
-
-        if self.object_store and \
-                transformation_request['result-destination'] == 'object-store':
-            self.object_store.create_bucket(request_id)
-            # WHat happens if object-store and object_store is None?
-
-        if transformation_request['result-destination'] == 'kafka':
-            broker = transformation_request['kafka']['broker']
-        else:
-            broker = None
-
-        request_rec = TransformRequest(
-            did=transformation_request['did'],
-            submit_time=time,
-            columns=transformation_request['columns'],
-            selection=transformation_request['selection'],
-            request_id=str(request_id),
-            image=transformation_request['image'],
-            chunk_size=transformation_request['chunk-size'],
-            result_destination=transformation_request['result-destination'],
-            result_format=transformation_request['result-format'],
-            kafka_broker=broker,
-            workers=transformation_request['workers'],
-            workflow_name=_workflow_name(transformation_request)
-        )
-
-        did_request = {
-            "request_id": request_rec.request_id,
-            "did": request_rec.did,
-            "service-endpoint": self._generate_advertised_endpoint(
-                "servicex/transformation/" +
-                request_rec.request_id
-            )
-        }
-
         try:
+            try:
+                transformation_request = parser.parse_args()
+            except BaseException as e:
+                return {'message': f'The json request was malformed: {str(e)}'}, 400
+
+            request_id = str(uuid.uuid4())
+            time = datetime.now(tz=timezone.utc)
+
+            if self.object_store and \
+                    transformation_request['result-destination'] == 'object-store':
+                self.object_store.create_bucket(request_id)
+                # WHat happens if object-store and object_store is None?
+
+            if transformation_request['result-destination'] == 'kafka':
+                broker = transformation_request['kafka']['broker']
+            else:
+                broker = None
+
+            request_rec = TransformRequest(
+                did=transformation_request['did'],
+                submit_time=time,
+                columns=transformation_request['columns'],
+                selection=transformation_request['selection'],
+                request_id=str(request_id),
+                image=transformation_request['image'],
+                chunk_size=transformation_request['chunk-size'],
+                result_destination=transformation_request['result-destination'],
+                result_format=transformation_request['result-format'],
+                kafka_broker=broker,
+                workers=transformation_request['workers'],
+                workflow_name=_workflow_name(transformation_request)
+            )
+
+            did_request = {
+                "request_id": request_rec.request_id,
+                "did": request_rec.did,
+                "service-endpoint": self._generate_advertised_endpoint(
+                    "servicex/transformation/" +
+                    request_rec.request_id
+                )
+            }
+
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
@@ -152,6 +156,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 "request_id": str(request_id)
             }
 
+        except ValueError as eek:
+            return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception as eek:
             print(eek)
             return {'message': 'Something went wrong'}, 500

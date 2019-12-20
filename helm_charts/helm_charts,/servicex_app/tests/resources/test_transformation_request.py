@@ -28,8 +28,6 @@
 import json
 from unittest.mock import call
 
-import pytest
-
 from servicex import ElasticSearchAdapter
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
@@ -92,9 +90,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request['columns'] = None
         request['selection'] = None
 
-        with pytest.raises(BaseException) as eek:
-            client.post('/servicex/transformation', json=request)
-        print(eek)
+        r = client.post('/servicex/transformation', json=request)
+        assert r.status_code == 400
 
     def test_submit_transformation_request_throws_exception(self, mocker, mock_rabbit_adaptor):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
@@ -198,6 +195,20 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                      "did": "123-45-678",
                                                      "service-endpoint": service_endpoint}
                                              ))
+
+    def test_submit_transformation_with_root_file_selection_error(self, mocker,
+                                                                  mock_rabbit_adaptor,
+                                                                  mock_code_gen_service):
+        mock_code_gen_service.generate_code_for_selection = \
+                mocker.Mock(side_effect=ValueError('This is the error message'))
+        request = self._generate_transformation_request_xAOD_root_file()
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_code_gen_service)
+        response = client.post('/servicex/transformation',
+                               json=request)
+
+        assert response.status_code == 400
 
     def test_submit_transformation_with_object_store(self, mocker, mock_rabbit_adaptor):
         from servicex import ObjectStoreManager

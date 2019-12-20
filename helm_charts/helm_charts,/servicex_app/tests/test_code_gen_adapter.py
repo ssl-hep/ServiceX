@@ -66,6 +66,6 @@ class TestCodeGenAdapter:
         mock_transformer_manager = mocker.Mock()
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
 
-        with pytest.raises(BaseException) as eek:
+        with pytest.raises(ValueError) as eek:
             service.generate_code_for_selection(self._generate_test_request(), "servicex")
         assert str(eek.value) == 'Failed to generate translation code: Ooops'
