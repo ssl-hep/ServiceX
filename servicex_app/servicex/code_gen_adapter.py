@@ -43,7 +43,7 @@ class CodeGenAdapter:
 
         if result.status_code != 200:
             msg = result.json['Message']
-            raise BaseException(f'Failed to generate translation code: {msg}')
+            raise ValueError(f'Failed to generate translation code: {msg}')
 
         zipfile = ZipFile(BytesIO(result.content))
         return self.transformer_manager.create_configmap_from_zip(zipfile,
