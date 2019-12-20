@@ -10,3 +10,16 @@ install:
 script:
 - flake8
 - coverage run -m pytest -s
+- codecov
+- docker build -t sslhep/servicex_app:${TRAVIS_BRANCH} .
+
+after_script:
+  - docker images
+
+before_deploy:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+deploy:
+  provider: script
+  script: docker push sslhep/servicex_code_gen_funcadl_xaod:${TRAVIS_BRANCH}
+  on:
+      all_branches: true
