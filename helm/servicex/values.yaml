@@ -41,6 +41,15 @@ preflight:
   tag: latest
   pullPolicy: IfNotPresent
 
+#
+# C++ func_adl Code Generator service
+codeGen:
+  enabled: true
+  image: sslhep/servicex_code_gen_funcadl_xaod
+  tag: latest
+  pullPolicy: IfNotPresent
+
+
 # Pull policy for the worker pods - the image and version are specified as
 # part of the transform request
 transformer:
