@@ -11,7 +11,7 @@ script:
 - flake8
 - coverage run -m pytest -s
 - codecov
-- docker build -t sslhep/servicex_app:${TRAVIS_BRANCH} .
+- docker build -t sslhep/servicex_code_gen_funcadl_xaod:${TRAVIS_BRANCH} .
 
 after_script:
   - docker images
