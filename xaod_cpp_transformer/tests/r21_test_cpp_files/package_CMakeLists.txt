@@ -1,0 +1,27 @@
+# The name of the package:
+atlas_subdir (analysis)
+
+# Add the shared library:
+atlas_add_library (analysisLib
+  analysis/*.h Root/*.cxx
+  PUBLIC_HEADERS analysis
+  LINK_LIBRARIES AnaAlgorithmLib xAODEventInfo xAODJet xAODTruth xAODMissingET xAODMuon xAODEgamma)
+
+if (XAOD_STANDALONE)
+ # Add the dictionary (for AnalysisBase only):
+ atlas_add_dictionary (queryDict
+  analysis/query.h
+  analysis/selection.xml
+  LINK_LIBRARIES analysisLib)
+endif ()
+
+if (NOT XAOD_STANDALONE)
+  # Add a component library for AthAnalysis only:
+  atlas_add_component (analysis
+    src/components/*.cxx
+    LINK_LIBRARIES analysisLib)
+endif ()
+
+# Install files from the package:
+atlas_install_joboptions( share/*_jobOptions.py )
+atlas_install_scripts( share/*_eljob.py )
