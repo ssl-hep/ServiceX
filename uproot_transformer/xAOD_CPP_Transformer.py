@@ -31,6 +31,7 @@ from servicex.transformer.transformer_argument_parser import TransformerArgument
 from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
+import os
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -66,7 +67,11 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, tree, attr_list, chunk_size):
     print("Transforming a single path: " + str(args.path))
+    os.system('/generated/runner.sh -r -d ' + file_path)
 
+
+def compile_code():
+    r = os.system('/generated/runner.sh -c')
 
 if __name__ == "__main__":
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
@@ -74,19 +79,19 @@ if __name__ == "__main__":
 
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
-    if args.result_destination == 'kafka':
-        messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
-        object_store = None
-    elif args.result_destination == 'object-store':
-        messaging = None
-        object_store = ObjectStoreManager()
-
-    _attr_list = TransformerArgumentParser.extract_attr_list(args.attr_names)
+    # if args.result_destination == 'kafka':
+    #     messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
+    #     object_store = None
+    # elif args.result_destination == 'object-store':
+    #     messaging = None
+    #     object_store = ObjectStoreManager()
 
     chunk_size = args.chunks
+
+    compile_code()
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        transform_single_file(args.path, args.tree, _attr_list, chunk_size)
+        transform_single_file(args.path, args.tree, None, chunk_size)
