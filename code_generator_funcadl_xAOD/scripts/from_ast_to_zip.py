@@ -6,8 +6,10 @@ from servicex.code_generator_service.generate_code import translate_text_ast_to_
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--ast", help="The text AST to be converted into zip file. STDIN if this is left off")
-    parser.add_argument("-z", "--zipfile", help="The name of the zip file to write out. STDOUT if this is left off")
+    parser.add_argument("-a", "--ast",
+                        help="The text AST to be converted into zip file. STDIN if this is left off")  # noqa: E501
+    parser.add_argument("-z", "--zipfile",
+                        help="The name of the zip file to write out. STDOUT if this is left off")
     args = parser.parse_args()
 
     # Get the input AST

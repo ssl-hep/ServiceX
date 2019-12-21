@@ -55,7 +55,7 @@ class TestGenerateCode():
         app = create_app(config)
         client = app.test_client()
         response = client.post("/servicex/generated-code",
-                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
+                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")  # noqa: E501
         assert response.status_code == 200
         check_zip_file(response.data)
 
@@ -68,7 +68,7 @@ class TestGenerateCode():
         app = create_app(config)
         client = app.test_client()
         response = client.post("/servicex/generated-code",
-                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root'))")
+                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root'))")  # noqa: E501
         assert response.status_code == 500
         assert 'Message' in response.json
 
@@ -95,6 +95,7 @@ class TestGenerateCode():
         app = create_app(config)
         client = app.test_client()
         response = client.post("/servicex/generated-code",
-                               data=b"(call ResultAwkwardArray (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")
+                               data=b"(call ResultAwkwardArray (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")  # noqa: E501
+
         assert response.status_code == 500
         assert 'Message' in response.json

@@ -65,7 +65,7 @@ def translate_text_ast_to_zip(code: str) -> bytes:
         raise GenerateCodeException("Requested codegen for an empty string.")
     body = text_ast_to_python_ast(code).body
     if len(body) != 1:
-        raise GenerateCodeException(f'Requested codegen for "{code}" yielded no code statements (or too many).')
+        raise GenerateCodeException(f'Requested codegen for "{code}" yielded no code statements (or too many).')  # noqa: E501
     a = body[0].value
 
     # Generate the C++ code
