@@ -7,6 +7,38 @@ set -e
 # Meant to be invokved in an ATLAS R21 analysis container.
 # This follows the tutorial from https://atlassoftwaredocs.web.cern.ch/ABtutorial/release_setup/
 
+# Parse the command line arguments. Our defaults
+output_method="cp"
+output_dir="/results"
+input_method="filelist"
+input_file=""
+compile=1
+run=1
+
+while getopts "d:cr" opt; do
+    case "$opt" in
+    d)
+        input_method="cmd"
+        input_file=$OPTARG
+        ;;
+    c)
+        run=0
+        ;;
+    r)
+        compile=0
+        ;;
+    ?)
+        exit 10
+    esac
+done
+
+# If there are any arguments left over, then very bad things have happened.
+shift $((OPTIND-1))
+if [ $# != 0 ]; then
+  echo "Extra arguments on the command line $@"
+  exit 1
+fi
+
 # Setup and config
 source /home/atlas/release_setup.sh
 
@@ -15,14 +47,15 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 local=`pwd`
 
 # Create a release directory
-mkdir rel
-cd rel
-mkdir source
-mkdir build
-mkdir run
+if [ $compile = 1 ]; then
+   mkdir rel
+   cd rel
+   mkdir source
+   mkdir build
+   mkdir run
 
 # Create cmake infrastructure
-cat > source/CMakeLists.txt << 'EOF'
+   cat > source/CMakeLists.txt << 'EOF'
 #
 # Project configuration for UserAnalysis.
 #
@@ -78,25 +111,25 @@ install( FILES ${CMAKE_BINARY_DIR}/${ATLAS_PLATFORM}/env_setup.sh
 atlas_cpack_setup()
 EOF
 
-# Create a package infrastructure
-cd source
-mkdir analysis
-mkdir analysis/analysis
-mkdir analysis/Root
-mkdir analysis/src
-mkdir analysis/src/components
-mkdir analysis/share
+   # Create a package infrastructure
+   cd source
+   mkdir analysis
+   mkdir analysis/analysis
+   mkdir analysis/Root
+   mkdir analysis/src
+   mkdir analysis/src/components
+   mkdir analysis/share
 
-# Create the basics for cmake
-cp $DIR/package_CMakeLists.txt analysis/CMakeLists.txt
+   # Create the basics for cmake
+   cp $DIR/package_CMakeLists.txt analysis/CMakeLists.txt
 
-# Next, copy over the algorithm. The source directory needs to be correctly mounted.
-cp $DIR/query.h analysis/analysis
-cp $DIR/query.cxx analysis/Root
-cp $DIR/ATestRun_eljob.py analysis/share
-chmod +x analysis/share/ATestRun_eljob.py
+   # Next, copy over the algorithm. The source directory needs to be correctly mounted.
+   cp $DIR/query.h analysis/analysis
+   cp $DIR/query.cxx analysis/Root
+   cp $DIR/ATestRun_eljob.py analysis/share
+   chmod +x analysis/share/ATestRun_eljob.py
 
-cat > analysis/analysis/queryDict.h << EOF
+   cat > analysis/analysis/queryDict.h << EOF
 #ifndef analysis_query_DICT_H
 #define analysis_query_DICT_H
 
@@ -108,7 +141,7 @@ cat > analysis/analysis/queryDict.h << EOF
 #endif
 EOF
 
-cat > analysis/analysis/selection.xml << EOF
+   cat > analysis/analysis/selection.xml << EOF
 <lcgdict>
 
   <!-- This file contains a list of all classes for which a dictionary
@@ -120,30 +153,43 @@ cat > analysis/analysis/selection.xml << EOF
 EOF
 
 
-# Do the build
-cd ../build
-cmake ../source
-make
-source x86_64-slc6-gcc62-opt/setup.sh
-
-# Do the run.
-#ATestRun_eljob.py --submission-dir=bogus
-if [ -e $DIR/filelist.txt ]; then
-   cp $DIR/filelist.txt .
+   # Do the build
+   cd ../build
+   cmake ../source
+   make
 else
-   cp $local/filelist.txt .
+   cd rel/build
 fi
-python ../source/analysis/share/ATestRun_eljob.py --submission-dir=bogus
 
-# Place the output file where it belongs
-if [ -z "$1" ]; then
-  cmd="cp"
-  destination="/results"
-else
-  destination=$1
-  cmd="cp"
-  if [[ $destination == "root:"* ]]; then
-    cmd="xrdcp"
-  fi
+# Sort out the input file location
+if [ $run = 1 ]; then
+   source ${AnalysisBaseExternals_PLATFORM}/setup.sh
+   if [ "$input_method" == "filelist" ]; then
+      if [ -e $DIR/filelist.txt ]; then
+         cp $DIR/filelist.txt .
+      else
+         cp $local/filelist.txt .
+      fi
+   elif [ "$input_method" == "cmd" ]; then
+      echo $input_file > filelist.txt
+   fi
+
+   # Do the run
+   if [ -e ./bogus ]; then
+     rm -rf bogus
+   fi
+   python ../source/analysis/share/ATestRun_eljob.py --submission-dir=bogus
+
+   # Place the output file where it belongs
+   if [ $output_method == "cp" ]; then
+      cmd="cp"
+      destination=$output_dir
+   else
+      destination=$1
+      cmd="cp"
+      if [[ $destination == "root:"* ]]; then
+         cmd="xrdcp"
+      fi
+   fi
+   $cmd ./bogus/data-ANALYSIS/ANALYSIS.root $destination
 fi
-$cmd ./bogus/data-ANALYSIS/ANALYSIS.root $destination
