@@ -25,7 +25,7 @@ You can now make queries against port 5000.
 For debugging purposes you sometimes want to translate an `ast` into a zip file. This container will also do that for you:
 
 ```
-echo "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" |  docker run -i --rm -v ${PWD}:/zip  servicexcodegeneratorfuncadlxaod:latest translate -z /zip/junk.zip
+echo "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" |   docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_xaod:master translate -z /zip/junk.zip
 ```
 
 After running, that will leave a `zip` file in your home directory that contains the 6 or so files necessary to run the requested transform. The only thing missing are the input files.
