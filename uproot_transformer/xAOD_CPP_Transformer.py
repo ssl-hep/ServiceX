@@ -67,7 +67,7 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, tree, attr_list, chunk_size):
     print("Transforming a single path: " + str(args.path))
-    os.system('/generated/runner.sh -r -d ' + file_path)
+    os.system('/generated/runner.sh -r -d ' + file_path + ' -o /home/atlas/results')
 
 
 def compile_code():
