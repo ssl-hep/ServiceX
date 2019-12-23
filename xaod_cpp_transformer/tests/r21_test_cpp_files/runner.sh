@@ -15,7 +15,7 @@ input_file=""
 compile=1
 run=1
 
-while getopts "d:cr" opt; do
+while getopts "d:o:cr" opt; do
     case "$opt" in
     d)
         input_method="cmd"
@@ -26,6 +26,9 @@ while getopts "d:cr" opt; do
         ;;
     r)
         compile=0
+        ;;
+    o)
+        output_dir=$OPTARG
         ;;
     ?)
         exit 10
