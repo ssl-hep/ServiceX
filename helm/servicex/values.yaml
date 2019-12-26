@@ -19,13 +19,13 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: latest
+  tag: 82_cpp_transformer
   pullPolicy: IfNotPresent
 
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: latest
+  tag: x509-secrets
   pullPolicy: IfNotPresent
 
   # For easy testing, we set this to be a publicly accessable xAOD File
@@ -46,7 +46,7 @@ preflight:
 codeGen:
   enabled: true
   image: sslhep/servicex_code_gen_funcadl_xaod
-  tag: latest
+  tag: master
   pullPolicy: IfNotPresent
 
 
