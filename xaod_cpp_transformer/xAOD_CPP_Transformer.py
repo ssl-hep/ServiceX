@@ -43,14 +43,15 @@ avg_cell_size = 42
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _tree_name = transform_request['tree-name']
+    # _tree_name = transform_request['tree-name']
     _file_path = transform_request['file-path']
-    _file_id = transform_request['file-id']
-    _server_endpoint = transform_request['service-endpoint']
+    # _file_id = transform_request['file-id']
+    # _server_endpoint = transform_request['service-endpoint']
 
     print(_file_path)
     try:
         # Do the transform
+        transform_single_file(_file_path, None, None, None)
         pass
 
     except Exception as error:
@@ -67,11 +68,21 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, tree, attr_list, chunk_size):
     print("Transforming a single path: " + str(args.path))
-    os.system('/generated/runner.sh -r -d ' + file_path + ' -o /home/atlas/results')
+    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o /home/atlas/results')
+    if r != 0:
+        raise BaseException("Unable to run the file - error return: "
+                            + str(r))
 
 
 def compile_code():
-    r = os.system('/generated/runner.sh -c')
+    # Have to use bash as the file runner.sh does not execute properly, despite its 'x'
+    # bit set. This seems to be some vagary of a ConfigMap from k8, which is how we usually get
+    # this file.
+    r = os.system('bash /generated/runner.sh -c')
+    if r != 0:
+        raise BaseException("Unable to compile the code - error return: "
+                            + str(r))
+
 
 if __name__ == "__main__":
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
