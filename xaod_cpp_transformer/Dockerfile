@@ -15,3 +15,5 @@ ENV PYTHONUNBUFFERED=1
 
 # Copy over the source
 COPY xAOD_CPP_Transformer.py .
+
+ENTRYPOINT [ "python", "xAOD_CPP_Transformer.py" ]
