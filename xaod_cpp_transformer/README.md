@@ -50,5 +50,5 @@ optional arguments:
 Under tests you'll find input files needed to try this out. Use the following docker conmmand.
 
 ```
-docker run --rm -it -v ${PWD}/tests/r21_test_cpp_files:/generated:ro -v ${PWD}/tests:/data:ro servicexxaodcpptransformer:latest python xAOD_CPP_Transformer.py --path /data/jets_10_events.root
+docker run --rm -it -v ${PWD}/tests/r21_test_cpp_files:/generated:ro -v ${PWD}/tests:/data:ro servicexxaodcpptransformer:latest --path /data/jets_10_events.root
 ```
