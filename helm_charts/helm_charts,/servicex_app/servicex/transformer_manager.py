@@ -89,14 +89,16 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY'])
             ]
 
-        python_args = [" --request-id " + request_id +
+        python_args = ["/home/atlas/proxy-exporter.sh & sleep 5 && " +
+                       "python /home/atlas/transformer.py " +
+                       " --request-id " + request_id +
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
                        " --result-destination " + result_destination +
                        " --result-format " + result_format]
 
         if kafka_broker:
-            python_args.append(" --brokerlist "+kafka_broker)
+            python_args[0] += " --brokerlist "+kafka_broker
 
         # Configure Pod template container
         container = client.V1Container(
@@ -106,8 +108,7 @@ class TransformerManager:
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
             env=env,
-            args=["/home/atlas/proxy-exporter.sh & sleep 5 && " +
-                  "python xaod_branches.py " + " ".join(python_args)]
+            args=python_args
         )
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
