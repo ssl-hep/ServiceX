@@ -56,9 +56,8 @@ kafka_parser.add_argument('broker', required=False, location=('kafka'))
 
 def _workflow_name(transform_request):
     'Look at the keys and determine what sort of a workflow we want to run'
-    has_columns = ('columns' in transform_request) and transform_request['columns'] is not None
-    has_selection = ('selection' in transform_request) \
-        and transform_request['selection'] is not None
+    has_columns = ('columns' in transform_request) and transform_request['columns']
+    has_selection = ('selection' in transform_request) and transform_request['selection']
     if has_columns and not has_selection:
         return 'straight_transform'
     if not has_columns and has_selection:
