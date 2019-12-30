@@ -50,5 +50,9 @@ optional arguments:
 Under tests you'll find input files needed to try this out. Use the following docker conmmand.
 
 ```
-docker run --rm -it -v ${PWD}/tests/r21_test_cpp_files:/generated:ro -v ${PWD}/tests:/data:ro servicexxaodcpptransformer:latest --path /data/jets_10_events.root
+docker run --rm -it \
+  --mount type=bind,source=$(pwd),target=/code \
+  --mount type=bind,source=$(pwd)/tests,target=/data \
+  --mount type=bind,source=$(pwd)/tests/r21_test_cpp_files,target=/generated,readonly \
+  servicexxaodcpptransformer:latest bash
 ```
