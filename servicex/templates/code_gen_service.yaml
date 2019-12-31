@@ -1,5 +1,5 @@
----
 {{- if .Values.codeGen.enabled -}}
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,5 +12,5 @@ spec:
      protocol: TCP
   selector:
     app: {{ .Release.Name }}-code-gen
-  type: NodePort
+  type: ClusterIP
 {{- end }}
