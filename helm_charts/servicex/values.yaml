@@ -25,7 +25,7 @@ app:
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: x509-secrets
+  tag: nano-aod
   pullPolicy: IfNotPresent
 
   # For easy testing, we set this to be a publicly accessable xAOD File
@@ -37,8 +37,8 @@ didFinder:
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
 preflight:
-  image: sslhep/servicex-transformer
-  tag: latest
+  image: sslhep/servicex_xaod_cpp_transformer
+  tag: develop
   pullPolicy: IfNotPresent
 
 #
