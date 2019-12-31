@@ -11,4 +11,4 @@ spec:
      protocol: TCP
   selector:
     app: {{ .Release.Name }}-servicex-app
-  type: NodePort
+  type: ClusterIP
