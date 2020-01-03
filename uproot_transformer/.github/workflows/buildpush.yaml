@@ -16,4 +16,5 @@ jobs:
         USERNAME: ${{ secrets.DOCKER_USERNAME }}
         PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         IMAGE_NAME: "gordonwatts/servicex_code_gen_funcadl_xaod"
-        LATEST: "true"
+        LATEST: FALSE
+        TAG_NAME: ${{ github.ref }}
