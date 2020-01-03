@@ -33,6 +33,7 @@ didFinder:
   # To rucio to actually resolve the dataset
   # Set this to empty to actually use the DID Finder
   staticFile: 'https://recastwww.web.cern.ch/recastwww/data/reana-recast-demo/mc15_13TeV.123456.cap_recast_demo_signal_one.root'
+  site: 'MWT2'
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
