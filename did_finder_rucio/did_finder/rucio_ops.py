@@ -1,4 +1,5 @@
 # Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,17 +54,19 @@ def find_replicas(file, site, replica_client):
     g_replicas = None
     while not g_replicas:
         try:
+            location = {'site': site} if site else None
+
             g_replicas = replica_client.list_replicas(
                 dids=[{'scope': file['scope'], 'name': file['name']}],
                 schemes=['root'],
-                client_location={'site': site})
+                client_location=location)
 
         except Exception as eek:
             print("\n\n\n\n\nERROR READING REPLICA ", eek)
     return g_replicas
 
 
-def get_sel_path(replica):
+def get_sel_path(replica, prefix):
     sel_path = None
 
     if 'pfns' not in replica:
@@ -76,7 +79,7 @@ def get_sel_path(replica):
         if meta['domain'] == 'lan':
             break
 
-    return sel_path
+    return prefix+sel_path
 
 class DIDSummary:
     def __init__(self, did):

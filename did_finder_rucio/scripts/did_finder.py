@@ -48,7 +48,7 @@ def _replica_lookup_worker(input_queue, output_queue, request_id,  _replica_clie
         replicas = find_replicas(file, site, _replica_client)
 
         for r in replicas:
-            sel_path = get_sel_path(r)
+            sel_path = get_sel_path(r, prefix)
 
             if sel_path:
                 data = {
@@ -82,18 +82,16 @@ def file_replicas(request_id, did, _did_client, _replica_client, max_workers = 1
 def process_did_list(dids, site, did_client, replica_client):
 
     for did in dids:
-        print("---->", did)
         files = list_files_for_did(parse_did(did), did_client)
         result = DIDSummary(did)
 
         for file in files:
-            print(file)
             result.accumulate(file)
 
             replicas = find_replicas(file, site, replica_client)
 
             for r in replicas:
-                sel_path = get_sel_path(r)
+                sel_path = get_sel_path(r, prefix)
 
                 if sel_path:
                     data = {
@@ -234,8 +232,12 @@ def callback(channel, method, properties, body):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--site', dest='site', action='store',
-                    default="MWT2",
+                    default=None,
                     help='XCache Site)')
+
+parser.add_argument('--prefix', dest='prefix', action='store',
+                    default='',
+                    help='Prefix to add to Xrootd URLs')
 
 parser.add_argument('--staticfile', dest='static_file', action='store',
                     default=None,
@@ -257,6 +259,7 @@ parser.add_argument('did_list', nargs='*')
 args = parser.parse_args()
 
 site = args.site
+prefix = args.prefix
 
 sample_request_id = 'cli'
 
