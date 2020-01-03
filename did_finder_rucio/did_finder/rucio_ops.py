@@ -31,12 +31,15 @@
 def parse_did(did):
     """
     Parse a DID string into the scope and name
+    Allow for no scope to be included
     :param did:
     :return: Dictionary with keys "scope" and "name"
     """
     d = dict()
-    print("--->",did)
-    d['scope'], d['name'] = did.split(":")
+    if ':' in did:
+        d['scope'], d['name'] = did.split(":")
+    else:
+        d['scope'], d['name'] = '', did
     return d
 
 
