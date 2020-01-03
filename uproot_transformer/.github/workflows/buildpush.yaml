@@ -4,17 +4,24 @@ on:
   push:
 
 jobs:
-  test:
+  docker:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1.2.0
+    - name: Checkout
+      uses: actions/checkout@v1.2.0
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+      id: extract_branch      
+
     - name: Build and Push Docker Image
       # See https://github.com/marketplace/actions/docker-push
       uses: opspresso/action-docker@master
       env:
         USERNAME: ${{ secrets.DOCKER_USERNAME }}
         PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        IMAGE_NAME: "servicex_code_gen_funcadl_xaod"
+        IMAGE_NAME: "gordonwatts/servicex_code_gen_funcadl_xaod"
         LATEST: FALSE
-        TAG_NAME: develop
+        TAG_NAME: ${{ steps.extract_branch.outputs.branch }}
