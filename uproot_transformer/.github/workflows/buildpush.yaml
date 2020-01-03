@@ -10,8 +10,8 @@ jobs:
     steps:
     - uses: actions/checkout@v1.2.0
     - name: Build and Push Docker Image
-    # See https://github.com/marketplace/actions/docker-push
-    - uses: opspresso/action-docker@master
+      # See https://github.com/marketplace/actions/docker-push
+      uses: opspresso/action-docker@master
       env:
         USERNAME: ${{ secrets.DOCKER_USERNAME }}
         PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
