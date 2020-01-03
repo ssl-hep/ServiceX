@@ -7,7 +7,10 @@ FROM atlas/analysisbase:21.2.102
 # WARNING: THis is for CentOS (modern versions of analysisbase)
 # TODO: Ask about a better way to deal with this.
 RUN sudo yum -y update
-RUN sudo yum localinstall http://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm -y; \
+# RUN sudo yum localinstall http://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm -y; \
+#     sudo curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg; \
+#     sudo curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo
+RUN sudo yum localinstall http://repo.opensciencegrid.org/osg/3.4/osg-3.4-el7-release-latest.rpm -y; \
     sudo curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg; \
     sudo curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo
 RUN sudo yum install -y xrootd-voms-plugin voms-clients wlcg-voms-atlas fetch-crl osg-ca-certs xrootd xrootd-client
