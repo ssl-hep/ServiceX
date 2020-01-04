@@ -64,7 +64,7 @@ def callback(channel, method, properties, body):
             object_store.upload_file(_request_id, root_file, output_path)
             os.remove(output_path)
 
-        servicex. post_status_update("File " + _file_path + " complete")
+        servicex.post_status_update("File " + _file_path + " complete")
 
         servicex.put_file_complete(_file_path, _file_id, "success",
                                    num_messages=0,
@@ -91,7 +91,7 @@ def transform_single_file(file_path, output_path):
     os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path)
     if r != 0:
-        raise BaseException("Unable to run the file - error return: " + str(r))
+        raise RuntimeError("Unable to run the file - error return: " + str(r))
 
 
 def compile_code():
@@ -100,8 +100,7 @@ def compile_code():
     # this file.
     r = os.system('bash /generated/runner.sh -c')
     if r != 0:
-        raise BaseException("Unable to compile the code - error return: "
-                            + str(r))
+        raise RuntimeError("Unable to compile the code - error return: " + str(r))
 
 
 if __name__ == "__main__":
