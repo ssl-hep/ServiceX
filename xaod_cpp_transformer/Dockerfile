@@ -26,6 +26,7 @@ RUN source /home/atlas/release_setup.sh; \
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
 ENV PYTHONUNBUFFERED=1
+ENV X509_USER_PROXY=/etc/grid-security/x509up
 
 # Copy over the source
 COPY \
