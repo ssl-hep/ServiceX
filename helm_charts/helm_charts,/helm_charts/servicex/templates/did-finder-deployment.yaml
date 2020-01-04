@@ -21,8 +21,6 @@ spec:
         volumeMounts:
           - name: rucio-cfg
             mountPath: /opt/rucio/etc/
-          - name: did-finder-cfg
-            mountPath: /usr/src/app/config/
           - name: x509-secret
             mountPath: /etc/grid-security-ro
             readOnly: true
@@ -31,9 +29,6 @@ spec:
         - name: rucio-cfg
           configMap:
             name: {{ .Release.Name }}-rucio-config
-        - name: did-finder-cfg
-          configMap:
-            name: {{ .Release.Name }}-did-finder-config
         - name: x509-secret
           secret:
             defaultMode: 292
