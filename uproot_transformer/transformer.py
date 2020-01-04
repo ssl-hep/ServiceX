@@ -86,6 +86,9 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, output_path):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
+    os.system("set")
+    os.system("ls $X509_USER_PROXY")
+    os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path)
     if r != 0:
         raise BaseException("Unable to run the file - error return: " + str(r))
