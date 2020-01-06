@@ -89,18 +89,22 @@ def transform_single_file(file_path, output_path):
     os.system("set")
     os.system("ls $X509_USER_PROXY")
     os.system("voms-proxy-info --all")
-    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path)
+    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
     if r != 0:
-        raise RuntimeError("Unable to run the file - error return: " + str(r))
+        with open('log.txt', 'r') as f:
+            errors = f.read()
+            raise RuntimeError("Unable to run the file - error return: " + str(r) + 'errors: \n' + errors)
 
 
 def compile_code():
     # Have to use bash as the file runner.sh does not execute properly, despite its 'x'
     # bit set. This seems to be some vagary of a ConfigMap from k8, which is how we usually get
     # this file.
-    r = os.system('bash /generated/runner.sh -c')
+    r = os.system('bash /generated/runner.sh -c | tee log.txt')
     if r != 0:
-        raise RuntimeError("Unable to compile the code - error return: " + str(r))
+        with open('log.txt', 'r') as f:
+            errors = f.read()
+            raise RuntimeError("Unable to compile the code - error return: " + str(r)+ 'errors: \n' + errors)
 
 
 if __name__ == "__main__":
