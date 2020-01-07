@@ -86,14 +86,17 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, output_path):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
-    os.system("set")
-    os.system("ls $X509_USER_PROXY")
     os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
+    reason_bad = None
     if r != 0:
+        reason_bad = "Error return from transformer: " + str(r)
+    if (reason_bad is None) and not os.path.exists(output_path):
+        reason_bad = "Output file " + output_path + " was not found"
+    if reason_bad is not None:
         with open('log.txt', 'r') as f:
             errors = f.read()
-            raise RuntimeError("Unable to run the file - error return: " + str(r) + 'errors: \n' + errors)
+            raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
 
 
 def compile_code():
