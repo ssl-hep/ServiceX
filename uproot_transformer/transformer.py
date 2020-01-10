@@ -32,6 +32,9 @@ from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
+from servicex.transformer.nanoaod_events import NanoAODEvents
+from servicex.transformer.nanoaod_transformer import NanoAODTransformer
+from servicex.transformer.arrow_writer import ArrowWriter
 import os
 
 
@@ -97,6 +100,14 @@ def transform_single_file(file_path, output_path):
         with open('log.txt', 'r') as f:
             errors = f.read()
             raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
+
+    arrow_writer = ArrowWriter(file_format=args.result_format, server_endpoint=None,
+                               object_store=object_store, messaging=messaging)
+    event_iterator = NanoAODEvents(file_path=file_path, tree_name=tree, attr_name_list=attr_list,
+                                   chunk_size=chunk_size)
+    transformer = NanoAODTransformer(event_iterator)
+    arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.topic,
+                                         file_id=None, request_id=args.request_id)
 
 
 def compile_code():
