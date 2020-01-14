@@ -19,9 +19,15 @@ RUN sudo yum install -y xrootd-server xrootd-client xrootd \
 # Install everything needed to host/run the analysis jobs
 RUN sudo mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 WORKDIR /home/atlas
+COPY bashrc /home/atlas/.bashrc
+COPY bashrc /home/atlas/.bash_profile
 COPY requirements.txt .
 RUN source /home/atlas/release_setup.sh; \
     python2 -m pip install --user -r requirements.txt
+# RUN /bin/bash -c "source /home/atlas/release_setup.sh && \
+#     pip install --user --upgrade pip && \
+#     pip install --user -r requirements.txt && \
+#     pip install --user --index-url https://test.pypi.org/simple/ --no-deps servicex==0.2rc2"
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
@@ -29,8 +35,4 @@ ENV PYTHONUNBUFFERED=1
 ENV X509_USER_PROXY=/etc/grid-security/x509up
 
 # Copy over the source
-COPY \
-    transformer.py \
-    validate_requests.py \
-    proxy-exporter.sh \
-    ./
+COPY . .
