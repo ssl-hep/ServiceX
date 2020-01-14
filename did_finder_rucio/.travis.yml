@@ -1,0 +1,21 @@
+language: python
+
+services:
+  - docker
+
+before_script:
+  - docker pull sslhep/servicex-did-finder:latest || true
+
+script:
+  - docker build --cache-from sslhep/servicex-did-finder -t sslhep/servicex-did-finder:${TRAVIS_BRANCH} .
+
+after_script:
+  - docker images
+
+before_deploy:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+deploy:
+  provider: script
+  script: docker push sslhep/servicex-did-finder:${TRAVIS_BRANCH}
+  on:
+      all_branches: true
