@@ -70,7 +70,7 @@ class TransformRequest(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
-    generated_code_cm = db.Column(db.String(40), nullable=True)
+    generated_code_cm = db.Column(db.String(128), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
