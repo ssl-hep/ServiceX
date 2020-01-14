@@ -30,11 +30,13 @@ import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
+from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.nanoaod_events import NanoAODEvents
 from servicex.transformer.nanoaod_transformer import NanoAODTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
+import uproot
 import os
 
 
@@ -42,6 +44,7 @@ import os
 # a rule of thumb to calculate chunksize
 avg_cell_size = 42
 
+messaging = None
 object_store = None
 
 
@@ -52,6 +55,7 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
     tick = time.time()
@@ -59,7 +63,7 @@ def callback(channel, method, properties, body):
         # Do the transform
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path)
+        transform_single_file(_file_path, output_path, servicex)
 
         tock = time.time()
 
@@ -87,7 +91,7 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path):
+def transform_single_file(file_path, output_path, servicex):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
     os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
@@ -101,13 +105,21 @@ def transform_single_file(file_path, output_path):
             errors = f.read()
             raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
 
-    arrow_writer = ArrowWriter(file_format=args.result_format, server_endpoint=None,
+    flat_file = uproot.open(output_path)
+    flat_tree_name = flat_file.keys()[0]
+    attr_name_list = flat_file[flat_tree_name].keys()
+
+    arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
                                object_store=object_store, messaging=messaging)
-    event_iterator = NanoAODEvents(file_path=file_path, tree_name=tree, attr_name_list=attr_list,
-                                   chunk_size=chunk_size)
+    # NB: We're converting the *output* ROOT file to Arrow arrays
+    # TODO: Implement configurable chunk_size
+    event_iterator = NanoAODEvents(file_path=output_path, tree_name=flat_tree_name,
+                                   attr_name_list=attr_name_list, chunk_size=1000)
     transformer = NanoAODTransformer(event_iterator)
     arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.topic,
                                          file_id=None, request_id=args.request_id)
+    # write_branches_to_arrow(transformer=transformer, topic_name=args.topic, file_id=None,
+    #                         request_id=args.request_id)
 
 
 def compile_code():
@@ -121,14 +133,94 @@ def compile_code():
             raise RuntimeError("Unable to compile the code - error return: " + str(r)+ 'errors: \n' + errors)
 
 
+# For testing of ScratchFileWriter; not used for Kafka broker
+def write_branches_to_arrow(transformer, topic_name, file_id, request_id):
+    from servicex.transformer.scratch_file_writer import ScratchFileWriter
+
+    tick = time.time()
+
+    scratch_writer = None
+
+    batch_number = 0
+    total_events = 0
+    total_bytes = 0
+    for pa_table in transformer.arrow_table():
+        if object_store:
+            if not scratch_writer:
+                scratch_writer = ScratchFileWriter(file_format=args.result_format)
+                scratch_writer.open_scratch_file(pa_table)
+
+            scratch_writer.append_table_to_scratch(pa_table)
+
+        total_events = total_events + pa_table.num_rows
+        batches = pa_table.to_batches(max_chunksize=transformer.chunk_size)
+
+        for batch in batches:
+            if messaging:
+                print(batch)
+                key = transformer.file_path + "-" + str(batch_number)
+
+                sink = pa.BufferOutputStream()
+                writer = pa.RecordBatchStreamWriter(sink, batch.schema)
+                writer.write_batch(batch)
+                writer.close()
+                messaging.publish_message(
+                    topic_name,
+                    key,
+                    sink.getvalue())
+
+                total_bytes = total_bytes + len(sink.getvalue().to_pybytes())
+
+                avg_cell_size = len(sink.getvalue().to_pybytes()) / len(
+                    transformer.attr_name_list) / batch.num_rows
+                print("Batch number " + str(batch_number) + ", "
+                      + str(batch.num_rows) +
+                      " events published to " + topic_name,
+                      "Avg Cell Size = " + str(avg_cell_size) + " bytes")
+                batch_number += 1
+
+                # if server_endpoint:
+                #     post_status_update(server_endpoint, "Processed " +
+                #                        str(batch.num_rows))
+
+    if object_store:
+        scratch_writer.close_scratch_file()
+
+        print("Writing parquet to ", request_id, " as ",
+              transformer.file_path.replace('/', ':'))
+
+        object_store.upload_file(request_id,
+                                      transformer.file_path.replace('/', ':'),
+                                      scratch_writer.file_path)
+
+        scratch_writer.remove_scratch_file()
+
+    if servicex:
+        servicex. post_status_update("File " + transformer.file_path + " complete")
+
+    tock = time.time()
+    print("Real time: " + str(round(tock - tick / 60.0, 2)) + " minutes")
+    if servicex:
+        servicex.put_file_complete(transformer.file_path, file_id, "success",
+                                        num_messages=batch_number,
+                                        total_time=round(tock - tick / 60.0, 2),
+                                        total_events=total_events,
+                                        total_bytes=total_bytes)
+
+
 if __name__ == "__main__":
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
 
-    assert args.result_format == 'root-file', 'We only know how to create root file output'
-    assert args.result_destination != 'kafka', 'Kafka not yet supported'
+    # assert args.result_format == 'root-file', 'We only know how to create root file output'
+    # assert args.result_destination != 'kafka', 'Kafka not yet supported'
 
-    if not args.output_dir and args.result_destination == 'object-store':
+    kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
+
+    if args.result_destination == 'kafka':
+        messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
+        object_store = None
+    elif not args.output_dir and args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
 
