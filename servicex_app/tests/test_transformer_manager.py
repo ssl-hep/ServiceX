@@ -156,6 +156,29 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
             assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
 
+    def test_launch_transformer_jobs_with_kafka_broker(self, mocker, mock_rabbit_adaptor):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+
+        transformer = TransformerManager('external-kubernetes')
+
+        client = self._test_client(transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor)
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka', result_format='arrow',
+                kafka_broker='kafka.servicex.org', x509_secret='x509')
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, '--result-destination') == 'kafka'
+            assert _arg_value(args, '--brokerlist') == 'kafka.servicex.org'
+
     def test_shutdown_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes
         mocker.patch.object(kubernetes.config, 'load_kube_config')
