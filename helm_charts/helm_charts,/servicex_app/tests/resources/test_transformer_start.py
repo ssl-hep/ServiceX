@@ -61,16 +61,18 @@ class TestTransformationStart(ResourceTestBase):
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
 
-        mock_transformer_manager.\
-            launch_transformer_jobs.assert_called_with(image='ssl-hep/foo:latest',
-                                                             request_id='1234',
-                                                             workers=42,
-                                                             chunk_size=1000,
-                                                             rabbitmq_uri='amqp://trans.rabbit',
-                                                             namespace='my-ws',
-                                                             result_destination='kafka',
-                                                             result_format='arrow',
-                                                             x509_secret='my-x509-secret')
+        mock_transformer_manager. \
+            launch_transformer_jobs \
+            .assert_called_with(image='ssl-hep/foo:latest',
+                                request_id='1234',
+                                workers=42,
+                                chunk_size=1000,
+                                rabbitmq_uri='amqp://trans.rabbit',
+                                namespace='my-ws',
+                                result_destination='kafka',
+                                result_format='arrow',
+                                x509_secret='my-x509-secret',
+                                kafka_broker='http://ssl-hep.org.kafka:12345')
 
         mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
 
