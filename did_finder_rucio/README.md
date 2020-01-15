@@ -15,8 +15,6 @@ The latest image is also available on [dockerhub](https://cloud.docker.com/u/ssl
 The service and the x509 proxy require several files and folders to be mounted
 in the running container:
 * `/etc/grid-security-ro/x509up`: File with valid X509 Proxy
-* `/usr/src/app/config/config.json` - JSON config file that controls the request
-lookup service
 
 ### Rucio Config
 The service requires a custom `rucio.cfg` which contains the CERN account name
@@ -24,26 +22,24 @@ associated with the provided Certs. A template .cfg file is provided in this
 repos `config` directory. Copy this file as `config/rucio.cfg` and update the 
 `account` property. 
 
-### Grid Certs
-*This section is out of date*
-Rucio requires access to your CERN grid cert to access the service. If you 
-don't already have these, follow 
-these [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) .
-
-Once this is complete you will have usercert and userkey PEM files in your 
-~/.globus directory. We will mount this directory readonly into the container.
-
 ### Docker Command Line
+You will need an X509 proxy avaiable as a mountable volume. The X509 Secret
+container can do using your credentials and cert:
+```bash
+docker run --rm \
+    --mount type=bind,source=$HOME/.globus,readonly,target=/etc/grid-certs \
+    --mount type=bind,source="$(pwd)"/secrets/secrets.txt,target=/servicex/secrets.txt \
+    --mount type=volume,source=x509,target=/etc/grid-security \
+    --name=x509-secrets sslhep/x509-secrets:latest
+```
 
 To start docker container: 
 ```bash
-docker run --rm -d \
-    --mount type=bind,source=$HOME/.globus,readonly,target=/etc/grid-certs \
+docker run --rm -it \
+    --mount type=volume,source=x509,target=/etc/grid-security-ro \
     --mount type=bind,source="$(pwd)"/config/rucio.cfg,target=/opt/rucio/etc/rucio.cfg \
-    --mount type=bind,source="$(pwd)"/secrets/secrets.txt,target=/servicex/secrets.txt \
-    --mount type=bind,source="$(pwd)"/config/config.json,target=/usr/src/app/config/config.json \
     --mount type=bind,source="$(pwd)"/,target=/code \
-    --name=did-finder sslhep/servicex-did-finder:reactive 
+    --name=did-finder sslhep/servicex-did-finder:develop 
 ```
 
 After the container is started you can attach to it and start using the rucio commands:
@@ -72,10 +68,5 @@ Arguments to this script are:
 drive a test process. It will generate output, but will only have a record to 
 a single file that you specify. This could be a local ROOT file and allow you 
 to avoid needing a grid cert since it never talks to Rucio
-* `--site` _XCache Site_ - This site is used to locate appropriate replicas. 
-Defaults to MWT2 
-
-
-## NOTE
-* needs update of the README :) so it explains how to run it in k8s not docker. 
-* needs rewrite to use REST API and not ES directly
+* `--site` _XCache Site_ - If provided, this site is used to locate appropriate replicas. 
+Defaults to None
