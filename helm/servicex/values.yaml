@@ -33,7 +33,7 @@ didFinder:
 # the transformer
 preflight:
   image: sslhep/servicex_xaod_cpp_transformer
-  tag: develop
+  tag: v0.2
   pullPolicy: IfNotPresent
 
 #
@@ -41,7 +41,7 @@ preflight:
 codeGen:
   enabled: true
   image: sslhep/servicex_code_gen_funcadl_xaod
-  tag: master
+  tag: v0.2
   pullPolicy: IfNotPresent
 
 
@@ -52,7 +52,7 @@ transformer:
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: latest
+  tag: v0.2
   pullPolicy: IfNotPresent
 
 
