@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
+import traceback
 from datetime import datetime
 from datetime import timezone
 import json
@@ -35,6 +37,7 @@ from flask_restful import reqparse
 
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
+from werkzeug.exceptions import BadRequest
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
@@ -77,10 +80,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
     def post(self):
         try:
-            try:
-                transformation_request = parser.parse_args()
-            except BaseException as e:
-                return {'message': f'The json request was malformed: {str(e)}'}, 400
+            transformation_request = parser.parse_args()
 
             request_id = str(uuid.uuid4())
             time = datetime.now(tz=timezone.utc)
@@ -154,9 +154,11 @@ class SubmitTransformationRequest(ServiceXResource):
             return {
                 "request_id": str(request_id)
             }
-
+        except BadRequest as bad_request:
+            return {'message': f'The json request was malformed: {str(bad_request)}'}, 400
         except ValueError as eek:
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
-        except Exception as eek:
-            print(eek)
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
             return {'message': 'Something went wrong'}, 500
