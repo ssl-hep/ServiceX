@@ -1,4 +1,7 @@
 # ServiceX_xAOD_CPP_transformer
+
+![](https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer/workflows/Docker%20Hub/badge.svg)
+
 ServiceX Transformer that converts ATLAS xAOD files into columnwise data
 
 ## Usage
@@ -6,7 +9,7 @@ ServiceX Transformer that converts ATLAS xAOD files into columnwise data
 You can invoke the transformer from the command line. For example:
 
 ```
-> docker run --rm -it servicexxaodcpptransformer:latest python transformer.py --help
+> docker run --rm -it sslhep/servicex_xaod_cpp_transformer:latest python transformer.py --help
 usage: transformer.py [-h] [--brokerlist BROKERLIST] [--topic TOPIC]
                       [--chunks CHUNKS] [--tree TREE] [--attrs ATTR_NAMES]
                       [--path PATH] [--limit LIMIT]
@@ -41,6 +44,17 @@ optional arguments:
                         Request ID to read from queue
 ```
 
+You will need an X509 proxy avaiable as a mountable volume. The X509 Secret
+container can do using your credentials and cert:
+```bash
+docker run --rm \
+    --mount type=bind,source=$HOME/.globus,readonly,target=/etc/grid-certs \
+    --mount type=bind,source="$(pwd)"/secrets/secrets.txt,target=/servicex/secrets.txt \
+    --mount type=volume,source=x509,target=/etc/grid-security \
+    --name=x509-secrets sslhep/x509-secrets:latest
+```
+
+
 ## Development
 ```bash
  python3 -m pip install -r requirements.txt
@@ -55,10 +69,16 @@ Under tests you'll find input files needed to try this out. Use the following do
 
 ```
 docker run --rm -it \
+  --mount type=volume,source=x509,target=/etc/grid-security-ro \
   --mount type=bind,source=$(pwd),target=/code \
   --mount type=bind,source=$(pwd)/tests,target=/data \
   --mount type=bind,source=$(pwd)/tests/r21_test_cpp_files,target=/generated,readonly \
-  servicexxaodcpptransformer:latest bash
+  sslhep/servicex_xaod_cpp_transformer:latest bash
 ```
 
 Then use `trasformer.py` and pass it the `--path` argument.
+
+For example:
+```bash
+ python transformer.py --path /data/jets_10_events.root --result-format root-file --output-dir /tmp --result-destination output-dir
+```
