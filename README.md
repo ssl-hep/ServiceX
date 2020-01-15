@@ -33,24 +33,19 @@ cluster you can use that. Otherwise, you can enable a
 single node kubernetes cluster on your desktop 
 [using Docker-Desktop](https://www.docker.com/blog/kubernetes-is-now-available-in-docker-desktop-stable-channel/).
 
-The service is published as a helm chart. You will need a version of helm 
+The service is published as a helm chart. You will need a version of helm. The
+chart has been tested on Helm3
 [installed on your desktop](https://helm.sh/docs/using_helm/).
-
-Once installed you will need to initilize the connection between helm and your
-cluster. 
-```bash
-% helm init --history-max 200
-``` 
 
 
 ### Step 1 - Deploy a Demo Version of ServiceX
-ServiceX will use your CERN grid certificates to communicate with Rucio. We've
-set up a simplified deployment that will just use a public xAOD file so you 
-try out ServiceX with minimal fuss.
+ServiceX will use your CERN grid certificates to communicate with Rucio. In this
+repo we've included a set of demo values that will just use a public xAOD file 
+so you can try out ServiceX with minimal fuss.
 ```bash
 % helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
 % helm repo update
-% helm install ssl-hep/servicex 
+% helm install -g -f demo-values.yaml ssl-hep/servicex 
 ```
 
 The notes at the end give you some helpful tips on interacting with the pods in 
@@ -67,11 +62,13 @@ You can check on the status of the deployment with the command
 Eventually your setup should resemble this:
 ```
 NAME                                             READY   STATUS    RESTARTS   AGE
-exegetical-mouse-did-finder-868484f5b5-8pwdk     1/1     Running   3          2m24s
-exegetical-mouse-minio-57cbd595b5-77426          1/1     Running   0          2m24s
-exegetical-mouse-preflight-64c5b6b647-5ctlb      1/1     Running   4          2m24s
-exegetical-mouse-rabbitmq-0                      1/1     Running   0          2m23s
-exegetical-mouse-servicex-app-6fdd5bf7b6-dcwwd   1/1     Running   3          2m24s
+servicex-1579021789-code-gen-7cd998d5b6-nwtgv            1/1     Running   0          49m
+servicex-1579021789-did-finder-7c5cbb4575-52wxf          1/1     Running   0          7m53s
+servicex-1579021789-minio-78b55bfdf8-mbmmf               1/1     Running   0          49m
+servicex-1579021789-preflight-b748b4dfd-qqt89            1/1     Running   4          49m
+servicex-1579021789-rabbitmq-0                           1/1     Running   0          49m
+servicex-1579021789-servicex-app-98779c79c-cvmqx         1/1     Running   3          49m
+servicex-1579021789-x509-secrets-74f4bcc8bb-5kqvb        1/1     Running   0          49m
 ```
 
 The name of your release will be different.
@@ -87,6 +84,7 @@ The default values for the ServiceX helm chart deploy the following services:
 | minio | An [opensource implementation](https://min.io) of Amazon's S3 object store. It is not required for ServiceX, but makes it easy to deliver results from smaller transformations as downloadable files. |
 | did-finder | This service accepts DIDs and consults Rucio to find replicas of the constituaent ROOT files. It sends these files back to the REST server so the transformers can access them |
 | preflight | This service accepts the first ROOT file found by the DID-Finder and does a quick validation of your request to make sure the columns are valid. Only after passing this test do the transformer jobs get started |
+| x509-secrets | This service uses your provided grid cert and credentials to obtain an X509 proxy from VOMs. This proxy is stored in the cluster as a secret that the DID finder and Transformers can mount to connect to resources on your behalf |
 
 ### Step 2 - Forward Ports to Your Desktop
 Kubernetes offers some sophisticated ways to expose deployed services for 
@@ -117,7 +115,8 @@ We have a notebook that submits a sample request to your serviceX, waits for
 the transformation to complete and downloads the results. The notebook is 
 found in the `examples` folder of this repo.
 
-First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/)
+First create a python [virtualenv](https://virtualenv.pypa.io/en/latest/). Note that the notebooks
+(and package requirements) are currently configured to work for Python 3.
 
 ```bash
 % virtualenv ~/.virtualenvs/servicex_demo
@@ -172,15 +171,23 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | Parameter                            | Description                                      | Default                                                 |
 | ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
-| `app.tag`                            | ServiceX image tag                               | `latest`                                               |
+| `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
-| `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                   |
+| `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           | 
+| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           |
+| `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |  
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
-| `preflight.tag`                      | Preflight image tag                              | `latest`                                              |
+| `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
+| `codeGen.enabled`                    | Enable deployment of code generator service?     | `true`                                                  |
+| `codeGen.image`                      | Code Gen image name                              | `sslhep/servicex_code_gen_funcadl_xaod`                 |
+| `codeGen.tag`                        | Code Gen image tag                               | `latest`                                                |
+| `codeGen.pullPolicy`                 | Code Gen image pull policy                       | `IfNotPresent`                                          |
+| `x509Secrets.image`                  | X509 Secret Service image name                   | `sslhep/x509-secrets`                                   |
+| `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
+| `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `IfNotPresent`                                          |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
 | `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
