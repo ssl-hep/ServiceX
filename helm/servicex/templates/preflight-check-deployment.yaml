@@ -17,7 +17,7 @@ spec:
         env:
           - name: "BASH_ENV"
             value: "/home/atlas/.bashrc"
-        args: ["/home/atlas/proxy-exporter.sh & sleep 5 && python validate_requests.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+        args: ["/home/atlas/proxy-exporter.sh & sleep 5 && python validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.rabbitmq.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.preflight.pullPolicy }}
