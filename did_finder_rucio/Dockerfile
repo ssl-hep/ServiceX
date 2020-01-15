@@ -33,7 +33,6 @@ SHELL [ "/usr/bin/scl", "enable", "rh-python36" ]
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
-#COPY bashrc /root/.bashrc
 
 COPY scl_enable /usr/bin/scl_enable
 ENV BASH_ENV="/usr/bin/scl_enable" \
@@ -46,6 +45,4 @@ COPY . .
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
-
-CMD sh -c "/usr/src/app/run_x509_updater.sh"
 

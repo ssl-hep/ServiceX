@@ -1,4 +1,5 @@
 # Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,11 +31,15 @@
 def parse_did(did):
     """
     Parse a DID string into the scope and name
+    Allow for no scope to be included
     :param did:
     :return: Dictionary with keys "scope" and "name"
     """
     d = dict()
-    d['scope'], d['name'] = did.split(":")
+    if ':' in did:
+        d['scope'], d['name'] = did.split(":")
+    else:
+        d['scope'], d['name'] = '', did
     return d
 
 
@@ -52,17 +57,19 @@ def find_replicas(file, site, replica_client):
     g_replicas = None
     while not g_replicas:
         try:
+            location = {'site': site} if site else None
+
             g_replicas = replica_client.list_replicas(
                 dids=[{'scope': file['scope'], 'name': file['name']}],
                 schemes=['root'],
-                client_location={'site': site})
+                client_location=location)
 
         except Exception as eek:
             print("\n\n\n\n\nERROR READING REPLICA ", eek)
     return g_replicas
 
 
-def get_sel_path(replica):
+def get_sel_path(replica, prefix):
     sel_path = None
 
     if 'pfns' not in replica:
@@ -75,7 +82,7 @@ def get_sel_path(replica):
         if meta['domain'] == 'lan':
             break
 
-    return sel_path
+    return prefix+sel_path
 
 class DIDSummary:
     def __init__(self, did):
@@ -95,8 +102,11 @@ class DIDSummary:
             self.files_skipped))
 
     def accumulate(self, file_record):
-        self.total_bytes += file_record['file_size']
-        self.total_events += file_record['file_events']
+        file_size_key = 'file_size' if 'file_size' in file_record else 'bytes'
+        file_events_key = 'file_events' if 'file_events' in file_record else 'events'
+
+        self.total_bytes += int(file_record[file_size_key] or 0)
+        self.total_events += int(file_record[file_events_key] or 0)
 
     def add_file(self, file_record):
         self.files += 1
