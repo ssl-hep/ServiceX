@@ -19,27 +19,31 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: latest
+  tag: v0.2
   pullPolicy: IfNotPresent
 
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: latest
+  tag: v0.2
   pullPolicy: IfNotPresent
-
-  # For easy testing, we set this to be a publicly accessable xAOD File
-  # The DID Finder will always just return this file instead of connecting
-  # To rucio to actually resolve the dataset
-  # Set this to empty to actually use the DID Finder
-  staticFile: 'https://recastwww.web.cern.ch/recastwww/data/reana-recast-demo/mc15_13TeV.123456.cap_recast_demo_signal_one.root'
+  site:
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
 preflight:
-  image: sslhep/servicex-transformer
-  tag: latest
+  image: sslhep/servicex_xaod_cpp_transformer
+  tag: develop
   pullPolicy: IfNotPresent
+
+#
+# C++ func_adl Code Generator service
+codeGen:
+  enabled: true
+  image: sslhep/servicex_code_gen_funcadl_xaod
+  tag: master
+  pullPolicy: IfNotPresent
+
 
 # Pull policy for the worker pods - the image and version are specified as
 # part of the transform request
