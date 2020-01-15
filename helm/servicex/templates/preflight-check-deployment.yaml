@@ -17,17 +17,25 @@ spec:
         env:
           - name: "BASH_ENV"
             value: "/home/atlas/.bashrc"
-        args: ["python validate_requests.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+        args: ["/home/atlas/proxy-exporter.sh & sleep 5 && python validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.rabbitmq.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.preflight.pullPolicy }}
-        {{ if .Values.hostMount }}
         volumeMounts:
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+
+          {{ if .Values.hostMount }}
           - name: rootfiles
             mountPath: /data
-        {{ end }}
-      {{ if .Values.hostMount }}
+          {{ end }}
       volumes:
+        - name: x509-secret
+          secret:
+            defaultMode: 292
+            secretName: {{ .Release.Name }}-x509-proxy
+        {{ if .Values.hostMount }}
         - name: rootfiles
           hostPath:
             path: {{ .Values.hostMount }}

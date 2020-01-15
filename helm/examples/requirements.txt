@@ -1,12 +1,5 @@
-jupyter
-request
-minio
-pyarrow
-requests
-pandas
-confluent-kafka
+# Works in Python 3
 awkward>=0.11.0
-uproot
 coffea>=0.5.6
-lz4tools
-
+confluent_kafka
+pyarrow
