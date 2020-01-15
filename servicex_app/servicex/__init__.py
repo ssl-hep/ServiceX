@@ -30,6 +30,7 @@ import os
 from flask import Flask
 from flask_restful import Api
 
+from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
@@ -53,7 +54,8 @@ def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
                provided_object_store=None,
-               provided_elasticsearch_adapter=None):
+               provided_elasticsearch_adapter=None,
+               provided_code_gen_service=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -85,6 +87,13 @@ def create_app(test_config=None,
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 
+        if not provided_code_gen_service:
+            code_gen_service = CodeGenAdapter(
+                app.config['CODE_GEN_SERVICE_URL'],
+                transformer_manager)
+        else:
+            code_gen_service = provided_code_gen_service
+
         if 'ELASTIC_SEARCH_LOGGING_ENABLED' in app.config \
                 and app.config['ELASTIC_SEARCH_LOGGING_ENABLED']\
                 and not provided_elasticsearch_adapter:
@@ -112,6 +121,6 @@ def create_app(test_config=None,
             db.create_all()
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor)
+                   elasticsearch_adaptor, code_gen_service)
 
     return app

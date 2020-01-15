@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import base64
+
 import kubernetes
 from kubernetes import client
 from flask import current_app
@@ -41,7 +43,8 @@ class TransformerManager:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
     def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers,
-                          result_destination, result_format, x509_secret, kafka_broker):
+                          result_destination, result_format, x509_secret, kafka_broker,
+                          generated_code_cm):
         volume_mounts = [
             client.V1VolumeMount(
                 name='x509-secret',
@@ -54,6 +57,16 @@ class TransformerManager:
                 secret=client.V1SecretVolumeSource(secret_name=x509_secret)
             )
         ]
+
+        if generated_code_cm:
+            volumes.append(client.V1Volume(
+                name='generated-code',
+                config_map=client.V1ConfigMapVolumeSource(
+                    name=generated_code_cm)
+                )
+            )
+            volume_mounts.append(
+                client.V1VolumeMount(mount_path="/generated", name='generated-code'))
 
         if "TRANSFORMER_LOCAL_PATH" in current_app.config:
             path = current_app.config['TRANSFORMER_LOCAL_PATH']
@@ -76,14 +89,16 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY'])
             ]
 
-        python_args = [" --request-id " + request_id +
+        python_args = ["/home/atlas/proxy-exporter.sh & sleep 5 && " +
+                       "python /home/atlas/transformer.py " +
+                       " --request-id " + request_id +
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
                        " --result-destination " + result_destination +
                        " --result-format " + result_format]
 
         if kafka_broker:
-            python_args.append(" --brokerlist "+kafka_broker)
+            python_args[0] += " --brokerlist "+kafka_broker
 
         # Configure Pod template container
         container = client.V1Container(
@@ -93,8 +108,7 @@ class TransformerManager:
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
             env=env,
-            args=["/home/atlas/proxy-exporter.sh & sleep 5 && " +
-                  "python xaod_branches.py " + " ".join(python_args)]
+            args=python_args
         )
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
@@ -125,12 +139,13 @@ class TransformerManager:
         print("Job created. status='%s'" % str(api_response.status))
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
-                                rabbitmq_uri, namespace, x509_secret,
-                                result_destination, result_format, kafka_broker=None):
+                                rabbitmq_uri, namespace, x509_secret, generated_code_cm,
+                                result_destination, result_format, kafka_broker=None,
+                                ):
         batch_v1 = client.BatchV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker)
+                                     x509_secret, kafka_broker, generated_code_cm)
         self.create_job(batch_v1, job, namespace)
 
     def shutdown_transformer_job(self, request_id, namespace):
@@ -143,3 +158,30 @@ class TransformerManager:
         batch_v1.delete_namespaced_job(name="transformer-" + request_id,
                                        body=body,
                                        namespace=namespace)
+
+    def create_configmap_from_zip(self, zipfile, request_id, namespace):
+        configmap_name = "{}-generated-source".format(request_id)
+        data = {
+            file.filename:
+                base64.b64encode(zipfile.open(file).read()).decode("ascii") for file in
+            zipfile.filelist
+        }
+
+        metadata = client.V1ObjectMeta(
+            name=configmap_name,
+            namespace=namespace,
+        )
+
+        # Instantiate the configmap object
+        configmap = client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            binary_data=data,
+            metadata=metadata
+        )
+
+        api_instance = client.CoreV1Api()
+        api_instance.create_namespaced_config_map(
+            namespace=namespace,
+            body=configmap)
+        return configmap_name

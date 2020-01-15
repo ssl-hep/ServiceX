@@ -25,78 +25,107 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
+import traceback
 from datetime import datetime
 from datetime import timezone
 import json
 import uuid
 
+from flask import current_app
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
+from werkzeug.exceptions import BadRequest
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
                     required=True)
 parser.add_argument('columns', help='This field cannot be blank',
-                    required=True)
+                    required=False)
+parser.add_argument('selection', help='This field or columns must be provided', required=False)
 parser.add_argument('image', required=False)
 parser.add_argument('chunk-size', required=False, type=int)
 parser.add_argument('workers', required=False, type=int)
 parser.add_argument('result-destination', required=True, choices=['kafka', 'object-store'])
 parser.add_argument('result-format', required=False,
-                    choices=['arrow', 'parquet'], default='arrow')
+                    choices=['arrow', 'parquet', 'root-file'], default='arrow')
 parser.add_argument('kafka', required=False, type=dict)
 
 kafka_parser = reqparse.RequestParser()
 kafka_parser.add_argument('broker', required=False, location=('kafka'))
 
 
+def _workflow_name(transform_request):
+    'Look at the keys and determine what sort of a workflow we want to run'
+    has_columns = ('columns' in transform_request) and transform_request['columns']
+    has_selection = ('selection' in transform_request) and transform_request['selection']
+    if has_columns and not has_selection:
+        return 'straight_transform'
+    if not has_columns and has_selection:
+        return 'selection_codegen'
+    raise ValueError('Cannot determine workflow from argument - '
+                     'selection or columns must be given, and not both')
+
+
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter):
+    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter, code_gen_service):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.elasticsearch_adapter = elasticsearch_adapter
+        cls.code_gen_service = code_gen_service
         return cls
 
     def post(self):
-        transformation_request = parser.parse_args()
-        request_id = str(uuid.uuid4())
-        time = datetime.now(tz=timezone.utc)
-
-        if self.object_store and \
-                transformation_request['result-destination'] == 'object-store':
-            self.object_store.create_bucket(request_id)
-
-        if transformation_request['result-destination'] == 'kafka':
-            broker = transformation_request['kafka']['broker']
-        else:
-            broker = None
-
-        request_rec = TransformRequest(
-            did=transformation_request['did'],
-            submit_time=time,
-            columns=transformation_request['columns'],
-            request_id=str(request_id),
-            image=transformation_request['image'],
-            chunk_size=transformation_request['chunk-size'],
-            result_destination=transformation_request['result-destination'],
-            result_format=transformation_request['result-format'],
-            kafka_broker=broker,
-            workers=transformation_request['workers']
-        )
-
-        did_request = {
-            "request_id": request_rec.request_id,
-            "did": request_rec.did,
-            "service-endpoint": self._generate_advertised_endpoint(
-                "servicex/transformation/" +
-                request_rec.request_id
-            )
-        }
-
         try:
+            transformation_request = parser.parse_args()
+
+            request_id = str(uuid.uuid4())
+            time = datetime.now(tz=timezone.utc)
+
+            if self.object_store and \
+                    transformation_request['result-destination'] == 'object-store':
+                self.object_store.create_bucket(request_id)
+                # WHat happens if object-store and object_store is None?
+
+            if transformation_request['result-destination'] == 'kafka':
+                broker = transformation_request['kafka']['broker']
+            else:
+                broker = None
+
+            request_rec = TransformRequest(
+                did=transformation_request['did'],
+                submit_time=time,
+                columns=transformation_request['columns'],
+                selection=transformation_request['selection'],
+                request_id=str(request_id),
+                image=transformation_request['image'],
+                chunk_size=transformation_request['chunk-size'],
+                result_destination=transformation_request['result-destination'],
+                result_format=transformation_request['result-format'],
+                kafka_broker=broker,
+                workers=transformation_request['workers'],
+                workflow_name=_workflow_name(transformation_request)
+            )
+
+            did_request = {
+                "request_id": request_rec.request_id,
+                "did": request_rec.did,
+                "service-endpoint": self._generate_advertised_endpoint(
+                    "servicex/transformation/" +
+                    request_rec.request_id
+                )
+            }
+
+            # If we are doing the xaod_cpp workflow, then the first thing to do is make
+            # sure the requested selection is correct, and generate the C++ files
+            if request_rec.workflow_name == 'selection_codegen':
+                namespace = current_app.config['TRANSFORMER_NAMESPACE']
+                request_rec.generated_code_cm = \
+                    self.code_gen_service.generate_code_for_selection(request_rec, namespace)
+
             # Create queue for transformers to read from
             self.rabbitmq_adaptor.setup_queue(request_id)
 
@@ -125,7 +154,11 @@ class SubmitTransformationRequest(ServiceXResource):
             return {
                 "request_id": str(request_id)
             }
-
-        except Exception as eek:
-            print(eek)
+        except BadRequest as bad_request:
+            return {'message': f'The json request was malformed: {str(bad_request)}'}, 400
+        except ValueError as eek:
+            return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
             return {'message': 'Something went wrong'}, 500

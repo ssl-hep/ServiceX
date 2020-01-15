@@ -6,7 +6,7 @@
 	},
 	"item": [
 		{
-			"name": "submit transformation",
+			"name": "submit func_adl transformation",
 			"event": [
 				{
 					"listen": "test",
@@ -37,7 +37,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:downloadable\",\n\t\"result-destination\": \"kafka\",\n\t\"kafka\":{\n\t\t\"broker\": \"servicex-kafka-1.slateci.net:19092\"\n\t},\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
@@ -53,7 +53,7 @@
 			"response": []
 		},
 		{
-			"name": "submit transformation to h5",
+			"name": "HTT Flat Ntuple",
 			"event": [
 				{
 					"listen": "test",
@@ -84,7 +84,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:downloadable\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 0\n}\t"
+					"raw": "{\n\t\"did\": \"user.kchoi:user.kchoi.NtupleForServiceX\",\n\t\"tree-name\": \"JET_CategoryReduction_JET_Flavor_Composition__1down\",\n\t\"columns\": \"MUON_MS__1down;2\",\n\t\"image\": \"sslhep/servicex-transformer:nano-aod\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
@@ -131,7 +131,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 25\n}"
+					"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 100\n}\t"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
@@ -384,7 +384,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"timestamp\": '2019-08-16T17:52:39.451950',\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
+					"raw": "{\n\t\"timestamp\": '2019-08-16T17:52:39.451950',\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\",\n        \"file-id\": 12,\n        \"status\": \"done\",\n        \"num-messages\": 100,\n        \"total-time\": 32,\n        \"total-events\": 10000,\n        \"total-bytes\": 3203,\n        \"avg-rate\": 30.3\n}"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation/:request_id/complete",
