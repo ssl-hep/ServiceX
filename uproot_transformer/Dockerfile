@@ -21,8 +21,7 @@ RUN sudo mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 WORKDIR /home/atlas
 COPY requirements.txt .
 RUN source /home/atlas/release_setup.sh; \
-    python2 -m pip install --user -r requirements.txt && \
-    python2 -m pip install --user --index-url https://test.pypi.org/simple/ --no-deps servicex==0.2rc2
+    python2 -m pip install --user -r requirements.txt
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
