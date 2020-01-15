@@ -67,6 +67,7 @@ class TestTransformationStart(ResourceTestBase):
                                 request_id='1234',
                                 workers=42,
                                 chunk_size=1000,
+                                generated_code_cm=None,
                                 rabbitmq_uri='amqp://trans.rabbit',
                                 namespace='my-ws',
                                 result_destination='kafka',

@@ -30,6 +30,7 @@ from pytest import fixture
 from servicex import create_app
 from servicex.models import TransformRequest
 from servicex.rabbit_adaptor import RabbitAdaptor
+from servicex.code_gen_adapter import CodeGenAdapter
 
 
 class ResourceTestBase:
@@ -49,7 +50,8 @@ class ResourceTestBase:
             'OBJECT_STORE_ENABLED': False,
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
-            'MINIO_SECRET_KEY': 'leftfoot1'
+            'MINIO_SECRET_KEY': 'leftfoot1',
+            'CODE_GEN_SERVICE_URL': 'http://localhost:5001'
         }
 
     @staticmethod
@@ -57,7 +59,8 @@ class ResourceTestBase:
                      transformation_manager=None,
                      rabbit_adaptor=None,
                      object_store=None,
-                     elasticsearch_adapter=None):
+                     elasticsearch_adapter=None,
+                     code_gen_service=None):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -66,7 +69,7 @@ class ResourceTestBase:
             config.update(additional_config)
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
-                         object_store, elasticsearch_adapter)
+                         object_store, elasticsearch_adapter, code_gen_service)
 
         return app.test_client()
 
@@ -90,3 +93,7 @@ class ResourceTestBase:
     @fixture
     def mock_rabbit_adaptor(self, mocker):
         return mocker.MagicMock(RabbitAdaptor)
+
+    @fixture
+    def mock_code_gen_service(self, mocker):
+        return mocker.MagicMock(CodeGenAdapter)
