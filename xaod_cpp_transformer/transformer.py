@@ -33,8 +33,8 @@ from servicex.transformer.transformer_argument_parser import TransformerArgument
 from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-from servicex.transformer.nanoaod_events import NanoAODEvents
-from servicex.transformer.nanoaod_transformer import NanoAODTransformer
+from servicex.transformer.uproot_events import UprootEvents
+from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
@@ -113,9 +113,9 @@ def transform_single_file(file_path, output_path, servicex):
                                object_store=object_store, messaging=messaging)
     # NB: We're converting the *output* ROOT file to Arrow arrays
     # TODO: Implement configurable chunk_size
-    event_iterator = NanoAODEvents(file_path=output_path, tree_name=flat_tree_name,
-                                   attr_name_list=attr_name_list, chunk_size=1000)
-    transformer = NanoAODTransformer(event_iterator)
+    event_iterator = Uprootvents(file_path=output_path, tree_name=flat_tree_name,
+                                 attr_name_list=attr_name_list, chunk_size=1000)
+    transformer = UprootTransformer(event_iterator)
     arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.topic,
                                          file_id=None, request_id=args.request_id)
     # write_branches_to_arrow(transformer=transformer, topic_name=args.topic, file_id=None,
