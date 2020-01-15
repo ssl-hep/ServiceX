@@ -10,49 +10,26 @@ spec:
       labels:
         app: {{ .Release.Name }}-did-finder
     spec:
-      initContainers:
-        - name: take-data-dir-ownership
-          image: alpine:3.6
-          command: ["/bin/sh","-c"]
-          args: ["base64 -d /etc/grid-certs-ro/usercert.pem.b64 > /etc/grid-certs/usercert.pem; chmod 600 /etc/grid-certs/usercert.pem; base64 -d /etc/grid-certs-ro/userkey.pem.b64 > /etc/grid-certs/userkey.pem; chmod 400 /etc/grid-certs/userkey.pem"]
-          volumeMounts:
-          - name: grid-certs-rw-copy
-            mountPath: /etc/grid-certs/
-          - name: grid-certs-cfg
-            mountPath: /etc/grid-certs-ro/
       containers:
       - name: {{ .Release.Name }}-did-finder
         image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
         command: ["bash","-c"]
-        args: ["/usr/src/app/run_x509_updater.sh & sleep 10 && env PYTHONPATH=./did_finder python scripts/did_finder.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.staticFile }} --staticfile {{ .Values.didFinder.staticFile }} {{ end }}"]
+        args: ["/usr/src/app/proxy-exporter.sh & sleep 5 && env PYTHONPATH=./did_finder python scripts/did_finder.py --rabbit-uri amqp://user:leftfoot1@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }} {{ if .Values.didFinder.staticFile }} --staticfile {{ .Values.didFinder.staticFile }} {{ end }}"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
         volumeMounts:
           - name: rucio-cfg
             mountPath: /opt/rucio/etc/
-          - name: did-finder-cfg
-            mountPath: /usr/src/app/config/
-          - name: grid-certs-rw-copy
-            mountPath: /etc/grid-certs/
-          - name: grid-secret
-            mountPath: /servicex/
-          - name: grid-certs-cfg
-            mountPath: /etc/grid-certs-ro/
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
 
       volumes:
         - name: rucio-cfg
           configMap:
             name: {{ .Release.Name }}-rucio-config
-        - name: did-finder-cfg
-          configMap:
-            name: {{ .Release.Name }}-did-finder-config
-        - name: grid-certs-cfg
-          configMap:
-            name: {{ .Release.Name }}-grid-certs-config
-            defaultMode: 400
-        - name: grid-certs-rw-copy
-          emptyDir: {}
-        - name: grid-secret
+        - name: x509-secret
           secret:
-            secretName: {{ .Release.Name }}-grid-secrets
+            defaultMode: 292
+            secretName: {{ .Release.Name }}-x509-proxy
