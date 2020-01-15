@@ -1,8 +1,9 @@
+{{- if .Values.codeGen.enabled -}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-servicex-app
+  name: {{ .Release.Name }}-code-gen
 spec:
   ports:
    - port: 8000
@@ -10,5 +11,6 @@ spec:
      name: "tcp"
      protocol: TCP
   selector:
-    app: {{ .Release.Name }}-servicex-app
+    app: {{ .Release.Name }}-code-gen
   type: ClusterIP
+{{- end }}

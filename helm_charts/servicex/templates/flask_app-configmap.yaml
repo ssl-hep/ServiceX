@@ -39,6 +39,8 @@ data:
 
     TRANSFORMER_MANAGER_ENABLED = True
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
+    TRANSFORMER_X509_SECRET="{{ .Release.Name }}-x509-proxy"
+
 
     TRANSFORMER_MESSAGING = 'none'
 
@@ -61,3 +63,8 @@ data:
     {{ else }}
     ELASTIC_SEARCH_LOGGING_ENABLED = False
     {{ end }}
+
+    {{ if .Values.codeGen.enabled }}
+    CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
+    {{ end }}
+
