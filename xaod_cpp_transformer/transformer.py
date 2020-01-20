@@ -38,6 +38,7 @@ from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
+import pyarrow as pa
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -113,13 +114,11 @@ def transform_single_file(file_path, output_path, servicex):
                                object_store=object_store, messaging=messaging)
     # NB: We're converting the *output* ROOT file to Arrow arrays
     # TODO: Implement configurable chunk_size
-    event_iterator = Uprootvents(file_path=output_path, tree_name=flat_tree_name,
+    event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
                                  attr_name_list=attr_name_list, chunk_size=1000)
     transformer = UprootTransformer(event_iterator)
-    arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.topic,
-                                         file_id=None, request_id=args.request_id)
-    # write_branches_to_arrow(transformer=transformer, topic_name=args.topic, file_id=None,
-    #                         request_id=args.request_id)
+    arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
+                                      file_id=None, request_id=args.request_id)
 
 
 def compile_code():
@@ -131,81 +130,6 @@ def compile_code():
         with open('log.txt', 'r') as f:
             errors = f.read()
             raise RuntimeError("Unable to compile the code - error return: " + str(r)+ 'errors: \n' + errors)
-
-
-# For testing of ScratchFileWriter; not used for Kafka broker
-def write_branches_to_arrow(transformer, topic_name, file_id, request_id):
-    from servicex.transformer.scratch_file_writer import ScratchFileWriter
-
-    tick = time.time()
-
-    scratch_writer = None
-
-    batch_number = 0
-    total_events = 0
-    total_bytes = 0
-    for pa_table in transformer.arrow_table():
-        if object_store:
-            if not scratch_writer:
-                scratch_writer = ScratchFileWriter(file_format=args.result_format)
-                scratch_writer.open_scratch_file(pa_table)
-
-            scratch_writer.append_table_to_scratch(pa_table)
-
-        total_events = total_events + pa_table.num_rows
-        batches = pa_table.to_batches(max_chunksize=transformer.chunk_size)
-
-        for batch in batches:
-            if messaging:
-                print(batch)
-                key = transformer.file_path + "-" + str(batch_number)
-
-                sink = pa.BufferOutputStream()
-                writer = pa.RecordBatchStreamWriter(sink, batch.schema)
-                writer.write_batch(batch)
-                writer.close()
-                messaging.publish_message(
-                    topic_name,
-                    key,
-                    sink.getvalue())
-
-                total_bytes = total_bytes + len(sink.getvalue().to_pybytes())
-
-                avg_cell_size = len(sink.getvalue().to_pybytes()) / len(
-                    transformer.attr_name_list) / batch.num_rows
-                print("Batch number " + str(batch_number) + ", "
-                      + str(batch.num_rows) +
-                      " events published to " + topic_name,
-                      "Avg Cell Size = " + str(avg_cell_size) + " bytes")
-                batch_number += 1
-
-                # if server_endpoint:
-                #     post_status_update(server_endpoint, "Processed " +
-                #                        str(batch.num_rows))
-
-    if object_store:
-        scratch_writer.close_scratch_file()
-
-        print("Writing parquet to ", request_id, " as ",
-              transformer.file_path.replace('/', ':'))
-
-        object_store.upload_file(request_id,
-                                      transformer.file_path.replace('/', ':'),
-                                      scratch_writer.file_path)
-
-        scratch_writer.remove_scratch_file()
-
-    if servicex:
-        servicex. post_status_update("File " + transformer.file_path + " complete")
-
-    tock = time.time()
-    print("Real time: " + str(round(tock - tick / 60.0, 2)) + " minutes")
-    if servicex:
-        servicex.put_file_complete(transformer.file_path, file_id, "success",
-                                        num_messages=batch_number,
-                                        total_time=round(tock - tick / 60.0, 2),
-                                        total_events=total_events,
-                                        total_bytes=total_bytes)
 
 
 if __name__ == "__main__":
