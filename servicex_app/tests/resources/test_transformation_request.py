@@ -196,12 +196,54 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                      "service-endpoint": service_endpoint}
                                              ))
 
+    def test_submit_transformation_file_list(self, mocker,
+                                             mock_rabbit_adaptor,
+                                             mock_code_gen_service):
+        request = self._generate_transformation_request()
+        request['did'] = None
+        request['file-list'] = ["file1", "file2"]
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_code_gen_service)
+        response = client.post('/servicex/transformation',
+                               json=request)
+
+        assert response.status_code == 200
+
     def test_submit_transformation_with_root_file_selection_error(self, mocker,
                                                                   mock_rabbit_adaptor,
                                                                   mock_code_gen_service):
         mock_code_gen_service.generate_code_for_selection = \
                 mocker.Mock(side_effect=ValueError('This is the error message'))
         request = self._generate_transformation_request_xAOD_root_file()
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_code_gen_service)
+        response = client.post('/servicex/transformation',
+                               json=request)
+
+        assert response.status_code == 400
+
+    def test_submit_transformation_missing_dataset_source(self, mocker,
+                                                          mock_rabbit_adaptor,
+                                                          mock_code_gen_service):
+        request = self._generate_transformation_request()
+        request['did'] = None
+        request['file-list'] = []
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_code_gen_service)
+        response = client.post('/servicex/transformation',
+                               json=request)
+
+        assert response.status_code == 400
+
+    def test_submit_transformation_duplicate_dataset_source(self, mocker,
+                                                            mock_rabbit_adaptor,
+                                                            mock_code_gen_service):
+        request = self._generate_transformation_request()
+        request['did'] = "This did"
+        request['file-list'] = ["amd this file"]
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    code_gen_service=mock_code_gen_service)
