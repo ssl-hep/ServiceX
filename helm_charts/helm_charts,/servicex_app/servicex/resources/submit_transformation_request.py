@@ -40,8 +40,16 @@ from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
 parser = reqparse.RequestParser()
-parser.add_argument('did', help='This field cannot be blank',
-                    required=True)
+parser.add_argument('did', help='Dataset Identifier. Provide this or file-list',
+                    required=False)
+
+parser.add_argument('file-list',
+                    type=list,
+                    default=[],
+                    location='json',
+                    help='Static list of Root Files. Provide this orDataset Identifier. ',
+                    required=False)
+
 parser.add_argument('columns', help='This field cannot be blank',
                     required=False)
 parser.add_argument('selection', help='This field or columns must be provided', required=False)
@@ -85,6 +93,15 @@ class SubmitTransformationRequest(ServiceXResource):
             request_id = str(uuid.uuid4())
             time = datetime.now(tz=timezone.utc)
 
+            requested_did = transformation_request['did'] \
+                if 'did' in transformation_request else None
+            requested_file_list = transformation_request['file-list'] \
+                if 'file-list' in transformation_request else None
+
+            # requested_did xor requested_file_list
+            if bool(requested_did) == bool(requested_file_list):
+                raise BadRequest("Must provide did or file-list but not both")
+
             if self.object_store and \
                     transformation_request['result-destination'] == 'object-store':
                 self.object_store.create_bucket(request_id)
@@ -96,7 +113,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 broker = None
 
             request_rec = TransformRequest(
-                did=transformation_request['did'],
+                did=requested_did if requested_did else "File List Provided in Request",
                 submit_time=time,
                 columns=transformation_request['columns'],
                 selection=transformation_request['selection'],
@@ -109,15 +126,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 workers=transformation_request['workers'],
                 workflow_name=_workflow_name(transformation_request)
             )
-
-            did_request = {
-                "request_id": request_rec.request_id,
-                "did": request_rec.did,
-                "service-endpoint": self._generate_advertised_endpoint(
-                    "servicex/transformation/" +
-                    request_rec.request_id
-                )
-            }
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
@@ -140,9 +148,21 @@ class SubmitTransformationRequest(ServiceXResource):
                 exchange="transformation_failures",
                 queue=request_id+"_errors")
 
-            self.rabbitmq_adaptor.basic_publish(exchange='',
-                                                routing_key='did_requests',
-                                                body=json.dumps(did_request))
+            if requested_did:
+                did_request = {
+                    "request_id": request_rec.request_id,
+                    "did": request_rec.did,
+                    "service-endpoint": self._generate_advertised_endpoint(
+                        "servicex/transformation/" +
+                        request_rec.request_id
+                    )
+                }
+
+                self.rabbitmq_adaptor.basic_publish(exchange='',
+                                                    routing_key='did_requests',
+                                                    body=json.dumps(did_request))
+            elif requested_file_list:
+                print(len(requested_file_list))
 
             request_rec.save_to_db()
 
@@ -160,5 +180,6 @@ class SubmitTransformationRequest(ServiceXResource):
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+            print(exc_value)
             return {'message': 'Something went wrong'}, 500

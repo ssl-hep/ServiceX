@@ -1,12 +1,12 @@
 {
 	"info": {
-		"_postman_id": "9003808e-201a-47d9-bf3a-3f0f715b93c9",
+		"_postman_id": "dc13cd9f-3666-4add-a391-36f5782d3663",
 		"name": "ServiceXTest",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "submit func_adl transformation",
+			"name": "submit with file list",
 			"event": [
 				{
 					"listen": "test",
@@ -31,13 +31,13 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
+						"type": "text",
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+					"raw": "{\n\t\"file-list\":[\n\t\t\t\"root://eospublic-srv-b2.cern.ch:1094//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/W3JetsToLNu.root?eos.share.expires=1581990269&eos.share.fxid=31695bb90000000&eos.share.signature=u6hHlQ/D4+IsLWYwPt70st/6cc65L0Qf+b1F2EFct9nRsWl175zAF0u7NEJklD93S4RosVCmCijxffWhd/qGHPJ+4fK/QgRfysjeaOUFQNo/H9z0rF95p70my8zhMv9Qzq/IW9G6eAoq/mLWive24n7IH2lmAQVK\",\n\t\t\t\"root://eospublic-srv-b2.cern.ch:1094//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/W2JetsToLNu.root?eos.share.expires=1581990341&eos.share.fxid=31695ace0000000&eos.share.signature=CCX9/DjWIioVtqrQLAYze814KZoTQmmDfjXN2K0MN9jLRWQtSmNoafi5XHTbILS6uU/bjSrjJa5k+cDMtAZ/4/hdahl2X6uW9pb5IledK/L15jmYmQTsxFgOqanhRQwcuijYQB1De+pLAJkId/r12Ou0qAeutGNG\",\n\t\t\t\"root://eospublic-srv-b2.cern.ch:1094//eos/opendata/cms/derived-data/AOD2NanoAODOutreachTool/W3JetsToLNu.root?eos.share.expires=1581990366&eos.share.fxid=31695bb90000000&eos.share.signature=CCX9/DjWIipkd34bs9QCtp1S+lcIsJoDB4Ev/0KgEV14ywZ9Dz66jy6rz8gFrqg4BjE71bOnU58kaSvqlx/rtG91fZD0/ggOB9NBr52p7e3Gj4+s+/R0hT4Ia3qj6CqBO/6YWEi+NGWjgycxuP1qtR9vpjonqzR3\"\n\t\t],\n\t\"columns\": \"MUON_MS__1down;2\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
 				},
 				"url": {
 					"raw": "{{host}}/servicex/transformation",
@@ -165,7 +165,7 @@
 					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
 				},
 				"url": {
-					"raw": "{{host}}/servicex/transformation/:request_id",
+					"raw": "{{host}}/servicex/transformation/:request_id?",
 					"host": [
 						"{{host}}"
 					],
@@ -226,7 +226,7 @@
 					"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
 				},
 				"url": {
-					"raw": "{{host}}/servicex/transformation",
+					"raw": "{{host}}/servicex/transformation?",
 					"host": [
 						"{{host}}"
 					],
@@ -566,5 +566,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }
