@@ -183,7 +183,9 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
 | `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           |
-| `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |  
+| `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |
+| `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
+| `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`          |
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
@@ -194,6 +196,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `x509Secrets.image`                  | X509 Secret Service image name                   | `sslhep/x509-secrets`                                   |
 | `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
 | `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `IfNotPresent`                                          |
+| `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
 | `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
