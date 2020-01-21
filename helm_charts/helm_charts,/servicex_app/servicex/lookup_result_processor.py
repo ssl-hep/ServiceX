@@ -25,38 +25,24 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
-import traceback
-
-from flask import request
-
-from servicex.models import TransformRequest
-from servicex.resources.servicex_resource import ServiceXResource
+import json
 
 
-class PreflightCheck(ServiceXResource):
-    @classmethod
-    def make_api(cls, lookup_result_processor):
-        cls.lookup_result_processor = lookup_result_processor
-        return cls
+class LookupResultProcessor:
+    def __init__(self, rabbitmq_adaptor, elasticsearch_adaptor, advertised_endpoint):
+        self.rabbitmq_adaptor = rabbitmq_adaptor
+        self.elasticsearch_adaptor = elasticsearch_adaptor
+        self.advertised_endpoint = advertised_endpoint
 
-    def post(self, request_id):
-        body = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
+    def publish_preflight_request(self, submitted_request, file_path):
+        preflight_request = {
+            'request-id': submitted_request.request_id,
+            'columns': submitted_request.columns,
+            'file-path': file_path,
+            "service-endpoint": self.advertised_endpoint +
+            "servicex/transformation/" + submitted_request.request_id
+        }
 
-        try:
-            self.lookup_result_processor.publish_preflight_request(
-                submitted_request,
-                body['file_path']
-            )
-
-            return {
-                "request-id": str(request_id),
-                "file-id": 42
-            }
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
-            return {'message': 'Something went wrong'}, 500
+        self.rabbitmq_adaptor.basic_publish(exchange='',
+                                            routing_key='validation_requests',
+                                            body=json.dumps(preflight_request))

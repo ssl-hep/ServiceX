@@ -25,33 +25,34 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
-
 from tests.resource_test_base import ResourceTestBase
 
 
 class TestPreflightCheck(ResourceTestBase):
-    def test_post_preflight_check(self, mocker,  mock_rabbit_adaptor):
+    def test_post_preflight_check(self, mocker, mock_rabbit_adaptor):
         import servicex
+        from servicex.lookup_result_processor import LookupResultProcessor
+
+        submitted_request = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
+            return_value=submitted_request)
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.publish_preflight_request = mocker.Mock()
+
+        client = self._test_client(
+            rabbit_adaptor=mock_rabbit_adaptor,
+            lookup_result_processor=mock_processor)
         response = client.post('/servicex/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='',
-            routing_key='validation_requests',
-            body=json.dumps(
-                {"request-id": 'BR549',
-                 "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "/foo/bar.root",
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234"
-                 }))
+        mock_processor.publish_preflight_request.assert_called_with(
+            submitted_request,
+            '/foo/bar.root'
+        )
 
         assert response.json == {
             "request-id": '1234',
@@ -60,13 +61,20 @@ class TestPreflightCheck(ResourceTestBase):
 
     def test_preflight_check_with_exception(self, mocker, mock_rabbit_adaptor):
         import servicex
+        from servicex.lookup_result_processor import LookupResultProcessor
+
+        submitted_request = self._generate_transform_request()
+
         mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
+            return_value=submitted_request)
 
-        mock_rabbit_adaptor.basic_publish = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.publish_preflight_request = mocker.Mock(side_effect=Exception('Test'))
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor)
         response = client.post('/servicex/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 500

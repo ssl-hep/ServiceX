@@ -25,38 +25,24 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
-import traceback
+import json
 
-from flask import request
-
-from servicex.models import TransformRequest
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.lookup_result_processor import LookupResultProcessor
+from tests.resource_test_base import ResourceTestBase
 
 
-class PreflightCheck(ServiceXResource):
-    @classmethod
-    def make_api(cls, lookup_result_processor):
-        cls.lookup_result_processor = lookup_result_processor
-        return cls
+class TestLookupResutProcessor(ResourceTestBase):
 
-    def post(self, request_id):
-        body = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
-
-        try:
-            self.lookup_result_processor.publish_preflight_request(
-                submitted_request,
-                body['file_path']
-            )
-
-            return {
-                "request-id": str(request_id),
-                "file-id": 42
-            }
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
-            return {'message': 'Something went wrong'}, 500
+    def test_publish_preflight_request(self, mocker,  mock_rabbit_adaptor):
+        processor = LookupResultProcessor(mock_rabbit_adaptor, None, "http://foo.com/")
+        processor.publish_preflight_request(self._generate_transform_request(),
+                                            "root1.root")
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='',
+            routing_key='validation_requests',
+            body=json.dumps(
+                {"request-id": 'BR549',
+                 "columns": 'electron.eta(), muon.pt()',
+                 "file-path": "root1.root",
+                 "service-endpoint": "http://foo.com/servicex/transformation/BR549"
+                 }))

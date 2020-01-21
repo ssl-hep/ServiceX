@@ -32,6 +32,7 @@ from flask_restful import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
+from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
@@ -55,7 +56,8 @@ def create_app(test_config=None,
                provided_rabbit_adaptor=None,
                provided_object_store=None,
                provided_elasticsearch_adapter=None,
-               provided_code_gen_service=None):
+               provided_code_gen_service=None,
+               provided_lookup_result_processor=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -106,6 +108,16 @@ def create_app(test_config=None,
         else:
             elasticsearch_adaptor = provided_elasticsearch_adapter
 
+        if not provided_lookup_result_processor:
+            lookup_result_processor = LookupResultProcessor(rabbit_adaptor,
+                                                            elasticsearch_adaptor,
+                                                            "http://" +
+                                                            app.config[
+                                                                'ADVERTISED_HOSTNAME'] + "/"
+                                                            )
+        else:
+            lookup_result_processor = provided_lookup_result_processor
+
         api = Api(app)
 
         # ensure the instance folder exists
@@ -121,6 +133,6 @@ def create_app(test_config=None,
             db.create_all()
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service)
+                   elasticsearch_adaptor, code_gen_service, lookup_result_processor)
 
     return app
