@@ -14,7 +14,7 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
     curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg; \
     curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo;
 
-RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
+RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas wlcg-voms-cms fetch-crl -y
 
 # We need python3 which is not part of the Rucio docker image
 RUN yum install -y centos-release-scl && \
@@ -45,5 +45,5 @@ RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
-CMD sh -c "python x509_updater.py"
+CMD sh -c "python x509_updater.py --voms $VOMS"
 
