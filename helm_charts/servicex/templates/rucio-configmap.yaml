@@ -10,20 +10,16 @@ metadata:
 data:
   rucio.cfg: |
     [client]
-    rucio_host = https://voatlasrucio-server-prod.cern.ch:443
-    auth_host = https://voatlasrucio-auth-prod.cern.ch:443
+    rucio_host = {{ .Values.didFinder.rucio_host }}
+    auth_host = {{ .Values.didFinder.auth_host }}
     auth_type = x509_proxy
-    # client_cert = /.globus/usercert.pem
-    # client_key = /.globus/userkey.pem
     ca_cert = /etc/pki/tls/certs/ca-bundle.crt
     account = {{ .Values.gridAccount }}
     client_x509_proxy = $X509_USER_PROXY
     request_retries = 3
 
     [policy]
-    permission = atlas
-    schema = atlas
+    permission = {{ .Values.x509Secrets.vomsOrg }}
+    schema = {{ .Values.x509Secrets.vomsOrg }}
     lfn2pfn_algorithm_default = hash
-    support = hn-atlas-dist-analysis-help@cern.ch
-    support_rucio = https://github.com/rucio/rucio/issues/
 
