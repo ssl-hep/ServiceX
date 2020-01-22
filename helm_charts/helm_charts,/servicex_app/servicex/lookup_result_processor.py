@@ -46,3 +46,28 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor.basic_publish(exchange='',
                                             routing_key='validation_requests',
                                             body=json.dumps(preflight_request))
+
+    def add_file_to_dataset(self, submitted_request, dataset_file):
+        request_id = submitted_request.request_id
+        dataset_file.save_to_db()
+
+        transform_request = {
+            'request-id': request_id,
+            'file-id': dataset_file.id,
+            'columns': submitted_request.columns,
+            'file-path': dataset_file.file_path,
+
+            "service-endpoint": self.advertised_endpoint +
+            "servicex/transformation/" + request_id,
+
+            "result-destination": submitted_request.result_destination
+        }
+
+        if submitted_request.result_destination == 'kafka':
+            transform_request.update(
+                {'kafka-broker': submitted_request.kafka_broker}
+            )
+
+        self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
+                                            routing_key=request_id,
+                                            body=json.dumps(transform_request))
