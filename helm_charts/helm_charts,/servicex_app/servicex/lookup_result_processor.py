@@ -27,6 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
+from servicex.models import TransformRequest
+
 
 class LookupResultProcessor:
     def __init__(self, rabbitmq_adaptor, elasticsearch_adaptor, advertised_endpoint):
@@ -71,3 +73,13 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                             routing_key=request_id,
                                             body=json.dumps(transform_request))
+
+    def report_fileset_complete(self, submitted_request,
+                                num_files, num_skipped=0, total_events=0,
+                                total_bytes=0, did_lookup_time=0):
+        submitted_request.files = num_files
+        submitted_request.files_skipped = num_skipped
+        submitted_request.total_events = total_events
+        submitted_request.total_bytes = total_bytes
+        submitted_request.did_lookup_time = did_lookup_time
+        TransformRequest.update_request(submitted_request)
