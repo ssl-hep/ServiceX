@@ -51,7 +51,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
 
-    AddFileToDataset.make_api(rabbit_mq_adaptor, elasticsearch_adapter)
+    AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
     api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
 
     PreflightCheck.make_api(lookup_result_processor)

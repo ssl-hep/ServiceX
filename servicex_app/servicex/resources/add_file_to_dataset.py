@@ -25,7 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
+import sys
+import traceback
 
 from flask import request
 
@@ -35,8 +36,8 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 class AddFileToDataset(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, elasticsearch_adaptor):
-        cls.rabbitmq_adaptor = rabbitmq_adaptor
+    def make_api(cls, lookup_result_processor, elasticsearch_adaptor):
+        cls.lookup_result_processor = lookup_result_processor
         cls.elasticsearch_adaptor = elasticsearch_adaptor
         return cls
 
@@ -50,27 +51,8 @@ class AddFileToDataset(ServiceXResource):
                                     adler32=add_file_request['adler32'],
                                     file_events=add_file_request['file_events'],
                                     file_size=add_file_request['file_size'])
-            db_record.save_to_db()
 
-            transform_request = {
-                'request-id': submitted_request.request_id,
-                'file-id': db_record.id,
-                'columns': submitted_request.columns,
-                'file-path': add_file_request['file_path'],
-                "service-endpoint": self._generate_advertised_endpoint(
-                    "servicex/transformation/" + request_id
-                ),
-                "result-destination": submitted_request.result_destination
-            }
-
-            if submitted_request.result_destination == 'kafka':
-                transform_request.update(
-                    {'kafka-broker': submitted_request.kafka_broker}
-                )
-
-            self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
-                                                routing_key=request_id,
-                                                body=json.dumps(transform_request))
+            self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             if self.elasticsearch_adaptor:
                 self.elasticsearch_adaptor.create_update_path(
@@ -84,6 +66,8 @@ class AddFileToDataset(ServiceXResource):
                 "file-id": db_record.id
             }
 
-        except Exception as eek:
-            print(eek)
-            return {'message': 'Something went wrong'}, 500
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+            print(exc_value)
+            return {'message': 'Something went wrong: ' + str(exc_value)}, 500
