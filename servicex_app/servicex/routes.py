@@ -57,6 +57,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     PreflightCheck.make_api(lookup_result_processor)
     api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
 
+    FilesetComplete.make_api(lookup_result_processor)
     api.add_resource(FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
 
     TransformStart.make_api(transformer_manager)

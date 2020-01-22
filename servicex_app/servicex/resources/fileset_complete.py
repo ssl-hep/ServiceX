@@ -32,13 +32,19 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class FilesetComplete(ServiceXResource):
+    @classmethod
+    def make_api(cls, lookup_result_processor):
+        cls.lookup_result_processor = lookup_result_processor
+        return cls
+
     def put(self, request_id):
         summary = request.get_json()
         rec = TransformRequest.return_request(request_id)
-        rec.files = summary['files']
-        rec.files_skipped = summary['files-skipped']
-        rec.total_events = summary['total-events']
-        rec.total_bytes = summary['total-bytes']
-        rec.did_lookup_time = summary['elapsed-time']
-        TransformRequest.update_request(rec)
-        print("Complete "+request_id)
+        self.lookup_result_processor.report_fileset_complete(
+            rec,
+            num_files=summary['files'],
+            num_skipped=summary['files-skipped'],
+            total_events=summary['total-events'],
+            total_bytes=summary['total-bytes'],
+            did_lookup_time=summary['elapsed-time']
+        )
