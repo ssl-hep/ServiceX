@@ -24,10 +24,6 @@ COPY bashrc /home/atlas/.bash_profile
 COPY requirements.txt .
 RUN source /home/atlas/release_setup.sh; \
     python2 -m pip install --user -r requirements.txt
-# RUN /bin/bash -c "source /home/atlas/release_setup.sh && \
-#     pip install --user --upgrade pip && \
-#     pip install --user -r requirements.txt && \
-#     pip install --user --index-url https://test.pypi.org/simple/ --no-deps servicex==0.2rc2"
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
