@@ -31,4 +31,8 @@ ENV PYTHONUNBUFFERED=1
 ENV X509_USER_PROXY=/etc/grid-security/x509up
 
 # Copy over the source
-COPY . .
+COPY \
+    transformer.py \	
+    validate_requests.py \	
+    proxy-exporter.sh \	
+    ./
