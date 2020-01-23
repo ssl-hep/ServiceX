@@ -106,19 +106,20 @@ def transform_single_file(file_path, output_path, servicex=None):
             errors = f.read()
             raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
 
-    flat_file = uproot.open(output_path)
-    flat_tree_name = flat_file.keys()[0]
-    attr_name_list = flat_file[flat_tree_name].keys()
+    if not object_store:
+        flat_file = uproot.open(output_path)
+        flat_tree_name = flat_file.keys()[0]
+        attr_name_list = flat_file[flat_tree_name].keys()
 
-    arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
-                               object_store=object_store, messaging=messaging)
-    # NB: We're converting the *output* ROOT file to Arrow arrays
-    # TODO: Implement configurable chunk_size
-    event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
-                                 attr_name_list=attr_name_list, chunk_size=1000)
-    transformer = UprootTransformer(event_iterator)
-    arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
-                                      file_id=None, request_id=args.request_id)
+        arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
+                                   object_store=object_store, messaging=messaging)
+        # NB: We're converting the *output* ROOT file to Arrow arrays
+        # TODO: Implement configurable chunk_size
+        event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
+                                      attr_name_list=attr_name_list, chunk_size=1000)
+        transformer = UprootTransformer(event_iterator)
+        arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
+                                             file_id=None, request_id=args.request_id)
 
 
 def compile_code():
