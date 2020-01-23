@@ -136,9 +136,6 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
 
-    # assert args.result_format == 'root-file', 'We only know how to create root file output'
-    # assert args.result_destination != 'kafka', 'Kafka not yet supported'
-
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     if args.result_destination == 'kafka':
