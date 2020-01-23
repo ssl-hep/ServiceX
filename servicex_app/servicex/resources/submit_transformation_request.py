@@ -165,7 +165,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key='did_requests',
                                                     body=json.dumps(did_request))
-            elif requested_file_list:
+            else:
                 # Request a preflight check on the first file
                 self.lookup_result_processor.publish_preflight_request(
                     request_rec,
