@@ -92,7 +92,7 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, servicex):
+def transform_single_file(file_path, output_path, servicex=None):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
     os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
