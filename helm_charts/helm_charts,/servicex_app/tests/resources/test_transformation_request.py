@@ -28,7 +28,7 @@
 import json
 from unittest.mock import call
 
-from servicex import ElasticSearchAdapter
+from servicex import ElasticSearchAdapter, LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
 
@@ -203,12 +203,30 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request['did'] = None
         request['file-list'] = ["file1", "file2"]
 
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service)
+                                   code_gen_service=mock_code_gen_service,
+                                   lookup_result_processor=mock_processor)
+
         response = client.post('/servicex/transformation',
                                json=request)
 
         assert response.status_code == 200
+
+        mock_processor.publish_preflight_request.assert_called_once()
+        preflight_call = mock_processor.publish_preflight_request.call_args
+        assert preflight_call[0][1] == 'file1'
+
+        mock_processor.add_file_to_dataset.assert_called()
+        add_file_calls = mock_processor.add_file_to_dataset.call_args_list
+        assert mock_processor.add_file_to_dataset.call_count == 2
+        assert add_file_calls[0][0][1].file_path == 'file1'
+        assert add_file_calls[1][0][1].file_path == 'file2'
+
+        mock_processor.report_fileset_complete.assert_called()
+        fileset_complete_call = mock_processor.report_fileset_complete.call_args
+        assert fileset_complete_call[1]['num_files'] == 2
 
     def test_submit_transformation_with_root_file_selection_error(self, mocker,
                                                                   mock_rabbit_adaptor,
@@ -243,10 +261,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                             mock_code_gen_service):
         request = self._generate_transformation_request()
         request['did'] = "This did"
-        request['file-list'] = ["amd this file"]
+        request['file-list'] = ["file1.root", "file2.root"]
+
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service)
+                                   code_gen_service=mock_code_gen_service,
+                                   lookup_result_processor=mock_processor)
+
         response = client.post('/servicex/transformation',
                                json=request)
 

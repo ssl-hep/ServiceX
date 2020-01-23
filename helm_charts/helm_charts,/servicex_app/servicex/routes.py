@@ -42,7 +42,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
                                          elasticsearch_adapter=elasticsearch_adapter,
-                                         code_gen_service=code_gen_service)
+                                         code_gen_service=code_gen_service,
+                                         lookup_result_processor=lookup_result_processor)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,
