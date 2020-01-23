@@ -35,7 +35,7 @@ import uuid
 from flask import current_app
 from flask_restful import reqparse
 
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, DatasetFile
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -79,11 +79,13 @@ def _workflow_name(transform_request):
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter, code_gen_service):
+    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter,
+                 code_gen_service, lookup_result_processor):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.elasticsearch_adapter = elasticsearch_adapter
         cls.code_gen_service = code_gen_service
+        cls.lookup_result_processor = lookup_result_processor
         return cls
 
     def post(self):
@@ -148,6 +150,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 exchange="transformation_failures",
                 queue=request_id+"_errors")
 
+            request_rec.save_to_db()
+
             if requested_did:
                 did_request = {
                     "request_id": request_rec.request_id,
@@ -162,9 +166,26 @@ class SubmitTransformationRequest(ServiceXResource):
                                                     routing_key='did_requests',
                                                     body=json.dumps(did_request))
             elif requested_file_list:
-                print(len(requested_file_list))
+                # Request a preflight check on the first file
+                self.lookup_result_processor.publish_preflight_request(
+                    request_rec,
+                    requested_file_list[0])
 
-            request_rec.save_to_db()
+                for file_path in requested_file_list:
+                    file_record = DatasetFile(request_id=request_id,
+                                              file_path=file_path,
+                                              adler32="xxx",
+                                              file_events=0,
+                                              file_size=0)
+                    self.lookup_result_processor.add_file_to_dataset(
+                        request_rec,
+                        file_record
+                    )
+
+                self.lookup_result_processor.report_fileset_complete(
+                    request_rec,
+                    num_files=len(requested_file_list)
+                )
 
             if self.elasticsearch_adapter:
                 self.elasticsearch_adapter.create_update_request(
