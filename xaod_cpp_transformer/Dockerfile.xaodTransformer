@@ -1,0 +1,6 @@
+ARG BASE_VERSION=latest
+
+FROM sslhep/servicex_func_adl_transformer_base:${BASE_VERSION}
+
+COPY . .
+RUN mv transformer_xaod.py transformer.py
