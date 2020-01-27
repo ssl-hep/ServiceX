@@ -1,6 +1,8 @@
 # Build a docker image to run against ATLAS code that has been pre-built and is ready to go.
+ARG BASE_VERSION=latest
 
-FROM atlas/analysisbase:21.2.102
+FROM atlas/analysisbase:${BASE_VERSION}
+#FROM atlas/analysisbase:21.2.102
 
 # We need a messy bunch of stuff to make sure we can properly access GRID resources using
 # x509 certs.
@@ -31,8 +33,4 @@ ENV PYTHONUNBUFFERED=1
 ENV X509_USER_PROXY=/etc/grid-security/x509up
 
 # Copy over the source
-COPY \
-    transformer.py \	
-    validate_requests.py \	
-    proxy-exporter.sh \	
-    ./
+COPY validate_requests.py proxy-exporter.sh ./

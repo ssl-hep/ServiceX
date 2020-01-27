@@ -11,10 +11,41 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1.2.0
 
-    - name: Publish to Registry
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+      id: extract_branch
+
+    - name: Build Base Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/servicex_xaod_cpp_transformer
+        name: sslhep/servicex_func_adl_transformer_base
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        tag_names: true
+        tag: "${GITHUB_REF##*/}"
+
+    - name: Build Uproot Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BASE_VERSION: ${{ steps.extract_branch.outputs.branch }}
+      with:
+        dockerfile: Dockerfile.uprootTransformer
+        name: sslhep/servicex_func_adl_uproot_transformer
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+        buildargs: BASE_VERSION
+
+    - name: Build xAOD Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BASE_VERSION: ${{ steps.extract_branch.outputs.branch }}
+      with:
+        dockerfile: Dockerfile.xaodTransformer
+        name: sslhep/servicex_func_adl_xaod_transformer
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+        buildargs: BASE_VERSION
+

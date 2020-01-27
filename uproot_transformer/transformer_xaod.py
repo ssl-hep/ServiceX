@@ -94,7 +94,7 @@ def callback(channel, method, properties, body):
 
 def transform_single_file(file_path, output_path, servicex=None):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
-    os.system("voms-proxy-info --all")
+    # os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
     reason_bad = None
     if r != 0:
