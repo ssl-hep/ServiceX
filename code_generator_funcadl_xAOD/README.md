@@ -31,7 +31,7 @@ For debugging purposes you sometimes want to translate an `ast` into a zip file.
 This container will also do that for you:
 
 ```
-AST = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" 
+AST="(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" 
 echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_xaod:master from_ast_to_zip.py -z /zip/junk.zip
 ```
 
@@ -56,6 +56,11 @@ docker run --rm -it \
   --mount type=bind,source=$(pwd)/generated,target=/generated \
   --entrypoint bash \
   sslhep/servicex_code_gen_funcadl_xaod:develop 
+```
+
+Then cd to /code and run the script as
+```bash
+ echo $AST | PYTHONPATH=/code python scripts/from_ast_to_zip.py -z /generated/foo.zip --uproot
 ```
 
 

@@ -56,6 +56,7 @@ def create_app(test_config=None):
 
     with app.app_context():
         api = Api(app)
+        GenerateCode.make_api(app.config['TARGET_BACKEND'])
 
         api.add_resource(GenerateCode, '/servicex/generated-code')
 

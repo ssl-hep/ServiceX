@@ -49,7 +49,8 @@ setup(
         'flask',
         'Flask-WTF',
         'flask-restful',
-        'func-adl-xAOD.backend==1.0.0a19'
+        'func-adl-xAOD.backend==1.0.0a19',
+        'func-adl-uproot==0.5'
     ],
     extras_require={
         'test': [
