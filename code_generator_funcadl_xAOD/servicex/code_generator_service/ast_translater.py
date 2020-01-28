@@ -28,11 +28,9 @@
 import os
 import pickle
 import zipfile
-from collections import Iterable, namedtuple
+from collections import namedtuple
 from tempfile import TemporaryDirectory
 
-import func_adl_uproot
-from func_adl_xAOD.backend import use_executor_xaod_hash_cache
 from func_adl.ast import ast_hash
 from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import atlas_xaod_executor
 from qastle import text_ast_to_python_ast
@@ -118,7 +116,6 @@ class AstTranslater:
 
         return GeneratedFileResult(hash, query_file_path)
 
-
     def translate_text_ast_to_zip(self, code: str) -> bytes:
         """Translate a text ast into a zip file as a memory stream
 
@@ -154,4 +151,3 @@ class AstTranslater:
 
             with open(z_filename, 'rb') as b_in:
                 return b_in.read()
-

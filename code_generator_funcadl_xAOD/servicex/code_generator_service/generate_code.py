@@ -27,12 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, Response
 from flask_restful import Resource
-from qastle import text_ast_to_python_ast
-from func_adl_xAOD.backend import use_executor_xaod_hash_cache
-from tempfile import TemporaryDirectory
-import zipfile
-import os
-
 from servicex.code_generator_service.ast_translater import AstTranslater
 
 

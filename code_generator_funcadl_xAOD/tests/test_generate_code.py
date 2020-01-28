@@ -49,8 +49,7 @@ class TestGenerateCode():
     def test_post_good_query(self, mocker):
         'Produce code for a simple good query'
         config = {
-            # TODO: What does this do?
-            'TestConfig': True
+            'TARGET_BACKEND': 'uproot'
         }
         app = create_app(config)
         client = app.test_client()

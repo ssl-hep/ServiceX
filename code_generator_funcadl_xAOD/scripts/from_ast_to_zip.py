@@ -11,11 +11,11 @@ if __name__ == "__main__":
     parser.add_argument("-z", "--zipfile",
                         help="The name of the zip file to write out. STDOUT if this is left off")
     parser.add_argument("--uproot",
-                        help="Generate code to transform file using uproot", action='store_true',
-                        default=False, required=False)
+                        help="Generate code to transform file using uproot",
+                        action='store_true', default=False, required=False)
     parser.add_argument("--xaod",
-                        help="Generate code to transform file using EventLoop", action='store_true',
-                        default=False, required=False)
+                        help="Generate code to transform file using EventLoop",
+                        action='store_true', default=False, required=False)
 
     args = parser.parse_args()
 
