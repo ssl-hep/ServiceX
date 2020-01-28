@@ -49,3 +49,15 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         tag: "${GITHUB_REF##*/}"
+
+    - name: Build Uproot Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BASE_VERSION: ${{ steps.extract_branch.outputs.branch }}
+      with:
+        dockerfile: Dockerfile.uproot
+        name: sslhep/servicex_code_gen_uproot
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+        buildargs: BASE_VERSION
