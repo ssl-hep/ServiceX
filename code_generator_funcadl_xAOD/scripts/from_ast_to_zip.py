@@ -1,7 +1,7 @@
 # A script that will take as input a text ast (on the command line) and
 # write out a zip file.
 import sys
-from servicex.code_generator_service.ast_translater import AstTranslater
+from servicex.code_generator_service.ast_translator import AstTranslator
 
 if __name__ == "__main__":
     import argparse
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     ast_text = args.ast if args.ast is not None else sys.stdin.read().strip()
 
     # Output file
-    translator = AstTranslater(target_backend)
+    translator = AstTranslator(target_backend)
     zip_data = translator.translate_text_ast_to_zip(ast_text)
     if args.zipfile is None:
         sys.stdout.buffer.write(zip_data)

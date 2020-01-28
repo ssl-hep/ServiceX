@@ -47,7 +47,7 @@ class GenerateCodeException(BaseException):
         BaseException.__init__(self, message)
 
 
-class AstTranslater:
+class AstTranslator:
     def __init__(self, target_backend):
         assert target_backend in ['xAOD', 'uproot']
         self.target_backend = target_backend
@@ -109,6 +109,7 @@ class AstTranslater:
             os.makedirs(query_file_path)
 
         exe = atlas_xaod_executor()
+        print("------>", exe)
         f_spec = exe.write_cpp_files(exe.apply_ast_transformations(a), query_file_path)
         print(f_spec)
 
@@ -129,7 +130,9 @@ class AstTranslater:
 
         if len(code) == 0:
             raise GenerateCodeException("Requested codegen for an empty string.")
+
         body = text_ast_to_python_ast(code).body
+        print("------>", code, body)
         if len(body) != 1:
             raise GenerateCodeException(
                 f'Requested codegen for "{code}" yielded no code statements (or too many).')  # noqa: E501

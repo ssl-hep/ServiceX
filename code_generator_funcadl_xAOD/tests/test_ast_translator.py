@@ -25,48 +25,31 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
-
-from flask import Flask
-from flask_restful import Api
-from servicex.code_generator_service.generate_code import GenerateCode
-from servicex.code_generator_service.ast_translator import AstTranslator
+from _ast import AST
+from types import SimpleNamespace
+import pytest
 
 
-def handle_invalid_usage(error: BaseException):
-    from flask import jsonify
-    response = jsonify({"message": str(error)})
-    response.status_code = 400
-    return response
+class TestASTTranslator:
+    def test_translate_uproot(self, mocker):
+        mock_uproot_generator = \
+            mocker.patch("func_adl_uproot.translation.generate_python_source",
+                         return_value="import uproot")
+        mock_ast = SimpleNamespace()
+        mock_ast.value = AST()
+        mock_result = SimpleNamespace()
+        mock_result.body = [mock_ast]
+        mock_text_to_python_ast = mocker.patch("qastle.text_ast_to_python_ast",
+                                               return_value=mock_result)
+        from servicex.code_generator_service import AstTranslator
 
+        ast_translator = AstTranslator('uproot')
+        ast_translator.translate_text_ast_to_zip("(foo (bar))")
 
-def create_app(test_config=None, provided_translator=None):
-    """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True)
+        mock_text_to_python_ast.assert_called_with("(foo (bar))")
+        mock_uproot_generator.assert_called_with(mock_ast.value)
 
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
-    if not test_config:
-        app.config.from_envvar('APP_CONFIG_FILE')
-    else:
-        app.config.from_mapping(test_config)
-
-    with app.app_context():
-
-        if not provided_translator:
-            translator = AstTranslator(app.config['TARGET_BACKEND'])
-        else:
-            translator = provided_translator
-
-        api = Api(app)
-        GenerateCode.make_api(translator)
-
-        api.add_resource(GenerateCode, '/servicex/generated-code')
-
-    app.errorhandler(Exception)(handle_invalid_usage)
-
-    return app
+    def test_bad_constructor_arg(self):
+        with pytest.raises(AssertionError):
+            from servicex.code_generator_service import AstTranslator
+            AstTranslator('blah')

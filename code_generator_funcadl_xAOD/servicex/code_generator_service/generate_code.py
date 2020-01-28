@@ -27,20 +27,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, Response
 from flask_restful import Resource
-from servicex.code_generator_service.ast_translater import AstTranslater
+from servicex.code_generator_service.ast_translator import AstTranslator
 
 
 class GenerateCode(Resource):
     @classmethod
-    def make_api(cls, target_backend: str):
-        cls.target_backend = target_backend
+    def make_api(cls, translator: AstTranslator):
+        cls.translator = translator
         return cls
 
     def post(self):
         try:
             code = request.data.decode('utf8')
-            translator = AstTranslater(self.target_backend)
-            zip_data = translator.translate_text_ast_to_zip(code)
+            zip_data = self.translator.translate_text_ast_to_zip(code)
 
             # Send the response back to you-know-what.
             response = Response(
