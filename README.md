@@ -160,6 +160,12 @@ ConfigMap for the PEM files and a Secret for the passcode.
 This works reliably, but may not be best practice for securing sensitive 
 information. Suggestions are welcome.
 
+## Optional Kafka Installation
+ServiceX can deliver transformed datasets to an object store service (Minio) 
+that is optionally installed with this helm chart. An alternative delivery
+mechanism is streamed arrow tables using Kafka. Full instructions and sample
+config files are in the [kafka](kafka) directory.
+
 ## Configuration
 The following table lists the configurable parameters of the ServiceX chart and 
 their default values. Note that you may wish to change some of the default 
