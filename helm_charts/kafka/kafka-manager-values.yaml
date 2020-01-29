@@ -1,0 +1,28 @@
+# Values to configure deployment of Kafka manager
+zkHosts: "benkafka-zookeeper:2181"
+
+## Basic Auth configuration
+##
+basicAuth:
+  enabled: true
+  username: "admin"
+  password: "leftfoot1"
+
+service:
+  type: LoadBalancer
+  port: 9000
+  annotations: {}
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - kafka-manager.mydomain.net
+  tls: []
+    # - secretName: kafka-manager-tls
+    #   hosts:
+    #     - kafka-manager.local
+

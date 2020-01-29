@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafkacat
+spec:
+  containers:
+  - name: kafka
+    image: solsson/kafkacat
+    command:
+      - sh
+      - -c
+      - "exec tail -f /dev/null"
