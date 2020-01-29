@@ -5,7 +5,11 @@ cluster to support ServiceX.
 This helm deployment is described 
 [here.](https://github.com/helm/charts/tree/master/incubator/kafka). 
 
-By following this recipe you can deploy a kafka cluster inside Kubernetes. 
+By following this recipe you can deploy a kafka cluster inside Kubernetes. These
+instructions do not include making Kafka accessable outside of the cluster since
+this brings in a number of authentication issues. See 
+[ServiceX Issue 72](https://github.com/ssl-hep/ServiceX/issues/72) for full 
+details and updates on this.
 
 We will assume that you have [Helm3](https://helm.sh) installed.
    
@@ -36,6 +40,12 @@ Delete persistent volume claims:
 
 
 ## Accessing kafka
+
+The Kafka brokers and Zookeeper can be referenced inside the cluster using 
+their service name. If you wish to access them from a pod in a different 
+namespace you can use a fully qualified cluster DNS name such as 
+`kafka-inc.kafka-inc.svc.cluster.local:9092`
+
 
 Here a list of services that are accessible from any namespace in the cluster
 
