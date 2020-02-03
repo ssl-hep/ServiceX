@@ -59,6 +59,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
         assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
                                  'columns': 'electron.eta(), muon.pt()',
                                  'selection': None,
+                                 'tree-name': "Events",
                                  'image': 'ssl-hep/foo:latest', 'chunk-size': 1000,
                                  'workers': 42, 'result-destination': 'kafka',
                                  'result-format': 'arrow',

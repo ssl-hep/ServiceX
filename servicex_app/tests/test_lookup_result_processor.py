@@ -72,6 +72,7 @@ class TestLookupResutProcessor(ResourceTestBase):
                  "file-id": 42,
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "/foo/bar.root",
+                 "tree-name": "Events",
                  "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/BR549",
                  'result-destination': 'object-store'
                  }))
@@ -98,6 +99,7 @@ class TestLookupResutProcessor(ResourceTestBase):
                  "file-id": 42,
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "/foo/bar.root",
+                 "tree-name": "Events",
                  "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/BR549",
                  'result-destination': 'kafka',
                  'kafka-broker': 'http://ssl-hep.org.kafka:12345'
