@@ -26,6 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import sys
+import traceback
+
+import awkward
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
@@ -56,6 +60,7 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    _tree_name = transform_request['tree-name']
     # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
@@ -64,13 +69,13 @@ def callback(channel, method, properties, body):
         # Do the transform
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path, servicex)
+        transform_single_file(_file_path, output_path, servicex, tree_name=_tree_name)
 
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file, output_path)
-            os.remove(output_path)
+            object_store.upload_file(_request_id, root_file+".awkd", output_path+".awkd")
+            os.remove(output_path+".awkd")
 
         servicex.post_status_update("File " + _file_path + " complete")
 
@@ -81,6 +86,10 @@ def callback(channel, method, properties, body):
                                    total_bytes=0)
 
     except Exception as error:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+        print(exc_value)
+
         transform_request['error'] = str(error)
         channel.basic_publish(exchange='transformation_failures',
                               routing_key=_request_id + '_errors',
@@ -92,19 +101,21 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, servicex=None):
+def transform_single_file(file_path, output_path, servicex=None, tree_name='Events'):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
-    os.system("voms-proxy-info --all")
-    r = os.system('python /generated/transformer.py ' + file_path + ' | tee log.txt')
-    reason_bad = None
-    if r != 0:
-        reason_bad = "Error return from transformer: " + str(r)
-    if (reason_bad is None) and not os.path.exists(output_path):
-        reason_bad = "Output file " + output_path + " was not found"
-    if reason_bad is not None:
-        with open('log.txt', 'r') as f:
-            errors = f.read()
-            raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
+
+    try:
+        import generated_transformer
+        table = generated_transformer.run_query(file_path, tree_name)
+        awkward.save(output_path, table, mode='w')
+        print("TRansformed ", table)
+    except Exception:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+        print(exc_value)
+
+        raise RuntimeError(
+            "Failed to transform input file " + file_path + ": " + exc_value)
 
     if not object_store:
         flat_file = uproot.open(output_path)

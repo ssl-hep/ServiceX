@@ -2,5 +2,12 @@ ARG BASE_VERSION=latest
 
 FROM sslhep/servicex_func_adl_transformer_base:${BASE_VERSION}
 
+RUN sudo yum install -y python3
+ENV PYTHONPATH /usr/lib/python3.6/site-packages/
+COPY requirements.txt .
+RUN sudo pip3 install -r requirements.txt
+
 COPY . .
+
+RUN mv uproot_bashrc .bashrc
 RUN mv transformer_uproot.py transformer.py
