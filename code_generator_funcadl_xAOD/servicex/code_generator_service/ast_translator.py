@@ -83,7 +83,7 @@ class AstTranslator:
 
         src = generate_python_source(a)
         print(query_file_path)
-        with open(os.path.join(query_file_path, 'transformer.py'), 'w') as python_file:
+        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(src)
 
         os.system("ls -lht " + query_file_path)
