@@ -90,7 +90,8 @@ class TransformerManager:
             ]
 
         python_args = ["/home/atlas/proxy-exporter.sh & sleep 5 && " +
-                       "python /home/atlas/transformer.py " +
+                       "PYTHONPATH=/generated:$PYTHONPATH " +
+                       "python3 /home/atlas/transformer.py " +
                        " --request-id " + request_id +
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
