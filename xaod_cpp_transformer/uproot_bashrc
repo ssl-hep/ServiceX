@@ -10,4 +10,5 @@ source /home/atlas/release_setup.sh
 export PATH=$PATH:/home/atlas/.local/bin
 export PYTHONPATH=/usr/lib/python3.6/site-packages/
 unset PYTHONHOME
+alias python=python3
 
