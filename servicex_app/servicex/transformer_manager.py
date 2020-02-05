@@ -90,7 +90,7 @@ class TransformerManager:
             ]
 
         python_args = ["/home/atlas/proxy-exporter.sh & sleep 5 && " +
-                       "PYTHONPATH=/generated:$PYTHONPATH && " +
+                       "PYTHONPATH=/generated:$PYTHONPATH " +
                        "python /home/atlas/transformer.py " +
                        " --request-id " + request_id +
                        " --rabbit-uri " + rabbitmq_uri +
@@ -107,7 +107,7 @@ class TransformerManager:
             image=image,
             image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
             volume_mounts=volume_mounts,
-            command=["bash", "-i", "-c"],  # Can't get bash to pick up my .bashrc!
+            command=["bash", "-c"],  # Can't get bash to pick up my .bashrc!
             env=env,
             args=python_args
         )
