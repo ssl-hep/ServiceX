@@ -108,7 +108,6 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
         import generated_transformer
         table = generated_transformer.run_query(file_path, tree_name)
         awkward.save(output_path, table, mode='w')
-        print("TRansformed ", table)
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
@@ -134,6 +133,7 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
 
 
 def compile_code():
+    import generated_transformer
     pass
 
 
