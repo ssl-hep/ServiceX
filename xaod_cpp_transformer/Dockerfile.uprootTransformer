@@ -1,63 +1,52 @@
-FROM atlas/analysisbase:21.2.96
+# based on https://github.com/dask/dask-docker/blob/master/base/Dockerfile
+# but more permissive about image size due to read-only requirement in openshift
+# FROM daskdev/dask:2.9.0
+FROM continuumio/miniconda3:4.7.12
 
-LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
+RUN apt-get install gnupg2 -y \
+    && wget -q -O - https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3 | apt-key add - \
+    && echo "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y ca-policy-egi-core \
+    && apt-get purge -y gnupg2 \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
-# analysisbase already sets user "atlas" so have to sudo everything
+RUN conda install --yes \
+    -c conda-forge \
+    lz4 \
+    xrootd==4.11.0 \
+    tini==0.18.0 \
+    && conda clean -tipsy
 
-# for CA certificates
-RUN sudo mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
+RUN conda install --yes \
+    -c conda-forge \
+    python-blosc \
+    cytoolz \
+    numpy==1.18.1 \
+    pandas==0.25.3 \
+    numba==0.48.0 \
+    scipy==1.4.1 \
+    && conda clean -tipsy
 
-# needed to get x509 proxy to read the data
-RUN sudo yum -y update
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y sudo
 
-# this is for  centos7 but analysisbase is sl6
+RUN useradd -ms /bin/bash atlas -G sudo && passwd -d atlas
+RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
-# RUN yum localinstall https://repo.opensciencegrid.org/osg/3.4/osg-3.4-el7-release-latest.rpm -y
-# RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm; \
-#     curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg; \
-#     curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo;
+COPY requirements.txt .
+RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 
-RUN sudo yum localinstall https://repo.opensciencegrid.org/osg/3.4/osg-3.4-el6-release-latest.rpm -y
-
-# epel comes preinstalled.
-# RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm;
-
-RUN sudo curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg; \
-    sudo curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo;
-
-RUN sudo yum install -y \
-    voms \
-    osg-ca-certs \
-    wlcg-voms-atlas \
-    voms-clients \
-    fetch-crl \
-    jq
-
-RUN sudo chown atlas /etc/grid-security
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
-# not needed.
-# RUN sudo yum install -y python34; \
-#     sudo curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py; \
-#     sudo python3 get-pip.py; \
-
-# get back to atlas user
-# RUN sudo su atlas
-
-# Create app directory
-WORKDIR /usr/src/app
 WORKDIR /home/atlas
+COPY uproot_proxy_exporter.sh proxy-exporter.sh
+RUN chmod +x proxy-exporter.sh
 
-
-# Update atlas user's startup script to always initialize the Atlas release
-COPY bashrc /home/atlas/.bashrc
-COPY bashrc /home/atlas/.bash_profile
-COPY requirements.txt .
-RUN /bin/bash -c "source /home/atlas/release_setup.sh && \
-    pip install --user -r requirements.txt"
-
-COPY . .
+COPY transformer_uproot.py transformer.py
+COPY validate_requests.py .
 ENV PYTHONUNBUFFERED=1
 ENV X509_USER_PROXY=/etc/grid-security/x509up
 
-RUN mv transformer_uproot.py transformer.py

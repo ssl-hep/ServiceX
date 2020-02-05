@@ -115,7 +115,7 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
         print(exc_value)
 
         raise RuntimeError(
-            "Failed to transform input file " + file_path + ": " + exc_value)
+            "Failed to transform input file " + file_path + ": " + str(exc_value))
 
     if not object_store:
         flat_file = uproot.open(output_path)
