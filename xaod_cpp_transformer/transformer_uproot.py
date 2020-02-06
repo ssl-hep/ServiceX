@@ -43,6 +43,7 @@ from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
 import pyarrow.parquet as pq
+from arrow_iterator import ArrowIterator
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -102,7 +103,7 @@ def callback(channel, method, properties, body):
 
 
 def transform_single_file(file_path, output_path, servicex=None, tree_name='Events'):
-    print("Transforming a single path: " + str(file_path) + " into " + output_path)
+    print("Transforming a single path: " + str(file_path))
 
     try:
         import generated_transformer
@@ -116,9 +117,11 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
         new_table = awkward.Table(concatenated)
 
         arrow = awkward.toarrow(new_table)
-        writer = pq.ParquetWriter(output_path, arrow.schema)
-        writer.write_table(table=arrow)
-        writer.close()
+
+        if output_path:
+            writer = pq.ParquetWriter(output_path, arrow.schema)
+            writer.write_table(table=arrow)
+            writer.close()
 
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -129,17 +132,11 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
             "Failed to transform input file " + file_path + ": " + str(exc_value))
 
     if messaging:
-        flat_file = uproot.open(output_path)
-        flat_tree_name = flat_file.keys()[0]
-        attr_name_list = flat_file[flat_tree_name].keys()
-
         arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
-                                   object_store=object_store, messaging=messaging)
-        # NB: We're converting the *output* ROOT file to Arrow arrays
-        # TODO: Implement configurable chunk_size
-        event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
-                                      attr_name_list=attr_name_list, chunk_size=1000)
-        transformer = UprootTransformer(event_iterator)
+                                   object_store=None, messaging=messaging)
+
+        #Todo implement chunk size parameter
+        transformer = ArrowIterator(arrow, chunk_size=1000, file_path=file_path)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
 
@@ -172,5 +169,5 @@ if __name__ == "__main__":
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        print("Transform a single file ", object_store, messaging)
+        print("Transform a single file ", args.path)
         transform_single_file(args.path, args.output_dir)
