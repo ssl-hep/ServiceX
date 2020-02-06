@@ -42,7 +42,7 @@ from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
-import pyarrow as pa
+import pyarrow.parquet as pq
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -69,13 +69,13 @@ def callback(channel, method, properties, body):
         # Do the transform
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path, servicex, tree_name=_tree_name)
+        transform_single_file(_file_path, output_path+".parquet", servicex, tree_name=_tree_name)
 
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file+".awkd", output_path+".awkd")
-            os.remove(output_path+".awkd")
+            object_store.upload_file(_request_id, root_file, output_path+".parquet")
+            os.remove(output_path+".parquet")
 
         servicex.post_status_update("File " + _file_path + " complete")
 
@@ -107,7 +107,19 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
     try:
         import generated_transformer
         table = generated_transformer.run_query(file_path, tree_name)
-        awkward.save(output_path, table, mode='w')
+
+        # Deal with messy, nested lazy arrays which cannot be converted to arrow
+        concatenated = {}
+        for column in table.columns:
+            concatenated[column] = awkward.concatenate(
+                [x.array.chunks[0].array for x in table[column].chunks])
+        new_table = awkward.Table(concatenated)
+
+        arrow = awkward.toarrow(new_table)
+        writer = pq.ParquetWriter(output_path, arrow.schema)
+        writer.write_table(table=arrow)
+        writer.close()
+
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
@@ -116,7 +128,7 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
         raise RuntimeError(
             "Failed to transform input file " + file_path + ": " + str(exc_value))
 
-    if not object_store:
+    if messaging:
         flat_file = uproot.open(output_path)
         flat_tree_name = flat_file.keys()[0]
         attr_name_list = flat_file[flat_tree_name].keys()
@@ -143,10 +155,14 @@ if __name__ == "__main__":
 
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
-    if args.result_destination == 'kafka':
+    print(args.result_destination, args.output_dir)
+    if args.output_dir:
+            messaging = None
+            object_store = None
+    elif args.result_destination == 'kafka':
         messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
         object_store = None
-    elif not args.output_dir and args.result_destination == 'object-store':
+    elif args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
 
@@ -156,4 +172,5 @@ if __name__ == "__main__":
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
+        print("Transform a single file ", object_store, messaging)
         transform_single_file(args.path, args.output_dir)
