@@ -74,7 +74,7 @@ def callback(channel, method, properties, body):
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file, output_path+".parquet")
+            object_store.upload_file(_request_id, root_file+".parquet", output_path+".parquet")
             os.remove(output_path+".parquet")
 
         servicex.post_status_update("File " + _file_path + " complete")
