@@ -60,42 +60,36 @@ def callback(channel, method, properties, body):
     servicex = ServiceXAdapter(_server_endpoint)
 
     tick = time.time()
-    file_done = False
-    file_retries = 0
-    while not file_done:
-        try:
-            # Do the transform
-            root_file = _file_path.replace('/', ':')
-            output_path = '/home/atlas/' + root_file
-            transform_single_file(_file_path, output_path, servicex)
+    try:
+        # Do the transform
+        root_file = _file_path.replace('/', ':')
+        output_path = '/home/atlas/' + root_file
+        transform_single_file(_file_path, output_path, servicex)
 
-            tock = time.time()
+        tock = time.time()
 
-            if object_store:
-                object_store.upload_file(_request_id, root_file, output_path)
-                os.remove(output_path)
+        if object_store:
+            object_store.upload_file(_request_id, root_file, output_path)
+            os.remove(output_path)
 
-            servicex.post_status_update("File " + _file_path + " complete")
+        servicex.post_status_update("File " + _file_path + " complete")
 
-            servicex.put_file_complete(_file_path, _file_id, "success",
-                                       num_messages=0,
-                                       total_time=round(tock - tick, 2),
-                                       total_events=0,
-                                       total_bytes=0)
-            file_done = True
+        servicex.put_file_complete(_file_path, _file_id, "success",
+                                   num_messages=0,
+                                   total_time=round(tock - tick, 2),
+                                   total_events=0,
+                                   total_bytes=0)
 
-        except Exception as error:
-            file_retries += 1
-            if file_retries >= 3:
-                transform_request['error'] = str(error)
-                channel.basic_publish(exchange='transformation_failures',
-                                      routing_key=_request_id + '_errors',
-                                      body=json.dumps(transform_request))
-                servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                           status='failure', num_messages=0, total_time=0,
-                                           total_events=0, total_bytes=0)
-        finally:
-            channel.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception as error:
+        transform_request['error'] = str(error)
+        channel.basic_publish(exchange='transformation_failures',
+                              routing_key=_request_id + '_errors',
+                              body=json.dumps(transform_request))
+        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+                                   status='failure', num_messages=0, total_time=0,
+                                   total_events=0, total_bytes=0)
+    finally:
+        channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def transform_single_file(file_path, output_path, servicex=None):
