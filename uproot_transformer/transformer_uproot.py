@@ -43,7 +43,6 @@ from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
 import pyarrow.parquet as pq
-from arrow_iterator import ArrowIterator
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -53,6 +52,16 @@ avg_cell_size = 42
 messaging = None
 object_store = None
 
+
+class ArrowIterator:
+    def __init__(self, arrow, chunk_size, file_path):
+        self.arrow = arrow
+        self.chunk_size = chunk_size
+        self.file_path = file_path
+        self.attr_name_list = ["not available"]
+
+    def arrow_table(self):
+        yield self.arrow
 
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
@@ -150,6 +159,7 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description="Uproot Transformer")
     args = parser.parse_args()
 
+    print("-----", sys.path)
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     print(args.result_destination, args.output_dir)
