@@ -1,6 +1,6 @@
 servicex-transformer==0.2.5
 requests>=2.22.0
-kafka-python
+kafka
 confluent_kafka==1.2.0
 pika
 minio
@@ -13,4 +13,5 @@ uproot
 awkward>=0.12.0
 xxhash
 lz4
-pyarrow
+pyarrow==0.16.0
+numpy==1.16.6
