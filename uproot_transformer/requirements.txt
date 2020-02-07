@@ -1,6 +1,6 @@
 servicex-transformer==0.2.5
 requests>=2.22.0
-kafka
+kafka-python
 confluent_kafka==1.2.0
 pika
 minio
