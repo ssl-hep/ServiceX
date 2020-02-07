@@ -63,6 +63,7 @@ class ArrowIterator:
     def arrow_table(self):
         yield self.arrow
 
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
