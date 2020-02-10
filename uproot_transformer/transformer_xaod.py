@@ -44,6 +44,7 @@ import pyarrow as pa
 # How many bytes does an average awkward array cell take up. This is just
 # a rule of thumb to calculate chunksize
 avg_cell_size = 42
+MAX_RETRIES = 3
 
 messaging = None
 object_store = None
@@ -86,7 +87,7 @@ def callback(channel, method, properties, body):
 
         except Exception as error:
             file_retries += 1
-            if file_retries >= 3:
+            if file_retries == MAX_RETRIES:
                 transform_request['error'] = str(error)
                 channel.basic_publish(exchange='transformation_failures',
                                     routing_key=_request_id + '_errors',
