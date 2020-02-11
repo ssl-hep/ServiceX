@@ -41,6 +41,7 @@ class TransformRequest(db.Model):
             'did': x.did,
             'columns': x.columns,
             'selection': x.selection,
+            'tree-name': x.tree_name,
             'image': x.image,
             'chunk-size': x.chunk_size,
             'workers': x.workers,
@@ -56,6 +57,7 @@ class TransformRequest(db.Model):
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(1024), unique=False, nullable=True)
+    tree_name = db.Column(db.String(512), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
