@@ -28,7 +28,8 @@
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
-               object_store, elasticsearch_adapter, code_gen_service):
+               object_store, elasticsearch_adapter, code_gen_service,
+               lookup_result_processor):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
@@ -41,7 +42,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
                                          elasticsearch_adapter=elasticsearch_adapter,
-                                         code_gen_service=code_gen_service)
+                                         code_gen_service=code_gen_service,
+                                         lookup_result_processor=lookup_result_processor)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,
@@ -50,12 +52,13 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
 
-    AddFileToDataset.make_api(rabbit_mq_adaptor, elasticsearch_adapter)
+    AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
     api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
 
-    PreflightCheck.make_api(rabbit_mq_adaptor)
+    PreflightCheck.make_api(lookup_result_processor)
     api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
 
+    FilesetComplete.make_api(lookup_result_processor)
     api.add_resource(FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
 
     TransformStart.make_api(transformer_manager)

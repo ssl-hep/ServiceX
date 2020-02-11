@@ -25,22 +25,24 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
 
 class TestFilesetComplete(ResourceTestBase):
     def test_put_fileset_complete(self, mocker,  mock_rabbit_adaptor):
         import servicex
+        submitted_request = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
+            return_value=submitted_request)
 
-        mock_transform_request_update = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'update_request')
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor)
+
         response = client.put('/servicex/transformation/1234/complete',
                               json={
                                   'files': 17,
@@ -51,6 +53,11 @@ class TestFilesetComplete(ResourceTestBase):
                               })
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-
-        # TODO: Figure out how to verify the update mock
-        mock_transform_request_update.assert_called()
+        mock_processor.report_fileset_complete.assert_called_with(
+            submitted_request,
+            num_files=17,
+            num_skipped=2,
+            total_events=1024,
+            total_bytes=2046,
+            did_lookup_time=42
+        )
