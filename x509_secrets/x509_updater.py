@@ -32,12 +32,29 @@ import time
 import kubernetes
 from kubernetes import client
 import base64
+import argparse
 
-if len(sys.argv) == 2:
-    secret_name = sys.argv[1]
+parser = argparse.ArgumentParser()
+parser.add_argument("--secret",
+                    help="Name of kubernetes secret to save proxy to",
+                    dest='secret', action='store',
+                    required=False, default=None)
+
+parser.add_argument("--voms",
+                    help="Name of CERN virtual org to authenticate against",
+                    dest='voms', action='store',
+                    required=True)
+
+args = parser.parse_args()
+
+if args.secret:
+    secret_name = args.secret
     print("Configuring "+secret_name)
     kubernetes.config.load_incluster_config()
+
+    # For command line testing
     # kubernetes.config.load_kube_config()
+
     pod_namespace = os.environ['MY_POD_NAMESPACE']
 else:
     secret_name = None
@@ -47,10 +64,10 @@ else:
 myCmd = """
  voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
                   -cert /etc/grid-certs/usercert.pem \
-                  --voms=atlas \
+                  --voms=%s \
                   <  /servicex/secrets.txt
                   """
-os.system(myCmd)
+os.system(myCmd % args.voms)
 f = "/etc/grid-security/x509up"
 
 if secret_name:
@@ -58,7 +75,7 @@ if secret_name:
     try:
         client.CoreV1Api().delete_namespaced_secret(namespace=pod_namespace, name=secret_name)
     except kubernetes.client.rest.ApiException as api_exception:
-        print("Ok ", api_exception)
+        print("No existing secret to delete")
 
 while True:
     if secret_name:
