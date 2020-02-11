@@ -54,6 +54,7 @@ parser.add_argument('columns', help='This field cannot be blank',
                     required=False)
 parser.add_argument('selection', help='This field or columns must be provided', required=False)
 parser.add_argument('image', required=False)
+parser.add_argument('tree-name', required=False)
 parser.add_argument('chunk-size', required=False, type=int)
 parser.add_argument('workers', required=False, type=int)
 parser.add_argument('result-destination', required=True, choices=['kafka', 'object-store'])
@@ -91,6 +92,7 @@ class SubmitTransformationRequest(ServiceXResource):
     def post(self):
         try:
             transformation_request = parser.parse_args()
+            print("object store ", self.object_store)
 
             request_id = str(uuid.uuid4())
             time = datetime.now(tz=timezone.utc)
@@ -119,6 +121,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 submit_time=time,
                 columns=transformation_request['columns'],
                 selection=transformation_request['selection'],
+                tree_name=transformation_request['tree-name'],
                 request_id=str(request_id),
                 image=transformation_request['image'],
                 chunk_size=transformation_request['chunk-size'],

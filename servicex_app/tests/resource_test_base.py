@@ -81,6 +81,7 @@ class ResourceTestBase:
         transform_request.submit_time = 1000
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
+        transform_request.tree_name = 'Events'
         transform_request.chunk_size = 1000
         transform_request.workers = 42
         transform_request.did = '123-456-789'
