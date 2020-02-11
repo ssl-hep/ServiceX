@@ -27,6 +27,9 @@ didFinder:
   image: sslhep/servicex-did-finder
   tag: v0.2
   pullPolicy: IfNotPresent
+  rucio_host: https://voatlasrucio-server-prod.cern.ch:443
+  auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+
   site:
 
 # Settings for the preflight checker - this usually uses the same image as
@@ -54,6 +57,7 @@ x509Secrets:
   image: sslhep/x509-secrets
   tag: v0.2
   pullPolicy: IfNotPresent
+  vomsOrg: atlas
 
 
 # Settings for sending logging messages to an elasticsearch service
