@@ -34,8 +34,8 @@ from servicex.models import TransformationResult
 
 
 class ServiceXResource(Resource):
-    @staticmethod
-    def _generate_advertised_endpoint(endpoint):
+    @classmethod
+    def _generate_advertised_endpoint(cls, endpoint):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
     @staticmethod

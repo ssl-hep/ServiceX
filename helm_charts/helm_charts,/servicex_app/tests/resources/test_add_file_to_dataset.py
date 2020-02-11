@@ -25,10 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
-
-from servicex import ElasticSearchAdapter
+from servicex import ElasticSearchAdapter, LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
+
+
+def set_dataset_file_id(submitted_request, dataset_file):
+    dataset_file.id = "42"
 
 
 class TestAddFileToDataset(ResourceTestBase):
@@ -40,8 +42,13 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=self._generate_transform_request())
         mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
 
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
+
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   elasticsearch_adapter=mock_elasticsearch_adapter)
+                                   lookup_result_processor=mock_processor,
+                                   elasticsearch_adapter=mock_elasticsearch_adapter
+                                   )
 
         response = client.put('/servicex/transformation/1234/files',
                               json={
@@ -52,21 +59,10 @@ class TestAddFileToDataset(ResourceTestBase):
                               })
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='transformation_requests',
-            routing_key='1234',
-            body=json.dumps(
-                {"request-id": 'BR549',
-                 "file-id": 1,
-                 "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "/foo/bar.root",
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234",
-                 'result-destination': 'kafka',
-                 'kafka-broker': 'http://ssl-hep.org.kafka:12345'
-                 }))
+        mock_processor.add_file_to_dataset.assert_called()
 
         call = mock_elasticsearch_adapter.create_update_path.mock_calls[0][1]
-        assert call[0] == '1234:1'
+        assert call[0] == '1234:42'
 
         path_doc = call[1]
         assert path_doc['req_id'] == '1234'
@@ -82,7 +78,7 @@ class TestAddFileToDataset(ResourceTestBase):
 
         assert response.json == {
             "request-id": '1234',
-            "file-id": 1
+            "file-id": '42'
         }
 
     def test_put_new_file_root_dest(self, mocker,  mock_rabbit_adaptor):
@@ -97,9 +93,13 @@ class TestAddFileToDataset(ResourceTestBase):
             'return_request',
             return_value=root_file_transform_request)
 
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
+
         mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor,
                                    elasticsearch_adapter=mock_elasticsearch_adapter)
         response = client.put('/servicex/transformation/1234/files',
                               json={
@@ -110,21 +110,11 @@ class TestAddFileToDataset(ResourceTestBase):
                               })
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='transformation_requests',
-            routing_key='1234',
-            body=json.dumps(
-                {"request-id": 'BR549',
-                 "file-id": 1,
-                 "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "/foo/bar.root",
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/1234",
-                 'result-destination': 'root'
-                 }))
+        mock_processor.add_file_to_dataset.assert_called()
 
         assert response.json == {
             "request-id": '1234',
-            "file-id": 1
+            "file-id": "42"
         }
 
     def test_put_new_file_with_exception(self, mocker, mock_rabbit_adaptor):
@@ -134,9 +124,18 @@ class TestAddFileToDataset(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        mock_rabbit_adaptor.basic_publish = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=Exception('Test'))
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor)
+
         response = client.put('/servicex/transformation/1234/files',
-                              json={'file_path': '/foo/bar.root'})
+                              json={
+                                  'file_path': '/foo/bar.root',
+                                  'adler32': '12345',
+                                  'file_size': 1024,
+                                  'file_events': 500
+                              })
         assert response.status_code == 500
-        assert response.json == {'message': 'Something went wrong'}
+        assert response.json == {'message': 'Something went wrong: Test'}
