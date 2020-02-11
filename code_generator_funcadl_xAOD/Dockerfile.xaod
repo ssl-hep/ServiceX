@@ -1,6 +1,7 @@
 ARG BASE_VERSION=latest
 
 FROM sslhep/servicex_code_gen_base:${BASE_VERSION}
+RUN pip install func-adl-xAOD.backend==1.0.0a22
 
 COPY app.xaod.conf ./app.conf
 

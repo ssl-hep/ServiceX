@@ -1,6 +1,7 @@
 ARG BASE_VERSION=latest
 
 FROM sslhep/servicex_code_gen_base:${BASE_VERSION}
+RUN pip install func-adl-uproot==0.7
 
 COPY app.uproot.conf ./app.conf
 
