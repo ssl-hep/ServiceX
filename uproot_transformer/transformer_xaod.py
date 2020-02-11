@@ -38,6 +38,8 @@ from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
+import sys
+import traceback
 import pyarrow as pa
 
 
@@ -54,7 +56,7 @@ object_store = None
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path']
+    _file_path = transform_request['file-path'].encode('ascii', 'ignore')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     # _chunks = transform_request['chunks']
@@ -96,6 +98,9 @@ def callback(channel, method, properties, body):
                                         status='failure', num_messages=0, total_time=0,
                                         total_events=0, total_bytes=0)
                 file_done = True
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+                print(exc_value)
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
