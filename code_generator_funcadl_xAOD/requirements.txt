@@ -1,0 +1,6 @@
+# Requirements needed to run the app.
+flask
+Flask-WTF
+flask-restful
+func-adl-xAOD.backend==1.0.0a22
+func-adl-uproot==0.6
