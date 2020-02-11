@@ -1,4 +1,4 @@
-servicex-transformer==0.2.5
+servicex-transformer==0.3.rc1
 requests>=2.22.0
 kafka-python
 confluent_kafka==1.2.0
