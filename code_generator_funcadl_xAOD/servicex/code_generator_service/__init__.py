@@ -58,7 +58,7 @@ def create_app(test_config=None, provided_translator=None):
     with app.app_context():
 
         if not provided_translator:
-            translator = AstTranslator(app.config['TARGET_BACKEND'])
+            translator = AstTranslator()
         else:
             translator = provided_translator
 

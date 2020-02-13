@@ -3,4 +3,4 @@ flask
 Flask-WTF
 flask-restful
 
-# The Func-ADL packages are installed in the appropriate Dockerfile
+func-adl-xAOD.backend==1.0.0a22

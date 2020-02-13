@@ -35,7 +35,6 @@ from func_adl.ast import ast_hash
 from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import atlas_xaod_executor
 from qastle import text_ast_to_python_ast
 from func_adl_xAOD.backend.util_LINQ import find_dataset, extract_dataset_info
-from func_adl_uproot.translation import generate_python_source
 
 GeneratedFileResult = namedtuple('GeneratedFileResult', 'hash output_dir')
 
@@ -48,9 +47,8 @@ class GenerateCodeException(BaseException):
 
 
 class AstTranslator:
-    def __init__(self, target_backend):
-        assert target_backend in ['xAOD', 'uproot']
-        self.target_backend = target_backend
+    def __init__(self):
+        pass
 
     def zipdir(self, path: str, zip_handle: zipfile.ZipFile) -> None:
         """Given a `path` to a directory, zip up its contents into a zip file.
@@ -62,33 +60,6 @@ class AstTranslator:
         for root, _, files in os.walk(path):
             for file in files:
                 zip_handle.write(os.path.join(root, file), file)
-
-    def get_generated_uproot(self, a, cache_path: str):
-        # Calculate the AST hash. If this is already around then we don't need to do very much!
-        hash = ast_hash.calc_ast_hash(a)
-
-        # Next, see if the hash file is there.
-        query_file_path = os.path.join(cache_path, hash)
-        cache_file = os.path.join(query_file_path, 'rep_cache.pickle')
-        if os.path.isfile(cache_file):
-            # We have a cache hit. Look it up.
-            file = find_dataset(a)
-            with open(cache_file, 'rb') as f:
-                result_cache = pickle.load(f)
-                return result_cache, extract_dataset_info(file)
-
-        # Create the files to run in that location.
-        if not os.path.exists(query_file_path):
-            os.makedirs(query_file_path)
-
-        src = generate_python_source(a)
-        print(query_file_path)
-        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
-            python_file.write(src)
-
-        os.system("ls -lht " + query_file_path)
-
-        return GeneratedFileResult(hash, query_file_path)
 
     def get_generated_xAOD(self, a, cache_path: str):
         # Calculate the AST hash. If this is already around then we don't need to do very much!
@@ -140,10 +111,7 @@ class AstTranslator:
 
         # Generate the C++ code
         with TemporaryDirectory() as tempdir:
-            if self.target_backend == 'xAOD':
-                r = self.get_generated_xAOD(a, tempdir)
-            else:
-                r = self.get_generated_uproot(a, tempdir)
+            r = self.get_generated_xAOD(a, tempdir)
 
             # Zip up everything in the directory - we are going to ship it as back as part
             # of the message.

@@ -10,29 +10,14 @@ if __name__ == "__main__":
                         help="The text AST to be converted into zip file. STDIN if this is left off")  # noqa: E501
     parser.add_argument("-z", "--zipfile",
                         help="The name of the zip file to write out. STDOUT if this is left off")
-    parser.add_argument("--uproot",
-                        help="Generate code to transform file using uproot",
-                        action='store_true', default=False, required=False)
-    parser.add_argument("--xaod",
-                        help="Generate code to transform file using EventLoop",
-                        action='store_true', default=False, required=False)
 
     args = parser.parse_args()
-
-    if args.xaod == args.uproot:
-        print("Please specify a target for generated code: Uproot or XAod")
-        sys.exit(-1)
-
-    if args.xaod:
-        target_backend = 'xAOD'
-    else:
-        target_backend = 'uproot'
 
     # Get the input AST
     ast_text = args.ast if args.ast is not None else sys.stdin.read().strip()
 
     # Output file
-    translator = AstTranslator(target_backend)
+    translator = AstTranslator()
     zip_data = translator.translate_text_ast_to_zip(ast_text)
     if args.zipfile is None:
         sys.stdout.buffer.write(zip_data)
