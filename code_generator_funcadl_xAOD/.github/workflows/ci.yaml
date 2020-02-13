@@ -44,7 +44,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - name: Build Uproot Image
+    - name: Build xAOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
         name: sslhep/servicex_code_gen_xaod

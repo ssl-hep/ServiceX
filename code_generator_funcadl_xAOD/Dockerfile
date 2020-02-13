@@ -16,6 +16,7 @@ COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
+COPY app.conf .
 ENV APP_CONFIG_FILE "/home/servicex/app.conf"
 
 EXPOSE 5000
