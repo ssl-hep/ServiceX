@@ -1,0 +1,8 @@
+.idea
+*egg-info*
+*.pyc
+.pytest_cache/*
+.coverage
+coverage.xml
+generated/
+.venv/*
