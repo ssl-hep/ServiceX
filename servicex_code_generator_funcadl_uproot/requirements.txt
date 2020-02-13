@@ -2,5 +2,5 @@
 flask
 Flask-WTF
 flask-restful
-func-adl-uproot==0.7
+func-adl-uproot==0.8
 func-adl==1.0.0a18
