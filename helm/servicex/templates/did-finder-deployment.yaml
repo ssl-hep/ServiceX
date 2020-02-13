@@ -1,10 +1,13 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-did-finder
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder
   template:
     metadata:
       labels:
