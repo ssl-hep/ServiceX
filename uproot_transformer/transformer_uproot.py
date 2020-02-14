@@ -26,20 +26,42 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import sys
+import traceback
+
+import awkward
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
+from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
+from servicex.transformer.uproot_events import UprootEvents
+from servicex.transformer.uproot_transformer import UprootTransformer
+from servicex.transformer.arrow_writer import ArrowWriter
+import uproot
 import os
+import pyarrow.parquet as pq
 
 
 # How many bytes does an average awkward array cell take up. This is just
 # a rule of thumb to calculate chunksize
 avg_cell_size = 42
 
+messaging = None
 object_store = None
+
+
+class ArrowIterator:
+    def __init__(self, arrow, chunk_size, file_path):
+        self.arrow = arrow
+        self.chunk_size = chunk_size
+        self.file_path = file_path
+        self.attr_name_list = ["not available"]
+
+    def arrow_table(self):
+        yield self.arrow
 
 
 # noinspection PyUnusedLocal
@@ -49,6 +71,8 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    _tree_name = transform_request['tree-name']
+    # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
     tick = time.time()
@@ -56,13 +80,13 @@ def callback(channel, method, properties, body):
         # Do the transform
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path)
+        transform_single_file(_file_path, output_path+".parquet", servicex, tree_name=_tree_name)
 
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file, output_path)
-            os.remove(output_path)
+            object_store.upload_file(_request_id, root_file+".parquet", output_path+".parquet")
+            os.remove(output_path+".parquet")
 
         servicex.post_status_update("File " + _file_path + " complete")
 
@@ -73,6 +97,10 @@ def callback(channel, method, properties, body):
                                    total_bytes=0)
 
     except Exception as error:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+        print(exc_value)
+
         transform_request['error'] = str(error)
         channel.basic_publish(exchange='transformation_failures',
                               routing_key=_request_id + '_errors',
@@ -84,40 +112,65 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path):
-    print("Transforming a single path: " + str(file_path) + " into " + output_path)
-    os.system("voms-proxy-info --all")
-    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
-    reason_bad = None
-    if r != 0:
-        reason_bad = "Error return from transformer: " + str(r)
-    if (reason_bad is None) and not os.path.exists(output_path):
-        reason_bad = "Output file " + output_path + " was not found"
-    if reason_bad is not None:
-        with open('log.txt', 'r') as f:
-            errors = f.read()
-            raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
+def transform_single_file(file_path, output_path, servicex=None, tree_name='Events'):
+    print("Transforming a single path: " + str(file_path))
+
+    try:
+        import generated_transformer
+        table = generated_transformer.run_query(file_path, tree_name)
+
+        # Deal with messy, nested lazy arrays which cannot be converted to arrow
+        concatenated = {}
+        for column in table.columns:
+            concatenated[column] = awkward.concatenate(
+                [x.array.chunks[0].array for x in table[column].chunks])
+        new_table = awkward.Table(concatenated)
+
+        arrow = awkward.toarrow(new_table)
+
+        if output_path:
+            writer = pq.ParquetWriter(output_path, arrow.schema)
+            writer.write_table(table=arrow)
+            writer.close()
+
+    except Exception:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+        print(exc_value)
+
+        raise RuntimeError(
+            "Failed to transform input file " + file_path + ": " + str(exc_value))
+
+    if messaging:
+        arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
+                                   object_store=None, messaging=messaging)
+
+        #Todo implement chunk size parameter
+        transformer = ArrowIterator(arrow, chunk_size=1000, file_path=file_path)
+        arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
+                                             file_id=None, request_id=args.request_id)
 
 
 def compile_code():
-    # Have to use bash as the file runner.sh does not execute properly, despite its 'x'
-    # bit set. This seems to be some vagary of a ConfigMap from k8, which is how we usually get
-    # this file.
-    r = os.system('bash /generated/runner.sh -c | tee log.txt')
-    if r != 0:
-        with open('log.txt', 'r') as f:
-            errors = f.read()
-            raise RuntimeError("Unable to compile the code - error return: " + str(r)+ 'errors: \n' + errors)
+    import generated_transformer
+    pass
 
 
 if __name__ == "__main__":
-    parser = TransformerArgumentParser(description="xAOD CPP Transformer")
+    parser = TransformerArgumentParser(description="Uproot Transformer")
     args = parser.parse_args()
 
-    assert args.result_format == 'root-file', 'We only know how to create root file output'
-    assert args.result_destination != 'kafka', 'Kafka not yet supported'
+    print("-----", sys.path)
+    kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
-    if not args.output_dir and args.result_destination == 'object-store':
+    print(args.result_destination, args.output_dir)
+    if args.output_dir:
+            messaging = None
+            object_store = None
+    elif args.result_destination == 'kafka':
+        messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
+        object_store = None
+    elif args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
 
@@ -127,4 +180,5 @@ if __name__ == "__main__":
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
+        print("Transform a single file ", args.path)
         transform_single_file(args.path, args.output_dir)

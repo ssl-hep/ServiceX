@@ -11,10 +11,21 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1.2.0
 
-    - name: Publish to Registry
+    - name: Build Uproot Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/servicex_xaod_cpp_transformer
+        dockerfile: Dockerfile.uprootTransformer
+        name: sslhep/servicex_func_adl_uproot_transformer
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        tag_names: true
+        tag: "${GITHUB_REF##*/}"
+
+    - name: Build xAOD Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        dockerfile: Dockerfile.xaodTransformer
+        name: sslhep/servicex_func_adl_xaod_transformer
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+
