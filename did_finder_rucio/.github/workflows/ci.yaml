@@ -1,0 +1,20 @@
+name: CI/CD
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Build DID-Finder Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: sslhep/servicex-did-finder
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+
