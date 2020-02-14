@@ -3,9 +3,6 @@ name: CI/CD
 on:
   push:
   pull_request:
-  # Run daily at 0:01 UTC
-  schedule:
-  - cron:  '1 0 * * *'
 
 jobs:
   test:
@@ -47,7 +44,7 @@ jobs:
     - name: Build xAOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/servicex_code_gen_xaod
+        name: sslhep/servicex_code_gen_func_adl_xaod
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         tag: "${GITHUB_REF##*/}"
