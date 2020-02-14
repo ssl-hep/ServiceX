@@ -29,6 +29,8 @@ from servicex.code_generator_service import create_app
 import io
 import zipfile
 
+from servicex.code_generator_service.ast_translator import GenerateCodeException
+
 
 def get_zipfile_data(zip_data: bytes):
     with zipfile.ZipFile(io.BytesIO(zip_data)) as thezip:
@@ -45,57 +47,38 @@ def check_zip_file(zip_data: bytes):
     assert len(names) == 6
 
 
-class TestGenerateCode():
+class TestGenerateCode:
     def test_post_good_query(self, mocker):
-        'Produce code for a simple good query'
+        """Produce code for a simple good query"""
+
+        mock_ast_translator = mocker.Mock()
+        mock_ast_translator.translate_text_ast_to_zip = mocker.Mock(return_value="hi")
+
         config = {
-            # TODO: What does this do?
-            'TestConfig': True
+            'TARGET_BACKEND': 'uproot'
         }
-        app = create_app(config)
+        app = create_app(config, provided_translator=mock_ast_translator)
         client = app.test_client()
-        response = client.post("/servicex/generated-code",
-                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")  # noqa: E501
+        select_stmt = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')"  # noqa: E501
+
+        response = client.post("/servicex/generated-code", data=select_stmt)
         assert response.status_code == 200
-        check_zip_file(response.data)
-
-    def test_post_empty_query(self, mocker):
-        'Post an empty query - should get back an error'
-        config = {
-            # TODO: What does this do?
-            'TestConfig': True
-        }
-        app = create_app(config)
-        client = app.test_client()
-        response = client.post("/servicex/generated-code",
-                               data=b"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root'))")  # noqa: E501
-        assert response.status_code == 500
-        assert 'Message' in response.json
-
-    def test_post_syntax_error_query(self, mocker):
-        'Post a query that contains a ast-language syntax error'
-        'Post an empty query - should get back an error'
-        config = {
-            # TODO: What does this do?
-            'TestConfig': True
-        }
-        app = create_app(config)
-        client = app.test_client()
-        response = client.post("/servicex/generated-code",
-                               data=b"")
-        assert response.status_code == 500
-        assert 'Message' in response.json
+        mock_ast_translator.translate_text_ast_to_zip.assert_called_with(select_stmt)
 
     def test_post_codegen_error_query(self, mocker):
-        'Post a query with a code-gen level error'
+        """Post a query with a code-gen level error"""
+        mock_ast_translator = mocker.Mock()
+        mock_ast_translator.translate_text_ast_to_zip = \
+            mocker.Mock(side_effect=GenerateCodeException)
+
         config = {
-            # TODO: What does this do?
-            'TestConfig': True
+            'TARGET_BACKEND': 'uproot'
         }
-        app = create_app(config)
+        app = create_app(config, provided_translator=mock_ast_translator)
         client = app.test_client()
-        response = client.post("/servicex/generated-code",
-                               data=b"(call ResultAwkwardArray (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')")  # noqa: E501
+        select_stmt = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')"  # noqa: E501
+
+        response = client.post("/servicex/generated-code", data=select_stmt)
 
         assert response.status_code == 500
         assert 'Message' in response.json

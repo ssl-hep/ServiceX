@@ -4,3 +4,5 @@
 .pytest_cache/*
 .coverage
 coverage.xml
+generated/
+.venv/*

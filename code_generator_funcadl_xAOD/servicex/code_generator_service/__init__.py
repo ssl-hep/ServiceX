@@ -30,6 +30,7 @@ import os
 from flask import Flask
 from flask_restful import Api
 from servicex.code_generator_service.generate_code import GenerateCode
+from servicex.code_generator_service.ast_translator import AstTranslator
 
 
 def handle_invalid_usage(error: BaseException):
@@ -39,7 +40,7 @@ def handle_invalid_usage(error: BaseException):
     return response
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, provided_translator=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -55,7 +56,14 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     with app.app_context():
+
+        if not provided_translator:
+            translator = AstTranslator()
+        else:
+            translator = provided_translator
+
         api = Api(app)
+        GenerateCode.make_api(translator)
 
         api.add_resource(GenerateCode, '/servicex/generated-code')
 
