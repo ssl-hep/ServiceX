@@ -43,6 +43,9 @@ from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
 import pyarrow.parquet as pq
+import pandas as pd
+import pyarrow as pa
+
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -120,13 +123,8 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
         table = generated_transformer.run_query(file_path, tree_name)
 
         # Deal with messy, nested lazy arrays which cannot be converted to arrow
-        concatenated = {}
-        for column in table.columns:
-            concatenated[column] = awkward.concatenate(
-                [x.array.chunks[0].array for x in table[column].chunks])
-        new_table = awkward.Table(concatenated)
-
-        arrow = awkward.toarrow(new_table)
+        new_table = pd.DataFrame(table)
+        arrow = pa.Table.from_pandas(new_table)
 
         if output_path:
             writer = pq.ParquetWriter(output_path, arrow.schema)
