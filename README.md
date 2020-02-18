@@ -83,6 +83,7 @@ The default values for the ServiceX helm chart deploy the following services:
 | rabbitmq | This is a [popular queue messaging system](https://www.rabbitmq.com) it provides a transaction mechanism for distributing work to the asynchronous components of the service |
 | minio | An [opensource implementation](https://min.io) of Amazon's S3 object store. It is not required for ServiceX, but makes it easy to deliver results from smaller transformations as downloadable files. |
 | did-finder | This service accepts DIDs and consults Rucio to find replicas of the constituaent ROOT files. It sends these files back to the REST server so the transformers can access them |
+| code-gen | This service generates code from your [qastle](https://github.com/iris-hep/qastle/blob/master/README.md) selects|
 | preflight | This service accepts the first ROOT file found by the DID-Finder and does a quick validation of your request to make sure the columns are valid. Only after passing this test do the transformer jobs get started |
 | x509-secrets | This service uses your provided grid cert and credentials to obtain an X509 proxy from VOMs. This proxy is stored in the cluster as a secret that the DID finder and Transformers can mount to connect to resources on your behalf |
 
