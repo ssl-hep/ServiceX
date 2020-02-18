@@ -19,13 +19,13 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: v0.2
+  tag: v0.3
   pullPolicy: IfNotPresent
 
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: v0.2
+  tag: v0.3
   pullPolicy: IfNotPresent
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -35,16 +35,20 @@ didFinder:
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
 preflight:
-  image: sslhep/servicex_xaod_cpp_transformer
-  tag: v0.2
+  image: sslhep/servicex_func_adl_xaod_transformer
+  # For uproot deployment
+  # image: sslhep/servicex_func_adl_uproot_transformer
+  tag: v0.3
   pullPolicy: IfNotPresent
 
 #
-# C++ func_adl Code Generator service
+# Code Generator service
 codeGen:
   enabled: true
-  image: sslhep/servicex_code_gen_funcadl_xaod
-  tag: v0.2
+  image: sslhep/servicex_code_gen_func_adl_xaod
+  # For uproot deployment
+  # image: sslhep/servicex_code_gen_func_adl_uproot
+  tag: v0.3
   pullPolicy: IfNotPresent
 
 
@@ -55,7 +59,7 @@ transformer:
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: v0.2
+  tag: v0.3
   pullPolicy: IfNotPresent
   vomsOrg: atlas
 
