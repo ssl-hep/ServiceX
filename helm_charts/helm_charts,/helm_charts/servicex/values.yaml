@@ -22,6 +22,11 @@ app:
   tag: v0.3
   pullPolicy: IfNotPresent
 
+  # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
+  rabbitmq:
+    retries: 12
+    retry_interval: 10 # seconds
+
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
