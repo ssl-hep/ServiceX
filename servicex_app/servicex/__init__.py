@@ -27,6 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import time
+
+import pika
 from flask import Flask
 from flask_restful import Api
 
@@ -39,15 +42,31 @@ from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 
 
-def _init_rabbit_mq(rabbitmq_url):
-    rabbit_mq_adaptor = RabbitAdaptor(rabbitmq_url)
-    rabbit_mq_adaptor.connect()
+def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
+    rabbit_mq_adaptor = None
+    retry_count = 0
+    while not rabbit_mq_adaptor:
+        try:
+            rabbit_mq_adaptor = RabbitAdaptor(rabbitmq_url)
+            rabbit_mq_adaptor.connect()
 
-    # Insure the required queues and exchange exist in RabbitMQ broker
-    rabbit_mq_adaptor.setup_queue('did_requests')
-    rabbit_mq_adaptor.setup_queue('validation_requests')
-    rabbit_mq_adaptor.setup_exchange('transformation_requests')
-    rabbit_mq_adaptor.setup_exchange('transformation_failures')
+            # Insure the required queues and exchange exist in RabbitMQ broker
+            rabbit_mq_adaptor.setup_queue('did_requests')
+            rabbit_mq_adaptor.setup_queue('validation_requests')
+            rabbit_mq_adaptor.setup_exchange('transformation_requests')
+            rabbit_mq_adaptor.setup_exchange('transformation_failures')
+
+        except pika.exceptions.AMQPConnectionError as eek:
+            rabbit_mq_adaptor = None
+            retry_count += 1
+            if retry_count < retries:
+                print("Failed to connect to RabbitMQ. Waiting before trying again")
+                time.sleep(retry_interval)
+            else:
+                print("Failed to connect to RabbitMQ. Giving Up")
+                raise eek
+
+    print("Connection to RabbitMQ Adaptor Up")
     return rabbit_mq_adaptor
 
 
@@ -85,7 +104,9 @@ def create_app(test_config=None,
             transformer_manager = provided_transformer_manager
 
         if not provided_rabbit_adaptor:
-            rabbit_adaptor = _init_rabbit_mq(app.config['RABBIT_MQ_URL'])
+            rabbit_adaptor = _init_rabbit_mq(app.config['RABBIT_MQ_URL'],
+                                             app.config['RABBIT_RETRIES'],
+                                             app.config['RABBIT_RETRY_INTERVAL'])
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 
