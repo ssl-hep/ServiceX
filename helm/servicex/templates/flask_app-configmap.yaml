@@ -26,6 +26,11 @@ data:
     JWT_SECRET_KEY = 'jwt-secret-string'
     RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
     TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
+
+    # Keep retrying to connect to Rabbit if its not yet up
+    RABBIT_RETRIES = {{ .Values.app.rabbitmq.retries }}
+    RABBIT_RETRY_INTERVAL = {{ .Values.app.rabbitmq.retry_interval }}
+
     ADVERTISED_HOSTNAME= '{{ .Release.Name }}-servicex-app:8000'
 
     {{ if .Values.hostMount }}
