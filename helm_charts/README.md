@@ -180,6 +180,8 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
+| `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
+| `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
