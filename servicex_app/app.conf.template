@@ -13,9 +13,9 @@ JWT_SECRET_KEY = 'jwt-secret-string'
 RABBIT_MQ_URL= 'amqp://user:leftfoot1@localhost:30672/%2F'
 TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@host.docker.internal:30672/%2F?heartbeat=9000'
 
-# Keep retrying every five seconds for two minutes before giving up
-RABBIT_RETRIES = 24
-RABBIT_RETRY_INTERVAL = 5
+# Keep retrying every ten seconds for two minutes before giving up
+RABBIT_RETRIES = 12
+RABBIT_RETRY_INTERVAL = 10
 
 
 # This will be mounted into the transformer pod's /data directory
