@@ -151,15 +151,15 @@ experiment, you can follow these
 [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) 
 on obtaining proper grid certificates.
 
-The DID Finder service assumes that the certs are available `/etc/grid-certs` 
-and that the passcode to unlock them can be found in a file called `secret.txt`
-in the `/servicex` directory. 
+You install the certs into the cluster as a global kubernetes secret. This is
+easily done with the ServiceX Command Line Interface (cli).
 
-This helm chart pulls these values out of `values.yaml` and generates a 
-ConfigMap for the PEM files and a Secret for the passcode.
-
-This works reliably, but may not be best practice for securing sensitive 
-information. Suggestions are welcome.
+1. Install the cli with `pip install servicex-cli`
+2. When this completes you can copy the certs into the cluster with `servicex init`
+By default, the script will pick up your grid certs from the `.globus` directory
+in your home directory. You can override this with the `--cert-dir` command line
+option. Also, the cli will create the secret in the `default` namespace. If you
+are using a different namespace you can override this with the `--namespace` option.
 
 ## Optional Kafka Installation
 ServiceX can deliver transformed datasets to an object store service (Minio) 
@@ -202,9 +202,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
-| `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
-| `usercert`                           | Copy of the contents of your `~/.globus/usercert.pem` file | - 
-| `userkey`                            | Copy of the contents of your `~/.globus/userkey.pem` file | -
+| `gridAccount`                        | CERN User account name to access Rucio           | - 
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
