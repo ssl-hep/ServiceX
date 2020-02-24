@@ -65,7 +65,7 @@ myCmd = """
  voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
                   -cert /etc/grid-certs/usercert.pem \
                   --voms=%s \
-                  <  /servicex/secrets.txt
+                  <  /etc/grid-certs-ro/passphrase
                   """
 os.system(myCmd % args.voms)
 f = "/etc/grid-security/x509up"
@@ -91,12 +91,13 @@ while True:
             if secret_created:
                 client.CoreV1Api().patch_namespaced_secret(name=secret_name,
                                                            namespace=pod_namespace, body=secret)
+                print("Updated proxy cert in  %s" % secret_name)
+
             else:
                 client.CoreV1Api().create_namespaced_secret(namespace=pod_namespace, body=secret)
+                print("Created Secret %s" % secret_name)
                 secret_created = True
 
-    # Update crls
-    os.system("/usr/sbin/fetch-crl")
     time.sleep(6*60*60)
 
 
