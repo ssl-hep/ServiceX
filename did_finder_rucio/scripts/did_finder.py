@@ -230,6 +230,34 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
+def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
+    rabbitmq = None
+    retry_count = 0
+
+    while not rabbitmq:
+        try:
+            rabbitmq = pika.BlockingConnection(pika.URLParameters(args.rabbit_uri))
+            _channel = rabbitmq.channel()
+            _channel.queue_declare(queue='did_requests')
+
+            print("Connected to RabbitMQ. Ready to start consuming requests")
+
+            _channel.basic_consume(queue='did_requests',
+                                   auto_ack=False,
+                                   on_message_callback=callback)
+            _channel.start_consuming()
+
+        except pika.exceptions.AMQPConnectionError as eek:
+            rabbitmq = None
+            retry_count += 1
+            if retry_count < retries:
+                print("Failed to connect to RabbitMQ. Waiting before trying again")
+                time.sleep(retry_interval)
+            else:
+                print("Failed to connect to RabbitMQ. Giving Up")
+                raise eek
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--site', dest='site', action='store',
                     default=None,
@@ -274,16 +302,7 @@ else:
 
 # If no DIDs on the command line then start up as server and await requests
 if not args.did_list:
-    rabbitmq = pika.BlockingConnection(
-        pika.URLParameters(args.rabbit_uri)
-    )
-    _channel = rabbitmq.channel()
-    _channel.exchange_declare('transformation_requests')
-
-    _channel.basic_consume(queue='did_requests',
-                           auto_ack=False,
-                           on_message_callback=callback)
-    _channel.start_consuming()
+    init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
 
 summary = process_did_list(args.did_list, site, did_client, replica_client)
 
