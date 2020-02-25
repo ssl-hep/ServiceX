@@ -34,6 +34,7 @@ import datetime
 import json
 import os
 import sys
+import time
 
 import requests
 import argparse
@@ -107,6 +108,34 @@ def callback(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
+def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
+    rabbitmq = None
+    retry_count = 0
+
+    while not rabbitmq:
+        try:
+            rabbitmq = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+            _channel = rabbitmq.channel()
+            _channel.queue_declare(queue='validation_requests')
+
+            print("Connected to RabbitMQ. Ready to start consuming requests")
+
+            _channel.basic_consume(queue='validation_requests',
+                                   auto_ack=False,
+                                   on_message_callback=callback)
+            _channel.start_consuming()
+
+        except pika.exceptions.AMQPConnectionError as eek:
+            rabbitmq = None
+            retry_count += 1
+            if retry_count < retries:
+                print("Failed to connect to RabbitMQ. Waiting before trying again")
+                time.sleep(retry_interval)
+            else:
+                print("Failed to connect to RabbitMQ. Giving Up")
+                raise eek
+
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
@@ -116,13 +145,4 @@ if __name__ == "__main__":
         print(valid, info)
         sys.exit(0)
 
-    rabbitmq = pika.BlockingConnection(
-        pika.URLParameters(args.rabbit_uri)
-    )
-    _channel = rabbitmq.channel()
-    _channel.queue_declare('validated_requests')
-
-    _channel.basic_consume(queue="validation_requests",
-                           auto_ack=False,
-                           on_message_callback=callback)
-    _channel.start_consuming()
+    init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
