@@ -25,3 +25,34 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+
+import requests
+
+
+class ServiceXAdapter:
+    def __init__(self, endpoint):
+        self.endpoint = endpoint
+
+    def post_status_update(self, status_msg):
+        requests.post(self.endpoint + "/status", data={
+            "timestamp": datetime.now().isoformat(),
+            "status": status_msg
+        })
+
+    def put_file_add(self, file_info):
+        requests.put(self.endpoint + "/files", json={
+            "timestamp": datetime.now().isoformat(),
+            "file_path": file_info['file_path'],
+            'adler32': file_info['adler32'],
+            'file_size': file_info['file_size'],
+            'file_events': file_info['file_events']
+        })
+
+    def post_preflight_check(self, file_entry):
+        requests.post(self.endpoint + "/preflight", json={
+            'file_path': file_entry['file_path']
+        })
+
+    def put_fileset_complete(self, summary):
+        requests.put(self.endpoint + "/complete", json=summary)

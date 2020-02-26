@@ -1,5 +1,4 @@
 # Copyright (c) 2019, IRIS-HEP
-# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,62 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-def parse_did(did):
-    """
-    Parse a DID string into the scope and name
-    Allow for no scope to be included
-    :param did:
-    :return: Dictionary with keys "scope" and "name"
-    """
-    d = dict()
-    if ':' in did:
-        d['scope'], d['name'] = did.split(":")
-    else:
-        d['scope'], d['name'] = '', did
-    return d
-
-
-def list_files_for_did(did, did_client):
-    g_files = None
-    while not g_files:
-        try:
-            g_files = did_client.list_files(did['scope'], did['name'])
-        except Exception as eek:
-            print("\n\n\n\n\nERROR LISTING FILES ", eek)
-    return g_files
-
-
-def find_replicas(file, site, replica_client):
-    g_replicas = None
-    while not g_replicas:
-        try:
-            location = {'site': site} if site else None
-
-            g_replicas = replica_client.list_replicas(
-                dids=[{'scope': file['scope'], 'name': file['name']}],
-                schemes=['root'],
-                client_location=location)
-
-        except Exception as eek:
-            print("\n\n\n\n\nERROR READING REPLICA ", eek)
-    return g_replicas
-
-
-def get_sel_path(replica, prefix):
-    sel_path = None
-
-    if 'pfns' not in replica:
-        return None
-
-    for fpath, meta in replica['pfns'].items():
-        if not meta['type'] == 'DISK':
-            continue
-        sel_path = fpath
-        if meta['domain'] == 'lan':
-            break
-
-    return prefix+sel_path
 
 class DIDSummary:
     def __init__(self, did):
