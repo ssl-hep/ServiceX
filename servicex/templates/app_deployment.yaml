@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-servicex-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: {{ .Release.Name }}-servicex-app
@@ -23,6 +23,11 @@ spec:
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.app.pullPolicy }}
+        {{- if .Values.app.resources }}
+        resources:
+{{ toYaml .Values.app.resources | indent 10 }}
+        {{- end }}
+
         volumeMounts:
           - name: app-cfg
             mountPath: /opt/servicex
