@@ -21,6 +21,7 @@ app:
   image: sslhep/servicex_app
   tag: v0.3
   pullPolicy: IfNotPresent
+  replicas: 1
 
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
@@ -34,6 +35,7 @@ didFinder:
   pullPolicy: IfNotPresent
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+  threads: 5
 
   site:
 

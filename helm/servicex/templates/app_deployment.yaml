@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-servicex-app
 spec:
-  replicas: 3
+  replicas: {{ .Values.app.replicas }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-servicex-app
