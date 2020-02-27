@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import sys
 import traceback
 
 import time
@@ -48,28 +49,17 @@ parser.add_argument('--prefix', dest='prefix', action='store',
                     default='',
                     help='Prefix to add to Xrootd URLs')
 
-parser.add_argument('--staticfile', dest='static_file', action='store',
-                    default=None,
-                    help='Static Root file to serve up)')
-
-parser.add_argument('--outfile', dest='output_file', action='store',
-                    default=None,
-                    help='Filename to output list of Root files to')
-
 parser.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
                     default='host.docker.internal')
 
-parser.add_argument('--max-workers', dest='max_workers', action='store',
-                    default=10, type=int)
+parser.add_argument('--threads', dest='threads', action='store',
+                    default=10, type=int, help="Number of threads to spawn")
 
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
 
 
-def process_did_list(did_list, site, did_client, replica_client):
-    pass
-
-
+# RabbitMQ Queue Callback Method
 def callback(channel, method, properties, body):
     try:
         did_request = json.loads(body)
@@ -87,13 +77,15 @@ def callback(channel, method, properties, body):
             site=site,
             prefix=prefix,
             chunk_size=1000,
-            threads=5
+            threads=threads
         )
 
         lookup_request.lookup_files()
 
     except Exception:
         traceback.print_exc()
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        servicex.post_status_update("DID Request failed " + str(exc_value))
     finally:
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -126,33 +118,19 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
                 raise eek
 
 
+# Main Script
 args = parser.parse_args()
 
 site = args.site
 prefix = args.prefix
+threads = args.threads
+print("--------- ServiceX DID Finder ----------------")
+print("Threads: " + str(threads))
+print("Site: " + str(site))
+print("Prefix: " + str(prefix))
 
-sample_request_id = 'cli'
+did_client = DIDClient()
+replica_client = ReplicaClient()
+rucio_adapter = RucioAdapter(did_client, replica_client)
 
-# Is this a test run where we serve up a particular file instead of hitting the
-# real Rucio service?
-if args.static_file:
-    rucio_adapter = None
-else:
-    did_client = DIDClient()
-    replica_client = ReplicaClient()
-    rucio_adapter = RucioAdapter(did_client, replica_client)
-
-# If no DIDs on the command line then start up as server and await requests
-if not args.did_list:
-    init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
-
-
-summary = process_did_list(args.did_list, site, did_client, replica_client)
-
-print(summary)
-
-if args.output_file:
-    with open(args.output_file, 'w') as f:
-        json.dump(summary.file_results, f)
-else:
-    print(summary.file_results)
+init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
