@@ -182,13 +182,15 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
+| `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
+| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { } |               
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           |
 | `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |
 | `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
-| `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`          |
+| `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
+| `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
@@ -233,6 +235,20 @@ Once you have exposed port 5000 of the REST app, you can use the included
 transformation request, and check on the status of a running job. You can 
 import the collection from the [ServiceX REST App](https://raw.githubusercontent.com/ssl-hep/ServiceX_App/develop/ServiceXTest.postman_collection.json) repo
 
+
+### Production Deployment
+We are still experimenting with various configurations for deploying a scaled-up
+ServiceX. 
+
+It's certainly helpful to beef up the RabbitMQ deployment:
+```yaml
+rabbitmq:
+  resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  replicas: 3
+```
 
 > **Tip**: List all releases using `helm list`
 
