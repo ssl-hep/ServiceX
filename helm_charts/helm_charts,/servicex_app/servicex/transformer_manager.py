@@ -79,6 +79,12 @@ class TransformerManager:
         # Compute Environment Vars
         env = [client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")]
 
+        # Provide each pod with an environment var holding that pod's name
+        pod_name_value_from = client.V1EnvVarSource(field_ref=client.V1ObjectFieldSelector(field_path="metadata.name"))
+        env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
+
+        env = env + [env_var_pod_name]
+
         if result_destination == 'object-store':
             env = env + [
                 client.V1EnvVar(name='MINIO_URL',
@@ -86,7 +92,7 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_ACCESS_KEY',
                                 value=current_app.config['MINIO_ACCESS_KEY']),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
-                                value=current_app.config['MINIO_SECRET_KEY'])
+                                value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
         python_args = ["/home/atlas/proxy-exporter.sh & sleep 5 && " +
