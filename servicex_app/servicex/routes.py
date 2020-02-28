@@ -33,6 +33,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
+    from servicex.resources.file_transform_status import FileTransformationStatus
     from servicex.resources.query_transformation_request import QueryTransformationRequest
     from servicex.resources.add_file_to_dataset import AddFileToDataset
     from servicex.resources.preflight_check import PreflightCheck
@@ -50,7 +51,10 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                      '/servicex/transformation/<string:request_id>',
                      '/servicex/transformation')
 
-    api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
+    api.add_resource(TransformationStatus,
+                     '/servicex/transformation/<string:request_id>/status')
+    api.add_resource(FileTransformationStatus,
+                     '/servicex/transformation/<string:request_id>/<int:file_id>/status')
 
     AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
     api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')

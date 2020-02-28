@@ -29,11 +29,13 @@ from flask_restful import reqparse
 from flask import jsonify
 from servicex.models import TransformationResult, TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
+from servicex.models import FileStatus
+import datetime
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('timestamp', help='This field cannot be blank',
                            required=True)
-status_parser.add_argument('status', help='This field cannot be blank',
+status_parser.add_argument('status-code', help='This field cannot be blank',
                            required=True)
 status_parser.add_argument('pod-name', required=False)
 status_parser.add_argument('info', required=False)
@@ -44,12 +46,23 @@ status_request_parser.add_argument('details', type=bool, default=False,
                                    required=False, location='args')
 
 
-class TransformationStatus(ServiceXResource):
+class FileTransformationStatus(ServiceXResource):
 
     def post(self, request_id, file_id):
         status = status_parser.parse_args()
-        status.request_id = request_id
         print(status)
+        status.request_id = request_id
+        file_status = FileStatus(file_id=file_id, request_id=request_id,
+                                 timestamp=datetime.datetime.strptime(
+                                     status.timestamp,
+                                     "%Y-%m-%dT%H:%M:%S.%f"),
+                                 pod_name=status['pod-name'],
+                                 status=status['status-code'],
+                                 info=status.info)
+        file_status.save_to_db()
+
+        print(file_status)
+        return "Ok"
 
     def get(self, request_id):
         status_request = status_request_parser.parse_args()
