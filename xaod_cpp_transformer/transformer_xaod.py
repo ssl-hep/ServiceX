@@ -62,6 +62,10 @@ def callback(channel, method, properties, body):
     # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
+    servicex.post_status_update(file_id=_file_id,
+                                status_code="start",
+                                info="xAOD Transformer")
+
     tick = time.time()
     file_done = False
     file_retries = 0
@@ -78,7 +82,9 @@ def callback(channel, method, properties, body):
                 object_store.upload_file(_request_id, root_file, output_path)
                 os.remove(output_path)
 
-            servicex.post_status_update("File " + _file_path + " complete")
+            servicex.post_status_update(file_id=_file_id,
+                                        status_code="complete",
+                                        info="Total time " + str(round(tock - tick, 2)))
 
             servicex.put_file_complete(_file_path, _file_id, "success",
                                     num_messages=0,
@@ -97,10 +103,21 @@ def callback(channel, method, properties, body):
                 servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                         status='failure', num_messages=0, total_time=0,
                                         total_events=0, total_bytes=0)
+
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="failure",
+                                            info= " error: " + str(error)[0:1024])
+
                 file_done = True
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
                 print(exc_value)
+            else:
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="retry",
+                                            info="Try: " + str(file_retries) +
+                                                 " error: " + str(error)[0:1024])
+
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
