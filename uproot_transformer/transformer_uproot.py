@@ -81,6 +81,10 @@ def callback(channel, method, properties, body):
     tick = time.time()
     try:
         # Do the transform
+        servicex.post_status_update(file_id=_file_id,
+                                    status_code="start",
+                                    info="tree-name: "+_tree_name)
+
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
         transform_single_file(_file_path, output_path+".parquet", servicex, tree_name=_tree_name)
@@ -91,7 +95,9 @@ def callback(channel, method, properties, body):
             object_store.upload_file(_request_id, root_file+".parquet", output_path+".parquet")
             os.remove(output_path+".parquet")
 
-        servicex.post_status_update("File " + _file_path + " complete")
+        servicex.post_status_update(file_id=_file_id,
+                                    status_code="complete",
+                                    info="Success")
 
         servicex.put_file_complete(_file_path, _file_id, "success",
                                    num_messages=0,
@@ -108,6 +114,11 @@ def callback(channel, method, properties, body):
         channel.basic_publish(exchange='transformation_failures',
                               routing_key=_request_id + '_errors',
                               body=json.dumps(transform_request))
+
+        servicex.post_status_update(file_id=_file_id,
+                                    status_code="failure",
+                                    info="error: "+str(exc_value)[0:1024])
+
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
                                    total_events=0, total_bytes=0)
