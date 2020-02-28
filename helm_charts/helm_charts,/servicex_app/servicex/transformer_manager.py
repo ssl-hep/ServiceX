@@ -80,7 +80,9 @@ class TransformerManager:
         env = [client.V1EnvVar(name="BASH_ENV", value="/home/atlas/.bashrc")]
 
         # Provide each pod with an environment var holding that pod's name
-        pod_name_value_from = client.V1EnvVarSource(field_ref=client.V1ObjectFieldSelector(field_path="metadata.name"))
+        pod_name_value_from = client.V1EnvVarSource(
+            field_ref=client.V1ObjectFieldSelector(
+                field_path="metadata.name"))
         env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
 
         env = env + [env_var_pod_name]

@@ -210,3 +210,22 @@ class DatasetFile(db.Model):
 
     def get_path_id(self):
         return self.request_id+":"+str(self.id)
+
+
+class FileStatus(db.Model):
+    __tablename__ = 'file_status'
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_id = db.Column(db.Integer, ForeignKey('files.id'), nullable=False)
+    request_id = db.Column(db.String(48),
+                           ForeignKey('requests.request_id'),
+                           unique=False,
+                           nullable=False)
+    status = db.Column(db.String(128), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    pod_name = db.Column(db.String(128), nullable=True)
+    info = db.Column(db.String(1024), nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
