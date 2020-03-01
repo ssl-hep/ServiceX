@@ -35,7 +35,7 @@ import uuid
 from flask import current_app
 from flask_restful import reqparse
 
-from servicex.models import TransformRequest, DatasetFile
+from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -189,6 +189,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec,
                     num_files=len(requested_file_list)
                 )
+
+            db.session.commit()
 
             if self.elasticsearch_adapter:
                 self.elasticsearch_adapter.create_update_request(

@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request
 
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -48,3 +48,4 @@ class FilesetComplete(ServiceXResource):
             total_bytes=summary['total-bytes'],
             did_lookup_time=summary['elapsed-time']
         )
+        db.session.commit()

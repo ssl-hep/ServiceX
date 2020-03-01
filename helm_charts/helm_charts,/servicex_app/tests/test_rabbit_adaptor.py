@@ -38,7 +38,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_pika = mocker.patch('pika.BlockingConnection')
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.connect()
-            mock_pika.assert_called_with(pika.URLParameters("amqp://test.com"))
+            mock_pika.assert_called_with([pika.URLParameters("amqp://test.com")])
 
     def test_setup_queue(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
@@ -232,7 +232,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection.channel.assert_called()
             mock_channel.basic_publish.assert_called_with(
                 exchange="exchange1",
+                mandatory=True,
                 routing_key='my_queue',
+                properties=pika.BasicProperties(delivery_mode=1),
                 body="{my: body}")
 
     def test_basic_publish_connection_closed(self, mocker, mock_rabbit_adaptor):
