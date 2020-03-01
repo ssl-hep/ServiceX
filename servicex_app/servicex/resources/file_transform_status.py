@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_restful import reqparse
 from flask import jsonify
-from servicex.models import TransformationResult, TransformRequest
+from servicex.models import TransformationResult, TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.models import FileStatus
 import datetime
@@ -58,10 +58,11 @@ class FileTransformationStatus(ServiceXResource):
                                      "%Y-%m-%dT%H:%M:%S.%f"),
                                  pod_name=status['pod-name'],
                                  status=status['status-code'],
-                                 info=status.info)
+                                 info=status.info[:4096])
         file_status.save_to_db()
 
         print(file_status)
+        db.session.commit()
         return "Ok"
 
     def get(self, request_id):

@@ -27,8 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 
-from servicex.models import TransformRequest
-
 
 class LookupResultProcessor:
     def __init__(self, rabbitmq_adaptor, elasticsearch_adaptor, advertised_endpoint):
@@ -83,4 +81,3 @@ class LookupResultProcessor:
         submitted_request.total_events = total_events
         submitted_request.total_bytes = total_bytes
         submitted_request.did_lookup_time = did_lookup_time
-        TransformRequest.update_request(submitted_request)

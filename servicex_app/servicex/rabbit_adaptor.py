@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -*- coding: utf-8 -*-
 # pylint: disable=C0111,C0103,R0205
+import random
 
 import pika
 from flask import current_app
@@ -43,7 +44,7 @@ class RabbitAdaptor(object):
         """
         self._connection = None
         self._channel = None
-        self._url = amqp_url
+        self._url = [pika.URLParameters(u) for u in amqp_url.split(",")]
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -51,9 +52,9 @@ class RabbitAdaptor(object):
         :rtype: pika.BlockingConnection
 
         """
+        random.shuffle(self._url)
         current_app.logger.info('Connecting to %s', self._url)
-        self._connection = pika.BlockingConnection(
-            pika.URLParameters(self._url))
+        self._connection = pika.BlockingConnection(self._url)
 
     def open_channel(self):
         """This method will open a new channel with RabbitMQ by issuing the
@@ -64,6 +65,10 @@ class RabbitAdaptor(object):
         """
         current_app.logger.info('Creating a new channel')
         self._channel = self._connection.channel()
+
+        # Turn on delivery confirmations
+        self._channel.confirm_delivery()
+
         return self._connection.channel
 
     @property
@@ -169,10 +174,14 @@ class RabbitAdaptor(object):
         while True:
             try:
                 channel = self.channel
+
                 channel.basic_publish(exchange=exchange,
                                       routing_key=routing_key,
-                                      body=body)
+                                      body=body,
+                                      properties=pika.BasicProperties(delivery_mode=1),
+                                      mandatory=True)
                 return
+
             except pika.exceptions.ConnectionClosedByBroker:
                 # Uncomment this to make the example not attempt recovery
                 # from server-initiated connection closure, including
@@ -180,14 +189,20 @@ class RabbitAdaptor(object):
                 #
                 # break
                 continue
+            except pika.exceptions.ChannelWrongStateError:
+                self.reset_closed()
+                current_app.loggger.info("Channel in wrong state. Reset and see if that fixes it")
+                continue
+
             # Do not recover on channel errors
             except pika.exceptions.AMQPChannelError as err:
                 current_app.logger.exception("Caught a channel error: {}, stopping...".format(err))
                 break
+
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
                 self.reset_closed()
-                current_app.logger.warning("Connection was closed, retrying...")
+                current_app.logger.info("Connection was closed, retrying...")
                 continue
 
     def close_channel(self):

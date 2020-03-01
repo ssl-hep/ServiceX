@@ -43,6 +43,7 @@ class AddFileToDataset(ServiceXResource):
 
     def put(self, request_id):
         try:
+            from servicex.models import db
             add_file_request = request.get_json()
             submitted_request = TransformRequest.return_request(request_id)
 
@@ -60,6 +61,7 @@ class AddFileToDataset(ServiceXResource):
                     self._generate_file_status_record(
                         db_record, "located")
                 )
+            db.session.commit()
 
             return {
                 "request-id": str(request_id),

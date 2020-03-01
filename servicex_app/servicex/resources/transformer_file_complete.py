@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import TransformRequest, TransformationResult, DatasetFile
+from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -78,4 +78,6 @@ class TransformerFileComplete(ServiceXResource):
                     self._generate_transformation_record(submitted_request, 'complete'))
 
         print(info)
+        db.session.commit()
+
         return "Ok"

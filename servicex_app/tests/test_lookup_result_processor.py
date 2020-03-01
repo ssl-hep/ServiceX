@@ -106,19 +106,18 @@ class TestLookupResutProcessor(ResourceTestBase):
                  }))
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
-        import servicex
-        mock_update = mocker.patch.object(servicex.models.TransformRequest, "update_request")
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           None, "http://cern.analysis.ch:5000/")
 
-        processor.report_fileset_complete(self._generate_transform_request(),
+        transform_request = self._generate_transform_request()
+
+        processor.report_fileset_complete(transform_request,
                                           num_files=1, num_skipped=2,
                                           total_events=3, total_bytes=4,
                                           did_lookup_time=5)
-        mock_update.assert_called()
-        args = mock_update.call_args
-        assert args[0][0].files == 1
-        assert args[0][0].files_skipped == 2
-        assert args[0][0].total_events == 3
-        assert args[0][0].total_bytes == 4
-        assert args[0][0].did_lookup_time == 5
+
+        assert transform_request.files == 1
+        assert transform_request.files_skipped == 2
+        assert transform_request.total_events == 3
+        assert transform_request.total_bytes == 4
+        assert transform_request.did_lookup_time == 5
