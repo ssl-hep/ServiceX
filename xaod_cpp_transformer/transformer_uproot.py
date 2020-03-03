@@ -151,8 +151,9 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
             "Failed to transform input file " + file_path + ": " + str(exc_value))
 
     if messaging:
-        arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
-                                   object_store=None, messaging=messaging)
+        arrow_writer = ArrowWriter(file_format=args.result_format,
+                                   object_store=None,
+                                   messaging=messaging)
 
         #Todo implement chunk size parameter
         transformer = ArrowIterator(arrow, chunk_size=1000, file_path=file_path)

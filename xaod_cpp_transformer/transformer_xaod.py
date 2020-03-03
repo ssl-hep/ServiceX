@@ -140,8 +140,9 @@ def transform_single_file(file_path, output_path, servicex=None):
         flat_tree_name = flat_file.keys()[0]
         attr_name_list = flat_file[flat_tree_name].keys()
 
-        arrow_writer = ArrowWriter(file_format=args.result_format, servicex=servicex,
-                                   object_store=object_store, messaging=messaging)
+        arrow_writer = ArrowWriter(file_format=args.result_format,
+                                   object_store=object_store,
+                                   messaging=messaging)
         # NB: We're converting the *output* ROOT file to Arrow arrays
         # TODO: Implement configurable chunk_size
         event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
