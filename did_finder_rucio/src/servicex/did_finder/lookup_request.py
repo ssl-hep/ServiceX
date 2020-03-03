@@ -100,7 +100,7 @@ class LookupRequest:
                 # sent.
                 sample_replica = None
                 for r in replicas:
-                    sel_path = RucioAdapter.get_sel_path(r, self.prefix)
+                    sel_path = RucioAdapter.get_sel_path(r, self.prefix, self.site)
                     if sel_path:
                         data = {
                             'req_id': self.request_id,

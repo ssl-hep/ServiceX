@@ -62,29 +62,28 @@ class RucioAdapter:
                 else:
                     file_list = [{'scope': files['scope'], 'name': files['name']}]
 
-                location = {'site': site} if site else None
-
                 g_replicas = self.replica_client.list_replicas(
                     dids=file_list,
                     schemes=['root'],
-                    client_location=location)
+                    client_location=None)
 
             except Exception as eek:
                 print("\n\n\n\n\nERROR READING REPLICA ", eek)
         return g_replicas
 
     @staticmethod
-    def get_sel_path(replica, prefix):
+    def get_sel_path(replica, prefix, site):
         sel_path = None
 
         if 'pfns' not in replica:
             return None
 
         for fpath, meta in replica['pfns'].items():
-            if not meta['type'] == 'DISK':
-                continue
-            sel_path = fpath
-            if meta['domain'] == 'lan':
+            if meta['type'] == 'DISK' and site in fpath:
+                sel_path = fpath
                 break
+
+        if not sel_path:
+            sel_path = sorted(replica['pfns'].keys())[-1]
 
         return prefix+sel_path
