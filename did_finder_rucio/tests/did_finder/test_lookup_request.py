@@ -92,7 +92,8 @@ class TestLookupRequest:
         mock_rucio.find_replicas.assert_called_with(["file1", "file2"], None)
         mock_sel_path.assert_called_with(
             mock_rucio.find_replicas.return_value[0],
-            ''
+            '',
+            None
         )
 
         mock_servicex.put_file_add.assert_called_with({
