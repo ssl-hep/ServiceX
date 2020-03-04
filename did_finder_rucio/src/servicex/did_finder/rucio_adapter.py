@@ -78,8 +78,12 @@ class RucioAdapter:
         if 'pfns' not in replica:
             return None
 
+        sitename = ''
+        if site:
+            sitename = site
+
         for fpath, meta in replica['pfns'].items():
-            if meta['type'] == 'DISK' and site in fpath:
+            if meta['type'] == 'DISK' and sitename in fpath:
                 sel_path = fpath
                 break
 
