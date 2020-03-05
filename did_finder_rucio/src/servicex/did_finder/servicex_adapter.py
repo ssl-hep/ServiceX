@@ -35,10 +35,21 @@ class ServiceXAdapter:
         self.endpoint = endpoint
 
     def post_status_update(self, status_msg):
-        requests.post(self.endpoint + "/status", data={
-            "timestamp": datetime.now().isoformat(),
-            "status": status_msg
-        })
+        success = False
+        attempts = 0
+        while not success and attempts < 3:
+            try:
+                requests.post(self.endpoint + "/status", data={
+                    "timestamp": datetime.now().isoformat(),
+                    "status": status_msg
+                })
+                success = True
+            except requests.exceptions.ConnectionError:
+                print("Connection err. Retry")
+                attempts += 1
+        if not success:
+            print("******** Failed to write status message")
+            print("******** Continuing")
 
     def put_file_add(self, file_info):
         requests.put(self.endpoint + "/files", json={
