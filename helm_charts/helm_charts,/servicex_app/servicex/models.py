@@ -223,7 +223,7 @@ class FileStatus(db.Model):
     __tablename__ = 'file_status'
 
     id = db.Column(db.Integer, primary_key=True)
-    file_id = db.Column(db.Integer, ForeignKey('files.id'), nullable=False)
+    file_id = db.Column(db.Integer, nullable=False)
     request_id = db.Column(db.String(48),
                            ForeignKey('requests.request_id'),
                            unique=False,
