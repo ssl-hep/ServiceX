@@ -42,7 +42,7 @@ class CodeGenAdapter:
                                data=request_record.selection)
 
         if result.status_code != 200:
-            msg = result.json['Message']
+            msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
         zipfile = ZipFile(BytesIO(result.content))

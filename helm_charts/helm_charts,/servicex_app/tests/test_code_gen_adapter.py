@@ -61,7 +61,7 @@ class TestCodeGenAdapter:
     def test_generate_code_bad_response(self, mocker):
         mock_response = mocker.Mock()
         mock_response.status_code = 500
-        mock_response.json = {"Message": "Ooops"}
+        mock_response.json = mocker.Mock(return_value={"Message": "Ooops"})
         mocker.patch('requests.post', return_value=mock_response)
         mock_transformer_manager = mocker.Mock()
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
