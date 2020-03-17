@@ -44,7 +44,7 @@ class RabbitAdaptor(object):
         """
         self._connection = None
         self._channel = None
-        self._url = [pika.URLParameters(u) for u in amqp_url.split(",")]
+        self._url_list = [pika.URLParameters(u) for u in amqp_url.split(",")]
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -52,9 +52,9 @@ class RabbitAdaptor(object):
         :rtype: pika.BlockingConnection
 
         """
-        random.shuffle(self._url)
-        current_app.logger.info('Connecting to %s', self._url)
-        self._connection = pika.BlockingConnection(self._url)
+        random.shuffle(self._url_list)
+        current_app.logger.info('Connecting to %s', self._url_list)
+        self._connection = pika.BlockingConnection(self._url_list)
 
     def open_channel(self):
         """This method will open a new channel with RabbitMQ by issuing the
