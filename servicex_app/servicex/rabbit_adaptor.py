@@ -134,8 +134,8 @@ class RabbitAdaptor(object):
                 break
             # Attempt to reconnect if the channel closed due to timeout
             except pika.exceptions.ChannelWrongStateError:
-                self.reset_closed()
                 current_app.logger.warning("Connection was closed, retrying...")
+                self.reset_closed()
                 continue
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
@@ -166,8 +166,8 @@ class RabbitAdaptor(object):
                 break
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
-                self.reset_closed()
                 current_app.logger.warning("Connection was closed, retrying...")
+                self.reset_closed()
                 continue
 
     def basic_publish(self, exchange, routing_key, body):
@@ -190,8 +190,8 @@ class RabbitAdaptor(object):
                 # break
                 continue
             except pika.exceptions.ChannelWrongStateError:
-                self.reset_closed()
                 current_app.loggger.info("Channel in wrong state. Reset and see if that fixes it")
+                self.reset_closed()
                 continue
 
             # Do not recover on channel errors
@@ -201,8 +201,8 @@ class RabbitAdaptor(object):
 
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
-                self.reset_closed()
                 current_app.logger.info("Connection was closed, retrying...")
+                self.reset_closed()
                 continue
 
     def close_channel(self):
