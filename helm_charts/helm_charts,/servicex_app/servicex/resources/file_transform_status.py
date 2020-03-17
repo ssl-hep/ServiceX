@@ -26,30 +26,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_restful import reqparse
-from flask import jsonify
-from servicex.models import TransformationResult, TransformRequest, db
+from servicex.models import db
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.models import FileStatus
 import datetime
 
-status_parser = reqparse.RequestParser()
-status_parser.add_argument('timestamp', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('status-code', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('pod-name', required=False)
-status_parser.add_argument('info', required=False)
-
-
-status_request_parser = reqparse.RequestParser()
-status_request_parser.add_argument('details', type=bool, default=False,
-                                   required=False, location='args')
-
 
 class FileTransformationStatus(ServiceXResource):
 
+    def __init__(self):
+        self.status_parser = reqparse.RequestParser()
+        self.status_parser.add_argument('timestamp', help='This field cannot be blank',
+                                        required=True)
+        self.status_parser.add_argument('status-code', help='This field cannot be blank',
+                                        required=True)
+        self.status_parser.add_argument('pod-name', required=False)
+        self.status_parser.add_argument('info', required=False)
+
     def post(self, request_id, file_id):
-        status = status_parser.parse_args()
+        status = self.status_parser.parse_args()
         print(status)
         status.request_id = request_id
         file_status = FileStatus(file_id=file_id, request_id=request_id,
@@ -68,25 +63,3 @@ class FileTransformationStatus(ServiceXResource):
             print("*******Error saving file status record")
         finally:
             return "Ok"
-
-    def get(self, request_id):
-        status_request = status_request_parser.parse_args()
-
-        count = TransformationResult.count(request_id)
-        stats = TransformationResult.statistics(request_id)
-        failures = TransformationResult.failed_files(request_id)
-        print(count, stats)
-        print(TransformRequest.files_remaining(request_id))
-        result_dict = {
-            "request-id": request_id,
-            "files-processed": count - failures,
-            "files-skipped": failures,
-            "files-remaining": TransformRequest.files_remaining(request_id),
-            "stats": stats
-        }
-
-        if status_request.details:
-            result_dict['details'] = TransformationResult.to_json_list(
-                TransformationResult.get_all_status(request_id))
-
-        return jsonify(result_dict)
