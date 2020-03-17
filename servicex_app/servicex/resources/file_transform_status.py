@@ -62,8 +62,12 @@ class FileTransformationStatus(ServiceXResource):
         file_status.save_to_db()
 
         print(file_status)
-        db.session.commit()
-        return "Ok"
+        try:
+            db.session.commit()
+        except Exception:
+            print("*******Error saving file status record")
+        finally:
+            return "Ok"
 
     def get(self, request_id):
         status_request = status_request_parser.parse_args()
