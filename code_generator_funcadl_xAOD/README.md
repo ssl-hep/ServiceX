@@ -21,7 +21,7 @@ return a binary zip file as output. To start that up, use the following
 docker command:
 
 ```
- docker run -it --rm -p 5000:5000  sslhep/servicex_code_gen_funcadl_xaod:latest
+ docker run -it --rm -p 5000:5000  sslhep/servicex_code_gen_func_adl_xaod:latest sslhep
 ```
 
 You can now make queries against port 5000.
@@ -32,7 +32,7 @@ This container will also do that for you:
 
 ```
 AST="(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')" 
-echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_xaod:master from_ast_to_zip.py -z /zip/junk.zip
+echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_func_adl_xaod:master from_ast_to_zip.py -z /zip/junk.zip
 ```
 
 After running, that will leave a `zip` file in your home directory that contains 
