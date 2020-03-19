@@ -150,6 +150,7 @@ def transform_single_file(file_path, output_path, servicex=None):
         transformer = UprootTransformer(event_iterator)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
+        print("Kafka Timings: "+str(arrow_writer.messaging_timings))
 
 
 def compile_code():
