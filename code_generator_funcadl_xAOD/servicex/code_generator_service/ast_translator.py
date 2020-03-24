@@ -34,6 +34,7 @@ from tempfile import TemporaryDirectory
 from func_adl.ast import ast_hash
 from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import atlas_xaod_executor
 from qastle import text_ast_to_python_ast
+from func_adl_xAOD.util_LINQ import find_dataset, extract_dataset_info
 
 GeneratedFileResult = namedtuple('GeneratedFileResult', 'hash output_dir')
 

@@ -30,6 +30,7 @@ import io
 import zipfile
 
 from servicex.code_generator_service.ast_translator import GenerateCodeException
+from func_adl_xAOD.util_LINQ import find_dataset, extract_dataset_info
 
 
 def get_zipfile_data(zip_data: bytes):
