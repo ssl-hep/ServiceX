@@ -187,7 +187,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |
+| `didFinder.site`                     | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
 | `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
 | `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
