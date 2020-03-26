@@ -151,15 +151,15 @@ experiment, you can follow these
 [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) 
 on obtaining proper grid certificates.
 
-The DID Finder service assumes that the certs are available `/etc/grid-certs` 
-and that the passcode to unlock them can be found in a file called `secret.txt`
-in the `/servicex` directory. 
+You install the certs into the cluster as a global kubernetes secret. This is
+easily done with the ServiceX Command Line Interface (cli).
 
-This helm chart pulls these values out of `values.yaml` and generates a 
-ConfigMap for the PEM files and a Secret for the passcode.
-
-This works reliably, but may not be best practice for securing sensitive 
-information. Suggestions are welcome.
+1. Install the cli with `pip install servicex-cli`
+2. When this completes you can copy the certs into the cluster with `servicex init`
+By default, the script will pick up your grid certs from the `.globus` directory
+in your home directory. You can override this with the `--cert-dir` command line
+option. Also, the cli will create the secret in the `default` namespace. If you
+are using a different namespace you can override this with the `--namespace` option.
 
 ## Optional Kafka Installation
 ServiceX can deliver transformed datasets to an object store service (Minio) 
@@ -180,13 +180,17 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
+| `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
+| `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
+| `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
+| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { } |               
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
-| `didFinder.staticFile`               | For debugging, DID Finder will always return this file for any DID. | _Set to an open xAOD File_           |
-| `didFinder.site`                     | Tier 2 site to pass on to Rucio as client location |                                                       |
+| `didFinder.site`                     | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
 | `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
-| `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`          |
+| `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
+| `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
@@ -200,9 +204,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
-| `gridPassword`                       | Passcode to unlock your grid PEM file            |  - 
-| `usercert`                           | Copy of the contents of your `~/.globus/usercert.pem` file | - 
-| `userkey`                            | Copy of the contents of your `~/.globus/userkey.pem` file | -
+| `gridAccount`                        | CERN User account name to access Rucio           | - 
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
@@ -233,6 +235,20 @@ Once you have exposed port 5000 of the REST app, you can use the included
 transformation request, and check on the status of a running job. You can 
 import the collection from the [ServiceX REST App](https://raw.githubusercontent.com/ssl-hep/ServiceX_App/develop/ServiceXTest.postman_collection.json) repo
 
+
+### Production Deployment
+We are still experimenting with various configurations for deploying a scaled-up
+ServiceX. 
+
+It's certainly helpful to beef up the RabbitMQ deployment:
+```yaml
+rabbitmq:
+  resources:
+     requests:
+       memory: 256Mi
+       cpu: 100m
+  replicas: 3
+```
 
 > **Tip**: List all releases using `helm list`
 

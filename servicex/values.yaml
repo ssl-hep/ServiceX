@@ -19,16 +19,23 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: v0.3
+  tag: v0.4
   pullPolicy: IfNotPresent
+  replicas: 1
+
+  # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
+  rabbitmq:
+    retries: 12
+    retry_interval: 10 # seconds
 
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: v0.3
+  tag: v0.4
   pullPolicy: IfNotPresent
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+  threads: 5
 
   site:
 
@@ -38,7 +45,7 @@ preflight:
   image: sslhep/servicex_func_adl_xaod_transformer
   # For uproot deployment
   # image: sslhep/servicex_func_adl_uproot_transformer
-  tag: v0.3
+  tag: v0.4
   pullPolicy: IfNotPresent
 
 #
@@ -48,7 +55,7 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
-  tag: v0.3
+  tag: v0.4
   pullPolicy: IfNotPresent
 
 
@@ -59,7 +66,7 @@ transformer:
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: v0.3
+  tag: v0.4
   pullPolicy: IfNotPresent
   vomsOrg: atlas
 
@@ -105,35 +112,5 @@ minio:
 ###### Settings for Authenticating with the CERN Infrastructure #######
 
 gridAccount: <your account>
-
-gridPassword: <your password>
-
-usercert: |+
-  -----BEGIN CERTIFICATE-----
-
-  -----END CERTIFICATE-----
-
-userkey: |+
-  -----BEGIN ENCRYPTED PRIVATE KEY-----
-
-  -----END ENCRYPTED PRIVATE KEY-----
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
 
 rbacEnabled: True
