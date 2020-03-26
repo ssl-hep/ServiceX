@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: transformer-busybox
+spec:
+  containers:
+  - args:
+    - /home/atlas/proxy-exporter.sh & sleep 5 &&  sleep 20000
+    command:
+    - bash
+    - -c
+    env:
+    - name: BASH_ENV
+      value: /home/atlas/.bashrc
+    image: sslhep/servicex_func_adl_uproot_transformer:develop
+    imagePullPolicy: IfNotPresent
+    name: generated-code-busybox
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /etc/grid-security-ro
+      name: x509-secret
+    - mountPath: /generated
+      name: generated-code
+  restartPolicy: Never
+  volumes:
+  - name: x509-secret
+    secret:
+      defaultMode: 420
+      secretName: uproot-x509-proxy
+  - configMap:
+      defaultMode: 420
+      name: 0294c057-896a-4a89-a59b-80d1930f2600-generated-source
+    name: generated-code
+
