@@ -25,3 +25,18 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
+
+from minio import Minio
+
+minioClient = Minio('localhost:9000',
+                    access_key='miniouser',
+                    secret_key='leftfoot1', secure=False)
+
+if len(sys.argv) == 0:
+    buckets = minioClient.list_buckets()
+    print([bucket.name for bucket in buckets])
+else:
+    objects = minioClient.list_objects(sys.argv[1])
+    sizes =[object.size for object in objects]
+    print(sum(sizes) / 1e6)
