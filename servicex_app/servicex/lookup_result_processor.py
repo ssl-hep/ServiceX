@@ -57,6 +57,7 @@ class LookupResultProcessor:
             'columns': submitted_request.columns,
             'file-path': dataset_file.file_path,
             'tree-name': submitted_request.tree_name,
+            'chunk-size': submitted_request.chunk_size,
 
             "service-endpoint": self.advertised_endpoint +
             "servicex/transformation/" + request_id,
