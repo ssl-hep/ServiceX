@@ -59,7 +59,7 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path'].encode('ascii', 'ignore')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    # _chunks = transform_request['chunks']
+    _chunks = transform_request['chunk-size']
     servicex = ServiceXAdapter(_server_endpoint)
 
     servicex.post_status_update(file_id=_file_id,
@@ -74,7 +74,7 @@ def callback(channel, method, properties, body):
             # Do the transform
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
-            transform_single_file(_file_path, output_path, servicex)
+            transform_single_file(_file_path, output_path, _chunks, servicex)
 
             tock = time.time()
 
@@ -121,7 +121,7 @@ def callback(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, servicex=None):
+def transform_single_file(file_path, output_path, chunks, servicex=None):
     print("Transforming a single path: " + str(file_path) + " into " + output_path)
     # os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
@@ -144,9 +144,8 @@ def transform_single_file(file_path, output_path, servicex=None):
                                    object_store=object_store,
                                    messaging=messaging)
         # NB: We're converting the *output* ROOT file to Arrow arrays
-        # TODO: Implement configurable chunk_size
         event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
-                                      attr_name_list=attr_name_list, chunk_size=1000)
+                                      attr_name_list=attr_name_list, chunk_size=chunks)
         transformer = UprootTransformer(event_iterator)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
