@@ -55,7 +55,7 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
-  tag: v0.4
+  tag: pr_backend_update
   pullPolicy: IfNotPresent
 
 
