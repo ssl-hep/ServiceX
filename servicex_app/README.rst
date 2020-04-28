@@ -8,6 +8,75 @@ ServiceX REST Server
 .. image:: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg
    :target: https://opensource.org/licenses/BSD-3-Clause
 
+This is a flask app for receiving user requests and orchestrating the ServiceX
+services:
+
+.. image:: doc/sequence_diagram.png
+
+
+Local Development
+-----------------
+First install the app and test dependencies with:
+
+.. code:: bash
+
+    pip install -e ".[test]"
+
+
+The application depends on the psycopg2 library to access postgres. The
+install for this library can be tricky on some desktop environments. You may have better luck with
+the pre-built binary package. Edit ``setup.py`` and replace ``psycopg2``
+with ``psycopg2-binary`` and try to pip install again.
+
+Running Tests
+*************
+We use flake8 to verify coding standards. You can run this tool over your code
+with the command
+
+.. code:: bash
+
+    flake8
+
+We use pytest to verify the code. These tests can be run with the command
+
+.. code:: bash
+
+    python -m pytest
+
+
+Detailed Transformer Logging
+----------------------------
+It can be complicated to debug issues inside the transformers on a very large
+dataset. To make it easier, detailed log statements are sent back from the
+transformers and stored in the postgres database. If you need to interrogate
+this database you can forward the postgres port to your development system with
+
+.. code:: bash
+
+kubectl port-forward xaod-postgresql-0 5432:5432
+
+Then use your favorite postgres sql client to connect to this
+database with the connection URL``jdbc:postgresql://localhost:5432/postgres``
+with the user postgres and the password leftfoot1.
+
+Of particular insterest is the ``file_status`` table. It contains entries for
+each transformed root file when it starts and when it finishes, retries, or
+reports an error.
+
+You can find errors with
+
+.. code:: sql
+
+    select * from file_status where request_id='da3d7cc2-7f97-4c98-be77-4e9c22f67425' and status='failure';
+
+These records include the error and the first 2048 characters of the stack
+trace along with the pod name where the transformer ran (you might be able to
+catch the full log with the ``kubectl logs -p`` which can retreive logs from
+terminated pods)
+
+More information on the specific file can be found by joining with the ``files``
+table.
+
 
 Building Docker Image
 ---------------------
@@ -16,7 +85,6 @@ Building Docker Image
 
    docker build -t servicex_app .
 
-.. image:: doc/sequence_diagram.png
 
 Running Docker
 --------------
