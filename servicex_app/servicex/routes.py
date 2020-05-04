@@ -39,12 +39,27 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.preflight_check import PreflightCheck
     from servicex.resources.fileset_complete import FilesetComplete
     from servicex.resources.transformer_file_complete import TransformerFileComplete
+    from servicex.resources.jwt.all_users import AllUsers
+    from servicex.resources.jwt.secret_resource import SecretResource
+    from servicex.resources.jwt.token_refresh import TokenRefresh
+    from servicex.resources.jwt.user_login import UserLogin
+    from servicex.resources.jwt.user_logout import UserLogoutAccess, UserLogoutRefresh
+    from servicex.resources.jwt.user_registration import UserRegistration
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
                                          elasticsearch_adapter=elasticsearch_adapter,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor)
+
+    api.add_resource(UserRegistration, '/registration')
+    api.add_resource(UserLogin, '/login')
+    api.add_resource(UserLogoutAccess, '/logout/access')
+    api.add_resource(UserLogoutRefresh, '/logout/refresh')
+    api.add_resource(TokenRefresh, '/token/refresh')
+    api.add_resource(AllUsers, '/users')
+    api.add_resource(SecretResource, '/secret')
+
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,
