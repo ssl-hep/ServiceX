@@ -31,7 +31,6 @@ import time
 
 import pika
 from flask import Flask
-from flask_restful import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
@@ -40,6 +39,9 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
+
+from flask_restful import Api
+from flask_jwt_extended import JWTManager
 
 
 def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
@@ -80,6 +82,7 @@ def create_app(test_config=None,
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
+    JWTManager(app)
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
     else:
