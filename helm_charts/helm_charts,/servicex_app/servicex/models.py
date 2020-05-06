@@ -25,9 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import hashlib
 from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
-from passlib.hash import pbkdf2_sha256 as sha256
 
 db = SQLAlchemy()
 
@@ -36,7 +36,7 @@ class UserModel(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    key = db.Column(db.String(120), nullable=False)
 
     def save_to_db(self):
         db.session.add(self)
@@ -51,7 +51,7 @@ class UserModel(db.Model):
         def to_json(x):
             return {
                 'username': x.username,
-                'password': x.password
+                'key': x.key
             }
 
         return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
@@ -67,11 +67,11 @@ class UserModel(db.Model):
 
     @staticmethod
     def generate_hash(password):
-        return sha256.hash(password)
+        return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def verify_hash(password, hash):
-        pass
+    def verify_hash(provided_password, key):
+        return UserModel.generate_hash(provided_password) == key
 
 
 class TransformRequest(db.Model):

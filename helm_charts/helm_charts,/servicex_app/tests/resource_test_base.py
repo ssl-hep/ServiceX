@@ -51,7 +51,8 @@ class ResourceTestBase:
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1',
-            'CODE_GEN_SERVICE_URL': 'http://localhost:5001'
+            'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
+            'ENABLE_AUTH': False
         }
 
     @staticmethod
