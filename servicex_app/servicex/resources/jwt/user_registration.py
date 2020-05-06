@@ -46,7 +46,7 @@ class UserRegistration(Resource):
 
         new_user = UserModel(
             username=data['username'],
-            password=UserModel.generate_hash(data['password'])
+            key=UserModel.generate_hash(data['password'])
         )
 
         try:

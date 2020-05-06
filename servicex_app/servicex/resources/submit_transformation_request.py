@@ -33,6 +33,7 @@ import json
 import uuid
 
 from flask import current_app
+from flask_jwt_extended import jwt_optional
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest, DatasetFile, db
@@ -89,7 +90,11 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.lookup_result_processor = lookup_result_processor
         return cls
 
+    @jwt_optional
     def post(self):
+        is_auth, auth_reject_message = self._validate_user()
+        if not is_auth:
+            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
         try:
             transformation_request = parser.parse_args()
             print("object store ", self.object_store)

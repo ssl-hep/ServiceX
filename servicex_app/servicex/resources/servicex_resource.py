@@ -25,6 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
+
+import flask_jwt_extended
 from flask_restful import Resource
 from flask import current_app
 from datetime import datetime
@@ -37,6 +40,27 @@ class ServiceXResource(Resource):
     @classmethod
     def _generate_advertised_endpoint(cls, endpoint):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+
+    def _validate_user(self):
+        """
+        Determine if the session should allow the user request in.
+        :return: Tuple of Boolean indicating whether the permission is granted and
+        a string message of why it is rejected
+        """
+        if not current_app.config['ENABLE_AUTH']:
+            return True, None
+        try:
+            auth = flask_jwt_extended.get_jwt_identity()
+
+            if auth:
+                return True, None
+            else:
+                return False, "No Valid Auth Provided"
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            print(exc_value)
+            return False, str(exc_value)
 
     @staticmethod
     def _generate_file_status_record(dataset_file, status):
