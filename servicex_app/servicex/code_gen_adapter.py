@@ -46,6 +46,8 @@ class CodeGenAdapter:
             raise ValueError(f'Failed to generate translation code: {msg}')
 
         zipfile = ZipFile(BytesIO(result.content))
+
+        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
         return self.transformer_manager.create_configmap_from_zip(zipfile,
                                                                   request_record.request_id,
                                                                   namespace)
