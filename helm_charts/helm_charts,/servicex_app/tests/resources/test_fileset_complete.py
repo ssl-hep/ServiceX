@@ -43,7 +43,7 @@ class TestFilesetComplete(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    lookup_result_processor=mock_processor)
 
-        response = client.put('/servicex/transformation/1234/complete',
+        response = client.put('/servicex/internal/transformation/1234/complete',
                               json={
                                   'files': 17,
                                   'files-skipped': 2,

@@ -40,7 +40,7 @@ class LookupResultProcessor:
             'columns': submitted_request.columns,
             'file-path': file_path,
             "service-endpoint": self.advertised_endpoint +
-            "servicex/transformation/" + submitted_request.request_id
+            "servicex/internal/transformation/" + submitted_request.request_id
         }
 
         self.rabbitmq_adaptor.basic_publish(exchange='',
@@ -60,7 +60,7 @@ class LookupResultProcessor:
             'chunk-size': submitted_request.chunk_size,
 
             "service-endpoint": self.advertised_endpoint +
-            "servicex/transformation/" + request_id,
+            "servicex/internal/transformation/" + request_id,
 
             "result-destination": submitted_request.result_destination
         }

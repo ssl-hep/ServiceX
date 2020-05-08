@@ -45,7 +45,7 @@ class TestLookupResutProcessor(ResourceTestBase):
                 {"request-id": 'BR549',
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "root1.root",
-                 "service-endpoint": "http://foo.com/servicex/transformation/BR549"
+                 "service-endpoint": "http://foo.com/servicex/internal/transformation/BR549"
                  }))
 
     def test_add_file_to_dataset(self, mocker, mock_rabbit_adaptor):
@@ -74,7 +74,8 @@ class TestLookupResutProcessor(ResourceTestBase):
                  "file-path": "/foo/bar.root",
                  "tree-name": "Events",
                  "chunk-size": 1000,
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/BR549",
+                 "service-endpoint":
+                     "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
                  'result-destination': 'object-store'
                  }))
 
@@ -102,7 +103,8 @@ class TestLookupResutProcessor(ResourceTestBase):
                  "file-path": "/foo/bar.root",
                  "tree-name": "Events",
                  "chunk-size": 1000,
-                 "service-endpoint": "http://cern.analysis.ch:5000/servicex/transformation/BR549",
+                 "service-endpoint":
+                     "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
                  'result-destination': 'kafka',
                  'kafka-broker': 'http://ssl-hep.org.kafka:12345'
                  }))

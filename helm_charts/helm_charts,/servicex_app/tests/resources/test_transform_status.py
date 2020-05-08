@@ -31,7 +31,7 @@ from tests.resource_test_base import ResourceTestBase
 class TestTransformStatus(ResourceTestBase):
     def test_post_status(self, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.post('/servicex/transformation/1234/status',
+        response = client.post('/servicex/internal/transformation/1234/status',
                                json={
                                    'timestamp': '2019-09-18T16:15:09.457481',
                                    'status': 'Just testing'
@@ -41,7 +41,7 @@ class TestTransformStatus(ResourceTestBase):
 
     def test_post_status_bad_data(self, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.post('/servicex/transformation/1234/status',
+        response = client.post('/servicex/internal/transformation/1234/status',
                                json={'foo': 'bar'})
 
         assert response.status_code == 400

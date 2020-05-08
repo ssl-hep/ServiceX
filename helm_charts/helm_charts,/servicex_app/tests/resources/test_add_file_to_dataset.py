@@ -50,7 +50,7 @@ class TestAddFileToDataset(ResourceTestBase):
                                    elasticsearch_adapter=mock_elasticsearch_adapter
                                    )
 
-        response = client.put('/servicex/transformation/1234/files',
+        response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'file_path': '/foo/bar.root',
                                   'adler32': '12345',
@@ -101,7 +101,7 @@ class TestAddFileToDataset(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    lookup_result_processor=mock_processor,
                                    elasticsearch_adapter=mock_elasticsearch_adapter)
-        response = client.put('/servicex/transformation/1234/files',
+        response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'file_path': '/foo/bar.root',
                                   'adler32': '12345',
@@ -130,7 +130,7 @@ class TestAddFileToDataset(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    lookup_result_processor=mock_processor)
 
-        response = client.put('/servicex/transformation/1234/files',
+        response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'file_path': '/foo/bar.root',
                                   'adler32': '12345',

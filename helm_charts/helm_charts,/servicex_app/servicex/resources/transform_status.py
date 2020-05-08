@@ -42,12 +42,6 @@ status_request_parser.add_argument('details', type=bool, default=False,
 
 
 class TransformationStatus(ServiceXResource):
-
-    def post(self, request_id):
-        status = status_parser.parse_args()
-        status.request_id = request_id
-        print(status)
-
     def get(self, request_id):
         status_request = status_request_parser.parse_args()
 
@@ -69,3 +63,11 @@ class TransformationStatus(ServiceXResource):
                 TransformationResult.get_all_status(request_id))
 
         return jsonify(result_dict)
+
+
+class TransformationStatusInternal(ServiceXResource):
+
+    def post(self, request_id):
+        status = status_parser.parse_args()
+        status.request_id = request_id
+        print(status)

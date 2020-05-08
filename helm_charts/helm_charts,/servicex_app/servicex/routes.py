@@ -32,7 +32,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                lookup_result_processor):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
-    from servicex.resources.transform_status import TransformationStatus
+    from servicex.resources.transform_status \
+        import TransformationStatus, TransformationStatusInternal
     from servicex.resources.file_transform_status import FileTransformationStatus
     from servicex.resources.query_transformation_request import QueryTransformationRequest
     from servicex.resources.add_file_to_dataset import AddFileToDataset
@@ -52,6 +53,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor)
 
+    # User management and Authentication Endpoints
     api.add_resource(UserRegistration, '/registration')
     api.add_resource(UserLogin, '/login')
     api.add_resource(UserLogoutAccess, '/logout/access')
@@ -60,6 +62,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllUsers, '/users')
     api.add_resource(SecretResource, '/secret')
 
+    # Client public endpoints
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(QueryTransformationRequest,
@@ -68,21 +71,30 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     api.add_resource(TransformationStatus,
                      '/servicex/transformation/<string:request_id>/status')
+
     api.add_resource(FileTransformationStatus,
                      '/servicex/transformation/<string:request_id>/<int:file_id>/status')
 
+    # Internal service endpoints
+    api.add_resource(TransformationStatusInternal,
+                     '/servicex/internal/transformation/<string:request_id>/status')
+
     AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
-    api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
+    api.add_resource(AddFileToDataset,
+                     '/servicex/internal/transformation/<string:request_id>/files')
 
     PreflightCheck.make_api(lookup_result_processor)
-    api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
+    api.add_resource(PreflightCheck,
+                     '/servicex/internal/transformation/<string:request_id>/preflight')
 
     FilesetComplete.make_api(lookup_result_processor)
-    api.add_resource(FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
+    api.add_resource(FilesetComplete,
+                     '/servicex/internal/transformation/<string:request_id>/complete')
 
     TransformStart.make_api(transformer_manager)
-    api.add_resource(TransformStart, '/servicex/transformation/<string:request_id>/start')
+    api.add_resource(TransformStart,
+                     '/servicex/internal/transformation/<string:request_id>/start')
 
     TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
     api.add_resource(TransformerFileComplete,
-                     '/servicex/transformation/<string:request_id>/file-complete')
+                     '/servicex/internal/transformation/<string:request_id>/file-complete')
