@@ -62,7 +62,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.put('/servicex/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
@@ -87,7 +87,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.put('/servicex/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
@@ -114,7 +114,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.put('/servicex/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
@@ -164,7 +164,7 @@ class TestTransformFileComplete(ResourceTestBase):
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    elasticsearch_adapter=mock_elasticsearch_adapter)
-        response = client.put('/servicex/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
@@ -228,7 +228,7 @@ class TestTransformFileComplete(ResourceTestBase):
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    elasticsearch_adapter=mock_elasticsearch_adapter)
-        response = client.put('/servicex/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200

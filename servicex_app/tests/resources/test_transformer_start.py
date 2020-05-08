@@ -53,7 +53,7 @@ class TestTransformationStart(ResourceTestBase):
             mock_transformer_manager,
             mock_rabbit_adaptor)
 
-        response = client.post('/servicex/transformation/1234/start',
+        response = client.post('/servicex/internal/transformation/1234/start',
                                json={
                                    'info': {
                                        'max-event-size': 4567}
@@ -101,7 +101,7 @@ class TestTransformationStart(ResourceTestBase):
             mock_transformer_manager,
             mock_rabbit_adaptor)
 
-        response = client.post('/servicex/transformation/1234/start',
+        response = client.post('/servicex/internal/transformation/1234/start',
                                json={'max-event-size': 4567})
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')

@@ -45,7 +45,7 @@ class TestPreflightCheck(ResourceTestBase):
         client = self._test_client(
             rabbit_adaptor=mock_rabbit_adaptor,
             lookup_result_processor=mock_processor)
-        response = client.post('/servicex/transformation/1234/preflight',
+        response = client.post('/servicex/internal/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
@@ -75,7 +75,7 @@ class TestPreflightCheck(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    lookup_result_processor=mock_processor)
-        response = client.post('/servicex/transformation/1234/preflight',
+        response = client.post('/servicex/internal/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 500
         assert response.json == {'message': 'Something went wrong'}
