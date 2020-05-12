@@ -30,6 +30,7 @@ import sys
 import traceback
 
 import awkward
+import awkward1
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
@@ -131,11 +132,17 @@ def transform_single_file(file_path, output_path, servicex=None, tree_name='Even
 
     try:
         import generated_transformer
+        start_transform = time.time()
         table = generated_transformer.run_query(file_path, tree_name)
+        end_transform = time.time()
+        print(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
 
-        # Deal with messy, nested lazy arrays which cannot be converted to arrow
-        new_table = pd.DataFrame(table)
-        arrow = pa.Table.from_pandas(new_table)
+        start_serialization = time.time()        
+        table_awk1 = awkward1.from_awkward0(table)
+        new_table = awkward1.to_awkward0(table_awk1)
+        arrow = awkward.toarrow(new_table)
+        end_serialization = time.time()
+        print(f'awkward Table -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
 
         if output_path:
             writer = pq.ParquetWriter(output_path, arrow.schema)

@@ -11,6 +11,7 @@ coverage==4.5.2
 codecov==2.0.15
 uproot
 awkward>=0.12.0
+awkward1==0.2.19
 xxhash
 lz4
 pyarrow==0.16.0
