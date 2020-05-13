@@ -22,6 +22,15 @@ app:
   tag: v0.4
   pullPolicy: IfNotPresent
   replicas: 1
+  auth: "True"
+
+  # JWT remains valid for 6 hours
+  authTimeout: 21600
+
+  ingress:
+    enabled: false
+    host: uc.ssl-hep.org
+    defaultBackend: default-http-backend
 
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:

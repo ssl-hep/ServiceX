@@ -38,3 +38,8 @@ Log in with
     Access Key: {{ .Values.minio.accessKey }}
     Secret Key: {{ .Values.minio.secretKey }}
 {{ end }}
+
+{{ if .Values.app.ingress.enabled }}
+Congratulations! You deployed an ingress for this service. You can access the
+REST service at http://{{ .Release.Name }}-servicex.{{ .Values.app.ingress.host }}
+{{ end }}
