@@ -183,6 +183,11 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
+| `app.auth`                           | Enable JWT Auth or allow unfettered access (Python boolean string) | `"False"`                             |
+| `app.authTimeout`                    | How many seconds should the generated JWTs be valid for? | 21600 (six hours)                               |
+| `app.ingress.enabled`                | Enable install of ingres                         | false                                                   |
+| `app.ingress.host`                   | Hostname to associate ingress with               | uc.ssl-hep.org                                          |
+| `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { } |               
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
