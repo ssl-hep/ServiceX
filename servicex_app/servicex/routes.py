@@ -72,9 +72,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(TransformationStatus,
                      '/servicex/transformation/<string:request_id>/status')
 
-    api.add_resource(FileTransformationStatus,
-                     '/servicex/transformation/<string:request_id>/<int:file_id>/status')
-
     # Internal service endpoints
     api.add_resource(TransformationStatusInternal,
                      '/servicex/internal/transformation/<string:request_id>/status')
@@ -94,6 +91,9 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     TransformStart.make_api(transformer_manager)
     api.add_resource(TransformStart,
                      '/servicex/internal/transformation/<string:request_id>/start')
+
+    api.add_resource(FileTransformationStatus,
+                     '/servicex/internal/transformation/<string:request_id>/<int:file_id>/status')
 
     TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
     api.add_resource(TransformerFileComplete,
