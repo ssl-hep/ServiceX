@@ -25,13 +25,19 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask_jwt_extended import jwt_optional
+
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
 
 
 class QueryTransformationRequest(ServiceXResource):
-
+    @jwt_optional
     def get(self, request_id=None):
+        is_auth, auth_reject_message = self._validate_user()
+        if not is_auth:
+            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
+
         if request_id:
             return TransformRequest.to_json(
                 TransformRequest.return_request(request_id)
