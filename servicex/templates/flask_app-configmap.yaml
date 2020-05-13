@@ -15,6 +15,12 @@ data:
     # details are beyond the scope of this example
     SECRET_KEY = 'abc123!'
 
+    # Enable JWT auth on public endpoints
+    ENABLE_AUTH={{ .Values.app.auth }}
+
+    # Number of seconds the JWT is valid for
+    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authTimeout }}
+
     {{ if .Values.postgres.enabled }}
     SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
     {{ else }}
