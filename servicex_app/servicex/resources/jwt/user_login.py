@@ -41,7 +41,7 @@ class UserLogin(Resource):
         current_user = UserModel.find_by_username(data['username'])
 
         if not current_user:
-            return {'message': "User {} doesn't exist".format(data['username'])}
+            return {'message': "User {} doesn't exist".format(data['username'])}, 404
 
         if UserModel.verify_hash(data['password'], current_user.key):
             access_token = create_access_token(identity=data['username'])
@@ -52,4 +52,4 @@ class UserLogin(Resource):
                 'refresh_token': refresh_token
                 }
         else:
-            return {'message': 'Wrong credentials'}
+            return {'message': 'Wrong credentials'}, 401
