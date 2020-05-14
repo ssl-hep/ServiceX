@@ -41,7 +41,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.fileset_complete import FilesetComplete
     from servicex.resources.transformer_file_complete import TransformerFileComplete
     from servicex.resources.jwt.all_users import AllUsers
-    from servicex.resources.jwt.secret_resource import SecretResource
     from servicex.resources.jwt.token_refresh import TokenRefresh
     from servicex.resources.jwt.user_login import UserLogin
     from servicex.resources.jwt.user_logout import UserLogoutAccess, UserLogoutRefresh
@@ -60,7 +59,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(UserLogoutRefresh, '/logout/refresh')
     api.add_resource(TokenRefresh, '/token/refresh')
     api.add_resource(AllUsers, '/users')
-    api.add_resource(SecretResource, '/secret')
 
     # Client public endpoints
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
