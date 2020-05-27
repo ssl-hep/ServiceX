@@ -18,9 +18,9 @@ postgres:
 
 # Settings for the Flask App
 app:
-  image: sslhep/servicex_app
-  tag: v0.4
-  pullPolicy: IfNotPresent
+  image: nlingareddy/servicex_trial
+  tag: try2
+  pullPolicy: Always
   replicas: 1
 
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
