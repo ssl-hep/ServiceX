@@ -42,7 +42,8 @@ class TransformerManager:
         else:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
-    def create_job_object(self, request_id, image, chunk_size, rabbitmq_uri, workers,
+    @staticmethod
+    def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
                           generated_code_cm):
         volume_mounts = [
@@ -119,30 +120,40 @@ class TransformerManager:
             env=env,
             args=python_args
         )
+
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels={"app": "transformer-" + request_id}),
+            metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
-                restart_policy="Never",
+                restart_policy="Always",
                 containers=[container],
                 volumes=volumes))
+
         # Create the specification of deployment
-        spec = client.V1JobSpec(
+        selector = client.V1LabelSelector(
+            match_labels={
+                "app": "transformer-" + request_id
+            })
+        spec = client.V1DeploymentSpec(
             template=template,
-            parallelism=workers,
-            backoff_limit=4)
-        # Instantiate the job object
-        job = client.V1Job(
-            api_version="batch/v1",
-            kind="Job",
+            selector=selector,
+            replicas=workers
+        )
+
+        deployment = client.V1Deployment(
+            api_version="apps/v1",
+            kind="Deployment",
             metadata=client.V1ObjectMeta(name="transformer-" + request_id),
-            spec=spec)
+            spec=spec
+        )
 
-        return job
+        return deployment
 
-    def create_job(self, api_instance, job, namespace):
+    @staticmethod
+    def _create_job(api_instance, job, namespace):
         # Create job
-        api_response = api_instance.create_namespaced_job(
+
+        api_response = api_instance.create_namespaced_deployment(
             body=job,
             namespace=namespace)
         print("Job created. status='%s'" % str(api_response.status))
@@ -151,24 +162,23 @@ class TransformerManager:
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
                                 result_destination, result_format, kafka_broker=None,
                                 ):
-        batch_v1 = client.BatchV1Api()
+        api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
                                      x509_secret, kafka_broker, generated_code_cm)
-        self.create_job(batch_v1, job, namespace)
 
-    def shutdown_transformer_job(self, request_id, namespace):
-        batch_v1 = client.BatchV1Api()
+        self._create_job(api_v1, job, namespace)
 
-        # Make sure when we delete the job, the pods go away too
-        # https://github.com/kubernetes-client/python/issues/234
-        body = client.V1DeleteOptions(propagation_policy='Background')
+    @staticmethod
+    def shutdown_transformer_job(request_id, namespace):
+        api_v1 = client.AppsV1Api()
+        api_v1.delete_namespaced_deployment(
+            name="transformer-" + request_id,
+            namespace=namespace
+        )
 
-        batch_v1.delete_namespaced_job(name="transformer-" + request_id,
-                                       body=body,
-                                       namespace=namespace)
-
-    def create_configmap_from_zip(self, zipfile, request_id, namespace):
+    @staticmethod
+    def create_configmap_from_zip(zipfile, request_id, namespace):
         configmap_name = "{}-generated-source".format(request_id)
         data = {
             file.filename:
