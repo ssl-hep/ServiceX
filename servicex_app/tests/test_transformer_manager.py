@@ -71,7 +71,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
@@ -83,10 +83,10 @@ class TestTransformerManager(ResourceTestBase):
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='kafka', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
-            called_job = mock_kubernetes.mock_calls[1][2]['body']
-            assert called_job.spec.parallelism == 17
-            assert len(called_job.spec.template.spec.containers) == 1
-            container = called_job.spec.template.spec.containers[0]
+            called_deployment = mock_kubernetes.mock_calls[1][2]['body']
+            assert called_deployment.spec.replicas == 17
+            assert len(called_deployment.spec.template.spec.containers) == 1
+            container = called_deployment.spec.template.spec.containers[0]
             assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
             args = container.args
@@ -101,7 +101,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
         additional_config = {
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo'
         }
@@ -130,7 +130,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
@@ -157,7 +157,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         transformer = TransformerManager('external-kubernetes')
         my_config = {
@@ -193,7 +193,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'BatchV1Api')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         transformer = TransformerManager('external-kubernetes')
 
@@ -216,20 +216,14 @@ class TestTransformerManager(ResourceTestBase):
     def test_shutdown_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_api = mocker.MagicMock(kubernetes.client.BatchV1Api)
-        mocker.patch.object(kubernetes.client, 'BatchV1Api',
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, 'AppsV1Api',
                             return_value=mock_api)
-
-        mock_delete_options = mocker.MagicMock()
-        md = mocker.patch.object(kubernetes.client, 'V1DeleteOptions',
-                                 return_value=mock_delete_options)
 
         transformer = TransformerManager('external-kubernetes')
         transformer.shutdown_transformer_job('1234', 'my-ns')
-        md.assert_called_with(propagation_policy='Background')
-        mock_api.delete_namespaced_job.assert_called_with(name='transformer-1234',
-                                                          body=mock_delete_options,
-                                                          namespace='my-ns')
+        mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
+                                                                 namespace='my-ns')
 
     def test_create_configmap_from_zip(self, mocker):
         import kubernetes
