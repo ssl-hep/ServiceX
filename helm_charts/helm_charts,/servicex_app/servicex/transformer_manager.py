@@ -137,7 +137,7 @@ class TransformerManager:
         spec = client.V1DeploymentSpec(
             template=template,
             selector=selector,
-            replicas=workers
+            replicas=1  # Start with one and let autoscaler bring us up to requested capacity
         )
 
         deployment = client.V1Deployment(
@@ -150,11 +150,40 @@ class TransformerManager:
         return deployment
 
     @staticmethod
+    def create_hpa_object(request_id, workers):
+        target = client.V1CrossVersionObjectReference(
+            api_version="apps/v1",
+            kind='Deployment',
+            name="transformer-" + request_id
+        )
+
+        hpa = client.V1HorizontalPodAutoscaler(
+            api_version="autoscaling/v1",
+            kind='HorizontalPodAutoscaler',
+            metadata=client.V1ObjectMeta(name="transformer-" + request_id),
+            spec=client.V1HorizontalPodAutoscalerSpec(
+                max_replicas=workers,
+                scale_target_ref=target,
+                target_cpu_utilization_percentage=1
+            )
+        )
+
+        return hpa
+
+    @staticmethod
     def _create_job(api_instance, job, namespace):
         # Create job
 
         api_response = api_instance.create_namespaced_deployment(
             body=job,
+            namespace=namespace)
+        print("Job created. status='%s'" % str(api_response.status))
+
+    @staticmethod
+    def _create_hpa(api_instance, hpa, namespace):
+        # Create job
+        api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
+            body=hpa,
             namespace=namespace)
         print("Job created. status='%s'" % str(api_response.status))
 
@@ -169,8 +198,18 @@ class TransformerManager:
 
         self._create_job(api_v1, job, namespace)
 
+        autoscaler_api = kubernetes.client.AutoscalingV1Api()
+        hpa = self.create_hpa_object(request_id, workers)
+        self._create_hpa(autoscaler_api, hpa, namespace)
+
     @staticmethod
     def shutdown_transformer_job(request_id, namespace):
+        autoscaler_api = kubernetes.client.AutoscalingV1Api()
+        autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+            name="transformer-" + request_id,
+            namespace=namespace
+        )
+
         api_v1 = client.AppsV1Api()
         api_v1.delete_namespaced_deployment(
             name="transformer-" + request_id,
