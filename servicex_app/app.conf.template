@@ -32,6 +32,11 @@ TRANSFORMER_X509_SECRET="aspiring-mole-x509-proxy"
 ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 
 TRANSFORMER_MANAGER_ENABLED = True
+
+# Set to True to use transformer pod autoscaling. If False then it will always
+# start the requested number of transformers
+TRANSFORMER_AUTOSCALE_ENABLED = True
+
 TRANSFORMER_MANAGER_MODE = 'external-kubernetes'
 
 TRANSFORMER_MESSAGING = 'none'

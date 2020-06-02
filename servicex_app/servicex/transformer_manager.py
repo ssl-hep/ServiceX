@@ -134,10 +134,13 @@ class TransformerManager:
             match_labels={
                 "app": "transformer-" + request_id
             })
+
+        # If we are using Autoscaler then always start with one replica
+        replicas = 1 if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED'] else workers
         spec = client.V1DeploymentSpec(
             template=template,
             selector=selector,
-            replicas=1  # Start with one and let autoscaler bring us up to requested capacity
+            replicas=replicas
         )
 
         deployment = client.V1Deployment(
@@ -198,17 +201,19 @@ class TransformerManager:
 
         self._create_job(api_v1, job, namespace)
 
-        autoscaler_api = kubernetes.client.AutoscalingV1Api()
-        hpa = self.create_hpa_object(request_id, workers)
-        self._create_hpa(autoscaler_api, hpa, namespace)
+        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+            autoscaler_api = kubernetes.client.AutoscalingV1Api()
+            hpa = self.create_hpa_object(request_id, workers)
+            self._create_hpa(autoscaler_api, hpa, namespace)
 
     @staticmethod
     def shutdown_transformer_job(request_id, namespace):
-        autoscaler_api = kubernetes.client.AutoscalingV1Api()
-        autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
-            name="transformer-" + request_id,
-            namespace=namespace
-        )
+        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+            autoscaler_api = kubernetes.client.AutoscalingV1Api()
+            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+                name="transformer-" + request_id,
+                namespace=namespace
+            )
 
         api_v1 = client.AppsV1Api()
         api_v1.delete_namespaced_deployment(
