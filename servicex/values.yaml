@@ -72,6 +72,8 @@ codeGen:
 # part of the transform request
 transformer:
   pullPolicy: IfNotPresent
+  autoscalerEnabled: false
+
 
 x509Secrets:
   image: sslhep/x509-secrets
