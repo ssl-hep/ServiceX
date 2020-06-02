@@ -106,6 +106,30 @@ class TestTransformerManager(ResourceTestBase):
             assert autoscaling_spec.max_replicas == 17
             assert autoscaling_spec.scale_target_ref.name == 'transformer-1234'
 
+    def test_launch_transformer_jobs_no_autoscaler(self, mocker, mock_rabbit_adaptor):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+
+        transformer = TransformerManager('external-kubernetes')
+        client = self._test_client(transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor,
+                                   additional_config={'TRANSFORMER_AUTOSCALE_ENABLED': False})
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                generated_code_cm=None)
+            called_deployment = mock_kubernetes.mock_calls[1][2]['body']
+            assert called_deployment.spec.replicas == 17
+            mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_not_called()
+
     def test_launch_transformer_with_hostpath(self, mocker, mock_rabbit_adaptor):
         import kubernetes
 
@@ -246,13 +270,40 @@ class TestTransformerManager(ResourceTestBase):
         mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
-        transformer.shutdown_transformer_job('1234', 'my-ns')
-        mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
-                                                                 namespace='my-ns')
+        client = self._test_client(transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor)
 
-        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
-            name='transformer-1234',
-            namespace='my-ns')
+        with client.application.app_context():
+            transformer.shutdown_transformer_job('1234', 'my-ns')
+            mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
+                                                                     namespace='my-ns')
+
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
+                name='transformer-1234',
+                namespace='my-ns')
+
+    def test_shutdown_transformer_jobs_no_autoscaler(self, mocker, mock_rabbit_adaptor):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, 'AppsV1Api',
+                            return_value=mock_api)
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+
+        transformer = TransformerManager('external-kubernetes')
+        client = self._test_client(transformation_manager=transformer,
+                                   rabbit_adaptor=mock_rabbit_adaptor,
+                                   additional_config={'TRANSFORMER_AUTOSCALE_ENABLED': False})
+
+        with client.application.app_context():
+            transformer.shutdown_transformer_job('1234', 'my-ns')
+            mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
+                                                                     namespace='my-ns')
+
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_not_called()
 
     def test_create_configmap_from_zip(self, mocker):
         import kubernetes
