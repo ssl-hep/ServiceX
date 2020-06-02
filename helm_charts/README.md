@@ -216,6 +216,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `minio.accessKey`                    | Access key to log into minio                     | miniouser |
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
+| `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  False          |
 | `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
 | `elasticsearchLogging.host`          | Hostname for external ElasticSearch server | |
 | `elasticsearchLogging.port`          | Port for external ElasticSearch Server           | 9200 |
