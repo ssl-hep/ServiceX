@@ -110,6 +110,9 @@ class TransformerManager:
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker
 
+        resources = client.V1ResourceRequirements(
+            limits={"cpu": 1}
+        )
         # Configure Pod template container
         container = client.V1Container(
             name="transformer-" + request_id,
@@ -118,7 +121,8 @@ class TransformerManager:
             volume_mounts=volume_mounts,
             command=["bash", "-c"],  # Can't get bash to pick up my .bashrc!
             env=env,
-            args=python_args
+            args=python_args,
+            resources=resources
         )
 
         # Create and Configure a spec section
