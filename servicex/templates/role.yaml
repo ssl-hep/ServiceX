@@ -9,9 +9,13 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 rules:
-- apiGroups: ["batch"]
-  resources: ["jobs"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
 
 ---
 
