@@ -7,6 +7,10 @@ SECRET_KEY = 'abc123!'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
+# JWT admin credentials
+JWT_ADMIN='admin'
+JWT_PASS='password'
+
 # Number of seconds the JWT is valid for
 JWT_ACCESS_TOKEN_EXPIRES=21600 # Six hours
 

@@ -25,48 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import io
+from flask_restful import Resource
 
-from setuptools import find_packages, setup
+from servicex.models import PendingUserModel
 
-with io.open('README.rst', 'rt', encoding='utf8') as f:
-    readme = f.read()
 
-setup(
-    name='servicex',
-    version='1.0.0',
-    url='https://iris-hep.org',
-    license='BSD',
-    maintainer='ServiceX Team',
-    maintainer_email='bengal1@illinois.edu',
-    description='REST Frontend to ServiceX.',
-    long_description=readme,
-    packages=find_packages(),
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=[
-        'flask',
-        'Flask-WTF',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio',
-        'elasticsearch',
-        'psycopg2-binary'
-    ],
-    extras_require={
-        'test': [
-            'pytest>=5.2',
-            'pytest-flask',
-            'coverage',
-            'codecov',
-            'pytest-mock',
-            'flake8'
-        ],
-    },
-)
+class Pending_AllUsers(Resource):
+    def get(self):
+        return PendingUserModel.return_all()
+
+    def delete(self):
+        return PendingUserModel.delete_all()
