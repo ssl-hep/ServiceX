@@ -28,6 +28,9 @@
 
 import os
 import time
+import sys
+import traceback
+
 
 import pika
 from flask import Flask
@@ -41,7 +44,7 @@ from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 
 from flask_restful import Api
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import (JWTManager)
 
 
 def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
@@ -152,9 +155,24 @@ def create_app(test_config=None,
 
         @app.before_first_request
         def create_tables():
-            from servicex.models import db
+            from servicex.models import db, UserModel
+            from flask_jwt_extended import (create_refresh_token, create_access_token)
             db.init_app(app)
             db.create_all()
+            if not UserModel.find_by_username(app.config['JWT_ADMIN']):
+                try:
+                    new_user = UserModel(
+                        username=app.config['JWT_ADMIN'],
+                        key=UserModel.generate_hash(app.config['JWT_PASS']),
+                        admin=1
+                    )
+                    new_user.save_to_db()
+                    create_access_token(identity=app.config['JWT_ADMIN'])
+                    create_refresh_token(identity=app.config['JWT_PASS'])
+                except Exception:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+                    print(exc_value)
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)

@@ -32,8 +32,8 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
-class UserModel(db.Model):
-    __tablename__ = 'users'
+class PendingUserModel(db.Model):
+    __tablename__ = 'pending'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
     key = db.Column(db.String(120), nullable=False)
@@ -52,6 +52,63 @@ class UserModel(db.Model):
             return {
                 'username': x.username,
                 'key': x.key
+            }
+        return {'pending': list(map(lambda x: to_json(x),
+                PendingUserModel.query.all()))}
+
+    @classmethod
+    def delete_all(cls):
+        try:
+            num_rows_deleted = db.session.query(cls).delete()
+            db.session.commit()
+            return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
+        except Exception:
+            return {'message': 'Something went wrong'}
+
+    @classmethod
+    def delete_one(cls, username):
+        try:
+            db.session.query(cls).filter_by(username=username).delete()
+            db.session.commit()
+            return {'message': 'row deleted'}
+        except Exception:
+            return {'message': 'Something went wrong'}
+
+    @staticmethod
+    def generate_hash(password):
+        return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def verify_hash(provided_password, key):
+        return PendingUserModel.generate_hash(provided_password) == key
+
+    @staticmethod
+    def get_password(cls, username):
+        return cls.query.filter_by(username=username).first().key
+
+
+class UserModel(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(120), unique=True, nullable=False)
+    key = db.Column(db.String(120), nullable=False)
+    admin = db.Column(db.Integer)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def find_by_username(cls, username):
+        return cls.query.filter_by(username=username).first()
+
+    @classmethod
+    def return_all(cls):
+        def to_json(x):
+            return {
+                'username': x.username,
+                'key': x.key,
+                'admin': x.admin
             }
 
         return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
