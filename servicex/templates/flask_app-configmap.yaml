@@ -24,6 +24,7 @@ data:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'some-secret-string'
     JWT_SECRET_KEY = 'jwt-secret-string'
+    ENABLE_AUTH = False
     JWT_ADMIN = 'admin'
     JWT_PASS = 'pass'
     RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
