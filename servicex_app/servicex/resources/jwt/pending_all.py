@@ -27,12 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_restful import Resource
 
-from servicex.models import PendingUserModel
+from servicex.models import UserModel
 
 
 class Pending_AllUsers(Resource):
     def get(self):
-        return PendingUserModel.return_all()
+        return UserModel.return_all_pending()
 
     def delete(self):
-        return PendingUserModel.delete_all()
+        return UserModel.delete_all_pending()
