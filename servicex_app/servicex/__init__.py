@@ -35,6 +35,7 @@ import traceback
 import pika
 from flask import Flask
 
+from resources.user_web import index
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -176,5 +177,7 @@ def create_app(test_config=None,
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)
+
+        app.add_url_rule("/", "index", index)
 
     return app
