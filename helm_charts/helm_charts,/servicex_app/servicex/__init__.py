@@ -165,7 +165,8 @@ def create_app(test_config=None,
                     new_user = UserModel(
                         username=app.config['JWT_ADMIN'],
                         key=UserModel.generate_hash(app.config['JWT_PASS']),
-                        admin=1
+                        admin=True,
+                        pending=False
                     )
                     new_user.save_to_db()
                     create_access_token(identity=app.config['JWT_ADMIN'])

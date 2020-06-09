@@ -29,7 +29,8 @@ import sys
 import traceback
 
 from flask_restful import Resource, reqparse
-from servicex.models import PendingUserModel
+
+from models import UserModel
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -40,12 +41,14 @@ class UserRegistration(Resource):
     def post(self):
         data = parser.parse_args()
 
-        if PendingUserModel.find_by_username(data['username']):
+        if UserModel.find_by_username(data['username']):
             return {'message': 'User {} already exists'.format(data['username'])}
 
-        new_user = PendingUserModel(
+        new_user = UserModel(
             username=data['username'],
-            key=PendingUserModel.generate_hash(data['password'])
+            key=UserModel.generate_hash(data['password']),
+            admin=False,
+            pending=True
         )
 
         try:
