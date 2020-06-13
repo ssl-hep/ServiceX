@@ -4,7 +4,7 @@ import sys
 from flask_jwt_extended import (jwt_optional)
 from flask_restful import reqparse
 
-from resources.servicex_resource import ServiceXResource
+from servicex.resources.servicex_resource import ServiceXResource
 from servicex.models import UserModel
 
 parser = reqparse.RequestParser()

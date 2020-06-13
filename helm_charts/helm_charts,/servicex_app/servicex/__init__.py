@@ -35,7 +35,7 @@ import traceback
 import pika
 from flask import Flask
 
-from resources.user_web import index
+from servicex.resources.user_web import index
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor

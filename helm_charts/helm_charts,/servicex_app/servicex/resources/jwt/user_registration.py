@@ -30,7 +30,7 @@ import traceback
 
 from flask_restful import Resource, reqparse
 
-from models import UserModel
+from servicex.models import UserModel
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
