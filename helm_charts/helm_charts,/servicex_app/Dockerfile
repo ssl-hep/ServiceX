@@ -10,7 +10,6 @@ COPY setup.cfg setup.cfg
 COPY README.rst README.rst
 RUN pip install -e .
 RUN pip install gunicorn
-RUN pip install -U Jinja2
 
 
 COPY *.py docker-dev.conf boot.sh ./
