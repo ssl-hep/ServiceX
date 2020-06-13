@@ -13,6 +13,43 @@ services:
 
 .. image:: doc/sequence_diagram.png
 
+User Management
+---------------
+If ``ENABLE_AUTH``  is set to True endpoints will be protected with JWT bearer
+tokens.
+
+An initial admin account is created when the app is started. That account's
+username is found in the ``JWT_ACCOUNT`` config property, and the password is
+set from ``JWT_PASSWORD``. This account can be used for all interactions with
+the endpoints, and can also be used to enable new users who submit requests for
+access to the system.
+
+Users (including the admin user) obtain a bearer token with the ``/login``
+endpoint. This POST request expects a JSON body that looks like:
+
+.. code:: json
+
+    {
+        "username": "admin",
+        "password": "password"
+    }
+
+
+The response will include an ``access_token`` and a ``refresh_token``. Requests
+to secured endpoints should have an HTTP header called ``Authorization`` it must
+have as the value ``Bearer`` and the token returned by the login POST.
+
+New users may request an account via the web page hosted at ``/``. This form
+asks for the username and password they wish to use. New accounts are marked
+as pending. An admin user can view the pending accounts with a GET on the
+``/pending`` endpoint. They can approve the request with a POST to ``/accept``
+with a body of:
+
+.. code:: json
+
+    {
+        "username": "<the username>"
+    }
 
 Local Development
 -----------------
