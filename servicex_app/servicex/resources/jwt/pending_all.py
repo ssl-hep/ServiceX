@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_jwt_extended import jwt_optional
 
-from resources.servicex_resource import ServiceXResource
+from servicex.resources.servicex_resource import ServiceXResource
 from servicex.models import UserModel
 
 
