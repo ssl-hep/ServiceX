@@ -43,6 +43,13 @@ class UserLogin(Resource):
         if not current_user:
             return {'message': "User {} doesn't exist".format(data['username'])}, 404
 
+        if current_user.pending:
+            return {
+                    'message':
+                    "User {} is still pending. Contact administrator to approve request".
+                    format(data['username'])
+                   }, 401
+
         if UserModel.verify_hash(data['password'], current_user.key):
             access_token = create_access_token(identity=data['username'])
             refresh_token = create_refresh_token(identity=data['username'])

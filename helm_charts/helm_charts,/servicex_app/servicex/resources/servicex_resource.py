@@ -33,7 +33,7 @@ from flask import current_app
 from datetime import datetime
 from datetime import timezone
 
-from servicex.models import TransformationResult
+from servicex.models import TransformationResult, UserModel
 
 
 class ServiceXResource(Resource):
@@ -41,7 +41,8 @@ class ServiceXResource(Resource):
     def _generate_advertised_endpoint(cls, endpoint):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
-    def _validate_user(self):
+    @staticmethod
+    def _validate_user():
         """
         Determine if the session should allow the user request in.
         :return: Tuple of Boolean indicating whether the permission is granted and
@@ -50,12 +51,41 @@ class ServiceXResource(Resource):
         if not current_app.config['ENABLE_AUTH']:
             return True, None
         try:
-            auth = flask_jwt_extended.get_jwt_identity()
+            user_id = flask_jwt_extended.get_jwt_identity()
 
-            if auth:
+            if not user_id:
+                return False, "No auth provided"
+
+            user_record = UserModel.find_by_username(user_id)
+
+            if user_record and not user_record.pending:
                 return True, None
             else:
                 return False, "No Valid Auth Provided"
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            print(exc_value)
+            return False, str(exc_value)
+
+    @staticmethod
+    def _validate_user_is_admin():
+        """
+        Determine if the session should allow the user request in. Use this to guard
+        endpoints that are only accessable to admin users
+        :return: Tuple of Boolean indicating whether the permission is granted and
+        a string message of why it is rejected
+        """
+        if not current_app.config['ENABLE_AUTH']:
+            return True, None
+        try:
+            user_id = flask_jwt_extended.get_jwt_identity()
+            user_record = UserModel.find_by_username(user_id)
+
+            if user_record and user_record.admin:
+                return True, None
+            else:
+                return False, "User is not permitted to perform this operation"
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()

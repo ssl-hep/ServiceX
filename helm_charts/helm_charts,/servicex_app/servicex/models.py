@@ -54,7 +54,8 @@ class UserModel(db.Model):
             return {
                 'username': x.username,
                 'key': x.key,
-                'admin': x.admin
+                'admin': x.admin,
+                'pending': x.pending
             }
 
         return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
