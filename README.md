@@ -183,7 +183,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
-| `app.auth`                           | Enable JWT Auth or allow unfettered access (Python boolean string) | `"False"`                             |
+| `app.auth`                           | Enable JWT Auth or allow unfettered access (Python boolean string) | `false`                             |
 | `app.adminUser`                      | Username for auto created admin user to manage new user workflow   | admin                                 |
 | `app.adminPassword`                  | Password for auto created admin user to manage new user workflow   | changeme                                 |
 | `app.authTimeout`                    | How many seconds should the generated JWTs be valid for? | 21600 (six hours)                               |
