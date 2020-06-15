@@ -24,6 +24,10 @@ app:
   replicas: 1
   auth: "True"
 
+  # Create an initial admin user to manage new user workflow
+  adminUser: admin
+  adminPassword: changeme
+
   # JWT remains valid for 6 hours
   authTimeout: 21600
 
