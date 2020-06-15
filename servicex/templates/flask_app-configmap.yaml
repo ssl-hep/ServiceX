@@ -16,7 +16,7 @@ data:
     SECRET_KEY = 'abc123!'
 
     # Enable JWT auth on public endpoints
-    ENABLE_AUTH={{ .Values.app.auth }}
+    ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
     # Create an initial admin user to manage new user workflow
     JWT_ADMIN = '{{ .Values.app.adminUser }}'
