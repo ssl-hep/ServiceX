@@ -22,7 +22,7 @@ app:
   tag: v0.4
   pullPolicy: IfNotPresent
   replicas: 1
-  auth: "True"
+  auth: false
 
   # Create an initial admin user to manage new user workflow
   adminUser: admin
