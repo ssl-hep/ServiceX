@@ -18,6 +18,10 @@ data:
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{ .Values.app.auth }}
 
+    # Create an initial admin user to manage new user workflow
+    JWT_ADMIN = '{{ .Values.app.adminUser }}'
+    JWT_PASS = '{{ .Values.app.adminPassword }}'
+
     # Number of seconds the JWT is valid for
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authTimeout }}
 
