@@ -15,10 +15,15 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
+    - name: Extract tag name
+      shell: bash
+      run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+      id: extract_tag_name
+
     - name: Build X509 Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/x509-secrets
+        name: sslhep/x509-secrets:${{ steps.extract_tag_name.outputs.imagetag }}
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         tag: "${GITHUB_REF##*/}"
