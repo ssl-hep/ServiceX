@@ -3,6 +3,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.0] - 2020-06-25
+### Added
+- More detailed timestamp logging in transformers
+- JWT based user securing of public endpoints
+- New user workflow with admin approval of pending users
+- Autoscaler for transforms. If enabled, jobs start with one transformer and
+then scale up to the requested number as CPU load increases
+
+### Changed
+- Improved the performance serialization of Awkward tables into Arrow
+- Upgraded to func-adl-uproot==0.11
+
+### Fixed
+- Passing chunk size to transformers
+
+
+### Removed
 
 ## [0.4] - 2020-03-26
 ### Added
