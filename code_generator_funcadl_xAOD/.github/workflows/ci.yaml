@@ -45,7 +45,7 @@ jobs:
     needs: test
     steps:
     - uses: actions/checkout@master
-      -
+
     - name: Extract tag name
       shell: bash
       run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
