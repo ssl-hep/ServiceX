@@ -115,7 +115,7 @@ class AstTranslator:
 
             # Zip up everything in the directory - we are going to ship it as back as part
             # of the message.
-            z_filename = os.path.join(str(tempdir), f'joined.zip')
+            z_filename = os.path.join(str(tempdir), 'joined.zip')
             zip_h = zipfile.ZipFile(z_filename, 'w', zipfile.ZIP_DEFLATED)
             self.zipdir(r.output_dir, zip_h)
             zip_h.close()
