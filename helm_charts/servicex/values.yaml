@@ -19,7 +19,7 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: v0.4
+  tag: v1.0-rc.1
   pullPolicy: IfNotPresent
   replicas: 1
   auth: false
@@ -44,7 +44,7 @@ app:
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: v0.4
+  tag: v1.0-rc.1
   pullPolicy: IfNotPresent
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -58,7 +58,7 @@ preflight:
   image: sslhep/servicex_func_adl_xaod_transformer
   # For uproot deployment
   # image: sslhep/servicex_func_adl_uproot_transformer
-  tag: v0.4
+  tag: v1.0-rc.1
   pullPolicy: IfNotPresent
 
 #
@@ -68,7 +68,7 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
-  tag: v0.4
+  tag: v1.0-rc.1
   pullPolicy: IfNotPresent
 
 
@@ -81,7 +81,7 @@ transformer:
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: v0.4
+  tag: v1.0-rc.1
   pullPolicy: IfNotPresent
   vomsOrg: atlas
 
