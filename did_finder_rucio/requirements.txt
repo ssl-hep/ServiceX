@@ -1,3 +1,3 @@
-rucio-clients
-pika
+rucio-clients==1.21.12
+pika==1.1.0
 
