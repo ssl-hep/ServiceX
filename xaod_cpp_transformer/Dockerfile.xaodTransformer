@@ -4,7 +4,7 @@ FROM atlas/analysisbase:21.2.102
 # x509 certs.
 # WARNING: THis is for CentOS (modern versions of analysisbase)
 # TODO: Ask about a better way to deal with this.
-RUN sudo yum -y update
+# RUN sudo yum -y update
 
 RUN sudo yum install -y https://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm
 # RUN sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
