@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_jwt_extended import jwt_optional
+from flask import current_app
 
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
@@ -39,8 +40,13 @@ class QueryTransformationRequest(ServiceXResource):
             return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
 
         if request_id:
-            return TransformRequest.to_json(
-                TransformRequest.return_request(request_id)
-            )
+            request_rec = TransformRequest.to_json(
+                TransformRequest.return_request(request_id))
+
+            if current_app.config['OBJECT_STORE_ENABLED']:
+                request_rec['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
+                request_rec['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
+                request_rec['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
+            return request_rec
         else:
             return TransformRequest.return_all()
