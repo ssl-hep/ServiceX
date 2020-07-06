@@ -55,7 +55,8 @@ class ResourceTestBase:
             'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
             'ENABLE_AUTH': False,
             'JWT_ADMIN': 'admin',
-            'JWT_PASS': 'pass'
+            'JWT_PASS': 'pass',
+            'JWT_SECRET_KEY': 'schtum'
         }
 
     @staticmethod
