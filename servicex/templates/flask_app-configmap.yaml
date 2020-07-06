@@ -67,6 +67,11 @@ data:
     MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:9000'
     MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
     MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
+    {{ if .Values.minio.ingress.enabled }}
+    MINIO_PUBLIC_URL = '{{index .Values.minio.ingress.hosts 0 }}'
+    {{ else }}
+    MINIO_PUBLIC_URL = '{{ .Release.Name }}-minio:9000'
+    {{ end }}
     {{ else }}
     OBJECT_STORE_ENABLED = False
     {{ end }}
