@@ -43,7 +43,8 @@ class QueryTransformationRequest(ServiceXResource):
             request_rec = TransformRequest.to_json(
                 TransformRequest.return_request(request_id))
 
-            if current_app.config['OBJECT_STORE_ENABLED']:
+            if current_app.config['OBJECT_STORE_ENABLED'] and \
+                    request_rec['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
                 request_rec['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
                 request_rec['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
                 request_rec['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']

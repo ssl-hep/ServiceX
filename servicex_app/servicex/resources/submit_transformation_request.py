@@ -115,7 +115,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 raise BadRequest("Must provide did or file-list but not both")
 
             if self.object_store and \
-                    transformation_request['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
+                    transformation_request['result-destination'] == \
+                    TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
 
