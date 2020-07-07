@@ -8,6 +8,7 @@
 # want to have the option of delivering results as parquet files
 objectStore:
     enabled: true
+    publicURL:
 
 # Enable deployment of a full postgres sql database. This is advisable for
 # bigger clusters where there will be several workers hitting the database
