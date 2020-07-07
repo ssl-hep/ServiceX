@@ -1,0 +1,10 @@
+site_name: ServiceX
+nav:
+    - Home: index.md
+    - Introduction: introduction.md
+    - Installation: installation.md
+    - Specifying a request: requests.md
+    - Examples: examples.md
+    - Outreach: outreach.md
+    - Development: development.md
+theme: readthedocs
