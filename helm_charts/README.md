@@ -214,9 +214,12 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `gridAccount`                        | CERN User account name to access Rucio           | - 
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
+| `objectstore.publicURL`              | What URL should the client use to download files? If set, this is given whether ingress is enabled or not  | nil |      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
 | `minio.accessKey`                    | Access key to log into minio                     | miniouser |
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
+| `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
+| `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
 | `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  False          |
 | `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
