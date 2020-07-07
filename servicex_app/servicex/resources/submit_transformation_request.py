@@ -58,7 +58,10 @@ parser.add_argument('image', required=False)
 parser.add_argument('tree-name', required=False)
 parser.add_argument('chunk-size', required=False, type=int)
 parser.add_argument('workers', required=False, type=int)
-parser.add_argument('result-destination', required=True, choices=['kafka', 'object-store'])
+parser.add_argument('result-destination', required=True, choices=[
+    TransformRequest.KAFKA_DEST,
+    TransformRequest.OBJECT_STORE_DEST
+])
 parser.add_argument('result-format', required=False,
                     choices=['arrow', 'parquet', 'root-file'], default='arrow')
 parser.add_argument('kafka', required=False, type=dict)
@@ -112,11 +115,11 @@ class SubmitTransformationRequest(ServiceXResource):
                 raise BadRequest("Must provide did or file-list but not both")
 
             if self.object_store and \
-                    transformation_request['result-destination'] == 'object-store':
+                    transformation_request['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
 
-            if transformation_request['result-destination'] == 'kafka':
+            if transformation_request['result-destination'] == TransformRequest.KAFKA_DEST:
                 broker = transformation_request['kafka']['broker']
             else:
                 broker = None
