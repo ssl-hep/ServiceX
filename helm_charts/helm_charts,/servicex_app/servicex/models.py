@@ -101,6 +101,8 @@ class UserModel(db.Model):
 
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
+    OBJECT_STORE_DEST = 'object-store'
+    KAFKA_DEST = 'kafka'
 
     _cache = {}
 
