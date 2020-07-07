@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Specifying a request - ServiceX</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Specifying a request";
+    var mkdocs_page_input_path = "requests.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> ServiceX</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../introduction/">Introduction</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Specifying a request</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#creating-a-request-via-func_adl">Creating a request via func_adl</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#creating-a-request-via-hep_tables">Creating a request via hep_tables</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#small-example-with-filtering">Small example with filtering</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../outreach/">Outreach</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../development/">Development</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">ServiceX</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Specifying a request</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="specifying-a-request">Specifying a request</h1>
+<p>A transformation request is a specifically formatted request sent to ServiceX. It includes
+information on what input dataset is to be used, what preselection is to be applied (including
+computation of new columns, if any), and what columns should be returned to the user.</p>
+<h2 id="creating-a-request-via-func_adl">Creating a request via func_adl</h2>
+<p>In order to use <code>func_adl</code> directly we start with a Qastle query as our input. We start from a
+query designed to extract the four-momenta of the Electron collection in some dataset:</p>
+<pre><code>my_query = "(Select data_column_source" \
+    "(lambda (list Event)" \
+        "(list (call (attr (attr Event 'Electrons') 'pt'))" \
+            "(call (attr (attr Event 'Electrons') 'eta'))" \
+            "(call (attr (attr Event 'Electrons') 'phi'))" \
+            "(call (attr (attr Event 'Electrons') 'e')))))"
+</code></pre>
+<p>Given this input, we can produce a <code>pandas.DataFrame</code> containing the four momenta of all
+electrons in an ATLAS xAOD file via</p>
+<pre><code>import servicex
+dataset = ‘mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00’
+sx_endpoint = 'http://rc1-xaod-servicex.uc.ssl-hep.org'
+minio_endpoint = 'servicex-minio.uc.ssl-hep.org'
+ds = servicex.ServiceXDataset(
+    dataset,
+    servicex.ServiceXAdaptor(sx_endpoint, username='mweinberg', password='XXXXXXXXX'),
+    servicex.MinioAdaptor(minio_endpoint)
+    )
+r = servicex.get_data_pandas_df(my_query)
+print(r)
+</code></pre>
+<p>This queries ServiceX for the specified dataset, extracts the requested columns, and after about
+1--2 minutes, prints a data frame with 4 columns (one for each of the variables).</p>
+<p>A badly formatted query, or a problem with the file in the backend, will cause an exception to be
+thrown. Note that there are also tools like the one
+<a href="https://github.com/mweinberg2718/useful-scripts/blob/master/xaod_qastle.py">here</a> that are capable
+of turning a text file of requested columns (e.g.
+<a href="https://github.com/mweinberg2718/useful-scripts/blob/master/xaod_branches.txt">here</a>) into a
+complete Qastle query.</p>
+<p>For all but the simplest single-column requests, creating a Qastle query as input can be quite
+cumbersome. <code>func_adl</code> provides additional libraries to construct queries. For example</p>
+<pre><code>import func_adl_xAOD
+f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
+r = f_ds \
+    .SelectMany('lambda e: e.Jets("AntiKt4EMTopoJets")') \
+    .Select('lambda j: j.pt()/1000.0') \
+    .AsPandasDF('JetPt') \
+    .value()
+print(r)
+</code></pre>
+<h2 id="creating-a-request-via-hep_tables">Creating a request via hep_tables</h2>
+<p>Another tool that can be used to make these requests is
+<a href="https://gordonwatts.github.io/hep_tables_docs/intro">hep_tables</a>. This can (soon) be installed via
+pip:</p>
+<pre><code>pip install hep_tables
+</code></pre>
+<p>As a simple example of their use, we can make a plot of the electron transverse momenta. First we
+set up the dataset and a computational graph for <code>func_adl</code>:</p>
+<pre><code>from hep_tables import xaod_table, make_local
+from func_adl import EventDataset
+import matplotlib.pyplot as plt
+
+dataset = EventDataset(‘localds://mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00')
+df = xaod_table(dataset)
+</code></pre>
+<p>Once we have this we can create a query for the electron transverse momenta and run it via
+ServiceX:</p>
+<pre><code>pts = df.Electrons(‘Electrons’).pt / 1000.0
+np_pts = make_local(pts)
+</code></pre>
+<p>This translates the query into the appropriate format for ServiceX, sends it to the service,
+collects their results, and packages them locally as a JaggedArray. Finally we can make a plot from
+this via:</p>
+<pre><code>plt.hist(np_pts.flatten(), range=(0,100), bins=50)
+</code></pre>
+<p>Which results in a histogram of a transverse momentum distribution:</p>
+<p><img alt="hep_tables" src="../img/hep_tables_example.png" /></p>
+<h2 id="small-example-with-filtering">Small example with filtering</h2>
+<p>Will include a small toy example with filtering here.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../examples/" class="btn btn-neutral float-right" title="Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../installation/" class="btn btn-neutral" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../installation/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../examples/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

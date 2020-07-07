@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Development - ServiceX</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Development";
+    var mkdocs_page_input_path = "development.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> ServiceX</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../introduction/">Introduction</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../requests/">Specifying a request</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../outreach/">Outreach</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Development</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#testing-new-changes">Testing new changes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#deploying-servicex-on-a-kubernetes-cluster">Deploying ServiceX on a Kubernetes cluster</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">ServiceX</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Development</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="development">Development</h1>
+<p>So you want to get involved! The developers welcome community input. The central development area
+with all ServiceX repositories can be found <a href="https://github.com/ssl-hep">here</a>. The core steps are
+shown in the diagram below.</p>
+<p><img alt="Development" src="../img/develop.png" /></p>
+<h2 id="testing-new-changes">Testing new changes</h2>
+<p>[Instructions for testing new changes. Broadly (1) setup testing environment via <code>conda</code> or
+<code>virtualenv</code>, (2) clone the appropriate repository, (3) run <code>python -m pip install -e .[test]</code>
+to set up the necessary packages in the environment, and (4) run the tests via <code>pytests</code>.]</p>
+<h2 id="deploying-servicex-on-a-kubernetes-cluster">Deploying ServiceX on a Kubernetes cluster</h2>
+<p>The entire ServiceX stack can be installed using the helm chart contained
+<a href="https://github.com/ssl-hep/ServiceX">here</a>. Below is a set of developer instructions for deploying
+a production-ready instance of ServiceX on a Kubernetes cluster.</p>
+<ol>
+<li>
+<p>Deployment requires access to a Kubernetes cluster. You’ll need to install and set up
+<code>kubectl</code> (see
+<a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">Install and Set Up kubectl</a>) and Helm 3
+(see <a href="https://helm.sh/docs/intro/install/">Installing Helm</a>).</p>
+</li>
+<li>
+<p>Next configure <code>kubectl</code> to access the appropriate namespace on the cluster with the
+kubeconfig file located at <code>~/.kube/config</code>.</p>
+</li>
+<li>
+<p>For complete control over the deployment values in the ServiceX Helm chart, it’s recommended to
+check out the <code>develop</code> branch of ServiceX from GitHub:</p>
+<pre><code>git clone https://github.com/ssl-hep/ServiceX.git
+cd ServiceX
+git checkout develop
+</code></pre>
+</li>
+<li>
+<p>Add and update the ServiceX Helm chart:</p>
+<pre><code>helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
+helm repo update
+helm dependency update servicex
+</code></pre>
+</li>
+<li>
+<p>ServiceX may require some modifications to the default deployment values to run on your cluster.
+In particular, you’ll need your CERN grid certificate to communicate with Rucio. You can see the
+default values in <code>servicex/values.yaml</code>. These values can be overridden via a separate yaml
+file. For example, to run on SSL-RIVER,</p>
+<pre><code>cat &lt;&lt;EOF &gt; river-values.yaml
+app:
+  auth: true
+  adminUser: admin
+  adminPassword: eto2ipiis1
+  ingress:
+    enabled: true
+didFinder:
+  tag: v1.0-rc.1
+  pullPolicy: Always
+codeGen:
+  # image: sslhep/servicex_code_gen_func_adl_uproot
+  image: sslhep/servicex_code_gen_func_adl_xaod
+rabbitmq:
+  service:
+    type: NodePort
+    nodePort: 30672
+minio:
+  ingress:
+    enabled: true
+    hosts:
+    - "servicex-minio.uc.ssl-hep.org"
+gridAccount: bgalewsk
+EOF
+</code></pre>
+</li>
+<li>
+<p>With the appropriate values, it is now possible to deploy ServiceX via the Helm chart:</p>
+<pre><code>helm install -f river-values.yaml --version v1.0.0-rc.1 rc1-xaod ssl-hep/servicex
+</code></pre>
+</li>
+<li>
+<p>Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to complete its
+initialization. After this all the pods of the new deployment should be ready. If you check the
+status of the pods via</p>
+<pre><code>kubectl get pods
+</code></pre>
+<p>You should soon find that your setup looks comparable to this:</p>
+<pre><code>NAME                                             READY   STATUS    RESTARTS   AGE
+servicex-1579021789-code-gen-7cd998d5b6-nwtgv            1/1     Running   0          49m
+servicex-1579021789-did-finder-7c5cbb4575-52wxf          1/1     Running   0          49m
+servicex-1579021789-minio-78b55bfdf8-mbmmf               1/1     Running   0          49m
+servicex-1579021789-preflight-b748b4dfd-qqt89            1/1     Running   4          49m
+servicex-1579021789-rabbitmq-0                           1/1     Running   0          49m
+servicex-1579021789-servicex-app-98779c79c-cvmqx         1/1     Running   3          49m
+servicex-1579021789-x509-secrets-74f4bcc8bb-5kqvb        1/1     Running   0          49m
+</code></pre>
+</li>
+<li>
+<p>The new ServiceX deployment should now be ready for business. To try a 10TB scale test check
+<a href="https://drive.google.com/open?id=1i5dHWMDEJk5dW0PbxGzo_ccKb8ViP9TCFaS_VpzWAUk">ServiceX_scaleTest</a>.</p>
+</li>
+</ol>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../outreach/" class="btn btn-neutral" title="Outreach"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../outreach/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
