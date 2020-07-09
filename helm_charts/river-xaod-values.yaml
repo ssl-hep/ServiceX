@@ -1,0 +1,33 @@
+app:
+  adminPassword: changeme
+  auth: true
+  ingress:
+    enabled: true
+codeGen:
+  image: sslhep/servicex_code_gen_func_adl_xaod
+didFinder:
+  pullPolicy: Always
+  tag: v1.0-rc.1
+gridAccount: bgalewsk
+minio:
+  ingress:
+    enabled: true
+    hosts:
+    - "rc1-xaod-minio.uc.ssl-hep.org"
+postgres:
+  enabled: true
+postgresql:
+  persistence:
+    enabled: true
+    storageClass: rook-ceph-block
+preflight:
+  pullPolicy: Always
+rabbitmq:
+  persistence:
+    enabled: true
+    storageClass: rook-ceph-block
+  service:
+    type: NodePort
+transformer:
+  autoscalerEnabled: true
+  pullPolicy: Always
