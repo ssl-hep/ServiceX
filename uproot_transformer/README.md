@@ -1,6 +1,6 @@
 # ServiceX_xAOD_CPP_transformer
 
-![](https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer/workflows/Docker%20Hub/badge.svg)
+![Badge](https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer/workflows/Docker%20Hub/badge.svg)
 
 ServiceX Transformer that converts ATLAS xAOD files into columnwise data
 
@@ -44,7 +44,7 @@ optional arguments:
                         Request ID to read from queue
 ```
 
-You will need an X509 proxy avaiable as a mountable volume. The X509 Secret
+You will need an X509 proxy available as a mountable volume. The X509 Secret
 container can do using your credentials and cert:
 
 ```bash
@@ -66,7 +66,7 @@ docker run --rm \
 
 #### Testing by running against known file and C++ files
 
-Under tests you'll find input files needed to try this out. Use the following docker conmmand.
+Under tests you'll find input files needed to try this out. Use the following docker command.
 
 ```bash
 docker run --rm -it \
@@ -77,7 +77,7 @@ docker run --rm -it \
   sslhep/servicex_xaod_cpp_transformer:latest bash
 ```
 
-Then use `trasformer.py` and pass it the `--path` argument.
+Then use `transformer.py` and pass it the `--path` argument.
 
 For example:
 
