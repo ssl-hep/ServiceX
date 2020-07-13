@@ -163,6 +163,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 queue=request_id+"_errors")
 
             request_rec.save_to_db()
+            db.session.commit()
 
             if requested_did:
                 did_request = {
@@ -199,7 +200,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     num_files=len(requested_file_list)
                 )
 
-            db.session.commit()
+                db.session.commit()
 
             if self.elasticsearch_adapter:
                 self.elasticsearch_adapter.create_update_request(
