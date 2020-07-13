@@ -27,7 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys
 import traceback
+import requests
 
+from flask import current_app
 from flask_restful import Resource, reqparse
 
 from servicex.models import UserModel
@@ -53,6 +55,10 @@ class UserRegistration(Resource):
 
         try:
             new_user.save_to_db()
+            slack_webhook_url = current_app.config['SLACK_WEBHOOK_URL']
+            requests.post(slack_webhook_url, {
+                "text": f"New signup from {new_user.username}"
+            })
             return {
                 'message': 'User {} added to pending user list'.format(data['username']),
                     }
