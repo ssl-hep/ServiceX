@@ -49,6 +49,11 @@ class TestTransformStatus(ResourceTestBase):
     def test_get_status(self, mocker, mock_rabbit_adaptor):
         import servicex
 
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=self._generate_transform_request())
+
         mock_count = mocker.patch.object(
             servicex.models.TransformationResult, 'count', return_value=17)
 
@@ -83,8 +88,22 @@ class TestTransformStatus(ResourceTestBase):
                 'avg-time': 15.55,
                 'total-time': 1024}
         }
-
+        mock_transform_request_read.assert_called_with("1234")
         mock_count.assert_called_with('1234')
         mock_files_remaining.assert_called_with('1234')
         mock_statistics.assert_called_with('1234')
         mock_files_failed.assert_called_with('1234')
+
+    def test_get_status_bad_request_id(self, mocker, mock_rabbit_adaptor):
+        import servicex
+
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=None)
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+
+        response = client.get('/servicex/transformation/1234/status')
+        assert response.status_code == 404
+        mock_transform_request_read.assert_called_with("1234")
