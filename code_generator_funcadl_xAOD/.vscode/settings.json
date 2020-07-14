@@ -8,6 +8,7 @@
         "jsonify",
         "localds",
         "microservice",
+        "noqa",
         "pytest",
         "qastle",
         "servicex",
