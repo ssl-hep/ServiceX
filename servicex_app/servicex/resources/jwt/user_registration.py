@@ -25,11 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+import os
+import requests
 import sys
 import traceback
-import requests
 
-from flask import current_app
 from flask_restful import Resource, reqparse
 
 from servicex.models import UserModel
@@ -55,10 +56,11 @@ class UserRegistration(Resource):
 
         try:
             new_user.save_to_db()
-            slack_webhook_url = current_app.config['SLACK_WEBHOOK_URL']
-            requests.post(slack_webhook_url, {
-                "text": f"New signup from {new_user.username}"
-            })
+            webhook_url = os.environ.get("SLACK_WEBHOOK_URL", default=None).strip("'")
+            if webhook_url is not None:
+                requests.post(webhook_url, json.dumps({
+                    "text": f"New signup from {new_user.username}"
+                }))
             return {
                 'message': 'User {} added to pending user list'.format(data['username']),
                     }
