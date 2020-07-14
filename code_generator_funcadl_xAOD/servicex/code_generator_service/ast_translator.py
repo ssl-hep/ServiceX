@@ -25,16 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import ast
 import os
-import pickle
 import zipfile
 from collections import namedtuple
 from tempfile import TemporaryDirectory
+from typing import Optional
+from pathlib import Path
 
-from func_adl.ast import ast_hash
-from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import atlas_xaod_executor
+from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import \
+    atlas_xaod_executor
 from qastle import text_ast_to_python_ast
-from func_adl_xAOD.util_LINQ import find_dataset, extract_dataset_info
 
 GeneratedFileResult = namedtuple('GeneratedFileResult', 'hash output_dir')
 
@@ -47,46 +48,37 @@ class GenerateCodeException(BaseException):
 
 
 class AstTranslator:
-    def __init__(self):
-        pass
+    def __init__(self, xaod_executor: Optional[atlas_xaod_executor] = None):
+        '''
+        Create the ast translator objects
 
-    def zipdir(self, path: str, zip_handle: zipfile.ZipFile) -> None:
+        Arguments
+
+            xaod_executor       The object that will do the translation
+        '''
+        self._exe = xaod_executor if xaod_executor is not None else atlas_xaod_executor()
+
+    @property
+    def executor(self):
+        return self._exe
+
+    def _zipdir(self, dir: Path, zip_handle: zipfile.ZipFile) -> None:
         """Given a `path` to a directory, zip up its contents into a zip file.
 
         Arguments:
             path        Path to a local directory. The contents will be put into the zip file
             zip_handle  The zip file handle to write into.
         """
-        for root, _, files in os.walk(path):
+        for root, _, files in os.walk(dir):
             for file in files:
                 zip_handle.write(os.path.join(root, file), file)
 
-    def get_generated_xAOD(self, a, cache_path: str):
-        # Calculate the AST hash. If this is already around then we don't need to do very much!
-        hash = ast_hash.calc_ast_hash(a)
+    def get_generated_xAOD(self, a: ast.AST, query_dir: Path):
+        if not query_dir.exists():
+            query_dir.mkdir(parents=True, exist_ok=True)
 
-        # Next, see if the hash file is there.
-        query_file_path = os.path.join(cache_path, hash)
-        cache_file = os.path.join(query_file_path, 'rep_cache.pickle')
-        if os.path.isfile(cache_file):
-            # We have a cache hit. Look it up.
-            file = find_dataset(a)
-            with open(cache_file, 'rb') as f:
-                result_cache = pickle.load(f)
-                return result_cache, extract_dataset_info(file)
-
-        # Create the files to run in that location.
-        if not os.path.exists(query_file_path):
-            os.makedirs(query_file_path)
-
-        exe = atlas_xaod_executor()
-        print("------>", exe)
-        f_spec = exe.write_cpp_files(exe.apply_ast_transformations(a), query_file_path)
-        print(f_spec)
-
-        os.system("ls -lht " + query_file_path)
-
-        return GeneratedFileResult(hash, query_file_path)
+        self._exe.write_cpp_files(
+            self._exe.apply_ast_transformations(a), str(query_dir))
 
     def translate_text_ast_to_zip(self, code: str) -> bytes:
         """Translate a text ast into a zip file as a memory stream
@@ -110,14 +102,15 @@ class AstTranslator:
 
         # Generate the C++ code
         with TemporaryDirectory() as tempdir:
-            r = self.get_generated_xAOD(a, tempdir)
+            loc = Path(tempdir) / 'hash'
+            self.get_generated_xAOD(a, loc)
 
             # Zip up everything in the directory - we are going to ship it as back as part
             # of the message.
-            z_filename = os.path.join(str(tempdir), 'joined.zip')
+            z_filename = Path(tempdir) / 'joined.zip'
             zip_h = zipfile.ZipFile(z_filename, 'w', zipfile.ZIP_DEFLATED)
-            self.zipdir(r.output_dir, zip_h)
+            self._zipdir(loc, zip_h)
             zip_h.close()
 
-            with open(z_filename, 'rb') as b_in:
+            with z_filename.open('rb') as b_in:
                 return b_in.read()
