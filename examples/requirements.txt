@@ -1,5 +1,4 @@
 # Works in Python 3
-awkward>=0.11.0
-coffea>=0.5.6
-confluent_kafka
-pyarrow
+awkward==0.12.21
+confluent-kafka==1.2.0
+pyarrow==0.16.0
