@@ -68,10 +68,6 @@
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
-                    </li>
-                </ul>
-                <ul>
                     <li class="toctree-l1"><a class="reference internal" href="../outreach/">Outreach</a>
                     </li>
                 </ul>
@@ -122,12 +118,14 @@ physics analyses. It provides a uniform backend to data storage services, ensuri
 have to know how or where the data is stored, and is capable of on-the-fly data transformations
 into a variety of formats (ROOT files, Arrow arrays, Parquet files, ...) The service offers
 preprocessing functionality via an analysis description language called
-<a href="https://pypi.org/project/func-adl/">func-adl</a> that allows users to filter events in place, unpack
-compressed formats, request columns, and specify computations to be applied to the results. This
-enables the user to start from any format and extract only the data needed for an analysis.</p>
-<p><img alt="Organization" src="../img/organize.png" /></p>
-<p>As shown in the diagram, ServiceX is designed to feed columns to a user running an analysis (e.g.
-via <code>awkward</code> or <code>coffea</code> tools) based on the results of a query designed by the user.</p>
+<a href="https://pypi.org/project/func-adl/">func-adl</a> that allows users to filter events, request columns,
+and even compute new variables. This enables the user to start from any format and extract only the
+data needed for an analysis.</p>
+<p><img alt="Organization" src="../img/organize2.png" /></p>
+<p>ServiceX is designed to feed columns to a user running an analysis (e.g. via
+<a href="https://github.com/scikit-hep/awkward-array">Awkward</a> or
+<a href="https://github.com/CoffeaTeam/coffea">Coffea</a> tools) based on the results of a query designed by
+the user.</p>
               
             </div>
           </div>

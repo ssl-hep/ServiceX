@@ -64,15 +64,7 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#creating-a-request-via-func_adl">Creating a request via func_adl</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#creating-a-request-via-hep_tables">Creating a request via hep_tables</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#small-example-with-filtering">Small example with filtering</a>
-    </li>
     </ul>
-                    </li>
-                </ul>
-                <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
                     </li>
                 </ul>
                 <ul>
@@ -119,32 +111,78 @@
 <p>A transformation request is a specifically formatted request sent to ServiceX. It includes
 information on what input dataset is to be used, what preselection is to be applied (including
 computation of new columns, if any), and what columns should be returned to the user.</p>
+<p>Each request requires two endpoints, one corresponding to the service itself, and one for the
+output of the request. The current available endpoints are shown below.</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Type</th>
+<th>Location</th>
+<th>Experiment</th>
+<th>Input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rc1-xaod-servicex.uc.ssl-hep.org</td>
+<td>ServiceX</td>
+<td>SSL-RIVER</td>
+<td>ATLAS</td>
+<td>xAOD files</td>
+</tr>
+<tr>
+<td>rc1-xaod-minio.uc.ssl-hep.org</td>
+<td>MinIO</td>
+<td>SSL-RIVER</td>
+<td>ATLAS</td>
+<td>xAOD files</td>
+</tr>
+<tr>
+<td>rc1-uproot-servicex.uc.ssl-hep.org</td>
+<td>ServiceX</td>
+<td>SSL-RIVER</td>
+<td>ATLAS</td>
+<td>Flat ntuples</td>
+</tr>
+<tr>
+<td>rc1-uproot-minio.uc.ssl-hep.org</td>
+<td>MinIO</td>
+<td>SSL-RIVER</td>
+<td>ATLAS</td>
+<td>Flat ntuples</td>
+</tr>
+</tbody>
+</table>
 <h2 id="creating-a-request-via-func_adl">Creating a request via func_adl</h2>
-<p>In order to use <code>func_adl</code> directly we start with a Qastle query as our input. We start from a
-query designed to extract the four-momenta of the Electron collection in some dataset:</p>
-<pre><code>my_query = "(Select data_column_source" \
-    "(lambda (list Event)" \
-        "(list (call (attr (attr Event 'Electrons') 'pt'))" \
-            "(call (attr (attr Event 'Electrons') 'eta'))" \
-            "(call (attr (attr Event 'Electrons') 'phi'))" \
-            "(call (attr (attr Event 'Electrons') 'e')))))"
+<p>In order to use <code>func_adl</code> directly we start with a <a href="https://github.com/iris-hep/qastle">Qastle</a>
+query as our input. The following is a query designed to extract the transverse momenta of a jet
+collection in some dataset:</p>
+<pre><code>my_query = "(call ResultTTree" \
+    "(call Select" \
+        "(call SelectMany" \
+            "(call EventDataset (list 'localds:bogus'))" \
+            "(lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))" \
+        ") (lambda (list j) (/ (call (attr j 'pt')) 1000.0))" \
+    ") (list 'JetPt') 'analysis' 'junk.root')"
 </code></pre>
-<p>Given this input, we can produce a <code>pandas.DataFrame</code> containing the four momenta of all
-electrons in an ATLAS xAOD file via</p>
+<p>Given this input, we can produce output containing the transverse momenta of all jets in an ATLAS
+xAOD file. We start by specifying the structure of the ServiceX request:</p>
 <pre><code>import servicex
 dataset = ‘mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00’
 sx_endpoint = 'http://rc1-xaod-servicex.uc.ssl-hep.org'
-minio_endpoint = 'servicex-minio.uc.ssl-hep.org'
+minio_endpoint = 'rc1-xaod-minio.uc.ssl-hep.org'
 ds = servicex.ServiceXDataset(
     dataset,
     servicex.ServiceXAdaptor(sx_endpoint, username='mweinberg', password='XXXXXXXXX'),
     servicex.MinioAdaptor(minio_endpoint)
     )
-r = servicex.get_data_pandas_df(my_query)
+</code></pre>
+<p>Once we have this, we can call ServiceX to output the results of our query in a convenient format:</p>
+<pre><code>r = servicex.get_data_pandas_df(my_query)
 print(r)
 </code></pre>
-<p>This queries ServiceX for the specified dataset, extracts the requested columns, and after about
-1--2 minutes, prints a data frame with 4 columns (one for each of the variables).</p>
+<p>After about 1--2 minutes, this prints a data frame with a single column for the transverse momenta.</p>
 <p>A badly formatted query, or a problem with the file in the backend, will cause an exception to be
 thrown. Note that there are also tools like the one
 <a href="https://github.com/mweinberg2718/useful-scripts/blob/master/xaod_qastle.py">here</a> that are capable
@@ -152,45 +190,19 @@ of turning a text file of requested columns (e.g.
 <a href="https://github.com/mweinberg2718/useful-scripts/blob/master/xaod_branches.txt">here</a>) into a
 complete Qastle query.</p>
 <p>For all but the simplest single-column requests, creating a Qastle query as input can be quite
-cumbersome. <code>func_adl</code> provides additional libraries to construct queries. For example</p>
+cumbersome. <code>func_adl</code> provides additional libraries to construct queries. For example, we can
+perform the same request using the <code>func_adl_xAOD</code> library:</p>
 <pre><code>import func_adl_xAOD
 f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
 r = f_ds \
     .SelectMany('lambda e: e.Jets("AntiKt4EMTopoJets")') \
-    .Select('lambda j: j.pt()/1000.0') \
+    .Select('lambda j: j.pt() / 1000.0') \
     .AsPandasDF('JetPt') \
     .value()
 print(r)
 </code></pre>
-<h2 id="creating-a-request-via-hep_tables">Creating a request via hep_tables</h2>
-<p>Another tool that can be used to make these requests is
-<a href="https://gordonwatts.github.io/hep_tables_docs/intro">hep_tables</a>. This can (soon) be installed via
-pip:</p>
-<pre><code>pip install hep_tables
-</code></pre>
-<p>As a simple example of their use, we can make a plot of the electron transverse momenta. First we
-set up the dataset and a computational graph for <code>func_adl</code>:</p>
-<pre><code>from hep_tables import xaod_table, make_local
-from func_adl import EventDataset
-import matplotlib.pyplot as plt
-
-dataset = EventDataset(‘localds://mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00')
-df = xaod_table(dataset)
-</code></pre>
-<p>Once we have this we can create a query for the electron transverse momenta and run it via
-ServiceX:</p>
-<pre><code>pts = df.Electrons(‘Electrons’).pt / 1000.0
-np_pts = make_local(pts)
-</code></pre>
-<p>This translates the query into the appropriate format for ServiceX, sends it to the service,
-collects their results, and packages them locally as a JaggedArray. Finally we can make a plot from
-this via:</p>
-<pre><code>plt.hist(np_pts.flatten(), range=(0,100), bins=50)
-</code></pre>
-<p>Which results in a histogram of a transverse momentum distribution:</p>
-<p><img alt="hep_tables" src="../img/hep_tables_example.png" /></p>
-<h2 id="small-example-with-filtering">Small example with filtering</h2>
-<p>Will include a small toy example with filtering here.</p>
+<p>Note that this returns the output as a Pandas dataframe; the library also has <code>AsROOTTTree()</code> and
+<code>AsAwkwardArray()</code> methods to return the output has a flat TTree or an Awkward array.</p>
               
             </div>
           </div>
@@ -198,7 +210,7 @@ this via:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../examples/" class="btn btn-neutral float-right" title="Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../outreach/" class="btn btn-neutral float-right" title="Outreach">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../installation/" class="btn btn-neutral" title="Getting started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -230,7 +242,7 @@ this via:</p>
         <span><a href="../installation/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../examples/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../outreach/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
