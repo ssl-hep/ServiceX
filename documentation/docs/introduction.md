@@ -12,11 +12,13 @@ physics analyses. It provides a uniform backend to data storage services, ensuri
 have to know how or where the data is stored, and is capable of on-the-fly data transformations
 into a variety of formats (ROOT files, Arrow arrays, Parquet files, ...) The service offers
 preprocessing functionality via an analysis description language called
-[func-adl](https://pypi.org/project/func-adl/) that allows users to filter events in place, unpack
-compressed formats, request columns, and specify computations to be applied to the results. This
-enables the user to start from any format and extract only the data needed for an analysis.
+[func-adl](https://pypi.org/project/func-adl/) that allows users to filter events, request columns,
+and even compute new variables. This enables the user to start from any format and extract only the
+data needed for an analysis.
 
-![Organization](img/organize.png)
+![Organization](img/organize2.png)
 
-As shown in the diagram, ServiceX is designed to feed columns to a user running an analysis (e.g.
-via ``awkward`` or ``coffea`` tools) based on the results of a query designed by the user.
+ServiceX is designed to feed columns to a user running an analysis (e.g. via
+[Awkward](https://github.com/scikit-hep/awkward-array) or
+[Coffea](https://github.com/CoffeaTeam/coffea) tools) based on the results of a query designed by
+the user.

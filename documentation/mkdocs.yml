@@ -4,7 +4,6 @@ nav:
     - Introduction: introduction.md
     - Getting started: installation.md
     - Specifying a request: requests.md
-    - Examples: examples.md
     - Outreach: outreach.md
     - Development: development.md
 theme: readthedocs
