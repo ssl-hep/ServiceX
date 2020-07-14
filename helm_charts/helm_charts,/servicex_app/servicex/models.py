@@ -28,6 +28,7 @@
 import hashlib
 from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
 
 db = SQLAlchemy()
 
@@ -167,13 +168,17 @@ class TransformRequest(db.Model):
 
     @classmethod
     def return_request(cls, request_id):
-        return cls.query.filter_by(request_id=request_id).one()
+        try:
+            return cls.query.filter_by(request_id=request_id).one()
+        except NoResultFound:
+            return None
 
     @classmethod
     def files_remaining(cls, request_id):
         submitted_request = cls.return_request(request_id)
         count = TransformationResult.count(request_id)
-        if submitted_request.files:
+
+        if submitted_request and submitted_request.files:
             return submitted_request.files - int(count or 0)
         else:
             return None

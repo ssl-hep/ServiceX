@@ -49,6 +49,10 @@ class TransformationStatus(ServiceXResource):
         if not is_auth:
             return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
 
+        submitted_request = TransformRequest.return_request(request_id)
+        if not submitted_request:
+            return "Transform Not Found", "404"
+
         status_request = status_request_parser.parse_args()
 
         count = TransformationResult.count(request_id)
