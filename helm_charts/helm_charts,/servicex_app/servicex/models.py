@@ -320,3 +320,10 @@ class FileStatus(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.flush()
+
+    @classmethod
+    def failures_for_request(cls, request_id):
+        return db.session.query(DatasetFile, FileStatus).filter(
+            FileStatus.request_id == request_id,
+            DatasetFile.request_id == FileStatus.request_id,
+            FileStatus.status == 'failure').all()
