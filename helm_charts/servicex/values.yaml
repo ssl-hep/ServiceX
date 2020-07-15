@@ -26,6 +26,7 @@ app:
   auth: false
 
   # Create an initial admin user to manage new user workflow
+  adminEmail: admin@example.com
   adminUser: admin
   adminPassword: changeme
 
