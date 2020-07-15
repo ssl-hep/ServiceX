@@ -40,10 +40,10 @@ to secured endpoints should have an HTTP header called ``Authorization`` it must
 have as the value ``Bearer`` and the token returned by the login POST.
 
 New users may request an account via the web page hosted at ``/``. This form
-asks for the username and password they wish to use. New accounts are marked
-as pending. An admin user can view the pending accounts with a GET on the
-``/pending`` endpoint. They can approve the request with a POST to ``/accept``
-with a body of:
+asks for the username and password they wish to use, as well as some other
+basic information. New accounts are marked as pending. An admin user can view
+the pending accounts with a GET on the ``/pending`` endpoint.
+They can approve the request with a POST to ``/accept`` with a body of:
 
 .. code:: json
 
@@ -102,7 +102,7 @@ Then use your favorite postgres sql client to connect to this
 database with the connection URL``jdbc:postgresql://localhost:5432/postgres``
 with the user postgres and the password leftfoot1.
 
-Of particular insterest is the ``file_status`` table. It contains entries for
+Of particular interest is the ``file_status`` table. It contains entries for
 each transformed root file when it starts and when it finishes, retries, or
 reports an error.
 
