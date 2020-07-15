@@ -40,6 +40,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.preflight_check import PreflightCheck
     from servicex.resources.fileset_complete import FilesetComplete
     from servicex.resources.transformer_file_complete import TransformerFileComplete
+    from servicex.resources.transform_errors import TransformErrors
     from servicex.resources.jwt.all_users import AllUsers
     from servicex.resources.jwt.token_refresh import TokenRefresh
     from servicex.resources.jwt.user_login import UserLogin
@@ -75,6 +76,9 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     api.add_resource(TransformationStatus,
                      '/servicex/transformation/<string:request_id>/status')
+
+    api.add_resource(TransformErrors,
+                     '/servicex/transformation/<string:request_id>/errors')
 
     # Internal service endpoints
     api.add_resource(TransformationStatusInternal,
