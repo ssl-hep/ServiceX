@@ -163,6 +163,8 @@ def create_app(test_config=None,
             if not UserModel.find_by_username(app.config['JWT_ADMIN']):
                 try:
                     new_user = UserModel(
+                        email=app.config['JWT_ADMIN_EMAIL'],
+                        full_name=app.config['JWT_ADMIN'],
                         username=app.config['JWT_ADMIN'],
                         key=UserModel.generate_hash(app.config['JWT_PASS']),
                         admin=True,

@@ -25,8 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
 import hashlib
-from sqlalchemy import func, ForeignKey
+
+from sqlalchemy import func, ForeignKey, DateTime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -35,11 +37,17 @@ db = SQLAlchemy()
 
 class UserModel(db.Model):
     __tablename__ = 'users'
+    admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(DateTime, default=datetime.utcnow)
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(320), nullable=False, unique=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    institution = db.Column(db.String(120))
     key = db.Column(db.String(120), nullable=False)
-    admin = db.Column(db.Boolean, nullable=True)
-    pending = db.Column(db.Boolean, nullable=False)
+    pending = db.Column(db.Boolean, default=True)
+    experiment = db.Column(db.String(120))
+    updated_at = db.Column(DateTime, default=datetime.utcnow)
+    username = db.Column(db.String(120), nullable=False, unique=True)
 
     def save_to_db(self):
         db.session.add(self)

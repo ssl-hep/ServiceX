@@ -36,22 +36,34 @@ from servicex.models import UserModel
 from .slack_msg_builder import signup
 
 parser = reqparse.RequestParser()
+parser.add_argument('full_name', help='This field cannot be blank', required=True)
+parser.add_argument('email', help='This field cannot be blank', required=True)
+parser.add_argument('institution')
+parser.add_argument('experiment')
 parser.add_argument('username', help='This field cannot be blank', required=True)
 parser.add_argument('password', help='This field cannot be blank', required=True)
+parser.add_argument('confirm_password', help='This field cannot be blank', required=True)
 
 
 class UserRegistration(Resource):
+
     def post(self):
         data = parser.parse_args()
 
         if UserModel.find_by_username(data['username']):
             return {'message': 'User {} already exists'.format(data['username'])}
 
+        if data.password != data.confirm_password:
+            return {'message': 'Passwords do not match'}
+        data.key = UserModel.generate_hash(data.password)
+
         new_user = UserModel(
-            username=data['username'],
-            key=UserModel.generate_hash(data['password']),
-            admin=False,
-            pending=True
+            email=data.email,
+            full_name=data.full_name,
+            institution=data.institution,
+            key=data.key,
+            experiment=data.experiment,
+            username=data.username
         )
 
         try:
@@ -63,7 +75,7 @@ class UserRegistration(Resource):
                 res.raise_for_status()
             return {
                 'message': 'User {} added to pending user list'.format(data['username']),
-                    }
+            }
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
