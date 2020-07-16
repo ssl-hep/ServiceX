@@ -25,9 +25,6 @@ app:
   replicas: 1
   auth: false
 
-  # Name of secret used to populate environment variables
-  secret:
-
   # Create an initial admin user to manage new user workflow
   adminUser: admin
   adminPassword: changeme
