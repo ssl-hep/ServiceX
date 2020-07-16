@@ -25,6 +25,11 @@ data:
     # Number of seconds the JWT is valid for
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authTimeout }}
 
+    # Slack webhooks
+    {{ if .Values.app.newSignupWebhook }}
+    SIGNUP_WEBHOOK_URL = '{{ .Values.app.newSignupWebhook }}'
+    {{ end }}
+
     {{ if .Values.postgres.enabled }}
     SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
     {{ else }}
@@ -93,4 +98,5 @@ data:
     {{ if .Values.codeGen.enabled }}
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
     {{ end }}
+
 
