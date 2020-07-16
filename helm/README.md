@@ -190,8 +190,8 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.ingress.enabled`                | Enable install of ingres                         | false                                                   |
 | `app.ingress.host`                   | Hostname to associate ingress with               | uc.ssl-hep.org                                          |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
-| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |
-| `app.secret`                         | Name of a Kubernetes Secret which is used to populate environment variables |                              |               
+| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
+| `app.newSignupWebhook`               | Slack webhook URL for new signups                | - 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
