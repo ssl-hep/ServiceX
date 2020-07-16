@@ -1,4 +1,4 @@
-# Getting started for users
+# Prerequisites for users
 
 Interacting with a central instance of ServiceX (as opposed to setting up your own instance)
 consists in two parts: getting authenticated in the system by an administrator and installing the
@@ -28,5 +28,5 @@ library you’ll need an environment running Python 3.7:
     python -m pip install servicex==2.0.0b9
     python -m pip install func-adl-xAOD==1.1.0b4
 
-After the prompt you can import the libraries and make a request using your registered username and
-password.
+In the Python prompt you can import the libraries and make a request using your registered username
+and password.
