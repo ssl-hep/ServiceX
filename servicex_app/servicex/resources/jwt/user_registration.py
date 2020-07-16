@@ -31,6 +31,7 @@ import requests
 import sys
 import traceback
 
+from flask import current_app
 from flask_restful import Resource, reqparse
 
 from servicex.models import UserModel
@@ -56,11 +57,13 @@ class UserRegistration(Resource):
 
         try:
             new_user.save_to_db()
-            webhook_url = os.environ.get("SLACK_WEBHOOK_URL", default=None).strip("'")
-            if webhook_url is not None:
-                requests.post(webhook_url, json.dumps({
+            webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
+            if webhook_url:
+                res = requests.post(webhook_url, json.dumps({
                     "text": f"New signup from {new_user.username}"
                 }))
+                # Raise exception on error (e.g. bad request or forbidden url)
+                res.raise_for_status()
             return {
                 'message': 'User {} added to pending user list'.format(data['username']),
                     }
