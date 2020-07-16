@@ -31,6 +31,9 @@ COPY bashrc /home/atlas/.bashrc
 COPY bashrc /home/atlas/.bash_profile
 COPY requirements.txt .
 RUN source /home/atlas/release_setup.sh; \
+    python2 -m pip install --user safety==1.8.7
+RUN source /home/atlas/release_setup.sh; \
+    safety check -r requirements.txt; \
     python2 -m pip install --user -r requirements.txt
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't

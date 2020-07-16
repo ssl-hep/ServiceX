@@ -37,6 +37,8 @@ RUN useradd -ms /bin/bash atlas -G sudo && passwd -d atlas
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
 COPY requirements.txt .
+RUN /opt/conda/bin/pip install safety==1.9.0
+RUN safety check -r requirements.txt
 RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
