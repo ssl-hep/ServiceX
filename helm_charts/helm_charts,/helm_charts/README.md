@@ -146,7 +146,7 @@ training wheels off and run ServiceX against a real dataset.
 
 ### Grid Certification
 The DID Finder will need to talk to CERN's Rucio service which requires grid
-certificates and a passcode to unlock them. If you are a member of the ATLAS
+certificates and a passcode to unlock them. If you are a mkember of the ATLAS
 experiment, you can follow these 
 [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) 
 on obtaining proper grid certificates.
@@ -191,6 +191,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.ingress.host`                   | Hostname to associate ingress with               | uc.ssl-hep.org                                          |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
+| `app.slackSigningSecret`             | Signing secret for Slack application             | -
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | - 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
@@ -230,6 +231,20 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `elasticsearchLogging.password`      | Password to connect to external ElasticSearch Server | |
 
 
+### Slack Integration
+
+ServiceX can send notifications of new user registrations to the Slack channel of your choice and allow administrators to approve pending users directly from Slack. 
+To set this up, complete the following steps before deploying ServiceX:
+
+- Create a secure Slack channel in your workspace (suggested name: `#servicex-signups`), accessible only to developers or administrators of ServiceX. 
+- Go to https://api.slack.com/apps and click "Create New App". Fill in ServiceX as the name and choose your workspace.
+- Scroll down to the App Credentials section and find your Signing Secret. Copy this value and place it in your `values.yaml` file as `app.slackSigningSecret`.
+- Scroll up to the feature list, click on Incoming Webhooks, and click the switch to turn them on.
+- Click the Add New Webhook to Workspace button at the bottom, choose your signups channel, and click the Allow button.
+- Copy the Webhook URL and store it in `values.yaml` under `app.newSignupWebhook`. Your next ServiceX deployment is ready to send Slack notifications!
+
+
+
 ### Using The Service
 You can access the REST service on your desktop with 
 ```bash
@@ -263,6 +278,7 @@ rabbitmq:
 ```
 
 > **Tip**: List all releases using `helm list`
+
 
 ### Uninstalling the Chart
 
