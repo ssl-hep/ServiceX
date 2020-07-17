@@ -241,7 +241,11 @@ To set this up, complete the following steps before deploying ServiceX:
 - Scroll down to the App Credentials section and find your Signing Secret. Copy this value and place it in your `values.yaml` file as `app.slackSigningSecret`.
 - Scroll up to the feature list, click on Incoming Webhooks, and click the switch to turn them on.
 - Click the Add New Webhook to Workspace button at the bottom, choose your signups channel, and click the Allow button.
-- Copy the Webhook URL and store it in `values.yaml` under `app.newSignupWebhook`. Your next ServiceX deployment is ready to send Slack notifications!
+- Copy the Webhook URL and store it in `values.yaml` under `app.newSignupWebhook`.
+- After completing the rest of the configuration, deploy ServiceX.
+- Go back to the [Slack App dashboard](https://api.slack.com/apps) and choose the app you created earlier. In the sidebar, click on Interactivity & Shortcuts under Features.
+- Click the switch to turn Interactivity on. In the Request URL field, enter the base URL for the ServiceX API, followed by `/slack`, e.g. `http://rc1-xaod-servicex.uc.ssl-hep.org/slack`. Save your changes.
+- You're all set! ServiceX will now send interactive Slack notifications to your signups channel whenever a new user registers.
 
 
 
