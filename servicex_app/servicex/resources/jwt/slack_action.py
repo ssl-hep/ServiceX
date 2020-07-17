@@ -1,16 +1,12 @@
 import json
-import traceback
 import requests
 import sys
+import traceback
 
 from flask import request
-from flask_restful import reqparse
 
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.resources.jwt.utils import accept_user
-
-parser = reqparse.RequestParser()
-parser.add_argument('username', help='This field cannot be blank', required=True)
 
 
 class SlackAction(ServiceXResource):
