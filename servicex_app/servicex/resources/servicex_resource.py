@@ -26,6 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys
+import time
+import hashlib
+import hmac
 
 import flask_jwt_extended
 from flask_restful import Resource
@@ -67,6 +70,28 @@ class ServiceXResource(Resource):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             print(exc_value)
             return False, str(exc_value)
+
+    @staticmethod
+    def _verify_slack_request(req):
+        secret = current_app.config.get('SLACK_SIGNING_SECRET')
+        if not secret:
+            return False, "No Slack app configured"
+
+        body = req.get_data().decode('utf-8')
+
+        timestamp = req.headers['X-Slack-Request-Timestamp']
+        if abs(time.time() - float(timestamp)) > 60 * 5:
+            return False, "Request is expired"
+
+        sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')
+        signature = "v0=" + hmac.new(secret.encode('utf-8'),
+                                     sig_basestring,
+                                     digestmod=hashlib.sha256).hexdigest()
+        slack_signature = req.headers['X-Slack-Signature']
+        if hmac.compare_digest(signature, slack_signature):
+            return True, None
+        else:
+            return False, "Signatures did not match"
 
     @staticmethod
     def _validate_user_is_admin():

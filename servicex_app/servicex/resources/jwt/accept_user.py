@@ -5,7 +5,7 @@ from flask_jwt_extended import (jwt_optional)
 from flask_restful import reqparse
 
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.models import UserModel
+from servicex.resources.jwt.utils import accept_user
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -20,15 +20,7 @@ class AcceptUser(ServiceXResource):
         else:
             try:
                 data = parser.parse_args()
-                pending_user = UserModel.find_by_username(data['username'])
-
-                if not pending_user:
-                    return {'message': 'user {} not registered'.format(data['username'])}
-                else:
-                    pending_user.pending = False
-                    pending_user.save_to_db()
-                    return {'message': 'user {} now ready for access'.format(data['username'])}
-
+                accept_user(data['username'])
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)

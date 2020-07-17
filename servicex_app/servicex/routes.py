@@ -46,6 +46,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.jwt.user_logout import UserLogoutAccess, UserLogoutRefresh
     from servicex.resources.jwt.user_registration import UserRegistration
     from servicex.resources.jwt.accept_user import AcceptUser
+    from servicex.resources.jwt.slack_action import SlackAction
     from servicex.resources.jwt.pending_all import PendingAllUsers
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
@@ -63,6 +64,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllUsers, '/users')
     api.add_resource(AcceptUser, '/accept')
     api.add_resource(PendingAllUsers, '/pending')
+    api.add_resource(SlackAction, '/slack')
 
     # Client public endpoints
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')

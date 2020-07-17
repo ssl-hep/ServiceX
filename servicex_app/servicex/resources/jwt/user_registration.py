@@ -59,8 +59,41 @@ class UserRegistration(Resource):
             webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
             if webhook_url:
                 res = requests.post(webhook_url, json.dumps({
-                    "text": f"New signup from {new_user.username}"
-                }))
+                        "blocks": [
+                            {
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": f"New signup from {new_user.username}"
+                                }
+                            },
+                            {
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "Approve"
+                                        },
+                                        "style": "primary",
+                                        "action_id": "accept_user",
+                                        "value": f"{new_user.username}"
+                                    },
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "Reject"
+                                        },
+                                        "style": "danger",
+                                        "action_id": "reject_user",
+                                        "value": f"{new_user.username}"
+                                    }
+                                ]
+                            }
+                        ]
+                    }))
                 # Raise exception on error (e.g. bad request or forbidden url)
                 res.raise_for_status()
             return {
