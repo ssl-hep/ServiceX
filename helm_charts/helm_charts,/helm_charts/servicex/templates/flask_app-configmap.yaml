@@ -26,6 +26,9 @@ data:
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authTimeout }}
 
     # Slack webhooks
+    {{ if .Values.app.slackSigningSecret }}
+    SLACK_SIGNING_SECRET = '{{ .Values.app.slackSigningSecret }}'
+    {{ end }}
     {{ if .Values.app.newSignupWebhook }}
     SIGNUP_WEBHOOK_URL = '{{ .Values.app.newSignupWebhook }}'
     {{ end }}
