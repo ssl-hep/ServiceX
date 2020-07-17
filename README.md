@@ -27,7 +27,7 @@ public xAOD file without any grid credentials.
 There is also an included Jupyter notebook for driving the system and getting
 some simple plots back.
 
-### Step 0 - Preperation
+### Step 0 - Preparation
 ServiceX requires an installation of Kubernetes. If you have access to a 
 cluster you can use that. Otherwise, you can enable a
 single node kubernetes cluster on your desktop 
@@ -146,7 +146,7 @@ training wheels off and run ServiceX against a real dataset.
 
 ### Grid Certification
 The DID Finder will need to talk to CERN's Rucio service which requires grid
-certificates and a passcode to unlock them. If you are a mkember of the ATLAS
+certificates and a passcode to unlock them. If you are a member of the ATLAS
 experiment, you can follow these 
 [helpful instructions](https://hep.pa.msu.edu/wiki/bin/view/ATLAS_Tier3/GridCert) 
 on obtaining proper grid certificates.
@@ -278,7 +278,6 @@ rabbitmq:
 ```
 
 > **Tip**: List all releases using `helm list`
-
 
 ### Uninstalling the Chart
 
