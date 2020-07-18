@@ -60,8 +60,11 @@ complete Qastle query.
 ## Using helper functions to construct a query
 
 For all but the simplest single-column requests, creating a Qastle query as input can be quite
-cumbersome. ``func_adl`` provides additional libraries to construct queries. For example, we can
-perform the same request using the ``func_adl_xAOD`` library:
+cumbersome. ``func_adl`` provides additional libraries to construct queries.
+
+### Simple single-variable query
+
+For example, we can perform the same request using the ``func_adl_xAOD`` library:
 
     import func_adl_xAOD
     f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
@@ -77,6 +80,8 @@ objects matching the selection criteria (in this case only the pT attribute of t
 Meanwhile the function ``SelectMany()`` shifts the hierarchy by returning a list of lists (in this
 case a list of events, each containing a separate list of jets). ``AsPandasDF()`` formats the
 output as a Pandas dataframe, and ``value()`` is responsible for executing the query.
+
+### Multi-variable query
 
 As a more realistic example, we can construct a request for the four-momenta of the Electron and
 Muon collection. In this case let's output the results as a set of AwkwardArrays:
@@ -97,6 +102,8 @@ Muon collection. In this case let's output the results as a set of AwkwardArrays
 Because the output is an AwkwardArray, which can handle the variable-size set of objects for each
 event, it is no longer necessary to use the ``SelectMany()`` function as above.
 
+### Query with applied filter
+
 Next, let's consider the case where we wish to return information only for those jets with a pT
 passing some threshold cut. This can be done via the ``Where()`` function:
 
@@ -108,6 +115,23 @@ passing some threshold cut. This can be done via the ``Where()`` function:
         .value()
 
 which returns a dataframe with the eta values of all jets whose pT is above 30 GeV.
+
+### Complex query with filtering and a computed variable
+
+Finally, let's take a complicated query where we ask for a computed variable (for simplicity we'll
+use a nonsense variable like eta * phi) from the Electrons collection, but only for those events
+with at least two jets with pT > 30 GeV. This can be done via:
+
+    r = f_ds \
+        .Where('lambda e: e.Jets("AntiKt4EMTopoJets") \
+            .Where('lambda j: j.pt() / 1000.0 > 30.0').Count() >= 1') \
+        .Select('lambda e: e.Electrons("Electrons")') \
+        .Select('lambda e: e.Select(lambda ele: ele.eta() * ele.phi())') \
+        .AsAwkwardArray('EleMyVar') \
+        .value()
+
+Note the nested ``Select()`` used to construct the computed variable; this ensures the variable is
+only computed for electrons in the list of filtered events.
 
 ## Choosing the output
 
