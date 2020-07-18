@@ -67,6 +67,16 @@
     <li class="toctree-l2"><a class="reference internal" href="#creating-a-request-via-func_adl">Creating a request via func_adl</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#using-helper-functions-to-construct-a-query">Using helper functions to construct a query</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#simple-single-variable-query">Simple single-variable query</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-variable-query">Multi-variable query</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#query-with-applied-filter">Query with applied filter</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#complex-query-with-filtering-and-a-computed-variable">Complex query with filtering and a computed variable</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#choosing-the-output">Choosing the output</a>
     </li>
@@ -198,8 +208,9 @@ of turning a text file of requested columns (e.g.
 complete Qastle query.</p>
 <h2 id="using-helper-functions-to-construct-a-query">Using helper functions to construct a query</h2>
 <p>For all but the simplest single-column requests, creating a Qastle query as input can be quite
-cumbersome. <code>func_adl</code> provides additional libraries to construct queries. For example, we can
-perform the same request using the <code>func_adl_xAOD</code> library:</p>
+cumbersome. <code>func_adl</code> provides additional libraries to construct queries.</p>
+<h3 id="simple-single-variable-query">Simple single-variable query</h3>
+<p>For example, we can perform the same request using the <code>func_adl_xAOD</code> library:</p>
 <pre><code>import func_adl_xAOD
 f_ds = func_adl_xAOD.ServiceXDatasetSource(ds)
 r = f_ds \
@@ -214,6 +225,7 @@ objects matching the selection criteria (in this case only the pT attribute of t
 Meanwhile the function <code>SelectMany()</code> shifts the hierarchy by returning a list of lists (in this
 case a list of events, each containing a separate list of jets). <code>AsPandasDF()</code> formats the
 output as a Pandas dataframe, and <code>value()</code> is responsible for executing the query.</p>
+<h3 id="multi-variable-query">Multi-variable query</h3>
 <p>As a more realistic example, we can construct a request for the four-momenta of the Electron and
 Muon collection. In this case let's output the results as a set of AwkwardArrays:</p>
 <pre><code>r = f_ds \
@@ -231,6 +243,7 @@ Muon collection. In this case let's output the results as a set of AwkwardArrays
 </code></pre>
 <p>Because the output is an AwkwardArray, which can handle the variable-size set of objects for each
 event, it is no longer necessary to use the <code>SelectMany()</code> function as above.</p>
+<h3 id="query-with-applied-filter">Query with applied filter</h3>
 <p>Next, let's consider the case where we wish to return information only for those jets with a pT
 passing some threshold cut. This can be done via the <code>Where()</code> function:</p>
 <pre><code>r = f_ds \
@@ -241,6 +254,20 @@ passing some threshold cut. This can be done via the <code>Where()</code> functi
     .value()
 </code></pre>
 <p>which returns a dataframe with the eta values of all jets whose pT is above 30 GeV.</p>
+<h3 id="complex-query-with-filtering-and-a-computed-variable">Complex query with filtering and a computed variable</h3>
+<p>Finally, let's take a complicated query where we ask for a computed variable (for simplicity we'll
+use a nonsense variable like eta * phi) from the Electrons collection, but only for those events
+with at least two jets with pT &gt; 30 GeV. This can be done via:</p>
+<pre><code>r = f_ds \
+    .Where('lambda e: e.Jets("AntiKt4EMTopoJets") \
+        .Where('lambda j: j.pt() / 1000.0 &gt; 30.0').Count() &gt;= 1') \
+    .Select('lambda e: e.Electrons("Electrons")') \
+    .Select('lambda e: e.Select(lambda ele: ele.eta() * ele.phi())') \
+    .AsAwkwardArray('EleMyVar') \
+    .value()
+</code></pre>
+<p>Note the nested <code>Select()</code> used to construct the computed variable; this ensures the variable is
+only computed for electrons in the list of filtered events.</p>
 <h2 id="choosing-the-output">Choosing the output</h2>
 <p>There are currently three choices for formatting the output of a ServiceX request: <code>AsPandasDF</code>
 returns the output as a Pandas
