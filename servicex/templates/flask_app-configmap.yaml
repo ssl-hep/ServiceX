@@ -19,8 +19,7 @@ data:
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
     # Create an initial admin user to manage new user workflow
-    JWT_ADMIN_EMAIL = '{{ .Values.app.adminEmail }}'
-    JWT_ADMIN = '{{ .Values.app.adminUser }}'
+    JWT_ADMIN = '{{ .Values.app.adminEmail }}'
     JWT_PASS = '{{ .Values.app.adminPassword }}'
 
     # Number of seconds the JWT is valid for
