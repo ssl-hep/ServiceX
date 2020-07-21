@@ -29,8 +29,9 @@ from datetime import datetime
 import hashlib
 
 from sqlalchemy import func, ForeignKey, DateTime
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.exc import NoResultFound
+from flask_sqlalchemy import SQLAlchemy
+
 
 db = SQLAlchemy()
 
