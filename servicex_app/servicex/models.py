@@ -91,6 +91,14 @@ class UserModel(db.Model):
         except Exception:
             return {'message': 'Something went wrong'}
 
+    @classmethod
+    def accept(cls, username):
+        pending_user = UserModel.find_by_username(username)
+        if not pending_user:
+            raise NoResultFound(f"No user registered with username: {username}")
+        pending_user.pending = False
+        pending_user.save_to_db()
+
     @staticmethod
     def generate_hash(password):
         return hashlib.sha256(password.encode("utf-8")).hexdigest()

@@ -57,7 +57,8 @@ setup(
         'kubernetes',
         'minio',
         'elasticsearch',
-        'psycopg2'
+        'psycopg2',
+        'slackblocks @ https://github.com/AndrewEckart/slackblocks/archive/master.zip'
     ],
     extras_require={
         'test': [
