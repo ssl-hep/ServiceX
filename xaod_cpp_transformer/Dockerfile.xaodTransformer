@@ -26,9 +26,9 @@ RUN sudo yum install -y xrootd-server xrootd-client xrootd \
 
 # Install everything needed to host/run the analysis jobs
 RUN sudo mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
-WORKDIR /home/atlas
-COPY bashrc /home/atlas/.bashrc
-COPY bashrc /home/atlas/.bash_profile
+WORKDIR /workdir
+COPY bashrc /workdir/.bashrc
+COPY bashrc /workdir/.bash_profile
 COPY requirements.txt .
 RUN source /home/atlas/release_setup.sh; \
     python2 -m pip install --user safety==1.8.7
