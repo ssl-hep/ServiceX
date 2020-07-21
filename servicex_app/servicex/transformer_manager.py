@@ -78,7 +78,7 @@ class TransformerManager:
                 client.V1VolumeMount(mount_path="/data", name='rootfiles'))
 
         # Compute Environment Vars
-        env = [client.V1EnvVar(name="BASH_ENV", value="/workdir/.bashrc")]
+        env = [client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc")]
 
         # Provide each pod with an environment var holding that pod's name
         pod_name_value_from = client.V1EnvVarSource(
@@ -98,9 +98,9 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
-        python_args = ["/workdir/proxy-exporter.sh & sleep 5 && " +
+        python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
-                       "python /workdir/transformer.py " +
+                       "python /servicex/transformer.py " +
                        " --request-id " + request_id +
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
