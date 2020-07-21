@@ -59,3 +59,7 @@ ES_HOST = 'host'
 ES_PORT = '9200'
 ES_USER = 'user'
 ES_PASS = 'pass'
+
+# Slack integration requires the app's signing secret and a signup webhook
+SLACK_SIGNING_SECRET = 'some-secret' # Found at https://api.slack.com/apps/<id>
+SIGNUP_WEBHOOK_URL = '' # Create at https://api.slack.com/apps/<app-id>/incoming-webhooks

@@ -51,6 +51,12 @@ with a body of:
         "username": "<the username>"
     }
 
+The API can also be configured to send notifications of new user registrations
+to a Slack channel of choice and allow administrators to approve pending users
+directly from Slack. This requires setting up a Slack app and supplying the
+``SLACK_SIGNING_SECRET`` and ``SIGNUP_WEBHOOK_URL`` config properties. For full
+details, see the `ServiceX README <https://github.com/ssl-hep/ServiceX>`_.
+
 Local Development
 -----------------
 First install the app and test dependencies with:
