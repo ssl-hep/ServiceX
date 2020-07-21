@@ -1,15 +1,42 @@
 import json
 
-from slackblocks import ActionsBlock, SectionBlock, Button, Message
-
 
 def signup(username) -> str:
-    text_section = SectionBlock(f"New signup from {username}")
-    approve_btn = Button("Approve", action_id="accept_user", value=username, style="primary")
-    reject_btn = Button("Reject", action_id="reject_user", value=username, style="danger")
-    actions = ActionsBlock([approve_btn, reject_btn])
-    alt_text = f"New signup from {username}."
-    return Message(channel='', text=alt_text, blocks=[text_section, actions]).json()
+    text_block = {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f"New signup from {username}"
+        }
+    }
+    approve_btn = {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Approve"
+        },
+        "style": "primary",
+        "action_id": "accept_user",
+        "value": f"{username}"
+    }
+    reject_btn = {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Reject"
+        },
+        "style": "danger",
+        "action_id": "reject_user",
+        "value": f"{username}"
+    }
+    actions_block = {
+        "type": "actions",
+        "elements": [approve_btn, reject_btn]
+    }
+    return json.dumps({
+        "blocks": [text_block, actions_block],
+        "text": f"New signup from {username}."
+    })
 
 
 def signup_ia(original_msg, initiating_user, action_id) -> str:
