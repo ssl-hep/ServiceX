@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
 import requests
 import sys
 import traceback
@@ -34,6 +33,7 @@ from flask import current_app
 from flask_restful import Resource, reqparse
 
 from servicex.models import UserModel
+from .slack_msg_builder import signup
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -58,42 +58,7 @@ class UserRegistration(Resource):
             new_user.save_to_db()
             webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
             if webhook_url:
-                res = requests.post(webhook_url, json.dumps({
-                        "blocks": [
-                            {
-                                "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text": f"New signup from {new_user.username}"
-                                }
-                            },
-                            {
-                                "type": "actions",
-                                "elements": [
-                                    {
-                                        "type": "button",
-                                        "text": {
-                                            "type": "plain_text",
-                                            "text": "Approve"
-                                        },
-                                        "style": "primary",
-                                        "action_id": "accept_user",
-                                        "value": f"{new_user.username}"
-                                    },
-                                    {
-                                        "type": "button",
-                                        "text": {
-                                            "type": "plain_text",
-                                            "text": "Reject"
-                                        },
-                                        "style": "danger",
-                                        "action_id": "reject_user",
-                                        "value": f"{new_user.username}"
-                                    }
-                                ]
-                            }
-                        ]
-                    }))
+                res = requests.post(webhook_url, signup(new_user.username))
                 # Raise exception on error (e.g. bad request or forbidden url)
                 res.raise_for_status()
             return {
