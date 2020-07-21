@@ -31,30 +31,30 @@ from flask_jwt_extended import (create_access_token, create_refresh_token)
 
 
 parser = reqparse.RequestParser()
-parser.add_argument('username', help='This field cannot be blank', required=True)
+parser.add_argument('email', help='This field cannot be blank', required=True)
 parser.add_argument('password', help='This field cannot be blank', required=True)
 
 
 class UserLogin(Resource):
     def post(self):
         data = parser.parse_args()
-        current_user = UserModel.find_by_username(data['username'])
+        current_user = UserModel.find_by_email(data['email'])
 
         if not current_user:
-            return {'message': "User {} doesn't exist".format(data['username'])}, 404
+            return {'message': "User {} doesn't exist".format(data['email'])}, 404
 
         if current_user.pending:
             return {
                     'message':
                     "User {} is still pending. Contact administrator to approve request".
-                    format(data['username'])
+                    format(data['email'])
                    }, 401
 
         if UserModel.verify_hash(data['password'], current_user.key):
-            access_token = create_access_token(identity=data['username'])
-            refresh_token = create_refresh_token(identity=data['username'])
+            access_token = create_access_token(identity=data['email'])
+            refresh_token = create_refresh_token(identity=data['email'])
             return {
-                'message': 'Logged in as {}'.format(current_user.username),
+                'message': 'Logged in as {}'.format(current_user.email),
                 'access_token': access_token,
                 'refresh_token': refresh_token
                 }

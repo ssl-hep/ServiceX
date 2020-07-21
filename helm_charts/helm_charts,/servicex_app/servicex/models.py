@@ -48,21 +48,20 @@ class UserModel(db.Model):
     pending = db.Column(db.Boolean, default=True)
     experiment = db.Column(db.String(120))
     updated_at = db.Column(DateTime, default=datetime.utcnow)
-    username = db.Column(db.String(120), nullable=False, unique=True)
 
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
 
     @classmethod
-    def find_by_username(cls, username):
-        return cls.query.filter_by(username=username).first()
+    def find_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
 
     @classmethod
     def return_all(cls):
         def to_json(x):
             return {
-                'username': x.username,
+                'email': x.email,
                 'key': x.key,
                 'admin': x.admin,
                 'pending': x.pending
@@ -74,7 +73,7 @@ class UserModel(db.Model):
     def return_all_pending(cls):
         def to_json(x):
             return {
-                'username': x.username,
+                'email': x.email,
                 'key': x.key,
                 'admin': x.admin
             }
@@ -101,10 +100,10 @@ class UserModel(db.Model):
             return {'message': 'Something went wrong'}
 
     @classmethod
-    def accept(cls, username):
-        pending_user = UserModel.find_by_username(username)
+    def accept(cls, email):
+        pending_user = UserModel.find_by_email(email)
         if not pending_user:
-            raise NoResultFound(f"No user registered with username: {username}")
+            raise NoResultFound(f"No user registered with email: {email}")
         pending_user.pending = False
         pending_user.save_to_db()
 

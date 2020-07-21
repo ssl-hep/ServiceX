@@ -40,7 +40,6 @@ parser.add_argument('full_name', help='This field cannot be blank', required=Tru
 parser.add_argument('email', help='This field cannot be blank', required=True)
 parser.add_argument('institution')
 parser.add_argument('experiment')
-parser.add_argument('username', help='This field cannot be blank', required=True)
 parser.add_argument('password', help='This field cannot be blank', required=True)
 parser.add_argument('confirm_password', help='This field cannot be blank', required=True)
 
@@ -50,8 +49,8 @@ class UserRegistration(Resource):
     def post(self):
         data = parser.parse_args()
 
-        if UserModel.find_by_username(data['username']):
-            return {'message': 'User {} already exists'.format(data['username'])}
+        if UserModel.find_by_email(data['email']):
+            return {'message': 'User {} already exists'.format(data['email'])}
 
         if data.password != data.confirm_password:
             return {'message': 'Passwords do not match'}
@@ -63,18 +62,17 @@ class UserRegistration(Resource):
             institution=data.institution,
             key=data.key,
             experiment=data.experiment,
-            username=data.username
         )
 
         try:
             new_user.save_to_db()
             webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
             if webhook_url:
-                res = requests.post(webhook_url, signup(new_user.username))
+                res = requests.post(webhook_url, signup(new_user.email))
                 # Raise exception on error (e.g. bad request or forbidden url)
                 res.raise_for_status()
             return {
-                'message': 'User {} added to pending user list'.format(data['username']),
+                'message': 'User {} added to pending user list'.format(data['email']),
             }
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()

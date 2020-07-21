@@ -59,7 +59,7 @@ class ServiceXResource(Resource):
             if not user_id:
                 return False, "No auth provided"
 
-            user_record = UserModel.find_by_username(user_id)
+            user_record = UserModel.find_by_email(user_id)
 
             if user_record and not user_record.pending:
                 return True, None
@@ -105,7 +105,7 @@ class ServiceXResource(Resource):
             return True, None
         try:
             user_id = flask_jwt_extended.get_jwt_identity()
-            user_record = UserModel.find_by_username(user_id)
+            user_record = UserModel.find_by_email(user_id)
 
             if user_record and user_record.admin:
                 return True, None

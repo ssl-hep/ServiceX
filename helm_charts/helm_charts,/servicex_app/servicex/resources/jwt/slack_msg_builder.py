@@ -1,12 +1,12 @@
 import json
 
 
-def signup(username) -> str:
+def signup(email) -> str:
     text_block = {
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"New signup from {username}"
+            "text": f"New signup from {email}"
         }
     }
     approve_btn = {
@@ -17,7 +17,7 @@ def signup(username) -> str:
         },
         "style": "primary",
         "action_id": "accept_user",
-        "value": f"{username}"
+        "value": f"{email}"
     }
     reject_btn = {
         "type": "button",
@@ -27,7 +27,7 @@ def signup(username) -> str:
         },
         "style": "danger",
         "action_id": "reject_user",
-        "value": f"{username}"
+        "value": f"{email}"
     }
     actions_block = {
         "type": "actions",
@@ -35,7 +35,7 @@ def signup(username) -> str:
     }
     return json.dumps({
         "blocks": [text_block, actions_block],
-        "text": f"New signup from {username}."
+        "text": f"New signup from {email}."
     })
 
 

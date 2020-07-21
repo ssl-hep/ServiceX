@@ -160,12 +160,11 @@ def create_app(test_config=None,
             from flask_jwt_extended import (create_refresh_token, create_access_token)
             db.init_app(app)
             db.create_all()
-            if not UserModel.find_by_username(app.config['JWT_ADMIN']):
+            if not UserModel.find_by_email(app.config['JWT_ADMIN']):
                 try:
                     new_user = UserModel(
-                        email=app.config['JWT_ADMIN_EMAIL'],
-                        full_name=app.config['JWT_ADMIN'],
-                        username=app.config['JWT_ADMIN'],
+                        email=app.config['JWT_ADMIN'],
+                        full_name="Administrator",
                         key=UserModel.generate_hash(app.config['JWT_PASS']),
                         admin=True,
                         pending=False
