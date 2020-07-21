@@ -9,7 +9,7 @@ from servicex.models import UserModel
 from servicex.resources.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
-parser.add_argument('username', help='This field cannot be blank', required=True)
+parser.add_argument('email', help='This field cannot be blank', required=True)
 
 
 class AcceptUser(ServiceXResource):
@@ -20,9 +20,9 @@ class AcceptUser(ServiceXResource):
             return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
         try:
             data = parser.parse_args()
-            username = data['username']
-            UserModel.accept(username)
-            return {'message': 'user {} now ready for access'.format(username)}
+            email = data['email']
+            UserModel.accept(email)
+            return {'message': 'user {} now ready for access'.format(email)}
         except NoResultFound as err:
             return {'message': str(err)}, 404
         except Exception:

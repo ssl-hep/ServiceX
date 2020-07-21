@@ -29,8 +29,8 @@ class SlackAction(ServiceXResource):
 
             action_id = action['action_id']
             if action_id == "accept_user":
-                username = action['value']
-                UserModel.accept(username)
+                email = action['value']
+                UserModel.accept(email)
                 response = signup_ia(original_msg, initiating_user, action_id)
                 slack_response = requests.post(response_url, response)
                 slack_response.raise_for_status()

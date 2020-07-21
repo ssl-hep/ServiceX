@@ -19,7 +19,7 @@ If ``ENABLE_AUTH``  is set to True endpoints will be protected with JWT bearer
 tokens.
 
 An initial admin account is created when the app is started. That account's
-username is found in the ``JWT_ACCOUNT`` config property, and the password is
+email is found in the ``JWT_ADMIN`` config property, and the password is
 set from ``JWT_PASSWORD``. This account can be used for all interactions with
 the endpoints, and can also be used to enable new users who submit requests for
 access to the system.
@@ -30,7 +30,7 @@ endpoint. This POST request expects a JSON body that looks like:
 .. code:: json
 
     {
-        "username": "admin",
+        "email": "admin@example.com",
         "password": "password"
     }
 
@@ -40,7 +40,7 @@ to secured endpoints should have an HTTP header called ``Authorization`` it must
 have as the value ``Bearer`` and the token returned by the login POST.
 
 New users may request an account via the web page hosted at ``/``. This form
-asks for the username and password they wish to use, as well as some other
+asks for the email and password they wish to use, as well as some other
 basic information. New accounts are marked as pending. An admin user can view
 the pending accounts with a GET on the ``/pending`` endpoint.
 They can approve the request with a POST to ``/accept`` with a body of:
@@ -48,7 +48,7 @@ They can approve the request with a POST to ``/accept`` with a body of:
 .. code:: json
 
     {
-        "username": "<the username>"
+        "email": "<the email>"
     }
 
 The API can also be configured to send notifications of new user registrations
