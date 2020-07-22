@@ -1,6 +1,6 @@
 from flask import redirect, url_for, current_app, session
 
-from .decorators import authenticated
+from servicex.decorators import authenticated
 from .utils import load_app_client
 
 

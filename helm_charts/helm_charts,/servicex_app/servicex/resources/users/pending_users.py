@@ -25,14 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask_jwt_extended import jwt_optional
-
 from servicex.resources.servicex_resource import ServiceXResource
+from servicex.decorators import admin_required
 from servicex.models import UserModel
 
 
-class PendingAllUsers(ServiceXResource):
-    @jwt_optional
+class PendingUsers(ServiceXResource):
+    @admin_required
     def get(self):
         is_auth, auth_reject_message = self._validate_user_is_admin()
         if not is_auth:
@@ -40,7 +39,7 @@ class PendingAllUsers(ServiceXResource):
         else:
             return UserModel.return_all_pending()
 
-    @jwt_optional
+    @admin_required
     def delete(self):
         is_auth, auth_reject_message = self._validate_user_is_admin()
         if not is_auth:

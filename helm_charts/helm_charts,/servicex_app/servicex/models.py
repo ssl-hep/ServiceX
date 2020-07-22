@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime
+from typing import Optional
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -64,15 +65,17 @@ class UserModel(db.Model):
         MailgunAdaptor().send(self.email, template_path)
 
     @classmethod
-    def find_by_email(cls, email) -> 'UserModel':
+    def find_by_email(cls, email) -> Optional['UserModel']:
         return cls.query.filter_by(email=email).first()
 
     @classmethod
-    def find_by_sub(cls, sub) -> 'UserModel':
-        result = cls.query.filter_by(sub=sub).first()
-        if result is None:
-            raise NoResultFound(f"No user found matching subject: {sub}")
-        return result
+    def find_by_sub(cls, sub) -> Optional['UserModel']:
+        return cls.query.filter_by(sub=sub).first()
+
+    # Defined for convenience in testing, since query is difficult to mock.
+    @classmethod
+    def find_by_id(cls, user_id) -> Optional['UserModel']:
+        return cls.query.get(user_id)
 
     @classmethod
     def return_all(cls):
@@ -83,7 +86,6 @@ class UserModel(db.Model):
                 'admin': x.admin,
                 'pending': x.pending
             }
-
         return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
 
     @classmethod
@@ -94,27 +96,20 @@ class UserModel(db.Model):
                 'id': x.id,
                 'admin': x.admin
             }
-
         return {'users': list(map(lambda x: to_json(x),
                                   UserModel.query.filter_by(pending=True)))}
 
     @classmethod
     def delete_all(cls):
-        try:
-            num_rows_deleted = db.session.query(cls).delete()
-            db.session.commit()
-            return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except Exception:
-            return {'message': 'Something went wrong'}
+        num_rows_deleted = db.session.query(cls).delete()
+        db.session.commit()
+        return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
 
     @classmethod
     def delete_all_pending(cls):
-        try:
-            num_rows_deleted = db.session.query.filter_by(pending=True).delete()
-            db.session.commit()
-            return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except Exception:
-            return {'message': 'Something went wrong'}
+        num_rows_deleted = db.session.query.filter_by(pending=True).delete()
+        db.session.commit()
+        return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
 
     @classmethod
     def accept(cls, email):

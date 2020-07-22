@@ -4,7 +4,7 @@ from flask import request, render_template, redirect, url_for, session, \
 from flask_jwt_extended import create_refresh_token
 
 from servicex.models import UserModel
-from .decorators import authenticated
+from servicex.decorators import authenticated
 from .forms import ProfileForm
 from .slack_msg_builder import signup
 
