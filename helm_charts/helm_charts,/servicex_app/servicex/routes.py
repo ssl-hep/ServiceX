@@ -66,7 +66,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(TokenRefresh, '/token/refresh')
     api.add_resource(AllUsers, '/users')
     api.add_resource(AcceptUser, '/accept')
-    api.add_resource(DeleteUser, '/delete')
+    api.add_resource(DeleteUser, '/users/<user_id>')
     api.add_resource(PendingAllUsers, '/pending')
     api.add_resource(SlackAction, '/slack')
 
