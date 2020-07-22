@@ -41,6 +41,8 @@ class ResourceTestBase:
         return {
             'TESTING': True,
             'RABBIT_MQ_URL': 'amqp://foo.com',
+            'RABBIT_RETRIES': 12,
+            'RABBIT_RETRY_INTERVAL': 10,
             'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:",
             'SQLALCHEMY_TRACK_MODIFICATIONS': False,
             'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
@@ -56,7 +58,7 @@ class ResourceTestBase:
             'MINIO_SECRET_KEY': 'leftfoot1',
             'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
             'ENABLE_AUTH': False,
-            'JWT_ADMIN': 'admin',
+            'JWT_ADMIN': 'admin@example.com',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum'
         }

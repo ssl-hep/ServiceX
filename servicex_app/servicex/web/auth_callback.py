@@ -1,7 +1,4 @@
-from typing import Optional
-
 from flask import flash, request, redirect, url_for, session
-from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.models import UserModel
 from .utils import load_app_client
@@ -44,15 +41,10 @@ def auth_callback():
                                                       include="identity_set")
     identity_set = token_introspect.data["identity_set"]
 
-    user: Optional[UserModel] = None
     for identity in identity_set:
-        try:
-            user = UserModel.find_by_sub(identity)
+        user = UserModel.find_by_sub(identity)
+        if user:
             session['user_id'] = user.id
             session['admin'] = user.admin
-        except NoResultFound as err:
-            print(err)
-    if user:
-        return redirect(url_for('profile'))
-    else:
-        return redirect(url_for('create_profile'))
+            return redirect(url_for('profile'))
+    return redirect(url_for('create_profile'))

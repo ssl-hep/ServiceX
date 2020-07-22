@@ -27,10 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from pytest import fixture
 
-from servicex import create_app
-from servicex.models import UserModel
-from servicex.rabbit_adaptor import RabbitAdaptor
-
 
 class WebTestBase:
     @staticmethod
@@ -66,6 +62,8 @@ class WebTestBase:
 
     @staticmethod
     def _test_client(mocker, extra_config=None):
+        from servicex import create_app
+        from servicex.rabbit_adaptor import RabbitAdaptor
         config = WebTestBase._app_config()
         if extra_config:
             config.update(extra_config)
@@ -76,6 +74,7 @@ class WebTestBase:
 
     @staticmethod
     def _test_user():
+        from servicex.models import UserModel
         return UserModel(
             name='Jane Doe',
             email='jane@example.com',
@@ -153,12 +152,12 @@ class WebTestBase:
     @fixture
     def user(self, mocker):
         user = self._test_user()
+        user.save_to_db = mocker.Mock()
+        user.delete_from_db = mocker.Mock()
         mocker.patch('servicex.models.UserModel.find_by_sub', return_value=user)
+        mocker.patch('servicex.models.UserModel.find_by_email', return_value=user)
+        mocker.patch('servicex.models.UserModel.find_by_id', return_value=user)
         return user
-
-    @fixture
-    def new_user(self, mocker):
-        return mocker.patch('servicex.models.UserModel').return_value
 
     @fixture
     def db(self, mocker):

@@ -2,7 +2,7 @@ from flask import redirect, url_for, session, flash
 from flask_jwt_extended import create_refresh_token
 
 from servicex.models import db, UserModel
-from .decorators import authenticated
+from servicex.decorators import authenticated
 
 
 @authenticated

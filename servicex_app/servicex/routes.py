@@ -47,11 +47,14 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.users.token_refresh import TokenRefresh
     from servicex.resources.users.accept_user import AcceptUser
     from servicex.resources.users.delete_user import DeleteUser
-    from servicex.resources.users.pending_all import PendingAllUsers
+    from servicex.resources.users.pending_users import PendingUsers
     from servicex.resources.users.slack_interaction import SlackInteraction
 
     from servicex.web import home, sign_in, sign_out, auth_callback, \
-        create_profile, view_profile, edit_profile, api_token
+        view_profile, edit_profile, api_token
+
+    # Must be its own module to allow patching
+    from servicex.web.create_profile import create_profile
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
@@ -77,7 +80,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllUsers, '/users')
     api.add_resource(AcceptUser, '/accept')
     api.add_resource(DeleteUser, '/users/<user_id>')
-    api.add_resource(PendingAllUsers, '/pending')
+    api.add_resource(PendingUsers, '/pending')
     api.add_resource(SlackInteraction, '/slack')
 
     # Client public endpoints
