@@ -66,7 +66,7 @@ class UserModel(db.Model):
         def to_json(x):
             return {
                 'email': x.email,
-                'key': x.key,
+                'id': x.id,
                 'admin': x.admin,
                 'pending': x.pending
             }
@@ -78,7 +78,7 @@ class UserModel(db.Model):
         def to_json(x):
             return {
                 'email': x.email,
-                'key': x.key,
+                'id': x.id,
                 'admin': x.admin
             }
 
