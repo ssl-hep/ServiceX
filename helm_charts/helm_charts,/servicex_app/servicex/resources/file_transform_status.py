@@ -28,7 +28,7 @@
 from flask_restful import reqparse
 from servicex.models import db
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.models import FileStatus
+from servicex.models import FileStatus, max_string_size
 import datetime
 
 
@@ -53,7 +53,7 @@ class FileTransformationStatus(ServiceXResource):
                                      "%Y-%m-%dT%H:%M:%S.%f"),
                                  pod_name=status['pod-name'],
                                  status=status['status-code'],
-                                 info=status.info[:4096])
+                                 info=status.info[:max_string_size])
         file_status.save_to_db()
 
         print(file_status)

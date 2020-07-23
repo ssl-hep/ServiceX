@@ -34,6 +34,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
+max_string_size = 10485760
 
 
 class UserModel(db.Model):
@@ -149,7 +150,6 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
-    max_string_size = 10485760
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
@@ -327,7 +327,7 @@ class FileStatus(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     pod_name = db.Column(db.String(128), nullable=True)
 
-    info = db.Column(db.String(4096), nullable=True)
+    info = db.Column(db.String(max_string_size), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
