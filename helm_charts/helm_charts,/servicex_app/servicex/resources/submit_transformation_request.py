@@ -85,12 +85,13 @@ def _workflow_name(transform_request):
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter,
-                 code_gen_service, lookup_result_processor):
+                 code_gen_service, lookup_result_processor, docker_repo_adapter):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.elasticsearch_adapter = elasticsearch_adapter
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
+        cls.docker_repo_adapter = docker_repo_adapter
         return cls
 
     @jwt_optional
@@ -124,6 +125,10 @@ class SubmitTransformationRequest(ServiceXResource):
                 broker = transformation_request['kafka']['broker']
             else:
                 broker = None
+
+            tagged_image = transformation_request['image']
+            if not self.docker_repo_adapter.check_image_exists(tagged_image):
+                return {'message': f"The requested transformer docker image doesn't exist: {tagged_image}"}, 400  # noqa: E501
 
             request_rec = TransformRequest(
                 did=requested_did if requested_did else "File List Provided in Request",
