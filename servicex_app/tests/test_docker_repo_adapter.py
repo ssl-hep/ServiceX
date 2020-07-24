@@ -52,3 +52,16 @@ class TestDockerRepoAdapter:
         docker = DockerRepoAdapter()
         result = docker.check_image_exists("foo/bar:baz")
         assert not result
+
+    def test_check_image_exists_invalid_name(self, mocker):
+        import requests
+        mock_response = mocker.Mock()
+        mocker.patch.object(requests, "get", return_value=mock_response)
+        mock_response.status_code = 404
+        docker = DockerRepoAdapter()
+        result = docker.check_image_exists("foobar:baz")
+        assert not result
+
+        assert not docker.check_image_exists("foo/barbaz")
+        assert not docker.check_image_exists("foobarbaz")
+        assert not docker.check_image_exists("")
