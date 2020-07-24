@@ -31,6 +31,7 @@ from servicex import create_app
 from servicex.models import TransformRequest
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.code_gen_adapter import CodeGenAdapter
+from servicex.docker_repo_adapter import DockerRepoAdapter
 
 
 class ResourceTestBase:
@@ -66,7 +67,8 @@ class ResourceTestBase:
                      object_store=None,
                      elasticsearch_adapter=None,
                      code_gen_service=None,
-                     lookup_result_processor=None):
+                     lookup_result_processor=None,
+                     docker_repo_adapter=None):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -76,7 +78,7 @@ class ResourceTestBase:
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
                          object_store, elasticsearch_adapter, code_gen_service,
-                         lookup_result_processor)
+                         lookup_result_processor, docker_repo_adapter)
 
         return app.test_client()
 
@@ -105,3 +107,9 @@ class ResourceTestBase:
     @fixture
     def mock_code_gen_service(self, mocker):
         return mocker.MagicMock(CodeGenAdapter)
+
+    @fixture
+    def mock_docker_repo_adapter(self, mocker):
+        docker = mocker.MagicMock(DockerRepoAdapter)
+        docker.check_image_exists = mocker.Mock(return_value=True)
+        return docker

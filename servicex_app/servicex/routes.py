@@ -29,7 +29,7 @@
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, elasticsearch_adapter, code_gen_service,
-               lookup_result_processor):
+               lookup_result_processor, docker_repo_adapter):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status \
@@ -56,7 +56,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          object_store=object_store,
                                          elasticsearch_adapter=elasticsearch_adapter,
                                          code_gen_service=code_gen_service,
-                                         lookup_result_processor=lookup_result_processor)
+                                         lookup_result_processor=lookup_result_processor,
+                                         docker_repo_adapter=docker_repo_adapter)
 
     # User management and Authentication Endpoints
     api.add_resource(UserRegistration, '/registration')
