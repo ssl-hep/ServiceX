@@ -45,28 +45,28 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'flask',
-        'Flask-WTF',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio',
-        'elasticsearch',
-        'psycopg2'
+        'Flask==1.1.2',
+        'Flask-WTF==0.14.3',
+        'Flask-RESTful==0.3.8',
+        'Flask-JWT-Extended==3.24.1',
+        'Flask-SQLAlchemy==2.4.3',
+        'Flask-Migrate==2.5.3',
+        'pika==1.1.0',
+        'passlib==1.7.2',
+        'confluent-kafka==1.4.2',
+        'kubernetes==11.0.0',
+        'minio==5.0.10',
+        'elasticsearch==7.8.0',
+        'psycopg2==2.8.5'
     ],
     extras_require={
         'test': [
             'pytest>=5.2',
-            'pytest-flask',
-            'coverage',
-            'codecov',
-            'pytest-mock',
-            'flake8'
+            'pytest-flask==1.0.0',
+            'coverage>=5.2',
+            'codecov==2.1.8',
+            'pytest-mock==3.2.0',
+            'flake8>=3.8'
         ],
     },
 )
