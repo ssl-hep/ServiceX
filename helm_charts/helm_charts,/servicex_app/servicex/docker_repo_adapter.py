@@ -35,7 +35,12 @@ class DockerRepoAdapter:
         self.registry_endpoint = registry_endpoint
 
     def check_image_exists(self, tagged_image):
-        (repo, image, tag) = re.search("(.+)/(.+):(.+)", tagged_image).groups()
+        search_result = re.search("(.+)/(.+):(.+)", tagged_image)
+        if not search_result or len(search_result.groups()) != 3:
+            return False
+
+        (repo, image, tag) = search_result.groups()
+
         query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
         r = requests.get(query)
         if r.status_code == 404:
