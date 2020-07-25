@@ -63,6 +63,7 @@ data:
     TRANSFORMER_MANAGER_ENABLED = True
 
     TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscalerEnabled }}
+    TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
     TRANSFORMER_X509_SECRET="{{ .Release.Name }}-x509-proxy"
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
