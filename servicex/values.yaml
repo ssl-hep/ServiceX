@@ -79,6 +79,7 @@ codeGen:
 transformer:
   pullPolicy: IfNotPresent
   autoscalerEnabled: false
+  cpuLimit: 1
 
 
 x509Secrets:
