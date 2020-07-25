@@ -99,6 +99,7 @@ class ResourceTestBase:
         transform_request.kafka_broker = 'http://ssl-hep.org.kafka:12345'
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
+        transform_request.status = "Submitted"
         return transform_request
 
     @fixture

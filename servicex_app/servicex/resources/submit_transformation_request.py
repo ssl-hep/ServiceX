@@ -144,7 +144,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 result_format=transformation_request['result-format'],
                 kafka_broker=broker,
                 workers=transformation_request['workers'],
-                workflow_name=_workflow_name(transformation_request)
+                workflow_name=_workflow_name(transformation_request),
+                status='Submitted'
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make

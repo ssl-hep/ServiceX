@@ -77,6 +77,7 @@ class TestTransformStatus(ResourceTestBase):
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 200
         assert response.json == {
+            "status": "Submitted",
             'request-id': '1234',
             'files-processed': 15,
             'files-remaining': 12,
