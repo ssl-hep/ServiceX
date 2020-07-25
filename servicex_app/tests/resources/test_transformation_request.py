@@ -257,6 +257,22 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 400
         assert response.json == {"message": "The requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
 
+    def test_submit_transformation_request_no_docker_check(self, mocker,
+                                                           mock_rabbit_adaptor,
+                                                           mock_docker_repo_adapter):
+
+        mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   docker_repo_adapter=mock_docker_repo_adapter,
+                                   additional_config={
+                                       'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False}
+                                   )
+
+        response = client.post('/servicex/transformation',
+                               json=self._generate_transformation_request())
+        assert response.status_code == 200
+        mock_docker_repo_adapter.check_image_exists.assert_not_called()
+
     def test_submit_transformation_with_root_file_selection_error(self, mocker,
                                                                   mock_rabbit_adaptor,
                                                                   mock_code_gen_service):

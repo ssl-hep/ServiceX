@@ -126,9 +126,10 @@ class SubmitTransformationRequest(ServiceXResource):
             else:
                 broker = None
 
-            tagged_image = transformation_request['image']
-            if not self.docker_repo_adapter.check_image_exists(tagged_image):
-                return {'message': f"The requested transformer docker image doesn't exist: {tagged_image}"}, 400  # noqa: E501
+            if current_app.config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
+                tagged_image = transformation_request['image']
+                if not self.docker_repo_adapter.check_image_exists(tagged_image):
+                    return {'message': f"The requested transformer docker image doesn't exist: {tagged_image}"}, 400  # noqa: E501
 
             request_rec = TransformRequest(
                 did=requested_did if requested_did else "File List Provided in Request",

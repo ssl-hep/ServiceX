@@ -49,6 +49,7 @@ class ResourceTestBase:
             'TRANSFORMER_AUTOSCALE_ENABLED': True,
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
             'TRANSFORMER_PULL_POLICY': 'Always',
+            'TRANSFORMER_VALIDATE_DOCKER_IMAGE': True,
             'OBJECT_STORE_ENABLED': False,
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
