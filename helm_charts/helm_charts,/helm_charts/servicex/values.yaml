@@ -24,6 +24,7 @@ app:
   pullPolicy: IfNotPresent
   replicas: 1
   auth: false
+  validateTransformerImage: true
 
   # Create an initial admin user to manage new user workflow
   adminEmail: admin@example.com
