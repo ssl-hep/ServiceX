@@ -61,6 +61,7 @@ class TransformationStatus(ServiceXResource):
         print(count, stats)
         print(TransformRequest.files_remaining(request_id))
         result_dict = {
+            "status": submitted_request.status,
             "request-id": request_id,
             "files-processed": count - failures,
             "files-skipped": failures,

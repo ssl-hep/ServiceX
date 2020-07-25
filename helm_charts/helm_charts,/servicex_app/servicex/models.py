@@ -32,7 +32,6 @@ from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
 from flask_sqlalchemy import SQLAlchemy
 
-
 db = SQLAlchemy()
 max_string_size = 10485760
 
@@ -143,7 +142,8 @@ class TransformRequest(db.Model):
             'result-format': x.result_format,
             'kafka-broker': x.kafka_broker,
             'workflow-name': x.workflow_name,
-            'generated-code-cm': x.generated_code_cm
+            'generated-code-cm': x.generated_code_cm,
+            'status': x.status
         }
 
     id = db.Column(db.Integer, primary_key=True)
@@ -167,6 +167,8 @@ class TransformRequest(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
     generated_code_cm = db.Column(db.String(128), nullable=True)
+    status = db.Column(db.String(128), nullable=True)
+    failure_description = db.Column(db.String(max_string_size), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)

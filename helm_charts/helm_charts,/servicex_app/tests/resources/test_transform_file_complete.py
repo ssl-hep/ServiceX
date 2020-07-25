@@ -59,6 +59,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         mocker.patch.object(DatasetFile, "get_by_id")
         mocker.patch.object(TransformationResult, "save_to_db")
+        mocker.patch.object(TransformRequest, "save_to_db")
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
@@ -84,6 +85,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         mocker.patch.object(DatasetFile, "get_by_id")
         mocker.patch.object(TransformationResult, "save_to_db")
+        mocker.patch.object(TransformRequest, "save_to_db")
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
@@ -192,6 +194,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker.patch.object(DatasetFile, "get_by_id",
                             return_value=self._generate_dataset_file())
         mocker.patch.object(TransformationResult, "save_to_db")
+        mocker.patch.object(TransformRequest, "save_to_db")
 
         mocker.patch.object(
             servicex.models.TransformationResult, 'statistics', return_value={

@@ -70,7 +70,8 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'result-format': 'arrow',
                                  'kafka-broker': 'http://ssl-hep.org.kafka:12345',
                                  'workflow-name': None,
-                                 'generated-code-cm': None}
+                                 'generated-code-cm': None,
+                                 'status': "Submitted"}
 
         mock_transform_request_read.assert_called_with('1234')
 
@@ -107,7 +108,8 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'minio-endpoint': 'minio.servicex.com:9000',
                                  'minio-secret-key': 'leftfoot1',
                                  'workflow-name': None,
-                                 'generated-code-cm': None}
+                                 'generated-code-cm': None,
+                                 'status': "Submitted"}
 
         mock_transform_request_read.assert_called_with('1234')
 
@@ -141,6 +143,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'workers': 42, 'result-destination': 'kafka',
                                  'result-format': 'arrow',
                                  'workflow-name': None,
-                                 'generated-code-cm': None}
+                                 'generated-code-cm': None,
+                                 'status': "Submitted"}
 
         mock_transform_request_read.assert_called_with('1234')
