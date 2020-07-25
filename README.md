@@ -192,7 +192,8 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
 | `app.slackSigningSecret`             | Signing secret for Slack application             | -
-| `app.newSignupWebhook`               | Slack webhook URL for new signups                | - 
+| `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
+| `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
