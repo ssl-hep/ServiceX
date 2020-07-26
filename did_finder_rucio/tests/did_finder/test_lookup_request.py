@@ -70,6 +70,41 @@ class TestLookupRequest:
         mock_rucio.list_files_for_did.assert_called_with("my-did")
         assert mock_thread.call_count == 5
 
+    def test_lookup_files_empty_did(self, mocker):
+        mock_rucio = mocker.MagicMock(RucioAdapter)
+        mock_rucio.list_files_for_did.return_value = iter([])
+
+        mocker.patch("threading.Thread")
+        mock_servicex = mocker.MagicMock(ServiceXAdapter)
+        request = LookupRequest(
+            "123-45",
+            "my-did",
+            mock_rucio, mock_servicex,
+            threads=5,
+            chunk_size=2)
+
+        request.lookup_files()
+        mock_servicex.post_status_update.assert_called_with(
+            "DID Finder found zero files for dataset my-did",
+            severity='fatal')
+
+    def test_lookup_files_did_not_found(self, mocker):
+        mock_rucio = mocker.MagicMock(RucioAdapter)
+        mock_rucio.list_files_for_did.return_value = None
+
+        mocker.patch("threading.Thread")
+        mock_servicex = mocker.MagicMock(ServiceXAdapter)
+        request = LookupRequest(
+            "123-45",
+            "my-did",
+            mock_rucio, mock_servicex,
+            threads=5,
+            chunk_size=2)
+
+        request.lookup_files()
+        mock_servicex.post_status_update.assert_called_with(
+            "DID Not found my-did", severity='fatal')
+
     def test_replica_lookup(self, mocker):
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.find_replicas.return_value = [

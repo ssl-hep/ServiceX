@@ -136,13 +136,26 @@ class LookupRequest:
                 traceback.print_exc()
 
     def lookup_files(self):
-        self.file_list = list(
-            self.rucio_adapter.list_files_for_did(self.did))
+        file_iterator = self.rucio_adapter.list_files_for_did(self.did)
+        if not file_iterator:
+            self.servicex_adapter.post_status_update(
+                "DID Not found "+self.did,
+                severity='fatal')
+            return
+
+        self.file_list = list(file_iterator)
         self.lookup_time = datetime.now()
+
         print("Dataset contains %d files. Lookup took %s" % (
             len(self.file_list),
             str(self.lookup_time-self.submited_time)
         ))
+
+        if len(self.file_list) == 0:
+            self.servicex_adapter.post_status_update(
+                "DID Finder found zero files for dataset "+self.did,
+                severity='fatal')
+            return
 
         for file in self.file_list:
             self.summary.accumulate(file)

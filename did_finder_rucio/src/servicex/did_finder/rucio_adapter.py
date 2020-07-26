@@ -26,6 +26,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from rucio.common.exception import DataIdentifierNotFound
 
 
 class RucioAdapter:
@@ -50,8 +51,13 @@ class RucioAdapter:
 
     def list_files_for_did(self, did):
         parsed_did = self.parse_did(did)
-        g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
-        return g_files
+
+        try:
+            g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
+            return g_files
+        except DataIdentifierNotFound:
+            print(f"-----> {did} not found")
+            return None
 
     def find_replicas(self, files, site):
         g_replicas = None

@@ -36,14 +36,16 @@ class ServiceXAdapter:
     def __init__(self, endpoint):
         self.endpoint = endpoint
 
-    def post_status_update(self, status_msg):
+    def post_status_update(self, status_msg, severity="info"):
         success = False
         attempts = 0
         while not success and attempts < MAX_RETRIES:
             try:
                 requests.post(self.endpoint + "/status", data={
                     "timestamp": datetime.now().isoformat(),
-                    "status": status_msg
+                    "source": "DID Finder",
+                    "severity": severity,
+                    "info": status_msg
                 })
                 success = True
             except requests.exceptions.ConnectionError:
