@@ -28,14 +28,9 @@
 from flask_jwt_extended import jwt_optional
 from flask_restful import reqparse
 from flask import jsonify
-from servicex.models import TransformationResult, TransformRequest
+from servicex.models import TransformationResult, TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 
-status_parser = reqparse.RequestParser()
-status_parser.add_argument('timestamp', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('status', help='This field cannot be blank',
-                           required=True)
 
 status_request_parser = reqparse.RequestParser()
 status_request_parser.add_argument('details', type=bool, default=False,
@@ -76,9 +71,38 @@ class TransformationStatus(ServiceXResource):
         return jsonify(result_dict)
 
 
+# Status Updates POST
+status_parser = reqparse.RequestParser()
+status_parser.add_argument('timestamp', help='This field cannot be blank',
+                           required=True)
+status_parser.add_argument('severity', help='Should be debug, info, warn, or fatal',
+                           required=False)
+status_parser.add_argument('info', required=False)
+status_parser.add_argument('source', required=False)
+
+
 class TransformationStatusInternal(ServiceXResource):
 
     def post(self, request_id):
         status = status_parser.parse_args()
         status.request_id = request_id
-        print(status)
+        if status.severity == "fatal":
+            print("+--------------------------------------------+")
+            print(r"""
+  ______   _______       _        ______ _____  _____   ____  _____
+ |  ____/\|__   __|/\   | |      |  ____|  __ \|  __ \ / __ \|  __ \
+ | |__ /  \  | |  /  \  | |      | |__  | |__) | |__) | |  | | |__) |
+ |  __/ /\ \ | | / /\ \ | |      |  __| |  _  /|  _  /| |  | |  _  /
+ | | / ____ \| |/ ____ \| |____  | |____| | \ \| | \ \| |__| | | \ \
+ |_|/_/    \_\_/_/    \_\______| |______|_|  \_\_|  \_\\____/|_|  \_\
+            """)
+            print(f"+ Fatal error reported for {request_id} from {status.source}")
+            print(status.info)
+            print("+--------------------------------------------+")
+
+            submitted_request = TransformRequest.return_request(request_id)
+            submitted_request.status = 'Fatal'
+            submitted_request.save_to_db()
+            db.session.commit()
+        else:
+            print(status)
