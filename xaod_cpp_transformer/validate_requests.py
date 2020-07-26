@@ -74,10 +74,12 @@ def validate_request(file_name):
         return False, "Could not compile generated code "+str(eek)
 
 
-def post_status_update(endpoint, status_msg):
+def post_status_update(endpoint, status_msg, severity='info'):
     requests.post(endpoint + "/status", data={
         "timestamp": datetime.datetime.now().isoformat(),
-        "status": status_msg
+        "severity": severity,
+        "source": "Preflight Check",
+        "info": status_msg
     })
 
 
@@ -102,7 +104,9 @@ def callback(channel, method, properties, body):
         post_status_update(service_endpoint,  "Request validated")
         post_transform_start(service_endpoint, info)
     else:
-        post_status_update(service_endpoint, "Validation Request failed "+info)
+        post_status_update(service_endpoint,
+                           "Validation Request failed "+info,
+                           severity='fatal')
 
     print(valid, info)
     channel.basic_ack(delivery_tag=method.delivery_tag)
