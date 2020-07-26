@@ -29,15 +29,45 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformStatus(ResourceTestBase):
-    def test_post_status(self, mock_rabbit_adaptor):
+    def test_post_status(self, mocker, mock_rabbit_adaptor):
+        from servicex.models import TransformRequest
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        mock_request = self._generate_transform_request()
+        mock_request.save_to_db = mocker.Mock()
+        mocker.patch.object(
+            TransformRequest,
+            'return_request',
+            return_value=mock_request)
+
         response = client.post('/servicex/internal/transformation/1234/status',
                                json={
                                    'timestamp': '2019-09-18T16:15:09.457481',
-                                   'status': 'Just testing'
+                                   'severity': "info",
+                                   'info': 'Just testing'
                                })
 
         assert response.status_code == 200
+        mock_request.save_to_db.assert_not_called()
+
+    def test_post_status_fatal(self, mocker, mock_rabbit_adaptor):
+        from servicex.models import TransformRequest
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        mock_request = self._generate_transform_request()
+        mock_request.save_to_db = mocker.Mock()
+        mocker.patch.object(
+            TransformRequest,
+            'return_request',
+            return_value=mock_request)
+
+        response = client.post('/servicex/internal/transformation/1234/status',
+                               json={
+                                   'timestamp': '2019-09-18T16:15:09.457481',
+                                   'severity': "fatal",
+                                   'info': 'Just testing'
+                               })
+
+        assert response.status_code == 200
+        mock_request.save_to_db.assert_called()
 
     def test_post_status_bad_data(self, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
