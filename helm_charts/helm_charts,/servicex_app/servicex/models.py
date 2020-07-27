@@ -143,7 +143,8 @@ class TransformRequest(db.Model):
             'kafka-broker': x.kafka_broker,
             'workflow-name': x.workflow_name,
             'generated-code-cm': x.generated_code_cm,
-            'status': x.status
+            'status': x.status,
+            'failure-info': x.failure_description
         }
 
     id = db.Column(db.Integer, primary_key=True)
