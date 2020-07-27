@@ -16,6 +16,8 @@ RUN pip install safety && \
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
+COPY migrations migrations
+
 RUN chmod +x boot.sh
 
 #ENV FLASK_APP servicex
