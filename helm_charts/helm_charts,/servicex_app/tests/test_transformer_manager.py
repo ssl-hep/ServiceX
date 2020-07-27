@@ -81,7 +81,8 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 30})
+                                   additional_config={'TRANSFORMER_CPU_LIMIT': 1,
+                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -120,7 +121,8 @@ class TestTransformerManager(ResourceTestBase):
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    additional_config={'TRANSFORMER_AUTOSCALE_ENABLED': False,
-                                                      'TRANSFORMER_CPU_LIMIT': 30})
+                                                      'TRANSFORMER_CPU_LIMIT': 1,
+                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -143,7 +145,8 @@ class TestTransformerManager(ResourceTestBase):
 
         additional_config = {
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo',
-            'TRANSFORMER_CPU_LIMIT': 30
+            'TRANSFORMER_CPU_LIMIT': 1,
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
 
         transformer = TransformerManager('external-kubernetes')
@@ -178,7 +181,8 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 30})
+                                   additional_config={'TRANSFORMER_CPU_LIMIT': 1,
+                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -211,7 +215,8 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
             'MINIO_ACCESS_KEY': 'itsame',
             'MINIO_SECRET_KEY': 'shhh',
-            'TRANSFORMER_CPU_LIMIT': 30
+            'TRANSFORMER_CPU_LIMIT': 1,
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
 
         client = self._test_client(additional_config=my_config,
@@ -249,7 +254,8 @@ class TestTransformerManager(ResourceTestBase):
 
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 30})
+                                   additional_config={'TRANSFORMER_CPU_LIMIT': 1,
+                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(

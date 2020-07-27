@@ -171,7 +171,7 @@ class TransformerManager:
             spec=client.V1HorizontalPodAutoscalerSpec(
                 max_replicas=workers,
                 scale_target_ref=target,
-                target_cpu_utilization_percentage=current_app.config['TRANSFORMER_CPU_LIMIT']
+                target_cpu_utilization_percentage=current_app.config['TRANSFORMER_CPU_SCALE_THRESHOLD']
             )
         )
 
