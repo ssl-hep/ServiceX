@@ -71,7 +71,9 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'kafka-broker': 'http://ssl-hep.org.kafka:12345',
                                  'workflow-name': None,
                                  'generated-code-cm': None,
-                                 'status': "Submitted"}
+                                 'status': "Submitted",
+                                 'failure-info': None
+                                 }
 
         mock_transform_request_read.assert_called_with('1234')
 
@@ -109,7 +111,9 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'minio-secret-key': 'leftfoot1',
                                  'workflow-name': None,
                                  'generated-code-cm': None,
-                                 'status': "Submitted"}
+                                 'status': "Submitted",
+                                 'failure-info': None
+                                 }
 
         mock_transform_request_read.assert_called_with('1234')
 
@@ -144,6 +148,8 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'result-format': 'arrow',
                                  'workflow-name': None,
                                  'generated-code-cm': None,
-                                 'status': "Submitted"}
+                                 'status': "Submitted",
+                                 'failure-info': None
+                                 }
 
         mock_transform_request_read.assert_called_with('1234')

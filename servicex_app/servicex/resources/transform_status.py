@@ -102,6 +102,7 @@ class TransformationStatusInternal(ServiceXResource):
 
             submitted_request = TransformRequest.return_request(request_id)
             submitted_request.status = 'Fatal'
+            submitted_request.failure_description = status.info
             submitted_request.save_to_db()
             db.session.commit()
         else:
