@@ -80,7 +80,7 @@ transformer:
   pullPolicy: IfNotPresent
   autoscalerEnabled: false
   cpuLimit: 1
-  cpuScaleThreshold: 1
+  cpuScaleThreshold: 70
 
 
 x509Secrets:
