@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_form %}
+{% block content %}
+    <div class="content-section" style="width: 400px">
+        <h4 class="mb-4">{{ action }}</h4>
+        {{ render_form(form, button_style='outline-primary', extra_classes='d-flex flex-column') }}
+    </div>
+{#    <form action="" method="POST" class="content-section col-md-8">#}
+{#        {{ form.hidden_tag() }}#}
+{#        <fieldset class="form-group">#}
+{#            <legend class="mb-4">Create Profile</legend>#}
+{#            <div class="form-group">#}
+{#                {{ form.name.label(class="form-control-label") }}#}
+{#                {{ form.name(class="form-control form-control-lg") }}#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                {{ form.email.label(class="form-control-label") }}#}
+{#                {{ form.email(class="form-control form-control-lg") }}#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                {{ form.institution.label(class="form-control-label") }}#}
+{#                {{ form.institution(class="form-control form-control-lg") }}#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                {{ form.experiment.label(class="form-control-label") }}#}
+{#                {{ form.experiment(class="form-control form-control-lg") }}#}
+{#            </div>#}
+{#        </fieldset>#}
+{#        <div class="form-group">#}
+{#            {{ form.submit(class="btn btn-outline-info") }}#}
+{#        </div>#}
+{#    </form>#}
+{% endblock %}

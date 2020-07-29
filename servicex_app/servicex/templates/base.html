@@ -27,12 +27,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarToggle">
                 <div class="navbar-nav mr-auto">
-                    <a class="nav-item nav-link" href="/">Home</a>
                     <a class="nav-item nav-link" href="https://mweinberg2718.github.io/ServiceX_frontend/">Docs</a>
                 </div>
                 <!-- Navbar Right Side -->
                 <div class="navbar-nav">
-                    <a class="nav-item nav-link" href="/sign-in">Sign In</a>
+                    {% if not session['is_authenticated'] %}
+                        <a class="nav-item nav-link" href="/sign-in">Sign In</a>
+                    {% else %}
+                        <a class="nav-item nav-link" href="/profile">{{ session['name'] }}</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
