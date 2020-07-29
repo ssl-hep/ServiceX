@@ -57,7 +57,9 @@ setup(
         'kubernetes',
         'minio',
         'elasticsearch',
-        'psycopg2'
+        'psycopg2',
+        'globus_sdk',
+        'cryptography',
     ],
     extras_require={
         'test': [
