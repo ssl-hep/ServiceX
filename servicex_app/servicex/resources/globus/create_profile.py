@@ -1,9 +1,11 @@
 from flask import request, render_template, redirect, url_for, session, \
-    flash
+    current_app, flash
+import requests
 
 from servicex.models import UserModel
 from .decorators import authenticated
 from .forms import ProfileForm
+from .slack_msg_builder import signup
 
 
 @authenticated
@@ -22,13 +24,21 @@ def create_profile():
                 name=form.name.data,
                 institution=form.institution.data,
                 experiment=form.experiment.data)
-            new_user.save_to_db()
-            session['user_id'] = new_user.id
-            session['admin'] = new_user.admin
-            flash("Profile created! Your account is pending approval. "
-                  "We'll email you when it's ready.",
-                  'success')
-            return redirect(url_for('profile'))
+            try:
+                new_user.save_to_db()
+                session['user_id'] = new_user.id
+                session['admin'] = new_user.admin
+                webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
+                if webhook_url:
+                    res = requests.post(webhook_url, signup(new_user.email))
+                    # Raise exception on error (e.g. bad request or forbidden url)
+                    res.raise_for_status()
+                flash("Profile created! Your account is pending approval. "
+                      "We'll email you when it's ready.",
+                      'success')
+                return redirect(url_for('profile'))
+            except requests.exceptions.HTTPError as err:
+                print("Error in response from Slack webhook:", err)
         else:
             print("Create Profile Form errors", form.errors)
             flash("Profile could not be saved. Please fix invalid fields below.", 'danger')
