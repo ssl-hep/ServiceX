@@ -43,7 +43,7 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 # from servicex.resources.user_web import index
-from servicex.resources.globus import home
+from servicex.resources.globus import home, sign_in, auth_callback
 
 from flask_restful import Api
 from flask_jwt_extended import (JWTManager)
@@ -164,9 +164,9 @@ def create_app(test_config=None,
             if not UserModel.find_by_email(app.config['JWT_ADMIN']):
                 try:
                     new_user = UserModel(
+                        globus_id='admin',
                         email=app.config['JWT_ADMIN'],
-                        full_name="Administrator",
-                        key=UserModel.generate_hash(app.config['JWT_PASS']),
+                        name="Administrator",
                         admin=True,
                         pending=False
                     )
@@ -181,6 +181,8 @@ def create_app(test_config=None,
         # Web Frontend Routes
         # app.add_url_rule("/", "index", index)
         app.add_url_rule('/', 'home', home)
+        app.add_url_rule('/sign-in', 'sign_in', sign_in)
+        app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)
