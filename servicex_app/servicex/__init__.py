@@ -35,7 +35,6 @@ import traceback
 import pika
 from flask import Flask
 
-from servicex.resources.user_web import index
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -43,6 +42,8 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
+# from servicex.resources.user_web import index
+from servicex.resources.globus import home
 
 from flask_restful import Api
 from flask_jwt_extended import (JWTManager)
@@ -177,9 +178,11 @@ def create_app(test_config=None,
                     traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
                     print(exc_value)
 
+        # Web Frontend Routes
+        # app.add_url_rule("/", "index", index)
+        app.add_url_rule('/', 'home', home)
+
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)
-
-        app.add_url_rule("/", "index", index)
 
     return app
