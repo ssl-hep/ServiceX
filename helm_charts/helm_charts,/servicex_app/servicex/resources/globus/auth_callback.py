@@ -56,4 +56,7 @@ def auth_callback():
             session['admin'] = user.admin
         except NoResultFound as err:
             print(err)
-    return redirect(url_for('home'))
+    if user:
+        return redirect(url_for('profile'))
+    else:
+        return redirect(url_for('create_profile'))

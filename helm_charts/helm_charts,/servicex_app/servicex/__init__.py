@@ -34,6 +34,7 @@ import traceback
 
 import pika
 from flask import Flask
+from flask_bootstrap import Bootstrap
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
@@ -43,7 +44,8 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 # from servicex.resources.user_web import index
-from servicex.resources.globus import home, sign_in, auth_callback
+from servicex.resources.globus import home, sign_in, sign_out, auth_callback, \
+    create_profile, view_profile, edit_profile
 
 from flask_restful import Api
 from flask_jwt_extended import (JWTManager)
@@ -86,6 +88,7 @@ def create_app(test_config=None,
                provided_lookup_result_processor=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+    Bootstrap(app)
 
     JWTManager(app)
     if not test_config:
@@ -182,9 +185,16 @@ def create_app(test_config=None,
         # app.add_url_rule("/", "index", index)
         app.add_url_rule('/', 'home', home)
         app.add_url_rule('/sign-in', 'sign_in', sign_in)
-        app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
+        app.add_url_rule('/sign-out', 'sign_out', sign_out)
+        app.add_url_rule('/authcallback', 'auth_callback', auth_callback)
+        app.add_url_rule('/profile', 'profile', view_profile)
+        app.add_url_rule('/profile/new', 'create_profile', create_profile,
+                         methods=['GET', 'POST'])
+        app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
+                         methods=['GET', 'POST'])
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)
+
 
     return app

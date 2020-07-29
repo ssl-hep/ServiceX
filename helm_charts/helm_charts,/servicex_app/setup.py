@@ -47,6 +47,8 @@ setup(
     install_requires=[
         'flask',
         'Flask-WTF',
+        'wtforms',
+        'email-validator',
         'pika',
         'flask-restful',
         'flask-jwt-extended',
@@ -60,6 +62,7 @@ setup(
         'psycopg2',
         'globus_sdk',
         'cryptography',
+        'bootstrap-flask'
     ],
     extras_require={
         'test': [

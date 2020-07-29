@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="content-section" style="width: 400px">
+        <h4 class="mb-3">Your Profile</h4>
+        <dl class="row">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">{{ user.name }}</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">{{ user.email }}</dd>
+
+            <dt class="col-sm-3">Institution</dt>
+            <dd class="col-sm-9">{{ user.institution }}</dd>
+
+            <dt class="col-sm-3">Experiment</dt>
+            <dd class="col-sm-9">{{ user.experiment }}</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">{{ "Pending" if user.pending else "Approved" }}</dd>
+        </dl>
+        <div class="row">
+            <div class="col d-flex flex-column">
+                <a href="{{url_for('edit_profile')}}" class="btn btn-outline-primary col-auto">Edit</a>
+            </div>
+            <div class="col d-flex flex-column">
+                <a href="{{url_for('sign_out')}}" class="btn btn-outline-danger col-auto">Sign Out</a>
+            </div>
+        </div>
+ </div>
+{% endblock %}
