@@ -44,10 +44,10 @@ RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
 WORKDIR /servicex
-COPY uproot_proxy_exporter.sh proxy-exporter.sh
+COPY proxy-exporter.sh .
 RUN chmod +x proxy-exporter.sh
 
-COPY transformer_uproot.py transformer.py
+COPY transformer.py .
 COPY validate_requests.py .
 ENV PYTHONUNBUFFERED=1
 ENV X509_USER_PROXY=/etc/grid-security/x509up
