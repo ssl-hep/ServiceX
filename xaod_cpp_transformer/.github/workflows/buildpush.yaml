@@ -21,19 +21,9 @@ jobs:
       run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
       id: extract_tag_name
 
-    - name: Build Uproot Image
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        dockerfile: Dockerfile.uprootTransformer
-        name: sslhep/servicex_func_adl_uproot_transformer:${{ steps.extract_tag_name.outputs.imagetag }}
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        tag: "${GITHUB_REF##*/}"
-
     - name: Build xAOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        dockerfile: Dockerfile.xaodTransformer
         name: sslhep/servicex_func_adl_xaod_transformer:${{ steps.extract_tag_name.outputs.imagetag }}
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
