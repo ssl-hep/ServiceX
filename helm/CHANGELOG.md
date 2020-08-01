@@ -3,7 +3,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [1.0] - 2020-06-25
+## [1.0.0-RC.2] - 2020-07-30
+### Added
+- Make Autoscaling threshold and pod CPU limit configurable
+- Validate transformer docker image name against DockerHub
+- Slack notification of new user requests
+- Minio endpoint is provided to users via transform request
+- Database migration via alembic
+- Report current status of transform request and support of fatal errors
+- User delete endpoint
+- Capture more detailed information from users in the new account create form
+- Error endpoint to show transformer errors encountered during job
+- DID Finder reports fatal error if no files are found for DID
+- Split the uproot and xAOD transformer repos
+
+### Changed
+- Use email address instead of username to identify users of ServiceX
+- Made size of file status info field to be the maximum VARCHAR size
+- Removed Atlas refereces from the transfomer docker image
+- Cleaned up command line interface to ServiceX CLI
+
+### Fixed
+- Pin pip dependencies
+- Transaction leak after DID finder request 
+
+### Removed
+
+## [1.0.0-RC.1] - 2020-06-25
 ### Added
 - More detailed timestamp logging in transformers
 - JWT based user securing of public endpoints
