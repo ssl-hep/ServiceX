@@ -14,5 +14,5 @@ List of talks/posters to the HEP community on ServiceX
 
 A link to our tutorials. We currently have two:
 
-* [A streaming example for xAOD files using func_adl](https://github.com/mweinberg2718/useful-scripts/blob/master/ServiceX_streamingTutorial.ipynb)
+* [A streaming example for xAOD files using func_adl](https://github.com/d-w-liu/documentation/blob/1.0/ServiceX%20stuff/ElectronData_1.1.ipynb)
 * [An example using hep_tables for the frontend](https://github.com/mweinberg2718/useful-scripts/blob/master/ServiceX_hep_tables_plotting.ipynb)
