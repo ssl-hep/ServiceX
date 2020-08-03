@@ -7,7 +7,6 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
 didFinder:
   pullPolicy: Always
-  tag: v1.0-rc.2
 gridAccount: bgalewsk
 minio:
   ingress:
