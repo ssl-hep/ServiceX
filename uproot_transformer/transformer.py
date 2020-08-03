@@ -118,7 +118,7 @@ def callback(channel, method, properties, body):
 
         servicex.post_status_update(file_id=_file_id,
                                     status_code="failure",
-                                    info="error: "+str(exc_value)[0:1024])
+                                    info="error: "+str(exc_value))
 
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
