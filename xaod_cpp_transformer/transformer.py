@@ -106,7 +106,7 @@ def callback(channel, method, properties, body):
 
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="failure",
-                                            info= " error: " + str(error)[0:1024])
+                                            info="error: " + str(error))
 
                 file_done = True
                 exc_type, exc_value, exc_traceback = sys.exc_info()
