@@ -46,3 +46,4 @@ COPY proxy-exporter.sh .
 COPY validate_requests.py .
 
 COPY transformer.py .
+WORKDIR /home/atlas
