@@ -7,13 +7,14 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
 didFinder:
   pullPolicy: Always
-  tag: v1.0-rc.1
+  tag: v1.0-rc.2
 gridAccount: bgalewsk
 minio:
   ingress:
     enabled: true
     hosts:
-    - "rc1-xaod-minio.uc.ssl-hep.org"
+    - "rc2-xaod-minio.uc.ssl-hep.org"
+  mode: distributed
 postgres:
   enabled: true
 postgresql:
