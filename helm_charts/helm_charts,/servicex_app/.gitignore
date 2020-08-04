@@ -2,6 +2,7 @@ sqlite
 app.conf
 .idea
 __pycache__/
+*.pyc
 servicex.egg-info/
 .coverage
 htmlcov/

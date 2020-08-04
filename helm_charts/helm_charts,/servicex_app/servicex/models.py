@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime
+from secrets import token_urlsafe
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -35,14 +36,21 @@ from sqlalchemy.orm.exc import NoResultFound
 db = SQLAlchemy()
 
 
+def generate_api_key():
+    return token_urlsafe(nbytes=32)
+
+
 class UserModel(db.Model):
     __tablename__ = 'users'
     admin = db.Column(db.Boolean, default=False)
+    api_key = db.Column(db.String(43), nullable=False, unique=True,
+                        index=True, default=generate_api_key)
     created_at = db.Column(DateTime, default=datetime.utcnow)
-    id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(320), nullable=False, unique=True)
     experiment = db.Column(db.String(120))
-    globus_id = db.Column(db.String(120), nullable=False, unique=True)
+    globus_id = db.Column(db.String(120), nullable=False,
+                          unique=True, index=True)
+    id = db.Column(db.Integer, primary_key=True)
     institution = db.Column(db.String(120))
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)

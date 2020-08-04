@@ -1,30 +1,106 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="content-section" style="width: 400px">
-        <h4 class="mb-3">Your Profile</h4>
-        <dl class="row">
-            <dt class="col-sm-3">Name</dt>
-            <dd class="col-sm-9">{{ user.name }}</dd>
+  <div class="content-section">
+    <div class="row justify-content-between align-items-center">
+      <h4 class="mb-3 col-auto">Your Profile</h4>
+      <div class="col-auto">
+        <a href="{{ url_for('edit_profile') }}"
+            title="Edit Profile"
+            data-toggle="tooltip"
+            class="col-auto btn btn-outline-primary">
+        Edit
+        </a>
+      </div>
+    </div>
+    <dl class="row">
+      <dt class="col-sm-3">Name</dt>
+      <dd class="col-sm-9">{{ user.name }}</dd>
 
-            <dt class="col-sm-3">Email</dt>
-            <dd class="col-sm-9">{{ user.email }}</dd>
+      <dt class="col-sm-3">Email</dt>
+      <dd class="col-sm-9">{{ user.email }}</dd>
 
-            <dt class="col-sm-3">Institution</dt>
-            <dd class="col-sm-9">{{ user.institution }}</dd>
+      <dt class="col-sm-3">Institution</dt>
+      <dd class="col-sm-9">{{ user.institution }}</dd>
 
-            <dt class="col-sm-3">Experiment</dt>
-            <dd class="col-sm-9">{{ user.experiment }}</dd>
+      <dt class="col-sm-3">Experiment</dt>
+      <dd class="col-sm-9">{{ user.experiment }}</dd>
 
-            <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">{{ "Pending" if user.pending else "Approved" }}</dd>
-        </dl>
-        <div class="row">
-            <div class="col d-flex flex-column">
-                <a href="{{url_for('edit_profile')}}" class="btn btn-outline-primary col-auto">Edit</a>
+      <dt class="col-sm-3">Status</dt>
+      <dd class="col-sm-9">{{ "Pending" if user.pending else "Approved" }}</dd>
+
+      <dt class="col-sm-3">Private API key</dt>
+      <dd class="col-sm-9">
+        <code class="text-muted">{{ user.api_key }}</code>
+        <button class="btn btn-sm btn-outline-secondary mx-2"
+                id="copy-btn"
+                type="button"
+                data-value="{{ user.api_key }}"
+                title="Copy to clipboard"
+                data-toggle="tooltip">
+          <i class="fa fa-copy"></i>
+        </button>
+        <span data-target="#exampleModal" data-toggle="modal">
+          <button class="btn btn-sm btn-outline-warning"
+                  type="button"
+                  title="Regenerate"
+                  data-toggle="tooltip">
+            <i class="fa fa-refresh"></i>
+          </button>
+        </span>
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Regenerate API key</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                  Generating a new API key will invalidate the current key.
+                  You must update any environments using your API key to use
+                  the newly generated key.
+              </div>
+              <div class="modal-body">
+                Are you sure you want to regenerate your key?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-outline" data-dismiss="modal">Cancel
+                </button>
+                <a class="btn btn-primary" href="{{ url_for('api_key') }}">Continue</a>
+              </div>
             </div>
-            <div class="col d-flex flex-column">
-                <a href="{{url_for('sign_out')}}" class="btn btn-outline-danger col-auto">Sign Out</a>
-            </div>
+          </div>
         </div>
- </div>
+      </dd>
+    </dl>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script>
+      const copyBtn = document.getElementById('copy-btn')
+
+      // Adapted from https://github.com/twbs/bootstrap/blob/c28934cb1871d6b6bd6a866660493a1137de17c6/site/assets/js/application.js
+      copyBtn.addEventListener('click', function (event) {
+          navigator.clipboard.writeText(this.getAttribute('data-value'))
+              .then(() => {
+                  $('#copy-btn').attr('data-original-title', 'Copied!')
+                      .tooltip('show')
+                      .attr('data-original-title', 'Copy to clipboard');
+              })
+              .catch(() => {
+                  $('#copy-btn').attr('data-original-title', 'Copying error')
+                      .tooltip('show')
+                      .attr('data-original-title', 'Copy to clipboard');
+              });
+      })
+
+      // Hide tooltip on mouseleave, since after clicking it remains focused
+      copyBtn.addEventListener('mouseleave', () => {
+          $('#copy-btn').tooltip('hide');
+      })
+  </script>
 {% endblock %}
