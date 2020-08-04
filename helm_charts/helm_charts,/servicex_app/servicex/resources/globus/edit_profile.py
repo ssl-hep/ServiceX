@@ -9,8 +9,8 @@ from .forms import ProfileForm
 
 @authenticated
 def edit_profile():
-    globus_id = session.get('primary_identity')
-    user: UserModel = UserModel.find_by_globus_id(globus_id)
+    sub = session.get('sub')
+    user: UserModel = UserModel.find_by_sub(sub)
     form = ProfileForm()
     if request.method == 'GET':
         form.name.data = user.name

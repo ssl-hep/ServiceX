@@ -7,9 +7,9 @@ from .decorators import authenticated
 
 @authenticated
 def view_profile():
-    globus_id = session.get('primary_identity')
+    sub = session.get('sub')
     try:
-        user = UserModel.find_by_globus_id(globus_id)
+        user = UserModel.find_by_sub(sub)
         return render_template('profile.html', user=user)
     except NoResultFound:
         return redirect(url_for('create_profile'))

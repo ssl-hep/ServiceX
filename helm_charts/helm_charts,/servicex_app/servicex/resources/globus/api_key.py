@@ -7,8 +7,8 @@ from .decorators import authenticated
 @authenticated
 def api_key():
     """Generate a new ServiceX API key."""
-    globus_id = session.get('primary_identity')
-    user: UserModel = UserModel.find_by_globus_id(globus_id)
+    sub = session.get('sub')
+    user: UserModel = UserModel.find_by_sub(sub)
     user.api_key = generate_api_key()
     db.session.commit()
     flash("Your new API key has been generated!", 'success')
