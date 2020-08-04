@@ -174,8 +174,6 @@ def create_app(test_config=None,
                         refresh_token=create_refresh_token('admin')
                     )
                     new_user.save_to_db()
-                    create_access_token(identity=app.config['JWT_ADMIN'])
-                    create_refresh_token(identity=app.config['JWT_PASS'])
                 except Exception:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
