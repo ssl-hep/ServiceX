@@ -41,7 +41,18 @@ TRANSFORMER_MANAGER_ENABLED = True
 # start the requested number of transformers
 TRANSFORMER_AUTOSCALE_ENABLED = True
 
+# Use one core per transformer
+TRANSFORMER_CPU_LIMIT = 1
+
+# CPU threshold for HPA (in percent) to spawn additional transformers
+TRANSFORMER_CPU_SCALE_THRESHOLD = 70
+
 TRANSFORMER_MANAGER_MODE = 'external-kubernetes'
+
+# Should we validate the docker image exists on DockerHub?
+# Set to False if you are doing local development and don't want to
+# push your image
+TRANSFORMER_VALIDATE_DOCKER_IMAGE = True
 
 TRANSFORMER_MESSAGING = 'none'
 OBJECT_STORE_ENABLED = False

@@ -85,12 +85,13 @@ def _workflow_name(transform_request):
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter,
-                 code_gen_service, lookup_result_processor):
+                 code_gen_service, lookup_result_processor, docker_repo_adapter):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.elasticsearch_adapter = elasticsearch_adapter
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
+        cls.docker_repo_adapter = docker_repo_adapter
         return cls
 
     @jwt_optional
@@ -125,6 +126,11 @@ class SubmitTransformationRequest(ServiceXResource):
             else:
                 broker = None
 
+            if current_app.config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
+                tagged_image = transformation_request['image']
+                if not self.docker_repo_adapter.check_image_exists(tagged_image):
+                    return {'message': f"The requested transformer docker image doesn't exist: {tagged_image}"}, 400  # noqa: E501
+
             request_rec = TransformRequest(
                 did=requested_did if requested_did else "File List Provided in Request",
                 submit_time=time,
@@ -138,7 +144,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 result_format=transformation_request['result-format'],
                 kafka_broker=broker,
                 workers=transformation_request['workers'],
-                workflow_name=_workflow_name(transformation_request)
+                workflow_name=_workflow_name(transformation_request),
+                status='Submitted'
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make

@@ -25,53 +25,26 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import io
+import re
 
-from setuptools import find_packages, setup
+import requests
 
-with io.open('README.rst', 'rt', encoding='utf8') as f:
-    readme = f.read()
 
-setup(
-    name='servicex',
-    version='1.0.0',
-    url='https://iris-hep.org',
-    license='BSD',
-    maintainer='ServiceX Team',
-    maintainer_email='bengal1@illinois.edu',
-    description='REST Frontend to ServiceX.',
-    long_description=readme,
-    packages=find_packages(),
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=[
-        'flask',
-        'Flask-WTF',
-        'wtforms',
-        'email-validator',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio',
-        'elasticsearch',
-        'psycopg2',
-        'globus_sdk',
-        'cryptography',
-        'bootstrap-flask'
-    ],
-    extras_require={
-        'test': [
-            'pytest>=5.2',
-            'pytest-flask==1.0.0',
-            'coverage>=5.2',
-            'codecov==2.1.8',
-            'pytest-mock==3.2.0',
-            'flake8>=3.8'
-        ],
-    },
-)
+class DockerRepoAdapter:
+    def __init__(self, registry_endpoint="https://hub.docker.com"):
+        self.registry_endpoint = registry_endpoint
+
+    def check_image_exists(self, tagged_image):
+        search_result = re.search("(.+)/(.+):(.+)", tagged_image)
+        if not search_result or len(search_result.groups()) != 3:
+            return False
+
+        (repo, image, tag) = search_result.groups()
+
+        query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
+        r = requests.get(query)
+        if r.status_code == 404:
+            return False
+
+        print("Requested Image: "+tagged_image+" exists, last updated "+r.json()['last_updated'])
+        return True

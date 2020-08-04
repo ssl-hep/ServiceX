@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import current_app
 
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -40,6 +40,9 @@ class TransformStart(ServiceXResource):
     def post(self, request_id):
         from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.return_request(request_id)
+        submitted_request.status = 'Running'
+        submitted_request.save_to_db()
+        db.session.commit()
 
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
 
