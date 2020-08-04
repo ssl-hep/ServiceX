@@ -37,9 +37,7 @@ def auth_callback():
         name=id_token.get('name', ''),
         email=id_token.get('email', ''),
         institution=id_token.get('organization', ''),
-        primary_username=id_token.get('preferred_username'),
-        primary_identity=id_token.get('sub'),
-        identity_provider=id_token.get('identity_provider')
+        sub=id_token.get('sub')
     )
 
     access_token = session['tokens']['auth.globus.org']['access_token']
@@ -51,7 +49,7 @@ def auth_callback():
     user: Optional[UserModel] = None
     for identity in identity_set:
         try:
-            user = UserModel.find_by_globus_id(identity)
+            user = UserModel.find_by_sub(identity)
             session['user_id'] = user.id
             session['admin'] = user.admin
         except NoResultFound as err:

@@ -19,7 +19,7 @@ def create_profile():
     elif request.method == 'POST':
         if form.validate_on_submit():
             new_user = UserModel(
-                globus_id=session['primary_identity'],
+                sub=session['sub'],
                 email=form.email.data,
                 name=form.name.data,
                 institution=form.institution.data,

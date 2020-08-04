@@ -48,12 +48,13 @@ class UserModel(db.Model):
     created_at = db.Column(DateTime, default=datetime.utcnow)
     email = db.Column(db.String(320), nullable=False, unique=True)
     experiment = db.Column(db.String(120))
-    globus_id = db.Column(db.String(120), nullable=False,
-                          unique=True, index=True)
+    sub = db.Column(db.String(120), nullable=False,
+                    unique=True, index=True)
     id = db.Column(db.Integer, primary_key=True)
     institution = db.Column(db.String(120))
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)
+    refresh_token = db.Column(db.Text, )
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
     def save_to_db(self):
@@ -69,10 +70,10 @@ class UserModel(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
-    def find_by_globus_id(cls, globus_id):
-        result = cls.query.filter_by(globus_id=globus_id).first()
+    def find_by_sub(cls, sub):
+        result = cls.query.filter_by(sub=sub).first()
         if result is None:
-            raise NoResultFound(f"No user found with Globus id: {globus_id}")
+            raise NoResultFound(f"No user found matching subject: {sub}")
         return result
 
     @classmethod

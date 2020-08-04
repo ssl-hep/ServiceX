@@ -166,7 +166,7 @@ def create_app(test_config=None,
             if not UserModel.find_by_email(app.config['JWT_ADMIN']):
                 try:
                     new_user = UserModel(
-                        globus_id='admin',
+                        sub='admin',
                         email=app.config['JWT_ADMIN'],
                         name="Administrator",
                         admin=True,
