@@ -10,10 +10,14 @@ COPY setup.cfg setup.cfg
 COPY README.rst README.rst
 RUN pip install -e .
 RUN pip install gunicorn
+RUN pip install safety && \
+    pip freeze | safety check
 
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
+COPY migrations migrations
+
 RUN chmod +x boot.sh
 
 #ENV FLASK_APP servicex

@@ -34,10 +34,12 @@ class TestTransformationStart(ResourceTestBase):
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
+        mock_request = self._generate_transform_request()
+        mock_request.save_to_db = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
+            return_value=mock_request)
 
         from servicex.kafka_topic_manager import KafkaTopicManager
         mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
@@ -80,6 +82,7 @@ class TestTransformationStart(ResourceTestBase):
         mock_kafka_topic_manager.create_topic.assert_called_with('1234',
                                                                  max_message_size=1920000,
                                                                  num_partitions=100)
+        mock_request.save_to_db.assert_called()
 
     def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):
         import servicex
@@ -88,11 +91,13 @@ class TestTransformationStart(ResourceTestBase):
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
         from servicex.kafka_topic_manager import KafkaTopicManager
         mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
+        mock_request = self._generate_transform_request()
+        mock_request.save_to_db = mocker.Mock()
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
+            return_value=mock_request)
 
         client = self._test_client(
             {
@@ -109,3 +114,5 @@ class TestTransformationStart(ResourceTestBase):
         mock_transformer_manager.\
             launch_transformer_jobs.assert_not_called()
         mock_kafka_topic_manager.assert_not_called()
+
+        mock_request.save_to_db.assert_called()
