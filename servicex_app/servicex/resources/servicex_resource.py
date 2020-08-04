@@ -30,7 +30,7 @@ import time
 import hashlib
 import hmac
 
-import flask_jwt_extended
+from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 from flask import current_app
 from datetime import datetime
@@ -54,18 +54,14 @@ class ServiceXResource(Resource):
         if not current_app.config['ENABLE_AUTH']:
             return True, None
         try:
-            user_id = flask_jwt_extended.get_jwt_identity()
-
-            if not user_id:
+            sub = get_jwt_identity()
+            if not sub:
                 return False, "No auth provided"
-
-            user_record = UserModel.find_by_email(user_id)
-
-            if user_record and not user_record.pending:
+            user = UserModel.find_by_sub(sub)
+            if user and not user.pending:
                 return True, None
             else:
                 return False, "No Valid Auth Provided"
-
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             print(exc_value)
@@ -104,14 +100,11 @@ class ServiceXResource(Resource):
         if not current_app.config['ENABLE_AUTH']:
             return True, None
         try:
-            user_id = flask_jwt_extended.get_jwt_identity()
-            user_record = UserModel.find_by_email(user_id)
-
-            if user_record and user_record.admin:
+            user = UserModel.find_by_sub(get_jwt_identity())
+            if user and user.admin:
                 return True, None
             else:
                 return False, "User is not permitted to perform this operation"
-
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             print(exc_value)

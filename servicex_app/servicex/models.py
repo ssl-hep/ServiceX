@@ -58,11 +58,11 @@ class UserModel(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_email(cls, email):
+    def find_by_email(cls, email) -> 'UserModel':
         return cls.query.filter_by(email=email).first()
 
     @classmethod
-    def find_by_sub(cls, sub):
+    def find_by_sub(cls, sub) -> 'UserModel':
         result = cls.query.filter_by(sub=sub).first()
         if result is None:
             raise NoResultFound(f"No user found matching subject: {sub}")
