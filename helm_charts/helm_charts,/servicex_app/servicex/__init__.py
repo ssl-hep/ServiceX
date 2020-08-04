@@ -43,8 +43,8 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
-from servicex.resources.globus import home, sign_in, sign_out, auth_callback, \
-    create_profile, view_profile, edit_profile, slack_interaction, api_key
+from servicex.web import home, sign_in, sign_out, auth_callback, \
+    create_profile, view_profile, edit_profile, slack_interaction, api_token
 
 from flask_restful import Api
 from flask_jwt_extended import (JWTManager)
@@ -170,7 +170,8 @@ def create_app(test_config=None,
                         email=app.config['JWT_ADMIN'],
                         name="Administrator",
                         admin=True,
-                        pending=False
+                        pending=False,
+                        refresh_token=create_refresh_token('admin')
                     )
                     new_user.save_to_db()
                     create_access_token(identity=app.config['JWT_ADMIN'])
@@ -185,7 +186,7 @@ def create_app(test_config=None,
         app.add_url_rule('/sign-in', 'sign_in', sign_in)
         app.add_url_rule('/sign-out', 'sign_out', sign_out)
         app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
-        app.add_url_rule('/api-key', 'api_key', api_key)
+        app.add_url_rule('/api-token', 'api_token', api_token)
         app.add_url_rule('/profile', 'profile', view_profile)
         app.add_url_rule('/profile/new', 'create_profile', create_profile,
                          methods=['GET', 'POST'])

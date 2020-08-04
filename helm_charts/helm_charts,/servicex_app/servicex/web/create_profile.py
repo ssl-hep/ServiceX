@@ -1,6 +1,7 @@
 import requests
 from flask import request, render_template, redirect, url_for, session, \
     current_app, flash
+from flask_jwt_extended import create_refresh_token
 
 from servicex.models import UserModel
 from .decorators import authenticated
@@ -18,12 +19,14 @@ def create_profile():
         form.institution.data = session.get('institution')
     elif request.method == 'POST':
         if form.validate_on_submit():
+            sub = session['sub']
             new_user = UserModel(
-                sub=session['sub'],
+                sub=sub,
                 email=form.email.data,
                 name=form.name.data,
                 institution=form.institution.data,
-                experiment=form.experiment.data)
+                experiment=form.experiment.data,
+                refresh_token=create_refresh_token(identity=sub))
             try:
                 new_user.save_to_db()
                 session['user_id'] = new_user.id
