@@ -1,6 +1,6 @@
+import requests
 from flask import request, render_template, redirect, url_for, session, \
     current_app, flash
-import requests
 
 from servicex.models import UserModel
 from .decorators import authenticated
