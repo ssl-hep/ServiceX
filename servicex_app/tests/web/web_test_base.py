@@ -28,6 +28,7 @@
 from pytest import fixture
 
 from servicex import create_app
+from servicex.models import UserModel
 from servicex.rabbit_adaptor import RabbitAdaptor
 
 
@@ -38,6 +39,7 @@ class WebTestBase:
         return {
             'TESTING': True,
             'SECRET_KEY': 'secret',
+            'WTF_CSRF_ENABLED': False,
             'RABBIT_MQ_URL': 'amqp://foo.com',
             'RABBIT_RETRIES': 12,
             'RABBIT_RETRY_INTERVAL': 10,
@@ -83,6 +85,15 @@ class WebTestBase:
 
         return app.test_client()
 
+    @staticmethod
+    def _test_user():
+        return UserModel(
+            name='Jane Doe',
+            email='jane@example.com',
+            sub='janedoe',
+            institution='UChicago',
+            experiment='ATLAS')
+
     @fixture
     def client(self, mocker):
         config = WebTestBase._app_config()
@@ -93,6 +104,20 @@ class WebTestBase:
         app.test_request_context().push()
         with app.test_client() as client:
             yield client
+
+    @fixture
+    def user(self, mocker):
+        user = self._test_user()
+        mocker.patch('servicex.models.UserModel.find_by_sub', return_value=user)
+        return user
+
+    @fixture
+    def new_user(self, mocker):
+        return mocker.patch('servicex.models.UserModel').return_value
+
+    @fixture
+    def db(self, mocker):
+        return mocker.patch('flask_sqlalchemy.SQLAlchemy').return_value
 
     # @staticmethod
     # def mock_session(mocker, some_dict):
