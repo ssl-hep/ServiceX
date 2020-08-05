@@ -120,6 +120,26 @@ terminated pods)
 More information on the specific file can be found by joining with the ``files``
 table.
 
+Database Migration
+------------------
+We use the alembic tooling under ``Flask-Migrate`` library to manage migration of
+database as schema evolves.
+
+Alembic stores database versions in the ``migrations`` directory. These are
+applied to the database as part of ``boot.sh``
+
+Create a new version of the database after updating ``models.py`` with the
+command:
+
+.. code:: bash
+
+FLASK_APP=servicex/app.py APP_CONFIG_FILE=../app.conf flask db migrate -m "<<release version>>"
+
+This will add a new script under ``migrations`` directory. Check it for
+accuracy and check it into the repo to have it applied when the built docker
+image is next run against a database.
+
+
 
 Building Docker Image
 ---------------------
