@@ -13,10 +13,7 @@ def edit_profile():
     user: UserModel = UserModel.find_by_sub(sub)
     form = ProfileForm()
     if request.method == 'GET':
-        form.name.data = user.name
-        form.email.data = user.email
-        form.institution.data = user.institution
-        form.experiment.data = user.experiment
+        form = ProfileForm(user)
     elif request.method == 'POST':
         if form.validate_on_submit():
             user.name = form.name.data
