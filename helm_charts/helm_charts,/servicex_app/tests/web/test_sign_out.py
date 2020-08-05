@@ -1,6 +1,5 @@
 from urllib.parse import quote
 from functools import reduce
-import operator
 
 from flask import Response, url_for, session
 
