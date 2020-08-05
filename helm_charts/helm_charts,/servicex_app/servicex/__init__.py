@@ -36,6 +36,7 @@ import pika
 from flask import Flask
 from flask_bootstrap import Bootstrap
 
+from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -82,7 +83,8 @@ def create_app(test_config=None,
                provided_object_store=None,
                provided_elasticsearch_adapter=None,
                provided_code_gen_service=None,
-               provided_lookup_result_processor=None):
+               provided_lookup_result_processor=None,
+               provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
     Bootstrap(app)
@@ -147,6 +149,11 @@ def create_app(test_config=None,
         else:
             lookup_result_processor = provided_lookup_result_processor
 
+        if not provided_docker_repo_adapter:
+            docker_repo_adapter = DockerRepoAdapter()
+        else:
+            docker_repo_adapter = provided_docker_repo_adapter
+
         api = Api(app)
 
         # ensure the instance folder exists
@@ -178,6 +185,7 @@ def create_app(test_config=None,
                     print(exc_value)
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service, lookup_result_processor)
+                   elasticsearch_adaptor, code_gen_service, lookup_result_processor,
+                   docker_repo_adapter)
 
     return app

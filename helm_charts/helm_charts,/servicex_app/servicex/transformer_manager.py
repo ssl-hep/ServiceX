@@ -111,7 +111,7 @@ class TransformerManager:
             python_args[0] += " --brokerlist "+kafka_broker
 
         resources = client.V1ResourceRequirements(
-            limits={"cpu": 1}
+            limits={"cpu": current_app.config['TRANSFORMER_CPU_LIMIT']}
         )
         # Configure Pod template container
         container = client.V1Container(
@@ -171,7 +171,9 @@ class TransformerManager:
             spec=client.V1HorizontalPodAutoscalerSpec(
                 max_replicas=workers,
                 scale_target_ref=target,
-                target_cpu_utilization_percentage=1
+                target_cpu_utilization_percentage=current_app.config[
+                    'TRANSFORMER_CPU_SCALE_THRESHOLD'
+                    ]
             )
         )
 

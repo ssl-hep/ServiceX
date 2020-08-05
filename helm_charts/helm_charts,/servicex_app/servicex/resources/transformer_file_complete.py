@@ -71,6 +71,8 @@ class TransformerFileComplete(ServiceXResource):
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
             print("Job is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
+            submitted_request.status = "Complete"
+            submitted_request.save_to_db()
 
             if self.elasticsearch_adapter:
                 self.elasticsearch_adapter.create_update_request(

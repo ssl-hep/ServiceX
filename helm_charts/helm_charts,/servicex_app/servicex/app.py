@@ -25,41 +25,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask_restful import reqparse
+from flask_migrate import Migrate
+import servicex
 from servicex.models import db
-from servicex.resources.servicex_resource import ServiceXResource
-from servicex.models import FileStatus, max_string_size
-import datetime
 
+app = servicex.create_app()
+db.init_app(app)
 
-class FileTransformationStatus(ServiceXResource):
-
-    def __init__(self):
-        self.status_parser = reqparse.RequestParser()
-        self.status_parser.add_argument('timestamp', help='This field cannot be blank',
-                                        required=True)
-        self.status_parser.add_argument('status-code', help='This field cannot be blank',
-                                        required=True)
-        self.status_parser.add_argument('pod-name', required=False)
-        self.status_parser.add_argument('info', required=False)
-
-    def post(self, request_id, file_id):
-        status = self.status_parser.parse_args()
-        print(status)
-        status.request_id = request_id
-        file_status = FileStatus(file_id=file_id, request_id=request_id,
-                                 timestamp=datetime.datetime.strptime(
-                                     status.timestamp,
-                                     "%Y-%m-%dT%H:%M:%S.%f"),
-                                 pod_name=status['pod-name'],
-                                 status=status['status-code'],
-                                 info=status.info[:max_string_size])
-        file_status.save_to_db()
-
-        print(file_status)
-        try:
-            db.session.commit()
-        except Exception:
-            print("*******Error saving file status record")
-        finally:
-            return "Ok"
+migrate = Migrate(app, db)

@@ -33,6 +33,7 @@ from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
 
 db = SQLAlchemy()
+max_string_size = 10485760
 
 
 class UserModel(db.Model):
@@ -149,14 +150,15 @@ class TransformRequest(db.Model):
             'result-format': x.result_format,
             'kafka-broker': x.kafka_broker,
             'workflow-name': x.workflow_name,
-            'generated-code-cm': x.generated_code_cm
+            'generated-code-cm': x.generated_code_cm,
+            'status': x.status,
+            'failure-info': x.failure_description
         }
 
     id = db.Column(db.Integer, primary_key=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
-    max_string_size = 10485760
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
@@ -174,6 +176,8 @@ class TransformRequest(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
     generated_code_cm = db.Column(db.String(128), nullable=True)
+    status = db.Column(db.String(128), nullable=True)
+    failure_description = db.Column(db.String(max_string_size), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
@@ -334,7 +338,7 @@ class FileStatus(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     pod_name = db.Column(db.String(128), nullable=True)
 
-    info = db.Column(db.String(4096), nullable=True)
+    info = db.Column(db.String(max_string_size), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
