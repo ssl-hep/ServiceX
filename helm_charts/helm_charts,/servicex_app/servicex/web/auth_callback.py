@@ -29,7 +29,6 @@ def auth_callback():
     code = request.args.get('code')
     tokens = client.oauth2_exchange_code_for_tokens(code)
     id_token = tokens.decode_id_token(client)
-    print("ID Token", id_token)
 
     session.update(
         tokens=tokens.by_resource_server,
@@ -44,7 +43,6 @@ def auth_callback():
     token_introspect = client.oauth2_token_introspect(token=access_token,
                                                       include="identity_set")
     identity_set = token_introspect.data["identity_set"]
-    print("Identity set", identity_set)
 
     user: Optional[UserModel] = None
     for identity in identity_set:

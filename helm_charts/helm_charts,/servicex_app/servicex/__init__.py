@@ -27,26 +27,24 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import time
 import sys
+import time
 import traceback
-
 
 import pika
 from flask import Flask
 from flask_bootstrap import Bootstrap
+from flask_jwt_extended import (JWTManager)
+from flask_restful import Api
 
-from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.code_gen_adapter import CodeGenAdapter
+from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
+from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
-from servicex.object_store_manager import ObjectStoreManager
-
-from flask_restful import Api
-from flask_jwt_extended import (JWTManager)
 
 
 def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
@@ -165,7 +163,7 @@ def create_app(test_config=None,
         @app.before_first_request
         def create_tables():
             from servicex.models import db, UserModel
-            from flask_jwt_extended import (create_refresh_token, create_access_token)
+            from flask_jwt_extended import create_refresh_token
             db.init_app(app)
             db.create_all()
             if not UserModel.find_by_email(app.config['JWT_ADMIN']):
