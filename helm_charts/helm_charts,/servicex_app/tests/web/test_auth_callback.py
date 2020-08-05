@@ -1,6 +1,3 @@
-from urllib.parse import quote
-from functools import reduce
-
 from flask import Response, url_for, session
 
 from .web_test_base import WebTestBase
