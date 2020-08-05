@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask import current_app as app
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
@@ -48,11 +49,28 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.jwt.delete_user import DeleteUser
     from servicex.resources.jwt.pending_all import PendingAllUsers
 
+    from servicex.web import home, sign_in, sign_out, auth_callback, \
+        create_profile, view_profile, edit_profile, slack_interaction, api_token
+
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
                                          elasticsearch_adapter=elasticsearch_adapter,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor)
+
+    # Web Frontend Routes
+    app.add_url_rule('/', 'home', home)
+    app.add_url_rule('/sign-in', 'sign_in', sign_in)
+    app.add_url_rule('/sign-out', 'sign_out', sign_out)
+    app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
+    app.add_url_rule('/api-token', 'api_token', api_token)
+    app.add_url_rule('/profile', 'profile', view_profile)
+    app.add_url_rule('/profile/new', 'create_profile', create_profile,
+                     methods=['GET', 'POST'])
+    app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
+                     methods=['GET', 'POST'])
+    app.add_url_rule('/slack', 'slack_interaction', slack_interaction,
+                     methods=['POST'])
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, '/token/refresh')

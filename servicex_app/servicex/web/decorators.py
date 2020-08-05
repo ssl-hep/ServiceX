@@ -1,9 +1,12 @@
-from flask import redirect, request, session, url_for
+from flask import redirect, request, session, url_for, current_app
 from functools import wraps
 
 
 def authenticated(fn):
     """Mark a route as requiring authentication."""
+
+    if not current_app.config.get('ENABLE_AUTH'):
+        return fn
 
     @wraps(fn)
     def decorated_function(*args, **kwargs):

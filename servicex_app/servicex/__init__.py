@@ -43,8 +43,6 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
-from servicex.web import home, sign_in, sign_out, auth_callback, \
-    create_profile, view_profile, edit_profile, slack_interaction, api_token
 
 from flask_restful import Api
 from flask_jwt_extended import (JWTManager)
@@ -178,20 +176,6 @@ def create_app(test_config=None,
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
                     print(exc_value)
-
-        # Web Frontend Routes
-        app.add_url_rule('/', 'home', home)
-        app.add_url_rule('/sign-in', 'sign_in', sign_in)
-        app.add_url_rule('/sign-out', 'sign_out', sign_out)
-        app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
-        app.add_url_rule('/api-token', 'api_token', api_token)
-        app.add_url_rule('/profile', 'profile', view_profile)
-        app.add_url_rule('/profile/new', 'create_profile', create_profile,
-                         methods=['GET', 'POST'])
-        app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
-                         methods=['GET', 'POST'])
-        app.add_url_rule('/slack', 'slack_interaction', slack_interaction,
-                         methods=['POST'])
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor)
