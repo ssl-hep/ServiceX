@@ -33,7 +33,6 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 
 
 class WebTestBase:
-
     @staticmethod
     def _app_config():
         return {
@@ -48,6 +47,7 @@ class WebTestBase:
             'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
+            'TRANSFORMER_MANAGER_MODE': 'external',
             'TRANSFORMER_AUTOSCALE_ENABLED': True,
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
             'TRANSFORMER_PULL_POLICY': 'Always',
@@ -61,28 +61,19 @@ class WebTestBase:
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',
             'JWT_ADMIN': 'admin',
             'JWT_PASS': 'pass',
-            'JWT_SECRET_KEY': 'schtum'
+            'JWT_SECRET_KEY': 'schtum',
         }
 
     @staticmethod
-    def _test_client(additional_config=None,
-                     transformation_manager=None,
-                     rabbit_adaptor=None,
-                     object_store=None,
-                     elasticsearch_adapter=None,
-                     code_gen_service=None,
-                     lookup_result_processor=None):
+    def _test_client(mocker, additional_config=None):
         config = WebTestBase._app_config()
-        config['TRANSFORMER_MANAGER_ENABLED'] = False
-        config['TRANSFORMER_MANAGER_MODE'] = 'external'
 
         if additional_config:
             config.update(additional_config)
 
-        app = create_app(config, transformation_manager, rabbit_adaptor,
-                         object_store, elasticsearch_adapter, code_gen_service,
-                         lookup_result_processor)
-
+        mock_rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
+        app = create_app(config, provided_rabbit_adaptor=mock_rabbit_adaptor)
+        app.test_request_context().push()
         return app.test_client()
 
     @staticmethod
@@ -129,25 +120,25 @@ class WebTestBase:
             "identity_provider_display_name": "CERN",
             "last_authentication": 1595620302,
             "identity_set": [
-            {
-              "email": "jane@cern.ch",
-              "identity_provider_display_name": "CERN",
-              "identity_provider": "primary-identity-provider-id",
-              "organization": "CERN",
-              "username": "jane@cern.ch",
-              "name": "Jane Doe",
-              "last_authentication": 1595620302,
-              "sub": "primary-oauth-id"
-            },
-            {
-              "email": "jane@uchicago.edu",
-              "identity_provider_display_name": "Google",
-              "last_authentication": 1595552908,
-              "identity_provider": "secondary-oauth-id",
-              "username": "jane@uchicago.edu@accounts.google.com",
-              "name": "Jane Doe",
-              "sub": "secondary-oauth-id"
-            }
+                {
+                  "email": "jane@cern.ch",
+                  "identity_provider_display_name": "CERN",
+                  "identity_provider": "primary-identity-provider-id",
+                  "organization": "CERN",
+                  "username": "jane@cern.ch",
+                  "name": "Jane Doe",
+                  "last_authentication": 1595620302,
+                  "sub": "primary-oauth-id"
+                },
+                {
+                  "email": "jane@uchicago.edu",
+                  "identity_provider_display_name": "Google",
+                  "last_authentication": 1595552908,
+                  "identity_provider": "secondary-oauth-id",
+                  "username": "jane@uchicago.edu@accounts.google.com",
+                  "name": "Jane Doe",
+                  "sub": "secondary-oauth-id"
+                }
             ],
             "name": "Jane Doe",
             "aud": "application-audience-id",
@@ -158,8 +149,6 @@ class WebTestBase:
     @fixture
     def client(self, mocker):
         config = WebTestBase._app_config()
-        config['TRANSFORMER_MANAGER_ENABLED'] = False
-        config['TRANSFORMER_MANAGER_MODE'] = 'external'
         rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
         app = create_app(config, provided_rabbit_adaptor=rabbit_adaptor)
         app.test_request_context().push()
