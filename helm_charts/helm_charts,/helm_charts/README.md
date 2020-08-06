@@ -186,7 +186,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.auth`                           | Enable authentication or allow unfettered access (Python boolean string) | `false`                         |
 | `app.globusClientID`                 | Globus application Client ID                     | -                                                       |
 | `app.globusClientSecret`             | Globus application Client Secret                 | -                                                       |
-| `app.adminID`                        | OAuth ID for auto created admin user             | admin                                                   |
+| `app.adminEmail`                        | Email address for auto-created admin user             | admin                                                   |
 | `app.tokenExpires`                   | Seconds until the ServiceX API tokens (JWT refresh tokens) expire | False (never)                          |
 | `app.authExpires`                    | Seconds until the JWT access tokens expire       | 21600 (six hours)                                       |
 | `app.ingress.enabled`                | Enable install of ingress                        | false                                                   |
