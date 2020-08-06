@@ -47,12 +47,13 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=320), nullable=False),
-    sa.Column('full_name', sa.String(length=120), nullable=False),
-    sa.Column('institution', sa.String(length=120), nullable=True),
-    sa.Column('key', sa.String(length=120), nullable=False),
-    sa.Column('pending', sa.Boolean(), nullable=True),
     sa.Column('experiment', sa.String(length=120), nullable=True),
+    sa.Column('institution', sa.String(length=120), nullable=True),
+    sa.Column('name', sa.String(length=120), nullable=False),
+    sa.Column('pending', sa.Boolean(), nullable=True),
+    sa.Column('refresh_token', sa.Text, nullable=False, unique=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('sub', sa.String(120), nullable=False, unique=True, index=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
