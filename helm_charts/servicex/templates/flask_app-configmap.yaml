@@ -23,10 +23,10 @@ data:
     GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
 
     # Create an initial admin user to manage new user workflow
-    JWT_ADMIN = '{{ .Values.app.adminID }}'
+    JWT_ADMIN = '{{ .Values.app.adminEmail }}'
 
     # Number of seconds the JWT is valid for
-    JWT_REFRESH_TOKEN_EXPIRES={{ .Values.app.tokenExpires }}
+    JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
 
     # Slack webhooks
