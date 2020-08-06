@@ -13,7 +13,7 @@ class TestDecorators(WebTestBase):
 
     def test_auth_decorator_not_signed_in(self, mocker):
         client = self._test_client(mocker,
-                                   additional_config={'ENABLE_AUTH': True})
+                                   extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
             from servicex.web.decorators import authenticated
             from servicex.web import home
@@ -24,7 +24,7 @@ class TestDecorators(WebTestBase):
 
     def test_auth_decorator_not_saved(self, mocker, new_user):
         client = self._test_client(mocker,
-                                   additional_config={'ENABLE_AUTH': True})
+                                   extra_config={'ENABLE_AUTH': True})
         with client.session_transaction() as sess:
             sess['is_authenticated'] = True
         response: Response = client.get(url_for('profile'))

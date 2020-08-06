@@ -65,11 +65,11 @@ class WebTestBase:
         }
 
     @staticmethod
-    def _test_client(mocker, additional_config=None):
+    def _test_client(mocker, extra_config=None):
         config = WebTestBase._app_config()
 
-        if additional_config:
-            config.update(additional_config)
+        if extra_config:
+            config.update(extra_config)
 
         mock_rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
         app = create_app(config, provided_rabbit_adaptor=mock_rabbit_adaptor)
