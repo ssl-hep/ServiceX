@@ -27,11 +27,11 @@ app:
   validateTransformerImage: true
 
   # Create an initial admin user to manage new user workflow
-  adminEmail: admin@example.com
-  adminPassword: changeme
+  adminID: admin
 
   # JWT remains valid for 6 hours
-  authTimeout: 21600
+  tokenExpires: false
+  authExpires: 21600
 
   ingress:
     enabled: false
