@@ -1,6 +1,8 @@
 app:
   adminPassword: changeme
   auth: true
+  slackSigningSecret: See README for instructions
+  newSignupWebhook: See README for instructions
   ingress:
     enabled: true
 codeGen:
