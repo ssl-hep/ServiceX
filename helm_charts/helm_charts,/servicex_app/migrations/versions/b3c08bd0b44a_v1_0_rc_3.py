@@ -1,8 +1,8 @@
-"""V1.0-RC.1
+"""v1.0-rc3
 
-Revision ID: b389abb05262
-Revises: 
-Create Date: 2020-07-25 15:41:23.517147
+Revision ID: b3c08bd0b44a
+Revises: 99e97a63d1bd
+Create Date: 2020-08-07 10:16:17.052225
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b389abb05262'
-down_revision = None
+revision = 'b3c08bd0b44a'
+down_revision = '99e97a63d1bd'
 branch_labels = None
 depends_on = None
 
@@ -39,23 +39,28 @@ def upgrade():
     sa.Column('total_bytes', sa.BigInteger(), nullable=True),
     sa.Column('did_lookup_time', sa.Integer(), nullable=True),
     sa.Column('generated_code_cm', sa.String(length=128), nullable=True),
+    sa.Column('status', sa.String(length=128), nullable=True),
+    sa.Column('failure_description', sa.String(length=10485760), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('request_id')
     )
     op.create_table('users',
     sa.Column('admin', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=320), nullable=False),
-    sa.Column('full_name', sa.String(length=120), nullable=False),
-    sa.Column('institution', sa.String(length=120), nullable=True),
-    sa.Column('key', sa.String(length=120), nullable=False),
-    sa.Column('pending', sa.Boolean(), nullable=True),
     sa.Column('experiment', sa.String(length=120), nullable=True),
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('institution', sa.String(length=120), nullable=True),
+    sa.Column('name', sa.String(length=120), nullable=False),
+    sa.Column('pending', sa.Boolean(), nullable=True),
+    sa.Column('refresh_token', sa.Text(), nullable=False),
+    sa.Column('sub', sa.String(length=120), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('refresh_token')
     )
+    op.create_index(op.f('ix_users_sub'), 'users', ['sub'], unique=True)
     op.create_table('file_status',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('file_id', sa.Integer(), nullable=False),
@@ -100,6 +105,7 @@ def downgrade():
     op.drop_table('transform_result')
     op.drop_table('files')
     op.drop_table('file_status')
+    op.drop_index(op.f('ix_users_sub'), table_name='users')
     op.drop_table('users')
     op.drop_table('requests')
     # ### end Alembic commands ###
