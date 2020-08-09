@@ -22,7 +22,7 @@ data:
     GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
     GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
 
-    # Create an initial admin user to manage new user workflow
+    # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
 
     # Number of seconds the JWT is valid for

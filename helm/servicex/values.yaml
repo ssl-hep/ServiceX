@@ -30,7 +30,7 @@ app:
   globusClientID: 
   globusClientSecret: 
 
-  # Create an initial admin user to manage new user workflow
+  # Specify an email address for the first admin user
   adminEmail: admin@example.com
 
   # JWT remains valid for 6 hours
