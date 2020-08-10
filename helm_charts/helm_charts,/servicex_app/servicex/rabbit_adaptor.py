@@ -190,7 +190,7 @@ class RabbitAdaptor(object):
                 # break
                 continue
             except pika.exceptions.ChannelWrongStateError:
-                current_app.loggger.info("Channel in wrong state. Reset and see if that fixes it")
+                current_app.logger.info("Channel in wrong state. Reset and see if that fixes it")
                 self.reset_closed()
                 continue
 
