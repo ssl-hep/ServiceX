@@ -27,9 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys
 import time
-import traceback
 
 import pika
 from flask import Flask
@@ -162,25 +160,9 @@ def create_app(test_config=None,
 
         @app.before_first_request
         def create_tables():
-            from servicex.models import db, UserModel
-            from flask_jwt_extended import create_refresh_token
+            from servicex.models import db
             db.init_app(app)
             db.create_all()
-            if not UserModel.find_by_email(app.config['JWT_ADMIN']):
-                try:
-                    new_user = UserModel(
-                        sub='admin',
-                        email=app.config['JWT_ADMIN'],
-                        name="Administrator",
-                        admin=True,
-                        pending=False,
-                        refresh_token=create_refresh_token('admin')
-                    )
-                    new_user.save_to_db()
-                except Exception:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-                    print(exc_value)
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor,

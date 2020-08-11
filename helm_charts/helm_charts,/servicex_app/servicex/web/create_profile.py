@@ -27,18 +27,22 @@ def create_profile():
                 institution=form.institution.data,
                 experiment=form.experiment.data,
                 refresh_token=create_refresh_token(identity=sub))
+            if new_user.email == current_app.config.get('JWT_ADMIN'):
+                new_user.admin = True
+                new_user.pending = False
             try:
                 new_user.save_to_db()
                 session['user_id'] = new_user.id
                 session['admin'] = new_user.admin
                 webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
-                if webhook_url:
+                msg_segments = ["Profile created!"]
+                if webhook_url and new_user.pending:
                     res = requests.post(webhook_url, signup(new_user.email))
                     # Raise exception on error (e.g. bad request or forbidden url)
                     res.raise_for_status()
-                flash("Profile created! Your account is pending approval. "
-                      "We'll email you when it's ready.",
-                      'success')
+                    msg_segments += ["Your account is pending approval.",
+                                     "We'll email you when it's ready."]
+                flash(' '.join(msg_segments), 'success')
                 return redirect(url_for('profile'))
             except requests.exceptions.HTTPError as err:
                 print("Error in response from Slack webhook:", err)
