@@ -28,9 +28,10 @@
 import hashlib
 from datetime import datetime
 
-from flask_sqlalchemy import SQLAlchemy
+import requests
 from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
+from flask_sqlalchemy import SQLAlchemy, current_app
 
 db = SQLAlchemy()
 max_string_size = 10485760
@@ -118,6 +119,16 @@ class UserModel(db.Model):
             raise NoResultFound(f"No user registered with email: {email}")
         pending_user.pending = False
         pending_user.save_to_db()
+        mailgun_api_key = current_app.config['MAILGUN_API_KEY']
+        text = "Your account has been approved. " \
+               "You can begin making transformation requests. "
+        requests.post(
+            "https://api.mailgun.net/v3/YOUR_DOMAIN_NAME/messages",
+            auth=("api", mailgun_api_key),
+            data={"from": "ServiceX <mailgun@ssl-hep.org>",
+                  "to": [email],
+                  "subject": "Welcome to ServiceX!",
+                  "text": text})
 
     @staticmethod
     def generate_hash(password):
