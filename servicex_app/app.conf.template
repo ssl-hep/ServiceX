@@ -11,8 +11,8 @@ ENABLE_AUTH=False
 GLOBUS_CLIENT_ID='globus-client-id'
 GLOBUS_CLIENT_SECRET='globus-client-secret'
 
-# JWT admin credentials
-JWT_ADMIN='admin'
+# JWT admin email address
+JWT_ADMIN='admin@example.com'
 
 # Number of seconds the JWTs are valid for
 JWT_REFRESH_TOKEN_EXPIRES=False
