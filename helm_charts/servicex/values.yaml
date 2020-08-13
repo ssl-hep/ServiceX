@@ -37,6 +37,10 @@ app:
   tokenExpires: false
   authExpires: 21600
 
+  # Mailgun configuration
+  mailgunApiKey:
+  mailgunDomain:
+
   ingress:
     enabled: false
     host: uc.ssl-hep.org
