@@ -119,16 +119,19 @@ class UserModel(db.Model):
             raise NoResultFound(f"No user registered with email: {email}")
         pending_user.pending = False
         pending_user.save_to_db()
-        mailgun_api_key = current_app.config['MAILGUN_API_KEY']
-        text = "Your account has been approved. " \
-               "You can begin making transformation requests. "
-        requests.post(
-            "https://api.mailgun.net/v3/YOUR_DOMAIN_NAME/messages",
-            auth=("api", mailgun_api_key),
-            data={"from": "ServiceX <mailgun@ssl-hep.org>",
-                  "to": [email],
-                  "subject": "Welcome to ServiceX!",
-                  "text": text})
+        mailgun_api_key = current_app.config.get('MAILGUN_API_KEY')
+        mailgun_domain = current_app.config.get('MAILGUN_DOMAIN')
+        if mailgun_api_key and mailgun_domain:
+            text = "Your account has been approved. " \
+                   "You can begin making transformation requests. "
+            res = requests.post(
+                f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
+                auth=("api", mailgun_api_key),
+                data={"from": "ServiceX <mailgun@ssl-hep.org>",
+                      "to": [email],
+                      "subject": "Welcome to ServiceX!",
+                      "text": text})
+            res.raise_for_status()
 
     @staticmethod
     def generate_hash(password):
