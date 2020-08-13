@@ -33,6 +33,10 @@ app:
   # JWT remains valid for 6 hours
   authTimeout: 21600
 
+  # Mailgun configuration
+  mailgunApiKey:
+  mailgunDomain:
+
   ingress:
     enabled: false
     host: uc.ssl-hep.org
