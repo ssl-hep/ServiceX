@@ -127,7 +127,7 @@ class UserModel(db.Model):
             res = requests.post(
                 f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
                 auth=("api", mailgun_api_key),
-                data={"from": "ServiceX <mailgun@ssl-hep.org>",
+                data={"from": f"ServiceX <noreply@{mailgun_domain}>",
                       "to": [email],
                       "subject": "Welcome to ServiceX!",
                       "text": text})

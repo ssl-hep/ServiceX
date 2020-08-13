@@ -62,7 +62,7 @@ approved. ServiceX admins can view the pending users with a GET on the
 
     {
         "email": "<the email>"
-    }
+    }flak
 
 The API can also be configured to send notifications of new user registrations
 to a Slack channel of choice, allowing administrators to approve pending users

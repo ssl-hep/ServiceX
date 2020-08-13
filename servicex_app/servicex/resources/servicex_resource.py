@@ -76,7 +76,7 @@ class ServiceXResource(Resource):
         body = req.get_data().decode('utf-8')
 
         timestamp = req.headers['X-Slack-Request-Timestamp']
-        if abs(time.time() - float(timestamp)) > 60 * 5:
+        if time.time() - float(timestamp) > 60 * 5:
             return False, "Request is expired"
 
         sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')
