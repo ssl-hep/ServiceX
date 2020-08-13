@@ -81,3 +81,4 @@ SIGNUP_WEBHOOK_URL = '' # Create at https://api.slack.com/apps/<app-id>/incoming
 
 # Mailgun configuration
 MAILGUN_API_KEY = ''
+MAILGUN_DOMAIN = ''
