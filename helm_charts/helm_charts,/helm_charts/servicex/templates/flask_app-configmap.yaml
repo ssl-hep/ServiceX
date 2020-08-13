@@ -37,6 +37,10 @@ data:
     SIGNUP_WEBHOOK_URL = '{{ .Values.app.newSignupWebhook }}'
     {{ end }}
 
+    # Mailgun configuration
+    MAILGUN_API_KEY = '{{ .Values.app.mailgunApiKey }}'
+    MAILGUN_DOMAIN = '{{ .Values.app.mailgunDomain }}'
+
     {{ if .Values.postgres.enabled }}
     SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
     {{ else }}
