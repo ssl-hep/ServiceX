@@ -67,8 +67,12 @@ approved. ServiceX admins can view the pending users with a GET on the
 The API can also be configured to send notifications of new user registrations
 to a Slack channel of choice, allowing administrators to approve pending users
 directly from Slack. This requires setting up a Slack app and supplying the
-``SLACK_SIGNING_SECRET`` and ``SIGNUP_WEBHOOK_URL`` config properties. For full
+``SLACK_SIGNING_SECRET`` and ``SIGNUP_WEBHOOK_URL`` config values. For full
 details, see the `ServiceX README <https://github.com/ssl-hep/ServiceX>`_.
+
+Email notifications can be sent to users when they are approved via Mailgun.
+All this requires is setting the ``MAILGUN_API_KEY`` and ``MAILGUN_DOMAIN``
+config values.
 
 Local Development
 -----------------
