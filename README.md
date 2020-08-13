@@ -195,6 +195,8 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
 | `app.slackSigningSecret`             | Signing secret for Slack application             | -
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
+| `app.mailgunApiKey`                  | API key to send Mailgun emails to newly approved users | -
+| `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
