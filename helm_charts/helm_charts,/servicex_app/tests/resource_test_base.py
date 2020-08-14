@@ -117,3 +117,21 @@ class ResourceTestBase:
         docker = mocker.MagicMock(DockerRepoAdapter)
         docker.check_image_exists = mocker.Mock(return_value=True)
         return docker
+
+    @fixture
+    def mock_jwt_required(self, mocker):
+        def identity(fn):
+            return fn
+        mocker.patch('servicex.decorators.jwt_required', side_effect=identity)
+
+    @fixture
+    def mock_requesting_user(self, mocker):
+        test_id = 6
+        mock_user = mocker.Mock()
+        mock_user.id = test_id
+        mock_user.admin = False
+        mock_user.pending = False
+        mocker.patch(
+            'servicex.resources.servicex_resource.UserModel.find_by_sub',
+            return_value=mock_user)
+        return mock_user
