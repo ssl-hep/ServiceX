@@ -33,7 +33,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
         import servicex
         mock_transform_request_read_all = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_all',
+            'return_json',
             return_value=[
                 {'request_id': '123'},
                 {'request_id': '456'}

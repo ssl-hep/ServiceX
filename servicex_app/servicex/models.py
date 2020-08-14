@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Iterable
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -137,26 +137,6 @@ class TransformRequest(db.Model):
 
     _cache = {}
 
-    @classmethod
-    def to_json(cls, x):
-        return {
-            'request_id': x.request_id,
-            'did': x.did,
-            'columns': x.columns,
-            'selection': x.selection,
-            'tree-name': x.tree_name,
-            'image': x.image,
-            'chunk-size': x.chunk_size,
-            'workers': x.workers,
-            'result-destination': x.result_destination,
-            'result-format': x.result_format,
-            'kafka-broker': x.kafka_broker,
-            'workflow-name': x.workflow_name,
-            'generated-code-cm': x.generated_code_cm,
-            'status': x.status,
-            'failure-info': x.failure_description
-        }
-
     id = db.Column(db.Integer, primary_key=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
@@ -186,10 +166,28 @@ class TransformRequest(db.Model):
         db.session.add(self)
         db.session.flush()
 
+    def to_json(self):
+        return {
+            'request_id': self.request_id,
+            'did': self.did,
+            'columns': self.columns,
+            'selection': self.selection,
+            'tree-name': self.tree_name,
+            'image': self.image,
+            'chunk-size': self.chunk_size,
+            'workers': self.workers,
+            'result-destination': self.result_destination,
+            'result-format': self.result_format,
+            'kafka-broker': self.kafka_broker,
+            'workflow-name': self.workflow_name,
+            'generated-code-cm': self.generated_code_cm,
+            'status': self.status,
+            'failure-info': self.failure_description
+        }
+
     @classmethod
-    def return_all(cls):
-        return {'requests': list(map(lambda x: cls.to_json(x),
-                                     TransformRequest.query.all()))}
+    def return_json(cls, requests: Iterable['TransformRequest']):
+        return {'requests': [r.to_json() for r in requests]}
 
     @classmethod
     def get_request_cached(cls, request_id):
@@ -201,7 +199,7 @@ class TransformRequest(db.Model):
         return live_val.id
 
     @classmethod
-    def return_request(cls, request_id):
+    def return_request(cls, request_id) -> Optional['TransformRequest']:
         try:
             return cls.query.filter_by(request_id=request_id).one()
         except NoResultFound:
