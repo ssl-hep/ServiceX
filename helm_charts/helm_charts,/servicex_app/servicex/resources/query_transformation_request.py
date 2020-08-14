@@ -26,25 +26,50 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import current_app
+from flask_jwt_extended import get_jwt_identity
+from flask_restful import reqparse
 
 from servicex.decorators import auth_required
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, UserModel
 from servicex.resources.servicex_resource import ServiceXResource
+
+parser = reqparse.RequestParser()
+parser.add_argument('submitted_by', type=int, location='args')
 
 
 class QueryTransformationRequest(ServiceXResource):
     @auth_required
     def get(self, request_id=None):
+        user = None
+        unauthorized_msg = 'You can only access your own transformation request(s).'
+        if current_app.config.get('ENABLE_AUTH'):
+            user_id = get_jwt_identity()
+            user = UserModel.find_by_email(user_id)
         if request_id:
-            request_rec = TransformRequest.to_json(
-                TransformRequest.return_request(request_id))
-
+            transform = TransformRequest.return_request(request_id)
+            if not transform:
+                msg = f'Transformation request not found with id: {request_id}'
+                return {'message': msg}, 404
+            if user and not user.admin and user.id != transform.submitted_by:
+                print(user.id, transform.submitted_by)
+                return {'message': unauthorized_msg}, 401
+            transform_json = transform.to_json()
             if current_app.config['OBJECT_STORE_ENABLED'] and \
-                    request_rec['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
-                request_rec['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
-                request_rec['minio-secured'] = current_app.config.get('MINIO_SECURED', False)
-                request_rec['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
-                request_rec['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
-            return request_rec
-        else:
-            return TransformRequest.return_all()
+                    transform_json['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
+                transform_json['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
+                transform_json['minio-secured'] = current_app.config.get('MINIO_SECURED', False)
+                transform_json['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
+                transform_json['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
+            return transform_json
+
+        args = parser.parse_args()
+        query_id = args.get('submitted_by')
+        if query_id:
+            if not user.admin and user.id != query_id:
+                return {'message': unauthorized_msg}, 401
+            transforms = TransformRequest.query.filter_by(submitted_by=query_id)
+            return TransformRequest.return_json(transforms)
+
+        if user and not user.admin:
+            return {'message': unauthorized_msg}, 401
+        return TransformRequest.return_json(TransformRequest.query.all())

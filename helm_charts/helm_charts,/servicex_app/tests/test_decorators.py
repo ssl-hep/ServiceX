@@ -120,8 +120,9 @@ class TestDecorators(WebTestBase):
     def test_auth_decorator_integration_auth_disabled(self, mocker):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
-        mocker.patch('servicex.resources.query_transformation_request.TransformRequest.to_json',
-                     return_value=data)
+        mock = mocker.patch('servicex.resources.query_transformation_request'
+                            '.TransformRequest.return_request').return_value
+        mock.to_json.return_value = data
         client = self._test_client(mocker)
         with client.application.app_context():
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
@@ -156,11 +157,14 @@ class TestDecorators(WebTestBase):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         fake_transform_id = 123
         data = {'id': fake_transform_id}
-        mocker.patch('servicex.resources.query_transformation_request.TransformRequest.to_json',
-                     return_value=data)
+        mock = mocker.patch('servicex.resources.query_transformation_request'
+                            '.TransformRequest.return_request').return_value
+        mock.submitted_by = user.id
+        mock.to_json.return_value = data
         with client.application.app_context():
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
                                             headers=self.fake_header())
+            print(response.data)
             assert response.status_code == 200
             assert response.json == data
 
