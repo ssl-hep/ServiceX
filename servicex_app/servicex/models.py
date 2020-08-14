@@ -51,6 +51,7 @@ class UserModel(db.Model):
     pending = db.Column(db.Boolean, default=True)
     refresh_token = db.Column(db.Text, nullable=False, unique=True)
     sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    requests = db.relationship('TransformRequest', backref='user')
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
     def save_to_db(self):
@@ -170,6 +171,7 @@ class TransformRequest(db.Model):
     result_format = db.Column(db.String(32), nullable=False)
     kafka_broker = db.Column(db.String(128), nullable=True)
     workflow_name = db.Column(db.String(40), nullable=False)
+    submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, nullable=True)
     files_skipped = db.Column(db.Integer, nullable=True)

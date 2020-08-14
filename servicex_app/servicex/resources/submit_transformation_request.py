@@ -25,20 +25,19 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
 import sys
 import traceback
-from datetime import datetime
-from datetime import timezone
-import json
 import uuid
+from datetime import datetime, timezone
 
 from flask import current_app
 from flask_restful import reqparse
-
-from servicex.models import TransformRequest, DatasetFile, db
-from servicex.decorators import auth_required
-from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+
+from servicex.decorators import auth_required
+from servicex.models import TransformRequest, DatasetFile, db
+from servicex.resources.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='Dataset Identifier. Provide this or file-list',
@@ -144,6 +143,9 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(transformation_request),
                 status='Submitted'
             )
+            user = self.get_requesting_user()
+            if user:
+                request_rec.submitted_by = user.id
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
