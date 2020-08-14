@@ -15,21 +15,41 @@ minio:
     enabled: true
     hosts:
     - "xaod-minio.uc.ssl-hep.org"
-  mode: distributed
+  persistence:
+    enabled: false
+  metrics:
+    serviceMonitor:
+      enabled: true
 postgres:
   enabled: true
 postgresql:
   persistence:
     enabled: true
     storageClass: rook-ceph-block
+  metrics:
+    enabled: true
 preflight:
   pullPolicy: Always
 rabbitmq:
-  persistence:
+  metrics:
     enabled: true
-    storageClass: rook-ceph-block
-  service:
-    type: NodePort
+    plugins: rabbitmq_prometheus
+    podAnnotations:
+      prometheus.io/port: '8080'
+      prometheus.io/scrape: "true"
+    prometheusRule:
+      additionalLabels: {}
+      enabled: false
+      namespace: ""
+      rules: []
+    serviceMonitor:
+      additionalLabels: {}
+      enabled: false
+      honorLabels: false
+      interval: 30s
+    persistence:
+      enabled: true
+      storageClass: rook-ceph-block
 transformer:
-  autoscalerEnabled: true
+  autoscalerEnabled: false
   pullPolicy: Always
