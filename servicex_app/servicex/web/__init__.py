@@ -6,7 +6,6 @@ from .api_token import api_token
 from .create_profile import create_profile
 from .view_profile import view_profile
 from .edit_profile import edit_profile
-from .slack_interaction import slack_interaction
 
 __all__ = [
     home,
@@ -17,5 +16,4 @@ __all__ = [
     create_profile,
     view_profile,
     edit_profile,
-    slack_interaction
 ]

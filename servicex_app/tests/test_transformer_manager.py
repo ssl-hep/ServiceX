@@ -81,8 +81,8 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 4,
-                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
+                                   extra_config={'TRANSFORMER_CPU_LIMIT': 4,
+                                                 'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -125,9 +125,9 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_AUTOSCALE_ENABLED': False,
-                                                      'TRANSFORMER_CPU_LIMIT': 1,
-                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
+                                   extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False,
+                                                 'TRANSFORMER_CPU_LIMIT': 1,
+                                                 'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -155,7 +155,7 @@ class TestTransformerManager(ResourceTestBase):
         }
 
         transformer = TransformerManager('external-kubernetes')
-        client = self._test_client(additional_config=additional_config,
+        client = self._test_client(extra_config=additional_config,
                                    transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
@@ -186,8 +186,8 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 1,
-                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
+                                   extra_config={'TRANSFORMER_CPU_LIMIT': 1,
+                                                 'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -224,7 +224,7 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
 
-        client = self._test_client(additional_config=my_config,
+        client = self._test_client(extra_config=my_config,
                                    transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
@@ -259,8 +259,8 @@ class TestTransformerManager(ResourceTestBase):
 
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_CPU_LIMIT': 1,
-                                                      'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
+                                   extra_config={'TRANSFORMER_CPU_LIMIT': 1,
+                                                 'TRANSFORMER_CPU_SCALE_THRESHOLD': 30})
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -313,7 +313,7 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager('external-kubernetes')
         client = self._test_client(transformation_manager=transformer,
                                    rabbit_adaptor=mock_rabbit_adaptor,
-                                   additional_config={'TRANSFORMER_AUTOSCALE_ENABLED': False})
+                                   extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False})
 
         with client.application.app_context():
             transformer.shutdown_transformer_job('1234', 'my-ns')

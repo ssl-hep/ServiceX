@@ -43,14 +43,15 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.transformer_file_complete import TransformerFileComplete
     from servicex.resources.transform_errors import TransformErrors
 
-    from servicex.resources.jwt.all_users import AllUsers
-    from servicex.resources.jwt.token_refresh import TokenRefresh
-    from servicex.resources.jwt.accept_user import AcceptUser
-    from servicex.resources.jwt.delete_user import DeleteUser
-    from servicex.resources.jwt.pending_all import PendingAllUsers
+    from servicex.resources.users.all_users import AllUsers
+    from servicex.resources.users.token_refresh import TokenRefresh
+    from servicex.resources.users.accept_user import AcceptUser
+    from servicex.resources.users.delete_user import DeleteUser
+    from servicex.resources.users.pending_all import PendingAllUsers
+    from servicex.resources.users.slack_interaction import SlackInteraction
 
     from servicex.web import home, sign_in, sign_out, auth_callback, \
-        create_profile, view_profile, edit_profile, slack_interaction, api_token
+        create_profile, view_profile, edit_profile, api_token
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
@@ -70,8 +71,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                      methods=['GET', 'POST'])
     app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
                      methods=['GET', 'POST'])
-    app.add_url_rule('/slack', 'slack_interaction', slack_interaction,
-                     methods=['POST'])
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, '/token/refresh')
@@ -79,6 +78,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AcceptUser, '/accept')
     api.add_resource(DeleteUser, '/users/<user_id>')
     api.add_resource(PendingAllUsers, '/pending')
+    api.add_resource(SlackInteraction, '/slack')
 
     # Client public endpoints
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
