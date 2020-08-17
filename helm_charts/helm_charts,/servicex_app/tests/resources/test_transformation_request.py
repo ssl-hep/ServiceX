@@ -264,7 +264,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter,
-                                   additional_config={
+                                   extra_config={
                                        'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False}
                                    )
 
@@ -340,7 +340,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                   'workers': 10}
 
         mock_object_store = mocker.MagicMock(ObjectStoreManager)
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    object_store=mock_object_store,
                                    docker_repo_adapter=mock_docker_repo_adapter)
@@ -416,7 +416,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             '_validate_user',
             return_value=(True, None))
 
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
@@ -445,7 +445,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             '_validate_user',
             return_value=(False, "This is a test"))
 
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation',

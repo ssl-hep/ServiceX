@@ -67,10 +67,8 @@ class WebTestBase:
     @staticmethod
     def _test_client(mocker, extra_config=None):
         config = WebTestBase._app_config()
-
         if extra_config:
             config.update(extra_config)
-
         mock_rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
         app = create_app(config, provided_rabbit_adaptor=mock_rabbit_adaptor)
         app.test_request_context().push()
@@ -108,7 +106,8 @@ class WebTestBase:
                 'token_type': 'Bearer'}
         }
 
-    def _id_token(self):
+    @staticmethod
+    def _id_token():
         return {
             "iss": "https://auth.globus.org",
             "exp": 1596128188,
@@ -148,11 +147,7 @@ class WebTestBase:
 
     @fixture
     def client(self, mocker):
-        config = WebTestBase._app_config()
-        rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
-        app = create_app(config, provided_rabbit_adaptor=rabbit_adaptor)
-        app.test_request_context().push()
-        with app.test_client() as client:
+        with self._test_client(mocker) as client:
             yield client
 
     @fixture

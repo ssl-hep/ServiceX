@@ -56,7 +56,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
             'OBJECT_STORE_ENABLED': False
         }
 
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 200
@@ -93,7 +93,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
             'MINIO_SECRET_KEY': 'leftfoot1'
         }
 
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 200
@@ -133,7 +133,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
             'MINIO_SECRET_KEY': 'leftfoot1'
         }
 
-        client = self._test_client(additional_config=local_config,
+        client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 200

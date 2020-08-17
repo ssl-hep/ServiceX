@@ -62,7 +62,7 @@ class ResourceTestBase:
         }
 
     @staticmethod
-    def _test_client(additional_config=None,
+    def _test_client(extra_config=None,
                      transformation_manager=None,
                      rabbit_adaptor=None,
                      object_store=None,
@@ -74,8 +74,8 @@ class ResourceTestBase:
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
 
-        if additional_config:
-            config.update(additional_config)
+        if extra_config:
+            config.update(extra_config)
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
                          object_store, elasticsearch_adapter, code_gen_service,

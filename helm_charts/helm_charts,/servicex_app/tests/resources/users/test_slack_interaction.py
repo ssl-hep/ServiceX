@@ -4,10 +4,9 @@ import hmac
 import hashlib
 from urllib.parse import quote_plus
 
-from flask import Response, url_for
+from flask import Response
 
-from .web_test_base import WebTestBase
-
+from ...resource_test_base import ResourceTestBase
 
 payload = {
   "type": "block_actions",
@@ -99,10 +98,11 @@ payload = {
 }
 
 
-class TestSlackInteraction(WebTestBase):
-    def test_slack_interaction_not_configured(self, client, mocker):
+class TestSlackInteraction(ResourceTestBase):
+    def test_slack_interaction_not_configured(self, mocker, mock_rabbit_adaptor):
         mock_post = mocker.patch('requests.post')
-        response: Response = client.post(url_for('slack_interaction'),
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)})
         assert response.status_code == 403
         with client.application.app_context():
@@ -110,13 +110,12 @@ class TestSlackInteraction(WebTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               missing_slack_app())
 
-    def test_slack_interaction_expired(self, mocker):
+    def test_slack_interaction_expired(self, mocker, mock_rabbit_adaptor):
         mock_post = mocker.patch('requests.post')
-        client = self._test_client(mocker, extra_config={
-            'SLACK_SIGNING_SECRET': 'my-slack-secret'
-        })
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         headers = {'X-Slack_Request-Timestamp': 0}
-        response: Response = client.post(url_for('slack_interaction'),
+        response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 403
@@ -125,16 +124,15 @@ class TestSlackInteraction(WebTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               request_expired())
 
-    def test_slack_interaction_invalid(self, mocker):
+    def test_slack_interaction_invalid(self, mocker, mock_rabbit_adaptor):
         mock_post = mocker.patch('requests.post')
-        client = self._test_client(mocker, extra_config={
-            'SLACK_SIGNING_SECRET': 'my-slack-secret'
-        })
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         headers = {
             'X-Slack_Request-Timestamp': time.time(),
             'X-Slack-Signature': 'abc'
         }
-        response: Response = client.post(url_for('slack_interaction'),
+        response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 401
@@ -143,12 +141,12 @@ class TestSlackInteraction(WebTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               verification_failed())
 
-    def test_slack_interaction_accept_user(self, mocker):
+    def test_slack_interaction_accept_user(self, mocker, mock_rabbit_adaptor):
         mock_post = mocker.patch('requests.post')
         mock_user_model = mocker.patch('servicex.models.UserModel')
         secret = 'my-slack-secret'
-        client = self._test_client(mocker, extra_config={
-            'SLACK_SIGNING_SECRET': secret})
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         timestamp = time.time()
         body = f"payload={quote_plus(json.dumps(payload))}"
         sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')
@@ -158,7 +156,7 @@ class TestSlackInteraction(WebTestBase):
             'X-Slack_Request-Timestamp': timestamp,
             'X-Slack-Signature': "v0=" + signature
         }
-        response: Response = client.post(url_for('slack_interaction'),
+        response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 200
