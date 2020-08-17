@@ -25,12 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from datetime import datetime
 import hashlib
+from datetime import datetime
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
-from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 max_string_size = 10485760
@@ -40,13 +40,14 @@ class UserModel(db.Model):
     __tablename__ = 'users'
     admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
-    id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(320), nullable=False, unique=True)
-    full_name = db.Column(db.String(120), nullable=False)
-    institution = db.Column(db.String(120))
-    key = db.Column(db.String(120), nullable=False)
-    pending = db.Column(db.Boolean, default=True)
     experiment = db.Column(db.String(120))
+    id = db.Column(db.Integer, primary_key=True)
+    institution = db.Column(db.String(120))
+    name = db.Column(db.String(120), nullable=False)
+    pending = db.Column(db.Boolean, default=True)
+    refresh_token = db.Column(db.Text, nullable=False, unique=True)
+    sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
     def save_to_db(self):
@@ -58,8 +59,15 @@ class UserModel(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_email(cls, email):
+    def find_by_email(cls, email) -> 'UserModel':
         return cls.query.filter_by(email=email).first()
+
+    @classmethod
+    def find_by_sub(cls, sub) -> 'UserModel':
+        result = cls.query.filter_by(sub=sub).first()
+        if result is None:
+            raise NoResultFound(f"No user found matching subject: {sub}")
+        return result
 
     @classmethod
     def return_all(cls):
