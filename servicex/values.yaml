@@ -26,12 +26,16 @@ app:
   auth: false
   validateTransformerImage: true
 
-  # Create an initial admin user to manage new user workflow
+  # Globus configuration - obtain these at https://auth.globus.org/v2/web/developers
+  globusClientID: 
+  globusClientSecret: 
+
+  # Specify an email address for the first admin user
   adminEmail: admin@example.com
-  adminPassword: changeme
 
   # JWT remains valid for 6 hours
-  authTimeout: 21600
+  tokenExpires: false
+  authExpires: 21600
 
   ingress:
     enabled: false
