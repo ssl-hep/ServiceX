@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_form %}
+{% block content %}
+    <div class="content-section" style="width: 400px">
+        <h4 class="mb-4">{{ action }}</h4>
+        {{ render_form(form, button_style='outline-primary', extra_classes='d-flex flex-column') }}
+    </div>
+{% endblock %}

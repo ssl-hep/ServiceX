@@ -7,11 +7,15 @@ SECRET_KEY = 'abc123!'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
-# JWT admin credentials
-JWT_ADMIN='admin'
-JWT_PASS='password'
+# Globus configuration - obtained at https://auth.globus.org/v2/web/developers
+GLOBUS_CLIENT_ID='globus-client-id'
+GLOBUS_CLIENT_SECRET='globus-client-secret'
 
-# Number of seconds the JWT is valid for
+# JWT admin email address
+JWT_ADMIN='admin@example.com'
+
+# Number of seconds the JWTs are valid for
+JWT_REFRESH_TOKEN_EXPIRES=False
 JWT_ACCESS_TOKEN_EXPIRES=21600 # Six hours
 
 # Based on https://codeburst.io/jwt-authorization-in-flask-c63c1acf4eeb

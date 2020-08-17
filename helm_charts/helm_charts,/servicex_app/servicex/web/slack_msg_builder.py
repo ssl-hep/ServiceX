@@ -54,3 +54,35 @@ def signup_ia(original_msg, initiating_user, action_id) -> str:
         "blocks": [original_msg['blocks'][0], feedback],
         "replace_original": True
     })
+
+
+def missing_slack_app() -> str:
+    return json.dumps({
+        "response_type": "ephemeral",
+        "replace_original": False,
+        "text": "ServiceX has no Slack app configured."
+    })
+
+
+def request_expired() -> str:
+    return json.dumps({
+        "response_type": "ephemeral",
+        "replace_original": False,
+        "text": "Sorry, this request has expired."
+    })
+
+
+def verification_failed() -> str:
+    return json.dumps({
+        "response_type": "ephemeral",
+        "replace_original": False,
+        "text": 'Slack Verification Failed: Signatures did not match.'
+    })
+
+
+def user_not_found(error) -> str:
+    return json.dumps({
+        "response_type": "ephemeral",
+        "replace_original": False,
+        "text": error
+    })
