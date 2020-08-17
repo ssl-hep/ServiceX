@@ -18,12 +18,16 @@ data:
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
-    # Create an initial admin user to manage new user workflow
+    # Globus configuration
+    GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
+    GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
+
+    # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
-    JWT_PASS = '{{ .Values.app.adminPassword }}'
 
     # Number of seconds the JWT is valid for
-    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authTimeout }}
+    JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
+    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
 
     # Slack webhooks
     {{ if .Values.app.slackSigningSecret }}
@@ -103,5 +107,3 @@ data:
     {{ if .Values.codeGen.enabled }}
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
     {{ end }}
-
-
