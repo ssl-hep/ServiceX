@@ -28,11 +28,9 @@
 import hashlib
 from datetime import datetime
 
-import requests
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
-from flask_sqlalchemy import SQLAlchemy, current_app
-from flask import render_template
 
 from servicex.mailgun_adaptor import MailgunAdaptor
 
