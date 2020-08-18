@@ -34,6 +34,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from flask_sqlalchemy import SQLAlchemy, current_app
 from flask import render_template
 
+from servicex.mailgun_adaptor import MailgunAdaptor
+
 db = SQLAlchemy()
 max_string_size = 10485760
 
@@ -61,18 +63,7 @@ class UserModel(db.Model):
         db.session.commit()
 
     def send_email(self, template_path):
-        mailgun_api_key = current_app.config.get('MAILGUN_API_KEY')
-        mailgun_domain = current_app.config.get('MAILGUN_DOMAIN')
-        if not mailgun_api_key or not mailgun_domain:
-            return
-        res = requests.post(
-            f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
-            auth=("api", mailgun_api_key),
-            data={"from": f"ServiceX <noreply@{mailgun_domain}>",
-                  "to": [self.email],
-                  "subject": "Welcome to ServiceX!",
-                  "html": render_template(template_path)})
-        res.raise_for_status()
+        MailgunAdaptor().send(self.email, template_path)
 
     @classmethod
     def find_by_email(cls, email) -> 'UserModel':
@@ -134,7 +125,7 @@ class UserModel(db.Model):
             raise NoResultFound(f"No user registered with email: {email}")
         pending_user.pending = False
         pending_user.save_to_db()
-        pending_user.send_email('emails/welcome.html')
+        pending_user.send_email('welcome.html')
 
     @staticmethod
     def generate_hash(password):
