@@ -255,6 +255,10 @@ To set this up, complete the following steps before deploying ServiceX:
 - You're all set! ServiceX will now send interactive Slack notifications to your signups channel whenever a new user registers.
 
 
+### Email Notifications
+
+ServiceX can send email notifications to newly registered users via [Mailgun](https://www.mailgun.com/) once their access has been approxed by an administrator. To enable this, obtain a Mailgun API key and [verified domain](https://documentation.mailgun.com/en/latest/quickstart-sending.html#verify-your-domain) and set `app.mailgunApiKey` and `app.mailgunDomain` in your `values.yaml`.
+
 
 ### Using The Service
 You can access the REST service on your desktop with 
