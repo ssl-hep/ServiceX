@@ -15,35 +15,48 @@ services:
 
 User Management
 ---------------
-If ``ENABLE_AUTH``  is set to True endpoints will be protected with JWT bearer
-tokens.
+If ``ENABLE_AUTH`` is set to True, an identity management system will be
+enabled. Users will need to create accounts in order to make requests.
+The system consists of two components: authentication (verification of each
+user's identity) and authorization (control of access to API resources).
 
-An initial admin account is created when the app is started. That account's
-email is found in the ``JWT_ADMIN`` config property, and the password is
-set from ``JWT_PASSWORD``. This account can be used for all interactions with
-the endpoints, and can also be used to enable new users who submit requests for
-access to the system.
+Authentication
+**************
+Authentication is currently implemented via `Globus <https://www.globus.org/>`_,
+a federated identity provider which implements the OAuth 2.0 protocol.
+Prospective users must visit the ServiceX website included in this Flask app
+at its hosted domain. There, they can sign in via Globus to confirm their
+identity using any supported identity provider (e.g. their university, CILogon,
+or GitHub account). A corresponding ServiceX user account will be created.
+Existing users can also visit the website to view information associated with
+their account.
 
-Users (including the admin user) obtain a bearer token with the ``/login``
-endpoint. This POST request expects a JSON body that looks like:
+Authorization
+*************
+If authentication is enabled, API resources will be protected with JWT bearer
+tokens. Authenticated users will be issued a ServiceX API token, which is a JWT
+refresh token containing their identity. This refresh token can be used to
+obtain access tokens, which are required in order to access protected resources.
 
-.. code:: json
+Clients accessing the ServiceX API, such as the
+`Python client <https://github.com/ssl-hep/ServiceX_frontend>`_,
+should accept the API token as a configuration value or environment variable,
+and use it to obtain access tokens and make requests. Requests to secured
+endpoints should have an HTTP header called ``Authorization`` with a value
+of ``Bearer <access_token>``.
 
-    {
-        "email": "admin@example.com",
-        "password": "password"
-    }
+Administrators
+**************
+Admin accounts are used to manage other users. The API server supports a
+``JWT_ADMIN`` config property, which should be set to the email address of the
+initial admin user. The first user to sign up with this email address will be
+made an admin user automatically. This should be done immediately after
+deployment.
 
-
-The response will include an ``access_token`` and a ``refresh_token``. Requests
-to secured endpoints should have an HTTP header called ``Authorization`` it must
-have as the value ``Bearer`` and the token returned by the login POST.
-
-New users may request an account via the web page hosted at ``/``. This form
-asks for the email and password they wish to use, as well as some other
-basic information. New accounts are marked as pending. An admin user can view
-the pending accounts with a GET on the ``/pending`` endpoint.
-They can approve the request with a POST to ``/accept`` with a body of:
+New users are marked as pending, and will be unable to submit requests until
+approved. ServiceX admins can view the pending users with a GET on the
+``/pending`` endpoint. They can approve a pending user with a POST to
+``/accept`` with a body of:
 
 .. code:: json
 
@@ -52,7 +65,7 @@ They can approve the request with a POST to ``/accept`` with a body of:
     }
 
 The API can also be configured to send notifications of new user registrations
-to a Slack channel of choice and allow administrators to approve pending users
+to a Slack channel of choice, allowing administrators to approve pending users
 directly from Slack. This requires setting up a Slack app and supplying the
 ``SLACK_SIGNING_SECRET`` and ``SIGNUP_WEBHOOK_URL`` config properties. For full
 details, see the `ServiceX README <https://github.com/ssl-hep/ServiceX>`_.
@@ -96,7 +109,7 @@ this database you can forward the postgres port to your development system with
 
 .. code:: bash
 
-kubectl port-forward xaod-postgresql-0 5432:5432
+	kubectl port-forward xaod-postgresql-0 5432:5432
 
 Then use your favorite postgres sql client to connect to this
 database with the connection URL``jdbc:postgresql://localhost:5432/postgres``
@@ -133,7 +146,7 @@ command:
 
 .. code:: bash
 
-FLASK_APP=servicex/app.py APP_CONFIG_FILE=../app.conf flask db migrate -m "<<release version>>"
+	FLASK_APP=servicex/app.py APP_CONFIG_FILE=../app.conf flask db migrate -m "<<release version>>"
 
 This will add a new script under ``migrations`` directory. Check it for
 accuracy and check it into the repo to have it applied when the built docker
