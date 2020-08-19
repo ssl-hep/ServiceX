@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-prometheus
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus
+        volumeMounts:
+        - name: prom-cfg
+          mountPath: /etc/prometheus/prometheus.yml
+          subPath: prometheus.yml
+        ports:
+        - containerPort: 9090
+      volumes:
+        - name: prom-cfg
+          configMap:
+            name: {{ .Release.Name }}-prom-cfg
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-prometheus
+spec:
+  selector:
+    app: {{ .Release.Name }}-prometheus
+  ports:
+  - name: promui
+    protocol: TCP
+    port: 9090
+    targetPort: 9090
