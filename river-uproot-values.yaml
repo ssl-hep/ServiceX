@@ -19,6 +19,8 @@ minio:
 postgres:
   enabled: true
 postgresql:
+  metrics:
+    enabled: true
   persistence:
     enabled: true
     storageClass: rook-ceph-block

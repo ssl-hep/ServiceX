@@ -36,3 +36,12 @@ data:
           - __meta_kubernetes_pod_container_name
           regex: rabbitmq;metrics
           action: keep
+      - job_name: 'postgresql'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_label_app
+          - __meta_kubernetes_pod_container_name
+          regex: postgresql;metrics
+          action: keep
