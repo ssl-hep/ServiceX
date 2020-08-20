@@ -28,6 +28,8 @@ postgresql:
     storageClass: rook-ceph-block
   metrics:
     enabled: true
+    serviceMonitor:
+      enabled: true
 preflight:
   pullPolicy: Always
 rabbitmq:
@@ -35,7 +37,7 @@ rabbitmq:
     enabled: true
     plugins: rabbitmq_prometheus
     podAnnotations:
-      prometheus.io/port: '8080'
+      prometheus.io/port: '9419'
       prometheus.io/scrape: "true"
     prometheusRule:
       additionalLabels: {}
@@ -44,7 +46,7 @@ rabbitmq:
       rules: []
     serviceMonitor:
       additionalLabels: {}
-      enabled: false
+      enabled: true
       honorLabels: false
       interval: 30s
     persistence:
