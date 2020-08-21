@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-servicex-app
+  labels:
+    app: {{ .Release.Name}}-servicex-app
+    release: {{ .Release.Name }}
+spec:
+  endpoints:
+  - port: tcp
+    path: /metrics
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-servicex-app
