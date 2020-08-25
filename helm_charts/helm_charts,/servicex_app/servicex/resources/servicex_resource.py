@@ -90,27 +90,6 @@ class ServiceXResource(Resource):
             return False, "Signatures did not match"
 
     @staticmethod
-    def _validate_user_is_admin():
-        """
-        Determine if the session should allow the user request in. Use this to guard
-        endpoints that are only accessable to admin users
-        :return: Tuple of Boolean indicating whether the permission is granted and
-        a string message of why it is rejected
-        """
-        if not current_app.config['ENABLE_AUTH']:
-            return True, None
-        try:
-            user = UserModel.find_by_sub(get_jwt_identity())
-            if user and user.admin:
-                return True, None
-            else:
-                return False, "User is not permitted to perform this operation"
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            print(exc_value)
-            return False, str(exc_value)
-
-    @staticmethod
     def _generate_file_status_record(dataset_file, status):
         time = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
 

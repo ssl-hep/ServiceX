@@ -33,16 +33,8 @@ from servicex.models import UserModel
 class PendingUsers(ServiceXResource):
     @admin_required
     def get(self):
-        is_auth, auth_reject_message = self._validate_user_is_admin()
-        if not is_auth:
-            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
-        else:
-            return UserModel.return_all_pending()
+        return UserModel.return_all_pending()
 
     @admin_required
     def delete(self):
-        is_auth, auth_reject_message = self._validate_user_is_admin()
-        if not is_auth:
-            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
-        else:
-            return UserModel.delete_all_pending()
+        return UserModel.delete_all_pending()
