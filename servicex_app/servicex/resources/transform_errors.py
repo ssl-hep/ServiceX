@@ -25,19 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask_jwt_extended import jwt_optional
 
+from servicex.decorators import auth_required
 from servicex.models import TransformRequest, FileStatus
 from servicex.resources.servicex_resource import ServiceXResource
 
 
 class TransformErrors(ServiceXResource):
-    @jwt_optional
+    @auth_required
     def get(self, request_id):
-        is_auth, auth_reject_message = self._validate_user()
-        if not is_auth:
-            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
-
         submitted_request = TransformRequest.return_request(request_id)
         if not submitted_request:
             return "Transform Not Found", "404"

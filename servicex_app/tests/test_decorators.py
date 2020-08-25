@@ -106,4 +106,3 @@ class TestDecorators(WebTestBase):
             decorated = admin_required(fake_route)
             response: Response = decorated()
             assert response.status_code == 200
-
