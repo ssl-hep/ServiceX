@@ -1,10 +1,10 @@
 from flask import redirect, url_for, current_app, session
 
-from servicex.decorators import authenticated
+from servicex.decorators import oauth_required
 from .utils import load_app_client
 
 
-@authenticated
+@oauth_required
 def sign_out():
     """Revoke tokens with Globus Auth and destroy session state."""
 
