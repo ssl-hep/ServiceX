@@ -2,10 +2,10 @@ from flask import redirect, url_for, session, flash
 from flask_jwt_extended import create_refresh_token
 
 from servicex.models import db, UserModel
-from servicex.decorators import authenticated
+from servicex.decorators import oauth_required
 
 
-@authenticated
+@oauth_required
 def api_token():
     """Generate a new ServiceX refresh token."""
     sub = session.get('sub')

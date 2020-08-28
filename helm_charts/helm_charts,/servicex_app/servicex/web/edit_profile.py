@@ -3,11 +3,11 @@ from datetime import datetime
 from flask import session, render_template, redirect, url_for, request, flash
 
 from servicex.models import db, UserModel
-from servicex.decorators import authenticated
+from servicex.decorators import oauth_required
 from .forms import ProfileForm
 
 
-@authenticated
+@oauth_required
 def edit_profile():
     sub = session.get('sub')
     user: UserModel = UserModel.find_by_sub(sub)

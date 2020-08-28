@@ -33,10 +33,10 @@ import json
 import uuid
 
 from flask import current_app
-from flask_jwt_extended import jwt_optional
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest, DatasetFile, db
+from servicex.decorators import auth_required
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -94,11 +94,8 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.docker_repo_adapter = docker_repo_adapter
         return cls
 
-    @jwt_optional
+    @auth_required
     def post(self):
-        is_auth, auth_reject_message = self._validate_user()
-        if not is_auth:
-            return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
         try:
             transformation_request = parser.parse_args()
             print("object store ", self.object_store)
