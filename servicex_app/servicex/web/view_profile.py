@@ -1,10 +1,10 @@
 from flask import session, render_template, redirect, url_for
 
 from servicex.models import UserModel
-from servicex.decorators import authenticated
+from servicex.decorators import oauth_required
 
 
-@authenticated
+@oauth_required
 def view_profile():
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
