@@ -1,5 +1,9 @@
-site_name: My Docs
-pages:
+site_name: ServiceX
+nav:
     - Home: index.md
-    - Implementation reference: Implementation_reference.md
-    - Installation: Installation.md
+    - Introduction: introduction.md 
+    - Installation: installation.md
+    - Specifying a request: requests.md
+    - Outreach: outreach.md
+    - Development: development.md
+theme: readthedocs

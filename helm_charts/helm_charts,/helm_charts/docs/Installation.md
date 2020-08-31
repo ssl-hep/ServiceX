@@ -1,82 +1,32 @@
-# Installation
+# Prerequisites for users
 
-All the tools can be installed in different kubernetes clusters. Here instructions for each tool separately.
-Secrets are all known to Ilija Vukotic.
+Interacting with a central instance of ServiceX (as opposed to setting up your own instance)
+consists in two parts: getting authenticated in the system by an administrator and installing the
+appropriate client library.
 
-## Frontend (ATM both web and REST API)
-Kubectl commands listed should be executed from subdirectory _kube_. 
+## Getting authenticated
 
-__label the node to be used for the frontend__  
-```kubectl label nodes <node name> es=capable```
+There are two instances of ServiceX, one to transform xAOD input files and one to transform flat
+ntuples, and you must be separately authenticated to each in order to use them. You can go to the
+[xAOD version](http://rc1-xaod-servicex.uc.ssl-hep.org/) or the
+[Uproot version](http://rc1-uproot-servicex.uc.ssl-hep.org/) and put in the username and password
+for your requested account. In addition, both instances rely on ATLAS credentials to access Rucio,
+so you must be a member of the ATLAS VO to use them. The ServiceX admins will seek to personally
+accept pending accounts, so once you've registered send a message to the admins (Ben Galewsky or
+Marc Weinberg, e.g. via [Slack](https://iris-hep.slack.com/archives/CJH870SR2)) and they will
+authorize any pending requests. Once you’re authenticated by an administrator your account will
+have access to ServiceX, and you’ll be able to put in transform requests.
 
-__ask Lincoln/Ilija/Judith to open ES firewall for that nodes IP. To get that IP look for external IP in output of :__  
-``` kubectl describe node <node name>```
+## Installing the client Python library
 
-__in AWS Route53 change A record for **servicex.slateci.net** to that IP__
+The documentation for the ServiceX client is shown
+[here](https://pypi.org/project/servicex/1.0.0b3/). It's also useful to employ functions from the
+func-adl libraries ([for xAOD](https://pypi.org/project/func-adl-xAOD/) or
+[Uproot](https://pypi.org/project/func-adl-uproot/)). To interact with ServiceX via the client
+library you’ll need an environment running Python 3.7:
 
-__create namespace__  
-``` kubectl create -f namespace.yaml ```
+    python -m pip install servicex==2.0.0b9
+    python -m pip install func-adl-xAOD==1.1.0b4
 
-__create secrets with site tls cert__  
-```kubectl create secret -n servicex generic cert-secret --from-file=tls.key=secrets/https-certs/servicex.key.pem --from-file=tls.crt=secrets/https-certs/servicex.cert.crt```
-
-__create secret with configuration__  
-```kubectl create secret -n servicex generic config --from-file=conf=../config/config.json```
-
-__create secret for Elasticsearch access__  
-```kubectl create secret -n servicex generic es-secret --from-file=es_conf=secrets/elasticsearch/elasticsearch.json```
-
-__create secret for Globus authentication__  
-```kubectl create secret -n servicex generic globus-secret --from-file=gconf=secrets/globus-conf/globus-config.json```
-
-__create service account__  
-```kubectl create -f service_account.yaml```
-
-__deploy service and ingress__  
-```kubectl create -f service.yaml```
-
-__deploy the frontend__  
-```kubectl create -f frontend.yaml```
-
-## did-finder, validator and transformer
-
-While all three tools can be on different clusters they all require servicex namespace and a secret needed to access ATLAS data:  
-```kubectl create secret -n servicex generic x509-secret --from-file=userkey=secrets/xcache.key.pem --from-file=usercert=secrets/xcache.crt.pem```
-
-__deploy the did-finder__  
-```kubectl create -f did-finder.yaml```
-
-__deploy the validator__  
-```kubectl create -f validator.yaml```
-
-__deploy the transformer__  
-```kubectl create -f did-finder.yaml```
-
-## redis
-
-Should be done from _servicex.redis/kube/standalone_.
-
-__create redis namespace__  
-```kubectl create ns redis```
-
-__create redis monitor (optional)__  
-```kubectl create kafka_monitor.yaml```
-
-__create master configuration secret__  
-```kubectl create secret -n redis generic redis-master-conf --from-file=conf=../config/redis.conf```
-
-__deploy master. The default configuration requires a node with 200GB of RAM.__  
-```kubectl create -f redis.yaml```
-
-__get master node IP. In AWS Route53 change A record for **redis.slateci.net** to that IP__
-
-__create slave configuration secret__  
-```kubectl create secret -n redis generic redis-slave-conf --from-file=conf=../config/redis-slave.conf```
-
-__deploy slave (optional)__  
-```kubectl create -f redis-slave.yaml```
-    
-## kafka
-
-
-
+In the Python prompt you can import the libraries and make a request using your registered username
+and password.
