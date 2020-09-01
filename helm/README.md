@@ -1,9 +1,9 @@
  # ServiceX - Data Delivery for the HEP Community
 
-ServiceX is an on-demand data delivery service which strives to provide analysts working in high energy physics with the data they need in an easy, flexible, and highly performant manner.
+ServiceX is an on-demand service that delivers data straight from the grid to high energy physics analysts in an easy, flexible, and highly performant manner.
 
 ## Features
-- __Experiment-agnostic:__ Supports both the ATLAS and CMS collaborations.
+- __Experiment-agnostic:__ Supports both the ATLAS and CMS collaborations on the LHC.
 - __Custom filters and pre-processing:__ Easily filter events, request specific columns, and unpack compressed formats using the [func-adl](https://github.com/iris-hep/func_adl) analysis description language.
 - __Choose your format:__ ServiceX can deliver data in a variety of columnar formats, including streams of ROOT data, small ROOT files, HDF5, and Apache Arrow buffers.
 - __No hassle:__ ServiceX uses Rucio to find and access data wherever it lives, so users don't have to worry about these details.
@@ -11,7 +11,7 @@ ServiceX is an on-demand data delivery service which strives to provide analysts
 
 ## Getting Started
 
-Check out our [installation guide](https://mweinberg2718.github.io/ServiceX_frontend/installation/) for instructions on how to obtain credentials and install the [ServiceX Python library](https://github.com/ssl-hep/ServiceX_frontend).
+Check out our [installation guide](https://mweinberg2718.github.io/ServiceX_frontend/installation/) for instructions on how to obtain credentials and install the [ServiceX Python library](https://pypi.org/project/servicex/).
 
 Once you've done that, refer to the documentation on how to get started [sending requests to ServiceX](https://mweinberg2718.github.io/ServiceX_frontend/requests/).
 
@@ -21,9 +21,9 @@ The full ServiceX docs can be found [here](https://mweinberg2718.github.io/Servi
 
 ## Self-Hosting
 
-The [Scalable Systems Laboratory](https://iris-hep.org/ssl.html) (SSL) at IRIS-HEP maintains two instances of ServiceX: one to transform xAOD input files, and one to transform flat ntuples.
+The [Scalable Systems Laboratory](https://iris-hep.org/ssl.html) (SSL) at IRIS-HEP maintains multiple instances of ServiceX to transform several input formats from different experiments.
 
-However, ServiceX is an open-source project, and you are welcome to host your own deployment. Instructions on how to configure and deploy ServiceX can be found in our [deployment guide](DEPLOYMENT.md).
+In addition, ServiceX is an open-source project, and you are welcome to host your own deployment. Instructions on how to configure and deploy ServiceX can be found in our [deployment guide](DEPLOYMENT.md).
 
 ## Contributing
 
