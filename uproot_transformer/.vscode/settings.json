@@ -6,6 +6,8 @@
         "globus",
         "servicex",
         "sslhep",
+        "tock",
         "xaod"
-    ]
+    ],
+    "python.pythonPath": ".venv\\Scripts\\python.exe"
 }
