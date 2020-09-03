@@ -82,7 +82,8 @@ def callback(channel, method, properties, body):
     try:
         # Do the transform
         servicex.post_status_update(file_id=_file_id,
-                                    status_code="start")
+                                    status_code="start",
+                                    info="Starting")
 
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file

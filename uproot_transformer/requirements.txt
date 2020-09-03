@@ -16,3 +16,6 @@ requests==2.24.0
 servicex-transformer==1.0.0rc2
 uproot==3.11.7
 xxhash==1.4.4
+
+# There is no way the small amount of code written in this repo needs all this - are these
+# dependencies and they should just included there?
