@@ -18,6 +18,7 @@ versions.
     * Peform Rolebindings 
 
 - You need to have [helm3](https://helm.sh/docs/intro/install/) installed.
+- You will need a valid set CERN certificates 
 
 
 ## Authenticating Against CERN Virtual Org
