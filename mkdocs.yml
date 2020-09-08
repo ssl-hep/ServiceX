@@ -5,5 +5,6 @@ nav:
     - Getting started: getting-started.md
     - Specifying a request: requests.md
     - Outreach: outreach.md
+    - Deployment: deployment.md
     - Development: development.md
 theme: readthedocs
