@@ -11,13 +11,15 @@ ServiceX is an on-demand service that delivers data straight from the grid to hi
 
 ## Getting Started
 
-Check out our [installation guide](https://mweinberg2718.github.io/ServiceX_frontend/installation/) for instructions on how to obtain credentials and install the [ServiceX Python library](https://pypi.org/project/servicex/).
+Check out our [installation guide](https://servicex.readthedocs.io/en/latest/getting-started/) for instructions on how to obtain credentials and install the [ServiceX Python library](https://pypi.org/project/servicex/).
 
-Once you've done that, refer to the documentation on how to get started [sending requests to ServiceX](https://mweinberg2718.github.io/ServiceX_frontend/requests/).
+Once you've done that, refer to the documentation on how to get started [sending requests to ServiceX](https://https://servicex.readthedocs.io/en/latest/requests/).
 
 ## Documentation
 
-The full ServiceX docs can be found [here](https://mweinberg2718.github.io/ServiceX_frontend/).
+[![Documentation Status](https://readthedocs.org/projects/servicex/badge/?version=latest)](https://servicex.readthedocs.io/en/latest/?badge=latest)
+
+The [ServiceX documentation](https://servicex.readthedocs.io/en/latest/) is hosted on Read the Docs.
 
 ## Self-Hosting
 
