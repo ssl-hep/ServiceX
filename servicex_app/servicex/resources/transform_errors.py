@@ -34,9 +34,15 @@ from servicex.resources.servicex_resource import ServiceXResource
 class TransformErrors(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        submitted_request = TransformRequest.return_request(request_id)
-        if not submitted_request:
-            return "Transform Not Found", "404"
+        # Validate that the user is an admin or submitted the request
+        transform = TransformRequest.return_request(request_id)
+        if not transform:
+            msg = f'Transformation request not found with id: {request_id}'
+            return {'message': msg}, 404
+        user = ServiceXResource.get_requesting_user()
+        if user and not user.admin and user.id != transform.submitted_by:
+            msg = 'You can only access your own transformation requests.'
+            return {'message': msg}, 401
 
         results = [{
             "pod-name": result[1].pod_name,

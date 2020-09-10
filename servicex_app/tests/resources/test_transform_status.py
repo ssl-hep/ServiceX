@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask import Response
+
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -125,7 +127,7 @@ class TestTransformStatus(ResourceTestBase):
         mock_statistics.assert_called_with('1234')
         mock_files_failed.assert_called_with('1234')
 
-    def test_get_status_bad_request_id(self, mocker, mock_rabbit_adaptor):
+    def test_get_status_404(self, mocker, mock_rabbit_adaptor):
         import servicex
 
         mock_transform_request_read = mocker.patch.object(
@@ -138,3 +140,19 @@ class TestTransformStatus(ResourceTestBase):
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")
+
+    def test_get_status_unauthorized(self, mocker, mock_rabbit_adaptor,
+                                     mock_requesting_user, mock_jwt_required):
+        user_id = mock_requesting_user.id
+        transform_request = self._generate_transform_request()
+        transform_request.submitted_by = user_id + 1
+        import servicex
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest, 'return_request',
+            return_value=transform_request)
+        mock_requesting_user.admin = False
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={'ENABLE_AUTH': True})
+        response: Response = client.get('/servicex/transformation/1234/status')
+        mock_transform_request_read.assert_called_with('1234')
+        assert response.status_code == 401
