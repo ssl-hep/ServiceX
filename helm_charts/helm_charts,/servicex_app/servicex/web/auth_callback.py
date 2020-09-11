@@ -11,8 +11,8 @@ def auth_callback():
               + request.args.get('error_description'),
               request.args['error'])
         return redirect('/')
-
-    redirect_uri = url_for('auth_callback', _external=True)
+    scheme = 'http' if 'localhost' in request.base_url else 'https'
+    redirect_uri = url_for('auth_callback', _external=True, _scheme=scheme)
 
     client = load_app_client()
     client.oauth2_start_flow(redirect_uri, refresh_tokens=True)
