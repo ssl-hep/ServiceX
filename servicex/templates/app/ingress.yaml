@@ -4,12 +4,22 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
+    {{- if .Values.app.ingress.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.app.ingress.clusterIssuer }}
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    {{- end }}
   labels:
     app: {{ .Release.Name }}-servicex
-  name: {{ .Release.Name }}-servicex-ingress
+  name: {{ .Release.Name }}-servicex
 spec:
+  {{- if .Values.app.ingress.clusterIssuer }}
+  tls:
+  - hosts:
+    - {{ .Release.Name }}.{{ .Values.app.ingress.host }}
+    secretName: {{ .Release.Name }}-tls
+  {{- end }}
   rules:
-  - host: {{ .Release.Name }}-servicex.{{ .Values.app.ingress.host }}
+  - host: {{ .Release.Name }}.{{ .Values.app.ingress.host }}
     http:
       paths:
       {{- if .Values.objectStore.enabled }}
