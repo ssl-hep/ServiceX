@@ -5,6 +5,7 @@ app:
   newSignupWebhook: See README for instructions
   ingress:
     enabled: true
+    clusterIssuer: letsencrypt-prod
 codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
 didFinder:
@@ -14,7 +15,7 @@ minio:
   ingress:
     enabled: true
     hosts:
-    - "xaod-minio.uc.ssl-hep.org"
+    - "xaod-minio.servicex.ssl-hep.org"
   mode: distributed
 postgres:
   enabled: true

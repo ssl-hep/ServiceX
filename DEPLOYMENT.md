@@ -168,8 +168,9 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.tokenExpires`                   | Seconds until the ServiceX API tokens (JWT refresh tokens) expire | False (never)                          |
 | `app.authExpires`                    | Seconds until the JWT access tokens expire       | 21600 (six hours)                                       |
 | `app.ingress.enabled`                | Enable install of ingress                        | false                                                   |
-| `app.ingress.host`                   | Hostname to associate ingress with               | uc.ssl-hep.org                                          |
+| `app.ingress.host`                   | Hostname to associate ingress with               | servicex.ssl-hep.org                                    |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
+| `app.ingress.clusterIssuer`          | Name of the ClusterIssuer to use which will be used to obtain a TLS certificate | letsencrypt-staging      |
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
 | `app.slackSigningSecret`             | Signing secret for Slack application             | -
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
@@ -229,7 +230,7 @@ To set this up, complete the following steps before deploying ServiceX:
 - Copy the Webhook URL and store it in `values.yaml` under `app.newSignupWebhook`.
 - After completing the rest of the configuration, deploy ServiceX.
 - Go back to the [Slack App dashboard](https://api.slack.com/apps) and choose the app you created earlier. In the sidebar, click on Interactivity & Shortcuts under Features.
-- Click the switch to turn Interactivity on. In the Request URL field, enter the base URL for the ServiceX API, followed by `/slack`, e.g. `http://rc1-xaod-servicex.uc.ssl-hep.org/slack`. Save your changes.
+- Click the switch to turn Interactivity on. In the Request URL field, enter the base URL for the ServiceX API, followed by `/slack`, e.g. `https://xaod.servicex.ssl-hep.org/slack`. Save your changes.
 - You're all set! ServiceX will now send interactive Slack notifications to your signups channel whenever a new user registers.
 
 
