@@ -73,7 +73,7 @@ You have some initial choices to make:
 * Will it be used for xAOD, MiniAOD, or flat ROOT files?
  
 With this in mind, create `values.yaml` and include:
-```
+```yaml
 postgres:
     enabled: true
 objectStore:
@@ -155,33 +155,50 @@ kubectl port-forward <<servicex minio pod name>> 9000:9000
 ### Run an Example Analysis
 
 
-## Add External Ingres and Authentication
+## Add External Ingress and Authentication
 Having a ServiceX instance with no external access is easy to set up, but of 
-limited value. We will now update values.yaml to open up an exinternal ingres
+limited value. We will now update values.yaml to open up an external ingress
 and configure Globus auth.
 
+### Obtain a TLS Certificate
+Globus Auth requires your deployment to be served over HTTPS.
+To obtain a TLS certificate, complete the following steps:
+- Install the [cert-manager](https://cert-manager.io/docs/) Kubernetes add-on.
+- Deploy one or more ClusterIssuers.
+The Let's Encrypt staging and production ClusterIssuers are recommended.
+- In `values.yaml`, set `app.ingress.clusterIssuer` to the name of the
+ClusterIssuer you'd like to use. The default value is `letsencrypt-staging`.
+Bear in mind that this is subject to
+[rate limits](https://letsencrypt.org/docs/rate-limits/),
+so it's best to use `letsencrypt-staging` for development).
+
+For more information, see the cert-manager [guide to securing nginx-ingress](https://cert-manager.io/docs/tutorials/acme/ingress).
 
 ### Define the Ingress Host
 The URL for your deployed ServiceX is a combination of the name of the helm 
 deployment (the argument provided with the `helm install` command and the 
-`ingres.host` setting in your values.yaml file. For example if your values file
+`ingress.host` setting in your values.yaml file. For example if your values file
 contains:
 
-```
+```yaml
 app:
     ingress:
         enabled: true
-        host: uc.ssl-hep.org
+        host: servicex.ssl-hep.org
+        clusterIssuer: letsencrypt-staging
 ```
 
 And you deployed the helm chart with
 ```
 helm install -f values.yaml --version v1.0.0-rc.2 xaod ssl-hep/servicex
 ```
-Then the instance's URL would be ``http://xaod-servicex.uc.ssl-hep.org`
+Then the instance's URL would be `https://xaod.servicex.ssl-hep.org`
+
+You should also make sure the host has a DNS A record pointing this
+(sub)domain at the external IP address of your ingress controller.
 
 ### Obtain Globus Auth Credentials
-Visit [developers.globus.org](http://developers.globus.org) and select 
+Visit [developers.globus.org](https://developers.globus.org) and select 
 _Register your app with Globus_.  Create a project for ServiceX and within 
 that project _Add a new App_.
 
@@ -194,22 +211,22 @@ urn:globus:auth:scope:auth.globus.org:view_identity_set
 ```
 
 Note the Client ID and paste this into your `values.yaml` as
-```
+```yaml
 app:
   globusClientID: << client Id here>> 
 ```
 
 Generate a client secret and paste this value into:
- ```
+ ```yaml
 app:
   globusClientSecret: << client secret here>> 
 ```
 
-The redirect URL will be your deployment's URL with `/auth-callback`. From
-the earlier example, the callback address would be 
-`http://xaod-servicex.uc.ssl-hep.org/auth-callback`.
-
-Save the record.
+The redirect URL will be your host followed by `/auth-callback`.
+In the earlier example, the redirect would be
+`https://xaod.servicex.ssl-hep.org/auth-callback`.
+If you want to use port-forwarding, also include
+`http://localhost:5000/auth-callback`. Save the record.
 
 ### Set the Minio Ingress
 Resulting files are stored in a minio object store which is deployed as a 
@@ -217,12 +234,12 @@ subchart. The helm chart for Minio has it's own support for an ingress. We
 can activate it. Unlike the ServiceX ingress, the subchart doesn't know the 
 name of our deployment, so you need to correctly set the deployment name in 
 the minio ingress address. 
-```
+```yaml
 minio:
   ingress:
     enabled: false
     hosts:
-    - "xaod-minio.uc.ssl-hep.org"
+    - "xaod-minio.servicex.ssl-hep.org"
 ```
 
 ### Sneak a Peek
@@ -251,7 +268,7 @@ To set this up, complete the following steps before deploying ServiceX:
 - Copy the Webhook URL and store it in `values.yaml` under `app.newSignupWebhook`.
 - After completing the rest of the configuration, deploy ServiceX.
 - Go back to the [Slack App dashboard](https://api.slack.com/apps) and choose the app you created earlier. In the sidebar, click on Interactivity & Shortcuts under Features.
-- Click the switch to turn Interactivity on. In the Request URL field, enter the base URL for the ServiceX API, followed by `/slack`, e.g. `http://rc1-xaod-servicex.uc.ssl-hep.org/slack`. Save your changes.
+- Click the switch to turn Interactivity on. In the Request URL field, enter the base URL for the ServiceX API, followed by `/slack`, e.g. `https://xaod.servicex.ssl-hep.org/slack`. Save your changes.
 - You're all set! ServiceX will now send interactive Slack notifications to your signups channel whenever a new user registers.
 
 ### Email Notifications

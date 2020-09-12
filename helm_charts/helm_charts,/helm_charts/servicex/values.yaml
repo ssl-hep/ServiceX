@@ -43,8 +43,9 @@ app:
 
   ingress:
     enabled: false
-    host: uc.ssl-hep.org
+    host: servicex.ssl-hep.org
     defaultBackend: default-http-backend
+    clusterIssuer: letsencrypt-staging
 
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
