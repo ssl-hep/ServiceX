@@ -65,7 +65,7 @@ file. For example, to run on SSL-RIVER,
           ingress:
             enabled: true
             hosts:
-            - "servicex-minio.uc.ssl-hep.org"
+            - "xaod-minio.servicex.ssl-hep.org"
         gridAccount: bgalewsk
         EOF
 

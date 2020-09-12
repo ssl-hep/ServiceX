@@ -41,5 +41,5 @@ Log in with
 
 {{ if .Values.app.ingress.enabled }}
 Congratulations! You deployed an ingress for this service. You can access the
-REST service at http://{{ .Release.Name }}-servicex.{{ .Values.app.ingress.host }}
+REST service at http://{{ .Release.Name }}.{{ .Values.app.ingress.host }}
 {{ end }}
