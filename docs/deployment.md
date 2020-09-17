@@ -206,9 +206,9 @@ The App name can be whatever you like.
 
 The scopes should include:
 ```
-email,
-urn:globus:auth:scope:auth.globus.org:view_identity_set
-```
+openid
+email
+profile```
 
 Note the Client ID and paste this into your `values.yaml` as
 ```yaml
@@ -217,7 +217,7 @@ app:
 ```
 
 Generate a client secret and paste this value into:
- ```yaml
+```yaml
 app:
   globusClientSecret: << client secret here>> 
 ```
@@ -226,7 +226,9 @@ The redirect URL will be your host followed by `/auth-callback`.
 In the earlier example, the redirect would be
 `https://xaod.servicex.ssl-hep.org/auth-callback`.
 If you want to use port-forwarding, also include
-`http://localhost:5000/auth-callback`. Save the record.
+`http://localhost:5000/auth-callback`. 
+
+Save the record.
 
 ### Set the Minio Ingress
 Resulting files are stored in a minio object store which is deployed as a 
