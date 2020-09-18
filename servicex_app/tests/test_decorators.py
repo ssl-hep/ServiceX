@@ -55,7 +55,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 200
 
-    def test_auth_decorator_user_deleted(self, mocker):
+    def test_auth_decorator_user_deleted(self, mocker, mock_jwt_required):
         mocker.patch('servicex.decorators.UserModel.find_by_sub',
                      return_value=None)
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})

@@ -33,11 +33,11 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     Pending or deleted users will receive a 401: Unauthorized response.
     """
 
+    if not current_app.config.get('ENABLE_AUTH'):
+        return fn
+
     @wraps(fn)
     def decorated_function(*args, **kwargs) -> Response:
-        if not current_app.config.get('ENABLE_AUTH'):
-            return fn(*args, **kwargs)
-
         user = UserModel.find_by_sub(get_jwt_identity())
         if not user:
             msg = 'Not Authorized: No user found matching this API token. ' \
@@ -49,24 +49,23 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                   'An administrator should approve it shortly. If not, ' \
                   'please contact the ServiceX admins via email or Slack.'
             return make_response({'message': msg}, 401)
-        return jwt_required(fn(*args, **kwargs))
+        return fn(*args, **kwargs)
 
-    return decorated_function
+    return jwt_required(decorated_function)
 
 
 def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """Mark an API resource as requiring administrator role."""
 
-    msg = 'Not Authorized: This resource is restricted to administrators.'
+    if not current_app.config.get('ENABLE_AUTH'):
+        return fn
 
     @wraps(fn)
     def decorated_function(*args, **kwargs) -> Response:
-        if not current_app.config.get('ENABLE_AUTH'):
-            return fn(*args, **kwargs)
-
         user = UserModel.find_by_sub(get_jwt_identity())
+        msg = 'Not Authorized: This resource is restricted to administrators.'
         if not (user and user.admin):
             return make_response({'message': msg}, 401)
-        return jwt_required(fn(*args, **kwargs))
+        return fn(*args, **kwargs)
 
-    return decorated_function
+    return jwt_required(decorated_function)
