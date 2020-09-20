@@ -1,4 +1,5 @@
 from flask import url_for, render_template, Response, make_response
+from flask_jwt_extended import create_access_token
 from pytest import fixture
 
 from tests.web.web_test_base import WebTestBase
@@ -11,12 +12,16 @@ def fake_route() -> Response:
 class TestDecorators(WebTestBase):
     @fixture
     def mock_jwt_required(self, mocker):
+        """
+        During unit tests, the jwt_required decorator from Flask-JWT-extended
+        is simply mocked to act as the identity function.
+        """
         mocker.patch('servicex.decorators.jwt_required',
                      side_effect=lambda f: f)
 
     def test_oauth_decorator_auth_disabled(self, client):
+        from servicex.decorators import oauth_required
         with client.application.app_context():
-            from servicex.decorators import oauth_required
             decorated = oauth_required(fake_route)
             response: Response = decorated()
             assert response.status_code == 200
@@ -106,3 +111,59 @@ class TestDecorators(WebTestBase):
             decorated = admin_required(fake_route)
             response: Response = decorated()
             assert response.status_code == 200
+
+    def test_auth_decorator_integration_auth_disabled(self, mocker):
+        fake_transform_id = 123
+        data = {'id': fake_transform_id}
+        mocker.patch('servicex.resources.query_transformation_request.TransformRequest.to_json',
+                     return_value=data)
+        client = self._test_client(mocker)
+        with client.application.app_context():
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
+            assert response.status_code == 200
+            assert response.json == data
+
+    def test_auth_decorator_integration_no_header(self, mocker):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            fake_transform_id = '123'
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
+            assert response.status_code == 401
+            assert response.json['msg'] == 'Missing Authorization Header'
+
+    def test_auth_decorator_integration_user_deleted(self, mocker):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            fake_transform_id = '123'
+            access_token = create_access_token(identity='abcd')
+            headers = {'Authorization': f'Bearer {access_token}'}
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
+                                            headers=headers)
+            assert response.status_code == 401
+            assert 'deleted' in response.json['message']
+
+    def test_auth_decorator_integration_user_pending(self, mocker, user):
+        user.pending = True
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            fake_transform_id = '123'
+            access_token = create_access_token(identity='abcd')
+            headers = {'Authorization': f'Bearer {access_token}'}
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
+                                            headers=headers)
+            assert response.status_code == 401
+            assert 'pending' in response.json['message']
+
+    def test_auth_decorator_integration_authorized(self, mocker, user):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        fake_transform_id = 123
+        data = {'id': fake_transform_id}
+        mocker.patch('servicex.resources.query_transformation_request.TransformRequest.to_json',
+                     return_value=data)
+        with client.application.app_context():
+            access_token = create_access_token(identity='abcd')
+            headers = {'Authorization': f'Bearer {access_token}'}
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
+                                            headers=headers)
+            assert response.status_code == 200
+            assert response.json == data
