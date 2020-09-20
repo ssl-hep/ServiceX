@@ -244,6 +244,24 @@ minio:
     - "xaod-minio.servicex.ssl-hep.org"
 ```
 
+TLS can also be enabled for Minio. To do so using cert-manager and the 
+Let's Encrypt ClusterIssuer, use the following configuration:
+```yaml
+minio:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      acme.cert-manager.io/http01-edit-in-place: "true"
+    hosts:
+    - xaod-minio.servicex.ssl-hep.org
+    tls:
+    - hosts:
+      - xaod-minio.servicex.ssl-hep.org
+      secretName: xaod-minio-tls
+```
+
 ### Sneak a Peek
 If you wish, you could deploy these values and have a ServiceX instance that
 is not secured but is reachable via the public URL.
