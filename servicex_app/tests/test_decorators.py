@@ -19,6 +19,11 @@ class TestDecorators(WebTestBase):
         mocker.patch('servicex.decorators.jwt_required',
                      side_effect=lambda f: f)
 
+    @staticmethod
+    def fake_header():
+        access_token = create_access_token(identity='abcd')
+        return {'Authorization': f'Bearer {access_token}'}
+
     def test_oauth_decorator_auth_disabled(self, client):
         from servicex.decorators import oauth_required
         with client.application.app_context():
@@ -126,19 +131,15 @@ class TestDecorators(WebTestBase):
     def test_auth_decorator_integration_no_header(self, mocker):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
-            fake_transform_id = '123'
-            response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
+            response: Response = client.get('servicex/transformation/123')
             assert response.status_code == 401
             assert response.json['msg'] == 'Missing Authorization Header'
 
     def test_auth_decorator_integration_user_deleted(self, mocker):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
-            fake_transform_id = '123'
-            access_token = create_access_token(identity='abcd')
-            headers = {'Authorization': f'Bearer {access_token}'}
-            response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
-                                            headers=headers)
+            response: Response = client.get('servicex/transformation/123',
+                                            headers=self.fake_header())
             assert response.status_code == 401
             assert 'deleted' in response.json['message']
 
@@ -146,11 +147,8 @@ class TestDecorators(WebTestBase):
         user.pending = True
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
-            fake_transform_id = '123'
-            access_token = create_access_token(identity='abcd')
-            headers = {'Authorization': f'Bearer {access_token}'}
-            response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
-                                            headers=headers)
+            response: Response = client.get('servicex/transformation/123',
+                                            headers=self.fake_header())
             assert response.status_code == 401
             assert 'pending' in response.json['message']
 
@@ -161,9 +159,41 @@ class TestDecorators(WebTestBase):
         mocker.patch('servicex.resources.query_transformation_request.TransformRequest.to_json',
                      return_value=data)
         with client.application.app_context():
-            access_token = create_access_token(identity='abcd')
-            headers = {'Authorization': f'Bearer {access_token}'}
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
-                                            headers=headers)
+                                            headers=self.fake_header())
+            assert response.status_code == 200
+            assert response.json == data
+
+    def test_admin_decorator_integration_auth_disabled(self, mocker):
+        data = {'users': [{'id': 1234}]}
+        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        client = self._test_client(mocker)
+        with client.application.app_context():
+            response: Response = client.get('users')
+            assert response.status_code == 200
+            assert response.json == data
+
+    def test_admin_decorator_integration_no_header(self, mocker):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            response: Response = client.get('users')
+            assert response.status_code == 401
+            assert response.json['msg'] == 'Missing Authorization Header'
+
+    def test_admin_decorator_integration_not_authorized(self, mocker, user):
+        user.admin = False
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            response: Response = client.get('users', headers=self.fake_header())
+            assert response.status_code == 401
+            assert 'restricted' in response.json['message']
+
+    def test_admin_decorator_integration_authorized(self, mocker, user):
+        user.admin = True
+        data = {'users': [{'id': 1234}]}
+        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            response: Response = client.get('users', headers=self.fake_header())
             assert response.status_code == 200
             assert response.json == data
