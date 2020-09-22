@@ -158,6 +158,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
+| `app.docsBaseUrl`                    | URL of the Read the Docs version matching this deployment | `https://servicex.readthedocs.io/en/latest/`   |
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
