@@ -89,6 +89,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
         local_config = {
             'OBJECT_STORE_ENABLED': True,
             'MINIO_PUBLIC_URL': 'minio.servicex.com:9000',
+            'MINIO_SECURED': False,
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1'
         }
@@ -108,6 +109,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
                                  'result-format': 'arrow',
                                  'minio-access-key': 'miniouser',
                                  'minio-endpoint': 'minio.servicex.com:9000',
+                                 'minio-secured': False,
                                  'minio-secret-key': 'leftfoot1',
                                  'workflow-name': None,
                                  'generated-code-cm': None,
