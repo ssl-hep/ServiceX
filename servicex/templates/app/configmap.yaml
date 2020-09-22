@@ -15,6 +15,9 @@ data:
     # details are beyond the scope of this example
     SECRET_KEY = 'abc123!'
 
+    # Base url of documentation
+    DOCS_BASE_URL = '{{ .Values.app.docsBaseUrl }}'
+
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
