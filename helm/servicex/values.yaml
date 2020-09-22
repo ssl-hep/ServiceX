@@ -26,6 +26,10 @@ app:
   auth: false
   validateTransformerImage: true
 
+  # Point to the correct version of the documentation
+  # Choose a version at https://readthedocs.org/projects/servicex/versions/
+  docsBaseUrl: https://servicex.readthedocs.io/en/latest/
+
   # Globus configuration - obtain these at https://auth.globus.org/v2/web/developers
   globusClientID: 
   globusClientSecret: 
@@ -132,6 +136,7 @@ minio:
   # For easy testing we don't require PVs for minio
   persistence:
     enabled: false
+  
   accessKey: miniouser
   secretKey: leftfoot1
 
