@@ -1,4 +1,4 @@
-"""empty message
+"""V1.0-RC.3
 
 Revision ID: dd1f9a8a2aee
 Revises: 99e97a63d1bd
