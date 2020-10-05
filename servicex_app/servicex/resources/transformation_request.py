@@ -43,10 +43,6 @@ class TransformationRequest(ServiceXResource):
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
-        user = ServiceXResource.get_requesting_user()
-        if user and not user.admin and user.id != transform.submitted_by:
-            msg = 'You can only access your own transformation requests.'
-            return {'message': msg}, 401
         transform_json = transform.to_json()
         if current_app.config['OBJECT_STORE_ENABLED'] and \
                 transform_json['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
