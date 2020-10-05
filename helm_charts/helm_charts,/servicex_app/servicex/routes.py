@@ -43,6 +43,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.fileset_complete import FilesetComplete
     from servicex.resources.transformer_file_complete import TransformerFileComplete
     from servicex.resources.transform_errors import TransformErrors
+    from servicex.resources.info import Info
 
     from servicex.resources.users.all_users import AllUsers
     from servicex.resources.users.token_refresh import TokenRefresh
@@ -85,6 +86,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(SlackInteraction, '/slack')
 
     # Client public endpoints
+    api.add_resource(Info, '/servicex')
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
 
     api.add_resource(AllTransformationRequests, '/servicex/transformation')

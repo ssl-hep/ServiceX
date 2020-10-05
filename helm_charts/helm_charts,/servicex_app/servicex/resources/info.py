@@ -25,53 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import io
+from resources.servicex_resource import ServiceXResource
+from flask import current_app
 
-from setuptools import find_packages, setup
 
-with io.open('README.rst', 'rt', encoding='utf8') as f:
-    readme = f.read()
-
-setup(
-    name='servicex_app',
-    version='1.0.0-RC.3',
-    url='https://iris-hep.org',
-    license='BSD',
-    maintainer='ServiceX Team',
-    maintainer_email='bengal1@illinois.edu',
-    description='REST Frontend to ServiceX.',
-    long_description=readme,
-    packages=find_packages(),
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=[
-        'flask',
-        'Flask-WTF',
-        'wtforms',
-        'email-validator',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio',
-        'elasticsearch',
-        'psycopg2',
-        'globus_sdk',
-        'cryptography',
-        'bootstrap-flask'
-    ],
-    extras_require={
-        'test': [
-            'pytest>=5.2',
-            'pytest-flask==1.0.0',
-            'coverage>=5.2',
-            'codecov==2.1.8',
-            'pytest-mock==3.2.0',
-            'flake8>=3.8'
-        ],
-    },
-)
+class Info(ServiceXResource):
+    def get(self):
+        return {
+            "app-version": self._get_app_version(),
+            "default-transformer": current_app.config['TRANSFORMER_DEFAULT_IMAGE'],
+            "code-gen-image": current_app.config['CODE_GEN_IMAGE']
+        }
