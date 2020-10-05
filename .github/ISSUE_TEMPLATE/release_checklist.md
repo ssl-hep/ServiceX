@@ -1,7 +1,6 @@
 ## Release x.x.x checklist
-* [ ]  Merge to master:
+* [ ]  Merge PRs targeted for this milestone, and postpone any remaining issues/PRs to next milestone
 * [ ]  Update change log
-* [ ]  Cherry-pick PRs: 
 * [ ]  Create release branch in ServiceX and ServiceX_App repos
 * [ ]  Freeze ServiceX chart dependencies in `servicex/requirements.yaml`
 * [ ]  Freeze ServiceX_App dependencies in `setup.py`
