@@ -28,6 +28,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
+import pkg_resources
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
@@ -94,3 +95,15 @@ class ServiceXResource(Resource):
             "status": status,
             "info": ' '
         }
+
+    @classmethod
+    def _get_app_version(cls):
+        """
+        Examine installed packages to get the version number for the ServiceX App
+        :return: The version number, or the string "develop" if servicex_app not installed
+        """
+        try:
+            app_version = pkg_resources.get_distribution('servicex_app').version
+            return app_version
+        except pkg_resources.DistributionNotFound:
+            return "develop"
