@@ -40,6 +40,8 @@ def upgrade():
     op.add_column('requests', sa.Column('submitted_by', sa.Integer()))
     op.create_foreign_key('requests_submitted_by_fkey', 'requests', 'users', ['submitted_by'], ['id'])
 
+    op.add_column('requests', sa.Column('app_version', sa.String(length=64), nullable=True))
+    op.add_column('requests', sa.Column('code_gen_image', sa.String(length=256), nullable=True))
 
 def downgrade():
     op.drop_constraint('requests_submitted_by_fkey', 'requests', type_='foreignkey')
@@ -61,3 +63,6 @@ def downgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+
+    op.drop_column('requests', 'app_version')
+    op.drop_column('requests', 'code_gen_image')

@@ -161,6 +161,8 @@ class TransformRequest(db.Model):
     generated_code_cm = db.Column(db.String(128), nullable=True)
     status = db.Column(db.String(128), nullable=True)
     failure_description = db.Column(db.String(max_string_size), nullable=True)
+    app_version = db.Column(db.String(64), nullable=True)
+    code_gen_image = db.Column(db.String(256), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
@@ -182,7 +184,9 @@ class TransformRequest(db.Model):
             'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status,
-            'failure-info': self.failure_description
+            'failure-info': self.failure_description,
+            'app-version': self.app_version,
+            'code-gen-image': self.code_gen_image
         }
 
     @classmethod
