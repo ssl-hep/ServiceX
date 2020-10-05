@@ -52,7 +52,7 @@ parser.add_argument('file-list',
 
 parser.add_argument('columns', help='This field cannot be blank',
                     required=False)
-parser.add_argument('selection', help='This field or columns must be provided', required=False)
+parser.add_argument('selection', help='Query string', required=False)
 parser.add_argument('image', required=False)
 parser.add_argument('tree-name', required=False)
 parser.add_argument('chunk-size', required=False, type=int)
@@ -102,6 +102,10 @@ class SubmitTransformationRequest(ServiceXResource):
             request_id = str(uuid.uuid4())
             time = datetime.now(tz=timezone.utc)
 
+            transformer_image = transformation_request['image'] \
+                if transformation_request['image'] \
+                else current_app.config['TRANSFORMER_DEFAULT_IMAGE']
+
             requested_did = transformation_request['did'] \
                 if 'did' in transformation_request else None
             requested_file_list = transformation_request['file-list'] \
@@ -123,7 +127,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 broker = None
 
             if current_app.config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
-                tagged_image = transformation_request['image']
+                tagged_image = transformer_image
                 if not self.docker_repo_adapter.check_image_exists(tagged_image):
                     return {'message': f"The requested transformer docker image doesn't exist: {tagged_image}"}, 400  # noqa: E501
 
@@ -134,14 +138,16 @@ class SubmitTransformationRequest(ServiceXResource):
                 selection=transformation_request['selection'],
                 tree_name=transformation_request['tree-name'],
                 request_id=str(request_id),
-                image=transformation_request['image'],
+                image=transformer_image,
                 chunk_size=transformation_request['chunk-size'],
                 result_destination=transformation_request['result-destination'],
                 result_format=transformation_request['result-format'],
                 kafka_broker=broker,
                 workers=transformation_request['workers'],
                 workflow_name=_workflow_name(transformation_request),
-                status='Submitted'
+                status='Submitted',
+                app_version=self._get_app_version(),
+                code_gen_image=current_app.config['CODE_GEN_IMAGE']
             )
             user = self.get_requesting_user()
             if user:

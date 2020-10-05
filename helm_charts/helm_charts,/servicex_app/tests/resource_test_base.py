@@ -60,7 +60,9 @@ class ResourceTestBase:
             'ENABLE_AUTH': False,
             'JWT_ADMIN': 'admin@example.com',
             'JWT_PASS': 'pass',
-            'JWT_SECRET_KEY': 'schtum'
+            'JWT_SECRET_KEY': 'schtum',
+            'TRANSFORMER_DEFAULT_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
+            'CODE_GEN_IMAGE': "sslhep/servicex_code_gen_func_adl_xaod:develop"
         }
 
     @staticmethod
@@ -102,6 +104,8 @@ class ResourceTestBase:
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
         transform_request.status = "Submitted"
+        transform_request.app_version = '1.0.1'
+        transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
         return transform_request
 
     @fixture
@@ -135,3 +139,10 @@ class ResourceTestBase:
             'servicex.resources.servicex_resource.UserModel.find_by_sub',
             return_value=mock_user)
         return mock_user
+
+    @fixture
+    def mock_app_version(self, mocker):
+        from servicex.resources.servicex_resource import ServiceXResource
+        mocker.patch.object(ServiceXResource,
+                            "_get_app_version",
+                            return_value='3.14.15')

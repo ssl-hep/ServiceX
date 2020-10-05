@@ -25,7 +25,9 @@ class TestTransformationRequest(ResourceTestBase):
                                  'workflow-name': None,
                                  'generated-code-cm': None,
                                  'status': "Submitted",
-                                 'failure-info': None
+                                 'failure-info': None,
+                                 'app-version': "1.0.1",
+                                 'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'
                                  }
         mock_transform_request_read.assert_called_with('1234')
 
@@ -64,7 +66,9 @@ class TestTransformationRequest(ResourceTestBase):
                                  'workflow-name': None,
                                  'generated-code-cm': None,
                                  'status': "Submitted",
-                                 'failure-info': None
+                                 'failure-info': None,
+                                 'app-version': "1.0.1",
+                                 'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'
                                  }
 
         mock_transform_request_read.assert_called_with('1234')
@@ -100,7 +104,9 @@ class TestTransformationRequest(ResourceTestBase):
                                  'workflow-name': None,
                                  'generated-code-cm': None,
                                  'status': "Submitted",
-                                 'failure-info': None
+                                 'failure-info': None,
+                                 'app-version': "1.0.1",
+                                 'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'
                                  }
 
         mock_transform_request_read.assert_called_with('1234')
