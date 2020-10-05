@@ -52,9 +52,8 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.json == self.example_json()
         mock_return_json.assert_called()
 
-    def test_get_all_authorized(self, mock_rabbit_adaptor, mock_jwt_required,
-                                mock_return_json, mock_requesting_user):
-        mock_requesting_user.admin = True
+    def test_get_all_auth_enabled(self, mock_rabbit_adaptor, mock_jwt_required,
+                                  mock_return_json, mock_requesting_user):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    extra_config={'ENABLE_AUTH': True})
         response: Response = client.get('/servicex/transformation')
@@ -62,17 +61,8 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.json == self.example_json()
         mock_return_json.assert_called()
 
-    def test_get_all_unauthorized(self, mock_rabbit_adaptor, mock_jwt_required,
-                                  mock_return_json, mock_requesting_user):
-        mock_requesting_user.admin = False
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'ENABLE_AUTH': True})
-        response: Response = client.get('/servicex/transformation')
-        assert response.status_code == 401
-        mock_return_json.assert_not_called()
-
-    def test_get_by_user_from_self(self, mock_rabbit_adaptor, mock_jwt_required,
-                                   mock_requesting_user, mock_return_json):
+    def test_get_by_user(self, mock_rabbit_adaptor, mock_jwt_required,
+                         mock_requesting_user, mock_return_json):
         user_id = mock_requesting_user.id
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    extra_config={'ENABLE_AUTH': True})
@@ -80,24 +70,3 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()
-
-    def test_get_by_user_from_admin(self, mock_rabbit_adaptor, mock_jwt_required,
-                                    mock_requesting_user, mock_return_json):
-        user_id = mock_requesting_user.id + 1
-        mock_requesting_user.admin = True
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'ENABLE_AUTH': True})
-        response = client.get(f'/servicex/transformation?submitted_by={user_id}')
-        assert response.status_code == 200
-        assert response.json == self.example_json()
-        mock_return_json.assert_called()
-
-    def test_get_by_user_unauthorized(self, mock_jwt_required, mock_return_json,
-                                      mock_rabbit_adaptor, mock_requesting_user):
-        user_id = mock_requesting_user.id + 1
-        mock_requesting_user.admin = False
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'ENABLE_AUTH': True})
-        response = client.get(f'/servicex/transformation?submitted_by={user_id}')
-        assert response.status_code == 401
-        mock_return_json.assert_not_called()

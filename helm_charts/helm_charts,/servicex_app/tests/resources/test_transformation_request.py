@@ -1,5 +1,3 @@
-from flask import Response
-
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -116,20 +114,3 @@ class TestTransformationRequest(ResourceTestBase):
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with('1234')
-
-    def test_get_single_request_unauthorized(self, mocker, mock_rabbit_adaptor,
-                                             mock_requesting_user,
-                                             mock_jwt_required):
-        user_id = mock_requesting_user.id
-        transform_request = self._generate_transform_request()
-        transform_request.submitted_by = user_id + 1
-        import servicex
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_request',
-            return_value=transform_request)
-        mock_requesting_user.admin = False
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'ENABLE_AUTH': True})
-        response: Response = client.get('/servicex/transformation/1234')
-        mock_transform_request_read.assert_called_with('1234')
-        assert response.status_code == 401

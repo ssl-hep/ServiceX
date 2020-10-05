@@ -41,15 +41,10 @@ status_request_parser.add_argument('details', type=bool, default=False,
 class TransformationStatus(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        # Validate that the user is an admin or submitted the request
         transform = TransformRequest.return_request(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
-        user = ServiceXResource.get_requesting_user()
-        if user and not user.admin and user.id != transform.submitted_by:
-            msg = 'You can only access your own transformation requests.'
-            return {'message': msg}, 401
 
         status_request = status_request_parser.parse_args()
 

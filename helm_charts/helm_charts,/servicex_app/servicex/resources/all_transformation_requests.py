@@ -40,19 +40,11 @@ parser.add_argument('submitted_by', type=int, location='args')
 class AllTransformationRequests(ServiceXResource):
     @auth_required
     def get(self):
-        user = self.get_requesting_user()
-
         args = parser.parse_args()
         query_id = args.get('submitted_by')
-        if user and not user.admin:
-            if not query_id or (query_id and user.id != query_id):
-                msg = 'You can only access your own transformation requests.'
-                return {'message': msg}, 401
-
         transforms: List[TransformRequest]
         if query_id:
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
             transforms = TransformRequest.query.all()
-
         return TransformRequest.return_json(transforms)
