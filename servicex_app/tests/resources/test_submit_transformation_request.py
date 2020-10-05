@@ -395,3 +395,55 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert record_body['events_processed'] == 0
         assert record_body['status'] == 'locating DID'
         assert record_body['info'] == ' '
+
+    def test_submit_transformation_auth_enabled(self, mock_rabbit_adaptor,
+                                                mock_docker_repo_adapter,
+                                                mock_jwt_required,
+                                                mock_requesting_user):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   docker_repo_adapter=mock_docker_repo_adapter,
+                                   extra_config={'ENABLE_AUTH': True})
+        response = client.post('/servicex/transformation',
+                               json=self._generate_transformation_request())
+
+        assert response.status_code == 200
+
+        request_id = response.json['request_id']
+
+        with client.application.app_context():
+            saved_obj = TransformRequest.return_request(request_id)
+            assert saved_obj
+            assert saved_obj.did == '123-45-678'
+            assert saved_obj.request_id == request_id
+            assert saved_obj.columns == "e.e, e.p"
+            assert saved_obj.image == 'ssl-hep/foo:latest'
+            assert saved_obj.chunk_size == 500
+            assert saved_obj.workers == 10
+            assert saved_obj.result_destination == 'kafka'
+            assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
+            assert saved_obj.submitted_by == mock_requesting_user.id
+
+        setup_queue_calls = [call(request_id), call(request_id+"_errors")]
+        mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+
+        bind_to_exchange_calls = [
+            call(exchange="transformation_requests", queue=request_id),
+            call(exchange="transformation_failures", queue=request_id+"_errors"),
+
+        ]
+
+        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
+
+        service_endpoint = \
+            "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
+            request_id
+
+        mock_rabbit_adaptor. \
+            basic_publish.assert_called_with(exchange='',
+                                             routing_key='did_requests',
+                                             body=json.dumps(
+                                                 {
+                                                     "request_id": request_id,
+                                                     "did": "123-45-678",
+                                                     "service-endpoint": service_endpoint}
+                                             ))
