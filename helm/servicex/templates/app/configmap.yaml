@@ -82,6 +82,8 @@ data:
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
 
     TRANSFORMER_MESSAGING = 'none'
+    TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
+
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
@@ -115,4 +117,5 @@ data:
 
     {{ if .Values.codeGen.enabled }}
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
+    CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
     {{ end }}
