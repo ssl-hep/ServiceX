@@ -29,11 +29,11 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestServicexInfo(ResourceTestBase):
-    def test_get_info(self, mocker, mock_rabbit_adaptor):
+    def test_get_info(self, mock_app_version, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.get('/servicex')
         assert response.status_code == 200
         print(response.json)
-        assert response.json == {'app-version': 'develop',
+        assert response.json == {'app-version': '3.14.15',
                                  'default-transformer': 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3',  # noqa: E501
                                  'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}  # noqa: E501
