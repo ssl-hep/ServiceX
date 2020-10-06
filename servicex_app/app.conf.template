@@ -4,6 +4,9 @@
 # details are beyond the scope of this example
 SECRET_KEY = 'abc123!'
 
+# Base URL of documentation
+DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/latest/'
+
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
