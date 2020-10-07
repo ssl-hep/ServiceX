@@ -1,3 +1,12 @@
+---
+name: Release Checklist
+about: List of tasks to be completed during each release
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 ## Release x.x.x checklist
 * [ ]  Merge PRs targeted for this milestone, and postpone any remaining issues/PRs to next milestone
 * [ ]  Update change log
