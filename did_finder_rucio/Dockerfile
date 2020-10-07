@@ -1,4 +1,4 @@
-FROM rucio/rucio-clients:latest
+FROM rucio/rucio-clients:release-1.23.7.post1
 
 LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
 
@@ -6,7 +6,7 @@ LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
 WORKDIR /usr/src/app
 
 # for CA certificates
-
+USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir 
 
 RUN yum -y update
@@ -34,7 +34,9 @@ COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
+
 COPY scl_enable /usr/bin/scl_enable
+
 ENV BASH_ENV="/usr/bin/scl_enable" \
     ENV="/usr/bin/scl_enable" \
     PROMPT_COMMAND=". /usr/bin/scl_enable"
@@ -43,6 +45,7 @@ COPY . .
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
+USER user
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
