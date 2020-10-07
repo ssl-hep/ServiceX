@@ -37,15 +37,15 @@ RUN pip install -r requirements.txt
 
 COPY scl_enable /usr/bin/scl_enable
 
-ENV BASH_ENV="/usr/bin/scl_enable" \
-    ENV="/usr/bin/scl_enable" \
-    PROMPT_COMMAND=". /usr/bin/scl_enable"
 
 COPY . .
 
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
-USER user
+
+ENV BASH_ENV="/usr/bin/scl_enable" \
+    ENV="/usr/bin/scl_enable" \
+    PROMPT_COMMAND=". /usr/bin/scl_enable"
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
 
