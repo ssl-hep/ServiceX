@@ -21,9 +21,10 @@ assignees: ''
   * [ ] [Uproot Code Generator](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
   * [ ] [ConfigMap Code Generator](https://github.com/ssl-hep/ServiceX_Code_Generator_Config_File)
 * [ ]  Activate [ReadTheDocs version](https://readthedocs.org/projects/servicex/versions/) for the release branch
-* [ ]  Update links to docs on release branch in ServiceX README and ServiceX_App website header and welcome emails
+* [ ]  Update links to docs in README on release branch
+* [ ]  Set chart version and app version in `servicex/Chart.yaml`
 * [ ]  Make sure that DockerHub has tags for this release in sslhep/servicex_app and other image repos
-* [ ]  Fix the default images and tags in `values.yaml` on release branch
+* [ ]  Fix the default images and tags in `servicex/values.yaml` on release branch
 * [ ]  Publish new version of ServiceX chart to ssl-hep/servicex helm repo
 * [ ]  Make centrally-managed deployments to River cluster
 * [ ]  Ensure docs on release branch are pointing to the correct deployments
