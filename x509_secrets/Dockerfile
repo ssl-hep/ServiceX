@@ -1,5 +1,7 @@
 FROM rucio/rucio-clients:latest
 
+USER root
+
 # Create app directory
 WORKDIR /usr/src/app
 
