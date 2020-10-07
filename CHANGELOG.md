@@ -5,16 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.0.0-RC.3] - 2020-10-8
 ### Added
-- Globus Auth for authentication
+- Globus Auth for new authentication system
+- Web frontend for signups, user profiles, and obtaining ServiceX API tokens
 - Mailgun support to email new users when their account has been approved
-- Migrated documentation to readthedocs
+- Migrated documentation to ReadtheDocs
 - Complete deployment instructions
 - TLS support for ingress
-- Tagging transform requests with the submitting user
+- Tagging transform requests with the submitting user if authentication is enabled
 - Default transformer image for deployment
-- New deployment information endpoint to find out the serviceX version, default transformer image, and the current code gen image tag
+- New deployment information endpoint to find out the ServiceX version, default transformer image, and the current code gen image tag
 - 
 ### Changed
+- API access tokens obtained using a ServiceX API token (replaces email/password)
 - Organized tempalates into folders to make the helm chart more manageable
 - Send the Minio url scheme to the client to make it possible to use TLS secured minio ingress
 - App version and code gen image tag are recorded in the DB for each transform
@@ -22,9 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add awkward1 library for parquet transform
 
 ### Fixed
-- Send 404 error when requesting status of a non-existent transform
+- Send 404 error when requesting information about a non-existent transform
 - Change the WORKDIR back to /home/atlas after all code is installed
-- Stop truncating error messages sent back to serviceX service
+- Stop truncating error messages sent back to ServiceX service
 
 ### Removed
 - Obsolete methods on ServiceXResource class
