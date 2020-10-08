@@ -20,7 +20,7 @@ spec:
         env:
           - name: "BASH_ENV"
             value: "/servicex/.bashrc"
-        args: ["/servicex/proxy-exporter.sh & sleep 5 && python /servicex/validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.rabbitmq.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+        args: ["/servicex/proxy-exporter.sh & sleep 5 && python /servicex/validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.auth.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.preflight.pullPolicy }}
