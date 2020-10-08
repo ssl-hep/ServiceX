@@ -54,8 +54,8 @@ data:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'some-secret-string'
     JWT_SECRET_KEY = 'jwt-secret-string'
-    RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
-    TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
+    RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
+    TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
 
     # Keep retrying to connect to Rabbit if its not yet up
     RABBIT_RETRIES = {{ .Values.app.rabbitmq.retries }}

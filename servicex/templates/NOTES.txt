@@ -15,8 +15,8 @@ Optionally, you can use a port forward to access the RabbitMQ Dashboard:
   kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-rabbitmq-0 15672:15672
 and then visit http://localhost:15672
 Log in with
-    username: {{ .Values.rabbitmq.rabbitmq.username }}
-    password: {{ .Values.rabbitmq.rabbitmq.password }}
+    username: {{ .Values.rabbitmq.auth.username }}
+    password: {{ .Values.rabbitmq.auth.password }}
 
 {{ if .Values.postgres.enabled }}
 You can also connect to the deployed postgres server with your favorite SQL client
