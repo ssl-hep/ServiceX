@@ -114,7 +114,7 @@ rabbitmq:
   # For easy testing we don't require PVs for rabbit
   persistence:
     enabled: false
-  rabbitmq:
+  auth:
     password: leftfoot1
   # This is needed for Windows users
   volumePermissions:
