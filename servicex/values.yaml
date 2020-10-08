@@ -20,7 +20,7 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: v1.0.0-rc.2
+  tag: develop
   pullPolicy: IfNotPresent
   replicas: 1
   auth: false
@@ -55,7 +55,7 @@ app:
 # Settings for the DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
-  tag: v1.0.0-rc.2
+  tag: develop
   pullPolicy: IfNotPresent
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -69,7 +69,7 @@ preflight:
   image: sslhep/servicex_func_adl_xaod_transformer
   # For uproot deployment
   # image: sslhep/servicex_func_adl_uproot_transformer
-  tag: v1.0.0-rc.2
+  tag: develop
   pullPolicy: IfNotPresent
 
 #
@@ -79,7 +79,7 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
-  tag: v1.0.0-rc.2
+  tag: develop
   pullPolicy: IfNotPresent
 
 
@@ -90,13 +90,13 @@ transformer:
   autoscalerEnabled: false
   cpuLimit: 1
   cpuScaleThreshold: 70
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
   # For uproot deployment
   #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:1.0.0-RC.3
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: v1.0.0-rc.2
+  tag: develop
   pullPolicy: IfNotPresent
   vomsOrg: atlas
 
