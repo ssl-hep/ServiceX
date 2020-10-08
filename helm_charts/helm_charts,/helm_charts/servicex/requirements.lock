@@ -1,12 +1,12 @@
 dependencies:
 - name: rabbitmq
-  repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 6.17.2
+  repository: https://charts.bitnami.com/bitnami/
+  version: 7.6.8
 - name: minio
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 5.0.6
+  version: 5.0.33
 - name: postgresql
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 8.3.3
-digest: sha256:c585c1bd722d105a53d059a2104841a1ee4e21ceb97b342fbc56671c3757b74b
-generated: "2020-02-13T14:50:08.862796-06:00"
+  version: 8.3.4
+digest: sha256:b706d44b74c23a4cebd95ef24fcd759183bd6fa92d0c009ca8afa25d27d70511
+generated: "2020-10-08T10:02:00.687411-05:00"
