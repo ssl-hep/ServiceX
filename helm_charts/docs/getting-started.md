@@ -8,8 +8,8 @@ appropriate client library.
 
 There are two instances of ServiceX, one to transform xAOD input files and one to transform flat
 ntuples, and you must be separately authenticated to each in order to use them. You can go to the
-[xAOD version](http://rc1-xaod-servicex.uc.ssl-hep.org/) or the
-[Uproot version](http://rc1-uproot-servicex.uc.ssl-hep.org/) and put in the username and password
+[xAOD version](https://xaod.servicex.ssl-hep.org) or the
+[Uproot version](https://uproot.servicex.ssl-hep.org) and put in the username and password
 for your requested account. In addition, both instances rely on ATLAS credentials to access Rucio,
 so you must be a member of the ATLAS VO to use them. The ServiceX admins will seek to personally
 accept pending accounts, so once you've registered send a message to the admins (Ben Galewsky or
@@ -20,13 +20,13 @@ have access to ServiceX, and you’ll be able to put in transform requests.
 ## Installing the client Python library
 
 The documentation for the ServiceX client is shown
-[here](https://pypi.org/project/servicex/1.0.0b3/). It's also useful to employ functions from the
+[here](https://pypi.org/project/servicex-cli/1.0.0rc3/). It's also useful to employ functions from the
 func-adl libraries ([for xAOD](https://pypi.org/project/func-adl-xAOD/) or
 [Uproot](https://pypi.org/project/func-adl-uproot/)). To interact with ServiceX via the client
 library you’ll need an environment running Python 3.7:
 
-    python -m pip install servicex==2.0.0b9
-    python -m pip install func-adl-xAOD==1.1.0b4
+    python -m pip install servicex==2.1
+    python -m pip install func-adl-xAOD==1.1.0b5
 
 In the Python prompt you can import the libraries and make a request using your registered username
 and password.
