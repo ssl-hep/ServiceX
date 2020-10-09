@@ -17,7 +17,7 @@ Once you've done that, refer to the documentation on how to get started [sending
 
 ## Documentation
 
-[![Documentation Status](https://readthedocs.org/projects/servicex/badge/?version=latest)](https://servicex.readthedocs.io/en/v1.0.0-rc.3/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/servicex/badge/?version=v1.0.0-rc.3)](https://servicex.readthedocs.io/en/v1.0.0-rc.3/?badge=v1.0.0-rc.3)
 
 The [ServiceX documentation](https://servicex.readthedocs.io/en/v1.0.0-rc.3/) is hosted on Read the Docs.
 
