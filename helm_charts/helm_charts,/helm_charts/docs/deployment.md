@@ -4,8 +4,8 @@ cluster. At present, each ServiceX instance is dedicated to a particular
 experiment and file format (flat root file, ATLAS xAOD, and CMS MiniAOD). There
 are centrally managed instances of the service running on 
 the University of Chicago's River cluster, 
-[xaod-servicex.uc.ssl-hep.org](xaod-servicex.uc.ssl-hep.org) and 
-[uproot-servicex.uc.ssl-hep.org](uproot-servicex.uc.ssl-hep.org). 
+[xaod.servicex.ssl-hep.org](https://xaod.servicex.ssl-hep.org) and 
+[uproot.servicex.ssl-hep.org](https://uproot.servicex.ssl-hep.org). 
 
 If you have access to a Kubernetes cluster and wish to deploy one or more 
 instances of ServiceX, this guide is for you.
@@ -208,7 +208,8 @@ The scopes should include:
 ```
 openid
 email
-profile```
+profile
+```
 
 Note the Client ID and paste this into your `values.yaml` as
 ```yaml
