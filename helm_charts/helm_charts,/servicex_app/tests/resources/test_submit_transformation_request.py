@@ -107,7 +107,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 500
         assert response.json == {"message": "Something went wrong"}
 
-    def test_submit_transformation(self, mock_rabbit_adaptor, mock_docker_repo_adapter):
+    def test_submit_transformation(self, mock_rabbit_adaptor,
+                                   mock_docker_repo_adapter,
+                                   mock_app_version):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
         response = client.post('/servicex/transformation',
@@ -128,6 +130,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'kafka'
             assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
+            assert saved_obj.app_version == "3.14.15"
+            assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
@@ -157,7 +161,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_root_file(self, mocker,
                                                   mock_rabbit_adaptor,
                                                   mock_code_gen_service,
-                                                  mock_docker_repo_adapter):
+                                                  mock_docker_repo_adapter,
+                                                  mock_app_version):
         mock_code_gen_service.generate_code_for_selection = mocker.Mock(return_value='my-cm')
         request = self._generate_transformation_request_xAOD_root_file()
 
@@ -184,6 +189,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'root-file'
             assert saved_obj.generated_code_cm == 'my-cm'
+            assert saved_obj.app_version == "3.14.15"
+            assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
