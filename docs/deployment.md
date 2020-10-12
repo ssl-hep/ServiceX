@@ -35,7 +35,7 @@ application.
 - X509 certs for the service account (assumed to be in ~/.globus)
 Install the serviceX cli via
 ```
-pip install servicex-cli==1.0.0rc2 
+pip install servicex-cli==1.0.0rc3 
 ```
 
 ### Install Your Certs
@@ -63,7 +63,6 @@ all of the subcharts:
 ```
 helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
 helm repo update
-helm dependency update servicex
 ``` 
 
 ### Edit a Basic Values.yaml
@@ -121,7 +120,7 @@ x509Secrets:
 ### Deploy the Helm Chart
 Deploy the chart to your cluster with 
 ```
-helm install -f values.yaml --version v1.0.0-rc.2 servicex ssl-hep/servicex
+helm install -f values.yaml --version v1.0.0-rc.3 servicex ssl-hep/servicex
 ```
 
 Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to
@@ -190,7 +189,7 @@ app:
 
 And you deployed the helm chart with
 ```
-helm install -f values.yaml --version v1.0.0-rc.2 xaod ssl-hep/servicex
+helm install -f values.yaml --version v1.0.0-rc.3 xaod ssl-hep/servicex
 ```
 Then the instance's URL would be `https://xaod.servicex.ssl-hep.org`
 
