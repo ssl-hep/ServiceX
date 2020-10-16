@@ -4,18 +4,6 @@ A transformation request is a specifically formatted request sent to ServiceX. I
 information on what input dataset is to be used, what preselection is to be applied (including
 computation of new columns, if any), and what columns should be returned to the user.
 
-## Selecting endpoints
-
-Each request requires two endpoints, one corresponding to the service itself, and one for the
-output of the request. The current available endpoints are shown below.
-
-| Endpoint                           | Type     | Location  | Experiment | Input        |
-|--------------------------------    |------    |-------    |--------    |----------    |
-| rc1-xaod-servicex.uc.ssl-hep.org   | ServiceX | SSL-RIVER | ATLAS      | xAOD files   |
-| rc1-xaod-minio.uc.ssl-hep.org      | MinIO    | SSL-RIVER | ATLAS      | xAOD files   |
-| rc1-uproot-servicex.uc.ssl-hep.org | ServiceX | SSL-RIVER | ATLAS      | Flat ntuples |
-| rc1-uproot-minio.uc.ssl-hep.org    | MinIO    | SSL-RIVER | ATLAS      | Flat ntuples |
-
 ## Creating a request via func_adl
 
 In order to use ``func_adl`` directly we start with a [Qastle](https://github.com/iris-hep/qastle)
