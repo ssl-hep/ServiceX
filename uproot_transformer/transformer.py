@@ -75,7 +75,6 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    _tree_name = transform_request['tree-name']
     # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
@@ -84,11 +83,11 @@ def callback(channel, method, properties, body):
         # Do the transform
         servicex.post_status_update(file_id=_file_id,
                                     status_code="start",
-                                    info="tree-name: "+_tree_name)
+                                    info="Starting")
 
         root_file = _file_path.replace('/', ':')
         output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path+".parquet", servicex, tree_name=_tree_name)
+        transform_single_file(_file_path, output_path+".parquet", servicex)
 
         tock = time.time()
 
@@ -127,13 +126,13 @@ def callback(channel, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, servicex=None, tree_name='Events'):
+def transform_single_file(file_path, output_path, servicex=None):
     print("Transforming a single path: " + str(file_path))
 
     try:
         import generated_transformer
         start_transform = time.time()
-        table = generated_transformer.run_query(file_path, tree_name)
+        table = generated_transformer.run_query(file_path)
         end_transform = time.time()
         print(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
 

@@ -2,10 +2,6 @@ name: Docker Hub
 
 on:
   push:
-    branches:
-      - "*"
-    tags:
-      - "*"
   pull_request:
 
 jobs:
@@ -28,4 +24,3 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         tag: "${GITHUB_REF##*/}"
-
