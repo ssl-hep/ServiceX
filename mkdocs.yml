@@ -7,10 +7,14 @@ nav:
         - Specifying a request: requests.md
         - Outreach: outreach.md
     - 'Deployment Guide':
+<<<<<<< HEAD
         - Introduction: deployment/introduction.md
         - Basic deployments: deployment/basic.md
         - Production deployments: deployment/production.md
         - Reference: deployment/reference.md
+=======
+        - Deployment: deployment.md
+>>>>>>> Add sections to docs nav
     - 'Developer Guide':
         - Development: development.md
 theme: readthedocs
