@@ -2,9 +2,12 @@ site_name: ServiceX
 nav:
     - Home: index.md
     - Introduction: introduction.md
-    - Getting started: getting-started.md
-    - Specifying a request: requests.md
-    - Outreach: outreach.md
-    - Deployment: deployment.md
-    - Development: development.md
+    - 'User Guide':
+        - Getting started: getting-started.md
+        - Specifying a request: requests.md
+        - Outreach: outreach.md
+    - 'Deployment Guide':
+        - Deployment: deployment.md
+    - 'Developer Guide':
+        - Development: development.md
 theme: readthedocs
