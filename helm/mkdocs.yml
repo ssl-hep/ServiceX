@@ -3,9 +3,9 @@ nav:
     - Home: index.md
     - Introduction: introduction.md
     - 'User Guide':
-        - Getting started: getting-started.md
-        - Specifying a request: requests.md
-        - Outreach: outreach.md
+        - Getting started: user/getting-started.md
+        - Specifying a request: user/requests.md
+        - Outreach: user/outreach.md
     - 'Deployment Guide':
 <<<<<<< HEAD
         - Introduction: deployment/introduction.md

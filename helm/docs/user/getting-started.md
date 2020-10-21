@@ -47,7 +47,7 @@ You can authenticate with the identity provider of your choice (e.g. CERN or you
 
 On your new profile, you'll see an API token. Copy it using using the button on the right:
 
-![Copying API token](img/copy-api-token.png)
+![Copying API token](../img/copy-api-token.png)
 
 Paste the token into your `.servicex` file, which should now look something like this:
 ```
