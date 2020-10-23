@@ -33,6 +33,8 @@ You can use one of the centrally-managed instances of ServiceX running on the Un
 |-----------------------------               |------         |-----   |-------       |
 | https://xaod.servicex.ssl-hep.org          | ATLAS         | xaod   | xAOD files   |
 | https://uproot-atlas.servicex.ssl-hep.org  | ATLAS         | uproot | Flat ntuples |
+| https://uproot-cms.servicex.ssl-hep.org    | CMS           | uproot | Flat ntuples |
+
 
 Choose one of the above, and copy the URL into the `endpoint` field of your `.servicex` file. Set `type: xaod` or `type: uproot` to match your endpoint.
 
