@@ -17,8 +17,9 @@ app:
   ingress:
     enabled: true
     clusterIssuer: letsencrypt-prod
+
 codeGen:
-  image: sslhep/servicex_code_gen_func_adl_xaod
+  image: sslhep/servicex_code_gen_func_adl_uproot
 
 didFinder:
   pullPolicy: Always
@@ -26,25 +27,19 @@ didFinder:
 
 objectStore:
     enabled: true
-    publicURL: xaod-minio.servicex.ssl-hep.org
+    publicURL: uproot-minio.servicex.ssl-hep.org
 
 gridAccount: changeme
-
 minio:
   ingress:
     enabled: true
-    annotations:
-      kubernetes.io/ingress.class: nginx
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
-    - "xaod-minio.servicex.ssl-hep.org"
-    tls:
-    - hosts:
-      - xaod-minio.servicex.ssl-hep.org
-      secretName: xaod-minio-tls
-  mode: distributed
-
+    - "uproot-minio.servicex.ssl-hep.org"
+  persistence:
+    enabled: false
+  metrics:
+    serviceMonitor:
+      enabled: false
 postgres:
   enabled: true
 postgresql:
@@ -79,6 +74,6 @@ rabbitmq:
       storageClass: rook-ceph-block
 transformer:
   autoscalerEnabled: false
-  pullPolicy: IfNotPresent
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:v1.0.0-rc.3
+  pullPolicy: Always
+  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:v1.0.0-rc.3
 
