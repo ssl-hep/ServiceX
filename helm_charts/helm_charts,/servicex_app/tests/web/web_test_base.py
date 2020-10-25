@@ -51,6 +51,7 @@ class WebTestBase:
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1',
+            'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
             'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
             'ENABLE_AUTH': False,
             'GLOBUS_CLIENT_ID': 'globus-client-id',
@@ -80,7 +81,9 @@ class WebTestBase:
             email='jane@example.com',
             sub='janedoe',
             institution='UChicago',
-            experiment='ATLAS')
+            experiment='ATLAS',
+            refresh_token="abcdef"
+        )
 
     @staticmethod
     def _auth_url():
