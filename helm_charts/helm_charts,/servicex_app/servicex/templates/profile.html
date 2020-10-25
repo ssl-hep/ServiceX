@@ -31,10 +31,10 @@
       <dt class="col-sm-3">API token</dt>
       <dd class="col-sm-9 row">
         <div class="col" style="word-break: break-all">
-          <code class="text-muted">{{ user.refresh_token }}</code>
+          <code class="text-muted">**********{{ user.refresh_token[-6:] }}</code>
         </div>
-        <div class="d-flex flex-column justify-content-center">
-          <button class="btn btn-sm btn-outline-secondary my-2"
+        <div class="d-flex flex-row justify-content-center">
+          <button class="btn btn-sm btn-outline-secondary"
                   id="copy-btn"
                   type="button"
                   data-value="{{ user.refresh_token }}"
@@ -42,7 +42,15 @@
                   data-toggle="tooltip">
             <i class="fa fa-copy"></i>
           </button>
-          <div class="my-2" data-target="#exampleModal" data-toggle="modal">
+          <a class="mx-3" href="{{ url_for('servicex-file') }}" download>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Download config"
+                    data-toggle="tooltip">
+              <i class="fa fa-download"></i>
+            </button>
+          </a>
+          <div data-target="#exampleModal" data-toggle="modal">
             <button class="btn btn-sm btn-outline-warning"
                     type="button"
                     title="Regenerate"
@@ -100,11 +108,6 @@
                       .tooltip('show')
                       .attr('data-original-title', 'Copy to clipboard');
               });
-      })
-
-      // Hide tooltip on mouseleave, since after clicking it remains focused
-      copyBtn.addEventListener('mouseleave', () => {
-          $('#copy-btn').tooltip('hide');
       })
   </script>
 {% endblock %}

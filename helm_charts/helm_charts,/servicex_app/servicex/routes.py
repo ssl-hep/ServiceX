@@ -53,7 +53,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.users.slack_interaction import SlackInteraction
 
     from servicex.web import home, sign_in, sign_out, auth_callback, \
-        view_profile, edit_profile, api_token
+        view_profile, edit_profile, api_token, servicex_file
 
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
@@ -71,6 +71,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     app.add_url_rule('/sign-out', 'sign_out', sign_out)
     app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
     app.add_url_rule('/api-token', 'api_token', api_token)
+    app.add_url_rule('/.servicex', 'servicex-file', servicex_file)
     app.add_url_rule('/profile', 'profile', view_profile)
     app.add_url_rule('/profile/new', 'create_profile', create_profile,
                      methods=['GET', 'POST'])
