@@ -75,18 +75,15 @@ Below are some basic examples which you can run to confirm that ServiceX is work
 ### xAOD
 
 ```python
-import servicex as sx
 from func_adl_servicex import ServiceXSourceXAOD
 
 dataset_name = "mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00"
-sx_dataset = sx.ServiceXDataset(dataset_name, "xaod")
-src = ServiceXSourceXAOD(sx_dataset)
+src = ServiceXSourceXAOD(dataset_name)
 df = src \
     .SelectMany('lambda e: e.Jets("AntiKt4EMTopoJets")') \
     .Select('lambda j: j.pt()/1000.0') \
     .AsPandasDF('JetPt') \
     .value()
-
 print(df)
 ```
 
@@ -113,17 +110,13 @@ entry
 
 ```python
 import pandas as pd
-import servicex as sx
 from func_adl_servicex import ServiceXSourceUpROOT
 
-
 dataset_name = "data15_13TeV:data15_13TeV.00282784.physics_Main.deriv.DAOD_PHYSLITE.r9264_p3083_p4165_tid21568807_00"
-sx_dataset = sx.ServiceXDataset(dataset_name, "uproot")
-src = ServiceXSourceUpROOT(sx_dataset, "CollectionTree")
+src = ServiceXSourceUpROOT(dataset_name, "CollectionTree")
 data = src.Select("lambda e: {'JetPT': e['AnalysisJetsAuxDyn.pt']}") \
     .AsParquetFiles('junk.parquet') \
     .value()
-
 df = pd.read_parquet(data[0])
 print(df)
 ```
