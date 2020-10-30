@@ -92,7 +92,7 @@ transformer:
   cpuScaleThreshold: 70
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
   # For uproot deployment
-  #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:1.0.0-RC.3
+  #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
 
 x509Secrets:
   image: sslhep/x509-secrets
