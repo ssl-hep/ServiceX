@@ -22,8 +22,8 @@ codeGen:
   image: sslhep/servicex_code_gen_func_adl_uproot
 
 didFinder:
-  rucio_host: http://cmsrucio-int.cern.ch
-  auth_host: https://cmsrucio-auth-int.cern.ch
+  rucio_host: http://cms-rucio.cern.ch
+  auth_host: https://cms-rucio-auth.cern.ch
 
 x509Secrets:
   vomsOrg: cms
