@@ -43,7 +43,8 @@ minio:
     - hosts:
       - xaod-minio.servicex.ssl-hep.org
       secretName: xaod-minio-tls
-  mode: distributed
+    mode: standalone
+    replicas: 1
 
 postgres:
   enabled: true
