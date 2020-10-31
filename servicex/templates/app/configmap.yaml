@@ -13,7 +13,7 @@ data:
     # this is the session secret, used to protect the Flask session. You should
     # use a longer secret string known only to your application
     # details are beyond the scope of this example
-    SECRET_KEY = 'abc123!'
+    SECRET_KEY = '{{ randAlphaNum 32 }}'
 
     # Base url of documentation - autopopulated from chart version
     # Must be activated at https://readthedocs.org/projects/servicex/versions/
@@ -25,6 +25,8 @@ data:
     # Globus configuration
     GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
     GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
+
+    JWT_SECRET_KEY = '{{ randAlphaNum 32 }}'
 
     # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
@@ -52,8 +54,6 @@ data:
     {{ end }}
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = 'some-secret-string'
-    JWT_SECRET_KEY = 'jwt-secret-string'
     RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
     TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
 
