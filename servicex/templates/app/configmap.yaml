@@ -24,6 +24,9 @@ data:
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
+    # Disable user management system
+    DISABLE_USER_MGMT = {{ ternary "True" "False" .Values.app.disableUserMgmt }}
+
     # Globus configuration
     GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
     GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
