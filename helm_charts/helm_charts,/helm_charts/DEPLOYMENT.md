@@ -170,7 +170,9 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.ingress.enabled`                | Enable install of ingress                        | false                                                   |
 | `app.ingress.host`                   | Hostname to associate ingress with               | servicex.ssl-hep.org                                    |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
-| `app.ingress.clusterIssuer`          | Name of the ClusterIssuer to use which will be used to obtain a TLS certificate | letsencrypt-staging      |
+| `app.ingress.tls.enabled`            | Enable TLS for ServiceX API Ingress resource     | false                                                   |
+| `app.ingress.tls.secretName`         | Name of TLS Secret used for ServiceX API server  | `{{.Release.Name}}-app-tls`                             |
+| `app.ingress.tls.clusterIssuer`      | Specify a ClusterIssuer if using cert-manager    | -                                                       |
 | `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
 | `app.slackSigningSecret`             | Signing secret for Slack application             | -
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
