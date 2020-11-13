@@ -45,7 +45,11 @@ app:
     enabled: false
     host: servicex.ssl-hep.org
     defaultBackend: default-http-backend
-    clusterIssuer: letsencrypt-prod
+    tls:
+      enabled: false
+      secretName: "{{.Release.Name}}-app-tls"
+      # Specify a ClusterIssuer if using cert-manager:
+      clusterIssuer:
 
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
