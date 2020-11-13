@@ -4,19 +4,19 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
-    {{- if .Values.app.ingress.clusterIssuer }}
-    cert-manager.io/cluster-issuer: {{ .Values.app.ingress.clusterIssuer }}
+    {{- if .Values.app.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.app.ingress.tls.clusterIssuer }}
     acme.cert-manager.io/http01-edit-in-place: "true"
     {{- end }}
   labels:
     app: {{ .Release.Name }}-servicex
   name: {{ .Release.Name }}-servicex
 spec:
-  {{- if .Values.app.ingress.clusterIssuer }}
+  {{- if .Values.app.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Release.Name }}.{{ .Values.app.ingress.host }}
-    secretName: {{ .Release.Name }}-tls
+    secretName: {{ tpl .Values.app.ingress.tls.secretName . }}
   {{- end }}
   rules:
   - host: {{ .Release.Name }}.{{ .Values.app.ingress.host }}
