@@ -4,7 +4,7 @@ So you want to get involved! The developers welcome community input. The central
 with all ServiceX repositories can be found [here](https://github.com/ssl-hep). The core steps are
 shown in the diagram below.
 
-![Development](img/develop.png)
+![Development](../img/develop.png)
 
 ## Testing new changes
 

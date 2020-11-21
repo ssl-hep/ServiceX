@@ -3,14 +3,14 @@ nav:
     - Home: index.md
     - Introduction: introduction.md
     - 'User Guide':
-        - Getting started: getting-started.md
-        - Specifying a request: requests.md
-        - Outreach: outreach.md
+        - Getting started: user/getting-started.md
+        - Specifying a request: user/requests.md
+        - Outreach: user/outreach.md
     - 'Deployment Guide':
         - Introduction: deployment/introduction.md
         - Basic deployments: deployment/basic.md
         - Production deployments: deployment/production.md
         - Reference: deployment/reference.md
     - 'Developer Guide':
-        - Development: development.md
+        - Development: development/development.md
 theme: readthedocs
