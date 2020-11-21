@@ -4,16 +4,19 @@ ServiceX is a data delivery service for high energy physicists working on the AT
 Requests to ServiceX can be made in Python using the [func-ADL](https://pypi.org/project/func-adl-servicex/1.0/) analysis description language or TCut selection strings.
 
 ## Prerequisites
-- Python 3.6 or 3.7
+- Python 3.6, 3.7, or 3.8
 - Member of the ATLAS or CMS collaborations
 
 ## Installation
 
-In this tutorial, we will use func-ADL to make requests to ServiceX. 
-You can install it via:
 ```bash
-pip install func-adl-servicex==1.0
+pip install servicex-clients
 ```
+
+This is an umbrella package which includes all of the frontend client 
+libraries used to communicate with a ServiceX backend. 
+There are multiple ways to specify a request, but we will use 
+func-ADL in this tutorial.
 
 ## Selecting an endpoint
 
