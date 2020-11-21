@@ -106,3 +106,45 @@ returns the output as a Pandas
 [TTree](https://root.cern.ch/doc/master/classTTree.html), and ``AsAwkwardArray`` returns the output
 as an [Awkward array](https://github.com/scikit-hep/awkward-array) suitable for use with
 [uproot](https://github.com/scikit-hep/uproot).
+
+## Local Caching
+
+By default, the ServiceX frontend client caches the results of each request
+locally to speed up repeated queries.
+
+### Cache location
+
+The default cache location is as follows:
+- `/tmp/servicex` on Linux
+- `%USERPROFILE%/AppData/Local/Temp/servicex` on Windows
+
+This can be changed by setting a `cache_path` in your `.servicex` config file:
+```yaml
+cache_path: /home/<my-user>/servicex-cache
+api_endpoints:
+    ...
+```
+
+### Bypassing the cache
+
+If you want the client to ignore the cached data, you can the use the 
+`ignore_cache` context manager provided by the `servicex` package:
+```python
+from servicex import ignore_cache
+
+with ignore_cache():
+    do_query()
+```
+
+In a Jupyter notebook, the `with` block won't span across cells.
+Instead, you can use the context manager's `__enter__` and `__exit__` methods:
+```python
+from servicex import ignore_cache
+
+ic = ignore_cache()
+ic.__enter__()
+
+...
+
+ic.__exit__(None None, None)
+```
