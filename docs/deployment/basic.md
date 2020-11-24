@@ -8,11 +8,11 @@ see the [production deployment guide](production.md).
 ## Prerequisites
 - A Kubernetes cluster running K8s version 1.16 or later. 
 Your account will need to have permission to:
-  * Create a Service Account
-  * Peform Rolebindings
+    - Create a Service Account
+    - Peform Rolebindings
 - [Helm 3](https://helm.sh/docs/intro/install/) installed.
 - Python 3.6+
-- A valid set of CERN X509 certificates `~/.globus` directory.
+- A valid set of CERN X509 certificates in the `~/.globus` directory.
 
 If you don't have access to a cluster, you can enable a single node 
 Kubernetes cluster on your desktop 
@@ -32,7 +32,7 @@ You can use the ServiceX CLI tool to install your CERN X509 certs onto the
 cluster. Install the CLI via 
 
 ```
-pip install servicex-cli==1.0.0rc3
+pip install servicex-cli
 ```
 
 ### Install your certificates
@@ -68,6 +68,7 @@ helm repo update
 ### Basic configuration
 The Helm chart is configured using a `.yaml` file.
 You have some initial choices to make:
+
 * Is this deployment for ATLAS or CMS?
 * Will it be used for xAOD, MiniAOD, or flat ROOT files?
  
@@ -158,7 +159,7 @@ This should output some JSON metadata for the deployment.
 
 ### Running a simple analysis
 
-Check out the [getting started guide](getting-started.md) for new users,
+Check out the [getting started guide](user/getting-started.md) for new users,
 which contains some examples of basic requests you can make to ServiceX.
 
 Select one which corresponds to the file type you chose for your deployment.
