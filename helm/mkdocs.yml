@@ -13,4 +13,8 @@ nav:
         - Reference: deployment/reference.md
     - 'Developer Guide':
         - Development: development/development.md
-theme: readthedocs
+theme:
+    name: readthedocs
+    highlightjs: true
+    hljs_languages:
+        - yaml
