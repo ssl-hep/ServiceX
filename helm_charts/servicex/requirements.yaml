@@ -4,7 +4,7 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami/
   - name: minio
     version: 5.0.*
-    repository: https://kubernetes-charts.storage.googleapis.com/
+    repository: https://helm.min.io/
     condition: objectStore.enabled
   - name: postgresql
     version: 8.3.*
