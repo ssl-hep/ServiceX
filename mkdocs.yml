@@ -6,6 +6,7 @@ nav:
         - Getting started: user/getting-started.md
         - Specifying a request: user/requests.md
         - Outreach: user/outreach.md
+        - Notebook: test.ipynb
     - 'Deployment Guide':
         - Introduction: deployment/introduction.md
         - Basic deployments: deployment/basic.md
@@ -18,3 +19,5 @@ theme:
     highlightjs: true
     hljs_languages:
         - yaml
+plugins:
+    - mkdocs-jupyter
