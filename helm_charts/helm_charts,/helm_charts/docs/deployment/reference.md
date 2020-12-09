@@ -19,6 +19,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.tokenExpires`                   | Seconds until the ServiceX API tokens (JWT refresh tokens) expire | False (never)                          |
 | `app.authExpires`                    | Seconds until the JWT access tokens expire       | 21600 (six hours)                                       |
 | `app.ingress.enabled`                | Enable install of ingress                        | false                                                   |
+| `app.ingress.class`                  | Class to be set in `kubernetes.io/ingress.class` annotation | nginx                                        |
 | `app.ingress.host`                   | Hostname to associate ingress with               | servicex.ssl-hep.org                                    |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
 | `app.ingress.tls.enabled`            | Enable TLS for ServiceX API Ingress resource     | false                                                   |

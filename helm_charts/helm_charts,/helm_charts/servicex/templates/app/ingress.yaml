@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: {{ .Values.app.ingress.class }}
     {{- if .Values.app.ingress.tls.clusterIssuer }}
     cert-manager.io/cluster-issuer: {{ .Values.app.ingress.tls.clusterIssuer }}
     acme.cert-manager.io/http01-edit-in-place: "true"
