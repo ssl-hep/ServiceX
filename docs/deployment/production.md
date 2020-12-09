@@ -7,7 +7,8 @@ For a guide to making a simple deployment of ServiceX with no extra features,
 check out our [basic deployment guide](basic.md).
 
 ## Prerequisites
-- A Kubernetes cluster running K8s version 1.16 or later. 
+- A Kubernetes cluster running K8s version 1.16 or later 
+with an ingress controller such as NGINX.
 - [Helm 3](https://helm.sh/docs/intro/install/) installed.
 - You've used the ServiceX CLI to install your grid certificates on 
 your cluster (if not, see the basic guide).
@@ -27,6 +28,7 @@ following section to your values file:
 app:
     ingress:
         enabled: true
+        class: <ingress class>
         host: <domain name for your deployment>
 ```
 
@@ -52,6 +54,10 @@ then the instance's URL would be `my-release.servicex.ssl-hep.org`.
 You should also make sure the host has a DNS A record pointing this 
 subdomain at the external IP address of your ingress controller.
 
+The `app.ingress.class` value is used to set the `kubernetes.io/ingress.class` 
+annotation on the Ingress resource. It defaults to `nginx`, but you can set a 
+different value, such as `traefik`.
+
 ### Adding an Ingress to Minio
 ServiceX stores files in a Minio object store which is deployed as a 
 subchart. The Helm chart for Minio has it's own support for an Ingress,
@@ -61,6 +67,8 @@ which we can activate like so:
 minio:
   ingress:
     enabled: true
+    annotations:
+      kubernetes.io/ingress.class: <ingress class>
     hosts:
     - my-release-minio.servicex.ssl-hep.org
 ```
@@ -154,7 +162,7 @@ minio:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: <ingress class>
     hosts:
     - my-release-minio.servicex.ssl-hep.org
     tls:
@@ -195,7 +203,7 @@ minio:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: <ingress class>
       cert-manager.io/cluster-issuer: letsencrypt-prod
       acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
@@ -316,6 +324,7 @@ rabbitmq:
        cpu: 100m
   replicas: 3
 ```
+<<<<<<< HEAD
 
 ## Autoscaling
 ServiceX should automatically scale up/down number of transformers. For this to work it uses Horizontal Pod Autoscaler (HPA). For the HPA to work, k8s cluster needs to be able to measure CPU utilization of the pods. This is easiest enabled by installing [metric-server](https://github.com/kubernetes-sigs/metrics-server). The latest one is easily installed and supports up to 100 nodes by default:
@@ -331,3 +340,5 @@ servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
 ```
 
 
+=======
+>>>>>>> Make ingress class annotation value configurable
