@@ -17,6 +17,7 @@ class TestServiceXFile(WebTestBase):
             type: xaod
         """
         assert response.data.decode() == dedent(expected)
+        assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
 
     def test_servicex_file_no_match(self, client):
         cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl:develop'}
