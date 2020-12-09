@@ -29,4 +29,4 @@ def servicex_file():
         type: {backend_type}
     """
     return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
-                     as_attachment=True, attachment_filename=".servicex")
+                     as_attachment=True, attachment_filename="servicex.yaml")
