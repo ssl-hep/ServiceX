@@ -22,12 +22,6 @@ spec:
   - host: {{ .Release.Name }}.{{ .Values.app.ingress.host }}
     http:
       paths:
-      {{- if .Values.objectStore.enabled }}
-      - path: /minio
-        backend:
-          serviceName: {{ .Release.Name }}-minio
-          servicePort: 9000
-      {{- end }}
       - path: /servicex/internal
         backend:
           serviceName: {{ .Values.app.ingress.defaultBackend }}
