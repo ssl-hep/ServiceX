@@ -6,10 +6,16 @@ You can monitor the status with
     kubectl get pods --namespace {{ .Release.Namespace }}
 and wait for 1/1 to be ready for the rabbitmq pod.
 
+{{ if .Values.app.ingress.enabled }}
+Congratulations! You deployed an ingress for this service. You can access the
+REST service at http://{{ .Release.Name }}.{{ .Values.app.ingress.host }}
+{{ else }}
 To access the REST server you will need to run a Kubernetes Port-Forward:
 
   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Release.Name }}-servicex-app" -o jsonpath="{.items[0].metadata.name}")
   kubectl port-forward $POD_NAME 5000:5000
+
+{{ end }}
 
 Optionally, you can use a port forward to access the RabbitMQ Dashboard:
   kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-rabbitmq-0 15672:15672
@@ -27,19 +33,21 @@ and connect with this JDBC Connection String:
 {{ end }}
 
 {{ if .Values.objectStore.enabled }}
+{{ if .Values.minio.ingress.enabled }}
+{{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
+
+Since you delcared an internet ingress to Minio you can access it at
+{{ .Values.objectStore.publicURL | default $minio_ingress }}
+{{ else }}
 Finaly, you can interact with the minio object store with another Port-Forward:
   export MINIO_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app=minio,release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
   kubectl port-forward $MINIO_POD_NAME 9000:9000
 
 You can use the minio browser by visiting:
     http://localhost:9000
-
+{{ end }}
 Log in with
     Access Key: {{ .Values.minio.accessKey }}
     Secret Key: {{ .Values.minio.secretKey }}
 {{ end }}
 
-{{ if .Values.app.ingress.enabled }}
-Congratulations! You deployed an ingress for this service. You can access the
-REST service at http://{{ .Release.Name }}.{{ .Values.app.ingress.host }}
-{{ end }}
