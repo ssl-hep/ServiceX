@@ -71,9 +71,11 @@ deployment, so you need to hardcode it in the Minio Ingress host
 The value should be `<helm release name>-minio.<app.ingress.host value>`.
 
 ### Ingress at CERN k8s cluster
-    For ingress to work at CERN, one needs at least two loadbalancers allowed for your project. 
-    CERN documentation is [here.](https://clouddocs.web.cern.ch/networking/load_balancing.html#kubernetes-service-type-loadbalancer)
-    Start by turning off the charts ingress.
+For ingress to work at CERN, one needs at least two loadbalancers allowed for your project. 
+CERN documentation is
+[here](https://clouddocs.web.cern.ch/networking/load_balancing.html#kubernetes-service-type-loadbalancer).
+
+Start by turning off the charts ingress:
 ```yaml
 app:
   ingress:
@@ -98,6 +100,7 @@ spec:
     app: <appname>-servicex-app
   type: LoadBalancer
 ```
+
  Verify that you can access it using just IP, then create a DNS for it:
 ```
 openstack loadbalancer set --description my-domain-name ServiceX-LB
@@ -105,6 +108,7 @@ ping my-domain-name.cern.ch
 ```
 
 Once service is accessible from inside CERN, you may ask for the firewall to be open, process is described [here.](https://clouddocs.web.cern.ch/containers/tutorials/firewall.html#servicetype-loadbalancer)
+The procedure should be repeated for MinIO.
 
 ## Configuring Ingress resources to use TLS
 It's a good idea to enable TLS for both of these Ingress resources.
@@ -313,4 +317,17 @@ rabbitmq:
   replicas: 3
 ```
 
-## 
+## Autoscaling
+ServiceX should automatically scale up/down number of transformers. For this to work it uses Horizontal Pod Autoscaler (HPA). For the HPA to work, k8s cluster needs to be able to measure CPU utilization of the pods. This is easiest enabled by installing [metric-server](https://github.com/kubernetes-sigs/metrics-server). The latest one is easily installed and supports up to 100 nodes by default:
+```
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+If everything is correct, you should be able to check resource use of the running pods. eg.
+```
+> kubectl top pods
+NAME                                     CPU(cores)   MEMORY(bytes)
+servicex-code-gen-844f449cc5-d7q7b       1m           140Mi
+servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
+```
+
+
