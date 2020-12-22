@@ -70,6 +70,41 @@ deployment, so you need to hardcode it in the Minio Ingress host
 (this is a current limitation of the Minio chart). 
 The value should be `<helm release name>-minio.<app.ingress.host value>`.
 
+### Ingress at CERN k8s cluster
+    For ingress to work at CERN, one needs at least two loadbalancers allowed for your project. 
+    CERN documentation is [here.](https://clouddocs.web.cern.ch/networking/load_balancing.html#kubernetes-service-type-loadbalancer)
+    Start by turning off the charts ingress.
+```yaml
+app:
+  ingress:
+    enabled: false
+```
+
+Create loadbalancer service like this:
+```yaml
+apiVersion: v1
+kind: ServiceX
+metadata:
+  name: ServiceX-LB
+  namespace: <your-namespace>
+  labels:
+    app: <appname>-servicex-app
+spec:
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: <appname>-servicex-app
+  type: LoadBalancer
+```
+ Verify that you can access it using just IP, then create a DNS for it:
+```
+openstack loadbalancer set --description my-domain-name ServiceX-LB
+ping my-domain-name.cern.ch
+```
+
+Once service is accessible from inside CERN, you may ask for the firewall to be open, process is described [here.](https://clouddocs.web.cern.ch/containers/tutorials/firewall.html#servicetype-loadbalancer)
 
 ## Configuring Ingress resources to use TLS
 It's a good idea to enable TLS for both of these Ingress resources.
