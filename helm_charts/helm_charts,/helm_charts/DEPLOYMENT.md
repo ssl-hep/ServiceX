@@ -209,10 +209,10 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
-| `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  False          |
+| `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  True        |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
-| `transformer.cpuScaleThreshold`      | Set CPU percentage threshold for pod scaling | 70 |
-| 'transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' | 
+| `transformer.cpuScaleThreshold`      | Set CPU percentage threshold for pod scaling | 30 |
+| `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' | 
 | `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
 | `elasticsearchLogging.host`          | Hostname for external ElasticSearch server | |
 | `elasticsearchLogging.port`          | Port for external ElasticSearch Server           | 9200 |
