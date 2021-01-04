@@ -107,8 +107,9 @@ class RabbitAdaptor(object):
                 continue
             # Do not recover on channel errors
             except pika.exceptions.AMQPChannelError as err:
-                current_app.logger.exception("Caught a channel error: {}, stopping...".format(err))
-                break
+                current_app.logger.warning("Caught a channel error: {}, retrying...".format(err))
+                self.reset_closed()
+                continue
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
                 current_app.logger.warning("Connection was closed, retrying...")

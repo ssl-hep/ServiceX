@@ -352,7 +352,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.exchange_declare = mocker.Mock(
                 side_effect=[
-                    pika.exceptions.AMQPChannelError
+                    pika.exceptions.AMQPChannelError,
+                    "ok"
                 ]
             )
 
@@ -364,8 +365,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             rabbit.setup_exchange("exchange1")
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
-            assert mock_channel.exchange_declare.call_count == 1
-            assert mock_pika.call_count == 1  # No retry of connection
+            assert mock_channel.exchange_declare.call_count == 2
+            assert mock_pika.call_count == 2  # Retry on channel error
 
     def test_setup_exchange_connection_error(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
