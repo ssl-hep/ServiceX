@@ -49,7 +49,7 @@ args = parser.parse_args()
 
 if args.secret:
     secret_name = args.secret
-    print("Configuring "+secret_name)
+    print("Creating secret:", secret_name)
     kubernetes.config.load_incluster_config()
 
     # For command line testing
@@ -70,35 +70,38 @@ myCmd = """
 os.system(myCmd % args.voms)
 f = "/etc/grid-security/x509up"
 
-if secret_name:
-    # Delete existing secret if present
-    try:
-        client.CoreV1Api().delete_namespaced_secret(namespace=pod_namespace, name=secret_name)
-    except kubernetes.client.rest.ApiException as api_exception:
-        print("No existing secret to delete")
+if not secret_name:
+    sys.exit(0)
 
+print("Delete existing secret if present")
+try:
+    client.CoreV1Api().delete_namespaced_secret(
+        namespace=pod_namespace, name=secret_name)
+except kubernetes.client.rest.ApiException as api_exception:
+    print("No existing secret to delete")
+
+
+secret_created = False
 while True:
-    if secret_name:
-        with open(f, 'rb') as proxy_file:
-            secret_created = False
-            data = {'x509up': base64.b64encode(proxy_file.read()).decode("ascii")}
-            secret = client.V1Secret(data=data,
-                                     kind='Secret',
-                                     type='Opaque',
-                                     metadata=client.V1ObjectMeta(
-                                         name=secret_name))
+    with open(f, 'rb') as proxy_file:
+        data = {'x509up': base64.b64encode(
+            proxy_file.read()).decode("ascii")}
+        secret = client.V1Secret(data=data,
+                                 kind='Secret',
+                                 type='Opaque',
+                                 metadata=client.V1ObjectMeta(
+                                     name=secret_name))
 
-            if secret_created:
-                client.CoreV1Api().patch_namespaced_secret(name=secret_name,
-                                                           namespace=pod_namespace, body=secret)
-                print("Updated proxy cert in  %s" % secret_name)
+        if secret_created:
+            client.CoreV1Api().patch_namespaced_secret(name=secret_name,
+                                                       namespace=pod_namespace, body=secret)
+            print("Updated proxy cert in %s" % secret_name)
 
-            else:
-                client.CoreV1Api().create_namespaced_secret(namespace=pod_namespace, body=secret)
-                print("Created Secret %s" % secret_name)
-                secret_created = True
+        else:
+            client.CoreV1Api().create_namespaced_secret(
+                namespace=pod_namespace, body=secret)
+            print("Created Secret %s" % secret_name)
+            secret_created = True
 
     time.sleep(6*60*60)
-
-
-
+    os.system(myCmd % args.voms)
