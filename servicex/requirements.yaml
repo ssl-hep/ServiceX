@@ -1,12 +1,12 @@
 dependencies:
   - name: rabbitmq
-    version: 7.6.*
+    version: 7.6.8
     repository: https://charts.bitnami.com/bitnami/
   - name: minio
-    version: 5.0.*
+    version: ">=5.0.32"
     repository: https://helm.min.io/
     condition: objectStore.enabled
   - name: postgresql
-    version: 8.3.*
-    repository: https://kubernetes-charts.storage.googleapis.com/
+    version: 8.3.4
+    repository: https://charts.bitnami.com/bitnami/
     condition: postgres.enabled
