@@ -1,0 +1,41 @@
+postgres:
+  enabled: true
+objectStore:
+  publicURL: servicex-minio:9000
+
+transformer:
+  autoscalerEnabled: true
+  # cpuLimit: 0.6
+  cpuScaleThreshold: 30
+
+gridAccount: ivukotic
+
+codeGen:
+  # Choose one of the following images to include in your values.yaml:
+  # For xAOD
+  image: sslhep/servicex_code_gen_func_adl_xaod
+
+  # Or for flat root files
+  # image: sslhep/servicex_code_gen_func_adl_uproot
+  # Or for miniAOD
+  # image: sslhep/servicex_code_gen_config_file
+
+preflight:
+  # Choose one of the following images to include in your values.yaml:
+  # For xAOD
+  image: sslhep/servicex_func_adl_xaod_transformer
+
+  # For flat root files or miniAOD
+  # image: sslhep/servicex_func_adl_uproot_transformer
+
+didFinder:
+  # For ATLAS Use these:
+  rucio_host: https://voatlasrucio-server-prod.cern.ch:443
+  auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+
+x509Secrets:
+  # For ATLAS
+  vomsOrg: atlas
+  image: ivukotic/x509-secrets
+  tag: develop
+  pullPolicy: Always
