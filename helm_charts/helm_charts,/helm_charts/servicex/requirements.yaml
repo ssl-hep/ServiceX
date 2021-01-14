@@ -1,12 +1,12 @@
 dependencies:
   - name: rabbitmq
+    version: 7.6.*
     repository: https://charts.bitnami.com/bitnami/
-    version: 7.6.8
   - name: minio
-    repository: https://kubernetes-charts.storage.googleapis.com/
-    version: 5.0.33
+    version: 5.0.*
+    repository: https://helm.min.io/
+    condition: objectStore.enabled
   - name: postgresql
+    version: 8.3.*
     repository: https://kubernetes-charts.storage.googleapis.com/
-    version: 8.3.4
-digest: sha256:b706d44b74c23a4cebd95ef24fcd759183bd6fa92d0c009ca8afa25d27d70511
-generated: "2020-10-08T10:02:00.687411-05:00"
+    condition: postgres.enabled
