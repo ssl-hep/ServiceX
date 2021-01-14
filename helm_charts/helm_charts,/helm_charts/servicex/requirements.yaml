@@ -8,5 +8,5 @@ dependencies:
     condition: objectStore.enabled
   - name: postgresql
     version: 8.3.*
-    repository: https://kubernetes-charts.storage.googleapis.com/
+    repository: https://charts.bitnami.com/bitnami/
     condition: postgres.enabled
