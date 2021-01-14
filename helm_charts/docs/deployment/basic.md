@@ -164,7 +164,7 @@ which contains some examples of basic requests you can make to ServiceX.
 
 Select one which corresponds to the file type you chose for your deployment.
 You can skip the sections on choosing an endpoint and obtaining credentials, 
-and use the following `.servicex` file instead:
+and use the following `servicex.yaml` file instead:
 ```yaml
 api_endpoints:
   - endpoint: http://localhost:5000/
