@@ -20,7 +20,7 @@ func-ADL in this tutorial.
 
 ## Selecting an endpoint
 
-Create a file called `.servicex` on your local machine in whichever directory your analysis code will be located. You can copy the template below:
+Create a file called `servicex.yaml` on your local machine in whichever directory your analysis code will be located. You can copy the template below:
 ```
 api_endpoints:
   - endpoint: <your-endpoint>
@@ -39,7 +39,7 @@ You can use one of the centrally-managed instances of ServiceX running on the Un
 | https://uproot-cms.servicex.ssl-hep.org    | CMS           | uproot | Flat ntuples |
 
 
-Choose one of the above, and copy the URL into the `endpoint` field of your `.servicex` file. Set `type: xaod` or `type: uproot` to match your endpoint.
+Choose one of the above, and copy the URL into the `endpoint` field of your `servicex.yaml` file. Set `type: xaod` or `type: uproot` to match your endpoint.
 
 The remainder of this guide will use the xAOD instance.
 
@@ -52,7 +52,7 @@ On your new profile, you'll see an API token. Copy it using using the button on 
 
 ![Copying API token](../img/copy-api-token.png)
 
-Paste the token into your `.servicex` file, which should now look something like this:
+Paste the token into your `servicex.yaml` file, which should now look something like this:
 ```
 api_endpoints:
   - endpoint: https://xaod.servicex.ssl-hep.org/
