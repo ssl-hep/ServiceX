@@ -17,7 +17,7 @@ data:
 
     # Base url of documentation - autopopulated from chart version
     # Must be activated at https://readthedocs.org/projects/servicex/versions/
-    DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/{{- ternary "latest" (printf "v%s" .Chart.Version) (eq .Chart.Version "develop") }}'
+    DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/{{- ternary "latest" (printf "v%s" .Chart.AppVersion) (eq .Chart.AppVersion "develop") }}'
 
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
