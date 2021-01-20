@@ -29,7 +29,7 @@ spec:
       - name: {{ .Release.Name }}-x509-secrets
         image: {{ .Values.x509Secrets.image }}:{{ .Values.x509Secrets.tag }}
         command: ["bash","-c"]
-        args: ["python x509_updater.py --secret {{ .Release.Name }}-x509-proxy --voms {{ .Values.x509Secrets.vomsOrg }}"]
+        args: ["python3 x509_updater.py --secret {{ .Release.Name }}-x509-proxy --voms {{ .Values.x509Secrets.vomsOrg }}"]
         env:
           - name: MY_POD_NAME
             valueFrom:
