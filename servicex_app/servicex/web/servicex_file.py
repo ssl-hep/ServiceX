@@ -10,12 +10,12 @@ from servicex.models import UserModel
 
 @oauth_required
 def servicex_file():
-    """Generate a .servicex config file prepopulated with this endpoint."""
+    """Generate a servicex.yaml config file prepopulated with this endpoint."""
     code_gen_image = current_app.config.get('CODE_GEN_IMAGE', "")
     candidates = ["xaod", "uproot", "miniaod", "nanoaod"]
     matches = [t for t in candidates if t in code_gen_image]
     if not matches or len(matches) > 1:
-        msg = "Could not generate a .servicex config file. " \
+        msg = "Could not generate a servicex.yaml config file. " \
               "Unable to infer filetype supported by this ServiceX instance."
         flash(msg, category='error')
         return redirect(url_for('profile'))
