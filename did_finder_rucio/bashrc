@@ -14,7 +14,4 @@ echo "Enable shell completion on the rucio commands"
 eval "$(register-python-argcomplete rucio)"
 eval "$(register-python-argcomplete rucio-admin)"
 
-# Added by Ben Galewsky for python3 migration
-. /opt/rh/rh-python36/enable
-
 export PYTHONPATH=/usr/src/app/did_finder
