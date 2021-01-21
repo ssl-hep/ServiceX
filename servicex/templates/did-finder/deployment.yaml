@@ -17,7 +17,7 @@ spec:
       - name: {{ .Release.Name }}-did-finder
         image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
         command: ["bash","-c"]
-        args: ["/usr/src/app/proxy-exporter.sh & sleep 5 && env PYTHONPATH=./src python scripts/did_finder.py --rabbit-uri amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }} --threads {{ .Values.didFinder.threads }}"]
+        args: ["/usr/src/app/proxy-exporter.sh & sleep 5 && env PYTHONPATH=./src python3 scripts/did_finder.py --rabbit-uri amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }} --threads {{ .Values.didFinder.threads }}"]
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
