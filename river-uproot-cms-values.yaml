@@ -16,7 +16,7 @@ app:
 
   ingress:
     enabled: true
-    clusterIssuer: letsencrypt-prod-nginx
+    clusterIssuer: letsencrypt-prod
 
 codeGen:
   image: sslhep/servicex_code_gen_func_adl_uproot
@@ -36,10 +36,6 @@ gridAccount: changeme
 minio:
   ingress:
     enabled: true
-    annotations:
-      kubernetes.io/ingress.class: nginx
-      cert-manager.io/cluster-issuer: letsencrypt-prod-nginx
-      acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
     - "uproot-minio.servicex.ssl-hep.org"
   persistence:
