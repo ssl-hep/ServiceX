@@ -1,4 +1,4 @@
-# Welcome to ServiceX
+<img src="img/ServiceX-Color-Transparent.png" width="150" height="150" align="left"> 
 
 [ServiceX](https://github.com/ssl-hep/ServiceX), a component of the
 [IRIS-HEP](https://iris-hep.org/) Intelligent Data Delivery Service, is an experiment-agnostic
