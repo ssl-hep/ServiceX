@@ -38,7 +38,7 @@ The server accepts the following arguments when it is launched
 |`--rabbit-uri` | A valid URI to the RabbitMQ Broker                                        | None     |
 | `--site`      | Site to pass in to Rucio as a `client_location` property                  | None     |
 | `--prefix`    | A string to prepend on resulting file names. Useful to add xCache to URLs | ' '      |
-| '--threads`   | Number of threads to launch for retrieving replicas from Rucio            |  10      |
+| `--threads`   | Number of threads to launch for retrieving replicas from Rucio            |  10      |
 
 
 ### Rucio Config
