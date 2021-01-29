@@ -9,7 +9,11 @@ while true; do
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
         echo "Got proxy."
-        break 
+        break
+    fi
+    sleep 5
 done
 
-python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $SITE --threads DID_THREADS
+export PYTHONPATH=./src
+python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $SITE --threads $DID_THREADS
+
