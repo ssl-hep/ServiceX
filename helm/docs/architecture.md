@@ -50,11 +50,12 @@
  <B> TODO: 
  * should be changed to once per 10 or 23h</B>
 
-### PostgreSQL
- A relational database which stores information about transformation requests, files, and users.
+### Database
+ Uses SQLAlchemy to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. 
 
+![Schema](img/sx-schema.png)
  <B>We need more details here:
- * Is it optional?
+ * is data removed once request has been processed?
  * What stores data?
  * Why is this done? 
  * How will data be used/presented?
@@ -111,11 +112,10 @@
 
 
 ### Transformers
- Transformers are the worker pods for a transformation request. They compile the generated C++ code, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. 
+ Transformers are the worker pods for a transformation request. They compile the generated C++ code, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform several files. Once all files are complete for the transformation request, they are spun down.
 
 <B>Q:
  * Where do they get C++ code from?
- * Can one transformer do multiple files of the same request?
  * Can one transformer do multiple different requests?
  * How do they get data? Is it always root:// protocol?
  * What will be fairshare policy?
@@ -123,8 +123,11 @@
 
 ## Error handling
 
-<>
+There are several distinct kinds of errors:
+* user request is not correct
+  * bad 
+* data is inaccessible
+* servicex internal issue
+* timeouts
 
 ## Monitoring and Accounting
-A single transformer may transform several files. 
-Once all files are complete for the transformation request, they are spun down.
