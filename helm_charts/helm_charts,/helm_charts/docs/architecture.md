@@ -28,13 +28,40 @@ Both clients then rely on the [ServiceX frontend](https://pypi.org/project/servi
 
 ![Architecture](img/sx-architecture.png)
 
-The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The chart consists of the following components:
-- ServiceX API Server (Flask app) - This is the main entry point to ServiceX, and can be exposed outside the cluster via an external ingress. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. It also servers a frontend web application where users can authenticate and obtain ServiceX API tokens.
-- PostgreSQL - A relational database which stores information about transformation requests, files, and users.
-- DID Finder - Service which looks up a dataset identifier (DID) and determines the optimal way to access the corresponding files. Responsible for querying Rucio for the location and metadata
+The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The chart consists of a number of microservices, described in the sections below.
+
+### ServiceX API Server (Flask app)
+This is the main entry point to ServiceX, and can be exposed outside the cluster via an external ingress. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. It also servers a frontend web application where users can authenticate and obtain ServiceX API tokens.
+
+### PostgreSQL
+A relational database which stores information about transformation requests, files, and users.
+
+### DID Finder
+Service which looks up a dataset identifier (DID) and determines the optimal way to access the corresponding files. Responsible for querying Rucio for the location and metadata
 of the files in the user request.
-- Code Generator - A microservice which takes a query written in a specific query language (e.g. FuncADL) and generates C++ source code to perform this transformation on files of a given type (e.g. xAOD). As a result, each ServiceX deployment is specific to a (query language, file type) pair.
-- X509 Proxy Renewal Service - This service passes the provided grid cert and key to the VOMS proxy server to generate an X509 proxy which is stored as a Kubernetes Secret.
-- RabbitMQ - Coordinates messages between microservices. A queue is created for each transformation request. One message is placed in the queue per file. Transformers consume messages while one is available and transform the corresponding file.
-- Minio - Minio stores file objects associated with a given transformation request. Can be exposed outside the cluster via a bundled ingress.
-- Pre-Flight Check - Attempts to transform a sample file using the same Docker image as the transformers. If this fails, no transformers will be launched.
+
+### Code Generator
+A microservice which takes a query written in a specific query language (e.g. FuncADL) and generates C++ source code to perform this transformation on files of a given type (e.g. xAOD). As a result, each ServiceX deployment is specific to a (query language, file type) pair.
+
+### X509 Proxy Renewal Service
+This service passes the provided grid cert and key to the VOMS proxy server to generate an X509 proxy which is stored as a Kubernetes Secret.
+
+### RabbitMQ 
+Coordinates messages between microservices. A queue is created for each transformation request. One message is placed in the queue per file. Transformers consume messages while one is available and transform the corresponding file.
+
+### Minio
+Minio stores file objects associated with a given transformation request. Can be exposed outside the cluster via a bundled ingress.
+
+### Pre-Flight Check 
+Attempts to transform a sample file using the same Docker image as the transformers. If this fails, no transformers will be launched.
+
+### Transformers
+Transformers are the worker pods for a transformation request. 
+They compile the generated C++ code, and then subscribe to the RabbitMQ topic for the request.
+They will listen for a message (file) from the queue, and then attempt to transform the file.
+If any errors are encountered, they will post a status update and retry.
+Once the max retry limit is reached, they will mark the file as failed.
+If the file is transformed successfully, they will post an update and mark the file as done. 
+
+A single transformer may transform several files. 
+Once all files are complete for the transformation request, they are spun down.
