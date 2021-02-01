@@ -33,4 +33,4 @@ COPY . .
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /etc/grid-security/x509up
-
+ENV X509_CERT_DIR /etc/grid-security/certificates

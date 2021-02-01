@@ -31,7 +31,8 @@ import sys
 import traceback
 
 import time
-from rucio.client import DIDClient, ReplicaClient
+from rucio.client.didclient import DIDClient
+from rucio.client.replicaclient import ReplicaClient
 import argparse
 import pika
 
