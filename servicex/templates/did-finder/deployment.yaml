@@ -16,11 +16,15 @@ spec:
       containers:
       - name: {{ .Release.Name }}-did-finder
         image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
-        command: ["bash","-c"]
-        args: ["/usr/src/app/proxy-exporter.sh & sleep 5 && env PYTHONPATH=./src python3 scripts/did_finder.py --rabbit-uri amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }} --threads {{ .Values.didFinder.threads }}"]
-        tty: true
-        stdin: true
+        command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
+        env:
+          - name: RMQ_URI
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+          - name: SITE
+            value: {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }}
+          - name: DID_THREADS
+            value: "{{ .Values.didFinder.threads }}"
         volumeMounts:
           - name: rucio-cfg
             mountPath: /opt/rucio/etc/
