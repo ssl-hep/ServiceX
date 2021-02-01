@@ -51,12 +51,11 @@
  * should be changed to once per 10 or 23h</B>
 
 ### Database
- Uses SQLAlchemy to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. 
+ Uses SQLAlchemy to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. All DB accesses are from ServiceX_App (REST API/WEB server).
 
 ![Schema](img/sx-schema.png)
  <B>We need more details here:
  * is data removed once request has been processed?
- * What stores data?
  * Why is this done? 
  * How will data be used/presented?
  * Could we know eg. slim and skim factors for each request?</B>
@@ -99,6 +98,13 @@
    * do we know how often data gets written and not read out?
    * do we know how many times are data re-read?</B>
 
+### Kafka
+ Kafka used to be an option for output.
+
+ <B>TODO:
+  * if abandoned, it should be removed everywhere. Currently search for "kafka" returns 257 results in 34 files.
+ </B>
+
 ### Pre-Flight Check 
  Attempts to transform a sample file using the same Docker image as the transformers. If this fails, no transformers will be launched.
  
@@ -108,7 +114,7 @@
 
   Q:
    * is it optional? If not, can it be made optional? 
- <B>
+ </B>
 
 
 ### Transformers
@@ -120,6 +126,14 @@
  * How do they get data? Is it always root:// protocol?
  * What will be fairshare policy?
  * Are they restarting for each file?</B>
+
+## User authentication and authorization
+ 
+ <B>Q:
+ * Needs description
+ * What is user approval, removal interface? 
+ * Mailing - still MailGun? What account? One for every deployment or?
+ <\B>
 
 ## Error handling
 
