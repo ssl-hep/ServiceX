@@ -51,7 +51,7 @@
  * should be changed to once per 10 or 23h</B>
 
 ### Database
- Uses SQLAlchemy to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. All DB accesses are from ServiceX_App (REST API/WEB server).
+ Uses SQLAlchemy (with Alembic and Flask-Migrate for schema changes) to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. All DB accesses are from ServiceX_App (REST API/WEB server).
 
 ![Schema](img/sx-schema.png)
  <B>We need more details here:
@@ -125,7 +125,9 @@
  * Can one transformer do multiple different requests?
  * How do they get data? Is it always root:// protocol?
  * What will be fairshare policy?
- * Are they restarting for each file?</B>
+ * Are they restarting for each file?
+ * Is there something stoping them when required number of events has been processed?</B>
+</B>
 
 ## User authentication and authorization
  
@@ -133,15 +135,33 @@
  * Needs description
  * What is user approval, removal interface? 
  * Mailing - still MailGun? What account? One for every deployment or?
- <\B>
+ </B>
 
 ## Error handling
 
 There are several distinct kinds of errors:
 * user request is not correct
-  * bad 
 * data is inaccessible
 * servicex internal issue
 * timeouts
 
+<B>TODO:
+ * describe all the failure modes and how are they handled. 
+</B>
+
+## Logging
+
+<B>Q:
+ * Only kubectl log ... for the servicex itself?
+ * No logs for user? How user finds out that eg. one of the files is being fetched from Canada and will take forewer? 
+</B>
+
 ## Monitoring and Accounting
+ There is a limited support for Elasticsearch based accounting. It requires direct connection to ES and account. Only sends and updates requests and file paths.
+ 
+<B>TODO:
+ * describe current Monitoring and Accounting
+ * if elasticsearch will be used, it should be fronted with a central logstash and enabled by default for all servicex instances. Much more data should be reported to it. If not, it should be removed.
+</B> 
+
+
