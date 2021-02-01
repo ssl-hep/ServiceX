@@ -1,8 +1,32 @@
 # ServiceX Architecture
 
-![Architecture](img/sx-architecture.png)
+## Frontend
+
+ServiceX is accessed via clients distributed as Python packages. 
+There is one client for each query language that may be used to access ServiceX. 
+While it is possible to install clients individually, 
+the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella package 
+lists all of them as dependencies, so that they can all be installed 
+with a single command: `pip install servicex-clients`.
+
+The individual clients are as follows:
+- [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language. Supports both xAOD and uproot files.
+- [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut selection strings. Supports only uproot files.
+
+Each client provides an API for specifying a query, which is ultimately represented as an abstract syntax tree in [Qastle](https://github.com/iris-hep/qastle).
+
+[Need Gordon to expand here on package organization, func-ADL, Qastle]
+
+Both clients then rely on the [ServiceX frontend](https://pypi.org/project/servicex/) package, which contains the code for communicating with a ServiceX backend. The workflow is as follows:
+- Given a query, the ServiceX frontend constructs a JSON payload for the request. 
+- It then hashes the request and checks a local cache which it maintains.
+  - If the request is identical to one which the user has submitted previously, it asks the backend for the data associated with the older request. 
+  - Otherwise, it submits a new transformation request to the backend.
+
 
 ## Backend
+
+![Architecture](img/sx-architecture.png)
 
 The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The chart consists of the following components:
 - ServiceX API Server (Flask app) - This is the main entry point to ServiceX, and can be exposed outside the cluster via an external ingress. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. It also servers a frontend web application where users can authenticate and obtain ServiceX API tokens.
@@ -14,7 +38,3 @@ of the files in the user request.
 - RabbitMQ - Coordinates messages between microservices. A queue is created for each transformation request. One message is placed in the queue per file. Transformers consume messages while one is available and transform the corresponding file.
 - Minio - Minio stores file objects associated with a given transformation request. Can be exposed outside the cluster via a bundled ingress.
 - Pre-Flight Check - Attempts to transform a sample file using the same Docker image as the transformers. If this fails, no transformers will be launched.
-
-## Frontend
-
-- 
