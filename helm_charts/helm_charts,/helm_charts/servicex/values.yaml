@@ -21,7 +21,7 @@ postgres:
 app:
   image: sslhep/servicex_app
   tag: develop
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   replicas: 1
   auth: false
   validateTransformerImage: true
@@ -61,7 +61,7 @@ app:
 didFinder:
   image: sslhep/servicex-did-finder
   tag: develop
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
   threads: 5
@@ -75,7 +75,7 @@ preflight:
   # For uproot deployment
   # image: sslhep/servicex_func_adl_uproot_transformer
   tag: develop
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 #
 # Code Generator service
@@ -85,13 +85,13 @@ codeGen:
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
   tag: develop
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 
 # Pull policy for the worker pods - the image and version are specified as
 # part of the transform request
 transformer:
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   autoscalerEnabled: false
   cpuLimit: 1
   cpuScaleThreshold: 70
@@ -102,7 +102,7 @@ transformer:
 x509Secrets:
   image: sslhep/x509-secrets
   tag: develop
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   vomsOrg: atlas
 
 
