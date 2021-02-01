@@ -25,8 +25,8 @@ didFinder:
   site: mwt2
 
 objectStore:
-    enabled: true
-    publicURL: xaod-minio.servicex.ssl-hep.org
+  enabled: true
+  publicURL: xaod-minio.servicex.ssl-hep.org
 
 gridAccount: changeme
 
@@ -38,11 +38,11 @@ minio:
       cert-manager.io/cluster-issuer: letsencrypt-prod-nginx
       acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
-    - "xaod-minio.servicex.ssl-hep.org"
+      - "xaod-minio.servicex.ssl-hep.org"
     tls:
-    - hosts:
-      - xaod-minio.servicex.ssl-hep.org
-      secretName: xaod-minio-tls
+      - hosts:
+          - xaod-minio.servicex.ssl-hep.org
+        secretName: xaod-minio-tls
     mode: standalone
     replicas: 1
 
@@ -63,7 +63,7 @@ rabbitmq:
     enabled: false
     plugins: rabbitmq_prometheus
     podAnnotations:
-      prometheus.io/port: '9419'
+      prometheus.io/port: "9419"
       prometheus.io/scrape: "true"
     prometheusRule:
       additionalLabels: {}
@@ -80,6 +80,5 @@ rabbitmq:
       storageClass: rook-ceph-block
 transformer:
   autoscalerEnabled: false
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:v1.0.0-rc.3
-
