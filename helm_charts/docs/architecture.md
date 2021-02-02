@@ -72,8 +72,8 @@
  A microservice which takes a query written in a specific query language (e.g. FuncADL) and generates C++ source code to perform this transformation on files of a given type (e.g. xAOD). As a result, each ServiceX deployment is specific to a (query language, file type) pair.
  
  <B>Q:
- * any other language supported excect FuncADL?
- * isn't this first translated to Quasle before generating C++ code?
+ * any other language supported except FuncADL?
+ * isn't this first translated to Qastle before generating C++ code?
  * links to the language?
  * what happens to the generated code? Stored somewhere? Can it be looked up?</B>
 
@@ -153,7 +153,7 @@ There are several distinct kinds of errors:
 
 <B>Q:
  * Only kubectl log ... for the servicex itself?
- * No logs for user? How user finds out that eg. one of the files is being fetched from Canada and will take forewer? 
+ * No logs for user? How user finds out that eg. one of the files is being fetched from Canada and will take forewer? Or that the file is corrupted?
 </B>
 
 ## Monitoring and Accounting
