@@ -1,19 +1,5 @@
-FROM atlas/analysisbase:21.2.102
+FROM atlas/analysisbase:21.2.157
 
-# We need a messy bunch of stuff to make sure we can properly access GRID resources using
-# x509 certs.
-# WARNING: THis is for CentOS (modern versions of analysisbase)
-# TODO: Ask about a better way to deal with this.
-#
-# "sudo yum -y update" breaks the container due to a bad path in some of the ATLAS RPM's.
-# So it must be disabled until it is fixed on the ATLAS end:
-#   https://sft.its.cern.ch/jira/browse/SPI-1654
-# Unfortunately, the lack of this means the rucioN2N won't work either due to a library
-# conflict. Once that jira is resolved:
-#   1. Remove the comment below
-#   1. Turn back on the rucioN2N installation below
-#   1. Test (access a xroot file, compile C++ code)
-#   1. Delete this comment. :-)
 RUN sudo yum -y update
 
 RUN sudo yum install -y https://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm
@@ -22,7 +8,6 @@ RUN sudo curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/w
 RUN sudo curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo;
 RUN sudo yum install -y xrootd-server xrootd-client xrootd \
     xrootd-voms voms-clients wlcg-voms-atlas fetch-crl osg-ca-certs
-#    xrootd-rucioN2N-for-Xcache
 
 # Install everything needed to host/run the analysis jobs
 RUN sudo mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
