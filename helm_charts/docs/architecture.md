@@ -34,16 +34,19 @@
 
 ![Architecture](img/sx-architecture.png)
 
-### ServiceX API Server (Flask app)
- This is the main entry point to ServiceX, and can be exposed outside the cluster. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. It also servers a frontend web application where users can authenticate and obtain ServiceX API tokens. ([repository](https://github.com/ssl-hep/ServiceX_App.git))
+### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
+ This is the main entry point to ServiceX, and can be exposed outside the cluster. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. 
+ 
+ It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
+ Authentication is optional, and may be enabled on a per-deployment basis.
+ Potential roadmap features for the web frontend include a dashboard of current / past requests, 
+ and an administrative dashboard for managing users and monitoring resource consumption.
  
  <B> Q:
    * REST API
      * Where is OpenAPI description/documentation?   
    * WEB frontend:
      * "... and retrieving the results" Really? I don't think data goes through it but directly from minio to user. This is a very important point.
-     * is web frontend optional?
-     * what will be the web frontend full functionality?
  </B>
 
 ### X509 Proxy Renewal Service
@@ -53,7 +56,9 @@
  * should be changed to once per 10 or 23h</B>
 
 ### Database
- Uses SQLAlchemy (with Alembic and Flask-Migrate for schema changes) to store into a relational database information about requests, files, and users (only if multiuser support enabled). By default DB is PostgreSQL, without persistance. Other option is sqlite. All DB accesses are from ServiceX_App (REST API/WEB server).
+The ServiceX API server stores information about requests, files, and users (if authentication is enabled) in a relational database. The default database is PostgreSQL, without persistance. Another option is SQLite. 
+The API server uses SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).
+No other microservices communicate with the database.
 
 ![Schema](img/sx-schema.png)
  <B>We need more details here:
@@ -63,7 +68,8 @@
  * Could we know eg. slim and skim factors for each request?</B>
 
 ### DID Finder
-  Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. This is done usig Rucio API. Uses x509 proxy to autheniticate to Rucio. 
+Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. 
+This is done usig the Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
 
 <B>Q:
   * How does it handle multiple replicas of the same files?
@@ -71,13 +77,23 @@
   * Does it sum up data size?</B>
 
 ### Code Generator
- A microservice which takes a query written in a specific query language (e.g. FuncADL) and generates C++ source code to perform this transformation on files of a given type (e.g. xAOD). As a result, each ServiceX deployment is specific to a (query language, file type) pair.
- 
+Code generators are microservices which take Qastle as input and generate C++ source code which transforms files of a given type (e.g. xAOD).
+Each deployment must specify a single code generator. 
+As a result, each ServiceX deployment is specific to a (query language, file type) pair.
+
+Code generation is supported for the following (query language, file type) pairs:
+- [funcADL/xAOD](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD)
+- [funcADL/uproot](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
+- **Is there one for TCut?**
+
  <B>Q:
- * any other language supported except FuncADL?
  * isn't this first translated to Qastle before generating C++ code?
  * links to the language?
- * what happens to the generated code? Stored somewhere? Can it be looked up?</B>
+ * what happens to the generated code? Stored somewhere? Can it be looked up?
+ * Can the code generators be consolidated in any way, 
+ so that they depend only on the file type, or nothing at all?
+ * Since this is just another Flask server, can it be merged with the ServiceX API server?
+ </B>
 
 ### RabbitMQ 
  Coordinates messages between microservices. A queue is created for each transformation request. One message is placed in the queue per file. Transformers consume messages while one is available and transform the corresponding file.
