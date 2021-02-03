@@ -118,7 +118,7 @@ The default cache location is as follows:
 - `/tmp/servicex` on Linux
 - `%USERPROFILE%/AppData/Local/Temp/servicex` on Windows
 
-This can be changed by setting a `cache_path` in your `.servicex` config file:
+This can be changed by setting a `cache_path` in your `servicex.yaml` config file:
 ```yaml
 cache_path: /home/<my-user>/servicex-cache
 api_endpoints:
