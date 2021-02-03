@@ -19,7 +19,7 @@ while true; do
         fi
     done
 
-    # Refresh every 10 hours
+    # Refresh every 10 hours.
     sleep 36000
 
 done
