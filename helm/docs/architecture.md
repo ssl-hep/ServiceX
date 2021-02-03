@@ -145,14 +145,13 @@ Code generation is supported for the following (query language, file type) pairs
  </B>   
 
 ### Transformers
- Transformers are the worker pods for a transformation request. They compile the generated C++ code, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform several files. Once all files are complete for the transformation request, they are spun down.
+ Transformers are the worker pods for a transformation request. They get generated transformer code from Code generator servers, compile it, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform multiple files. Once all files are complete for the transformation request, they are spun down.
 
 <B>Q:
- * Where do they get C++ code from?
  * Can one transformer do multiple different requests?
  * How do they get data? Is it always root:// protocol?
  * What will be fairshare policy?
- * Are they restarting for each file?
+ * What happens if a file transformation fails on all retries? 
  * Is there something stoping them when required number of events has been processed?</B>
 </B>
 
