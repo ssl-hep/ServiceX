@@ -29,8 +29,7 @@ import json
 import sys
 import traceback
 
-import awkward
-import awkward1
+import awkward as ak
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
@@ -41,7 +40,6 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
 from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
-import uproot
 import os
 import pyarrow.parquet as pq
 import pandas as pd
@@ -132,16 +130,14 @@ def transform_single_file(file_path, output_path, servicex=None):
     try:
         import generated_transformer
         start_transform = time.time()
-        table = generated_transformer.run_query(file_path)
+        awkward_array = generated_transformer.run_query(file_path)
         end_transform = time.time()
         print(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
 
         start_serialization = time.time()        
-        table_awk1 = awkward1.from_awkward0(table)
-        new_table = awkward1.to_awkward0(table_awk1)
-        arrow = awkward.toarrow(new_table)
+        arrow = ak.to_arrow(awkward_array)
         end_serialization = time.time()
-        print(f'awkward Table -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
+        print(f'awkward Array -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
 
         if output_path:
             writer = pq.ParquetWriter(output_path, arrow.schema)

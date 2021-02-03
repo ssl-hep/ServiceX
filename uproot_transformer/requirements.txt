@@ -1,5 +1,4 @@
-awkward==0.12.22
-awkward1==0.2.27
+awkward==1.0.2
 codecov==2.0.17
 confluent-kafka==1.4.0
 coverage==4.5.2
@@ -14,7 +13,7 @@ pytest==4.6.11
 pytest-mock==2.0.0
 requests==2.24.0
 servicex-transformer==1.0.0rc2
-uproot==3.11.7
+uproot==4.0.1
 xxhash==1.4.4
 
 # There is no way the small amount of code written in this repo needs all this - are these
