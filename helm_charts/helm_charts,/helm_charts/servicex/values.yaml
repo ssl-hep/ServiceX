@@ -91,10 +91,10 @@ codeGen:
 # Pull policy for the worker pods - the image and version are specified as
 # part of the transform request
 transformer:
+  autoscalerEnabled: true
   pullPolicy: Always
-  autoscalerEnabled: false
   cpuLimit: 1
-  cpuScaleThreshold: 70
+  cpuScaleThreshold: 30
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
   # For uproot deployment
   #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
