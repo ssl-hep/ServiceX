@@ -324,7 +324,6 @@ rabbitmq:
        cpu: 100m
   replicas: 3
 ```
-<<<<<<< HEAD
 
 ## Autoscaling
 ServiceX should automatically scale up/down number of transformers. For this to work it uses Horizontal Pod Autoscaler (HPA). For the HPA to work, k8s cluster needs to be able to measure CPU utilization of the pods. This is easiest enabled by installing [metric-server](https://github.com/kubernetes-sigs/metrics-server). The latest one is easily installed and supports up to 100 nodes by default:
@@ -338,7 +337,3 @@ NAME                                     CPU(cores)   MEMORY(bytes)
 servicex-code-gen-844f449cc5-d7q7b       1m           140Mi
 servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
 ```
-
-
-=======
->>>>>>> Make ingress class annotation value configurable
