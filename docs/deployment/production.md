@@ -7,7 +7,8 @@ For a guide to making a simple deployment of ServiceX with no extra features,
 check out our [basic deployment guide](basic.md).
 
 ## Prerequisites
-- A Kubernetes cluster running K8s version 1.16 or later. 
+- A Kubernetes cluster running K8s version 1.16 or later 
+with an ingress controller such as NGINX.
 - [Helm 3](https://helm.sh/docs/intro/install/) installed.
 - You've used the ServiceX CLI to install your grid certificates on 
 your cluster (if not, see the basic guide).
@@ -27,6 +28,7 @@ following section to your values file:
 app:
     ingress:
         enabled: true
+        class: <ingress class>
         host: <domain name for your deployment>
 ```
 
@@ -52,6 +54,10 @@ then the instance's URL would be `my-release.servicex.ssl-hep.org`.
 You should also make sure the host has a DNS A record pointing this 
 subdomain at the external IP address of your ingress controller.
 
+The `app.ingress.class` value is used to set the `kubernetes.io/ingress.class` 
+annotation on the Ingress resource. It defaults to `nginx`, but you can set a 
+different value, such as `traefik`.
+
 ### Adding an Ingress to Minio
 ServiceX stores files in a Minio object store which is deployed as a 
 subchart. The Helm chart for Minio has it's own support for an Ingress,
@@ -61,6 +67,8 @@ which we can activate like so:
 minio:
   ingress:
     enabled: true
+    annotations:
+      kubernetes.io/ingress.class: <ingress class>
     hosts:
     - my-release-minio.servicex.ssl-hep.org
 ```
@@ -70,6 +78,45 @@ deployment, so you need to hardcode it in the Minio Ingress host
 (this is a current limitation of the Minio chart). 
 The value should be `<helm release name>-minio.<app.ingress.host value>`.
 
+### Ingress at CERN k8s cluster
+For ingress to work at CERN, one needs at least two loadbalancers allowed for your project. 
+CERN documentation is
+[here](https://clouddocs.web.cern.ch/networking/load_balancing.html#kubernetes-service-type-loadbalancer).
+
+Start by turning off the charts ingress:
+```yaml
+app:
+  ingress:
+    enabled: false
+```
+
+Create loadbalancer service like this:
+```yaml
+apiVersion: v1
+kind: ServiceX
+metadata:
+  name: ServiceX-LB
+  namespace: <your-namespace>
+  labels:
+    app: <appname>-servicex-app
+spec:
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: <appname>-servicex-app
+  type: LoadBalancer
+```
+
+ Verify that you can access it using just IP, then create a DNS for it:
+```
+openstack loadbalancer set --description my-domain-name ServiceX-LB
+ping my-domain-name.cern.ch
+```
+
+Once service is accessible from inside CERN, you may ask for the firewall to be open, process is described [here.](https://clouddocs.web.cern.ch/containers/tutorials/firewall.html#servicetype-loadbalancer)
+The procedure should be repeated for MinIO.
 
 ## Configuring Ingress resources to use TLS
 It's a good idea to enable TLS for both of these Ingress resources.
@@ -115,7 +162,7 @@ minio:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: <ingress class>
     hosts:
     - my-release-minio.servicex.ssl-hep.org
     tls:
@@ -156,7 +203,7 @@ minio:
   ingress:
     enabled: true
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: <ingress class>
       cert-manager.io/cluster-issuer: letsencrypt-prod
       acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
@@ -277,5 +324,21 @@ rabbitmq:
        cpu: 100m
   replicas: 3
 ```
+<<<<<<< HEAD
 
-## 
+## Autoscaling
+ServiceX should automatically scale up/down number of transformers. For this to work it uses Horizontal Pod Autoscaler (HPA). For the HPA to work, k8s cluster needs to be able to measure CPU utilization of the pods. This is easiest enabled by installing [metric-server](https://github.com/kubernetes-sigs/metrics-server). The latest one is easily installed and supports up to 100 nodes by default:
+```
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+If everything is correct, you should be able to check resource use of the running pods. eg.
+```
+> kubectl top pods
+NAME                                     CPU(cores)   MEMORY(bytes)
+servicex-code-gen-844f449cc5-d7q7b       1m           140Mi
+servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
+```
+
+
+=======
+>>>>>>> Make ingress class annotation value configurable
