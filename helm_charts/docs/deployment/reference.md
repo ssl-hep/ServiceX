@@ -8,7 +8,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
-| `app.pullPolicy`                     | ServiceX image pull policy                       | `IfNotPresent`                                          |
+| `app.pullPolicy`                     | ServiceX image pull policy                       | `Always`                                          |
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
@@ -19,6 +19,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.tokenExpires`                   | Seconds until the ServiceX API tokens (JWT refresh tokens) expire | False (never)                          |
 | `app.authExpires`                    | Seconds until the JWT access tokens expire       | 21600 (six hours)                                       |
 | `app.ingress.enabled`                | Enable install of ingress                        | false                                                   |
+| `app.ingress.class`                  | Class to be set in `kubernetes.io/ingress.class` annotation | nginx                                        |
 | `app.ingress.host`                   | Hostname to associate ingress with               | servicex.ssl-hep.org                                    |
 | `app.ingress.defaultBackend`         | Name of a service to send requests to internal endpoints to | default-http-backend                         |
 | `app.ingress.tls.enabled`            | Enable TLS for ServiceX API Ingress resource     | false                                                   |
@@ -32,21 +33,21 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
-| `didFinder.pullPolicy`               | DID Finder image pull policy                     | `IfNotPresent`                                          |
+| `didFinder.pullPolicy`               | DID Finder image pull policy                     | `Always`                                          |
 | `didFinder.site`                     | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
 | `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.auth _host`               | URL to obtain rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
 | `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
-| `preflight.pullPolicy`               | Preflight image pull policy                      | `IfNotPresent`                                          |
+| `preflight.pullPolicy`               | Preflight image pull policy                      | `Always`                                          |
 | `codeGen.enabled`                    | Enable deployment of code generator service?     | `true`                                                  |
 | `codeGen.image`                      | Code Gen image name                              | `sslhep/servicex_code_gen_funcadl_xaod`                 |
 | `codeGen.tag`                        | Code Gen image tag                               | `latest`                                                |
-| `codeGen.pullPolicy`                 | Code Gen image pull policy                       | `IfNotPresent`                                          |
+| `codeGen.pullPolicy`                 | Code Gen image pull policy                       | `Always`                                          |
 | `x509Secrets.image`                  | X509 Secret Service image name                   | `sslhep/x509-secrets`                                   |
 | `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
-| `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `IfNotPresent`                                          |
+| `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `Always`                                          |
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | - 
@@ -59,8 +60,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
-| `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | IfNotPresent |
 | `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  True          |
+| `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
 | `transformer.cpuScaleThreshold`      | Set CPU percentage threshold for pod scaling | 30 |
 | `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' | 

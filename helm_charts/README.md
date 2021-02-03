@@ -1,4 +1,6 @@
- # ServiceX - Data Delivery for the HEP Community
+<img src="docs/img/ServiceX-Color-ImageOnly-Transparent.png" width="200" height="200">
+
+# ServiceX - Data Delivery for the HEP Community
 
 ServiceX is an on-demand service that delivers data straight from the grid to high energy physics analysts in an easy, flexible, and highly performant manner.
 
