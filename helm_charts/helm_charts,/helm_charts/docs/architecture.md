@@ -30,6 +30,8 @@
 
  The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a number of microservices, described in the sections below.
 
+<B>Q: What rights does it require on K8s cluster?</B>
+
 ![Architecture](img/sx-architecture.png)
 
 ### ServiceX API Server (Flask app)
@@ -116,6 +118,15 @@
    * is it optional? If not, can it be made optional? 
  </B>
 
+### Code generators
+ These are flask web servers that get a query string and return a zip file containing 6 files that can be compiled and run by a transformer. Currently there are two different generators:
+ * FuncADL_uproot
+ * FuncADL_xAOD
+
+ <B>Q:
+ * Can one have two or more of generators in one deployment?
+ * Why is this needed in each deployment and not one central service?
+ </B>   
 
 ### Transformers
  Transformers are the worker pods for a transformation request. They compile the generated C++ code, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform several files. Once all files are complete for the transformation request, they are spun down.
