@@ -1,5 +1,5 @@
-[![GitHub Actions Status](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD/workflows/CI/CD/badge.svg)](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD/actions)
-[![Code Coverage](https://codecov.io/gh/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD/graph/badge.svg)](https://codecov.io/gh/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD)
+[![GitHub Actions Status](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot/workflows/CI/CD/badge.svg)](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot/actions)
+[![Code Coverage](https://codecov.io/gh/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot/graph/badge.svg)](https://codecov.io/gh/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
 
 
 ServiceX Code Generator
@@ -31,7 +31,7 @@ This container will also do that for you:
 
 ```
 AST="(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))" 
-echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_uproot:latest from_ast_to_zip.py -z /zip/junk.zip
+echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_uproot:latest translate -z /zip/junk.zip
 ```
 
 After running, that will leave a `zip` file in your home directory that contains 
