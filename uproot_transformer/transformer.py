@@ -134,8 +134,11 @@ def transform_single_file(file_path, output_path, servicex=None):
         end_transform = time.time()
         print(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
 
-        start_serialization = time.time()        
-        arrow = ak.to_arrow(awkward_array)
+        start_serialization = time.time()
+        try:
+            arrow = ak.to_arrow_table(awkward_array)
+        except TypeError:
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None))
         end_serialization = time.time()
         print(f'awkward Array -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
 
