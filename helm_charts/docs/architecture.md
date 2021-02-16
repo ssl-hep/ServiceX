@@ -35,12 +35,32 @@
 ![Architecture](img/sx-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
- This is the main entry point to ServiceX, and can be exposed outside the cluster. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. 
+This is the main entry point to ServiceX, and can be exposed outside the cluster. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. 
  
- It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
- Authentication is optional, and may be enabled on a per-deployment basis.
- Potential roadmap features for the web frontend include a dashboard of current / past requests, 
- and an administrative dashboard for managing users and monitoring resource consumption.
+It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
+Authentication is optional, and may be enabled on a per-deployment basis (see below for more details).
+
+Potential roadmap features for the web frontend include a dashboard of current / past requests, 
+and an administrative dashboard for managing users and monitoring resource consumption.
+
+#### **Authentication and Authorization**
+
+If the `auth` flag is set to True when ServiceX is deployed, 
+requests to the API server must include a JWT access token.
+
+To authorize their requests, users must provide a ServiceX API Token (JWT refresh token) 
+in their `servicex.yaml` file. The frontend Python client will use this to obtain access tokens.
+
+Users can obtain a ServiceX API token by visiting the frontend web application.
+Users must authenticate by signing in to Globus via the identity provider of choice.
+New accounts will be marked as pending, and can be approved by the deployment's administrators.
+This can be done via Slack if the webhook is configured.
+Once approved, new users will receive a welcome email via Mailgun (if configured).
+
+Future versions of ServiceX may support disabling Globus auth and the internal user management system, but retaining the JWT system. 
+ServiceX API Tokens would need to be generated externally using the same secret used for the deployment.
+
+#### **Endpoints**
  
  <B> Q:
    * REST API
@@ -155,13 +175,7 @@ Code generation is supported for the following (query language, file type) pairs
  * Is there something stoping them when required number of events has been processed?</B>
 </B>
 
-## User authentication and authorization
- 
- <B>Q:
- * Needs description
- * What is user approval, removal interface? 
- * Mailing - still MailGun? What account? One for every deployment or?
- </B>
+
 
 ## Error handling
 
