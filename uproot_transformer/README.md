@@ -1,15 +1,15 @@
-# ServiceX_xAOD_CPP_transformer
+# ServiceX_Uproot_Transformer
 
-![Badge](https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer/workflows/Docker%20Hub/badge.svg)
+![Badge](https://github.com/ssl-hep/ServiceX_Uproot_Transformer/workflows/Docker%20Hub/badge.svg)
 
-ServiceX Transformer that converts ATLAS xAOD files into columnwise data
+ServiceX Transformer that converts flat ROOT ntuples into columnwise data
 
 ## Usage
 
 You can invoke the transformer from the command line. For example:
 
 ```bash
-> docker run --rm -it sslhep/servicex_xaod_cpp_transformer:latest python transformer.py --help
+> docker run --rm -it sslhep/servicex_func_adl_uproot_transformer:latest python transformer.py --help
 usage: transformer.py [-h] [--brokerlist BROKERLIST] [--topic TOPIC]
                       [--chunks CHUNKS] [--tree TREE] [--attrs ATTR_NAMES]
                       [--path PATH] [--limit LIMIT]
@@ -19,7 +19,7 @@ usage: transformer.py [-h] [--brokerlist BROKERLIST] [--topic TOPIC]
                       [--max-message-size MAX_MESSAGE_SIZE]
                       [--rabbit-uri RABBIT_URI] [--request-id REQUEST_ID]
 
-xAOD CPP Transformer
+Uproot Transformer
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -60,27 +60,4 @@ docker run --rm \
 ```bash
  python3 -m pip install -r requirements.txt
  python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps servicex
-```
-
-### Testing
-
-#### Testing by running against known file and C++ files
-
-Under tests you'll find input files needed to try this out. Use the following docker command.
-
-```bash
-docker run --rm -it \
-  --mount type=volume,source=x509,target=/etc/grid-security-ro \
-  --mount type=bind,source=$(pwd),target=/code \
-  --mount type=bind,source=$(pwd)/tests,target=/data \
-  --mount type=bind,source=$(pwd)/tests/r21_test_cpp_files,target=/generated,readonly \
-  sslhep/servicex_xaod_cpp_transformer:latest bash
-```
-
-Then use `transformer.py` and pass it the `--path` argument.
-
-For example:
-
-```bash
- python transformer.py --path /data/jets_10_events.root --result-format root-file --output-dir /tmp --result-destination output-dir
 ```
