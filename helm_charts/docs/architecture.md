@@ -8,20 +8,25 @@
  - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language Supports both xAOD and uproot files.
  - [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut selection strings. Supports only uproot files.
 
- Each client provides an API for specifying a query, which is ultimately represented as an abstract syntax tree in [Qastle](https://github.com/iris-hep/qastle).
+ Each of the above clients provides an API for specifying a query, which is ultimately represented as an abstract syntax tree in [Qastle](https://github.com/iris-hep/qastle). The `qastle` is then handed off to the frontend package, which manages the interaction with ServiceX.
 
-[Need Gordon to expand here on package organization, func-ADL, Qastle]
-
- Both clients then rely on the [ServiceX frontend](https://pypi.org/project/servicex/) package, which contains the code for communicating with a ServiceX backend. The workflow is as follows:
- - Given a query, the ServiceX frontend constructs a JSON payload for the request. 
+The [ServiceX frontend](https://pypi.org/project/servicex/) package contains the code for communicating with a ServiceX backend. The workflow is as follows:
+ - Given a query, the ServiceX frontend constructs a JSON payload for the request. The JSON payload contains the `qastle`, the DID, and anything else necessary to run the query. 
  - It then hashes the request and checks a local cache which it maintains.
-   - If the request is identical to one which the user has submitted previously, it asks the backend for the data associated with the older request. 
+   - If the request is in the local request cache, then the system tries to load the data from the local disk cache. If it can't be found on the local disk cache, it requests the data from the backend. If any of these steps fail, then it moves onto the below step.
    - Otherwise, it submits a new transformation request to the backend.
 
+Some technical details of the above process:
+
+- Since the JSON payload completely specifies a request to run on the backend, hashing it becomes a cache lookup key
+- The cache is maintain on a local disk (its location is configurable)
+- The frontend can deliver the data several ways:
+  - Wait until the complete transform request has occurred, or return the data bit-by-bit as each piece of work is finished by ServiceX
+  - The data can be copied locally to a file by the frontend code, or a valid Minio URL can be returned instead (valid for about one day after the request), and, as a last option, as a single large `awkward` or `pandas` object. In the case of `awkward`, lazy arrays are used. In the case of `pandas` the data must be rectilinear, and fit in memory.
+  - The data comes back as a ROOT file or `parquet` file, depending if you ask for the `xAOD` backend or the `uproot` backend. This is backed into the transformers that operate on these two types of files, and does need to be fixed. If you ask for an `awkward` or `pandas.DataFrame` the format conversion is handled automatically.
+- Errors that occur during the transformation on the backend are reported as python exceptions by the frontend code.
+
 <B>Q:
-  * Can we say here how the data gets delivered? Technology, format, etc.?
-  * Are errors reported somewhere?
-  * What is the cache? Minio? How does it checks if data is still there?
   * TODO:
     * Fix schema - transformers also talk to RMQ 
     * Fix schema - what talks to postgresql? </B>
@@ -97,22 +102,16 @@ This is done usig the Rucio API. The DID finder uses an x509 proxy to authentica
   * Does it sum up data size?</B>
 
 ### Code Generator
-Code generators are microservices which take Qastle as input and generate C++ source code which transforms files of a given type (e.g. xAOD).
-Each deployment must specify a single code generator. 
-As a result, each ServiceX deployment is specific to a (query language, file type) pair.
+Code generators are microservices which take [`qastle`](https://github.com/iris-hep/qastle) as input and generate C++ source code which transforms files of a given type (e.g. xAOD).
+Each deployment must specify a single code generator. As a result, each ServiceX deployment is specific to a (query language, file type) pair. The code generators run in separate containers because they have python versioning requirements that may be different from other components of ServiceX.
 
 Code generation is supported for the following (query language, file type) pairs:
 - [funcADL/xAOD](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD)
 - [funcADL/uproot](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
-- **Is there one for TCut?**
 
  <B>Q:
- * isn't this first translated to Qastle before generating C++ code?
- * links to the language?
  * what happens to the generated code? Stored somewhere? Can it be looked up?
- * Can the code generators be consolidated in any way, 
- so that they depend only on the file type, or nothing at all?
- * Since this is just another Flask server, can it be merged with the ServiceX API server?
+ * Can the code generators be consolidated in any way, so that they depend only on the file type, or nothing at all?
  </B>
 
 ### RabbitMQ 
