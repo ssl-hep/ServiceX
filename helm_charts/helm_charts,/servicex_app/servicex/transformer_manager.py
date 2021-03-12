@@ -157,24 +157,24 @@ class TransformerManager:
         return deployment
 
     @staticmethod
-    def create_hpa_object(request_id, workers):
+    def create_hpa_object(request_id):
         target = client.V1CrossVersionObjectReference(
             api_version="apps/v1",
             kind='Deployment',
             name="transformer-" + request_id
         )
 
+        cfg = current_app.config
+        spec = client.V1HorizontalPodAutoscalerSpec(
+            scale_target_ref=target,
+            target_cpu_utilization_percentage=cfg["TRANSFORMER_CPU_SCALE_THRESHOLD"],
+            max_replicas=cfg["TRANSFORMER_MAX_REPLICAS"]
+        )
         hpa = client.V1HorizontalPodAutoscaler(
             api_version="autoscaling/v1",
             kind='HorizontalPodAutoscaler',
             metadata=client.V1ObjectMeta(name="transformer-" + request_id),
-            spec=client.V1HorizontalPodAutoscalerSpec(
-                max_replicas=workers,
-                scale_target_ref=target,
-                target_cpu_utilization_percentage=current_app.config[
-                    'TRANSFORMER_CPU_SCALE_THRESHOLD'
-                    ]
-            )
+            spec=spec
         )
 
         return hpa
@@ -209,7 +209,7 @@ class TransformerManager:
 
         if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            hpa = self.create_hpa_object(request_id, workers)
+            hpa = self.create_hpa_object(request_id)
             self._create_hpa(autoscaler_api, hpa, namespace)
 
     @staticmethod
