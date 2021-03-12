@@ -51,7 +51,7 @@ setup(
         'email-validator',
         'pika',
         'flask-restful',
-        'flask-jwt-extended',
+        'flask-jwt-extended>=3.0, <4.0',
         'passlib',
         'flask-sqlalchemy',
         'Flask-Migrate',
