@@ -168,6 +168,7 @@ class TransformerManager:
         spec = client.V1HorizontalPodAutoscalerSpec(
             scale_target_ref=target,
             target_cpu_utilization_percentage=cfg["TRANSFORMER_CPU_SCALE_THRESHOLD"],
+            min_replicas=cfg["TRANSFORMER_MIN_REPLICAS"],
             max_replicas=cfg["TRANSFORMER_MAX_REPLICAS"]
         )
         hpa = client.V1HorizontalPodAutoscaler(
