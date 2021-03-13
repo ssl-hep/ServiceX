@@ -71,7 +71,8 @@ setup(
             'coverage>=5.2',
             'codecov==2.1.8',
             'pytest-mock==3.2.0',
-            'flake8>=3.8'
+            'flake8>=3.8',
+            'pre-commit'
         ],
     },
 )
