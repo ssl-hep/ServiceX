@@ -1,8 +1,10 @@
 # ServiceX Architecture
 
 ## Frontend
-
- ServiceX is accessed via clients distributed as Python packages. There is one client for each query language that may be used to access ServiceX. While it is possible to install clients individually, the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella package lists all of them as dependencies, so that they can all be installed with a single command: `pip install servicex-clients`.
+ ServiceX presents a RESTful interface for submitting transformation requests and
+ requesting status updates. Most users will not wish to interact directly with 
+ the REST interface so typically, ServiceX is accessed via clients distributed 
+ as Python packages. There is one client for each query language that may be used to access ServiceX. While it is possible to install clients individually, the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella package lists all of them as dependencies, so that they can all be installed with a single command: `pip install servicex-clients`.
 
  The individual clients are as follows:
  - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language Supports both xAOD and uproot files.
@@ -26,21 +28,18 @@ Some technical details of the above process:
   - The data comes back as a ROOT file or `parquet` file, depending if you ask for the `xAOD` backend or the `uproot` backend. This is backed into the transformers that operate on these two types of files, and does need to be fixed. If you ask for an `awkward` or `pandas.DataFrame` the format conversion is handled automatically.
 - Errors that occur during the transformation on the backend are reported as python exceptions by the frontend code.
 
-<B>Q:
-  * TODO:
-    * Fix schema - transformers also talk to RMQ 
-    * Fix schema - what talks to postgresql? </B>
-
 ## Backend
 
  The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a number of microservices, described in the sections below.
 
-<B>Q: What rights does it require on K8s cluster?</B>
 
 ![Architecture](img/sx-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
-This is the main entry point to ServiceX, and can be exposed outside the cluster. It provides a REST API for creating transformation requests, posting and retrieving status updates, and retrieving the results. 
+This is the main entry point to ServiceX, and can be exposed outside the cluster. 
+It provides a REST API for creating transformation requests, posting and 
+retrieving status updates, and retrieving the results. It also has a set of private 
+in-cluster REST endpoints for orchestrating the microservices
  
 It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
 Authentication is optional, and may be enabled on a per-deployment basis (see below for more details).
@@ -50,7 +49,7 @@ and an administrative dashboard for managing users and monitoring resource consu
 
 #### **Authentication and Authorization**
 
-If the `auth` flag is set to True when ServiceX is deployed, 
+If the `auth` configuration option is set to True when ServiceX is deployed, 
 requests to the API server must include a JWT access token.
 
 To authorize their requests, users must provide a ServiceX API Token (JWT refresh token) 
@@ -77,29 +76,43 @@ ServiceX API Tokens would need to be generated externally using the same secret 
 ### X509 Proxy Renewal Service
  This service uses the provided grid certificate and key to authenticate against a VOMS proxy server. This generates an X509 proxy which is stored as a Kubernetes Secret. Proxy is renewed once per hour. 
  
- <B> TODO: 
- * should be changed to once per 10 or 23h</B>
-
 ### Database
 The ServiceX API server stores information about requests, files, and users (if authentication is enabled) in a relational database. The default database is PostgreSQL, without persistance. Another option is SQLite. 
 The API server uses SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).
 No other microservices communicate with the database.
 
 ![Schema](img/sx-schema.png)
- <B>We need more details here:
- * is data removed once request has been processed?
- * Why is this done? 
- * How will data be used/presented?
- * Could we know eg. slim and skim factors for each request?</B>
 
 ### DID Finder
 Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. 
 This is done usig the Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
 
-<B>Q:
-  * How does it handle multiple replicas of the same files?
-  * Are there retries?
-  * Does it sum up data size?</B>
+Since there may be multiple replcias of each file, the DID finder has an optional
+`site` setting which indicates a prefered site from which to serve replicas. 
+If there are no replicas hosted at that site, the DID finder will simply return
+the first replica from the list returned from Rucio.
+
+To improve performance, the DID finder is multi-threaded to maintain multiple
+simultaneous requests to Rucio. 
+
+The DID finder receives datasets to resolve via a RabbitMQ queue. The very first
+result it finds is submitted back to the flask app via a POST to the `preflight` 
+endpoint. This is treated as a sample file to drive the preflight check.
+
+This replica as well as all subsequent replicas are reported to the app via
+POSTs to the `/files` endpoint. After the final file has posted in this way, 
+a PUT is sent to the `/complete` endpoint to let the service know all file 
+replicas have been reported. This message contains summary information about 
+the dataset
+```json
+{
+    "files": self.summary.files,
+    "files-skipped": self.summary.files_skipped,
+    "total-events": self.summary.total_events,
+    "total-bytes": self.summary.total_bytes,
+    "elapsed-time": int(elapsed_time.total_seconds())
+}
+```
 
 ### Code Generator
 Code generators are microservices which take [`qastle`](https://github.com/iris-hep/qastle) as input and generate C++ source code which transforms files of a given type (e.g. xAOD).
@@ -109,71 +122,51 @@ Code generation is supported for the following (query language, file type) pairs
 - [funcADL/xAOD](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD)
 - [funcADL/uproot](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
 
- <B>Q:
- * what happens to the generated code? Stored somewhere? Can it be looked up?
- * Can the code generators be consolidated in any way, so that they depend only on the file type, or nothing at all?
- </B>
+The generated code is placed into a Kubernetes ConfigMap named after the 
+transformation uuid. This configmap is mounted into the transformer pods
+when they are launched.
+
+There is a simple [kubernetes yaml file](https://github.com/ssl-hep/ServiceX/blob/develop/scripts/generated_code_busybox.yaml)
+for deploying a busybox pod which mounts one of the generated code configmaps. 
+
 
 ### RabbitMQ 
- Coordinates messages between microservices. A queue is created for each transformation request. One message is placed in the queue per file. Transformers consume messages while one is available and transform the corresponding file.
+ Coordinates messages between microservices. There is a queue sitting in front of
+  the DID finder, receiving lookup requests. The transformer workers are fed from 
+  a topic specific to a transform request. Files that fail transformation are 
+  placed onto a dead letter queue to allow transactionally secure reprocessing
  
- <B>Q:
-   * any other queues?
-   * any other functionality except DID-finder adding messages and transformers consuming them?
-   * Any message lifetime?
-   * Are messages peristified in case of restart?</B>
 
 ### Minio
- Minio stores file objects associated with a given transformation request. Can be exposed outside the cluster via a bundled ingress.
-
- <B>Q:
-   * any cleanup? manual or automatic? if automatic, what is the cleanup policy?
-   * do we have at least a way to find out who/what uses space in Minio? 
-   * can we see how much space is left? 
-   * persistent between servicex/k8s restart?
-   * do we know throughput we are generating on it?
-   * do we know how often data gets written and not read out?
-   * do we know how many times are data re-read?</B>
+ Minio stores file objects associated with a given transformation request. 
+ Can be exposed outside the cluster via a bundled ingress. At present there is
+ no cleanup of these generated files, so they must be deleted manually. 
+ Furthermore, there is no use of Minio user identities, so all files are saved
+ in the same namespace with no quota enforcement.
 
 ### Kafka
- Kafka used to be an option for output.
+ Kafka used to be an option for output. 
 
  <B>TODO:
   * if abandoned, it should be removed everywhere. Currently search for "kafka" returns 257 results in 34 files.
  </B>
 
 ### Pre-Flight Check 
- Attempts to transform a sample file using the same Docker image as the transformers. If this fails, no transformers will be launched.
+ Attempts to transform a sample file using the same Docker image as the 
+ transformers. If this fails, no transformers will be launched. This validates
+ the generated code as well as the apporpriateness of the request relative to the
+ properties in the sample file
  
- <B>TODO:
-   * enable autoscaler. Since autoscaling will be default, it will newer start a lot of transformers right away but only one. This one will effectively serve as a check.
-   * Figure out what needs to be done to get this do compilation so it is not performed at each transformer. Rename accordingly.
-
-  Q:
-   * is it optional? If not, can it be made optional? 
- </B>
-
 ### Code generators
  These are flask web servers that get a query string and return a zip file containing 6 files that can be compiled and run by a transformer. Currently there are two different generators:
  * FuncADL_uproot
  * FuncADL_xAOD
 
- <B>Q:
- * Can one have two or more of generators in one deployment?
- * Why is this needed in each deployment and not one central service?
- </B>   
+Currently all requests go to the code generator deployed with the rest of the helm 
+chart. Eventually we will want to allow multiple code generators in a deployment. 
 
 ### Transformers
  Transformers are the worker pods for a transformation request. They get generated transformer code from Code generator servers, compile it, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform multiple files. Once all files are complete for the transformation request, they are spun down.
-
-<B>Q:
- * Can one transformer do multiple different requests?
- * How do they get data? Is it always root:// protocol?
- * What will be fairshare policy?
- * What happens if a file transformation fails on all retries? 
- * Is there something stoping them when required number of events has been processed?</B>
-</B>
-
 
 
 ## Error handling
@@ -184,23 +177,12 @@ There are several distinct kinds of errors:
 * servicex internal issue
 * timeouts
 
-<B>TODO:
- * describe all the failure modes and how are they handled. 
-</B>
-
 ## Logging
+Output messages from the transformers are sent back to the flask app and persisted
+to the database. All other logs are available only through the Kubectl pod logging
+operation.
 
-<B>Q:
- * Only kubectl log ... for the servicex itself?
- * No logs for user? How user finds out that eg. one of the files is being fetched from Canada and will take forewer? Or that the file is corrupted?
-</B>
 
 ## Monitoring and Accounting
  There is a limited support for Elasticsearch based accounting. It requires direct connection to ES and account. Only sends and updates requests and file paths.
  
-<B>TODO:
- * describe current Monitoring and Accounting
- * if elasticsearch will be used, it should be fronted with a central logstash and enabled by default for all servicex instances. Much more data should be reported to it. If not, it should be removed.
-</B> 
-
-
