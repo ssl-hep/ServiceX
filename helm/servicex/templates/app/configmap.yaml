@@ -74,9 +74,11 @@ data:
 
     TRANSFORMER_MANAGER_ENABLED = True
 
-    TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscalerEnabled }}
+    TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
     TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
-    TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.cpuScaleThreshold }}
+    TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}
+    TRANSFORMER_MIN_REPLICAS = {{ .Values.transformer.autoscaler.minReplicas }}
+    TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
     TRANSFORMER_X509_SECRET="{{ .Release.Name }}-x509-proxy"
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
