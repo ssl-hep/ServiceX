@@ -82,6 +82,7 @@ class TestTransformerManager(ResourceTestBase):
         cfg = {
             'TRANSFORMER_CPU_LIMIT': 4,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
         }
         client = self._test_client(transformation_manager=transformer,
@@ -113,6 +114,7 @@ class TestTransformerManager(ResourceTestBase):
             assert mock_kubernetes.mock_calls[1][2]['namespace'] == 'my-ns'
             mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_called()
             autoscaling_spec = mock_autoscaling.mock_calls[0][2]['body'].spec
+            assert autoscaling_spec.min_replicas == 3
             assert autoscaling_spec.max_replicas == 17
             assert autoscaling_spec.scale_target_ref.name == 'transformer-1234'
             assert autoscaling_spec.target_cpu_utilization_percentage == 30
