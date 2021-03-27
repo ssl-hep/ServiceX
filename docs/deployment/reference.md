@@ -60,10 +60,12 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
-| `transformer.autoscalerEnabled`      | Set to True to enable the pod horizontal autoscaler for transformers |  True          |
+| `transformer.autoscaler.enabled`     | Enable/disable horizontal pod autoscaler for transformers |  True |
+| `transformer.autoscaler.cpuScaleThreshold` | CPU percentage threshold for pod scaling   | 30 |
+| `transformer.autoscaler.minReplicas` | Minimum number of transformer pods per request   | 1 |
+| `transformer.autoscaler.maxReplicas` | Maximum number of transformer pods per request   | 20 |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
-| `transformer.cpuScaleThreshold`      | Set CPU percentage threshold for pod scaling | 30 |
 | `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' | 
 | `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
 | `elasticsearchLogging.host`          | Hostname for external ElasticSearch server | |

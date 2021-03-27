@@ -77,7 +77,8 @@ rabbitmq:
       enabled: true
       storageClass: rook-ceph-block
 transformer:
-  autoscalerEnabled: false
+  autoscaler:
+    enabled: false
   pullPolicy: Always
   defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:v1.0.0-rc.3
 
