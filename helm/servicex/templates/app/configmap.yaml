@@ -92,11 +92,6 @@ data:
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
 
-    TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
-    TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}
-    TRANSFORMER_MIN_REPLICAS = {{ .Values.transformer.autoscaler.minReplicas }}
-    TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}
-    TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
 
     TRANSFORMER_PERSISTENCE_CLAIM = {{ .Values.transformer.persistence.existingClaim }}
     TRANSFORMER_PERSISTENCE_STORAGE_CLASS = {{ .Values.transformer.persistence.stoargeClass }}
