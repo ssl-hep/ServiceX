@@ -29,9 +29,8 @@ import json
 
 
 class LookupResultProcessor:
-    def __init__(self, rabbitmq_adaptor, elasticsearch_adaptor, advertised_endpoint):
+    def __init__(self, rabbitmq_adaptor, advertised_endpoint):
         self.rabbitmq_adaptor = rabbitmq_adaptor
-        self.elasticsearch_adaptor = elasticsearch_adaptor
         self.advertised_endpoint = advertised_endpoint
 
     def publish_preflight_request(self, submitted_request, file_path):

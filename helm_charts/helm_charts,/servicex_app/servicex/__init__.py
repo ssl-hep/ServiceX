@@ -37,7 +37,6 @@ from flask_restful import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
-from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
@@ -77,7 +76,6 @@ def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
                provided_object_store=None,
-               provided_elasticsearch_adapter=None,
                provided_code_gen_service=None,
                provided_lookup_result_processor=None,
                provided_docker_repo_adapter=None):
@@ -123,21 +121,8 @@ def create_app(test_config=None,
         else:
             code_gen_service = provided_code_gen_service
 
-        if 'ELASTIC_SEARCH_LOGGING_ENABLED' in app.config \
-                and app.config['ELASTIC_SEARCH_LOGGING_ENABLED']\
-                and not provided_elasticsearch_adapter:
-            elasticsearch_adaptor = ElasticSearchAdapter(
-                app.config['ES_HOST'],
-                app.config['ES_PORT'],
-                app.config['ES_USER'],
-                app.config['ES_PASS']
-            )
-        else:
-            elasticsearch_adaptor = provided_elasticsearch_adapter
-
         if not provided_lookup_result_processor:
             lookup_result_processor = LookupResultProcessor(rabbit_adaptor,
-                                                            elasticsearch_adaptor,
                                                             "http://" +
                                                             app.config[
                                                                 'ADVERTISED_HOSTNAME'] + "/"
@@ -164,8 +149,7 @@ def create_app(test_config=None,
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service, lookup_result_processor,
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service, lookup_result_processor,
                    docker_repo_adapter)
 
     return app
