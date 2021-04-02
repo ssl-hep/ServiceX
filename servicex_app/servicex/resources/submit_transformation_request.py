@@ -83,10 +83,11 @@ def _workflow_name(transform_request):
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
-    def make_api(cls, rabbitmq_adaptor, object_store,
+    def make_api(cls, rabbitmq_adaptor, object_store, elasticsearch_adapter,
                  code_gen_service, lookup_result_processor, docker_repo_adapter):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
+        cls.elasticsearch_adapter = elasticsearch_adapter
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
@@ -212,6 +213,11 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
 
                 db.session.commit()
+
+            if self.elasticsearch_adapter:
+                self.elasticsearch_adapter.create_update_request(
+                    request_id,
+                    self._generate_transformation_record(request_rec, "locating DID"))
 
             return {
                 "request_id": str(request_id)

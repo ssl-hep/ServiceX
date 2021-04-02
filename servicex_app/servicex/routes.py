@@ -29,7 +29,7 @@ from flask import current_app as app
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
-               object_store, code_gen_service,
+               object_store, elasticsearch_adapter, code_gen_service,
                lookup_result_processor, docker_repo_adapter):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
@@ -60,6 +60,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
+                                         elasticsearch_adapter=elasticsearch_adapter,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor,
                                          docker_repo_adapter=docker_repo_adapter)
@@ -103,7 +104,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(TransformationStatusInternal,
                      '/servicex/internal/transformation/<string:request_id>/status')
 
-    AddFileToDataset.make_api(lookup_result_processor)
+    AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
     api.add_resource(AddFileToDataset,
                      '/servicex/internal/transformation/<string:request_id>/files')
 
@@ -122,6 +123,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(FileTransformationStatus,
                      '/servicex/internal/transformation/<string:request_id>/<int:file_id>/status')
 
-    TransformerFileComplete.make_api(transformer_manager)
+    TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
     api.add_resource(TransformerFileComplete,
                      '/servicex/internal/transformation/<string:request_id>/file-complete')

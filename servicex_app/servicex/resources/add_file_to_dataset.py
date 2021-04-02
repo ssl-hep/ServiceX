@@ -36,8 +36,9 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 class AddFileToDataset(ServiceXResource):
     @classmethod
-    def make_api(cls, lookup_result_processor):
+    def make_api(cls, lookup_result_processor, elasticsearch_adaptor):
         cls.lookup_result_processor = lookup_result_processor
+        cls.elasticsearch_adaptor = elasticsearch_adaptor
         return cls
 
     def put(self, request_id):
@@ -54,6 +55,12 @@ class AddFileToDataset(ServiceXResource):
 
             self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
+            if self.elasticsearch_adaptor:
+                self.elasticsearch_adaptor.create_update_path(
+                    db_record.get_path_id(),
+                    self._generate_file_status_record(
+                        db_record, "located")
+                )
             db.session.commit()
 
             return {
