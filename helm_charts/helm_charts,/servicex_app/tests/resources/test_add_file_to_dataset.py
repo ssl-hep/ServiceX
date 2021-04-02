@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from servicex import LookupResultProcessor
+from servicex import ElasticSearchAdapter, LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -40,12 +40,14 @@ class TestAddFileToDataset(ResourceTestBase):
             servicex.models.TransformRequest,
             'return_request',
             return_value=self._generate_transform_request())
+        mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor
+                                   lookup_result_processor=mock_processor,
+                                   elasticsearch_adapter=mock_elasticsearch_adapter
                                    )
 
         response = client.put('/servicex/internal/transformation/1234/files',
@@ -58,6 +60,21 @@ class TestAddFileToDataset(ResourceTestBase):
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
         mock_processor.add_file_to_dataset.assert_called()
+
+        call = mock_elasticsearch_adapter.create_update_path.mock_calls[0][1]
+        assert call[0] == '1234:42'
+
+        path_doc = call[1]
+        assert path_doc['req_id'] == '1234'
+
+        assert path_doc['adler32'] == '12345'
+        assert path_doc['file_size'] == 1024
+        assert path_doc['file_events'] == 500
+        assert path_doc['file_path'] == '/foo/bar.root'
+        assert path_doc['status'] == 'located'
+        assert path_doc['info'] == 'info'
+        assert path_doc['events_served'] == 0
+        assert path_doc['retries'] == 0
 
         assert response.json == {
             "request-id": '1234',
@@ -79,8 +96,11 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
 
+        mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
+
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+                                   lookup_result_processor=mock_processor,
+                                   elasticsearch_adapter=mock_elasticsearch_adapter)
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'file_path': '/foo/bar.root',
