@@ -33,9 +33,8 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 class TransformerFileComplete(ServiceXResource):
     @classmethod
-    def make_api(cls, transformer_manager, elasticsearch_adapter):
+    def make_api(cls, transformer_manager):
         cls.transformer_manager = transformer_manager
-        cls.elasticsearch_adapter = elasticsearch_adapter
         return cls
 
     def put(self, request_id):
@@ -57,15 +56,6 @@ class TransformerFileComplete(ServiceXResource):
         )
         rec.save_to_db()
 
-        if self.elasticsearch_adapter:
-            self.elasticsearch_adapter.create_update_path(
-                dataset_file.get_path_id(),
-                self._generate_file_status_record(dataset_file, info['status']))
-
-            self.elasticsearch_adapter.create_update_request(
-                request_id,
-                self._generate_transformation_record(submitted_request, 'transforming'))
-
         files_remaining = TransformRequest.files_remaining(request_id)
         if files_remaining is not None and files_remaining <= 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
@@ -73,11 +63,6 @@ class TransformerFileComplete(ServiceXResource):
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             submitted_request.status = "Complete"
             submitted_request.save_to_db()
-
-            if self.elasticsearch_adapter:
-                self.elasticsearch_adapter.create_update_request(
-                    request_id,
-                    self._generate_transformation_record(submitted_request, 'complete'))
 
         print(info)
         db.session.commit()
