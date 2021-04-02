@@ -164,8 +164,7 @@ def create_app(test_config=None,
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service, lookup_result_processor,
-                   docker_repo_adapter)
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service,
+                   lookup_result_processor, docker_repo_adapter)
 
     return app
