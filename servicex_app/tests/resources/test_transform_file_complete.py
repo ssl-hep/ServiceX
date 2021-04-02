@@ -133,13 +133,11 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_dataset_file.request_id = 'BR549'
         return mock_dataset_file
 
-    def test_file_transform_complete_elasticsearch_files_remain(self, mocker,
-                                                                mock_rabbit_adaptor):
+    def test_file_transform_complete_files_remain(self, mocker,
+                                                  mock_rabbit_adaptor):
         import servicex
-        from servicex import ElasticSearchAdapter
 
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mocker.patch.object(
             servicex.models.TransformRequest,
@@ -164,29 +162,14 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker.patch.object(TransformationResult, "save_to_db")
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor,
-                                   elasticsearch_adapter=mock_elasticsearch_adapter)
+                                   rabbit_adaptor=mock_rabbit_adaptor)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
-        mock_elasticsearch_adapter.create_update_request.assert_called()
-        call = mock_elasticsearch_adapter.create_update_path.mock_calls[0]
-        record_body = call[1][1]
-        assert record_body['req_id'] == 'BR549'
-        assert record_body['adler32'] == '123-455'
-        assert record_body['file_size'] == 0
-        assert record_body['file_events'] == 0
-        assert record_body['file_path'] == '/foo/bar.root'
-        assert record_body['status'] == 'OK'
-        assert record_body['info'] == 'info'
-        assert record_body['events_served'] == 0
-        assert record_body['retries'] == 0
 
-    def test_file_transform_complete_elasticsearch_no_files_remain(self, mocker,
-                                                                   mock_rabbit_adaptor):
+    def test_file_transform_complete_no_files_remain(self, mocker, mock_rabbit_adaptor):
         import servicex
-        from servicex import ElasticSearchAdapter
 
         mocker.patch.object(servicex.models.TransformationResult, 'count',
                             return_value=17)
@@ -207,7 +190,6 @@ class TestTransformFileComplete(ResourceTestBase):
             })
 
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_elasticsearch_adapter = mocker.MagicMock(ElasticSearchAdapter)
 
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mocker.patch.object(
@@ -229,30 +211,8 @@ class TestTransformFileComplete(ResourceTestBase):
             })
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor,
-                                   elasticsearch_adapter=mock_elasticsearch_adapter)
+                                   rabbit_adaptor=mock_rabbit_adaptor)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
-        path_call = mock_elasticsearch_adapter.create_update_request.mock_calls[0]
-        record_body = path_call[1][1]
-
-        assert record_body['name'] == 'Transformation Request'
-        assert record_body['description'] == 'Transformation Request'
-        assert record_body['dataset'] == '123-456-789'
-        assert record_body['dataset_size'] == 1203
-        assert record_body['dataset_files'] == 17
-        assert record_body['dataset_events'] == 10000
-        assert record_body['columns'] == 'electron.eta(), muon.pt()'
-        assert record_body['events'] == 0
-        assert record_body['events_transformed'] == 4000
-        assert record_body['events_served'] == 0
-        assert record_body['events_processed'] == 0
-        assert record_body['status'] == 'transforming'
-        assert record_body['info'] == ' '
-
-        path_call2 = mock_elasticsearch_adapter.create_update_request.mock_calls[1]
-        record_body2 = path_call2[1][1]
-
-        assert record_body2['status'] == 'complete'
