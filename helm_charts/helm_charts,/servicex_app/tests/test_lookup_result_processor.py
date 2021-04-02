@@ -35,7 +35,7 @@ from tests.resource_test_base import ResourceTestBase
 class TestLookupResutProcessor(ResourceTestBase):
 
     def test_publish_preflight_request(self, mocker,  mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor, None, "http://foo.com/")
+        processor = LookupResultProcessor(mock_rabbit_adaptor, "http://foo.com/")
         processor.publish_preflight_request(self._generate_transform_request(),
                                             "root1.root")
         mock_rabbit_adaptor.basic_publish.assert_called_with(
@@ -50,7 +50,7 @@ class TestLookupResutProcessor(ResourceTestBase):
 
     def test_add_file_to_dataset(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          None, "http://cern.analysis.ch:5000/")
+                                          "http://cern.analysis.ch:5000/")
         dataset_file = DatasetFile(request_id="BR549",
                                    file_path="/foo/bar.root",
                                    adler32='12345',
@@ -81,7 +81,7 @@ class TestLookupResutProcessor(ResourceTestBase):
 
     def test_add_file_to_dataset_kafka(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          None, "http://cern.analysis.ch:5000/")
+                                          "http://cern.analysis.ch:5000/")
         dataset_file = DatasetFile(request_id="BR549",
                                    file_path="/foo/bar.root",
                                    adler32='12345',
@@ -110,8 +110,7 @@ class TestLookupResutProcessor(ResourceTestBase):
                  }))
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          None, "http://cern.analysis.ch:5000/")
+        processor = LookupResultProcessor(mock_rabbit_adaptor, "http://cern.analysis.ch:5000/")
 
         transform_request = self._generate_transform_request()
 
