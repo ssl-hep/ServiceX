@@ -48,10 +48,6 @@ TRANSFORMER_MANAGER_ENABLED = True
 # start the requested number of transformers
 TRANSFORMER_AUTOSCALE_ENABLED = True
 
-# Set min and max replicas for autoscaler
-TRANSFORMER_MIN_REPLICAS = 1
-TRANSFORMER_MAX_REPLICAS = 20
-
 # Use one core per transformer
 TRANSFORMER_CPU_LIMIT = 1
 
