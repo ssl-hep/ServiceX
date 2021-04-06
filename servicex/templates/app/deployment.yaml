@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-servicex-app
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
       serviceAccountName: {{ template "servicex.fullname" . }}
       containers:
@@ -19,6 +20,8 @@ spec:
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
+        - name: INSTANCE_NAME
+          value: {{ .Release.Name }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.app.pullPolicy }}
