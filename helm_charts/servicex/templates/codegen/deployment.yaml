@@ -20,7 +20,8 @@ spec:
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
-
+        - name: INSTANCE_NAME
+          value: {{ .Release.Name }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.codeGen.pullPolicy }}
