@@ -25,6 +25,8 @@ spec:
             value: {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }}
           - name: DID_THREADS
             value: "{{ .Values.didFinder.threads }}"
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
         volumeMounts:
           - name: rucio-cfg
             mountPath: /opt/rucio/etc/
