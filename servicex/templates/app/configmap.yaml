@@ -9,6 +9,8 @@ metadata:
     app: {{ .Release.Name }}
 data:
   app.conf: |
+    INSTANCE_NAME = '{{ .Release.Name }}'
+    
     #SERVER_NAME = '127.0.0.1:5000'
     # this is the session secret, used to protect the Flask session. You should
     # use a longer secret string known only to your application
