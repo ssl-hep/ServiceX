@@ -39,7 +39,7 @@ pip install servicex-cli
 
 You can run the CLI to install your certs with the following command:
 ```
-servicex init --cert-dir ~/.globus --namespace <default>
+servicex --namespace <default> init --cert-dir ~/.globus 
 ```
 By default, this will look for the certificates in your `~/.globus` directory.
 You can pass another directory with the `--cert-dir` argument.
@@ -124,8 +124,10 @@ helm install -f values.yaml --version v1.0.0-rc.3 servicex ssl-hep/servicex
 ```
 
 Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to
-complete its initialization. After this all the pods of the new deployment 
-should be ready. If you check the status of the pods via
+complete its initialization. The `servicex` argument is used by helm as the release 
+name.  It is used to refer to the chart when deploying, insptacting, or deleting 
+the chart. After this all the pods of the new deployment 
+should be ready. You can check the status of the pods via
 
 ```
 kubectl get pods
