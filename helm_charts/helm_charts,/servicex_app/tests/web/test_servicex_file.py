@@ -6,6 +6,7 @@ from .web_test_base import WebTestBase
 
 from servicex.web.servicex_file import correct_url
 
+
 class TestServiceXFile(WebTestBase):
     def test_servicex_file(self, client, user):
         cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}
