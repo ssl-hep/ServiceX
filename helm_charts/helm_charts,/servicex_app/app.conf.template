@@ -77,12 +77,6 @@ MINIO_SECURED = False
 CODE_GEN_SERVICE_URL = 'http://localhost:5001'
 CODE_GEN_IMAGE = "sslhep/servicex_code_gen_func_adl_xaod:develop"
 
-ELASTIC_SEARCH_LOGGING_ENABLED = False
-ES_HOST = 'host'
-ES_PORT = '9200'
-ES_USER = 'user'
-ES_PASS = 'pass'
-
 # Slack integration requires the app's signing secret and a signup webhook
 SLACK_SIGNING_SECRET = 'some-secret' # Found at https://api.slack.com/apps/<id>
 SIGNUP_WEBHOOK_URL = '' # Create at https://api.slack.com/apps/<app-id>/incoming-webhooks
