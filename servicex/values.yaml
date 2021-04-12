@@ -108,15 +108,6 @@ x509Secrets:
   pullPolicy: Always
   vomsOrg: atlas
 
-
-# Settings for sending logging messages to an elasticsearch service
-elasticsearchLogging:
-  enabled: False
-  host: 'host'
-  port: 9200
-  user: 'user account'
-  password: 'password'
-
 # Values for the RabbitMQ Chart
 rabbitmq:
   # For easy testing we don't require PVs for rabbit
