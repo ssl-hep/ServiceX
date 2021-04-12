@@ -1,0 +1,18 @@
+# Default values for logging.
+
+servicex:
+  # namespace where you have servicex deployed
+  namespace: default
+
+elasticsearch:
+  host: "host.org"
+  port: "9200"
+  user: "user"
+  pass: "pass"
+  protocol: https
+
+kibana:
+  host: https://kibana-host.org:5601
+  dashboards:
+    enabled: true
+    index: .kibana

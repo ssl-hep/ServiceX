@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "logging.fullname" . }}
+  namespace: kube-system
+  labels:
+    k8s-app: servicex
+data:
+  filebeat.yml: |-
+    setup:
+      kibana:
+        host: {{ .Values.kibana.host }}
+      dashboards:
+        enabled: {{ .Values.kibana.dashboards.enabled }}
+        kibana-index: {{ .Values.kibana.dashboards.index }}
+    filebeat:
+
+      autodiscover:
+        providers:
+          - type: kubernetes
+            node: ${NODE_NAME}
+            templates:
+              - condition:
+                  and:
+                    - equals:
+                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - not:
+                        equals: 
+                          kubernetes.container.name: rabbitmq
+                    - not: 
+                        contains: 
+                          kubernetes.pod.name: postgresql
+                    - not:
+                        equals: 
+                          kubernetes.container.name: minio
+                config:
+                  - type: container
+                    paths:
+                    - /var/log/containers/*${data.kubernetes.container.id}.log
+                    processors:
+                      - add_kubernetes_metadata:
+
+              - condition:
+                  and:
+                    - equals:
+                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - equals: 
+                        kubernetes.container.name: rabbitmq
+                config:
+                  - module: rabbitmq
+                    log:
+                      input:
+                        type: container
+                        paths: 
+                          - "/var/log/containers/*rabbit*rabbit*.log"
+                      stream: all
+
+              - condition:
+                  and:
+                    - equals:
+                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - contains: 
+                        kubernetes.pod.name: postgresql
+                config:
+                  - module: postgresql
+                    log:
+                      input:
+                        type: container
+                        paths: 
+                          - "/var/log/containers/*postgresql*.log"
+                      stream: all
+
+
+    output.elasticsearch:
+      protocol: {{ .Values.elasticsearch.protocol }}
+      hosts: ["{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}"]
+      username: {{ .Values.elasticsearch.user }}
+      password: {{ .Values.elasticsearch.pass }}
