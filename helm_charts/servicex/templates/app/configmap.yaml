@@ -109,16 +109,6 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
-    {{ if .Values.elasticsearchLogging.enabled }}
-    ELASTIC_SEARCH_LOGGING_ENABLED = True
-    ES_HOST = '{{ .Values.elasticsearchLogging.host }}'
-    ES_PORT = '{{ .Values.elasticsearchLogging.port }}'
-    ES_USER = '{{ .Values.elasticsearchLogging.user }}'
-    ES_PASS = '{{ .Values.elasticsearchLogging.password }}'
-    {{ else }}
-    ELASTIC_SEARCH_LOGGING_ENABLED = False
-    {{ end }}
-
     {{ if .Values.codeGen.enabled }}
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
     CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
