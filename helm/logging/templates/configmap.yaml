@@ -37,8 +37,14 @@ data:
                   - type: container
                     paths:
                     - /var/log/containers/*${data.kubernetes.container.id}.log
-                    processors:
-                      - add_kubernetes_metadata:
+                    # processors:
+                    #   - add_kubernetes_metadata:
+                    #       host: ${NODE_NAME}
+                    #       matchers:
+                    #       - logs_path:
+                    #           logs_path: "/var/lib/containers/"
+                    #           # logs_path: "/var/lib/docker/containers/"
+
 
               - condition:
                   and:
