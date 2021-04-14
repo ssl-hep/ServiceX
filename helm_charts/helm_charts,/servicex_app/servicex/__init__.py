@@ -53,7 +53,6 @@ def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
             rabbit_mq_adaptor.connect()
 
             # Insure the required queues and exchange exist in RabbitMQ broker
-            rabbit_mq_adaptor.setup_queue('did_requests')
             rabbit_mq_adaptor.setup_queue('validation_requests')
             rabbit_mq_adaptor.setup_exchange('transformation_requests')
             rabbit_mq_adaptor.setup_exchange('transformation_failures')

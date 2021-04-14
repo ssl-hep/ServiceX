@@ -150,7 +150,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
-                                             routing_key='did_requests',
+                                             routing_key='rucio_did_requests',
                                              body=json.dumps(
                                                  {
                                                      "request_id": request_id,
@@ -209,7 +209,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
-                                             routing_key='did_requests',
+                                             routing_key='rucio_did_requests',
                                              body=json.dumps(
                                                  {
                                                      "request_id": request_id,
@@ -408,7 +408,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
-                                             routing_key='did_requests',
+                                             routing_key='rucio_did_requests',
                                              body=json.dumps(
                                                  {
                                                      "request_id": request_id,
