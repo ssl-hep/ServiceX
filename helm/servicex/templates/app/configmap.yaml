@@ -113,3 +113,5 @@ data:
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
     CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
     {{ end }}
+
+    DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderSchema }}'
