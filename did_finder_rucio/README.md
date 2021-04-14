@@ -1,4 +1,4 @@
-# ServiceX-DID-finder
+# Rucio ServiceX-DID-finder
 ![CI/CD](https://github.com/ssl-hep/ServiceX-DID-finder/workflows/CI/CD/badge.svg)
 [![codecov](https://codecov.io/gh/ssl-hep/ServiceX-DID-finder/branch/master/graph/badge.svg)](https://codecov.io/gh/ssl-hep/ServiceX-DID-finder)
 
@@ -7,7 +7,7 @@ For a given RUCIO DID and client site finds optimal access paths.
 ## Overview
 This service is intended to run as part of a [ServiceX](https://github.com/ssl-hep/ServiceX)
 deployment. In that role it listens for Dataset Lookup requests on the 
-`did_requests` RabbitMQ queue. Upon receipt, it asks Rucio to resolve the
+`rucio_did_requests` RabbitMQ queue. Upon receipt, it asks Rucio to resolve the
 dataset and return the files that make it up. These files are bundled up into
 1,000 file chunks and sent to Rucio's replica client to find available copies 
 on the grid. As these responses come back, the server selects a replica and

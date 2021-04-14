@@ -40,6 +40,7 @@ from servicex.did_finder.lookup_request import LookupRequest
 from servicex.did_finder.rucio_adapter import RucioAdapter
 from servicex.did_finder.servicex_adapter import ServiceXAdapter
 
+QUEUE_NAME = 'rucio_did_requests'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--site', dest='site', action='store',
@@ -99,11 +100,11 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
         try:
             rabbitmq = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
             _channel = rabbitmq.channel()
-            _channel.queue_declare(queue='did_requests')
+            _channel.queue_declare(queue=QUEUE_NAME)
 
             print("Connected to RabbitMQ. Ready to start consuming requests")
 
-            _channel.basic_consume(queue='did_requests',
+            _channel.basic_consume(queue=QUEUE_NAME,
                                    auto_ack=False,
                                    on_message_callback=callback)
             _channel.start_consuming()
