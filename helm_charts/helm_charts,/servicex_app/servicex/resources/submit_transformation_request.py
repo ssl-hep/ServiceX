@@ -187,7 +187,10 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 }
 
-                parsed_did = DIDParser(requested_did)
+                parsed_did = DIDParser(requested_did,
+                                       default_scheme=current_app.config[
+                                           'DID_FINDER_DEFAULT_SCHEME'])
+
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
