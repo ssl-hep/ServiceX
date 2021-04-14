@@ -35,6 +35,7 @@ from flask import current_app
 from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
 
+from servicex.did_parser import DIDParser
 from servicex.decorators import auth_required
 from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
@@ -186,8 +187,9 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 }
 
+                parsed_did = DIDParser(requested_did)
                 self.rabbitmq_adaptor.basic_publish(exchange='',
-                                                    routing_key='did_requests',
+                                                    routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
             else:
                 # Request a preflight check on the first file
