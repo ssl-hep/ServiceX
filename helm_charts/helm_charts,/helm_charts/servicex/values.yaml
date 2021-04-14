@@ -41,6 +41,10 @@ app:
   mailgunApiKey:
   mailgunDomain:
 
+  # If user provides DID that lacks a schema, route the requests to this
+  # particular DID Finder
+  defaultDIDFinderSchema: rucio
+
   ingress:
     enabled: false
     class: nginx
@@ -57,7 +61,7 @@ app:
     retries: 12
     retry_interval: 10 # seconds
 
-# Settings for the DID Finder
+# Settings for the Rucio DID Finder
 didFinder:
   image: sslhep/servicex-did-finder
   tag: develop
