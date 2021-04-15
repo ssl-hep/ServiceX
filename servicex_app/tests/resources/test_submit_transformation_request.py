@@ -95,6 +95,18 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         r = client.post('/servicex/transformation', json=request)
         assert r.status_code == 400
 
+    def test_submit_transformation_bad_did_scheme(self, mocker,
+                                                  mock_rabbit_adaptor,
+                                                  mock_docker_repo_adapter):
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   docker_repo_adapter=mock_docker_repo_adapter)
+        request = self._generate_transformation_request()
+        request['did'] = 'foobar://my-did'
+        response = client.post('/servicex/transformation', json=request)
+
+        assert response.status_code == 400
+
     def test_submit_transformation_request_throws_exception(self, mocker,
                                                             mock_rabbit_adaptor,
                                                             mock_docker_repo_adapter):

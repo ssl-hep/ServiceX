@@ -77,6 +77,7 @@ class ResourceTestBase:
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
         config['DID_FINDER_DEFAULT_SCHEME'] = 'rucio'
+        config['VALID_DID_SCHEMES'] = ['rucio']
 
         if extra_config:
             config.update(extra_config)

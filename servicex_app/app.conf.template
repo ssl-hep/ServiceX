@@ -80,6 +80,7 @@ CODE_GEN_IMAGE = "sslhep/servicex_code_gen_func_adl_xaod:develop"
 # If no scheme is included in a requests DID, it will be routed to the Rucio
 # DID Finder
 DID_FINDER_DEFAULT_SCHEME = 'rucio'
+VALID_DID_SCHEMES = ['rucio']
 
 # Slack integration requires the app's signing secret and a signup webhook
 SLACK_SIGNING_SECRET = 'some-secret' # Found at https://api.slack.com/apps/<id>
