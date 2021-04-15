@@ -191,6 +191,9 @@ class SubmitTransformationRequest(ServiceXResource):
                                        default_scheme=current_app.config[
                                            'DID_FINDER_DEFAULT_SCHEME'])
 
+                if parsed_did.scheme not in current_app.config['VALID_DID_SCHEMES']:
+                    return {'message': f"The requested DID scheme is not supported: {parsed_did.scheme}"}, 400  # noqa: E501
+
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
