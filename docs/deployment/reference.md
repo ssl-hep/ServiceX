@@ -30,7 +30,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
 | `app.mailgunApiKey`                  | API key to send Mailgun emails to newly approved users | -
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
-| `app.defaultDIDFinderSchema`         | DID Finder schema if none provided in request    | `rucio`                                                 |
+| `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request    | `rucio`                                                 |
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
