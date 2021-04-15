@@ -25,15 +25,27 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
+
+
 class DIDParser:
+    # RE to find the first scheme reference and add any remaining ones into the did
+    did_re = re.compile("^(\\w+):\\/\\/(.*$)")
+
     def __init__(self, did: str, default_scheme: str = 'rucio'):
-        parts = did.split("://")
-        if len(parts) == 2:
-            self.scheme = parts[0]
-            self.did = parts[1]
+        """
+        Parse the did and extract the scheme. If no scheme is found, default to the
+        provided one
+        :param did: Full DID which may contain a scheme
+        :param default_scheme: Use this if no scheme provided
+        """
+        match = self.did_re.match(did)
+        if match:
+            self.scheme = match.group(1)
+            self.did = match.group(2)
         else:
             self.scheme = default_scheme
-            self.did = parts[0]
+            self.did = did
 
     @property
     def microservice_queue(self) -> str:
