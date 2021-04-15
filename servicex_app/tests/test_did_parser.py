@@ -39,6 +39,11 @@ class TestDIDParser:
         assert parser.scheme == 'http'
         assert parser.did == 'my-did'
 
+    def test_embedded_schemes(self):
+        parser = DIDParser("file://http://foo.bar/my-did,https://baz.com/fff")
+        assert parser.scheme == 'file'
+        assert parser.did == 'http://foo.bar/my-did,https://baz.com/fff'
+
     def test_microservice_queue(self):
         parser = DIDParser("rucio://my-did")
         assert parser.microservice_queue == 'rucio_did_requests'
