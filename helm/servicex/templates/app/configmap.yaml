@@ -114,4 +114,4 @@ data:
     CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
     {{ end }}
 
-    DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderSchema }}'
+    DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderScheme }}'
