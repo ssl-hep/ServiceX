@@ -115,3 +115,5 @@ data:
     {{ end }}
 
     DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderScheme }}'
+    VALID_DID_SCHEMES = [ "{{ join "\",\"" .Values.app.allowedDIDSchemes }}" ]
+

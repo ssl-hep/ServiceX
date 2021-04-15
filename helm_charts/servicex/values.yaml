@@ -44,6 +44,8 @@ app:
   # If user provides DID that lacks a schema, route the requests to this
   # particular DID Finder
   defaultDIDFinderScheme: rucio
+  allowedDIDSchemes:
+    - rucio
 
   ingress:
     enabled: false
