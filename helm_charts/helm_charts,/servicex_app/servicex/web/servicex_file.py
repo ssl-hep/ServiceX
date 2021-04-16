@@ -57,4 +57,4 @@ def get_correct_url(request: flask.Request) -> str:
         return parsed_url._replace(scheme="https").geturl()
     else:
         # give up and don't make any changes
-        return request.base_url
+        return request.url_root

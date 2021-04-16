@@ -54,7 +54,7 @@ class TestServiceXFile(WebTestBase):
         test_request = werkzeug.test.EnvironBuilder(path="foo/test",
                                                     base_url="http://localhost/",
                                                     environ_base=request_environ).get_request()
-        test_url = "http://localhost/foo/test"
+        test_url = "http://localhost/"
         result = get_correct_url(test_request)
         assert result == test_url
 
@@ -63,7 +63,7 @@ class TestServiceXFile(WebTestBase):
                                                     base_url="https://localhost/",
                                                     environ_base=request_environ).get_request()
 
-        test_url = "https://localhost/foo/test"
+        test_url = "https://localhost/"
         result = get_correct_url(test_request)
         assert result == test_url
 
@@ -71,7 +71,7 @@ class TestServiceXFile(WebTestBase):
         test_request = werkzeug.test.EnvironBuilder(path="foo/test",
                                                     base_url="https://test.com/",
                                                     environ_base=request_environ).get_request()
-        test_url = "http://test.com/foo/test"
+        test_url = "http://test.com/"
         result = get_correct_url(test_request)
         assert result == test_url.replace("http", "https")
 
@@ -79,6 +79,6 @@ class TestServiceXFile(WebTestBase):
         test_request = werkzeug.test.EnvironBuilder(path="foo/test",
                                                     base_url="https://test.com:8080/",
                                                     environ_base=request_environ).get_request()
-        test_url = "https://test.com:8080/foo/test"
+        test_url = "https://test.com:8080/"
         result = get_correct_url(test_request)
         assert result == test_url
