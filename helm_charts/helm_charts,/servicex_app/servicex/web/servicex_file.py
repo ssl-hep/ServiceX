@@ -2,6 +2,7 @@ from io import BytesIO
 from textwrap import dedent
 from urllib.parse import urlparse
 
+import flask
 from flask import current_app, flash, redirect, request, session, url_for, \
     send_file
 
@@ -24,7 +25,7 @@ def servicex_file():
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
 
-    endpoint_url = correct_url(request.url_root)
+    endpoint_url = get_correct_url(request)
     body = f"""\
     api_endpoints:
       - endpoint: {endpoint_url}
@@ -35,18 +36,25 @@ def servicex_file():
                      as_attachment=True, attachment_filename="servicex.yaml")
 
 
-def correct_url(url: str) -> str:
+def get_correct_url(request: flask.Request) -> str:
     """
-    Update url string to remove http reference in uri to https reference
-    unless the url refers to localhost
+    Update url string to try to make sure that the proper url scheme (https, http)
+    is used
     see https://github.com/ssl-hep/ServiceX/issues/266
 
-    :param url: string with complete url
+    :param request: flask request object
     :return: string with http url changed to https except
     """
 
-    parsed_url = urlparse(url)
-    if parsed_url.scheme == "http" and "localhost" not in parsed_url.netloc:
+    parsed_url = urlparse(request.base_url)
+    request_scheme = request.headers.get('X-Scheme')
+    if request_scheme is not None:
+        # use the same scheme that the request used
+        return parsed_url._replace(scheme=request_scheme).geturl()
+    elif parsed_url.scheme == "http" and "localhost" not in parsed_url.netloc:
+        # if the request scheme is unknown use https unless we're referring
+        # to localhost
         return parsed_url._replace(scheme="https").geturl()
     else:
-        return url
+        # give up and don't make any changes
+        return request.base_url
