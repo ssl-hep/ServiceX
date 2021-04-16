@@ -4,7 +4,7 @@ from flask import Response, url_for, get_flashed_messages
 
 from .web_test_base import WebTestBase
 
-from servicex.web.servicex_file import correct_url
+from servicex.web.servicex_file import get_correct_url
 
 
 class TestServiceXFile(WebTestBase):
@@ -47,18 +47,38 @@ class TestServiceXFile(WebTestBase):
         see:
         https://github.com/ssl-hep/ServiceX/issues/266
         """
+
+        import werkzeug
+
+        request_environ = {"X-Scheme" : "http"}
+        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
+                                                    base_url="http://localhost/",
+                                                    environ_base=request_environ).get_request()
         test_url = "http://localhost/foo/test"
-        result = correct_url(test_url)
+        result = get_correct_url(test_request)
         assert result == test_url
+
+        request_environ = {"X-Scheme" : "https"}
+        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
+                                                    base_url="https://localhost/",
+                                                    environ_base=request_environ).get_request()
 
         test_url = "https://localhost/foo/test"
-        result = correct_url(test_url)
+        result = get_correct_url(test_request)
         assert result == test_url
 
+        request_environ = {"X-Scheme" : "https"}
+        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
+                                                    base_url="https://test.com/",
+                                                    environ_base=request_environ).get_request()
         test_url = "http://test.com/foo/test"
-        result = correct_url(test_url)
+        result = get_correct_url(test_request)
         assert result == test_url.replace("http", "https")
 
+        request_environ = {"X-Scheme" : "https"}
+        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
+                                                    base_url="https://test.com:8080/",
+                                                    environ_base=request_environ).get_request()
         test_url = "https://test.com:8080/foo/test"
-        result = correct_url(test_url)
+        result = get_correct_url(test_request)
         assert result == test_url
