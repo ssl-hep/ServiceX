@@ -242,8 +242,8 @@ class TransformerManager:
 
     @staticmethod
     def get_deployment_status(
-            request_id: str
-    ) -> Optional[kubernetes.client.AppsV1beta1DeploymentStatus]:
+        request_id: str
+    ) -> Optional[kubernetes.client.models.v1_deployment_status.V1DeploymentStatus]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"

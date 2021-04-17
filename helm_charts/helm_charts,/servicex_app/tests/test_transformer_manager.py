@@ -44,36 +44,32 @@ def _env_value(env_list, env_name):
 
 
 class TestTransformerManager(ResourceTestBase):
+    @pytest.fixture
+    def mock_kubernetes(self, mocker):
+        mock_kubernetes = mocker.MagicMock(name="mock_kubernetes")
+        mocker.patch('servicex.transformer_manager.kubernetes', mock_kubernetes)
+        mocker.patch('servicex.transformer_manager.client', mock_kubernetes.client)
+        return mock_kubernetes
 
-    def test_init_external_kubernetes(self, mocker):
-        import kubernetes
-        mock_kubernetes = mocker.patch.object(kubernetes.config, 'load_kube_config')
+    def test_init_external_kubernetes(self, mock_kubernetes):
         TransformerManager('external-kubernetes')
-        mock_kubernetes.assert_called()
+        mock_kubernetes.config.load_kube_config.assert_called()
 
-    def test_init_internal_kubernetes(self, mocker):
-        import kubernetes
-        mock_kubernetes = mocker.patch.object(kubernetes.config, 'load_incluster_config')
+    def test_init_internal_kubernetes(self, mock_kubernetes):
         TransformerManager('internal-kubernetes')
-        mock_kubernetes.assert_called()
+        mock_kubernetes.config.load_incluster_config.assert_called()
 
-    def test_init_invalid_config(self, mocker):
-        import kubernetes
-        mock_kubernetes_inside = mocker.patch.object(kubernetes.config,
-                                                     'load_incluster_config')
-        mock_kubernetes_outside = mocker.patch.object(kubernetes.config,
-                                                      'load_kube_config')
-
+    def test_init_invalid_config(self, mock_kubernetes):
         with pytest.raises(ValueError):
             TransformerManager('foo')
-            mock_kubernetes_inside.assert_not_called()
-            mock_kubernetes_outside.assert_not_called()
+            mock_kubernetes.config.load_incluster_config.assert_not_called()
+            mock_kubernetes.config.load_kube_config.assert_not_called()
 
     def test_launch_transformer_jobs(self, mocker, mock_rabbit_adaptor):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+        mock_api = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         mock_autoscaling = mocker.Mock()
         mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
@@ -90,7 +86,7 @@ class TestTransformerManager(ResourceTestBase):
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='kafka', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
-            called_deployment = mock_kubernetes.mock_calls[1][2]['body']
+            called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == 1
             assert len(called_deployment.spec.template.spec.containers) == 1
             container = called_deployment.spec.template.spec.containers[0]
@@ -106,7 +102,7 @@ class TestTransformerManager(ResourceTestBase):
             assert "cpu" in limits
             assert limits['cpu'] == 4
 
-            assert mock_kubernetes.mock_calls[1][2]['namespace'] == 'my-ns'
+            assert mock_api.mock_calls[1][2]['namespace'] == 'my-ns'
             mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_called()
             autoscaling_spec = mock_autoscaling.mock_calls[0][2]['body'].spec
             assert autoscaling_spec.max_replicas == 17
@@ -117,7 +113,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+        mock_api = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         mock_autoscaling = mocker.Mock()
         mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
@@ -135,7 +131,7 @@ class TestTransformerManager(ResourceTestBase):
                 chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='kafka', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
-            called_deployment = mock_kubernetes.mock_calls[1][2]['body']
+            called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == 17
             mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_not_called()
 
@@ -367,3 +363,37 @@ class TestTransformerManager(ResourceTestBase):
             decode("ascii")
         assert calls[1]['namespace'] == 'servicex'
         assert calls[1]['body'].metadata.name == 'my-request-generated-source'
+
+    def test_get_deployment_status(self, mocker, mock_rabbit_adaptor, mock_kubernetes):
+        mock_api = mock_kubernetes.client.AppsV1Api.return_value
+        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
+        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
+        mock_deployment = mocker.MagicMock(name="mock_deployment")
+        mock_deployment_list.items = [mock_deployment]
+
+        transformer_manager = TransformerManager('external-kubernetes')
+        client = self._test_client(transformation_manager=transformer_manager,
+                                   rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False})
+
+        with client.application.app_context():
+            status = transformer_manager.get_deployment_status("1234")
+            assert status == mock_deployment.status
+
+    def test_get_deployment_status_404(
+        self, mocker, mock_rabbit_adaptor, mock_kubernetes
+    ):
+        mock_api = mock_kubernetes.client.AppsV1Api.return_value
+        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
+        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
+        mock_deployment_list.items = []
+
+        transformer_manager = TransformerManager('external-kubernetes')
+        client = self._test_client(transformation_manager=transformer_manager,
+                                   rabbit_adaptor=mock_rabbit_adaptor,
+                                   extra_config={
+                                       'TRANSFORMER_AUTOSCALE_ENABLED': False})
+
+        with client.application.app_context():
+            status = transformer_manager.get_deployment_status("1234")
+            assert status is None
