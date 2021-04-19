@@ -35,6 +35,10 @@ MAX_RETRIES = 3
 class ServiceXAdapter:
     def __init__(self, endpoint):
         self.endpoint = endpoint
+        # set logging to a null handler
+        import logging
+        self.__logger = logging.getLogger(__name__)
+        self.__logger.addHandler(logging.NullHandler())
 
     def post_status_update(self, status_msg, severity="info"):
         success = False
@@ -48,12 +52,11 @@ class ServiceXAdapter:
                     "info": status_msg
                 })
                 success = True
-            except requests.exceptions.ConnectionError:
-                print("Connection err. Retry")
+            except requests.exceptions.ConnectionError as e:
+                self.__logger.exception(f"Connection err. Retry {attempts}/{MAX_RETRIES}")
                 attempts += 1
         if not success:
-            print("******** Failed to write status message")
-            print("******** Continuing")
+            self.__logger.warning(f"Failed to write status message, continuing")
 
     def put_file_add(self, file_info):
         success = False
@@ -72,8 +75,7 @@ class ServiceXAdapter:
                 print("Connection err. Retry")
                 attempts += 1
         if not success:
-            print("******** Failed to add new file")
-            print("******** Continuing")
+            self.__logger.warning(f"Failed to add new file, continuing")
 
     def post_preflight_check(self, file_entry):
         success = False
@@ -85,11 +87,10 @@ class ServiceXAdapter:
                 })
                 success = True
             except requests.exceptions.ConnectionError:
-                print("Connection err. Retry")
+                self.__logger.exception(f"Connection err. Retry {attempts}/{MAX_RETRIES}")
                 attempts += 1
         if not success:
-            print("******** Failed to write preflight check")
-            print("******** Continuing")
+            self.__logger.warning(f"Failed to write preflight check, continuing")
 
     def put_fileset_complete(self, summary):
         success = False
@@ -99,7 +100,7 @@ class ServiceXAdapter:
                 requests.put(self.endpoint + "/complete", json=summary)
                 success = True
             except requests.exceptions.ConnectionError:
-                print("Connection err. Retry")
+                self.__logger.exception(f"Connection err. Retry {attempts}/{MAX_RETRIES}")
                 attempts += 1
         if not success:
             print("******** Failed to write fileset complete")

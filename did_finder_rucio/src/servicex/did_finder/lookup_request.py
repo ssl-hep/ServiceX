@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import math
 import threading
-import traceback
 from asyncio import Queue
 
 from servicex.did_finder.rucio_adapter import RucioAdapter
@@ -61,6 +60,11 @@ class LookupRequest:
         self.lookup_time = None
         self.replica_lookup_complete = None
 
+        # set logging to a null handler
+        import logging
+        self.__logger = logging.getLogger(__name__)
+        self.__logger.addHandler(logging.NullHandler())
+
     # Yield successive n-sized
     # chunks from file list.
     def chunks(self):
@@ -83,8 +87,8 @@ class LookupRequest:
         self.servicex_adapter.post_status_update("Fileset load complete in " + str(
             self.replica_lookup_complete - self.submited_time))
 
-        print(self.summary)
-        print("Complete time = ", self.replica_lookup_complete - self.submited_time)
+        self.__logger.info(self.summary)
+        self.__logger.info(f"Complete time =  {self.replica_lookup_complete} - {self.submited_time}")
 
     def replica_lookup(self):
         while not self.replica_lookup_queue.empty():
@@ -93,7 +97,7 @@ class LookupRequest:
                 tick = datetime.now()
                 replicas = list(self.rucio_adapter.find_replicas(chunk, self.site))
                 tock = datetime.now()
-                print("Read %d replicas in %s" % (len(replicas), str(tock-tick)))
+                self.__logger.info(f"Read {len(replicas)} replicas in {str(tock-tick)}")
 
                 # Opportunistically prepare a sample file to submit to serviceX. At the end of
                 # this loop we will do a single thread-safe check to see if the sample has been
@@ -124,16 +128,16 @@ class LookupRequest:
                                 self.report_lookup_complete()
 
                 tock2 = datetime.now()
-                print("Files submitted to serviceX in ", tock2 - tock)
+                self.__logger.info(f"Files submitted to serviceX in {tock2 - tock}")
 
                 with self.sample_submitted_lock:
                     if not self.sample_submitted:
                         self.servicex_adapter.post_preflight_check(sample_replica)
-                        print("Submitted Sample file ", sample_replica)
+                        self.__logger.info(f"Submitted Sample file {sample_replica}")
                         self.sample_submitted = True
 
-            except Exception:
-                traceback.print_exc()
+            except Exception as e:
+                self.__logger.exception(f"Received exception while doing replica lookup: {e}")
 
     def lookup_files(self):
         file_iterator = self.rucio_adapter.list_files_for_did(self.did)
@@ -146,12 +150,11 @@ class LookupRequest:
         self.file_list = list(file_iterator)
         self.lookup_time = datetime.now()
 
-        print("Dataset contains %d files. Lookup took %s" % (
-            len(self.file_list),
-            str(self.lookup_time-self.submited_time)
-        ))
+        self.__logger.info(f"Dataset contains {len(self.file_list)} files. " +
+                           f"Lookup took {str(self.lookup_time-self.submited_time)}")
 
         if len(self.file_list) == 0:
+            self.__logger.warning(f"DID Finder found zero files for {self.did}")
             self.servicex_adapter.post_status_update(
                 "DID Finder found zero files for dataset "+self.did,
                 severity='fatal')
@@ -159,7 +162,7 @@ class LookupRequest:
 
         for file in self.file_list:
             self.summary.accumulate(file)
-        print(self.summary)
+        self.__logger.info(self.summary)
 
         self.replica_lookup_queue = Queue(math.ceil(len(self.file_list) / self.chunk_size))
 

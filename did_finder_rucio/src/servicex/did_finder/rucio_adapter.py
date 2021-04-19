@@ -34,6 +34,11 @@ class RucioAdapter:
         self.did_client = did_client
         self.replica_client = replica_client
 
+        # set logging to a null handler
+        import logging
+        self.__logger = logging.getLogger(__name__)
+        self.__logger.addHandler(logging.NullHandler())
+
     @staticmethod
     def parse_did(did):
         """
@@ -56,7 +61,7 @@ class RucioAdapter:
             g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
             return g_files
         except DataIdentifierNotFound:
-            print(f"-----> {did} not found")
+            self.__logger.warning(f"-----> {did} not found")
             return None
 
     def find_replicas(self, files, site):
@@ -73,8 +78,8 @@ class RucioAdapter:
                     schemes=['root'],
                     client_location=None)
 
-            except Exception as eek:
-                print("\n\n\n\n\nERROR READING REPLICA ", eek)
+            except Exception as e:
+                self.__logger.exception(f"ERROR READING REPLICA {e}")
         return g_replicas
 
     @staticmethod
