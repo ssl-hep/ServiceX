@@ -1,6 +1,10 @@
 #!/bin/sh
 mkdir instance
-FLASK_APP=servicex/app.py flask db upgrade
-#flask db upgrade
-#flask translate compile
+# SQLite doesn't handle migrations, so rely on SQLAlchmy table creation
+if grep "sqlite:////sqlite/app.db" /opt/servicex/app.conf; then
+  echo "SQLLite DB, so skipping db migrations";
+else
+  FLASK_APP=servicex/app.py flask db upgrade;
+fi
+
 exec gunicorn -b :5000 --workers=5 --threads=1 --timeout 120 --access-logfile - --error-logfile - "servicex:create_app()"
