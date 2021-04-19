@@ -88,7 +88,7 @@ class LookupRequest:
             self.replica_lookup_complete - self.submited_time))
 
         self.__logger.info(self.summary)
-        self.__logger.info(f"Complete time =  {self.replica_lookup_complete} - {self.submited_time}")
+        self.__logger.info(f"Complete time =  {self.replica_lookup_complete - self.submited_time}")
 
     def replica_lookup(self):
         while not self.replica_lookup_queue.empty():
