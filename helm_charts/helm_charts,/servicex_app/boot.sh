@@ -1,7 +1,7 @@
 #!/bin/sh
 mkdir instance
 # SQLite doesn't handle migrations, so rely on SQLAlchmy table creation
-if grep "sqlite:////sqlite/app.db" /opt/servicex/app.conf; then
+if grep "sqlite://" /opt/servicex/app.conf; then
   echo "SQLLite DB, so skipping db migrations";
 else
   FLASK_APP=servicex/app.py flask db upgrade;
