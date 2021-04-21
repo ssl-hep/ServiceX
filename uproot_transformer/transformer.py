@@ -28,6 +28,7 @@
 import json
 import sys
 import traceback
+import logging
 
 import awkward as ak
 import time
@@ -54,6 +55,30 @@ avg_cell_size = 42
 messaging = None
 object_store = None
 
+
+# function to initialize logging
+def initialize_logging(request=None):
+    """
+    Get a logger and initialize it so that it outputs the correct format
+
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+
+    log = logging.getLogger()
+    if 'INSTANCE_NAME' in os.environ:
+        instance = os.environ['INSTANCE_NAME']
+    else:
+        instance = 'Unknown'
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} xaod_cpp_transformer {} ".format(instance, request) +
+                                  '%(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
 
 class ArrowIterator:
     def __init__(self, arrow, chunk_size, file_path):
@@ -104,9 +129,7 @@ def callback(channel, method, properties, body):
                                    total_bytes=0)
 
     except Exception as error:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-        print(exc_value)
+        logger.exception(f"Received exception doing transform: {error}")
 
         transform_request['error'] = str(error)
         channel.basic_publish(exchange='transformation_failures',
@@ -115,7 +138,7 @@ def callback(channel, method, properties, body):
 
         servicex.post_status_update(file_id=_file_id,
                                     status_code="failure",
-                                    info="error: "+str(exc_value))
+                                    info=f"error: {error}")
 
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
@@ -125,14 +148,14 @@ def callback(channel, method, properties, body):
 
 
 def transform_single_file(file_path, output_path, servicex=None):
-    print("Transforming a single path: " + str(file_path))
+    logger.info(f"Transforming a single path: {file_path}")
 
     try:
         import generated_transformer
         start_transform = time.time()
         awkward_array = generated_transformer.run_query(file_path)
         end_transform = time.time()
-        print(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
+        logger.info(f'generated_transformer.py: {round(end_transform - start_transform, 2)} sec')
 
         start_serialization = time.time()
         try:
@@ -140,20 +163,16 @@ def transform_single_file(file_path, output_path, servicex=None):
         except TypeError:
             arrow = ak.to_arrow_table(ak.repartition(awkward_array, None))
         end_serialization = time.time()
-        print(f'awkward Array -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
+        logger.info(f'awkward Array -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
 
         if output_path:
             writer = pq.ParquetWriter(output_path, arrow.schema)
             writer.write_table(table=arrow)
             writer.close()
 
-    except Exception:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-        print(exc_value)
-
-        raise RuntimeError(
-            "Failed to transform input file " + file_path + ": " + str(exc_value))
+    except Exception as error:
+        logger.exception(f"Failed to transform input file {file_path}: {error}")
+        raise RuntimeError(f"Failed to transform input file {file_path}: {error}")
 
     if messaging:
         arrow_writer = ArrowWriter(file_format=args.result_format,
@@ -175,10 +194,12 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description="Uproot Transformer")
     args = parser.parse_args()
 
-    print("-----", sys.path)
+    logger = initialize_logging(args.request_id)
+
+    logger.info("-----", sys.path)
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
-    print(args.result_destination, args.output_dir)
+    logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
     if args.output_dir:
             messaging = None
             object_store = None
@@ -195,5 +216,5 @@ if __name__ == "__main__":
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        print("Transform a single file ", args.path)
+        logger.info("Transform a single file ", args.path)
         transform_single_file(args.path, args.output_dir)
