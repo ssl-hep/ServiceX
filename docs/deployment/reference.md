@@ -31,7 +31,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.mailgunApiKey`                  | API key to send Mailgun emails to newly approved users | -
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
 | `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request    | `rucio`                                                 |
-| `app.allowedDIDSchemes`              | List of valid DID finder schemes to accept       | `rucio`                                                 |
+| `app.allowedDIDSchemes`              | List of valid DID finder schemes to accept       | [`rucio`]                                                 |
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
