@@ -5,14 +5,14 @@ servicex:
   namespace: default
 
 elasticsearch:
-  host: "host.org"
+  host: atlas-kibana.mwt2.org
   port: "9200"
-  user: "user"
-  pass: "pass"
+  user: river-dev-logs
+  pass: river-dev-logs
   protocol: https
 
 kibana:
-  host: https://kibana-host.org:5601
+  host: https://atlas-kibana.mwt2.org:5601
   dashboards:
-    enabled: true
-    index: .kibana
+    enabled: false
+    index: .kibana-dev
