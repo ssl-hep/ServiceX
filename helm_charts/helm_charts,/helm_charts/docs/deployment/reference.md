@@ -67,3 +67,20 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
 | `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' |
+
+## Logging chart
+
+The following table lists the configurable parameters of the Logging chart and their default values.
+
+| Parameter                            | Description                                      | Default                                                 |
+| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `servicex.namespace` | namespace where you have servicex deployed | default |
+| `elasticsearch.host` | Elasticsearch host | atlas-kibana.mwt2.org |
+| `elasticsearch.port` | Elasticsearch port | 9200 |
+| `elasticsearch.user` | Elasticsearch user with appropriate roles | river-dev-logs  |
+| `elasticsearch.pass` | Elasticsearch pass | river-dev-logs  |
+| `elasticsearch.protocol` | SSL support | https  |
+| `kibana.host` | address of the Kibana endpoint | https://atlas-kibana.mwt2.org:5601 |
+| `kibana.dashboards.enabled` | If not there dashboards will be created. | false |
+| `kibana.dashboards.index` | Kibana system index | .kibana-dev  |
+
