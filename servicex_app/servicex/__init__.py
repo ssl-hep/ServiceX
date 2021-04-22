@@ -90,6 +90,9 @@ def create_app(test_config=None,
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
+        # Validate did-finder scheme
+        if app.config['DID_FINDER_DEFAULT_SCHEME'] not in app.config['VALID_DID_SCHEMES']:
+            raise ValueError(f"Default DID Finder Scheme not listed in {app.config['VALID_DID_SCHEMES']}") # NOQA E501
 
         if app.config['OBJECT_STORE_ENABLED']:
             if not provided_object_store:

@@ -56,6 +56,8 @@ class WebTestBase:
             'ENABLE_AUTH': False,
             'GLOBUS_CLIENT_ID': 'globus-client-id',
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',
+            'DID_FINDER_DEFAULT_SCHEME': 'rucio',
+            'VALID_DID_SCHEMES': ['rucio'],
             'JWT_ADMIN': 'admin',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
