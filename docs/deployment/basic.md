@@ -1,6 +1,6 @@
 # How to deploy ServiceX
 ServiceX is deployed using a Helm chart. The full list of configuration 
-options can be found in the [refence section](reference.md).
+options can be found in the [reference section](reference.md).
 
 This guide is aimed at those interested in learning how to deploy ServiceX 
 with minimal configuration. For more advanced topics, such as making a 
