@@ -60,7 +60,7 @@ docker run --rm -it \
 
 Then cd to /code and run the script as
 ```bash
- echo $AST | PYTHONPATH=/code python scripts/from_ast_to_zip.py -z /generated/foo.zip --uproot
+ echo $AST | PYTHONPATH=/code python3 from_ast_to_zip.py -z /generated/foo.zip --atlas-xaod
 ```
 
 

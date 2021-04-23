@@ -3,4 +3,4 @@ Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-WTF==0.14.3
 
-func-adl-xAOD.backend==1.0.0b5
+git+git://github.com/sudo-panda/func_adl_xAOD.git@setup-py-fix#egg=func_adl_xAOD
