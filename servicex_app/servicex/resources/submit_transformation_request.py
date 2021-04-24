@@ -160,6 +160,10 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_rec.generated_code_cm = \
                     self.code_gen_service.generate_code_for_selection(request_rec, namespace)
 
+            # Insure the required queues and exchange exist in RabbitMQ broker
+            self.rabbitmq_adaptor.setup_exchange('transformation_requests')
+            self.rabbitmq_adaptor.setup_exchange('transformation_failures')
+
             # Create queue for transformers to read from
             self.rabbitmq_adaptor.setup_queue(request_id)
 
