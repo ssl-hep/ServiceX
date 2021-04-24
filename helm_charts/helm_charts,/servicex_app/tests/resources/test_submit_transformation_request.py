@@ -147,6 +147,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         setup_queue_calls = [call(request_id), call(request_id+"_errors")]
         mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+        mock_rabbit_adaptor.setup_exchange.assert_has_calls([
+            call('transformation_requests'),
+            call('transformation_failures')
+        ])
 
         bind_to_exchange_calls = [
             call(exchange="transformation_requests", queue=request_id),
