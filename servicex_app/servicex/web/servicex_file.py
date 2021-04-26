@@ -46,7 +46,7 @@ def get_correct_url(request: flask.Request) -> str:
     :return: string with http url changed to https except
     """
 
-    parsed_url = urlparse(request.base_url)
+    parsed_url = urlparse(request.url_root)
     request_scheme = request.headers.get('X-Scheme')
     if request_scheme is not None:
         # use the same scheme that the request used
