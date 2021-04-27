@@ -51,11 +51,12 @@ class TestServiceXFile(WebTestBase):
         import werkzeug
 
         # Test provided scheme always prevails
-        request_environ = {"X-Scheme": "http"}
         test_request = werkzeug.test.EnvironBuilder(path="foo/test",
                                                     base_url="http://localhost/",
-                                                    environ_base=request_environ).get_request()
-        test_url = "http://localhost/"
+                                                    headers={
+                                                        "X-Scheme": "https"
+                                                    }).get_request()
+        test_url = "https://localhost/"
         result = get_correct_url(test_request)
         assert result == test_url
 
