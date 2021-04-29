@@ -1,4 +1,4 @@
-# Development
+# Contributing to ServiceX
 
 So you want to get involved! The developers welcome community input. The central development area
 with all ServiceX repositories can be found [here](https://github.com/ssl-hep). The core steps are
