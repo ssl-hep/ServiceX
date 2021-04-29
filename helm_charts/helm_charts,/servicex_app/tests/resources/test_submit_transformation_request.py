@@ -116,8 +116,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
-        assert response.status_code == 500
-        assert response.json == {"message": "Something went wrong"}
+        assert response.status_code == 503
+        assert response.json == {"message": "Error setting up transformer queues"}
 
     def test_submit_transformation(self, mock_rabbit_adaptor,
                                    mock_docker_repo_adapter,
