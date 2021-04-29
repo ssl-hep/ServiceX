@@ -15,7 +15,8 @@ nav:
         - Production deployments: deployment/production.md
         - Reference: deployment/reference.md
     - 'Developer Guide':
-        - Development: development/development.md
+        - Architecture: development/architecture.md
+        - Contributing: development/contributing.md
 theme:
     name: readthedocs
     highlightjs: true
