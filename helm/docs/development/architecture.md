@@ -7,12 +7,14 @@
  as Python packages. There is one client for each query language that may be used to access ServiceX. While it is possible to install clients individually, the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella package lists all of them as dependencies, so that they can all be installed with a single command: `pip install servicex-clients`.
 
  The individual clients are as follows:
+
  - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language Supports both xAOD and uproot files.
  - [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut selection strings. Supports only uproot files.
 
  Each of the above clients provides an API for specifying a query, which is ultimately represented as an abstract syntax tree in [Qastle](https://github.com/iris-hep/qastle). The `qastle` is then handed off to the frontend package, which manages the interaction with ServiceX.
 
 The [ServiceX frontend](https://pypi.org/project/servicex/) package contains the code for communicating with a ServiceX backend. The workflow is as follows:
+
  - Given a query, the ServiceX frontend constructs a JSON payload for the request. The JSON payload contains the `qastle`, the DID, and anything else necessary to run the query. 
  - It then hashes the request and checks a local cache which it maintains.
    - If the request is in the local request cache, then the system tries to load the data from the local disk cache. If it can't be found on the local disk cache, it requests the data from the backend. If any of these steps fail, then it moves onto the below step.
@@ -33,7 +35,7 @@ Some technical details of the above process:
  The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a number of microservices, described in the sections below.
 
 
-![Architecture](img/sx-architecture.png)
+![Architecture](/img/sx-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
 This is the main entry point to ServiceX, and can be exposed outside the cluster. 
@@ -44,7 +46,7 @@ in-cluster REST endpoints for orchestrating the microservices
 It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
 Authentication is optional, and may be enabled on a per-deployment basis (see below for more details).
 
-Potential roadmap features for the web frontend include a dashboard of current / past requests, 
+Potential roadmap features for the web frontend include a dashboard of current or past requests, 
 and an administrative dashboard for managing users and monitoring resource consumption.
 
 #### **Authentication and Authorization**
@@ -64,14 +66,14 @@ Once approved, new users will receive a welcome email via Mailgun (if configured
 Future versions of ServiceX may support disabling Globus auth and the internal user management system, but retaining the JWT system. 
 ServiceX API Tokens would need to be generated externally using the same secret used for the deployment.
 
-#### **Endpoints**
- 
+<!-- #### **Endpoints** -->
+<!--  
  <B> Q:
    * REST API
      * Where is OpenAPI description/documentation?   
    * WEB frontend:
      * "... and retrieving the results" Really? I don't think data goes through it but directly from minio to user. This is a very important point.
- </B>
+ </B> -->
 
 ### X509 Proxy Renewal Service
  This service uses the provided grid certificate and key to authenticate against a VOMS proxy server. This generates an X509 proxy which is stored as a Kubernetes Secret. Proxy is renewed once per hour. 
@@ -81,7 +83,7 @@ The ServiceX API server stores information about requests, files, and users (if 
 The API server uses SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).
 No other microservices communicate with the database.
 
-![Schema](img/sx-schema.png)
+![Schema](/img/sx-schema.png)
 
 ### DID Finder
 Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. 
@@ -115,10 +117,12 @@ the dataset
 ```
 
 ### Code Generator
-Code generators are microservices which take [`qastle`](https://github.com/iris-hep/qastle) as input and generate C++ source code which transforms files of a given type (e.g. xAOD).
-Each deployment must specify a single code generator. As a result, each ServiceX deployment is specific to a (query language, file type) pair. The code generators run in separate containers because they have python versioning requirements that may be different from other components of ServiceX.
+Code generators are Flask web servers which take a [`qastle`](https://github.com/iris-hep/qastle) query string as input and generate a zip archive containing C++ source code which transforms files of a given type (e.g. xAOD).
+
+Currently, each deployment must specify a single code generator. As a result, a ServiceX deployment is specific to a (query language, file type) pair. The code generators run in separate containers because they have Python versioning requirements that may be different from other components of ServiceX. Eventually, we would like to support multiple code generators per deployment. 
 
 Code generation is supported for the following (query language, file type) pairs:
+
 - [funcADL/xAOD](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD)
 - [funcADL/uproot](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot)
 
@@ -144,12 +148,12 @@ for deploying a busybox pod which mounts one of the generated code configmaps.
  Furthermore, there is no use of Minio user identities, so all files are saved
  in the same namespace with no quota enforcement.
 
-### Kafka
+<!-- ### Kafka
  Kafka used to be an option for output. 
 
  <B>TODO:
   * if abandoned, it should be removed everywhere. Currently search for "kafka" returns 257 results in 34 files.
- </B>
+ </B> -->
 
 ### Pre-Flight Check 
  Attempts to transform a sample file using the same Docker image as the 
@@ -157,13 +161,6 @@ for deploying a busybox pod which mounts one of the generated code configmaps.
  the generated code as well as the apporpriateness of the request relative to the
  properties in the sample file
  
-### Code generators
- These are flask web servers that get a query string and return a zip file containing 6 files that can be compiled and run by a transformer. Currently there are two different generators:
- * FuncADL_uproot
- * FuncADL_xAOD
-
-Currently all requests go to the code generator deployed with the rest of the helm 
-chart. Eventually we will want to allow multiple code generators in a deployment. 
 
 ### Transformers
  Transformers are the worker pods for a transformation request. They get generated transformer code from Code generator servers, compile it, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform multiple files. Once all files are complete for the transformation request, they are spun down.
@@ -172,10 +169,11 @@ chart. Eventually we will want to allow multiple code generators in a deployment
 ## Error handling
 
 There are several distinct kinds of errors:
-* user request is not correct
-* data is inaccessible
-* servicex internal issue
-* timeouts
+
+* User request is not correct
+* Data is inaccessible
+* Internal ServiceX issue
+* Timeouts
 
 ## Logging
 Output messages from the transformers are sent back to the flask app and persisted
