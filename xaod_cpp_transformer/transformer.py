@@ -164,6 +164,7 @@ def compile_code():
 
 
 if __name__ == "__main__":
+    print("starting xaod_cpp_transformer")
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
 
@@ -183,3 +184,4 @@ if __name__ == "__main__":
 
     if args.path:
         transform_single_file(args.path, args.output_dir)
+    print("finished xaod_cpp_transformer")
