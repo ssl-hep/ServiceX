@@ -35,7 +35,7 @@ Some technical details of the above process:
  The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a number of microservices, described in the sections below.
 
 
-![Architecture](/img/sx-architecture.png)
+![Architecture](../img/sx-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
 This is the main entry point to ServiceX, and can be exposed outside the cluster. 
@@ -83,7 +83,7 @@ The ServiceX API server stores information about requests, files, and users (if 
 The API server uses SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).
 No other microservices communicate with the database.
 
-![Schema](/img/sx-schema.png)
+![Schema](../img/sx-schema.png)
 
 ### DID Finder
 Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. 
