@@ -209,3 +209,25 @@ class TestDecorators(WebTestBase):
             response: Response = client.get('users', headers=self.fake_header())
             assert response.status_code == 200
             assert response.json == data
+
+    def test_admin_decorator_integration_oauth_authorized(self, mocker, user):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        data = {'users': [{'id': 1234}]}
+        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        with client.session_transaction() as sess:
+            sess['is_authenticated'] = True
+            sess['admin'] = True
+        with client.application.app_context():
+            response: Response = client.get('users')
+            assert response.status_code == 200
+            assert response.json == data
+
+    def test_admin_decorator_integration_oauth_not_authorized(self, mocker, user):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        with client.session_transaction() as sess:
+            sess['is_authenticated'] = True
+            sess['admin'] = False
+        with client.application.app_context():
+            response: Response = client.get('users')
+            assert response.status_code == 401
+            assert 'restricted' in response.json['message']

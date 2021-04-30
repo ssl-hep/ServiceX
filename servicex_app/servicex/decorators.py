@@ -65,16 +65,19 @@ def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
+        msg = 'Not Authorized: This resource is restricted to administrators.'
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
-            return fn(*args, **kwargs)
+            if session.get('admin'):
+                return fn(*args, **kwargs)
+            else:
+                return make_response({'message': msg}, 401)
         try:
             verify_jwt_in_request()
         except NoAuthorizationError as exc:
             return make_response({'message': str(exc)}, 401)
         user = UserModel.find_by_sub(get_jwt_identity())
-        msg = 'Not Authorized: This resource is restricted to administrators.'
         if not (user and user.admin):
             return make_response({'message': msg}, 401)
         return fn(*args, **kwargs)
