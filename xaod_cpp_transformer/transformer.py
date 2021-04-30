@@ -96,7 +96,7 @@ def parse_output_logs(logfile):
             if '---<' in line:
                 # message is ('------< ', json_string)
                 # want everything after the comma except for last character (')')
-                mesg = line.split(',')[1][:-1]
+                mesg = line.split(',', 1)[1].strip()[:-1]
                 # need to change ' to " to make message proper json
                 body = json.loads(mesg.replace("'", '"'))
                 events = body.get("total-events", 0)
@@ -307,11 +307,16 @@ if __name__ == "__main__":
     startup_time = get_process_info()
 
     if args.request_id and not args.path:
+        print("A******")
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
+        print("B******")
 
     if args.path:
+        print("1******")
         transform_single_file(args.path, args.output_dir)
+        print("2******")
     total_time = get_process_info()
     stop_time = timeit.default_timer()
     log_stats(startup_time, total_time, running_time=(stop_time - start_time))
     print("finished xaod_cpp_transformer")
+    print("******")
