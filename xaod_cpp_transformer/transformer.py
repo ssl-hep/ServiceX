@@ -93,6 +93,7 @@ def parse_output_logs(logfile):
     total_time = 0
     with open(logfile, 'r') as f:
         logger.info("Found logfile: {}".format(logfile))
+        logger.info("File info: ".format(os.stat(logfile)))
         for line in f.readlines():
             if '---<' in line:
                 logger.info("Matched json")
