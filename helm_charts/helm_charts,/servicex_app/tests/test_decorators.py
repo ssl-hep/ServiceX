@@ -1,6 +1,5 @@
 from flask import url_for, render_template, Response, make_response
 from flask_jwt_extended import create_access_token
-from pytest import fixture
 
 from tests.web.web_test_base import WebTestBase
 
@@ -10,15 +9,6 @@ def fake_route() -> Response:
 
 
 class TestDecorators(WebTestBase):
-    @fixture
-    def mock_jwt_required(self, mocker):
-        """
-        During unit tests, the jwt_required decorator from Flask-JWT-extended
-        is simply mocked to act as the identity function.
-        """
-        mocker.patch('servicex.decorators.jwt_required',
-                     side_effect=lambda f: f)
-
     @staticmethod
     def fake_header():
         access_token = create_access_token(identity='abcd')
@@ -65,7 +55,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 200
 
-    def test_auth_decorator_user_deleted(self, mocker, mock_jwt_required):
+    def test_auth_decorator_user_deleted(self, mocker, mock_jwt_extended):
         mocker.patch('servicex.decorators.UserModel.find_by_sub',
                      return_value=None)
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
@@ -75,7 +65,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 401
 
-    def test_auth_decorator_user_pending(self, mocker, mock_jwt_required, user):
+    def test_auth_decorator_user_pending(self, mocker, mock_jwt_extended, user):
         user.pending = True
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
@@ -84,7 +74,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 401
 
-    def test_auth_decorator_authorized(self, mocker, mock_jwt_required, user):
+    def test_auth_decorator_authorized(self, mocker, mock_jwt_extended, user):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
             from servicex.decorators import auth_required
@@ -99,7 +89,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 200
 
-    def test_admin_decorator_unauthorized(self, mocker, mock_jwt_required, user):
+    def test_admin_decorator_unauthorized(self, mocker, mock_jwt_extended, user):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         user.admin = False
         with client.application.app_context():
@@ -108,7 +98,7 @@ class TestDecorators(WebTestBase):
             response: Response = decorated()
             assert response.status_code == 401
 
-    def test_admin_decorator_authorized(self, mocker, mock_jwt_required, user):
+    def test_admin_decorator_authorized(self, mocker, mock_jwt_extended, user):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         user.admin = True
         with client.application.app_context():
@@ -134,8 +124,9 @@ class TestDecorators(WebTestBase):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
             response: Response = client.get('servicex/transformation/123')
+            print(response.data)
             assert response.status_code == 401
-            assert response.json['msg'] == 'Missing Authorization Header'
+            assert response.json['message'] == 'Missing Authorization Header'
 
     def test_auth_decorator_integration_user_deleted(self, mocker):
         client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
@@ -169,6 +160,22 @@ class TestDecorators(WebTestBase):
             assert response.status_code == 200
             assert response.json == data
 
+    def test_auth_decorator_integration_oauth(self, mocker, user):
+        client = self._test_client(mocker, extra_config={'ENABLE_AUTH': True})
+        fake_transform_id = 123
+        data = {'id': fake_transform_id}
+        mock = mocker.patch('servicex.resources.transformation_request'
+                            '.TransformRequest.return_request').return_value
+        mock.submitted_by = user.id
+        mock.to_json.return_value = data
+        with client.session_transaction() as sess:
+            sess['is_authenticated'] = True
+        with client.application.app_context():
+            response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
+            print(response.data)
+            assert response.status_code == 200
+            assert response.json == data
+
     def test_admin_decorator_integration_auth_disabled(self, mocker):
         data = {'users': [{'id': 1234}]}
         mocker.patch('servicex.models.UserModel.return_all', return_value=data)
@@ -183,7 +190,7 @@ class TestDecorators(WebTestBase):
         with client.application.app_context():
             response: Response = client.get('users')
             assert response.status_code == 401
-            assert response.json['msg'] == 'Missing Authorization Header'
+            assert response.json['message'] == 'Missing Authorization Header'
 
     def test_admin_decorator_integration_not_authorized(self, mocker, user):
         user.admin = False

@@ -3,7 +3,8 @@ from typing import Callable
 
 from flask import redirect, request, session, url_for, current_app, \
     make_response, Response
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from servicex.models import UserModel
 
@@ -34,6 +35,14 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """
 
     def inner(*args, **kwargs) -> Response:
+        if not current_app.config.get('ENABLE_AUTH'):
+            return fn(*args, **kwargs)
+        elif session.get('is_authenticated'):
+            return fn(*args, **kwargs)
+        try:
+            verify_jwt_in_request()
+        except NoAuthorizationError as exc:
+            return make_response({'message': str(exc)}, 401)
         user = UserModel.find_by_sub(get_jwt_identity())
         if not user:
             msg = 'Not Authorized: No user found matching this API token. ' \
@@ -47,31 +56,25 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             return make_response({'message': msg}, 401)
         return fn(*args, **kwargs)
 
-    @wraps(fn)
-    def decorated(*args, **kwargs) -> Callable[..., Response]:
-        if not current_app.config.get('ENABLE_AUTH'):
-            return fn(*args, **kwargs)
-        # Wrap with jwt_required as well if auth is enabled
-        return jwt_required(inner)(*args, **kwargs)
-
-    return decorated
+    return inner
 
 
 def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """Mark an API resource as requiring administrator role."""
 
     def inner(*args, **kwargs) -> Response:
+        if not current_app.config.get('ENABLE_AUTH'):
+            return fn(*args, **kwargs)
+        elif session.get('is_authenticated'):
+            return fn(*args, **kwargs)
+        try:
+            verify_jwt_in_request()
+        except NoAuthorizationError as exc:
+            return make_response({'message': str(exc)}, 401)
         user = UserModel.find_by_sub(get_jwt_identity())
         msg = 'Not Authorized: This resource is restricted to administrators.'
         if not (user and user.admin):
             return make_response({'message': msg}, 401)
         return fn(*args, **kwargs)
 
-    @wraps(fn)
-    def decorated(*args, **kwargs) -> Callable[..., Response]:
-        if not current_app.config.get('ENABLE_AUTH'):
-            return fn(*args, **kwargs)
-        # Wrap with jwt_required as well if auth is enabled
-        return jwt_required(inner)(*args, **kwargs)
-
-    return decorated
+    return inner

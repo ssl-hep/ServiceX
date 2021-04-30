@@ -124,12 +124,6 @@ class ResourceTestBase:
         return docker
 
     @fixture
-    def mock_jwt_required(self, mocker):
-        def identity(fn):
-            return fn
-        mocker.patch('servicex.decorators.jwt_required', side_effect=identity)
-
-    @fixture
     def mock_requesting_user(self, mocker):
         test_id = 6
         mock_user = mocker.Mock()

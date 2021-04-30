@@ -382,7 +382,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_auth_enabled(self, mock_rabbit_adaptor,
                                                 mock_docker_repo_adapter,
-                                                mock_jwt_required,
+                                                mock_jwt_extended,
                                                 mock_requesting_user):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter,
