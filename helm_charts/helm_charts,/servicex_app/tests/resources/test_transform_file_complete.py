@@ -53,9 +53,8 @@ class TestTransformFileComplete(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        mock_files_remaining = mocker.patch.object(TransformRequest,
-                                                   'files_remaining',
-                                                   return_value=1)
+        mock_files_remaining = mocker.PropertyMock(return_value=1)
+        TransformRequest.files_remaining = mock_files_remaining
 
         mocker.patch.object(DatasetFile, "get_by_id")
         mocker.patch.object(TransformationResult, "save_to_db")
@@ -67,7 +66,6 @@ class TestTransformFileComplete(ResourceTestBase):
                               json=self._generate_file_complete_request())
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-        mock_files_remaining.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_no_files_remaining(self, mocker,
@@ -80,8 +78,8 @@ class TestTransformFileComplete(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        mock_files_remaining = mocker.patch.object(TransformRequest, 'files_remaining',
-                                                   return_value=0)
+        mock_files_remaining = mocker.PropertyMock(return_value=0)
+        TransformRequest.files_remaining = mock_files_remaining
 
         mocker.patch.object(DatasetFile, "get_by_id")
         mocker.patch.object(TransformationResult, "save_to_db")
@@ -94,34 +92,28 @@ class TestTransformFileComplete(ResourceTestBase):
 
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
-        mock_files_remaining.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
                                                                              'my-ws')
 
-    def test_put_transform_file_complete_unknown_files_remaining(self, mocker,
-                                                                 mock_rabbit_adaptor):
+    def test_put_transform_file_complete_unknown_request_id(
+        self, mocker, mock_rabbit_adaptor
+    ):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
-            return_value=self._generate_transform_request())
-
-        mock_files_remaining = mocker.patch.object(TransformRequest,
-                                                   'files_remaining',
-                                                   return_value=None)
-        mocker.patch.object(DatasetFile, "get_by_id")
-        mocker.patch.object(TransformationResult, "save_to_db")
+            return_value=None
+        )
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
-        assert response.status_code == 200
+        assert response.status_code == 404
         mock_transform_request_read.assert_called_with('1234')
-        mock_files_remaining.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def _generate_dataset_file(self):
@@ -144,18 +136,8 @@ class TestTransformFileComplete(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        mocker.patch.object(
-            servicex.models.TransformationResult, 'statistics', return_value={
-                "total-messages": 123,
-                "min-time": 1,
-                "max-time": 30,
-                "avg-time": 15.55,
-                "total-time": 1024,
-                "total-events": 4000
-            })
-
-        mocker.patch.object(TransformRequest, 'files_remaining',
-                            return_value=1)
+        mock_files_remaining = mocker.PropertyMock(return_value=1)
+        TransformRequest.files_remaining = mock_files_remaining
 
         mocker.patch.object(DatasetFile, "get_by_id",
                             return_value=self._generate_dataset_file())
@@ -172,23 +154,10 @@ class TestTransformFileComplete(ResourceTestBase):
                                                      mock_rabbit_adaptor):
         import servicex
 
-        mocker.patch.object(servicex.models.TransformationResult, 'count',
-                            return_value=17)
-
         mocker.patch.object(DatasetFile, "get_by_id",
                             return_value=self._generate_dataset_file())
         mocker.patch.object(TransformationResult, "save_to_db")
         mocker.patch.object(TransformRequest, "save_to_db")
-
-        mocker.patch.object(
-            servicex.models.TransformationResult, 'statistics', return_value={
-                "total-messages": 123,
-                "min-time": 1,
-                "max-time": 30,
-                "avg-time": 15.55,
-                "total-time": 1024,
-                "total-events": 4000
-            })
 
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
 
@@ -198,18 +167,8 @@ class TestTransformFileComplete(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        mocker.patch.object(TransformRequest, 'files_remaining',
-                            return_value=0)
-
-        mocker.patch.object(
-            servicex.models.TransformationResult, 'statistics', return_value={
-                "total-messages": 123,
-                "min-time": 1,
-                "max-time": 30,
-                "avg-time": 15.55,
-                "total-time": 1024,
-                "total-events": 4000
-            })
+        mock_files_remaining = mocker.PropertyMock(return_value=0)
+        TransformRequest.files_remaining = mock_files_remaining
 
         client = self._test_client(transformation_manager=mock_transformer_manager,
                                    rabbit_adaptor=mock_rabbit_adaptor)
