@@ -1,16 +1,24 @@
 # Contributing to ServiceX
 
 So you want to get involved! The developers welcome community input. The central development area
-with all ServiceX repositories can be found [here](https://github.com/ssl-hep). The core steps are
-shown in the diagram below.
+with all ServiceX repositories can be found [here](https://github.com/ssl-hep). 
+
+The core steps for processing a transformation request are shown in the diagram below.
 
 ![Development](../img/develop.png)
 
+<!--- 
+TODO: update to remove kafka from the png
+-->
+
 ## Testing new changes
 
-[Instructions for testing new changes. Broadly (1) setup testing environment via ``conda`` or
-``virtualenv``, (2) clone the appropriate repository, (3) run ``python -m pip install -e .[test]``
-to set up the necessary packages in the environment, and (4) run the tests via ``pytests``.]
+Instructions for testing new changes. Broadly
+
+1. setup testing environment via ``conda`` or ``virtualenv``, 
+2. clone the appropriate repository
+3. run ``python -m pip install -e .[test]`` to set up the necessary packages in the environment 
+4. run the tests via ``pytests``.
 
 ## Deploying ServiceX on a Kubernetes cluster
 
