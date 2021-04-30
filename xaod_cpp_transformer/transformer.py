@@ -56,6 +56,69 @@ messaging = None
 object_store = None
 
 
+def initialize_logging(request=None):
+    """
+    Get a logger and initialize it so that it outputs the correct format
+
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+
+    log = logging.getLogger()
+    if 'INSTANCE_NAME' in os.environ:
+        instance = os.environ['INSTANCE_NAME']
+    else:
+        instance = 'Unknown'
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} xaod_cpp_transformer {} ".format(instance, request) +
+                                  '%(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
+
+
+def parse_output_logs(logfile):
+    """
+    Parse output from runner.sh and output appropriate log messages
+    :param logfile: path to logfile
+    :return:  None
+    """
+    total_events = 0
+    total_bytes = 0
+    successes = 0
+    total_files = 0
+    total_time = 0
+    with open(logfile, 'r') as f:
+        for line in f.readlines():
+            if '---<' in line:
+                # message is ('------< ', json_string)
+                # want everything after the comma except for last character (')')
+                mesg = line.split(',')[1][:-1]
+                # need to change ' to " to make message proper json
+                body = json.loads(mesg.replace("'", '"'))
+                events = body.get("total-events", 0)
+                bytes_processed = body.get("total-bytes", 0)
+                processing_time = body.get("total-time", 0)
+                total_events += events
+                total_bytes += bytes_processed
+                total_time += processing_time
+                total_files += 1
+                status = body.get("status", "unknown")
+                if status not in ("failure", "unknown"):
+                    successes += 1
+                logger.info("Processed {} ".format(body.get("file-path", "unknown file")) +
+                            "events: {} ".format(events) +
+                            "bytes: {} ".format(bytes_processed) +
+                            "seconds: {} ".format(processing_time) +
+                            "status: {}".format(status))
+        logger.info("Total events: {}".format(total_events))
+        logger.info("Total bytes: {}".format(total_bytes))
+        logger.info("Total time: {}".format(total_time))
+        logger.info("Total successes: {}/{}".format(successes, total_files))
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
@@ -172,7 +235,7 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
 
-    kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
+    logger = initialize_logging(args.request_id)
 
     if args.result_destination == 'kafka':
         sys.stderr.write("Kafka is no longer supported as a transport mechanism\n")
