@@ -30,7 +30,6 @@ import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
-from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
@@ -40,7 +39,6 @@ import uproot
 import os
 import sys
 import traceback
-import pyarrow as pa
 
 
 # How many bytes does an average awkward array cell take up. This is just
@@ -171,8 +169,8 @@ if __name__ == "__main__":
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     if args.result_destination == 'kafka':
-        messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
-        object_store = None
+        sys.stderr.write("Kafka is no longer supported as a transport mechanism\n")
+        sys.exit(1)
     elif not args.output_dir and args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
