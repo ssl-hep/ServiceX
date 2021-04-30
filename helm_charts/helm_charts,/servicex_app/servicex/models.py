@@ -227,15 +227,18 @@ class TransformRequest(db.Model):
 
     @property
     def result_count(self) -> int:
-        return TransformationResult.filter_by(request_id=self.request_id).count()
+        return TransformationResult.query.filter_by(request_id=self.request_id).count()
 
     @property
     def results(self) -> List['TransformationResult']:
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
 
     @property
-    def files_remaining(self) -> int:
-        return self.files - TransformationResult.count(self.request_id)
+    def files_remaining(self) -> Optional[int]:
+        # During dataset lookup, the total number of files is unknown
+        if self.files is None:
+            return None
+        return self.files - self.result_count
 
     @property
     def files_processed(self) -> int:
@@ -250,7 +253,7 @@ class TransformRequest(db.Model):
         ).count()
 
     @property
-    def statistics(self) -> dict:
+    def statistics(self) -> Optional[dict]:
         rslt_list = db.session.query(
             TransformationResult.request_id,
             func.sum(TransformationResult.messages).label('total_msgs'),
