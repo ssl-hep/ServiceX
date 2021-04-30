@@ -245,6 +245,7 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
     # os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path + '| tee log.txt')
+    os.fsync(open("log.txt").fileno())
     parse_output_logs("log.txt")
 
     reason_bad = None
