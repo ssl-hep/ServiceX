@@ -52,7 +52,7 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.json == self.example_json()
         mock_return_json.assert_called()
 
-    def test_get_all_auth_enabled(self, mock_rabbit_adaptor, mock_jwt_required,
+    def test_get_all_auth_enabled(self, mock_rabbit_adaptor, mock_jwt_extended,
                                   mock_return_json, mock_requesting_user):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    extra_config={'ENABLE_AUTH': True})
@@ -61,7 +61,7 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.json == self.example_json()
         mock_return_json.assert_called()
 
-    def test_get_by_user(self, mock_rabbit_adaptor, mock_jwt_required,
+    def test_get_by_user(self, mock_rabbit_adaptor, mock_jwt_extended,
                          mock_requesting_user, mock_return_json):
         user_id = mock_requesting_user.id
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
