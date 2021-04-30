@@ -34,6 +34,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     Pending or deleted users will receive a 401: Unauthorized response.
     """
 
+    @wraps(fn)
     def inner(*args, **kwargs) -> Response:
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
@@ -62,6 +63,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """Mark an API resource as requiring administrator role."""
 
+    @wraps(fn)
     def inner(*args, **kwargs) -> Response:
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
