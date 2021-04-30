@@ -119,6 +119,54 @@ def parse_output_logs(logfile):
         logger.info("Total time: {}".format(total_time))
         logger.info("Total successes: {}/{}".format(successes, total_files))
 
+
+# class TimeTuple(NamedTuple):
+class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "idle"])):
+    """
+    Named tuple to store process time information.
+    Immutable so values can't be accidentally altered after creation
+    """
+    # user: float
+    # system: float
+    # idle: float
+
+    @property
+    def total_time(self):
+        """
+        Return total time spent by process
+
+        :return: sum of user, system, idle times
+        """
+        return self.user + self.system + self.idle
+
+
+def get_process_info():
+    """
+    Get process information (just cpu, sys, idle times right now) and return it
+
+    :return: TimeTuple with timing information
+    """
+    time_stats = psutil.cpu_times()
+    return TimeTuple(user=time_stats.user, system=time_stats.system, idle=time_stats.idle)
+
+
+def log_stats(startup_time, total_time, running_time=0.0):
+    """
+    Log statistics about transformer execution
+
+    :param startup_time: time to initialize and run cpp transformer
+    :param total_time:  total process times (sys, user, idle)
+    :param running_time:  total time to run script
+    :return: None
+    """
+    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
+                                                                  startup_time.system) +
+                "idle: {} total: {}".format(startup_time.idle, startup_time.total_time))
+    logger.info("Total process times  user: {} sys: {} ".format(total_time.system, total_time.system) +
+                "idle: {} total: {}".format(total_time.idle, total_time.total_time))
+    logger.info("Total running time {}".format(running_time))
+
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
