@@ -226,6 +226,7 @@ def callback(channel, method, properties, body):
                 file_done = True
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+                logger.exception("Received exception")
                 print(exc_value)
             else:
                 servicex.post_status_update(file_id=_file_id,
@@ -237,9 +238,11 @@ def callback(channel, method, properties, body):
 
 
 def transform_single_file(file_path, output_path, chunks, servicex=None):
-    print("Transforming a single path: " + str(file_path) + " into " + output_path)
+    logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
     # os.system("voms-proxy-info --all")
-    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path +  '| tee log.txt')
+    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path + '| tee log.txt')
+    parse_output_logs("log.txt")
+
     reason_bad = None
     if r != 0:
         reason_bad = "Error return from transformer: " + str(r)
@@ -248,6 +251,11 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     if reason_bad is not None:
         with open('log.txt', 'r') as f:
             errors = f.read()
+            logger.error("Failed to transform input file {}: ".format(file_path) +
+                         "{} -- errors: {}".format(reason_bad, errors))
+            raise RuntimeError("Failed to transform input file {}: ".format(file_path) +
+                               "{} -- errors: {}".format(reason_bad, errors))
+
             raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
 
     if not object_store:
@@ -264,7 +272,7 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
         transformer = UprootTransformer(event_iterator)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
-        print("Kafka Timings: "+str(arrow_writer.messaging_timings))
+        logger.info("Kafka Timings: "+str(arrow_writer.messaging_timings))
 
 
 def compile_code():
@@ -275,7 +283,8 @@ def compile_code():
     if r != 0:
         with open('log.txt', 'r') as f:
             errors = f.read()
-            raise RuntimeError("Unable to compile the code - error return: " + str(r)+ 'errors: \n' + errors)
+            logger.error("Unable to compile the code - error return: " + str(r) + 'errors: \n' + errors)
+            raise RuntimeError("Unable to compile the code - error return: " + str(r) + 'errors: \n' + errors)
 
 
 if __name__ == "__main__":
