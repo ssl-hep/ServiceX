@@ -92,11 +92,14 @@ def parse_output_logs(logfile):
     total_files = 0
     total_time = 0
     with open(logfile, 'r') as f:
+        logger.info("Found logfile: {}".format(logfile))
         for line in f.readlines():
             if '---<' in line:
+                logger.info("Matched json")
                 # message is ('------< ', json_string)
                 # want everything after the comma except for last character (')')
                 mesg = line.split(',', 1)[1].strip()[:-1]
+                logger.info(mesg)
                 # need to change ' to " to make message proper json
                 body = json.loads(mesg.replace("'", '"'))
                 events = body.get("total-events", 0)
@@ -255,8 +258,6 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
                          "{} -- errors: {}".format(reason_bad, errors))
             raise RuntimeError("Failed to transform input file {}: ".format(file_path) +
                                "{} -- errors: {}".format(reason_bad, errors))
-
-            raise RuntimeError("Failed to transform input file " + file_path + ": " + reason_bad + ' -- errors: \n' + errors)
 
     if not object_store:
         flat_file = uproot.open(output_path)
