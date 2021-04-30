@@ -280,12 +280,14 @@ def compile_code():
 
 if __name__ == "__main__":
     print("starting xaod_cpp_transformer")
+    start_time = timeit.default_timer()
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
 
     logger = initialize_logging(args.request_id)
 
     if args.result_destination == 'kafka':
+        logger.error("Kafka is no longer supported as a transport mechanism")
         sys.stderr.write("Kafka is no longer supported as a transport mechanism\n")
         sys.exit(1)
     elif not args.output_dir and args.result_destination == 'object-store':
@@ -293,10 +295,14 @@ if __name__ == "__main__":
         object_store = ObjectStoreManager()
 
     compile_code()
+    startup_time = get_process_info()
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
         transform_single_file(args.path, args.output_dir)
+    total_time = get_process_info()
+    stop_time = timeit.default_timer()
+    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
     print("finished xaod_cpp_transformer")
