@@ -12,8 +12,10 @@
 
  The individual clients are as follows:
 
- - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language Supports both xAOD and uproot files.
- - [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut selection strings. Supports only uproot files.
+ - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the 
+   func-ADL query language Supports both xAOD and uproot files.
+ - [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut 
+   selection strings. Supports only uproot files.
 
  Each of the above clients provides an API for specifying a query, which is
  ultimately represented as an abstract syntax tree in
@@ -23,20 +25,36 @@
 The [ServiceX frontend](https://pypi.org/project/servicex/) package contains the
 code for communicating with a ServiceX backend. The workflow is as follows:
 
- - Given a query, the ServiceX frontend constructs a JSON payload for the request. The JSON payload contains the `qastle`, the DID, and anything else necessary to run the query. 
+ - Given a query, the ServiceX frontend constructs a JSON payload for the 
+   request. The JSON payload contains the `qastle`, the DID, and anything else 
+   necessary to run the query. 
  - It then hashes the request and checks a local cache which it maintains.
-   - If the request is in the local request cache, then the system tries to load the data from the local disk cache. If it can't be found on the local disk cache, it requests the data from the backend. If any of these steps fail, then it moves onto the below step.
-   - Otherwise, it submits a new transformation request to the backend.
+  - If the request is in the local request cache, then the system tries to load
+    the data from the local disk cache. If it can't be found on the local disk
+    cache, it requests the data from the backend. If any of these steps fail,
+    then it moves onto the below step.
+  - Otherwise, it submits a new transformation request to the backend.
 
 Some technical details of the above process:
 
-- Since the JSON payload completely specifies a request to run on the backend, hashing it becomes a cache lookup key
-- The cache is maintain on a local disk (its location is configurable)
+- Since the JSON payload completely specifies a request to run on the backend, 
+  hashing it becomes a cache lookup key
+- The cache is maintained on a local disk (its location is configurable)
 - The frontend can deliver the data several ways:
-  - Wait until the complete transform request has occurred, or return the data bit-by-bit as each piece of work is finished by ServiceX
-  - The data can be copied locally to a file by the frontend code, or a valid Minio URL can be returned instead (valid for about one day after the request), and, as a last option, as a single large `awkward` or `pandas` object. In the case of `awkward`, lazy arrays are used. In the case of `pandas` the data must be rectilinear, and fit in memory.
-  - The data comes back as a ROOT file or `parquet` file, depending if you ask for the `xAOD` backend or the `uproot` backend. This is backed into the transformers that operate on these two types of files, and does need to be fixed. If you ask for an `awkward` or `pandas.DataFrame` the format conversion is handled automatically.
-- Errors that occur during the transformation on the backend are reported as python exceptions by the frontend code.
+  - Wait until the complete transform request has occurred, or return the data 
+    bit-by-bit as each piece of work is finished by ServiceX
+  - The data can be copied locally to a file by the frontend code, or a valid 
+    Minio URL can be returned instead (valid for about one day after the request), 
+    and, as a last option, as a single large `awkward` or `pandas` object. In 
+    the case of `awkward`, lazy arrays are used. In the case of `pandas` the data 
+    must be rectilinear, and fit in memory.
+  - The data comes back as a ROOT file or `parquet` file, depending if you ask 
+    for the `xAOD` backend or the `uproot` backend. This is loaded into the 
+    transformers that operate on these two types of files, and does need to be 
+    fixed. If you ask for an `awkward` or `pandas.DataFrame` the format 
+    conversion is handled automatically.
+- Errors that occur during the transformation on the backend are reported as 
+  python exceptions by the frontend code.
 
 ## Backend
 
@@ -44,8 +62,7 @@ Some technical details of the above process:
  Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a
  number of microservices, described in the sections below.
 
-
-![Architecture](../img/sx-architecture.png)
+![Architecture](../img/ServiceX-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
 This is the main entry point to ServiceX, and can be exposed outside the
@@ -102,6 +119,7 @@ PostgreSQL, without persistance. Another option is SQLite.  The API server uses
 SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).  No
 other microservices communicate with the database.
 
+The database schema used to store information is shown below:
 ![Schema](../img/sx-schema.png)
 
 ### DID Finder
@@ -125,7 +143,8 @@ This replica as well as all subsequent replicas are reported to the app via
 POSTs to the `/files` endpoint. After the final file has posted in this way, a
 PUT is sent to the `/complete` endpoint to let the service know all file
 replicas have been reported. This message contains summary information about the
-dataset 
+dataset. An example of a JSON message follows:
+
 ```json
 {
     "files": self.summary.files,
@@ -163,15 +182,16 @@ for deploying a busybox pod which mounts one of the generated code configmaps.
 
 
 ### RabbitMQ 
- Coordinates messages between microservices. There is a queue sitting in front of
-  the DID finder, receiving lookup requests. The transformer workers are fed from 
-  a topic specific to a transform request. Files that fail transformation are 
-  placed onto a dead letter queue to allow transactionally secure reprocessing
+RabbitMQ coordinates messages between the microservices and the API Server. There 
+is a queue sitting in front of the DID finder, receiving lookup requests. The 
+transformer workers are fed from a topic specific to a transform request. Files 
+that fail transformation are placed onto a dead letter queue to allow 
+transactionally secure reprocessing
  
 
 ### Minio
  Minio stores file objects associated with a given transformation request. 
- Can be exposed outside the cluster via a bundled ingress. At present there is
+ It can be exposed outside the cluster via a bundled ingress. At present there is
  no cleanup of these generated files, so they must be deleted manually. 
  Furthermore, there is no use of Minio user identities, so all files are saved
  in the same namespace with no quota enforcement.
@@ -187,19 +207,20 @@ for deploying a busybox pod which mounts one of the generated code configmaps.
  Attempts to transform a sample file using the same Docker image as the 
  transformers. If this fails, no transformers will be launched. This validates
  the generated code as well as the apporpriateness of the request relative to the
- properties in the sample file
+ properties in the sample file.
  
 
 ### Transformers
- Transformers are the worker pods for a transformation request. They get
- generated transformer code from Code generator servers, compile it, and then
- subscribe to the RabbitMQ topic for the request. They will listen for a message
- (file) from the queue, and then attempt to transform the file. If any errors
- are encountered, they will post a status update and retry. Once the max retry
- limit is reached, they will mark the file as failed. If the file is transformed
- successfully, they will post an update and mark the file as done. A single
- transformer may transform multiple files. Once all files are complete for the
- transformation request, they are spun down.
+Transformers are the worker pods for a transformation request. They get
+generated transformer code from Code generator servers (through the a zip file 
+in the ConfigMap), compile it, and then
+subscribe to the RabbitMQ topic for the request. They will listen for a message
+(file) from the queue, and then attempt to transform the file. If any errors
+are encountered, they will post a status update and retry. Once the max retry
+limit is reached, they will mark the file as failed. If the file is transformed
+successfully, they will post an update and mark the file as done. A single
+transformer may transform multiple files. Once all files are complete for the
+transformation request, they are spun down.
 
 
 ## Error handling
@@ -218,7 +239,7 @@ operation.
 
 
 ## Monitoring and Accounting
- There is a limited support for Elasticsearch based accounting. It requires
- direct connection to ES and account. Only sends and updates requests and file
- paths.
+There is a limited support for Elasticsearch based accounting. It requires
+direct connection to ES and account. Only sends and updates requests and file
+paths.
  
