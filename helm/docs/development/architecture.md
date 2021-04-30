@@ -4,16 +4,24 @@
  ServiceX presents a RESTful interface for submitting transformation requests and
  requesting status updates. Most users will not wish to interact directly with 
  the REST interface so typically, ServiceX is accessed via clients distributed 
- as Python packages. There is one client for each query language that may be used to access ServiceX. While it is possible to install clients individually, the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella package lists all of them as dependencies, so that they can all be installed with a single command: `pip install servicex-clients`.
+ as Python packages. There is one client for each query language that may be
+ used to access ServiceX. While it is possible to install clients individually,
+ the [servicex-clients](https://pypi.org/project/servicex-clients/) umbrella
+ package lists all of them as dependencies, so that they can all be installed
+ with a single command: `pip install servicex-clients`.
 
  The individual clients are as follows:
 
  - [func-adl-servicex](https://pypi.org/project/func-adl-servicex/) for the func-ADL query language Supports both xAOD and uproot files.
  - [tcut-to-qastle](https://pypi.org/project/tcut-to-qastle/) translates TCut selection strings. Supports only uproot files.
 
- Each of the above clients provides an API for specifying a query, which is ultimately represented as an abstract syntax tree in [Qastle](https://github.com/iris-hep/qastle). The `qastle` is then handed off to the frontend package, which manages the interaction with ServiceX.
+ Each of the above clients provides an API for specifying a query, which is
+ ultimately represented as an abstract syntax tree in
+ [Qastle](https://github.com/iris-hep/qastle). The `qastle` is then handed off
+ to the frontend package, which manages the interaction with ServiceX.
 
-The [ServiceX frontend](https://pypi.org/project/servicex/) package contains the code for communicating with a ServiceX backend. The workflow is as follows:
+The [ServiceX frontend](https://pypi.org/project/servicex/) package contains the
+code for communicating with a ServiceX backend. The workflow is as follows:
 
  - Given a query, the ServiceX frontend constructs a JSON payload for the request. The JSON payload contains the `qastle`, the DID, and anything else necessary to run the query. 
  - It then hashes the request and checks a local cache which it maintains.
@@ -32,39 +40,46 @@ Some technical details of the above process:
 
 ## Backend
 
- The ServiceX backend is distributed as a Helm chart for deployment to a Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a number of microservices, described in the sections below.
+ The ServiceX backend is distributed as a Helm chart for deployment to a
+ Kubernetes cluster. The [chart](https://github.com/ssl-hep/ServiceX.git) a
+ number of microservices, described in the sections below.
 
 
 ![Architecture](../img/sx-architecture.png)
 
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
-This is the main entry point to ServiceX, and can be exposed outside the cluster. 
-It provides a REST API for creating transformation requests, posting and 
-retrieving status updates, and retrieving the results. It also has a set of private 
-in-cluster REST endpoints for orchestrating the microservices
+This is the main entry point to ServiceX, and can be exposed outside the
+cluster.  It provides a REST API for creating transformation requests, posting
+and retrieving status updates, and retrieving the results. It also has a set of
+private in-cluster REST endpoints for orchestrating the microservices
  
-It also serves a frontend web application where users can authenticate via Globus and obtain ServiceX API tokens. 
-Authentication is optional, and may be enabled on a per-deployment basis (see below for more details).
+It also serves a frontend web application where users can authenticate via
+Globus and obtain ServiceX API tokens.  Authentication is optional, and may be
+enabled on a per-deployment basis (see below for more details).
 
-Potential roadmap features for the web frontend include a dashboard of current or past requests, 
-and an administrative dashboard for managing users and monitoring resource consumption.
+Potential roadmap features for the web frontend include a dashboard of current
+or past requests, and an administrative dashboard for managing users and
+monitoring resource consumption.
 
 #### **Authentication and Authorization**
 
-If the `auth` configuration option is set to True when ServiceX is deployed, 
+If the `auth` configuration option is set to True when ServiceX is deployed,
 requests to the API server must include a JWT access token.
 
-To authorize their requests, users must provide a ServiceX API Token (JWT refresh token) 
-in their `servicex.yaml` file. The frontend Python client will use this to obtain access tokens.
+To authorize their requests, users must provide a ServiceX API Token (JWT
+refresh token) in their `servicex.yaml` file. The frontend Python client will
+use this to obtain access tokens.
 
 Users can obtain a ServiceX API token by visiting the frontend web application.
-Users must authenticate by signing in to Globus via the identity provider of choice.
-New accounts will be marked as pending, and can be approved by the deployment's administrators.
-This can be done via Slack if the webhook is configured.
-Once approved, new users will receive a welcome email via Mailgun (if configured).
+Users must authenticate by signing in to Globus via the identity provider of
+choice.  New accounts will be marked as pending, and can be approved by the
+deployment's administrators.  This can be done via Slack if the webhook is
+configured.  Once approved, new users will receive a welcome email via Mailgun
+(if configured).
 
-Future versions of ServiceX may support disabling Globus auth and the internal user management system, but retaining the JWT system. 
-ServiceX API Tokens would need to be generated externally using the same secret used for the deployment.
+Future versions of ServiceX may support disabling Globus auth and the internal
+user management system, but retaining the JWT system.  ServiceX API Tokens would
+need to be generated externally using the same secret used for the deployment.
 
 <!-- #### **Endpoints** -->
 <!--  
@@ -76,36 +91,41 @@ ServiceX API Tokens would need to be generated externally using the same secret 
  </B> -->
 
 ### X509 Proxy Renewal Service
- This service uses the provided grid certificate and key to authenticate against a VOMS proxy server. This generates an X509 proxy which is stored as a Kubernetes Secret. Proxy is renewed once per hour. 
+This service uses the provided grid certificate and key to authenticate against
+a VOMS proxy server. This generates an X509 proxy which is stored as a
+Kubernetes Secret. Proxy is renewed once per hour. 
  
 ### Database
-The ServiceX API server stores information about requests, files, and users (if authentication is enabled) in a relational database. The default database is PostgreSQL, without persistance. Another option is SQLite. 
-The API server uses SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).
-No other microservices communicate with the database.
+The ServiceX API server stores information about requests, files, and users (if
+authentication is enabled) in a relational database. The default database is
+PostgreSQL, without persistance. Another option is SQLite.  The API server uses
+SQLAlchemy as an ORM (with Alembic and Flask-Migrate for schema changes).  No
+other microservices communicate with the database.
 
 ![Schema](../img/sx-schema.png)
 
 ### DID Finder
-Service which looks up a datasets that should be processed, gets a list of paths and number of events for all the files in the dataset. 
-This is done usig the Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
+Service which looks up a datasets that should be processed, gets a list of paths
+and number of events for all the files in the dataset.  This is done usig the
+Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
 
-Since there may be multiple replcias of each file, the DID finder has an optional
-`site` setting which indicates a prefered site from which to serve replicas. 
-If there are no replicas hosted at that site, the DID finder will simply return
-the first replica from the list returned from Rucio.
+Since there may be multiple replcias of each file, the DID finder has an
+optional `site` setting which indicates a prefered site from which to serve
+replicas.  If there are no replicas hosted at that site, the DID finder will
+simply return the first replica from the list returned from Rucio.
 
 To improve performance, the DID finder is multi-threaded to maintain multiple
 simultaneous requests to Rucio. 
 
 The DID finder receives datasets to resolve via a RabbitMQ queue. The very first
-result it finds is submitted back to the flask app via a POST to the `preflight` 
+result it finds is submitted back to the flask app via a POST to the `preflight`
 endpoint. This is treated as a sample file to drive the preflight check.
 
 This replica as well as all subsequent replicas are reported to the app via
-POSTs to the `/files` endpoint. After the final file has posted in this way, 
-a PUT is sent to the `/complete` endpoint to let the service know all file 
-replicas have been reported. This message contains summary information about 
-the dataset
+POSTs to the `/files` endpoint. After the final file has posted in this way, a
+PUT is sent to the `/complete` endpoint to let the service know all file
+replicas have been reported. This message contains summary information about the
+dataset 
 ```json
 {
     "files": self.summary.files,
@@ -117,9 +137,16 @@ the dataset
 ```
 
 ### Code Generator
-Code generators are Flask web servers which take a [`qastle`](https://github.com/iris-hep/qastle) query string as input and generate a zip archive containing C++ source code which transforms files of a given type (e.g. xAOD).
+Code generators are Flask web servers which take a
+[`qastle`](https://github.com/iris-hep/qastle) query string as input and
+generate a zip archive containing C++ source code which transforms files of a
+given type (e.g. xAOD).
 
-Currently, each deployment must specify a single code generator. As a result, a ServiceX deployment is specific to a (query language, file type) pair. The code generators run in separate containers because they have Python versioning requirements that may be different from other components of ServiceX. Eventually, we would like to support multiple code generators per deployment. 
+Currently, each deployment must specify a single code generator. As a result, a
+ServiceX deployment is specific to a (query language, file type) pair. The code
+generators run in separate containers because they have Python versioning
+requirements that may be different from other components of ServiceX.
+Eventually, we would like to support multiple code generators per deployment. 
 
 Code generation is supported for the following (query language, file type) pairs:
 
@@ -130,7 +157,8 @@ The generated code is placed into a Kubernetes ConfigMap named after the
 transformation uuid. This configmap is mounted into the transformer pods
 when they are launched.
 
-There is a simple [kubernetes yaml file](https://github.com/ssl-hep/ServiceX/blob/develop/scripts/generated_code_busybox.yaml)
+There is a simple [kubernetes yaml
+file](https://github.com/ssl-hep/ServiceX/blob/develop/scripts/generated_code_busybox.yaml)
 for deploying a busybox pod which mounts one of the generated code configmaps. 
 
 
@@ -163,7 +191,15 @@ for deploying a busybox pod which mounts one of the generated code configmaps.
  
 
 ### Transformers
- Transformers are the worker pods for a transformation request. They get generated transformer code from Code generator servers, compile it, and then subscribe to the RabbitMQ topic for the request. They will listen for a message (file) from the queue, and then attempt to transform the file. If any errors are encountered, they will post a status update and retry. Once the max retry limit is reached, they will mark the file as failed. If the file is transformed successfully, they will post an update and mark the file as done. A single transformer may transform multiple files. Once all files are complete for the transformation request, they are spun down.
+ Transformers are the worker pods for a transformation request. They get
+ generated transformer code from Code generator servers, compile it, and then
+ subscribe to the RabbitMQ topic for the request. They will listen for a message
+ (file) from the queue, and then attempt to transform the file. If any errors
+ are encountered, they will post a status update and retry. Once the max retry
+ limit is reached, they will mark the file as failed. If the file is transformed
+ successfully, they will post an update and mark the file as done. A single
+ transformer may transform multiple files. Once all files are complete for the
+ transformation request, they are spun down.
 
 
 ## Error handling
@@ -182,5 +218,7 @@ operation.
 
 
 ## Monitoring and Accounting
- There is a limited support for Elasticsearch based accounting. It requires direct connection to ES and account. Only sends and updates requests and file paths.
+ There is a limited support for Elasticsearch based accounting. It requires
+ direct connection to ES and account. Only sends and updates requests and file
+ paths.
  
