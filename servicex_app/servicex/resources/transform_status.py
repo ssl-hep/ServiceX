@@ -48,23 +48,19 @@ class TransformationStatus(ServiceXResource):
 
         status_request = status_request_parser.parse_args()
 
-        count = TransformationResult.count(request_id)
-        stats = TransformationResult.statistics(request_id)
-        failures = TransformationResult.failed_files(request_id)
-        print(count, stats)
-        print(TransformRequest.files_remaining(request_id))
         result_dict = {
             "status": transform.status,
             "request-id": request_id,
-            "files-processed": count - failures,
-            "files-skipped": failures,
-            "files-remaining": TransformRequest.files_remaining(request_id),
-            "stats": stats
+            "files-processed": transform.files_processed,
+            "files-skipped": transform.files_failed,
+            "files-remaining": transform.files_remaining,
+            "stats": transform.statistics
         }
 
         if status_request.details:
             result_dict['details'] = TransformationResult.to_json_list(
-                TransformationResult.get_all_status(request_id))
+                transform.results
+            )
 
         return jsonify(result_dict)
 

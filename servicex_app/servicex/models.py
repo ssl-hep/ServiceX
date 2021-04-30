@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
-from datetime import datetime
-from typing import Optional, Iterable
+from datetime import datetime, timedelta
+from typing import Iterable, List, Optional
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -138,12 +138,12 @@ class TransformRequest(db.Model):
     _cache = {}
 
     id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.String(48), unique=True, nullable=False)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
-    request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
     workers = db.Column(db.Integer, nullable=True)
@@ -209,15 +209,76 @@ class TransformRequest(db.Model):
         except NoResultFound:
             return None
 
-    @classmethod
-    def files_remaining(cls, request_id):
-        submitted_request = cls.return_request(request_id)
-        count = TransformationResult.count(request_id)
-
-        if submitted_request and submitted_request.files:
-            return submitted_request.files - int(count or 0)
-        else:
+    @property
+    def submitter_name(self):
+        if self.submitted_by is None:
             return None
+        elif self.user is None:
+            return "[deleted]"
+        return self.user.name
+
+    @property
+    def age(self) -> timedelta:
+        return datetime.utcnow() - self.submit_time
+
+    @property
+    def incomplete(self) -> bool:
+        return self.status not in {"Complete", "Fatal"}
+
+    @property
+    def result_count(self) -> int:
+        return TransformationResult.filter_by(request_id=self.request_id).count()
+
+    @property
+    def results(self) -> List['TransformationResult']:
+        return TransformationResult.query.filter_by(request_id=self.request_id).all()
+
+    @property
+    def files_remaining(self) -> int:
+        return self.files - TransformationResult.count(self.request_id)
+
+    @property
+    def files_processed(self) -> int:
+        return TransformationResult.query.filter_by(
+            request_id=self.request_id, transform_status="success"
+        ).count()
+
+    @property
+    def files_failed(self) -> int:
+        return TransformationResult.query.filter_by(
+            request_id=self.request_id, transform_status="failure"
+        ).count()
+
+    @property
+    def statistics(self) -> dict:
+        rslt_list = db.session.query(
+            TransformationResult.request_id,
+            func.sum(TransformationResult.messages).label('total_msgs'),
+            func.min(TransformationResult.transform_time).label('min_time'),
+            func.max(TransformationResult.transform_time).label('max_time'),
+            func.avg(TransformationResult.transform_time).label('avg_time'),
+            func.sum(TransformationResult.transform_time).label('total_time'),
+            func.avg(TransformationResult.avg_rate).label('avg_rate'),
+            func.sum(TransformationResult.total_bytes).label('total_bytes'),
+            func.sum(TransformationResult.total_events).label('total_events')
+        ).group_by(TransformationResult.request_id).filter_by(
+            request_id=self.request_id).all()
+
+        if len(rslt_list) == 0:
+            return None
+
+        rslt = rslt_list[0]
+
+        return {
+            "total-messages": int(rslt.total_msgs),
+            "min-time": int(rslt.min_time),
+            "max-time": int(rslt.max_time),
+            "avg-time": float(rslt.avg_time),
+            "total-time": int(rslt.total_time),
+            "avg-rate": float(rslt.avg_rate),
+            "total-bytes": int(rslt.total_bytes),
+            "total-events": int(rslt.total_events)
+        }
 
 
 class TransformationResult(db.Model):
@@ -258,50 +319,6 @@ class TransformationResult(db.Model):
     def save_to_db(self):
         db.session.add(self)
         db.session.flush()
-
-    @classmethod
-    def count(cls, request_id):
-        return cls.query.filter_by(request_id=request_id).count()
-
-    @classmethod
-    def failed_files(cls, request_id):
-        return cls.query.filter(TransformationResult.request_id == request_id,
-                                TransformationResult.transform_status != 'success').count()
-
-    @classmethod
-    def get_all_status(cls, request_id):
-        return cls.query.filter(TransformationResult.request_id == request_id).all()
-
-    @classmethod
-    def statistics(cls, request_key):
-        rslt_list = db.session.query(
-            TransformationResult.request_id,
-            func.sum(TransformationResult.messages).label('total_msgs'),
-            func.min(TransformationResult.transform_time).label('min_time'),
-            func.max(TransformationResult.transform_time).label('max_time'),
-            func.avg(TransformationResult.transform_time).label('avg_time'),
-            func.sum(TransformationResult.transform_time).label('total_time'),
-            func.avg(TransformationResult.avg_rate).label('avg_rate'),
-            func.sum(TransformationResult.total_bytes).label('total_bytes'),
-            func.sum(TransformationResult.total_events).label('total_events')
-        ).group_by(TransformationResult.request_id).filter_by(
-            request_id=request_key).all()
-
-        if len(rslt_list) == 0:
-            return None
-
-        rslt = rslt_list[0]
-
-        return {
-            "total-messages": int(rslt.total_msgs),
-            "min-time": int(rslt.min_time),
-            "max-time": int(rslt.max_time),
-            "avg-time": float(rslt.avg_time),
-            "total-time": int(rslt.total_time),
-            "avg-rate": float(rslt.avg_rate),
-            "total-bytes": int(rslt.total_bytes),
-            "total-events": int(rslt.total_events)
-        }
 
 
 class DatasetFile(db.Model):

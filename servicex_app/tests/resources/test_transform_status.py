@@ -79,28 +79,25 @@ class TestTransformStatus(ResourceTestBase):
     def test_get_status(self, mocker, mock_rabbit_adaptor):
         import servicex
 
+        mock_files_processed = mocker.PropertyMock(return_value=15)
+        servicex.models.TransformRequest.files_processed = mock_files_processed
+        mock_files_remaining = mocker.PropertyMock(return_value=12)
+        servicex.models.TransformRequest.files_remaining = mock_files_remaining
+        mock_files_failed = mocker.PropertyMock(return_value=2)
+        servicex.models.TransformRequest.files_failed = mock_files_failed
+        mock_statistics = mocker.PropertyMock(return_value={
+            "total-messages": 123,
+            "min-time": 1,
+            "max-time": 30,
+            "avg-time": 15.55,
+            "total-time": 1024
+        })
+        servicex.models.TransformRequest.statistics = mock_statistics
+
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
             return_value=self._generate_transform_request())
-
-        mock_count = mocker.patch.object(
-            servicex.models.TransformationResult, 'count', return_value=17)
-
-        mock_statistics = mocker.patch.object(
-            servicex.models.TransformationResult, 'statistics', return_value={
-                "total-messages": 123,
-                "min-time": 1,
-                "max-time": 30,
-                "avg-time": 15.55,
-                "total-time": 1024
-            })
-
-        mock_files_remaining = mocker.patch.object(
-            servicex.models.TransformRequest, 'files_remaining', return_value=12)
-
-        mock_files_failed = mocker.patch.object(
-            servicex.models.TransformationResult, 'failed_files', return_value=2)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
@@ -109,9 +106,9 @@ class TestTransformStatus(ResourceTestBase):
         assert response.json == {
             "status": "Submitted",
             'request-id': '1234',
-            'files-processed': 15,
-            'files-remaining': 12,
-            'files-skipped': 2,
+            'files-processed': mock_files_processed.return_value,
+            'files-remaining': mock_files_remaining.return_value,
+            'files-skipped': mock_files_failed.return_value,
             'stats': {
                 'total-messages': 123,
                 'min-time': 1,
@@ -120,10 +117,6 @@ class TestTransformStatus(ResourceTestBase):
                 'total-time': 1024}
         }
         mock_transform_request_read.assert_called_with("1234")
-        mock_count.assert_called_with('1234')
-        mock_files_remaining.assert_called_with('1234')
-        mock_statistics.assert_called_with('1234')
-        mock_files_failed.assert_called_with('1234')
 
     def test_get_status_404(self, mocker, mock_rabbit_adaptor):
         import servicex
