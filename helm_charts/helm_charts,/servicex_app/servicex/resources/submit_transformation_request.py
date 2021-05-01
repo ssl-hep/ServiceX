@@ -41,33 +41,32 @@ from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
-parser.add_argument('did', help='Dataset Identifier. Provide this or file-list',
-                    required=False)
-
-parser.add_argument('file-list',
-                    type=list,
-                    default=[],
-                    location='json',
-                    help='Static list of Root Files. Provide this orDataset Identifier. ',
-                    required=False)
-
-parser.add_argument('columns', help='This field cannot be blank',
-                    required=False)
-parser.add_argument('selection', help='Query string', required=False)
-parser.add_argument('image', required=False)
-parser.add_argument('tree-name', required=False)
-parser.add_argument('chunk-size', required=False, type=int)
-parser.add_argument('workers', required=False, type=int)
+parser.add_argument('title', help='Optional title for this request (max 128 chars)')
+parser.add_argument('did', help='Dataset Identifier. Provide this or file-list')
+parser.add_argument(
+    'file-list',
+    type=list,
+    default=[],
+    location='json',
+    help='Static list of Root Files. Provide this or Dataset Identifier.'
+)
+parser.add_argument('columns', help='This field cannot be blank')
+parser.add_argument('selection', help='Query string')
+parser.add_argument('image')
+parser.add_argument('tree-name')
+parser.add_argument('chunk-size', type=int)
+parser.add_argument('workers', type=int)
 parser.add_argument('result-destination', required=True, choices=[
     TransformRequest.KAFKA_DEST,
     TransformRequest.OBJECT_STORE_DEST
 ])
-parser.add_argument('result-format', required=False,
-                    choices=['arrow', 'parquet', 'root-file'], default='arrow')
-parser.add_argument('kafka', required=False, type=dict)
+parser.add_argument(
+    'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
+)
 
+parser.add_argument('kafka', type=dict)
 kafka_parser = reqparse.RequestParser()
-kafka_parser.add_argument('broker', required=False, location=('kafka'))
+kafka_parser.add_argument('broker', location=('kafka'))
 
 
 def _workflow_name(transform_request):
