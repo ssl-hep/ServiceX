@@ -52,7 +52,7 @@ parser.add_argument(
 )
 parser.add_argument('columns', help='This field cannot be blank')
 parser.add_argument('selection', help='Query string')
-parser.add_argument('image')
+parser.add_argument('image', default=current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
 parser.add_argument('tree-name')
 parser.add_argument('chunk-size', type=int)
 parser.add_argument('workers', type=int)
@@ -100,7 +100,7 @@ class SubmitTransformationRequest(ServiceXResource):
             print("object store ", self.object_store)
 
             request_id = str(uuid.uuid4())
-            image = args.get("image", config['TRANSFORMER_DEFAULT_IMAGE'])
+            image = args["image"]
             did = args.get("did")
             file_list = args.get("file-list")
 

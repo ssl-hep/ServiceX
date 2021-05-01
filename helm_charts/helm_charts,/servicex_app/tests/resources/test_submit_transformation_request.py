@@ -28,6 +28,8 @@
 import json
 from unittest.mock import call
 
+from flask import current_app
+
 from servicex import LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
@@ -40,7 +42,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = {
             'did': '123-45-678',
             'columns': "e.e, e.p",
-            'image': 'ssl-hep/foo:latest',
             'result-destination': 'kafka',
             'kafka': {'broker': 'ssl.hep.kafka:12332'},
             'chunk-size': 500,
@@ -119,7 +120,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
             assert saved_obj.columns == "e.e, e.p"
-            assert saved_obj.image == 'ssl-hep/foo:latest'
+            assert saved_obj.image == current_app.config["TRANSFORMER_DEFAULT_IMAGE"]
             assert saved_obj.chunk_size == 500
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'kafka'
@@ -240,9 +241,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
         client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter)
         request = self._generate_transformation_request()
+        request["image"] = "ssl-hep/foo:latest"
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
-        assert response.json == {"message": "Requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
+        assert response.json == {"message": "Requested transformer docker image doesn't exist: " + request["image"]}  # noqa: E501
 
     def test_submit_transformation_request_no_docker_check(
         self, mocker, mock_docker_repo_adapter
