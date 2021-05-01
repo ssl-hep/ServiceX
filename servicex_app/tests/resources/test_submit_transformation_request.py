@@ -94,6 +94,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
 
         assert response.status_code == 400
+        assert "DID scheme is not supported" in response.json["message"]
 
     def test_submit_transformation_request_throws_exception(
         self, mocker, mock_rabbit_adaptor
@@ -257,7 +258,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 400
-        assert response.json == {"message": "The requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
+        assert response.json == {"message": "Requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
 
     def test_submit_transformation_request_no_docker_check(
         self, mocker, mock_docker_repo_adapter
