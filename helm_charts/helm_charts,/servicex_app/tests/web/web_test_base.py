@@ -64,14 +64,12 @@ class WebTestBase:
         }
 
     @staticmethod
-    def _test_client(mocker, extra_config=None):
+    def _test_client(extra_config=None):
         from servicex import create_app
-        from servicex.rabbit_adaptor import RabbitAdaptor
         config = WebTestBase._app_config()
         if extra_config:
             config.update(extra_config)
-        mock_rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
-        app = create_app(config, provided_rabbit_adaptor=mock_rabbit_adaptor)
+        app = create_app(config)
         app.test_request_context().push()
         return app.test_client()
 
@@ -150,8 +148,8 @@ class WebTestBase:
         }
 
     @fixture
-    def client(self, mocker):
-        with self._test_client(mocker) as client:
+    def client(self):
+        with self._test_client() as client:
             yield client
 
     @fixture

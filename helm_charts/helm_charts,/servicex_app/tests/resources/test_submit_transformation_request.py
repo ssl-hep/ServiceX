@@ -35,8 +35,7 @@ from tests.resource_test_base import ResourceTestBase
 
 class TestSubmitTransformationRequest(ResourceTestBase):
 
-    def test_submit_transformation_request_bad(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_submit_transformation_request_bad(self, client):
         response = client.post('/servicex/transformation',
                                json={'timestamp': '20190101'})
         assert response.status_code == 400
@@ -62,32 +61,26 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 'result-format': 'root-file',
                 'workers': 10}
 
-    def test_submit_transformation_bad_result_dest(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_submit_transformation_bad_result_dest(self, client):
         request = self._generate_transformation_request()
         request['result-destination'] = 'foo'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_bad_wrong_dest_for_format(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_submit_transformation_bad_wrong_dest_for_format(self, client):
         request = self._generate_transformation_request()
         request['result-format'] = 'root-file'
         request['result-destination'] = 'minio'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_bad_result_format(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_submit_transformation_bad_result_format(self, client):
         request = self._generate_transformation_request()
         request['result-format'] = 'foo'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_bad_workflow(self, mock_rabbit_adaptor,
-                                                mock_docker_repo_adapter):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+    def test_submit_transformation_bad_workflow(self, client):
         request = self._generate_transformation_request()
         request['columns'] = None
         request['selection'] = None
@@ -95,35 +88,26 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         r = client.post('/servicex/transformation', json=request)
         assert r.status_code == 400
 
-    def test_submit_transformation_bad_did_scheme(self, mocker,
-                                                  mock_rabbit_adaptor,
-                                                  mock_docker_repo_adapter):
-
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+    def test_submit_transformation_bad_did_scheme(self, client):
         request = self._generate_transformation_request()
         request['did'] = 'foobar://my-did'
         response = client.post('/servicex/transformation', json=request)
 
         assert response.status_code == 400
 
-    def test_submit_transformation_request_throws_exception(self, mocker,
-                                                            mock_rabbit_adaptor,
-                                                            mock_docker_repo_adapter):
+    def test_submit_transformation_request_throws_exception(
+        self, mocker, mock_rabbit_adaptor
+    ):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 503
         assert response.json == {"message": "Error setting up transformer queues"}
 
-    def test_submit_transformation(self, mock_rabbit_adaptor,
-                                   mock_docker_repo_adapter,
-                                   mock_app_version):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+    def test_submit_transformation(self, mock_rabbit_adaptor, mock_app_version):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
 
@@ -235,8 +219,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_file_list(self, mocker,
                                              mock_rabbit_adaptor,
-                                             mock_code_gen_service,
-                                             mock_docker_repo_adapter):
+                                             mock_code_gen_service):
         request = self._generate_transformation_request()
         request['did'] = None
         request['file-list'] = ["file1", "file2"]
@@ -244,9 +227,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service,
-                                   lookup_result_processor=mock_processor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+                                   lookup_result_processor=mock_processor)
 
         response = client.post('/servicex/transformation',
                                json=request)
@@ -267,84 +248,59 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         fileset_complete_call = mock_processor.report_fileset_complete.call_args
         assert fileset_complete_call[1]['num_files'] == 2
 
-    def test_submit_transformation_request_bad_image(self, mocker,
-                                                     mock_rabbit_adaptor,
-                                                     mock_docker_repo_adapter):
-
+    def test_submit_transformation_request_bad_image(
+        self, mocker, mock_docker_repo_adapter
+    ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+        client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter)
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 400
         assert response.json == {"message": "The requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
 
-    def test_submit_transformation_request_no_docker_check(self, mocker,
-                                                           mock_rabbit_adaptor,
-                                                           mock_docker_repo_adapter):
-
+    def test_submit_transformation_request_no_docker_check(
+        self, mocker, mock_docker_repo_adapter
+    ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter,
-                                   extra_config={
-                                       'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False}
-                                   )
+        client = self._test_client(
+            extra_config={'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False},
+            docker_repo_adapter=mock_docker_repo_adapter,
+        )
 
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 200
         mock_docker_repo_adapter.check_image_exists.assert_not_called()
 
-    def test_submit_transformation_with_root_file_selection_error(self, mocker,
-                                                                  mock_rabbit_adaptor,
-                                                                  mock_code_gen_service):
+    def test_submit_transformation_with_root_file_selection_error(
+        self, mocker, mock_code_gen_service
+    ):
         mock_code_gen_service.generate_code_for_selection = \
             mocker.Mock(side_effect=ValueError('This is the error message'))
         request = self._generate_transformation_request_xAOD_root_file()
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation',
-                               json=request)
-
+        client = self._test_client(code_gen_service=mock_code_gen_service)
+        response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_missing_dataset_source(self, mocker,
-                                                          mock_rabbit_adaptor,
-                                                          mock_code_gen_service):
+    def test_submit_transformation_missing_dataset_source(self, client):
         request = self._generate_transformation_request()
         request['did'] = None
         request['file-list'] = []
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation',
-                               json=request)
-
+        response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_duplicate_dataset_source(self, mocker,
-                                                            mock_rabbit_adaptor,
-                                                            mock_code_gen_service):
+    def test_submit_transformation_duplicate_dataset_source(self, client):
         request = self._generate_transformation_request()
         request['did'] = "This did"
         request['file-list'] = ["file1.root", "file2.root"]
 
-        mock_processor = mocker.MagicMock(LookupResultProcessor)
-
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_code_gen_service,
-                                   lookup_result_processor=mock_processor)
-
-        response = client.post('/servicex/transformation',
-                               json=request)
-
+        response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_with_object_store(self, mocker,
-                                                     mock_rabbit_adaptor,
-                                                     mock_docker_repo_adapter):
+    def test_submit_transformation_with_object_store(self, mocker):
         from servicex import ObjectStoreManager
 
         local_config = {
@@ -363,10 +319,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                   'workers': 10}
 
         mock_object_store = mocker.MagicMock(ObjectStoreManager)
-        client = self._test_client(extra_config=local_config,
-                                   rabbit_adaptor=mock_rabbit_adaptor,
-                                   object_store=mock_object_store,
-                                   docker_repo_adapter=mock_docker_repo_adapter)
+        client = self._test_client(
+            extra_config=local_config,
+            object_store=mock_object_store
+        )
         response = client.post('/servicex/transformation',
                                json=transformation_request)
         assert response.status_code == 200
@@ -380,13 +336,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'parquet'
 
-    def test_submit_transformation_auth_enabled(self, mock_rabbit_adaptor,
-                                                mock_docker_repo_adapter,
-                                                mock_jwt_extended,
-                                                mock_requesting_user):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   docker_repo_adapter=mock_docker_repo_adapter,
-                                   extra_config={'ENABLE_AUTH': True})
+    def test_submit_transformation_auth_enabled(
+        self, mock_rabbit_adaptor, mock_jwt_extended, mock_requesting_user
+    ):
+        client = self._test_client(
+            rabbit_adaptor=mock_rabbit_adaptor, extra_config={'ENABLE_AUTH': True}
+        )
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request())
 

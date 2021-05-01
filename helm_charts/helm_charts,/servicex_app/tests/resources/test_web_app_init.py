@@ -31,11 +31,11 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestWebAppInit(ResourceTestBase):
-    def test_invalid_default_did_finder(self, mocker, mock_rabbit_adaptor):
+    def test_invalid_default_did_finder(self):
         bad_config = {
             'DID_FINDER_DEFAULT_SCHEME': 'cuckoo',
             'VALID_DID_SCHEMES': 'rucio'
         }
 
         with pytest.raises(ValueError):
-            self._test_client(extra_config=bad_config, rabbit_adaptor=mock_rabbit_adaptor)
+            self._test_client(extra_config=bad_config)

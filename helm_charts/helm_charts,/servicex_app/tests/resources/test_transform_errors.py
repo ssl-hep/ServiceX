@@ -30,7 +30,7 @@ from servicex.models import DatasetFile, FileStatus
 
 
 class TestTransformErrors(ResourceTestBase):
-    def test_get_errors(self, mocker, mock_rabbit_adaptor):
+    def test_get_errors(self, mocker, client):
         import servicex
 
         mock_transform_request_read = mocker.patch.object(
@@ -52,8 +52,6 @@ class TestTransformErrors(ResourceTestBase):
             'failures_for_request',
             return_value=file_error_result)
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-
         response = client.get('/servicex/transformation/1234/errors')
         assert response.status_code == 200
         assert response.json == {'errors': [
@@ -67,15 +65,13 @@ class TestTransformErrors(ResourceTestBase):
         mock_transform_request_read.assert_called_with("1234")
         mock_transform_errors.assert_called_with("1234")
 
-    def test_get_errors_404(self, mocker, mock_rabbit_adaptor):
+    def test_get_errors_404(self, mocker, client):
         import servicex
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
             return_value=None)
-
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.get('/servicex/transformation/1234/errors')
         assert response.status_code == 404

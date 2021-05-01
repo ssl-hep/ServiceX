@@ -29,7 +29,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformationStart(ResourceTestBase):
-    def test_transform_start(self, mocker, mock_rabbit_adaptor):
+    def test_transform_start(self, mocker):
         import servicex
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
@@ -47,13 +47,13 @@ class TestTransformationStart(ResourceTestBase):
             'servicex.kafka_topic_manager.KafkaTopicManager',
             return_value=mock_kafka_topic_manager)
 
+        cfg = {
+            'TRANSFORMER_MANAGER_ENABLED': True,
+            'TRANSFORMER_X509_SECRET': 'my-x509-secret'
+        }
         client = self._test_client(
-            {
-                'TRANSFORMER_MANAGER_ENABLED': True,
-                'TRANSFORMER_X509_SECRET': 'my-x509-secret'
-            },
-            mock_transformer_manager,
-            mock_rabbit_adaptor)
+            extra_config=cfg, transformation_manager=mock_transformer_manager
+        )
 
         response = client.post('/servicex/internal/transformation/1234/start',
                                json={

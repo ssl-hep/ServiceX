@@ -43,8 +43,7 @@ class TestTransformFileComplete(ResourceTestBase):
             'avg-rate': 30.2
         }
 
-    def test_put_transform_file_complete_files_remaining(self, mocker,
-                                                         mock_rabbit_adaptor):
+    def test_put_transform_file_complete_files_remaining(self, mocker):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
@@ -60,16 +59,14 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker.patch.object(TransformationResult, "save_to_db")
         mocker.patch.object(TransformRequest, "save_to_db")
 
-        client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
         assert response.status_code == 200
         mock_transform_request_read.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
-    def test_put_transform_file_complete_no_files_remaining(self, mocker,
-                                                            mock_rabbit_adaptor):
+    def test_put_transform_file_complete_no_files_remaining(self, mocker):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
@@ -85,8 +82,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker.patch.object(TransformationResult, "save_to_db")
         mocker.patch.object(TransformRequest, "save_to_db")
 
-        client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
@@ -95,9 +91,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
                                                                              'my-ws')
 
-    def test_put_transform_file_complete_unknown_request_id(
-        self, mocker, mock_rabbit_adaptor
-    ):
+    def test_put_transform_file_complete_unknown_request_id(self, mocker):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
@@ -107,8 +101,7 @@ class TestTransformFileComplete(ResourceTestBase):
             return_value=None
         )
 
-        client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 
@@ -125,8 +118,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_dataset_file.request_id = 'BR549'
         return mock_dataset_file
 
-    def test_file_transform_complete_files_remain(self, mocker,
-                                                  mock_rabbit_adaptor):
+    def test_file_transform_complete_files_remain(self, mocker):
         import servicex
 
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
@@ -143,8 +135,7 @@ class TestTransformFileComplete(ResourceTestBase):
                             return_value=self._generate_dataset_file())
         mocker.patch.object(TransformationResult, "save_to_db")
 
-        client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
 

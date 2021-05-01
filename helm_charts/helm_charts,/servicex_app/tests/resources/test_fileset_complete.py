@@ -30,7 +30,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestFilesetComplete(ResourceTestBase):
-    def test_put_fileset_complete(self, mocker,  mock_rabbit_adaptor):
+    def test_put_fileset_complete(self, mocker):
         import servicex
         submitted_request = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
@@ -40,8 +40,7 @@ class TestFilesetComplete(ResourceTestBase):
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor)
 
         response = client.put('/servicex/internal/transformation/1234/complete',
                               json={

@@ -29,7 +29,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestPreflightCheck(ResourceTestBase):
-    def test_post_preflight_check(self, mocker, mock_rabbit_adaptor):
+    def test_post_preflight_check(self, mocker):
         import servicex
         from servicex.lookup_result_processor import LookupResultProcessor
 
@@ -40,11 +40,8 @@ class TestPreflightCheck(ResourceTestBase):
             return_value=submitted_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.publish_preflight_request = mocker.Mock()
 
-        client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
-            lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor)
         response = client.post('/servicex/internal/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 200
@@ -59,7 +56,7 @@ class TestPreflightCheck(ResourceTestBase):
             "file-id": 42
         }
 
-    def test_preflight_check_with_exception(self, mocker, mock_rabbit_adaptor):
+    def test_preflight_check_with_exception(self, mocker):
         import servicex
         from servicex.lookup_result_processor import LookupResultProcessor
 
@@ -71,10 +68,9 @@ class TestPreflightCheck(ResourceTestBase):
             return_value=submitted_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.publish_preflight_request = mocker.Mock(side_effect=Exception('Test'))
+        mock_processor.publish_preflight_request.side_effect = Exception('Test')
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor)
         response = client.post('/servicex/internal/transformation/1234/preflight',
                                json={'file_path': '/foo/bar.root'})
         assert response.status_code == 500

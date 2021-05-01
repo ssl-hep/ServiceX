@@ -99,9 +99,8 @@ payload = {
 
 
 class TestSlackInteraction(ResourceTestBase):
-    def test_slack_interaction_not_configured(self, mocker, mock_rabbit_adaptor):
+    def test_slack_interaction_not_configured(self, mocker, client):
         mock_post = mocker.patch('requests.post')
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)})
         assert response.status_code == 403
@@ -110,10 +109,9 @@ class TestSlackInteraction(ResourceTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               missing_slack_app())
 
-    def test_slack_interaction_expired(self, mocker, mock_rabbit_adaptor):
+    def test_slack_interaction_expired(self, mocker):
         mock_post = mocker.patch('requests.post')
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
+        client = self._test_client(extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         headers = {'X-Slack_Request-Timestamp': 0}
         response: Response = client.post('/slack',
                                          data={'payload': json.dumps(payload)},
@@ -124,10 +122,9 @@ class TestSlackInteraction(ResourceTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               request_expired())
 
-    def test_slack_interaction_invalid(self, mocker, mock_rabbit_adaptor):
+    def test_slack_interaction_invalid(self, mocker):
         mock_post = mocker.patch('requests.post')
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
+        client = self._test_client(extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         headers = {
             'X-Slack_Request-Timestamp': time.time(),
             'X-Slack-Signature': 'abc'
@@ -141,12 +138,11 @@ class TestSlackInteraction(ResourceTestBase):
             assert mock_post.called_once_with(payload['response_url'],
                                               verification_failed())
 
-    def test_slack_interaction_accept_user(self, mocker, mock_rabbit_adaptor):
+    def test_slack_interaction_accept_user(self, mocker):
         mock_post = mocker.patch('requests.post')
         mock_user_model = mocker.patch('servicex.models.UserModel')
         secret = 'my-slack-secret'
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
+        client = self._test_client(extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         timestamp = time.time()
         body = f"payload={quote_plus(json.dumps(payload))}"
         sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')

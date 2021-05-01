@@ -25,6 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from unittest.mock import MagicMock
+
 from pytest import fixture
 
 from servicex import create_app
@@ -32,6 +35,7 @@ from servicex.models import TransformRequest
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
+from servicex.lookup_result_processor import LookupResultProcessor
 
 
 class ResourceTestBase:
@@ -66,13 +70,15 @@ class ResourceTestBase:
         }
 
     @staticmethod
-    def _test_client(extra_config=None,
-                     transformation_manager=None,
-                     rabbit_adaptor=None,
-                     object_store=None,
-                     code_gen_service=None,
-                     lookup_result_processor=None,
-                     docker_repo_adapter=None):
+    def _test_client(
+        extra_config=None,
+        transformation_manager=None,
+        rabbit_adaptor=None,
+        object_store=None,
+        code_gen_service=None,
+        lookup_result_processor=None,
+        docker_repo_adapter=None
+    ):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -82,11 +88,28 @@ class ResourceTestBase:
         if extra_config:
             config.update(extra_config)
 
+        if rabbit_adaptor is None:
+            rabbit_adaptor = MagicMock(RabbitAdaptor)
+
+        if code_gen_service is None:
+            code_gen_service = MagicMock(CodeGenAdapter)
+
+        if lookup_result_processor is None:
+            lookup_result_processor = MagicMock(LookupResultProcessor)
+
+        if docker_repo_adapter is None:
+            docker_repo_adapter = MagicMock(DockerRepoAdapter)
+            docker_repo_adapter.check_image_exists.return_value = True
+
         app = create_app(config, transformation_manager, rabbit_adaptor,
                          object_store, code_gen_service,
                          lookup_result_processor, docker_repo_adapter)
 
         return app.test_client()
+
+    @fixture
+    def client(self):
+        return self._test_client()
 
     @staticmethod
     def _generate_transform_request():

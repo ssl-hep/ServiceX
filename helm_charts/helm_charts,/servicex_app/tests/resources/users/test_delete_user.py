@@ -4,8 +4,7 @@ from tests.web.web_test_base import WebTestBase
 
 
 class TestDeleteUser(WebTestBase):
-    def test_delete_user(self, mocker, user):
-        client = self._test_client(mocker)
+    def test_delete_user(self, mocker, client, user):
         user.id = 7
         resp_json = {'message': f'user {user.id} has been deleted'}
         resp: Response = client.delete(f'users/{user.id}')
