@@ -73,10 +73,10 @@ class ResourceTestBase:
     def _test_client(
         extra_config=None,
         transformation_manager=None,
-        rabbit_adaptor=None,
+        rabbit_adaptor=MagicMock(RabbitAdaptor),
         object_store=None,
-        code_gen_service=None,
-        lookup_result_processor=None,
+        code_gen_service=MagicMock(CodeGenAdapter),
+        lookup_result_processor=MagicMock(LookupResultProcessor),
         docker_repo_adapter=None
     ):
         config = ResourceTestBase._app_config()
@@ -85,17 +85,8 @@ class ResourceTestBase:
         config['DID_FINDER_DEFAULT_SCHEME'] = 'rucio'
         config['VALID_DID_SCHEMES'] = ['rucio']
 
-        if extra_config:
+        if extra_config is not None:
             config.update(extra_config)
-
-        if rabbit_adaptor is None:
-            rabbit_adaptor = MagicMock(RabbitAdaptor)
-
-        if code_gen_service is None:
-            code_gen_service = MagicMock(CodeGenAdapter)
-
-        if lookup_result_processor is None:
-            lookup_result_processor = MagicMock(LookupResultProcessor)
 
         if docker_repo_adapter is None:
             docker_repo_adapter = MagicMock(DockerRepoAdapter)
