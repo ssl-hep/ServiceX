@@ -29,8 +29,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestServicexInfo(ResourceTestBase):
-    def test_get_info(self, mock_app_version, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_get_info(self, client, mock_app_version):
         response = client.get('/servicex')
         assert response.status_code == 200
         print(response.json)

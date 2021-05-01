@@ -29,9 +29,8 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformStatus(ResourceTestBase):
-    def test_post_status(self, mocker, mock_rabbit_adaptor):
+    def test_post_status(self, mocker, client):
         from servicex.models import TransformRequest
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
@@ -49,9 +48,8 @@ class TestTransformStatus(ResourceTestBase):
         assert response.status_code == 200
         mock_request.save_to_db.assert_not_called()
 
-    def test_post_status_fatal(self, mocker, mock_rabbit_adaptor):
+    def test_post_status_fatal(self, mocker, client):
         from servicex.models import TransformRequest
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
@@ -69,14 +67,12 @@ class TestTransformStatus(ResourceTestBase):
         assert response.status_code == 200
         mock_request.save_to_db.assert_called()
 
-    def test_post_status_bad_data(self, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_post_status_bad_data(self, client):
         response = client.post('/servicex/internal/transformation/1234/status',
                                json={'foo': 'bar'})
-
         assert response.status_code == 400
 
-    def test_get_status(self, mocker, mock_rabbit_adaptor):
+    def test_get_status(self, mocker, client):
         import servicex
 
         mock_files_processed = mocker.PropertyMock(return_value=15)
@@ -99,8 +95,6 @@ class TestTransformStatus(ResourceTestBase):
             'return_request',
             return_value=self._generate_transform_request())
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 200
         assert response.json == {
@@ -118,15 +112,13 @@ class TestTransformStatus(ResourceTestBase):
         }
         mock_transform_request_read.assert_called_with("1234")
 
-    def test_get_status_404(self, mocker, mock_rabbit_adaptor):
+    def test_get_status_404(self, mocker, client):
         import servicex
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
             return_value=None)
-
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 404

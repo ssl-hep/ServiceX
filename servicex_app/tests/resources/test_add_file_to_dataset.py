@@ -34,7 +34,7 @@ def set_dataset_file_id(submitted_request, dataset_file):
 
 
 class TestAddFileToDataset(ResourceTestBase):
-    def test_put_new_file(self, mocker,  mock_rabbit_adaptor):
+    def test_put_new_file(self, mocker):
         import servicex
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
@@ -42,11 +42,9 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=self._generate_transform_request())
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
+        mock_processor.add_file_to_dataset.side_effect = set_dataset_file_id
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor
-                                   )
+        client = self._test_client(lookup_result_processor=mock_processor)
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
@@ -63,7 +61,7 @@ class TestAddFileToDataset(ResourceTestBase):
             "file-id": '42'
         }
 
-    def test_put_new_file_root_dest(self, mocker,  mock_rabbit_adaptor):
+    def test_put_new_file_root_dest(self, mocker):
         import servicex
 
         root_file_transform_request = self._generate_transform_request()
@@ -76,10 +74,9 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=root_file_transform_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=set_dataset_file_id)
+        mock_processor.add_file_to_dataset.side_effect = set_dataset_file_id
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor)
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'file_path': '/foo/bar.root',
@@ -96,7 +93,7 @@ class TestAddFileToDataset(ResourceTestBase):
             "file-id": "42"
         }
 
-    def test_put_new_file_with_exception(self, mocker, mock_rabbit_adaptor):
+    def test_put_new_file_with_exception(self, mocker):
         import servicex
         mocker.patch.object(
             servicex.models.TransformRequest,
@@ -104,10 +101,9 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=self._generate_transform_request())
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset = mocker.Mock(side_effect=Exception('Test'))
+        mock_processor.add_file_to_dataset.side_effect = Exception('Test')
 
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor)
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={

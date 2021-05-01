@@ -32,16 +32,14 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestRabbitAdaptor(ResourceTestBase):
-    def test_connect(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_connect(self, mocker, client):
         with client.application.app_context():
             mock_pika = mocker.patch('pika.BlockingConnection')
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.connect()
             mock_pika.assert_called_with([pika.URLParameters("amqp://test.com")])
 
-    def test_setup_queue(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_queue(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -61,8 +59,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             rabbit.setup_queue("my_queue")
             mock_connection.channel.assert_not_called()
 
-    def test_setup_queue_broker_closed(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_queue_broker_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -74,8 +71,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.setup_queue("my_queue")
 
-    def test_setup_queue_wrong_state(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_queue_wrong_state(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -94,8 +90,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection.channel.assert_called()
             assert mock_pika.call_count == 2  # Retried the connection
 
-    def test_setup_queue_connection_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_queue_connection_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -114,8 +109,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection.channel.assert_called()
             assert mock_pika.call_count == 2  # Retried the connection
 
-    def test_bind_queue_to_exchange(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_bind_queue_to_exchange(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -133,8 +127,7 @@ class TestRabbitAdaptor(ResourceTestBase):
                 queue="my_queue",
                 routing_key='my_queue')
 
-    def test_bind_queue_to_exchange_connection_closed(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_bind_queue_to_exchange_connection_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -161,8 +154,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.queue_bind.call_count == 2
             assert mock_pika.call_count == 1  # No retry
 
-    def test_bind_queue_to_exchange_channel_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_bind_queue_to_exchange_channel_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -188,8 +180,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.queue_bind.call_count == 1
             assert mock_pika.call_count == 1  # No retry
 
-    def test_bind_queue_to_exchange_connection_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_bind_queue_to_exchange_connection_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -216,8 +207,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.queue_bind.call_count == 2
             assert mock_pika.call_count == 2  # Retried the connection
 
-    def test_basic_publish(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_basic_publish(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -237,8 +227,7 @@ class TestRabbitAdaptor(ResourceTestBase):
                 properties=pika.BasicProperties(delivery_mode=1),
                 body="{my: body}")
 
-    def test_basic_publish_connection_closed(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_basic_publish_connection_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -260,8 +249,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.basic_publish.call_count == 2
             assert mock_pika.call_count == 1  # No retry of connection
 
-    def test_basic_publish_channel_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_basic_publish_channel_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -282,8 +270,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.basic_publish.call_count == 1
             assert mock_pika.call_count == 1  # No retry of connection
 
-    def test_basic_publish_connection_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_basic_publish_connection_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -305,8 +292,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.basic_publish.call_count == 2
             assert mock_pika.call_count == 2
 
-    def test_setup_exchange(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_exchange(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -322,8 +308,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel.exchange_declare.assert_called_with(
                 exchange="exchange1")
 
-    def test_setup_exchange_connection_closed(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_exchange_connection_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -345,8 +330,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.exchange_declare.call_count == 2
             assert mock_pika.call_count == 2
 
-    def test_setup_exchange_channel_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_exchange_channel_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -368,8 +352,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.exchange_declare.call_count == 2
             assert mock_pika.call_count == 2  # Retry on channel error
 
-    def test_setup_exchange_connection_error(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_setup_exchange_connection_error(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -391,8 +374,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             assert mock_channel.exchange_declare.call_count == 2
             assert mock_pika.call_count == 2
 
-    def test_close_channel(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_close_channel(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
@@ -411,8 +393,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             rabbit.close_channel()
             mock_channel.close.assert_called()
 
-    def test_close_connection(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_close_connection(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_connection.close = mocker.Mock()
@@ -432,8 +413,7 @@ class TestRabbitAdaptor(ResourceTestBase):
             rabbit.close_connection()
             mock_connection.close.assert_called()
 
-    def test_channel_acessro(self, mocker, mock_rabbit_adaptor):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+    def test_channel_acessro(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_connection.close = mocker.Mock()
