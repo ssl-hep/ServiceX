@@ -139,6 +139,7 @@ class TransformRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
+    title = db.Column(db.String(128), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
