@@ -3,6 +3,17 @@ from servicex.models import UserModel, TransformRequest
 
 class TestTransformRequest:
 
+    def test_incomplete(self):
+        for status, expected in [
+            ("Submitted", True),
+            ("Running", True),
+            ("Complete", False),
+            ("Fatal", False)
+        ]:
+            request = TransformRequest()
+            request.status = status
+            assert request.incomplete == expected
+
     def test_submitter_name(self):
         user = UserModel()
         user.id = 1234
