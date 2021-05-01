@@ -127,13 +127,14 @@ class SubmitTransformationRequest(ServiceXResource):
 
             user = self.get_requesting_user()
             request_rec = TransformRequest(
+                request_id=str(request_id),
+                title=args.get("title"),
                 did=did if did else "File List Provided in Request",
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
                 selection=args['selection'],
                 tree_name=args['tree-name'],
-                request_id=str(request_id),
                 image=image,
                 chunk_size=args['chunk-size'],
                 result_destination=args['result-destination'],
