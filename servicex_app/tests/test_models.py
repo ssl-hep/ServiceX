@@ -1,9 +1,18 @@
 from datetime import datetime, timedelta
 
-from servicex.models import UserModel, TransformRequest
+from pytest import fixture
+
+from servicex.models import UserModel, TransformRequest, TransformationResult
 
 
 class TestTransformRequest:
+
+    @fixture
+    def mock_tr(self, mocker):
+        mock_tr = mocker.patch("servicex.models.TransformationResult")
+        mock_query = mocker.MagicMock()
+        mock_tr.query.filter_by.return_value = mock_query
+        return mock_tr
 
     def test_age(self, mocker):
         request = TransformRequest()
@@ -48,13 +57,50 @@ class TestTransformRequest:
         request = TransformRequest()
         assert request.submitter_name is None
 
+    def test_result_count(self, mock_tr):
+        mock_tr.query.filter_by.return_value.count.return_value = 3
+        request = TransformRequest(request_id="1234")
+        assert request.result_count == 3
+        mock_tr.query.filter_by.assert_called_once_with(request_id=request.request_id)
+        mock_tr.query.filter_by.return_value.count.assert_called_once()
+
+    def test_results(self, mock_tr):
+        results = [TransformationResult(), TransformationResult()]
+        mock_tr.query.filter_by.return_value.all.return_value = results
+        request = TransformRequest(request_id="1234")
+        assert request.results == results
+        mock_tr.query.filter_by.assert_called_once_with(request_id=request.request_id)
+        mock_tr.query.filter_by.return_value.all.assert_called_once()
+
     def test_files_remaining(self, mocker):
         request = TransformRequest()
         request.files = 17
-        TransformRequest.result_count = mocker.PropertyMock(return_value=10)
+        mocker.patch(
+            "servicex.models.TransformRequest.result_count",
+            new_callable=mocker.PropertyMock,
+            return_value=10
+        )
         assert request.files_remaining == 7
 
-    def test_files_remaining_unknown(self, mocker):
+    def test_files_remaining_unknown(self):
         request = TransformRequest()
         request.files = None
         assert request.files_remaining is None
+
+    def test_files_processed(self, mock_tr):
+        mock_tr.query.filter_by.return_value.count.return_value = 3
+        request = TransformRequest(request_id="1234")
+        assert request.files_processed == 3
+        mock_tr.query.filter_by.assert_called_once_with(
+            request_id=request.request_id, transform_status="success"
+        )
+        mock_tr.query.filter_by.return_value.count.assert_called_once()
+
+    def test_files_failed(self, mock_tr):
+        mock_tr.query.filter_by.return_value.count.return_value = 3
+        request = TransformRequest(request_id="1234")
+        assert request.files_failed == 3
+        mock_tr.query.filter_by.assert_called_once_with(
+            request_id=request.request_id, transform_status="failure"
+        )
+        mock_tr.query.filter_by.return_value.count.assert_called_once()
