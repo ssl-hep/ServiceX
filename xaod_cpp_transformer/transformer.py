@@ -194,6 +194,7 @@ def callback(channel, method, properties, body):
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
             transform_single_file(_file_path, output_path, _chunks, servicex)
+            parse_output_logs("log.txt")
 
             tock = time.time()
 
