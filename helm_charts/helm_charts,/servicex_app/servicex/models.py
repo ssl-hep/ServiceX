@@ -210,20 +210,20 @@ class TransformRequest(db.Model):
             return None
 
     @property
-    def submitter_name(self):
-        if self.submitted_by is None:
-            return None
-        elif self.user is None:
-            return "[deleted]"
-        return self.user.name
-
-    @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
 
     @property
     def incomplete(self) -> bool:
         return self.status not in {"Complete", "Fatal"}
+
+    @property
+    def submitter_name(self):
+        if self.submitted_by is None:
+            return None
+        elif self.user is None:
+            return "[deleted]"
+        return self.user.name
 
     @property
     def result_count(self) -> int:
