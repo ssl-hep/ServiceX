@@ -1,7 +1,19 @@
+from datetime import datetime, timedelta
+
 from servicex.models import UserModel, TransformRequest
 
 
 class TestTransformRequest:
+
+    def test_age(self, mocker):
+        request = TransformRequest()
+        t = datetime(2021, 1, 1)
+        delta = timedelta(days=1, hours=3, minutes=5)
+        request.submit_time = t
+        mock_dt = mocker.patch("servicex.models.datetime")
+        mock_dt.utcnow.return_value = t+delta
+        assert request.age == delta
+        assert mock_dt.utcnow.called_once()
 
     def test_incomplete(self):
         for status, expected in [
