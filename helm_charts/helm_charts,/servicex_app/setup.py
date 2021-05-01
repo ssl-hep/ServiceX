@@ -61,7 +61,8 @@ setup(
         'psycopg2',
         'globus_sdk',
         'cryptography',
-        'bootstrap-flask'
+        'bootstrap-flask',
+        'humanize'
     ],
     extras_require={
         'test': [
