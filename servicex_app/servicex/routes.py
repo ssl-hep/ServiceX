@@ -53,8 +53,15 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.users.pending_users import PendingUsers
     from servicex.resources.users.slack_interaction import SlackInteraction
 
-    from servicex.web import home, sign_in, sign_out, auth_callback, \
-        view_profile, edit_profile, api_token, servicex_file
+    from servicex.web.home import home
+    from servicex.web.sign_in import sign_in
+    from servicex.web.sign_out import sign_out
+    from servicex.web.auth_callback import auth_callback
+    from servicex.web.view_profile import view_profile
+    from servicex.web.edit_profile import edit_profile
+    from servicex.web.api_token import api_token
+    from servicex.web.servicex_file import servicex_file
+    from servicex.web.transformation_request import transformation_request
 
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
@@ -77,6 +84,11 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                      methods=['GET', 'POST'])
     app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
                      methods=['GET', 'POST'])
+    app.add_url_rule(
+        '/transformation-request/<id_>',
+        'transformation_request',
+        transformation_request
+    )
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, '/token/refresh')

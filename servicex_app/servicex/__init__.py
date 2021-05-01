@@ -122,4 +122,10 @@ def create_app(test_config=None,
         add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service,
                    lookup_result_processor, docker_repo_adapter)
 
+        # Inject useful Python modules to make them available in all templates
+        @app.context_processor
+        def inject_modules():
+            import humanize
+            return dict(humanize=humanize)
+
     return app
