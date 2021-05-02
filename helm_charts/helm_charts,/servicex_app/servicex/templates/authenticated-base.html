@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from 'bootstrap/nav.html' import render_nav_item %}
+
+
+{% block nav %}
+  <ul class="nav nav-pills mb-4">
+    {{ render_nav_item('user-dashboard', 'Dashboard') }}
+    {{ render_nav_item('profile', 'Profile') }}
+  </ul>
+{% endblock %}

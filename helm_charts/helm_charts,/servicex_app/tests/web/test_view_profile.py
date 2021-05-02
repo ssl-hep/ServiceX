@@ -6,7 +6,7 @@ from .web_test_base import WebTestBase
 class TestViewProfile(WebTestBase):
     def test_view_profile(self, client, user):
         with client.session_transaction() as sess:
-            sess['sub'] = 'janedoe'
+            sess['sub'] = user.sub
         response: Response = client.get(url_for('profile'))
         assert response.status_code == 200
         assert response.data.decode() == render_template('profile.html', user=user)

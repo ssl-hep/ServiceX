@@ -35,4 +35,4 @@ class TestAuthCallback(WebTestBase):
         assert session.get('name') == id_token['name']
         assert session.get('sub') == id_token['sub']
         assert response.status_code == 302
-        assert response.location == url_for('profile', _external=True)
+        assert response.location == url_for('user-dashboard', _external=True)
