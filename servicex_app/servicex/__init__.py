@@ -126,6 +126,7 @@ def create_app(test_config=None,
         @app.context_processor
         def inject_modules():
             import humanize
-            return dict(humanize=humanize)
+            import datetime
+            return dict(datetime=datetime, humanize=humanize)
 
     return app

@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+
 from pytest import fixture
 
 
@@ -147,6 +149,16 @@ class WebTestBase:
             "iat": 1595955388,
             "sub": "primary-oauth-id"
         }
+
+    @staticmethod
+    def _test_transformation_req():
+        from servicex.models import TransformRequest
+        return TransformRequest(
+            id=1234,
+            did="foo",
+            request_id="b5901cca-9858-42e7-a093-0929cf391f0e",
+            submit_time=datetime.utcnow(),
+        )
 
     @fixture
     def client(self):
