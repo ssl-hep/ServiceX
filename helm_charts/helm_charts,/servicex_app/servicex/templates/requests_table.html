@@ -6,10 +6,9 @@
   <table class="table">
     <thead class="thead-dark">
       <tr>
-        <th scope="col">ID</th>
+        <th scope="col">Title</th>
         {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
-        <th scope="col">Submitted at</th>
-        <th scope="col">Age</th>
+        <th scope="col">Submit time</th>
         <th scope="col">Status</th>
         <th scope="col">Files completed</th>
         <th scope="col">Workers</th>
@@ -23,7 +22,6 @@
         </th>
         {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
         <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-        <td>{{ humanize.naturaldelta(req.age) }}</td>
         <td>
           <div id="status-{{ req.request_id }}">
             {{ req.status }}
@@ -37,7 +35,8 @@
         </td>
         <td>
           <div>
-            <span id="files-processed-{{ req.request_id }}">{{ humanize.intcomma(req.files_processed) }}</span> of {{ humanize.intcomma(req.files) }}</div>
+            <span id="files-processed-{{ req.request_id }}">{{ humanize.intcomma(req.files_processed) }}</span> of
+            <span>{{ humanize.intcomma(req.files or "Unknown") }}</span></div>
           <div id="files-failed-{{ req.request_id }}">
             {% if req.files_failed %}({{ req.files_failed }} failed){% endif %}
           </div>
@@ -66,7 +65,7 @@
         return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
           .then((resp) => resp.json())
           .then((data) => {
-            console.log(`${req_id} deployment`, data);
+            {#console.log(`${req_id} deployment`, data);#}
             $(`#replicas-${req_id}`).text(data["replicas"]);
           });
       }));
@@ -78,7 +77,7 @@
         return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
           .then((resp) => resp.json())
           .then((data) => {
-            console.log(`${req_id} status`, data);
+            {#console.log(`${req_id} status`, data);#}
             const status = data["status"];
             const processed = data["files-processed"];
             const remaining = data["files-remaining"];
