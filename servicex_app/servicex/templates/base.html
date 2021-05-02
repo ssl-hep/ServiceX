@@ -33,24 +33,23 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarToggle">
         <div class="navbar-nav mr-auto">
-          <a class="nav-item nav-link"
-             href="{{ config['DOCS_BASE_URL'] }}">
-            Docs
-          </a>
+          <a class="nav-item nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
+        {% if not config['ENABLE_AUTH'] %}
+          <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
+        {% endif %}
         </div>
         <!-- Navbar Right Side -->
         {% if config['ENABLE_AUTH'] %}
           <div class="navbar-nav">
           {% if not session['is_authenticated'] %}
             <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>
-            <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
           {% else %}
             <a href=" {{ url_for('user-dashboard') }}" class="nav-item nav-link">{{ session['name'] }}</a>
             <a href="{{ url_for('sign_out') }}" class="nav-item nav-link">
               <i class="fa fa-sign-out" aria-hidden="true"></i>
             </a>
           {% endif %}
-        </div>
+          </div>
         {% endif %}
       </div>
     </div>

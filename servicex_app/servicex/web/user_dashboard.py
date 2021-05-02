@@ -12,8 +12,4 @@ def user_dashboard():
         .filter_by(submitted_by=session["user_id"])\
         .order_by(TransformRequest.id.desc())\
         .paginate(page=page, per_page=15, error_out=False)
-    return render_template(
-        "user_dashboard.html",
-        transformation_requests=pagination.items,
-        pagination=pagination
-    )
+    return render_template("user_dashboard.html", pagination=pagination)
