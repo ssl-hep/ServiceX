@@ -151,14 +151,16 @@ class WebTestBase:
         }
 
     @staticmethod
-    def _test_transformation_req():
+    def _test_transformation_req(**kwargs):
         from servicex.models import TransformRequest
-        return TransformRequest(
-            id=1234,
-            did="foo",
-            request_id="b5901cca-9858-42e7-a093-0929cf391f0e",
-            submit_time=datetime.utcnow(),
-        )
+        defaults = {
+            "id": 1234,
+            "did": "foo",
+            "request_id": "b5901cca-9858-42e7-a093-0929cf391f0e",
+            "submit_time": datetime.utcnow()
+        }
+        defaults.update(kwargs)
+        return TransformRequest(**defaults)
 
     @fixture
     def client(self):

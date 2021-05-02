@@ -42,10 +42,11 @@
         {% if config['ENABLE_AUTH'] %}
           <div class="navbar-nav">
           {% if not session['is_authenticated'] %}
-            <a href="/sign-in" class="nav-item nav-link">Sign In</a>
+            <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>
+            <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
           {% else %}
-            <a href="/profile" class="nav-item nav-link">{{ session['name'] }}</a>
-            <a href="/sign-out" class="nav-item nav-link">
+            <a href=" {{ url_for('user-dashboard') }}" class="nav-item nav-link">{{ session['name'] }}</a>
+            <a href="{{ url_for('sign_out') }}" class="nav-item nav-link">
               <i class="fa fa-sign-out" aria-hidden="true"></i>
             </a>
           {% endif %}
@@ -57,6 +58,9 @@
 </header>
 
 <main role="main" class="container">
+  <div class="row">
+    {% block nav %}{% endblock %}
+  </div>
   <div class="row">
     <div class="col-md-12">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -91,6 +95,11 @@
     // Enable tooltips
     $(function () {
         $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'})
+    })
+
+    // Mark current endpoint as active
+    $(document).ready(function () {
+      $("#{{request.endpoint}}").addClass("active");
     })
 </script>
 

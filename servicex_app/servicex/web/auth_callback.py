@@ -46,5 +46,5 @@ def auth_callback():
         if user:
             session['user_id'] = user.id
             session['admin'] = user.admin
-            return redirect(url_for('profile'))
+            return redirect(url_for('user-dashboard'))
     return redirect(url_for('create_profile'))

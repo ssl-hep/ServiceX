@@ -1,7 +1,8 @@
 body {
   background: #fafafa;
   color: #333333;
-  margin-top: 5rem;
+  margin-top: 56px;
+  padding: 20px 0;
 }
 
 .site-header .navbar-nav .nav-link {
@@ -18,7 +19,7 @@ body {
 
 .content-section {
   background: #ffffff;
-  padding: 10px 20px;
+  padding: 20px;
   border: 1px solid #dddddd;
   border-radius: 3px;
   margin-bottom: 20px;

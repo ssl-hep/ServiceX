@@ -1,0 +1,25 @@
+{% extends "authenticated-base.html" %}
+
+{% from 'requests_table.html' import requests_table, requests_table_update_script %}
+
+{% block content %}
+
+  <div>
+    <div class="content-section">
+      <div class="lead">
+        Welcome to ServiceX, {{ session['name'] }}!
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h4 class="mb-3">Transformation Requests</h4>
+      {{ requests_table(pagination, humanize) }}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {{ requests_table_update_script(pagination) }}
+{% endblock %}
