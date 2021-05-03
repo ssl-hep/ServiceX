@@ -14,6 +14,14 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
       serviceAccountName: {{ template "servicex.fullname" . }}
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        - name: check-postgresql
+          image: "ncsa/checks:latest"
+          env:
+            - name: PG_URI
+              value: 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+      {{- end }}
       containers:
       - name: {{ .Release.Name }}-servicex-app
         image: {{ .Values.app.image }}:{{ .Values.app.tag }}
