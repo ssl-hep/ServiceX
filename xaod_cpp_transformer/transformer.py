@@ -174,7 +174,6 @@ def callback(channel, method, properties, body):
             output_path = '/home/atlas/' + root_file
             logger.info("Processing {}".format(root_file))
             transform_single_file(_file_path, output_path, _chunks, servicex)
-            parse_output_logs("log.txt")
 
             tock = time.time()
 
