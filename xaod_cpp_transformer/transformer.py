@@ -89,10 +89,6 @@ def parse_output_logs(logfile):
     """
     total_events = 0
     events_processed = 0
-    total_bytes = 0
-    successes = 0
-    total_files = 0
-    total_time = 0
     total_events_re = re.compile(r'Processing events \d+-(\d+)')
     events_processed_re = re.compile(r'Processed (\d+) events')
     with open(logfile, 'r') as f:
@@ -190,10 +186,10 @@ def callback(channel, method, properties, body):
                                         status_code="complete",
                                         info="Total time " + str(round(tock - tick, 2)))
             servicex.put_file_complete(_file_path, _file_id, "success",
-                                    num_messages=0,
-                                    total_time=round(tock - tick, 2),
-                                    total_events=0,
-                                    total_bytes=0)
+                                       num_messages=0,
+                                       total_time=round(tock - tick, 2),
+                                       total_events=0,
+                                       total_bytes=0)
             logger.info("Time to process {}: {}".format(root_file, round(tock - tick, 2)))
             logger.info("Processed {} bytes".format(os.stat(_file_path).st_size))
             file_done = True
@@ -203,11 +199,11 @@ def callback(channel, method, properties, body):
             if file_retries == MAX_RETRIES:
                 transform_request['error'] = str(error)
                 channel.basic_publish(exchange='transformation_failures',
-                                    routing_key=_request_id + '_errors',
-                                    body=json.dumps(transform_request))
+                                      routing_key=_request_id + '_errors',
+                                      body=json.dumps(transform_request))
                 servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                        status='failure', num_messages=0, total_time=0,
-                                        total_events=0, total_bytes=0)
+                                           status='failure', num_messages=0, total_time=0,
+                                           total_events=0, total_bytes=0)
 
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="failure",
