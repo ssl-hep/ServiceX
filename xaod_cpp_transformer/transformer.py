@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import re
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
@@ -87,42 +88,23 @@ def parse_output_logs(logfile):
     :return:  None
     """
     total_events = 0
+    events_processed = 0
     total_bytes = 0
     successes = 0
     total_files = 0
     total_time = 0
+    total_events_re = re.compile(r'Processing events \d+-(\d+)')
+    events_processed_re = re.compile(r'Processed (\d+) events')
     with open(logfile, 'r') as f:
-        logger.info("Found logfile: {}".format(logfile))
-        logger.info("File info: ".format(os.stat(logfile)))
-        for line in f.readlines():
-            if '---<' in line:
-                logger.info("Matched json")
-                # message is ('------< ', json_string)
-                # want everything after the comma except for last character (')')
-                mesg = line.split(',', 1)[1].strip()[:-1]
-                logger.info(mesg)
-                # need to change ' to " to make message proper json
-                body = json.loads(mesg.replace("'", '"'))
-                events = body.get("total-events", 0)
-                bytes_processed = body.get("total-bytes", 0)
-                processing_time = body.get("total-time", 0)
-                total_events += events
-                total_bytes += bytes_processed
-                total_time += processing_time
-                total_files += 1
-                status = body.get("status", "unknown")
-                if status not in ("failure", "unknown"):
-                    successes += 1
-                logger.info("Processed {} ".format(body.get("file-path", "unknown file")) +
-                            "events: {} ".format(events) +
-                            "bytes: {} ".format(bytes_processed) +
-                            "seconds: {} ".format(processing_time) +
-                            "status: {}".format(status))
+        buf = f.read()
+        match = total_events_re.search(buf)
+        if match:
+            total_events = int(match.group(1))
+        matches = events_processed_re.finditer(buf)
+        for m in matches:
+            events_processed = int(m.group(1))
         logger.info("Total events: {}".format(total_events))
-        logger.info("Total bytes: {}".format(total_bytes))
-        logger.info("Total time: {}".format(total_time))
-        logger.info("Total successes: {}/{}".format(successes, total_files))
-
+        logger.info("Events processed: {}".format(events_processed))
 
 # class TimeTuple(NamedTuple):
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "idle"])):
@@ -193,6 +175,7 @@ def callback(channel, method, properties, body):
             # Do the transform
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
+            logger.info("Processing {}".format(root_file))
             transform_single_file(_file_path, output_path, _chunks, servicex)
             parse_output_logs("log.txt")
 
@@ -205,12 +188,13 @@ def callback(channel, method, properties, body):
             servicex.post_status_update(file_id=_file_id,
                                         status_code="complete",
                                         info="Total time " + str(round(tock - tick, 2)))
-
             servicex.put_file_complete(_file_path, _file_id, "success",
                                     num_messages=0,
                                     total_time=round(tock - tick, 2),
                                     total_events=0,
                                     total_bytes=0)
+            logger.info("Time to process {}: {}".format(root_file, round(tock - tick, 2)))
+            logger.info("Processed {} bytes".format(os.stat(_file_path).st_size))
             file_done = True
 
         except Exception as error:
