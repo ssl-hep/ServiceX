@@ -229,7 +229,7 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     os.system('/usr/bin/sync log.txt')
     parse_output_logs("log.txt")
     if os.path.exists(output_path) and os.path.isfile(output_path):
-        logger.info("Processed {} bytes".format(os.stat(output_path).st_size))
+        logger.info("Wrote {} bytes to output for {}".format(os.stat(output_path).st_size, file_path))
 
     reason_bad = None
     if r != 0:
