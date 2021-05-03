@@ -99,8 +99,7 @@ def parse_output_logs(logfile):
         matches = events_processed_re.finditer(buf)
         for m in matches:
             events_processed = int(m.group(1))
-        logger.info("Total events: {}".format(total_events))
-        logger.info("Events processed: {}".format(events_processed))
+        logger.info("{} events processed out of {} total events".format(events_processed, total_events))
 
 
 # class TimeTuple(NamedTuple):
@@ -172,7 +171,7 @@ def callback(channel, method, properties, body):
             # Do the transform
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
-            logger.info("Processing {}".format(root_file))
+            logger.info("Processing {}, file id: {}".format(root_file, _file_id))
             transform_single_file(_file_path, output_path, _chunks, servicex)
 
             tock = time.time()
@@ -189,7 +188,8 @@ def callback(channel, method, properties, body):
                                        total_time=round(tock - tick, 2),
                                        total_events=0,
                                        total_bytes=0)
-            logger.info("Time to process {}: {}".format(root_file, round(tock - tick, 2)))
+            logger.info("Time to successfully process {}: {} seconds".format(root_file, round(tock - tick, 2)))
+
             file_done = True
 
         except Exception as error:
