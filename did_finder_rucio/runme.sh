@@ -5,7 +5,7 @@
 
 while true; do 
     date
-    ls /etc/grid-security/x509up
+    ls ${X509_USER_PROXY}
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
         echo "Got proxy."
