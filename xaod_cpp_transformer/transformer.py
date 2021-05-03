@@ -106,6 +106,7 @@ def parse_output_logs(logfile):
         logger.info("Total events: {}".format(total_events))
         logger.info("Events processed: {}".format(events_processed))
 
+
 # class TimeTuple(NamedTuple):
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "idle"])):
     """
