@@ -226,7 +226,7 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     os.system('/usr/bin/sync log.txt')
     parse_output_logs("log.txt")
     if os.path.exists(output_path) and os.path.isfile(output_path):
-        logger.info("Wrote {} bytes to output for {}".format(os.stat(output_path).st_size, file_path))
+        logger.info("Wrote {} bytes after transforming {}".format(os.stat(output_path).st_size, file_path))
 
     reason_bad = None
     if r != 0:
@@ -266,8 +266,8 @@ def compile_code():
     if r != 0:
         with open('log.txt', 'r') as f:
             errors = f.read()
-            logger.error("Unable to compile the code - error return: " + str(r) + 'errors: \n' + errors)
-            raise RuntimeError("Unable to compile the code - error return: " + str(r) + 'errors: \n' + errors)
+            logger.error("Unable to compile the code - error return: " + str(r) + 'errors: ' + errors)
+            raise RuntimeError("Unable to compile the code - error return: " + str(r) + "errors: \n" + errors)
 
 
 if __name__ == "__main__":
