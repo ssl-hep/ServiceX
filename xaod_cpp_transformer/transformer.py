@@ -190,7 +190,6 @@ def callback(channel, method, properties, body):
                                        total_events=0,
                                        total_bytes=0)
             logger.info("Time to process {}: {}".format(root_file, round(tock - tick, 2)))
-            #logger.info("Processed {} bytes".format(os.stat(_file_path).st_size))
             file_done = True
 
         except Exception as error:
@@ -210,9 +209,7 @@ def callback(channel, method, properties, body):
 
                 file_done = True
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
                 logger.exception("Received exception")
-                print(exc_value)
             else:
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="retry",
@@ -274,7 +271,6 @@ def compile_code():
 
 
 if __name__ == "__main__":
-    print("starting xaod_cpp_transformer")
     start_time = timeit.default_timer()
     parser = TransformerArgumentParser(description="xAOD CPP Transformer")
     args = parser.parse_args()
@@ -293,16 +289,10 @@ if __name__ == "__main__":
     startup_time = get_process_info()
 
     if args.request_id and not args.path:
-        print("A******")
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
-        print("B******")
 
     if args.path:
-        print("1******")
         transform_single_file(args.path, args.output_dir)
-        print("2******")
     total_time = get_process_info()
     stop_time = timeit.default_timer()
     log_stats(startup_time, total_time, running_time=(stop_time - start_time))
-    print("finished xaod_cpp_transformer")
-    print("******")
