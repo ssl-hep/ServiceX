@@ -275,9 +275,9 @@ if __name__ == "__main__":
     logger = initialize_logging(args.request_id)
 
     if args.result_destination == 'kafka':
-        logger.error("Kafka is no longer supported as a transport mechanism")
-        sys.stderr.write("Kafka is no longer supported as a transport mechanism\n")
-        sys.exit(1)
+        msg = "Kafka is no longer supported as a transport mechanism"
+        logger.error(msg)
+        sys.stderr.write(msg + "\n")
     elif not args.output_dir and args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
