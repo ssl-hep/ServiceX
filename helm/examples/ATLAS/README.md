@@ -28,3 +28,10 @@ downloaded to your computer.
 You may place this in your home directory or within
 the [servicex_frontend search path](https://github.com/ssl-hep/ServiceX_frontend#configuration).
 
+## Examples
+<table>
+<tr>
+<td><a href="Z_ee.ipynb"><img src="/docs/img/Z_ee_example.jpg" alt="Z_ee Example Notebook"></a></td>
+<td valign="center">Notebook to compute Mass of Z Boson from Z_ee</td>
+</tr>
+</table>
