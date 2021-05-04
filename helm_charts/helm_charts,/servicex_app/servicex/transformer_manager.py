@@ -148,7 +148,10 @@ class TransformerManager:
             })
 
         # If we are using Autoscaler then always start with one replica
-        replicas = 1 if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED'] else workers
+        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+            replicas = current_app.config.get('TRANSFORMER_MIN_REPLICAS', 1)
+        else:
+            replicas = workers
         spec = client.V1DeploymentSpec(
             template=template,
             selector=selector,

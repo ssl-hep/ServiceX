@@ -91,7 +91,7 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='kafka', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
-            assert called_deployment.spec.replicas == 1
+            assert called_deployment.spec.replicas == cfg['TRANSFORMER_MIN_REPLICAS']
             assert len(called_deployment.spec.template.spec.containers) == 1
             container = called_deployment.spec.template.spec.containers[0]
             assert container.image == 'sslhep/servicex-transformer:pytest'
