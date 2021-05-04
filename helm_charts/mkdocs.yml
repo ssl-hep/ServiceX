@@ -6,7 +6,8 @@ nav:
         - Getting started: user/getting-started.md
         - Specifying a request: user/requests.md
         - Outreach: user/outreach.md
-        # - Func-ADL Intro: user/func_adl_intro.ipynb
+    - 'Examples':
+        - ATLAS xAOD Example: user/func_adl_xaod.ipynb
         # - TCut Intro: user/tcut_intro.ipynb
         # - Advanced xAOD with Func-ADL: user/func_adl_xaod.ipynb
     - 'Deployment Guide':
