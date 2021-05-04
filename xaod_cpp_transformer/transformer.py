@@ -186,7 +186,6 @@ def callback(channel, method, properties, body):
                                        total_events=0,
                                        total_bytes=0)
             logger.info("Time to successfully process {}: {} seconds".format(root_file, round(tock - tick, 2)))
-
             file_done = True
 
         except Exception as error:
@@ -212,6 +211,10 @@ def callback(channel, method, properties, body):
                                             status_code="retry",
                                             info="Try: " + str(file_retries) +
                                                  " error: " + str(error)[0:1024])
+
+    total_time = get_process_info()
+    stop_time = timeit.default_timer()
+    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
 
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -290,6 +293,3 @@ if __name__ == "__main__":
 
     if args.path:
         transform_single_file(args.path, args.output_dir)
-    total_time = get_process_info()
-    stop_time = timeit.default_timer()
-    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
