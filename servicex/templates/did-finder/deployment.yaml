@@ -27,6 +27,10 @@ spec:
             value: "{{ .Values.didFinder.threads }}"
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+          {{- if .Values.didFinder.proxyLocation }}
+          - name: X509_USER_PROXY
+            value: {{ .Values.didFinder.proxyLocation }}
+          {{- end }}
         volumeMounts:
           - name: rucio-cfg
             mountPath: /opt/rucio/etc/
