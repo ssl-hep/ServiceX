@@ -66,10 +66,7 @@ def initialize_logging(request=None):
     """
 
     log = logging.getLogger()
-    if 'INSTANCE_NAME' in os.environ:
-        instance = os.environ['INSTANCE_NAME']
-    else:
-        instance = 'Unknown'
+    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
     formatter = logging.Formatter('%(levelname)s ' +
                                   "{} xaod_cpp_transformer {} ".format(instance, request) +
                                   '%(message)s')
