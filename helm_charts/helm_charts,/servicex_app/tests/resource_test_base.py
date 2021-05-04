@@ -53,6 +53,8 @@ class ResourceTestBase:
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
             'TRANSFORMER_AUTOSCALE_ENABLED': True,
+            'TRANSFORMER_MIN_REPLICAS': 1,
+            'TRANSFORMER_MAX_REPLICAS': 5,
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
             'TRANSFORMER_PULL_POLICY': 'Always',
             'TRANSFORMER_VALIDATE_DOCKER_IMAGE': True,
