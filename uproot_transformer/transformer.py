@@ -315,7 +315,7 @@ if __name__ == "__main__":
         object_store = None
     elif args.result_destination == 'object-store':
         messaging = None
-        posix_path = "/home/atlas"
+        posix_path = "/home/output"
         object_store = ObjectStoreManager()
     elif args.result_destination == 'volume':
         messaging = None
