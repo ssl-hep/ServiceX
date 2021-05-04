@@ -181,6 +181,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
+| `didFinder.proxyLocation`            | DID Finder optional proxy location               | -                                                       |
 | `didFinder.pullPolicy`               | DID Finder image pull policy                     | `Always`                                          |
 | `didFinder.site`                     | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
 | `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
@@ -188,6 +189,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
+| `preflight.proxyLocation`            | Preflight optional proxy location                | -                                                       |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `Always`                                          |
 | `codeGen.enabled`                    | Enable deployment of code generator service?     | `true`                                                  |
 | `codeGen.image`                      | Code Gen image name                              | `sslhep/servicex_code_gen_funcadl_xaod`                 |
@@ -195,6 +197,7 @@ or [mino](https://github.com/helm/charts/tree/master/stable/minio#configuration)
 | `codeGen.pullPolicy`                 | Code Gen image pull policy                       | `Always`                                          |
 | `x509Secrets.image`                  | X509 Secret Service image name                   | `sslhep/x509-secrets`                                   |
 | `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
+| `x509Secrets.proxyLocation`          | X509 Secret Service optional proxy location      | -                                                       |
 | `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `Always`                                          |
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
