@@ -15,3 +15,4 @@ requests==2.24.0
 servicex-transformer==1.0.0rc3
 uproot==3.11.7
 xxhash==1.4.4
+psutil==5.8.0
