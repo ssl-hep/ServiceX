@@ -110,3 +110,4 @@ node_modules
 
 .idea/
 deployed-values/
+.servicex
