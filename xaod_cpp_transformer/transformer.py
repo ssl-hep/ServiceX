@@ -39,7 +39,6 @@ from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
 import sys
-import traceback
 
 import logging
 import timeit
@@ -125,7 +124,8 @@ def get_process_info():
 
     :return: TimeTuple with timing information
     """
-    time_stats = psutil.cpu_times()
+    process_info = psutil.Process()
+    time_stats = process_info.cpu_times()
     return TimeTuple(user=time_stats.user, system=time_stats.system, idle=time_stats.idle)
 
 
