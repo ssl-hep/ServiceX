@@ -13,6 +13,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
 | `app.auth`                           | Enable authentication or allow unfettered access (Python boolean string) | `false`                         |
+| `app.disableUserMgmt`                | Opt out of built-in ServiceX user management system | `false`                                              |
 | `app.globusClientID`                 | Globus application Client ID                     | -                                                       |
 | `app.globusClientSecret`             | Globus application Client Secret                 | -                                                       |
 | `app.adminEmail`                     | Email address for initial admin user             | admin@example.com                                       |

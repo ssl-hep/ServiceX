@@ -24,6 +24,7 @@ app:
   pullPolicy: Always
   replicas: 1
   auth: false
+  disableUserMgmt: false
   validateTransformerImage: true
 
   # Globus configuration - obtain these at https://auth.globus.org/v2/web/developers
