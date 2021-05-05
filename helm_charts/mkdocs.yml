@@ -10,7 +10,6 @@ nav:
         # - TCut Intro: user/tcut_intro.ipynb
         # - Advanced xAOD with Func-ADL: user/func_adl_xaod.ipynb
     - 'Deployment Guide':
-        - Introduction: deployment/introduction.md
         - Basic deployments: deployment/basic.md
         - Production deployments: deployment/production.md
         - Reference: deployment/reference.md

@@ -28,7 +28,7 @@ ServiceX uses a slightly modified GitLab flow. Each repository has a main branch
 1. Set up a local development environment:
     - Decide which microservice (or Helm chart) you'd like to change, 
     and locate the corresponding repository. 
-    - If you are a not a member of the IRIS-HEP SSL, 
+    - If you are a not a member of the `ssl-hep` GitHub organization, 
     fork the repository.
     - Clone the (forked) repository to your local machine:
     ```
@@ -80,8 +80,8 @@ unless the issue is specific to a single microservice.
 We manage project priorities with a [ZenHub board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333,180236972,185614791,182823774,202592339).
 
 ## Join us on Slack
-We coordinate our efforts on the [IRIS-HEP slack](http://iris-hep.slack.com).
-Come join this intellectual hub.
+We coordinate our efforts on the [IRIS-HEP Slack](http://iris-hep.slack.com).
+Come join this intellectual hub!
 
 ## Debugging Tips
 Microservice architectures can be difficult to test and debug. Here are some 
