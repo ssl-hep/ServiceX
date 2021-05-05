@@ -1,9 +1,20 @@
-# How to deploy ServiceX
-ServiceX is deployed using a Helm chart. The full list of configuration 
-options can be found in the [reference section](reference.md).
+# Introduction to ServiceX Deployment
 
-This guide is aimed at those interested in learning how to deploy ServiceX 
-with minimal configuration. For more advanced topics, such as making a 
+ServiceX is a multi-tenant service designed to be deployed on a Kubernetes
+cluster. At present, each ServiceX instance is dedicated to a particular
+experiment and file format (flat root file, ATLAS xAOD, and CMS MiniAOD). There
+are centrally managed instances of the service running on 
+the University of Chicago's River cluster at 
+[xaod.servicex.ssl-hep.org](https://xaod.servicex.ssl-hep.org) and 
+[uproot-atlas.servicex.ssl-hep.org](https://uproot-atlas.servicex.ssl-hep.org). 
+
+ServiceX is deployed using a [Helm](https://helm.sh/) chart. 
+The full list of configuration options can be found in the 
+[reference section](reference.md).
+
+This introduction is aimed at those interested in learning how to deploy 
+ServiceX with minimal configuration. 
+For more advanced topics, such as making a 
 publicly accessible deployment suitable for multiple users, 
 see the [production deployment guide](production.md).
 
@@ -19,7 +30,6 @@ Your account will need to have permission to:
 If you don't have access to a cluster, you can enable a single node 
 Kubernetes cluster on your desktop 
 [using Docker-Desktop](https://www.docker.com/blog/kubernetes-is-now-available-in-docker-desktop-stable-channel/).
-
 
 
 ## Authenticating to the grid
@@ -163,7 +173,7 @@ This should output some JSON metadata for the deployment.
 
 ### Running a simple analysis
 
-Check out the [getting started guide](../user/getting-started.md) for new users,
+Check out the [quick start guide](../user/getting-started.md) for new users,
 which contains some examples of basic requests you can make to ServiceX.
 
 Select one which corresponds to the file type you chose for your deployment.
