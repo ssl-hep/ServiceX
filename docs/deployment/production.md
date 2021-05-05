@@ -176,6 +176,7 @@ Here, you must specify a secret name; there is no default.
 ### With cert-manager
 Alternately, you can let cert-manager handle the TLS certificates.
 To use it, complete the following steps:
+
 - [Install cert-manager](https://cert-manager.io/docs/installation/kubernetes/)
 on your cluster if it's not already installed.
 - Deploy one or more ClusterIssuers, or check that one is already present. 
