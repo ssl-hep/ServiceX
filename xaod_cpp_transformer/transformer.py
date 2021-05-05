@@ -99,34 +99,34 @@ def parse_output_logs(logfile):
     return total_events, events_processed
 
 # class TimeTuple(NamedTuple):
-class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "idle"])):
+class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
     Named tuple to store process time information.
     Immutable so values can't be accidentally altered after creation
     """
     # user: float
     # system: float
-    # idle: float
+    # iowait: float
 
     @property
     def total_time(self):
         """
         Return total time spent by process
 
-        :return: sum of user, system, idle times
+        :return: sum of user, system, iowait times
         """
-        return self.user + self.system + self.idle
+        return self.user + self.system + self.iowait
 
 
 def get_process_info():
     """
-    Get process information (just cpu, sys, idle times right now) and return it
+    Get process information (just cpu, sys, iowait times right now) and return it
 
     :return: TimeTuple with timing information
     """
     process_info = psutil.Process()
     time_stats = process_info.cpu_times()
-    return TimeTuple(user=time_stats.user, system=time_stats.system, idle=time_stats.idle)
+    return TimeTuple(user=time_stats.user, system=time_stats.system, iowait=time_stats.iowait)
 
 
 def log_stats(startup_time, total_time, running_time=0.0):
@@ -134,15 +134,15 @@ def log_stats(startup_time, total_time, running_time=0.0):
     Log statistics about transformer execution
 
     :param startup_time: time to initialize and run cpp transformer
-    :param total_time:  total process times (sys, user, idle)
+    :param total_time:  total process times (sys, user, iowait)
     :param running_time:  total time to run script
     :return: None
     """
     logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
                                                                   startup_time.system) +
-                "idle: {} total: {}".format(startup_time.idle, startup_time.total_time))
+                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
     logger.info("Total process times  user: {} sys: {} ".format(total_time.system, total_time.system) +
-                "idle: {} total: {}".format(total_time.idle, total_time.total_time))
+                "iowait: {} total: {}".format(total_time.iowait, total_time.total_time))
     logger.info("Total running time {}".format(running_time))
 
 
