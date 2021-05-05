@@ -287,6 +287,9 @@ if __name__ == "__main__":
 
     compile_code()
     startup_time = get_process_info()
+    total_time = get_process_info()
+    stop_time = timeit.default_timer()
+    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
