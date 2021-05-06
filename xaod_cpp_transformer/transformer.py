@@ -126,7 +126,9 @@ def get_process_info():
     """
     process_info = psutil.Process()
     time_stats = process_info.cpu_times()
-    return TimeTuple(user=time_stats.user, system=time_stats.system, iowait=time_stats.iowait)
+    return TimeTuple(user=time_stats.user+time_stats.children_user,
+                     system=time_stats.system+time_stats.children_system,
+                     iowait=time_stats.iowait)
 
 
 def log_stats(startup_time, total_time, running_time=0.0):
@@ -141,7 +143,8 @@ def log_stats(startup_time, total_time, running_time=0.0):
     logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
                                                                   startup_time.system) +
                 "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("Total process times  user: {} sys: {} ".format(total_time.system, total_time.system) +
+    logger.info("Total process times  user: {} sys: {} ".format(total_time.user,
+                                                                total_time.system) +
                 "iowait: {} total: {}".format(total_time.iowait, total_time.total_time))
     logger.info("Total running time {}".format(running_time))
 
