@@ -167,8 +167,8 @@ def callback(channel, method, properties, body):
     logger.info("*********** Time test")
     log_stats(time_info1, time_info2, 0)
     p = psutil.Process()
-    logger.info("Time info 1: {}".format(p.cpu_times))
-    logger.info("Time info 2: {}".format(p.cpu_times))
+    logger.info("Time info 1: {}".format(p.cpu_times()))
+    logger.info("Time info 2: {}".format(p.cpu_times()))
 
     file_done = False
     file_retries = 0
