@@ -191,7 +191,7 @@ def callback(channel, method, properties, body):
                                         info="Total time " + str(total_time))
             servicex.put_file_complete(_file_path, _file_id, "success",
                                        num_messages=0,
-                                       total_time=round(tock - tick, 2),
+                                       total_time=total_time,
                                        total_events=total_events,
                                        total_bytes=output_size)
             logger.info("Time to successfully process {}: {} seconds".format(root_file, total_time))
@@ -238,7 +238,9 @@ def callback(channel, method, properties, body):
               'request-id': _request_id,
               'user-time': elapsed_process_times.user,
               'system-time': elapsed_process_times.system,
-              'total-time': elapsed_process_times.total_time}
+              'io-wait': elapsed_process_times.iowait,
+              'total-time': elapsed_process_times.total_time,
+              'wall-time': total_time}
     logger.info("Metric: {}".format(json.dumps(record)))
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
