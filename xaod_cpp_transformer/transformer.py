@@ -98,6 +98,7 @@ def parse_output_logs(logfile):
         logger.info("{} events processed out of {} total events".format(events_processed, total_events))
     return total_events, events_processed
 
+
 # class TimeTuple(NamedTuple):
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
@@ -131,21 +132,21 @@ def get_process_info():
                      iowait=time_stats.iowait)
 
 
-def log_stats(startup_time, total_time, running_time=0.0):
+def log_stats(startup_time, elapsed_time, running_time=0.0):
     """
     Log statistics about transformer execution
 
     :param startup_time: time to initialize and run cpp transformer
-    :param total_time:  total process times (sys, user, iowait)
+    :param elapsed_time:  elapsed time spent by processing file (sys, user, iowait)
     :param running_time:  total time to run script
     :return: None
     """
     logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
                                                                   startup_time.system) +
                 "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("Total process times  user: {} sys: {} ".format(total_time.user,
-                                                                total_time.system) +
-                "iowait: {} total: {}".format(total_time.iowait, total_time.total_time))
+    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
+                                                                  elapsed_time.system) +
+                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
     logger.info("Total running time {}".format(running_time))
 
 
@@ -170,6 +171,7 @@ def callback(channel, method, properties, body):
     total_events = 0
     output_size = 0
     total_time = 0
+    start_process_times = get_process_info()
     while not file_done:
         try:
             # Do the transform
@@ -219,10 +221,19 @@ def callback(channel, method, properties, body):
                                             info="Try: " + str(file_retries) +
                                                  " error: " + str(error)[0:1024])
 
-    total_time = get_process_info()
+    stop_process_times = get_process_info()
+    elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
+                                      system=stop_process_times.system - start_process_times.system,
+                                      iowait=stop_process_times.iowait - start_process_times.iowait)
     stop_time = timeit.default_timer()
-    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
-
+    log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
+    record = {'filename': '',
+              'output-size': output_size,
+              'events': total_events,
+              'user-time': elapsed_process_times.user,
+              'system-time': elapsed_process_times.system,
+              'total-time': elapsed_process_times.total_time}
+    logger.info("Metric: {}".format(json.dumps(record)))
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -307,9 +318,6 @@ if __name__ == "__main__":
 
     compile_code()
     startup_time = get_process_info()
-    total_time = get_process_info()
-    stop_time = timeit.default_timer()
-    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
