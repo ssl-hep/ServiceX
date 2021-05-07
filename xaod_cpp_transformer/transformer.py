@@ -231,7 +231,8 @@ def callback(channel, method, properties, body):
                                       iowait=stop_process_times.iowait - start_process_times.iowait)
     stop_time = timeit.default_timer()
     log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
-    record = {'filename': root_file,
+    record = {'filename': _file_path,
+              'file-id': _file_id,
               'output-size': output_size,
               'events': total_events,
               'user-time': elapsed_process_times.user,
