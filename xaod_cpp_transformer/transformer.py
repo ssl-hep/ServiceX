@@ -235,6 +235,7 @@ def callback(channel, method, properties, body):
               'file-id': _file_id,
               'output-size': output_size,
               'events': total_events,
+              'request-id': _request_id,
               'user-time': elapsed_process_times.user,
               'system-time': elapsed_process_times.system,
               'total-time': elapsed_process_times.total_time}
