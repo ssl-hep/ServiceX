@@ -165,9 +165,6 @@ def callback(channel, method, properties, body):
 
     tick = time.time()
 
-    time_info1 = get_process_info()
-    time_info2 = get_process_info()
-
     file_done = False
     file_retries = 0
     total_events = 0
