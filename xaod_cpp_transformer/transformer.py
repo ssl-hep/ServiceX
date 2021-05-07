@@ -216,6 +216,10 @@ def callback(channel, method, properties, body):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logger.exception("Received exception")
             else:
+                logger.warning("Retry {} of {} for {}: {}".format(file_retries,
+                                                                  MAX_RETRIES,
+                                                                  root_file,
+                                                                  error))
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="retry",
                                             info="Try: " + str(file_retries) +
