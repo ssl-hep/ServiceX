@@ -1,102 +1,106 @@
-# Contributing to ServiceX
+# ServiceX Contributor Guide
 
-So you want to get involved! The developers welcome community input. The central development area
-with all ServiceX repositories can be found [here](https://github.com/ssl-hep). 
+Welcome to the ServiceX contributor guide, and thank you for your interest in contributing to the project!
 
-The core steps for processing a transformation request are shown in the diagram below.
+## Overview
 
-![Development](../img/develop.png)
+ServiceX uses a microservice architecture, 
+and is designed to be hosted on a Kubernetes cluster. 
+The ServiceX project uses a polyrepo strategy for source code management: 
+the source code for each microservice is located in a dedicated repo. 
 
-<!--- 
-TODO: update to remove kafka from the png
--->
+Below is a partial list of these repositories:
 
-## Testing new changes
+- [ServiceX](https://github.com/ssl-hep/ServiceX) - Main repository, contains Helm charts for deployment to Kubernetes
+- [ServiceX_frontend](https://github.com/ssl-hep/ServiceX_frontend) - The ServiceX Python library, which enables users to send requests to ServiceX. Currently, this is the only ServiceX frontend client.
+- [ServiceX_App](https://github.com/ssl-hep/ServiceX_App) - The ServiceX API Server, written in Flask.
 
-Instructions for testing new changes. Broadly
+Additional repositories related to the project can be found in the [ssl-hep GitHub organization](https://github.com/ssl-hep).
 
-1. setup testing environment via ``conda`` or ``virtualenv``, 
-2. clone the appropriate repository
-3. run ``python -m pip install -e .[test]`` to set up the necessary packages in the environment 
-4. run the tests via ``pytests``.
+Please read our [architecture document](https://servicex.readthedocs.io/en/latest/development/architecture/) for more details.
 
-## Deploying ServiceX on a Kubernetes cluster
+## Branching Strategy
 
-The entire ServiceX stack can be installed using the helm chart contained
-[here](https://github.com/ssl-hep/ServiceX). Below is a set of developer instructions for deploying
-a production-ready instance of ServiceX on a Kubernetes cluster.
+ServiceX uses a slightly modified GitLab flow. Each repository has a main branch, usually named `develop` (or `master` for the Python frontend). All changes should be made on feature branches and submitted as PRs to the main branch. Releases are frozen on dedicated release branches, e.g. `v1.0.0-RC.2`. 
 
-1. Deployment requires access to a Kubernetes cluster. You’ll need to install and set up
-``kubectl`` (see
-[Install and Set Up kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)) and Helm 3
-(see [Installing Helm](https://helm.sh/docs/intro/install/)).
+## Development Workflow
 
-2. Next configure ``kubectl`` to access the appropriate namespace on the cluster with the
-kubeconfig file located at ``~/.kube/config``.
+1. Set up a local development environment:
+    - Decide which microservice (or Helm chart) you'd like to change, 
+    and locate the corresponding repository. 
+    - If you are a not a member of the `ssl-hep` GitHub organization, 
+    fork the repository.
+    - Clone the (forked) repository to your local machine:
+    ```
+    git clone git@github.com:<GitHub username>/ServiceX_App.git
+    ```
+    - If you created a fork, add the upstream repository as remote:
+    ```
+    git remote add upstream git@github.com:ssl-hep/ServiceX_App.git
+    ```
+    - Set up a new environment via ``conda`` or ``virtualenv``.
+    - Install dependencies, including test dependencies:
+    ```
+    python3 -m pip install -e .[test]
+    ```
+    - If the root directory contains a file named `.pre-commit-config.yaml`,
+    you can install the [pre-commit](https://pre-commit.com/) hooks with:
+    ```
+    pip install pre-commit
+    pre-commit install
+    ```
+1. Develop your contribution:
+    - Pull latest changes from upstream:
+    ```
+    git checkout develop
+    git pull upstream develop
+    ```
+    - Create a branch for the feature you want to work on:
+    ```
+    git checkout -b fix-issue-99
+    ```
+    - Commit locally as you progress with `git add` and `git commit`.
+1. Test your changes:
+    - Run the full test suite with `python -m pytest`, or target specific test files with `python -m pytest tests/path/to/file.py`.
+    - Please write new unit tests to cover any changes you make.
+    - You can also manually test microservice changes against a full ServiceX deployment by building the Docker image, pushing it to DockerHub, and setting the `image` and `tag` values as follows:
+    ```yaml
+    app:
+      image: <organization>/<image repository>
+      tag: my-feature-branch
+    ``` 
+    - For more details, please read our full 
+    [deployment guide](https://servicex.readthedocs.io/en/latest/deployment/basic). 
+1. Submit a pull request to the upstream repository.
 
-3. For complete control over the deployment values in the ServiceX Helm chart, it’s recommended to
-check out the ``develop`` branch of ServiceX from GitHub:
+## Issues
+Please submit issues for bugs and feature requests to the [main ServiceX repository](https://github.com/ssl-hep/ServiceX),
+unless the issue is specific to a single microservice.
 
-        git clone https://github.com/ssl-hep/ServiceX.git
-        cd ServiceX
-        git checkout develop
+We manage project priorities with a [ZenHub board](https://app.zenhub.com/workspaces/servicex-5caba4288d0ceb76ea94ae1f/board?repos=180217333,180236972,185614791,182823774,202592339).
 
-4. Add and update the ServiceX Helm chart:
+## Join us on Slack
+We coordinate our efforts on the [IRIS-HEP Slack](http://iris-hep.slack.com).
+Come join this intellectual hub!
 
-        helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
-        helm repo update
-        helm dependency update servicex
+## Debugging Tips
+Microservice architectures can be difficult to test and debug. Here are some 
+helpful hints to make this easier.
 
-5. ServiceX may require some modifications to the default deployment values to run on your cluster.
-In particular, you’ll need your CERN grid certificate to communicate with Rucio. You can see the
-default values in ``servicex/values.yaml``. These values can be overridden via a separate yaml
-file. For example, to run on SSL-RIVER,
+1. Instead of relying on the DID Finder to locate some particular datafile, you
+can mount one of your local directories into the transformer pod and then 
+instruct the DID Finder to always offer up the path to that file regardless of
+the submitted DID. You can use the `hostMount` value to have a local directory
+mounted into each transformer pod under `/data`. You can use the 
+`didFinder.staticFile` value to instruct DID Finder to offer up a file from that
+directory.
+2. You can use port-forwarding to expose port 15672 from the RabbitMQ pod to 
+your laptop and log into the Rabbit admin console using the username: `user` and
+password `leftfoot1`. From here you can monitor the queues, purge old messages
+and inject your own messages
 
-        cat <<EOF > river-values.yaml
-        app:
-          auth: true
-          adminUser: admin
-          adminPassword: eto2ipiis1
-          ingress:
-            enabled: true
-        didFinder:
-          tag: v1.0-rc.1
-          pullPolicy: Always
-        codeGen:
-          # image: sslhep/servicex_code_gen_func_adl_uproot
-          image: sslhep/servicex_code_gen_func_adl_xaod
-        rabbitmq:
-          service:
-            type: NodePort
-            nodePort: 30672
-        minio:
-          ingress:
-            enabled: true
-            hosts:
-            - "xaod-minio.servicex.ssl-hep.org"
-        gridAccount: bgalewsk
-        EOF
+## Notes for Maintainers
 
-6. With the appropriate values, it is now possible to deploy ServiceX via the Helm chart:
+### Hotfixes
 
-        helm install -f river-values.yaml --version v1.0.0-rc.1 rc1-xaod ssl-hep/servicex
-
-7. Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to complete its
-initialization. After this all the pods of the new deployment should be ready. If you check the
-status of the pods via
-
-        kubectl get pods
-
-    You should soon find that your setup looks comparable to this:
-
-        NAME                                             READY   STATUS    RESTARTS   AGE
-        servicex-1579021789-code-gen-7cd998d5b6-nwtgv            1/1     Running   0          49m
-        servicex-1579021789-did-finder-7c5cbb4575-52wxf          1/1     Running   0          49m
-        servicex-1579021789-minio-78b55bfdf8-mbmmf               1/1     Running   0          49m
-        servicex-1579021789-preflight-b748b4dfd-qqt89            1/1     Running   4          49m
-        servicex-1579021789-rabbitmq-0                           1/1     Running   0          49m
-        servicex-1579021789-servicex-app-98779c79c-cvmqx         1/1     Running   3          49m
-        servicex-1579021789-x509-secrets-74f4bcc8bb-5kqvb        1/1     Running   0          49m
-
-8. The new ServiceX deployment should now be ready for business. To try a 10TB scale test check
-[ServiceX_scaleTest](https://drive.google.com/open?id=1i5dHWMDEJk5dW0PbxGzo_ccKb8ViP9TCFaS_VpzWAUk).
+If a critical bugfix or hotfix must be applied to a previous release, it should be merged to the main branch and then applied to each affected release branch using `git cherry-pick <merge commit hash> -m 1`. Merge commits have 2 parents, so the `-m 1` flag is used to specify that the first parent (i.e. previous commit on the main branch) should be used 

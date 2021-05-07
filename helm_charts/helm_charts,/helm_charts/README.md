@@ -13,9 +13,10 @@ ServiceX is an on-demand service that delivers data straight from the grid to hi
 
 ## Getting Started
 
-Check out our [installation guide](https://servicex.readthedocs.io/en/latest/getting-started/) for instructions on how to obtain credentials and install the [ServiceX Python library](https://pypi.org/project/servicex/).
-
-Once you've done that, refer to the documentation on how to get started [sending requests to ServiceX](https://https://servicex.readthedocs.io/en/latest/requests/).
+Check out our [quick start guide](https://servicex.readthedocs.io/en/latest/user/getting-started/) 
+for instructions on how to obtain credentials, 
+install the [ServiceX Python library](https://pypi.org/project/servicex/),
+and make your first ServiceX transformation request.
 
 ## Documentation
 
@@ -27,11 +28,14 @@ The [ServiceX documentation](https://servicex.readthedocs.io/en/latest/) is host
 
 The [Scalable Systems Laboratory](https://iris-hep.org/ssl.html) (SSL) at IRIS-HEP maintains multiple instances of ServiceX to transform several input formats from different experiments.
 
-In addition, ServiceX is an open-source project, and you are welcome to host your own deployment. Instructions on how to configure and deploy ServiceX can be found in our [deployment guide](DEPLOYMENT.md).
+In addition, ServiceX is an open-source project, and you are welcome to host your own deployment. 
+Instructions on how to configure and deploy ServiceX can be found in our 
+[deployment guide](https://servicex.readthedocs.io/en/latest/deployment/basic/).
 
 ## Contributing
 
-The ServiceX team welcomes community contributions. If you'd like to get involved, please check out our [contributor guide](CONTRIBUTING.md).
+The ServiceX team welcomes community contributions. If you'd like to get involved, please check out our 
+[contributor guide](https://servicex.readthedocs.io/en/latest/development/contributing/).
 
 ## License
 
