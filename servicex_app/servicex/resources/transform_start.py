@@ -34,10 +34,15 @@ from servicex.resources.servicex_resource import ServiceXResource
 class TransformStart(ServiceXResource):
     @classmethod
     def make_api(cls, transformer_manager):
+        """Initializes the transformer manage for this resource."""
         cls.transformer_manager = transformer_manager
         return cls
 
     def post(self, request_id):
+        """
+        Starts a transformation request, deploys transformers, and updates record.
+        :param request_id: UUID of transformation request.
+        """
         from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.return_request(request_id)
         submitted_request.status = 'Running'

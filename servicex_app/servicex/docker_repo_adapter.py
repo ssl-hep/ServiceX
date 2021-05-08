@@ -34,7 +34,12 @@ class DockerRepoAdapter:
     def __init__(self, registry_endpoint="https://hub.docker.com"):
         self.registry_endpoint = registry_endpoint
 
-    def check_image_exists(self, tagged_image):
+    def check_image_exists(self, tagged_image: str) -> bool:
+        """
+        Checks that the given Docker image
+        :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".
+        :return: Whether or not the image exists in the registry.
+        """
         search_result = re.search("(.+)/(.+):(.+)", tagged_image)
         if not search_result or len(search_result.groups()) != 3:
             return False
