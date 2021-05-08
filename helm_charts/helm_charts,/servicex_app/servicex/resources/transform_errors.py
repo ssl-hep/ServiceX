@@ -34,6 +34,10 @@ from servicex.resources.servicex_resource import ServiceXResource
 class TransformErrors(ServiceXResource):
     @auth_required
     def get(self, request_id):
+        """
+        Fetches errors for a given transformation request.
+        :param request_id: UUID of transformation request.
+        """
         transform = TransformRequest.return_request(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'

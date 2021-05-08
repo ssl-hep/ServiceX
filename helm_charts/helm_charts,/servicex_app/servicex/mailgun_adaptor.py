@@ -8,7 +8,12 @@ class MailgunAdaptor:
         self.domain = current_app.config.get('MAILGUN_DOMAIN')
         self.endpoint = f"https://api.mailgun.net/v3/{self.domain}/messages"
 
-    def send(self, email, template_name):
+    def send(self, email: str, template_name: str):
+        """
+        Sends an email to the given address using the given template.
+        :param email: Email address of recipient.
+        :param template_name: Name of HTML template file.
+        """
         if not self.api_key or not self.domain:
             return
         data = {

@@ -25,8 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import requests
+
+from servicex.models import TransformRequest
 
 
 class CodeGenAdapter:
@@ -34,7 +35,16 @@ class CodeGenAdapter:
         self.code_gen_url = code_gen_url
         self.transformer_manager = transformer_manager
 
-    def generate_code_for_selection(self, request_record, namespace):
+    def generate_code_for_selection(
+        self, request_record: TransformRequest, namespace: str
+    ):
+        """
+        Generates the C++ code for a request's selection string.
+        Places the results in a ConfigMap resource in the
+        Starts a transformation request, deploys transformers, and updates record.
+        :param request_record: A TransformationRequest.
+        :param namespace: Namespace in which to place resulting ConfigMap.
+        """
         from io import BytesIO
         from zipfile import ZipFile
 
