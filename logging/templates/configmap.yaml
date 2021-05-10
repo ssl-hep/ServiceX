@@ -38,11 +38,42 @@ data:
                     paths:
                     - /var/log/containers/*${data.kubernetes.container.id}.log
                     processors:
-                      - dissect:
-                          tokenizer: "%{level} %{instance} %{component} %{requestID} %{message}"
-                          field: "message"
-                          target_prefix: ""
-                          overwrite_keys: true
+                      - if:
+                          or:
+                            - regexp:
+                                message: "^INFO.*"
+                            - regexp:
+                                message: "^ERROR.*"
+                            - regexp:
+                                message: "^CRITICAL.*"
+                            - regexp:
+                                message: "^WARNING.*"
+                            - regexp:
+                                message: "^DEBUG.*"
+                        then:
+                          - dissect:
+                              tokenizer: "%{level} %{instance} %{component} %{requestID} %{message}"
+                              field: "message"
+                              target_prefix: ""
+                              overwrite_keys: true
+                          - if:
+                              regexp:
+                                message: "^Metric:"
+                            then:
+                              - dissect:
+                                  tokenizer: "Metric: %{data}"
+                                  field: "message"
+                                  target_prefix: ""
+                                  overwrite_keys: true
+                              - decode_json_fields:
+                                  fields: [data]
+                                  process_array: true
+                                  max_depth: 2
+                                  target: ""
+                                  overwrite_keys: false
+                                  add_error_key: true
+                              - drop_fields:
+                                  fields: ["message", "data"]
 
 
               - condition:
