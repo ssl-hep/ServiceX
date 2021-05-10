@@ -11,6 +11,16 @@ To install:
 pip install coffea[servicex]
 ```
 
+If you want to host your own notebook you'll need JupyterLab
+```bash
+pip install jupyterlab
+```
+
+The dynamic plots require the JupyterLab widgets
+```bash
+pip install jupyterlab-widgets
+```
+
 ## Obtain Credentials
 Visit SSL's [xAOD ServiceX](https://xaod.servicex.ssl-hep.org) instance. Click 
 on the _Sign-in_ button in the upper right hand corner. You will be asked to 
