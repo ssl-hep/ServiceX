@@ -108,6 +108,14 @@ class SubmitTransformationRequest(ServiceXResource):
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
 
+            if did:
+                parsed_did = DIDParser(
+                    did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
+                )
+                if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
+                    msg = f"DID scheme is not supported: {parsed_did.scheme}"
+                    return {'message': msg}, 400
+
             if self.object_store and \
                     args['result-destination'] == \
                     TransformRequest.OBJECT_STORE_DEST:
@@ -128,7 +136,7 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
-                did=did if did else "File List Provided in Request",
+                did=parsed_did.full_did if did else "File List Provided in Request",
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -182,19 +190,12 @@ class SubmitTransformationRequest(ServiceXResource):
             if did:
                 did_request = {
                     "request_id": request_rec.request_id,
-                    "did": request_rec.did,
+                    "did": parsed_did.did,
                     "service-endpoint": self._generate_advertised_endpoint(
                         "servicex/internal/transformation/" +
                         request_rec.request_id
                     )
                 }
-
-                parsed_did = DIDParser(
-                    did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
-                )
-                if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
-                    msg = f"DID scheme is not supported: {parsed_did.scheme}"
-                    return {'message': msg}, 400
 
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,

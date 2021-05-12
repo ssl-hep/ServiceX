@@ -55,3 +55,11 @@ class DIDParser:
         :return: queue name
         """
         return f"{self.scheme}_did_requests"
+
+    @property
+    def full_did(self) -> str:
+        """
+        Reconstruct the full DID with scheme - this is useful if the scheme was defaulted
+        :return:
+        """
+        return f'{self.scheme}://{self.did}'
