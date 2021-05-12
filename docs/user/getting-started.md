@@ -19,51 +19,37 @@ There are multiple ways to specify a request, but we will use
 func-ADL in this tutorial.
 
 ## Selecting an endpoint
-
-Create a file called `servicex.yaml` on your local machine in whichever directory your analysis code will be located. You can copy the template below:
-```
-api_endpoints:
-  - endpoint: <your-endpoint>
-    token: <api-token>
-    type: (xaod | uproot)
-```
-
-To use the ServiceX client, you will need a ServiceX API token issued by a ServiceX backend instance.
-Each ServiceX instance is dedicated to a specific experiment and file format.
-You can use one of the centrally-managed instances of ServiceX running on the University of Chicago's River cluster:
+To use the ServiceX client, you will need a ServiceX API token issued by a 
+ServiceX backend instance. Each ServiceX instance is dedicated to a specific 
+experiment and file format.
+You can use one of the centrally-managed instances of ServiceX running on the 
+University of Chicago's River cluster:
 
 | Endpoint                                   | Collaboration | Type   | Input        |
 |-----------------------------               |------         |-----   |-------       |
 | https://xaod.servicex.ssl-hep.org          | ATLAS         | xaod   | xAOD files   |
 | https://uproot-atlas.servicex.ssl-hep.org  | ATLAS         | uproot | Flat ntuples |
-| https://uproot-cms.servicex.ssl-hep.org    | CMS           | uproot | Flat ntuples |
 
 
-Choose one of the above, and copy the URL into the `endpoint` field of your `servicex.yaml` file. Set `type: xaod` or `type: uproot` to match your endpoint.
+Visit the instance that meets your needs. Click on the _Sign-in_ button in the 
+upper right hand corner. You will be asked to authenticate via GlobusAuth and 
+complete a registration form. Once this form is submitted, it will be reviewed 
+by SSL staff. You will receive an email upon approval. 
+
+At this time you may return to the ServiceX page. Click on your name in the 
+upper right hand corner and then select _Profile_ tab. Click on the download
+button to have a servicex.yaml file generated with your access token and 
+downloaded to your computer. 
+
+![Download button](../img/download-servicex-yaml.jpg)
+
+You may place this in your home directory or within
+the [servicex_frontend search path](https://github.com/ssl-hep/ServiceX_frontend#configuration).
 
 The remainder of this guide will use the xAOD instance.
 
-## Obtaining credentials
-
-Next, visit the URL in a browser and click the sign in button to create an account with that instance.
-You can authenticate with the identity provider of your choice (e.g. CERN or your university). Save your profile.
-
-On your new profile, you'll see an API token. Copy it using using the button on the right:
-
-![Copying API token](../img/copy-api-token.png)
-
-Paste the token into your `servicex.yaml` file, which should now look something like this:
-```
-api_endpoints:
-  - endpoint: https://xaod.servicex.ssl-hep.org/
-    token: <omitted>
-    type: xaod
-```
-
-Since ServiceX instances rely on a shared grid certificate to access Rucio, each user must be approved by the ServiceX admins. They will be automatically notified, and you'll receive a welcome email once your account is approved.
 
 ## First request
-
 Once you've been approved, you're ready to go!
 
 You can interact with ServiceX by making a transformation request. A transformation request includes the following information:

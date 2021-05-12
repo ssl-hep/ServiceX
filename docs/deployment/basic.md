@@ -1,7 +1,20 @@
-# How to deploy ServiceX
+# Introduction to ServiceX Deployment
 
-This guide is aimed at those interested in learning how to deploy ServiceX 
-with minimal configuration. For more advanced topics, such as making a 
+ServiceX is a multi-tenant service designed to be deployed on a Kubernetes
+cluster. At present, each ServiceX instance is dedicated to a particular
+experiment and file format (flat root file, ATLAS xAOD, and CMS MiniAOD). There
+are centrally managed instances of the service running on 
+the University of Chicago's River cluster at 
+[xaod.servicex.ssl-hep.org](https://xaod.servicex.ssl-hep.org) and 
+[uproot-atlas.servicex.ssl-hep.org](https://uproot-atlas.servicex.ssl-hep.org). 
+
+ServiceX is deployed using a [Helm](https://helm.sh/) chart. 
+The full list of configuration options can be found in the 
+[reference section](reference.md).
+
+This introduction is aimed at those interested in learning how to deploy 
+ServiceX with minimal configuration. 
+For more advanced topics, such as making a 
 publicly accessible deployment suitable for multiple users, 
 see the [production deployment guide](production.md).
 
@@ -17,7 +30,6 @@ Your account will need to have permission to:
 If you don't have access to a cluster, you can enable a single node 
 Kubernetes cluster on your desktop 
 [using Docker-Desktop](https://www.docker.com/blog/kubernetes-is-now-available-in-docker-desktop-stable-channel/).
-
 
 
 ## Authenticating to the grid
@@ -39,7 +51,7 @@ pip install servicex-cli
 
 You can run the CLI to install your certs with the following command:
 ```
-servicex init --cert-dir ~/.globus --namespace <default>
+servicex --namespace <default> init --cert-dir ~/.globus 
 ```
 By default, this will look for the certificates in your `~/.globus` directory.
 You can pass another directory with the `--cert-dir` argument.
@@ -124,8 +136,10 @@ helm install -f values.yaml --version v1.0.0-rc.3 servicex ssl-hep/servicex
 ```
 
 Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to
-complete its initialization. After this all the pods of the new deployment 
-should be ready. If you check the status of the pods via
+complete its initialization. The `servicex` argument is used by helm as the release 
+name.  It is used to refer to the chart when deploying, insptacting, or deleting 
+the chart. After this all the pods of the new deployment 
+should be ready. You can check the status of the pods via
 
 ```
 kubectl get pods
@@ -159,7 +173,7 @@ This should output some JSON metadata for the deployment.
 
 ### Running a simple analysis
 
-Check out the [getting started guide](../user/getting-started.md) for new users,
+Check out the [quick start guide](../user/getting-started.md) for new users,
 which contains some examples of basic requests you can make to ServiceX.
 
 Select one which corresponds to the file type you chose for your deployment.

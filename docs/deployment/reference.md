@@ -30,6 +30,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
 | `app.mailgunApiKey`                  | API key to send Mailgun emails to newly approved users | -
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
+| `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request    | `rucio`                                                 |
+| `app.allowedDIDSchemes`              | List of valid DID finder schemes to accept       | [`rucio`]                                                 |
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
 | `didFinder.image`                    | DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.tag`                      | DID Finder image tag                             | `latest`                                                |
@@ -66,10 +68,21 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.autoscaler.maxReplicas` | Maximum number of transformer pods per request   | 20 |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
-| `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' | 
-| `elasticsearchLogging.enabled`       | Set to True to enable writing of reports to an external ElasticSearch system | False |
-| `elasticsearchLogging.host`          | Hostname for external ElasticSearch server | |
-| `elasticsearchLogging.port`          | Port for external ElasticSearch Server           | 9200 |
-| `elasticsearchLogging.user`          | Username to connect to external ElasticSearch Server | |
-| `elasticsearchLogging.password`      | Password to connect to external ElasticSearch Server | |
+| `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' |
+
+## Logging chart
+
+The following table lists the configurable parameters of the Logging chart and their default values.
+
+| Parameter                            | Description                                      | Default                                                 |
+| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `servicex.namespace` | namespace where you have servicex deployed | default |
+| `elasticsearch.host` | Elasticsearch host | atlas-kibana.mwt2.org |
+| `elasticsearch.port` | Elasticsearch port | 9200 |
+| `elasticsearch.user` | Elasticsearch user with appropriate roles | river-dev-logs  |
+| `elasticsearch.pass` | Elasticsearch pass | river-dev-logs  |
+| `elasticsearch.protocol` | SSL support | https  |
+| `kibana.host` | address of the Kibana endpoint | https://atlas-kibana.mwt2.org:5601 |
+| `kibana.dashboards.enabled` | If not there dashboards will be created. | false |
+| `kibana.dashboards.index` | Kibana system index | .kibana-dev  |
 
