@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from flask import Response, url_for, get_flashed_messages
+from flask import Response, url_for
 
 from .web_test_base import WebTestBase
 
@@ -8,6 +8,8 @@ from servicex.web.servicex_file import get_correct_url
 
 
 class TestServiceXFile(WebTestBase):
+    module = "servicex.web.servicex_file"
+
     def test_servicex_file(self, client, user):
         cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}
         client.application.config.update(cfg)
@@ -21,23 +23,21 @@ class TestServiceXFile(WebTestBase):
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
 
-    def test_servicex_file_no_match(self, client):
+    def test_servicex_file_no_match(self, mock_flash, client):
         cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl:develop'}
         client.application.config.update(cfg)
         response: Response = client.get(url_for('servicex-file'))
         assert response.status_code == 302
-        flashed_messages = get_flashed_messages()
-        assert flashed_messages
-        assert "Unable to infer filetype" in flashed_messages[0]
+        mock_flash.assert_called_once()
+        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
 
-    def test_servicex_file_ambiguous_match(self, client):
+    def test_servicex_file_ambiguous_match(self, client, mock_flash):
         cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod_uproot:develop'}
         client.application.config.update(cfg)
         response: Response = client.get(url_for('servicex-file'))
         assert response.status_code == 302
-        flashed_messages = get_flashed_messages()
-        assert flashed_messages
-        assert "Unable to infer filetype" in flashed_messages[0]
+        mock_flash.assert_called_once()
+        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
 
     def test_correct_url(self, client):
         """

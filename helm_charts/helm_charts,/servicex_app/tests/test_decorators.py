@@ -1,4 +1,4 @@
-from flask import url_for, render_template, Response, make_response
+from flask import url_for, Response, make_response
 from flask_jwt_extended import create_access_token
 
 from tests.web.web_test_base import WebTestBase
@@ -38,7 +38,7 @@ class TestDecorators(WebTestBase):
         assert response.status_code == 302
         assert response.location == url_for('create_profile', _external=True)
 
-    def test_oauth_decorator_saved(self, client, user):
+    def test_oauth_decorator_saved(self, client, user, captured_templates):
         client.application.config['ENABLE_AUTH'] = True
         user.id = 7
         with client.session_transaction() as sess:
@@ -46,7 +46,9 @@ class TestDecorators(WebTestBase):
             sess['user_id'] = user.id
         resp: Response = client.get(url_for('profile'))
         assert resp.status_code == 200
-        assert resp.data.decode() == render_template('profile.html', user=user)
+        template, context = captured_templates[0]
+        assert template.name == "profile.html"
+        assert context["user"] == user
 
     def test_auth_decorator_auth_disabled(self, client):
         with client.application.app_context():

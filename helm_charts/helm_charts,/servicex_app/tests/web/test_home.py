@@ -1,10 +1,11 @@
-from flask import Response, render_template
+from flask import Response
 
 from .web_test_base import WebTestBase
 
 
 class TestHome(WebTestBase):
-    def test_home(self, client):
+    def test_home(self, client, captured_templates):
         response: Response = client.get('/')
         assert response.status_code == 200
-        assert response.data.decode() == render_template('home.html')
+        template, context = captured_templates[0]
+        assert template.name == "home.html"

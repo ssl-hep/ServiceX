@@ -27,10 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime
 
+from flask import template_rendered
+from flask.testing import FlaskClient
 from pytest import fixture
 
 
 class WebTestBase:
+    module = ""
+
     @staticmethod
     def _app_config():
         return {
@@ -67,7 +71,7 @@ class WebTestBase:
         }
 
     @staticmethod
-    def _test_client(extra_config=None):
+    def _test_client(extra_config=None) -> FlaskClient:
         from servicex import create_app
         config = WebTestBase._app_config()
         if extra_config:
@@ -164,8 +168,21 @@ class WebTestBase:
 
     @fixture
     def client(self):
-        with self._test_client() as client:
-            yield client
+        return self._test_client()
+
+    @fixture
+    def captured_templates(self, client):
+        # Based on https://stackoverflow.com/a/58204843/8534196
+        recorded = []
+
+        def record(sender, template, context, **extra):
+            recorded.append((template, context))
+
+        template_rendered.connect(record, client.application)
+        try:
+            yield recorded
+        finally:
+            template_rendered.disconnect(record, client.application)
 
     @fixture
     def user(self, mocker):
@@ -198,3 +215,15 @@ class WebTestBase:
                                             'secondary-oauth-id']}
         client.oauth2_token_introspect = mocker.Mock(return_value=mock_intro)
         return client
+
+    @fixture
+    def mock_session(self, mocker):
+        if not self.module:
+            raise ValueError("Please provide a module name!")
+        return mocker.patch(f"{self.module}.session", dict())
+
+    @fixture
+    def mock_flash(self, mocker):
+        if not self.module:
+            raise ValueError("Please provide a module name!")
+        return mocker.patch(f"{self.module}.flash", mocker.MagicMock(name="mock_flash"))
