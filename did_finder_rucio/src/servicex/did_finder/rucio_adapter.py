@@ -57,7 +57,6 @@ class RucioAdapter:
 
     def list_files_for_did(self, did):
         parsed_did = self.parse_did(did)
-        self.logger.info(f"did: {did}")
         try:
             g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
             return g_files

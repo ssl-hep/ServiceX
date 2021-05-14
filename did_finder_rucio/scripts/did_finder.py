@@ -168,7 +168,6 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 if __name__ == "__main__":
     # Main Script
     logger = initialize_logging()
-    logger.info("v 2")
     args = parser.parse_args()
 
     site = args.site
