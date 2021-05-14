@@ -174,15 +174,8 @@ if __name__ == "__main__":
     site = args.site
     prefix = args.prefix
     threads = args.threads
-    # print("--------- ServiceX DID Finder ----------------")
-    # print("Threads: " + str(threads))
-    # print("Site: " + str(site))
-    # print("Prefix: " + str(prefix))
     logger.info("None ServiceX DID Finder starting up: " +
                 f"Threads: {threads} Site: {site} Prefix: {prefix}")
-    logger.info("None ServiceX DID Finder starting up: " +
-                f"Threads: {threads} Site: {site} Prefix: {prefix}",
-                extra={'requestId': 9999})
     did_client = DIDClient()
     replica_client = ReplicaClient()
     rucio_adapter = RucioAdapter(did_client, replica_client)

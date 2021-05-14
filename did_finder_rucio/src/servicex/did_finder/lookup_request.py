@@ -25,8 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
 import math
 import threading
+import logging
 from asyncio import Queue
 
 from servicex.did_finder.rucio_adapter import RucioAdapter
@@ -61,9 +63,8 @@ class LookupRequest:
         self.replica_lookup_complete = None
 
         # set logging to a null handler
-        import logging
-        self.__logger = logging.getLogger(__name__)
-        self.__logger.addHandler(logging.NullHandler())
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.NullHandler())
 
     # Yield successive n-sized
     # chunks from file list.
@@ -74,21 +75,18 @@ class LookupRequest:
 
     def report_lookup_complete(self):
         elapsed_time = self.replica_lookup_complete - self.submited_time
-        self.servicex_adapter.put_fileset_complete(
-            {
-                "files": self.summary.files,
-                "files-skipped": self.summary.files_skipped,
-                "total-events": self.summary.total_events,
-                "total-bytes": self.summary.total_bytes,
-                "elapsed-time": int(elapsed_time.total_seconds())
-            }
-        )
+        lookup_info = {"files": self.summary.files,
+                       "files-skipped": self.summary.files_skipped,
+                       "total-events": self.summary.total_events,
+                       "total-bytes": self.summary.total_bytes,
+                       "elapsed-time": int(elapsed_time.total_seconds())}
+        self.servicex_adapter.put_fileset_complete(lookup_info)
 
         self.servicex_adapter.post_status_update("Fileset load complete in " + str(
             self.replica_lookup_complete - self.submited_time))
 
-        self.__logger.info(self.summary)
-        self.__logger.info(f"Complete time =  {self.replica_lookup_complete - self.submited_time}")
+        self.logger.info(self.summary, extra={'requestId': None})
+        self.logger.info(f"Metric: {json.dumps(lookup_info)}", extra={'requestId': None})
 
     def replica_lookup(self):
         while not self.replica_lookup_queue.empty():
@@ -97,7 +95,7 @@ class LookupRequest:
                 tick = datetime.now()
                 replicas = list(self.rucio_adapter.find_replicas(chunk, self.site))
                 tock = datetime.now()
-                self.__logger.info(f"Read {len(replicas)} replicas in {str(tock-tick)}")
+                self.logger.info(f"Read {len(replicas)} replicas in {str(tock - tick)}")
 
                 # Opportunistically prepare a sample file to submit to serviceX. At the end of
                 # this loop we will do a single thread-safe check to see if the sample has been
@@ -128,16 +126,16 @@ class LookupRequest:
                                 self.report_lookup_complete()
 
                 tock2 = datetime.now()
-                self.__logger.info(f"Files submitted to serviceX in {tock2 - tock}")
+                self.logger.info(f"Files submitted to serviceX in {tock2 - tock}")
 
                 with self.sample_submitted_lock:
                     if not self.sample_submitted:
                         self.servicex_adapter.post_preflight_check(sample_replica)
-                        self.__logger.info(f"Submitted Sample file {sample_replica}")
+                        self.logger.info(f"Submitted Sample file {sample_replica}")
                         self.sample_submitted = True
 
             except Exception as e:
-                self.__logger.exception(f"Received exception while doing replica lookup: {e}")
+                self.logger.exception(f"Received exception while doing replica lookup: {e}")
 
     def lookup_files(self):
         file_iterator = self.rucio_adapter.list_files_for_did(self.did)
@@ -150,11 +148,11 @@ class LookupRequest:
         self.file_list = list(file_iterator)
         self.lookup_time = datetime.now()
 
-        self.__logger.info(f"Dataset contains {len(self.file_list)} files. " +
-                           f"Lookup took {str(self.lookup_time-self.submited_time)}")
+        self.logger.info(f"Dataset contains {len(self.file_list)} files. " +
+                         f"Lookup took {str(self.lookup_time-self.submited_time)}")
 
         if len(self.file_list) == 0:
-            self.__logger.warning(f"DID Finder found zero files for {self.did}")
+            self.logger.warning(f"DID Finder found zero files for {self.did}")
             self.servicex_adapter.post_status_update(
                 "DID Finder found zero files for dataset "+self.did,
                 severity='fatal')
@@ -162,7 +160,7 @@ class LookupRequest:
 
         for file in self.file_list:
             self.summary.accumulate(file)
-        self.__logger.info(self.summary)
+        self.logger.info(self.summary)
 
         self.replica_lookup_queue = Queue(math.ceil(len(self.file_list) / self.chunk_size))
 
