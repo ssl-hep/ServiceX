@@ -27,6 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import logging
+import os
 import sys
 import traceback
 import time
@@ -59,6 +61,27 @@ parser.add_argument('--threads', dest='threads', action='store',
 
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
+
+
+def initialize_logging():
+    """
+    Get a logger and initialize it so that it outputs the correct format
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+
+    log = logging.getLogger()
+    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} did_finder NONE".format(instance) +
+                                  ' %(message)s')
+#                                  '%(requestId)s %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
 
 
 # RabbitMQ Queue Callback Method
@@ -121,16 +144,20 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 
 
 # Main Script
+logger = initialize_logging()
+logger.info("v 1")
 args = parser.parse_args()
 
 site = args.site
 prefix = args.prefix
 threads = args.threads
-print("--------- ServiceX DID Finder ----------------")
-print("Threads: " + str(threads))
-print("Site: " + str(site))
-print("Prefix: " + str(prefix))
-
+# print("--------- ServiceX DID Finder ----------------")
+# print("Threads: " + str(threads))
+# print("Site: " + str(site))
+# print("Prefix: " + str(prefix))
+logger.info("None ServiceX DID Finder starting up: " +
+            f"Threads: {threads} Site: {site} Prefix: {prefix}",
+            extra={'requestId': None})
 did_client = DIDClient()
 replica_client = ReplicaClient()
 rucio_adapter = RucioAdapter(did_client, replica_client)
