@@ -45,7 +45,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'flask',
+        'flask>=1.1.2, <2.0',
         'Flask-WTF',
         'wtforms',
         'email-validator',
@@ -72,6 +72,7 @@ setup(
             'codecov==2.1.8',
             'pytest-mock==3.2.0',
             'flake8>=3.8',
+            'blinker',
             'pre-commit'
         ],
     },
