@@ -62,6 +62,7 @@ parser.add_argument('--threads', dest='threads', action='store',
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
 
+
 class DIDFormatter(logging.Formatter):
     """
     Need a customer formatter to allow for logging with request ids that vary.
@@ -95,9 +96,8 @@ def initialize_logging():
     log = logging.getLogger()
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
     formatter = DIDFormatter('%(levelname)s ' +
-                                  "{} did_finder ".format(instance) +
-                                  '%(requestId)s %(message)s')
-#                                  '%(requestId)s %(message)s')
+                             f"{instance} did_finder " +
+                             '%(requestId)s %(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
