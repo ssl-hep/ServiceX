@@ -29,11 +29,11 @@
 import json
 import sys
 import traceback
-
 import time
+import argparse
+
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
-import argparse
 import pika
 
 from servicex.did_finder.lookup_request import LookupRequest
