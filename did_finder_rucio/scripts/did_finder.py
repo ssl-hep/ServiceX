@@ -62,6 +62,28 @@ parser.add_argument('--threads', dest='threads', action='store',
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
 
+class DIDFormatter(logging.Formatter):
+    """
+    Need a customer formatter to allow for logging with request ids that vary.
+    Normally log messages are "level instance component request_id mesg" and
+    request_id gets set by initialize_logging but we need a handler that'll let
+    us pass in the request id and have that embedded in the log message
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format record with request id if present, otherwise assume None
+
+        :param record: LogRecord
+        :return: formatted log message
+        """
+
+        if hasattr(record, "requestId"):
+            return super().format(record)
+        else:
+            setattr(record, "requestId", None)
+            return super().format(record)
+
 
 def initialize_logging():
     """
@@ -72,9 +94,9 @@ def initialize_logging():
 
     log = logging.getLogger()
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
-    formatter = logging.Formatter('%(levelname)s ' +
-                                  "{} did_finder NONE".format(instance) +
-                                  ' %(message)s')
+    formatter = DIDFormatter('%(levelname)s ' +
+                                  "{} did_finder ".format(instance) +
+                                  '%(requestId)s %(message)s')
 #                                  '%(requestId)s %(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -143,23 +165,26 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
                 raise eek
 
 
-# Main Script
-logger = initialize_logging()
-logger.info("v 1")
-args = parser.parse_args()
+if __name__ == "__main__":
+    # Main Script
+    logger = initialize_logging()
+    logger.info("v 2")
+    args = parser.parse_args()
 
-site = args.site
-prefix = args.prefix
-threads = args.threads
-# print("--------- ServiceX DID Finder ----------------")
-# print("Threads: " + str(threads))
-# print("Site: " + str(site))
-# print("Prefix: " + str(prefix))
-logger.info("None ServiceX DID Finder starting up: " +
-            f"Threads: {threads} Site: {site} Prefix: {prefix}",
-            extra={'requestId': None})
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client)
+    site = args.site
+    prefix = args.prefix
+    threads = args.threads
+    # print("--------- ServiceX DID Finder ----------------")
+    # print("Threads: " + str(threads))
+    # print("Site: " + str(site))
+    # print("Prefix: " + str(prefix))
+    logger.info("None ServiceX DID Finder starting up: " +
+                f"Threads: {threads} Site: {site} Prefix: {prefix}")
+    logger.info("None ServiceX DID Finder starting up: " +
+                f"Threads: {threads} Site: {site} Prefix: {prefix}",
+                extra={'requestId': 9999})
+    did_client = DIDClient()
+    replica_client = ReplicaClient()
+    rucio_adapter = RucioAdapter(did_client, replica_client)
 
-init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
+    init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
