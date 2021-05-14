@@ -85,6 +85,7 @@ class LookupRequest:
         self.servicex_adapter.post_status_update(f"Fileset load complete in {elapsed_time}")
 
         self.logger.info(self.summary, extra={'requestId': self.request_id})
+        lookup_info['elapsed-time'] = elapsed_time.total_seconds()
         self.logger.info(f"Metric: {json.dumps(lookup_info)}",
                          extra={'requestId': self.request_id})
 
