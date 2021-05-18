@@ -173,7 +173,7 @@ if __name__ == "__main__":
     site = args.site
     prefix = args.prefix
     threads = args.threads
-    logger.info("None ServiceX DID Finder starting up: " +
+    logger.info("ServiceX DID Finder starting up: " +
                 f"Threads: {threads} Site: {site} Prefix: {prefix}")
     did_client = DIDClient()
     replica_client = ReplicaClient()
