@@ -96,7 +96,7 @@ def initialize_logging():
     log = logging.getLogger()
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
     formatter = DIDFormatter('%(levelname)s ' +
-                             f"{instance} did_finder " +
+                             f"{instance} rucio_did_finder " +
                              '%(requestId)s %(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
