@@ -26,6 +26,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
+
 from rucio.common.exception import DataIdentifierNotFound
 
 
@@ -35,9 +37,8 @@ class RucioAdapter:
         self.replica_client = replica_client
 
         # set logging to a null handler
-        import logging
-        self.__logger = logging.getLogger(__name__)
-        self.__logger.addHandler(logging.NullHandler())
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.NullHandler())
 
     @staticmethod
     def parse_did(did):
@@ -56,12 +57,11 @@ class RucioAdapter:
 
     def list_files_for_did(self, did):
         parsed_did = self.parse_did(did)
-
         try:
             g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
             return g_files
         except DataIdentifierNotFound:
-            self.__logger.warning(f"-----> {did} not found")
+            self.logger.warning(f"{did} not found")
             return None
 
     def find_replicas(self, files, site):
@@ -79,7 +79,7 @@ class RucioAdapter:
                     client_location=None)
 
             except Exception as e:
-                self.__logger.exception(f"ERROR READING REPLICA {e}")
+                self.logger.exception(f"ERROR READING REPLICA {e}")
         return g_replicas
 
     @staticmethod

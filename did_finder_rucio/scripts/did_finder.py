@@ -27,13 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import logging
+import os
 import sys
 import traceback
-
 import time
+import argparse
+
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
-import argparse
 import pika
 
 from servicex.did_finder.lookup_request import LookupRequest
@@ -59,6 +61,49 @@ parser.add_argument('--threads', dest='threads', action='store',
 
 # Gobble up the rest of the args as a list of DIDs
 parser.add_argument('did_list', nargs='*')
+
+
+class DIDFormatter(logging.Formatter):
+    """
+    Need a customer formatter to allow for logging with request ids that vary.
+    Normally log messages are "level instance component request_id mesg" and
+    request_id gets set by initialize_logging but we need a handler that'll let
+    us pass in the request id and have that embedded in the log message
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format record with request id if present, otherwise assume None
+
+        :param record: LogRecord
+        :return: formatted log message
+        """
+
+        if hasattr(record, "requestId"):
+            return super().format(record)
+        else:
+            setattr(record, "requestId", None)
+            return super().format(record)
+
+
+def initialize_logging():
+    """
+    Get a logger and initialize it so that it outputs the correct format
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+
+    log = logging.getLogger()
+    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+    formatter = DIDFormatter('%(levelname)s ' +
+                             f"{instance} rucio_did_finder " +
+                             '%(requestId)s %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
 
 
 # RabbitMQ Queue Callback Method
@@ -120,19 +165,18 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
                 raise eek
 
 
-# Main Script
-args = parser.parse_args()
+if __name__ == "__main__":
+    # Main Script
+    logger = initialize_logging()
+    args = parser.parse_args()
 
-site = args.site
-prefix = args.prefix
-threads = args.threads
-print("--------- ServiceX DID Finder ----------------")
-print("Threads: " + str(threads))
-print("Site: " + str(site))
-print("Prefix: " + str(prefix))
+    site = args.site
+    prefix = args.prefix
+    threads = args.threads
+    logger.info("ServiceX DID Finder starting up: " +
+                f"Threads: {threads} Site: {site} Prefix: {prefix}")
+    did_client = DIDClient()
+    replica_client = ReplicaClient()
+    rucio_adapter = RucioAdapter(did_client, replica_client)
 
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client)
-
-init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
+    init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
