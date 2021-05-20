@@ -94,7 +94,7 @@ data:
 
 
     TRANSFORMER_PERSISTENCE_CLAIM = {{ .Values.transformer.persistence.existingClaim }}
-    TRANSFORMER_PERSISTENCE_STORAGE_CLASS = {{ .Values.transformer.persistence.stoargeClass }}
+    TRANSFORMER_PERSISTENCE_STORAGE_CLASS = {{ .Values.transformer.persistence.storageClass }}
     TRANSFORMER_PERSISTENCE_SIZE = {{ .Values.transformer.persistence.size }}
     TRANSFORMER_PERSISTENCE_ANNOTATIONS = {{ .Values.transformer.persistence.annotations }}
     TRANSFORMER_PERSISTENCE_SUBDIR = {{ .Values.transformer.persistence.subdir}}
