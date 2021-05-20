@@ -39,7 +39,6 @@ from servicex.transformer.arrow_writer import ArrowWriter
 import uproot
 import os
 import sys
-import traceback
 
 import logging
 import timeit
@@ -82,7 +81,7 @@ def parse_output_logs(logfile):
     """
     Parse output from runner.sh and output appropriate log messages
     :param logfile: path to logfile
-    :return:  None
+    :return:  Tuple with (total_events: Int, processed_events: Int)
     """
     total_events = 0
     events_processed = 0
@@ -97,52 +96,57 @@ def parse_output_logs(logfile):
         for m in matches:
             events_processed = int(m.group(1))
         logger.info("{} events processed out of {} total events".format(events_processed, total_events))
+    return total_events, events_processed
 
 
 # class TimeTuple(NamedTuple):
-class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "idle"])):
+class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
     Named tuple to store process time information.
     Immutable so values can't be accidentally altered after creation
     """
     # user: float
     # system: float
-    # idle: float
+    # iowait: float
 
     @property
     def total_time(self):
         """
         Return total time spent by process
 
-        :return: sum of user, system, idle times
+        :return: sum of user, system, iowait times
         """
-        return self.user + self.system + self.idle
+        return self.user + self.system + self.iowait
 
 
 def get_process_info():
     """
-    Get process information (just cpu, sys, idle times right now) and return it
+    Get process information (just cpu, sys, iowait times right now) and return it
 
     :return: TimeTuple with timing information
     """
-    time_stats = psutil.cpu_times()
-    return TimeTuple(user=time_stats.user, system=time_stats.system, idle=time_stats.idle)
+    process_info = psutil.Process()
+    time_stats = process_info.cpu_times()
+    return TimeTuple(user=time_stats.user+time_stats.children_user,
+                     system=time_stats.system+time_stats.children_system,
+                     iowait=time_stats.iowait)
 
 
-def log_stats(startup_time, total_time, running_time=0.0):
+def log_stats(startup_time, elapsed_time, running_time=0.0):
     """
     Log statistics about transformer execution
 
     :param startup_time: time to initialize and run cpp transformer
-    :param total_time:  total process times (sys, user, idle)
+    :param elapsed_time:  elapsed time spent by processing file (sys, user, iowait)
     :param running_time:  total time to run script
     :return: None
     """
     logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
                                                                   startup_time.system) +
-                "idle: {} total: {}".format(startup_time.idle, startup_time.total_time))
-    logger.info("Total process times  user: {} sys: {} ".format(total_time.system, total_time.system) +
-                "idle: {} total: {}".format(total_time.idle, total_time.total_time))
+                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
+    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
+                                                                  elapsed_time.system) +
+                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
     logger.info("Total running time {}".format(running_time))
 
 
@@ -161,32 +165,36 @@ def callback(channel, method, properties, body):
                                 info="xAOD Transformer")
 
     tick = time.time()
+
     file_done = False
     file_retries = 0
+    total_events = 0
+    output_size = 0
+    total_time = 0
+    start_process_times = get_process_info()
     while not file_done:
         try:
             # Do the transform
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
             logger.info("Processing {}, file id: {}".format(root_file, _file_id))
-            transform_single_file(_file_path, output_path, _chunks, servicex)
+            (total_events, output_size) = transform_single_file(_file_path, output_path, _chunks, servicex)
 
             tock = time.time()
-
+            total_time = round(tock - tick, 2)
             if object_store:
                 object_store.upload_file(_request_id, root_file, output_path)
                 os.remove(output_path)
 
             servicex.post_status_update(file_id=_file_id,
                                         status_code="complete",
-                                        info="Total time " + str(round(tock - tick, 2)))
+                                        info="Total time " + str(total_time))
             servicex.put_file_complete(_file_path, _file_id, "success",
                                        num_messages=0,
-                                       total_time=round(tock - tick, 2),
-                                       total_events=0,
-                                       total_bytes=0)
-            logger.info("Time to successfully process {}: {} seconds".format(root_file, round(tock - tick, 2)))
-
+                                       total_time=total_time,
+                                       total_events=total_events,
+                                       total_bytes=output_size)
+            logger.info("Time to successfully process {}: {} seconds".format(root_file, total_time))
             file_done = True
 
         except Exception as error:
@@ -197,8 +205,8 @@ def callback(channel, method, properties, body):
                                       routing_key=_request_id + '_errors',
                                       body=json.dumps(transform_request))
                 servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                           status='failure', num_messages=0, total_time=0,
-                                           total_events=0, total_bytes=0)
+                                           status='failure', num_messages=0, total_time=total_time,
+                                           total_events=total_events, total_bytes=output_size)
 
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="failure",
@@ -208,22 +216,55 @@ def callback(channel, method, properties, body):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logger.exception("Received exception")
             else:
+                logger.warning("Retry {} of {} for {}: {}".format(file_retries,
+                                                                  MAX_RETRIES,
+                                                                  root_file,
+                                                                  error))
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="retry",
                                             info="Try: " + str(file_retries) +
                                                  " error: " + str(error)[0:1024])
 
+    stop_process_times = get_process_info()
+    elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
+                                      system=stop_process_times.system - start_process_times.system,
+                                      iowait=stop_process_times.iowait - start_process_times.iowait)
+    stop_time = timeit.default_timer()
+    log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
+    record = {'filename': _file_path,
+              'file-id': _file_id,
+              'output-size': output_size,
+              'events': total_events,
+              'request-id': _request_id,
+              'user-time': elapsed_process_times.user,
+              'system-time': elapsed_process_times.system,
+              'io-wait': elapsed_process_times.iowait,
+              'total-time': elapsed_process_times.total_time,
+              'wall-time': total_time}
+    logger.info("Metric: {}".format(json.dumps(record)))
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def transform_single_file(file_path, output_path, chunks, servicex=None):
+    """
+    Transform a single file and return some information about output
+
+    :param file_path: path for file to process
+    :param output_path: path to file
+    :param chunks: size of chunk
+    :param servicex: servicex instance
+    :return: Tuple with (total_events: Int, output_size: Int)
+    """
+
     logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
     # os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path + '| tee log.txt')
     os.system('/usr/bin/sync log.txt')
-    parse_output_logs("log.txt")
+    total_events, _ = parse_output_logs("log.txt")
+    output_size = 0
     if os.path.exists(output_path) and os.path.isfile(output_path):
-        logger.info("Wrote {} bytes after transforming {}".format(os.stat(output_path).st_size, file_path))
+        output_size = os.stat(output_path).st_size
+        logger.info("Wrote {} bytes after transforming {}".format(output_size, file_path))
 
     reason_bad = None
     if r != 0:
@@ -233,10 +274,10 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     if reason_bad is not None:
         with open('log.txt', 'r') as f:
             errors = f.read()
-            logger.error("Failed to transform input file {}: ".format(file_path) +
-                         "{} -- errors: {}".format(reason_bad, errors))
-            raise RuntimeError("Failed to transform input file {}: ".format(file_path) +
-                               "{} -- errors: {}".format(reason_bad, errors))
+            mesg = "Failed to transform input file {}: ".format(file_path) + \
+                   "{} -- errors: {}".format(reason_bad, errors)
+            logger.error(mesg)
+            raise RuntimeError(mesg)
 
     if not object_store:
         flat_file = uproot.open(output_path)
@@ -253,6 +294,7 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
         logger.info("Kafka Timings: "+str(arrow_writer.messaging_timings))
+    return total_events, output_size
 
 
 def compile_code():
@@ -290,6 +332,3 @@ if __name__ == "__main__":
 
     if args.path:
         transform_single_file(args.path, args.output_dir)
-    total_time = get_process_info()
-    stop_time = timeit.default_timer()
-    log_stats(startup_time, total_time, running_time=(stop_time - start_time))
