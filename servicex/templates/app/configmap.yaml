@@ -9,6 +9,8 @@ metadata:
     app: {{ .Release.Name }}
 data:
   app.conf: |
+    INSTANCE_NAME = '{{ .Release.Name }}'
+    
     #SERVER_NAME = '127.0.0.1:5000'
     # this is the session secret, used to protect the Flask session. You should
     # use a longer secret string known only to your application
@@ -116,17 +118,11 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
-    {{ if .Values.elasticsearchLogging.enabled }}
-    ELASTIC_SEARCH_LOGGING_ENABLED = True
-    ES_HOST = '{{ .Values.elasticsearchLogging.host }}'
-    ES_PORT = '{{ .Values.elasticsearchLogging.port }}'
-    ES_USER = '{{ .Values.elasticsearchLogging.user }}'
-    ES_PASS = '{{ .Values.elasticsearchLogging.password }}'
-    {{ else }}
-    ELASTIC_SEARCH_LOGGING_ENABLED = False
-    {{ end }}
-
     {{ if .Values.codeGen.enabled }}
     CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
     CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
     {{ end }}
+
+    DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderScheme }}'
+    VALID_DID_SCHEMES = [ "{{ join "\",\"" .Values.app.allowedDIDSchemes }}" ]
+

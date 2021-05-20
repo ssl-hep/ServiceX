@@ -1,4 +1,0 @@
-# Works in Python 3
-awkward==0.12.21
-confluent-kafka==1.2.0
-pyarrow==0.16.0
