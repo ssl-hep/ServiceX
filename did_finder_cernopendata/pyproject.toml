@@ -1,15 +1,19 @@
 [tool.poetry]
-name = "ServiceX_DID_finder_CERNOpenData"
+name = "ServiceX_DID_Finder_CERNOpenData"
 version = "1.0.0a1"
 description = "DID Finder that translates CERN OpenData Files"
 authors = ["Gordon Watts <gwatts@uw.edu>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8,<3.10"
+servicex-did-finder-lib = "^1.0.0-beta.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 flake8 = "^3.9.1"
+jupyterlab = "^3.0.16"
+func-adl-servicex = "^1.0.4"
+matplotlib = "^3.4.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
