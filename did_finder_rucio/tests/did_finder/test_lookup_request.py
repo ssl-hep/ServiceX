@@ -156,7 +156,12 @@ class TestLookupRequest:
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.find_replicas.return_value = [
             {
-                "adler32": "ad:efb2b057",
+                "adler32": "efb2b057",
+                "events": 1000,
+                "bytes": 689123
+            },
+            {
+                "adler32": "efb2b057",
                 "events": 1000,
                 "bytes": 689123
              }
@@ -178,8 +183,9 @@ class TestLookupRequest:
         mock_sel_path.return_value = "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1"
 
         request = LookupRequest("my-did", mock_rucio, chunk_size=2)
+        list_of_files = []
         async for f in request.replica_lookup(input_data):
-            pass
+            list_of_files.append(f)
         mock_rucio.find_replicas.assert_called_with(
             [
                 {'name': "file1", 'scope': "fork"},
@@ -191,55 +197,8 @@ class TestLookupRequest:
             None
         )
 
-        # mock_servicex.put_file_add.assert_called_with({
-        #     'adler32': 'ad:efb2b057',
-        #     'file_events': 0,
-        #     'file_path': 'mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1',
-        #     'file_size': 689123,
-        #     'req_id': '123-45'
-        # })
-
-        # mock_servicex.post_preflight_check.assert_called_once()
-        # mock_servicex.post_preflight_check.assert_called_with({
-        #     'adler32': 'ad:efb2b057',
-        #     'file_events': 0,
-        #     'file_path': 'mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1',
-        #     'file_size': 689123,
-        #     'req_id': '123-45'
-        # })
-
-    # def test_fileset_complete(self, mocker):
-    #     mock_rucio = mocker.MagicMock(RucioAdapter)
-    #     mock_rucio.find_replicas.return_value = [
-    #         {
-    #             "adler32": "ad:efb2b057",
-    #             "events": 1000,
-    #             "bytes": 689123
-    #          },
-    #         {
-    #             "adler32": "ad:efb2b058",
-    #             "events": 2000,
-    #             "bytes": 689124
-    #         }
-    #     ]
-
-    #     mock_sel_path = mocker.patch.object(
-    #         servicex.did_finder.rucio_adapter.RucioAdapter, "get_sel_path")
-    #     mock_sel_path.side_effect = [
-    #         "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1",
-    #         "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.2"
-    #     ]
-
-    #     mock_servicex = mocker.MagicMock(ServiceXAdapter)
-    #     request = LookupRequest("123-45", "my-did", mock_rucio, mock_servicex, chunk_size=2)
-    #     request.sample_submitted = True
-    #     request.file_list = ["file1", "file2"]
-
-    #     request.replica_lookup_queue = Queue(5)
-    #     request.replica_lookup_queue.put_nowait(["file1", "file2"])
-    #     request.replica_lookup()
-
-    #     mock_servicex.put_fileset_complete.assert_called_once()
-    #     fileset_complete_args = mock_servicex.put_fileset_complete.call_args[0][0]
-    #     assert fileset_complete_args['files'] == 2
-    #     assert fileset_complete_args['total-bytes'] == 689123 + 689124
+        assert len(list_of_files) == 2
+        assert list_of_files[0]['adler32'] == 'efb2b057'
+        assert list_of_files[0]['file_events'] == 0
+        assert list_of_files[0]['file_path'] == \
+            'mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1'
