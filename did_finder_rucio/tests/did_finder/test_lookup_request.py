@@ -88,7 +88,7 @@ class TestLookupRequest:
             } for i in range(10)
         ]
 
-        mock_rucio.list_files_for_did.return_value = rucio_file_list
+        mock_rucio.list_files_for_did.return_value = iter(rucio_file_list)
         # Chunk size is 2, so return 2 files with each find_replicas call
         mock_rucio.find_replicas.return_value = [
             {
@@ -121,7 +121,6 @@ class TestLookupRequest:
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.list_files_for_did.return_value = iter([])
 
-        mocker.patch("threading.Thread")
         request = LookupRequest(
             "my-did",
             mock_rucio,
