@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+from typing import Optional
 from aiostream import stream, pipe
 
 from servicex.did_finder.rucio_adapter import RucioAdapter
@@ -34,14 +35,20 @@ from datetime import datetime
 
 
 class LookupRequest:
-    def __init__(self, did, rucio_adapter, site=None,
-                 prefix='', chunk_size=1000, threads=1):
+    def __init__(self, did: str,
+                 rucio_adapter: RucioAdapter,
+                 site: Optional[str] = None,
+                 prefix: str = '',
+                 chunk_size: int = 1000,
+                 threads: int = 1,
+                 request_id: str = 'bogus-id'):
         self.did = did
         self.site = site
         self.prefix = prefix
         self.rucio_adapter = rucio_adapter
         self.chunk_size = chunk_size
         self.num_threads = threads
+        self.request_id = request_id
 
         self.summary = DIDSummary(did)
 

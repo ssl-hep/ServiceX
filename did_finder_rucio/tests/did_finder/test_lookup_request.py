@@ -59,6 +59,13 @@ class TestLookupRequest:
 
         mock_rucio.list_files_for_did.return_value = rucio_file_list
 
+        mock_rucio.find_replicas.return_value = [
+            {
+                'adler32': 21231,
+                'bytes': 1122233344,
+            }
+        ]
+
         request = LookupRequest(
             "my-did",
             mock_rucio,
@@ -86,6 +93,18 @@ class TestLookupRequest:
         ]
 
         mock_rucio.list_files_for_did.return_value = rucio_file_list
+        # Chunk size is 2, so return 2 files with each find_replicas call
+        mock_rucio.find_replicas.return_value = [
+            {
+                'adler32': 21231,
+                'bytes': 1122233344,
+            },
+            {
+                'adler32': 212312,
+                'bytes': 11222333442,
+            }
+
+        ]
 
         request = LookupRequest(
             "my-did",
@@ -96,7 +115,7 @@ class TestLookupRequest:
         output_files = []
         async for f in request.lookup_files():
             output_files.append(f)
-        assert len(output_files) == 5
+        assert len(output_files) == 10
 
         mock_rucio.list_files_for_did.assert_called_with("my-did")
 
