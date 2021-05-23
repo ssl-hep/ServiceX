@@ -173,14 +173,14 @@ class TestLookupRequest:
         ]
 
         mock_sel_path = mocker.patch.object(
-            servicex.did_finder.rucio_adapter.RucioAdapter, "get_sel_path")
+            servicex.did_finder.rucio_adapter.RucioAdapter, "get_sel_path")  # type:ignore
         mock_sel_path.return_value = "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1"
 
         request = LookupRequest("my-did", mock_rucio, chunk_size=2)
         request.replica_lookup(input_data)
         mock_rucio.find_replicas.assert_called_with(
             [
-                {'name': "file1", 'scope': "fork"}, 
+                {'name': "file1", 'scope': "fork"},
                 {'name': "file2", 'scope': 'fork'}
             ], None)
         mock_sel_path.assert_called_with(

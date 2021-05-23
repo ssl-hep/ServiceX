@@ -30,7 +30,6 @@ from typing import Optional
 from aiostream import stream, pipe
 
 from servicex.did_finder.rucio_adapter import RucioAdapter
-from .did_summary import DIDSummary
 from datetime import datetime
 
 
@@ -42,6 +41,18 @@ class LookupRequest:
                  chunk_size: int = 1000,
                  threads: int = 1,
                  request_id: str = 'bogus-id'):
+        '''Create the `LookupRequest` object that is responsible for returning
+        lists of files. Processes things in chunks.
+
+        Args:
+            did (str): [description]
+            rucio_adapter (RucioAdapter): [description]
+            site (Optional[str], optional): [description]. Defaults to None.
+            prefix (str, optional): [description]. Defaults to ''.
+            chunk_size (int, optional): [description]. Defaults to 1000.
+            threads (int, optional): [description]. Defaults to 1.
+            request_id (str, optional): [description]. Defaults to 'bogus-id'.
+        '''
         self.did = did
         self.site = site
         self.prefix = prefix
@@ -50,27 +61,9 @@ class LookupRequest:
         self.num_threads = threads
         self.request_id = request_id
 
-        self.summary = DIDSummary(did)
-
         # set logging to a null handler
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
-
-    # def report_lookup_complete(self):
-    #     elapsed_time = self.replica_lookup_complete - self.submited_time
-    #     lookup_info = {"files": self.summary.files,
-    #                    "files-skipped": self.summary.files_skipped,
-    #                    "total-events": self.summary.total_events,
-    #                    "total-bytes": self.summary.total_bytes,
-    #                    "elapsed-time": int(elapsed_time.total_seconds())}
-    #     self.servicex_adapter.put_fileset_complete(lookup_info)
-
-    #     self.servicex_adapter.post_status_update(f"Fileset load complete in {elapsed_time}")
-
-    #     self.logger.info(self.summary, extra={'requestId': self.request_id})
-    #     lookup_info['elapsed-time'] = elapsed_time.total_seconds()
-    #     self.logger.info(f"Metric: {json.dumps(lookup_info)}",
-    #                      extra={'requestId': self.request_id})
 
     def replica_lookup(self, chunk):
 
@@ -80,7 +73,8 @@ class LookupRequest:
         tick = datetime.now()
         replicas = list(self.rucio_adapter.find_replicas(file_list, self.site))
         tock = datetime.now()
-        self.logger.info(f"Read {len(replicas)} replicas in {str(tock - tick)}")
+        self.logger.info(f"Read {len(replicas)} replicas in {str(tock - tick)}",
+                         extra={'requestId': self.request_id})
 
         # Translate all the replicas into a form that the did finder library
         # likes from the rucio returned metadata.
@@ -95,32 +89,29 @@ class LookupRequest:
         ]
         return did_replicas
 
-        # tock2 = datetime.now()
-        # self.logger.info(f"Files submitted to serviceX in {tock2 - tock}",
-        #                     extra={'requestId': self.request_id})
-
-        # This is weird because it seems to say - if we get a replica error, just keep going.
-        # except Exception as e:
-        #     self.logger.exception(f"Received exception while doing replica lookup: {e}",
-        #                           extra={'requestId': self.request_id})
-
     async def lookup_files(self):
         '''
         Run the file look up end-to-end.
         '''
 
-        # Get the list of contents from rucio
+        # Get the list of contents from rucio.
+        lookup_start = datetime.now()
         file_iterator = self.rucio_adapter.list_files_for_did(self.did)
+        lookup_finish = datetime.now()
         if not file_iterator:
             raise Exception(f'DID not found {self.did}')
+        all_files = list(file_iterator)
+
+        self.logger.info(f"Dataset contains {len(all_files)} files. " +
+                         f"Lookup took {str(lookup_finish-lookup_start)}",
+                         extra={'requestId': self.request_id})
 
         # Now we build a pipe-line to resolve into nearby replicas. The nearby replicas
         # should give us data locality and speed things up. To optimize the throughput,
         # we do the replica lookups in large chunks of files
-        all_files = stream.iterate(file_iterator)
-        replicia_files = (all_files
-                          | pipe.chunks(self.chunk_size)
-                          | pipe.map(self.replica_lookup)
+        replicia_files = (stream.iterate(all_files)
+                          | pipe.chunks(self.chunk_size)  # type:ignore
+                          | pipe.map(self.replica_lookup, )  # type:ignore
                           )
 
         # Feed the info back as the chunk information is returned:
@@ -128,15 +119,3 @@ class LookupRequest:
             async for chunk in streamer:
                 for f in chunk:
                     yield f
-
-        # self.logger.info(f"Dataset contains {len(self.file_list)} files. " +
-        #                  f"Lookup took {str(self.lookup_time-self.submited_time)}",
-        #                  extra={'requestId': self.request_id})
-
-        # for chunk in self.chunks():
-        #     file_list = [{'scope': file['scope'], 'name': file['name']} for file in chunk]
-        #     self.replica_lookup_queue.put_nowait(file_list)
-
-        # self.lookup_threads = [
-        #     threading.Thread(target=self.replica_lookup)
-        #     for i in range(self.num_threads)]
