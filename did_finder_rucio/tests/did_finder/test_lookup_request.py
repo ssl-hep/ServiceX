@@ -25,21 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from asyncio import Queue
-from unittest.mock import call
 import pytest
 
 import servicex
 from servicex.did_finder.lookup_request import LookupRequest
 from servicex.did_finder.rucio_adapter import RucioAdapter
-from servicex.did_finder.servicex_adapter import ServiceXAdapter
 
 
 class TestLookupRequest:
     def test_init(self, mocker):
         mock_rucio = mocker.MagicMock(RucioAdapter)
-        mock_servicex = mocker.MagicMock(ServiceXAdapter)
-        request = LookupRequest("my-did", mock_rucio, mock_servicex)
+        request = LookupRequest("my-did", mock_rucio)
         assert request.rucio_adapter == mock_rucio
         assert request.did == 'my-did'
         assert request.chunk_size == 1000
@@ -182,7 +178,11 @@ class TestLookupRequest:
 
         request = LookupRequest("my-did", mock_rucio, chunk_size=2)
         request.replica_lookup(input_data)
-        mock_rucio.find_replicas.assert_called_with([{'name': "file1", 'scope': "fork"}, {'name': "file2", 'scope': 'fork'}], None)
+        mock_rucio.find_replicas.assert_called_with(
+            [
+                {'name': "file1", 'scope': "fork"}, 
+                {'name': "file2", 'scope': 'fork'}
+            ], None)
         mock_sel_path.assert_called_with(
             mock_rucio.find_replicas.return_value[0],
             '',
