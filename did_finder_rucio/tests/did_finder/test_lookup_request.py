@@ -151,7 +151,8 @@ class TestLookupRequest:
 
         assert "DID not found" in str(e)
 
-    def test_replica_lookup(self, mocker):
+    @pytest.mark.asyncio
+    async def test_replica_lookup(self, mocker):
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.find_replicas.return_value = [
             {
@@ -177,7 +178,8 @@ class TestLookupRequest:
         mock_sel_path.return_value = "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1"
 
         request = LookupRequest("my-did", mock_rucio, chunk_size=2)
-        request.replica_lookup(input_data)
+        async for f in request.replica_lookup(input_data):
+            pass
         mock_rucio.find_replicas.assert_called_with(
             [
                 {'name': "file1", 'scope': "fork"},

@@ -65,7 +65,7 @@ class LookupRequest:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
-    def replica_lookup(self, chunk):
+    async def replica_lookup(self, chunk):
 
         # Do the lookup
         file_list = [{'scope': file['scope'], 'name': file['name']} for file in chunk]
@@ -78,16 +78,13 @@ class LookupRequest:
 
         # Translate all the replicas into a form that the did finder library
         # likes from the rucio returned metadata.
-        did_replicas = [
-                {
-                    'adler32': r['adler32'],
-                    'file_size': r['bytes'],
-                    'file_events': 0,
-                    'file_path': RucioAdapter.get_sel_path(r, self.prefix, self.site)
-                }
-                for r in replicas
-        ]
-        return did_replicas
+        for r in replicas:
+            yield {
+                'adler32': r['adler32'],
+                'file_size': r['bytes'],
+                'file_events': 0,
+                'file_path': RucioAdapter.get_sel_path(r, self.prefix, self.site)
+            }
 
     async def lookup_files(self):
         '''
@@ -111,11 +108,11 @@ class LookupRequest:
         # we do the replica lookups in large chunks of files
         replicia_files = (stream.iterate(all_files)
                           | pipe.chunks(self.chunk_size)  # type:ignore
-                          | pipe.map(self.replica_lookup, )  # type:ignore
+                          | pipe.map(self.replica_lookup)  # type:ignore
+                          | pipe.flatten(task_limit=1)  # type:ignore
                           )
 
         # Feed the info back as the chunk information is returned:
         async with replicia_files.stream() as streamer:
-            async for chunk in streamer:
-                for f in chunk:
-                    yield f
+            async for f in streamer:
+                yield f
