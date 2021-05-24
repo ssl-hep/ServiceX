@@ -22,10 +22,8 @@ spec:
             value: "/servicex/.bashrc"
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
-          {{- if .Values.preflight.proxyLocation }}
           - name: X509_USER_PROXY
             value: {{ .Values.preflight.proxyLocation }}
-          {{- end }}
         args: ["/servicex/proxy-exporter.sh & sleep 5 && python /servicex/validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.auth.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
         tty: true
         stdin: true

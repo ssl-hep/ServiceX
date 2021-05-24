@@ -71,6 +71,7 @@ didFinder:
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
   auth_host: https://voatlasrucio-auth-prod.cern.ch:443
   threads: 5
+  proxyLocation: /tmp/x509up
 
   site:
 
@@ -82,6 +83,7 @@ preflight:
   # image: sslhep/servicex_func_adl_uproot_transformer
   tag: develop
   pullPolicy: Always
+  proxyLocation: /tmp/x509up
 
 #
 # Code Generator service
@@ -113,6 +115,7 @@ x509Secrets:
   tag: develop
   pullPolicy: Always
   vomsOrg: atlas
+  proxyLocation: /tmp/x509up
 
 # Values for the RabbitMQ Chart
 rabbitmq:

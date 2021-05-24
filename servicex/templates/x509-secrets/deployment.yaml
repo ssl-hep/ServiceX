@@ -42,10 +42,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          {{- if .Values.x509Secrets.proxyLocation }}
           - name: X509_USER_PROXY
             value: {{ .Values.x509Secrets.proxyLocation }}
-          {{- end }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.x509Secrets.pullPolicy }}
