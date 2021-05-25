@@ -104,7 +104,6 @@ transformer:
      size: 1Gi
      annotations: ""
      subdir: "test"
-
   # For uproot deployment
   defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
 
@@ -125,10 +124,12 @@ elasticsearchLogging:
 
 # Values for the RabbitMQ Chart
 rabbitmq:
+  
   # For easy testing we don't require PVs for rabbit
   persistence:
     enabled: false
   auth:
+    erlangCookie: llfpwGQYtSdyjlKOcuP2V0GrC5gpzw4Z 
     password: leftfoot1
   # This is needed for Windows users
   volumePermissions:
@@ -155,6 +156,6 @@ minio:
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 
-gridAccount: <your account>
+gridAccount: clundst
 
 rbacEnabled: True
