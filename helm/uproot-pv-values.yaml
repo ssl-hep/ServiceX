@@ -19,7 +19,7 @@ postgres:
 
 # Settings for the Flask App
 app:
-  image: sslhep/servicex_app
+  image: zche/servicex_app
   tag: develop
   pullPolicy: Always
   replicas: 1
@@ -62,10 +62,10 @@ didFinder:
   image: sslhep/servicex-did-finder
   tag: develop
   pullPolicy: Always
-  rucio_host: https://voatlasrucio-server-prod.cern.ch:443
-  auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+  rucio_host: http://cms-rucio.cern.ch
+  auth_host: https://cms-rucio-auth.cern.ch
   threads: 5
-  site:
+  site: T2_US_Nebraska
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
@@ -80,9 +80,9 @@ preflight:
 # Code Generator service
 codeGen:
   enabled: true
-  image: sslhep/servicex_code_gen_func_adl_xaod
+  #image: sslhep/servicex_code_gen_func_adl_xaod
   # For uproot deployment
-  # image: sslhep/servicex_code_gen_func_adl_uproot
+  image: sslhep/servicex_code_gen_func_adl_uproot
   tag: develop
   pullPolicy: Always
 
@@ -97,22 +97,22 @@ transformer:
     maxReplicas: 20
   pullPolicy: Always
   cpuLimit: 1
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
-  persistence: true
+  #defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
+  persistence: 
      existingClaim: 
-     storageClass: cephfs
+     storageClass: rook-cephfs-skyhookdm
      size: 1Gi
      annotations: ""
      subdir: "test"
 
   # For uproot deployment
-  #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
+  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
 
 x509Secrets:
   image: sslhep/x509-secrets
   tag: develop
   pullPolicy: Always
-  vomsOrg: atlas
+  vomsOrg: cms
 
 
 # Settings for sending logging messages to an elasticsearch service
