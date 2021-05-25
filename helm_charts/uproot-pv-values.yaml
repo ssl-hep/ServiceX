@@ -70,9 +70,9 @@ didFinder:
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
 preflight:
-  image: sslhep/servicex_func_adl_xaod_transformer
+  #image: sslhep/servicex_func_adl_xaod_transformer
   # For uproot deployment
-  # image: sslhep/servicex_func_adl_uproot_transformer
+  image: sslhep/servicex_func_adl_uproot_transformer
   tag: develop
   pullPolicy: Always
 
