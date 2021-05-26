@@ -70,7 +70,7 @@ def run_rucio_finder():
     '''
     logger = logging.getLogger(__name__)
 
-    # Parse the command line arguemnts
+    # Parse the command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', dest='site', action='store',
                         default=None,

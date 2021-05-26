@@ -38,7 +38,7 @@ import asyncio
 async def to_thread(func, *args, **kwargs):
     """Asynchronously run function *func* in a separate thread.
     Any *args and **kwargs supplied for this function are directly passed
-    to *func*. Also, the current :class:`contextvars.Context` is propogated,
+    to *func*. Also, the current :class:`contextvars.Context` is propagated,
     allowing context variables from the main thread to be accessed in the
     separate thread.
     Return a coroutine that can be awaited to get the eventual result of *func*.
@@ -62,11 +62,11 @@ class LookupRequest:
         Args:
             did (str): The DID we are going to lookup
             rucio_adapter (RucioAdapter): Thread safe rucio lookup object
-            site (Optional[str], optional): Our site to improve locaity of rucio lookup.
+            site (Optional[str], optional): Our site to improve locality of rucio lookup.
                 Defaults to None.
             prefix (str, optional): Prefix for xcache use. Defaults to ''.
             chunk_size (int, optional): How to chunk rucio replica lookup. Defaults to 1000.
-            threads (int, optional): How many simultanious rucio lookups can run. Defaults to 1.
+            threads (int, optional): How many simultaneous rucio lookups can run. Defaults to 1.
             request_id (str, optional): ServiceX Request ID that requested this DID.
                 Defaults to 'bogus-id'.
         '''
