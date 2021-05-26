@@ -27,7 +27,8 @@ The latest image is also available on [dockerhub](https://cloud.docker.com/u/ssl
 The service requires two volumes to be mounted in order to operate:
 1. A valid x509 proxy certificate in `/etc/grid-security-ro`. 
 There is a script that usually gets run to copy the cert to a correctly permissioned
-directory.
+directory. The location of the cert can be overridden by setting the X509_USER_PROXY
+environment variable.
 2. Rucio config file in `/opt/rucio/etc/`
 
 ## Command Line Arguments
