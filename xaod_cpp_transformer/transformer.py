@@ -67,7 +67,7 @@ def initialize_logging(request=None):
     log = logging.getLogger()
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
     formatter = logging.Formatter('%(levelname)s ' +
-                                  "{} xaod_cpp_transformer {} ".format(instance, request) +
+                                  "{} {} {} ".format(instance, os.environ["INSTANCE"], request) +
                                   '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -162,7 +162,7 @@ def callback(channel, method, properties, body):
 
     servicex.post_status_update(file_id=_file_id,
                                 status_code="start",
-                                info="xAOD Transformer")
+                                info=os.environ["DESC"])
 
     tick = time.time()
 
@@ -311,7 +311,7 @@ def compile_code():
 
 if __name__ == "__main__":
     start_time = timeit.default_timer()
-    parser = TransformerArgumentParser(description="xAOD CPP Transformer")
+    parser = TransformerArgumentParser(description=os.environ["DESC"])
     args = parser.parse_args()
 
     logger = initialize_logging(args.request_id)

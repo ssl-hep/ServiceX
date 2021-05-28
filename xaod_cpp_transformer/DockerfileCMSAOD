@@ -1,0 +1,23 @@
+FROM cmsopendata/cmssw_5_3_32:latest
+
+USER root
+RUN yum -y update
+
+# Install everything needed to host/run the analysis jobs
+WORKDIR /servicex
+COPY requirements.txt .
+RUN python2 -m pip install --user safety==1.8.7
+RUN safety check -r requirements.txt; \
+    python2 -m pip install --user -r requirements.txt
+
+# Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
+# show up until much later!
+ENV PYTHONUNBUFFERED=1
+ENV INSTANCE="cms_aod_cpp_transformer"
+ENV DESC="CMS AOD CPP Transformer"
+
+# Copy over the source
+COPY validate_requests.py .
+
+COPY transformer.py .
+WORKDIR /home/atlas
