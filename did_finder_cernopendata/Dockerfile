@@ -21,4 +21,7 @@ COPY src/servicex_did_finder_cernopendata .
 # build stamp
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
+# Make sure python isn't buffered
+ENV PYTHONUNBUFFERED=1
+
 ENTRYPOINT [ "python3", "/usr/src/app/did_finder.py" ]
