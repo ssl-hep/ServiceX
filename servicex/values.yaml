@@ -46,6 +46,7 @@ app:
   defaultDIDFinderScheme: rucio
   allowedDIDSchemes:
     - rucio
+    - demo
 
   ingress:
     enabled: false
@@ -73,6 +74,11 @@ didFinder:
   threads: 5
 
   site:
+
+didFinderDemo:
+  image: gordonwatts/servicex-did-finder-demo
+  tag: main
+  pullPolicy: Always
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
