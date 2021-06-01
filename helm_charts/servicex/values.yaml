@@ -116,7 +116,7 @@ transformer:
   pullPolicy: Always
   cpuLimit: 1
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
-  persistence: false
+  persistence: 
      existingClaim: 
      storageClass: 
      size: 
