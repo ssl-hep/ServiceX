@@ -4,8 +4,10 @@ from typing import Any, AsyncGenerator, Dict
 
 from servicex_did_finder_lib import start_did_finder
 
+__log = logging.getLogger(__name__)
 
-async def find_files(did_name: str) -> AsyncGenerator[Dict[str, Any], None]:
+
+async def find_files(did_name: str, info: Dict[str, Any]) -> AsyncGenerator[Dict[str, Any], None]:
     '''For each incoming did name, generate a list of files that ServiceX can
     process
 
@@ -21,18 +23,20 @@ async def find_files(did_name: str) -> AsyncGenerator[Dict[str, Any], None]:
     Returns:
         AsyncGenerator[Dict[str, any], None]: yield each file
     '''
-    print(did_name)
+    __log.info(f'DID Lookup request for dataset {did_name}',
+               extra={'requestId': info['request-id']})
     if not did_name.isnumeric():
         raise Exception('CERNOpenData can only work with dataset numbers as names (e.g. 1507)')
 
     cmd = f'cernopendata-client get-file-locations --protocol xrootd --recid {did_name}'.split(' ')
     print(cmd)
 
-    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1, universal_newlines=1) as p:
+    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1,
+               universal_newlines=1) as p:  # type: ignore
+
         for line in p.stdout:
             assert isinstance(line, str)
             uri = line.strip()
-            print(uri)
             if not uri.startswith('root://'):
                 raise Exception(f'CMSOpenData: Opendata record returned a non-xrootd url: {uri}')
             yield {
@@ -44,14 +48,13 @@ async def find_files(did_name: str) -> AsyncGenerator[Dict[str, Any], None]:
 
 
 def run_open_data():
-    log = logging.getLogger(__name__)
-    print("starting up")
-
+    __log.info('Starting CERNOpenData DID finder')
     try:
-        log.info('Starting CERNOpenData DID finder')
+        __log.info('Starting CERNOpenData DID finder',
+                   extra={'requestId': 'forkingfork'})
         start_did_finder('cernopendata', find_files)
     finally:
-        log.info('Done running CERNOpenData DID finder')
+        __log.info('Done running CERNOpenData DID finder')
 
 
 if __name__ == "__main__":
