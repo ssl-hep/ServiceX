@@ -155,6 +155,6 @@ minio:
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 
-gridAccount: 
+gridAccount: <user>
 
 rbacEnabled: True
