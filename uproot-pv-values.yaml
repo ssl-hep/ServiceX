@@ -129,7 +129,6 @@ rabbitmq:
   persistence:
     enabled: false
   auth:
-    erlangCookie: llfpwGQYtSdyjlKOcuP2V0GrC5gpzw4Z 
     password: leftfoot1
   # This is needed for Windows users
   volumePermissions:
@@ -156,6 +155,6 @@ minio:
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 
-gridAccount: clundst
+gridAccount: 
 
 rbacEnabled: True
