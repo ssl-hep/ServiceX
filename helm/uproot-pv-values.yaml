@@ -72,7 +72,7 @@ didFinder:
 preflight:
   #image: sslhep/servicex_func_adl_xaod_transformer
   # For uproot deployment
-  image: sslhep/servicex_func_adl_uproot_transformer
+  image: zche/servicex_func_adl_uproot_transformer
   tag: develop
   pullPolicy: Always
 
@@ -102,10 +102,10 @@ transformer:
      existingClaim: 
      storageClass: rook-cephfs-skyhookdm
      size: 1Gi
-     annotations: ""
+     annotations: 
      subdir: "test"
   # For uproot deployment
-  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
+  defaultTransformerImage: zche/servicex_func_adl_uproot_transformer:develop
 
 x509Secrets:
   image: sslhep/x509-secrets
