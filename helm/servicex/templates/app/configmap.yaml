@@ -45,7 +45,8 @@ data:
 
     # Mailgun configuration
     MAILGUN_API_KEY = '{{ .Values.app.mailgunApiKey }}'
-    MAILGUN_DOMAIN = '{{ .Values.app.mailgunDomain }}'
+    MAILGUN_DOMAIN = 'not-empty'
+    # MAILGUN_DOMAIN = '{{ .Values.app.mailgunDomain }}'
 
     {{ if .Values.postgres.enabled }}
     SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
@@ -54,7 +55,7 @@ data:
     {{ end }}
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = 'some-secret-string'
+    SECRET_KEY = 'some-very-secret-string'
     JWT_SECRET_KEY = 'jwt-secret-string'
     RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
     TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000'
@@ -91,13 +92,13 @@ data:
 
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
+    
 
-
-    TRANSFORMER_PERSISTENCE_CLAIM = {{ .Values.transformer.persistence.existingClaim }}
-    TRANSFORMER_PERSISTENCE_STORAGE_CLASS = {{ .Values.transformer.persistence.storageClass }}
-    TRANSFORMER_PERSISTENCE_SIZE = {{ .Values.transformer.persistence.size }}
-    TRANSFORMER_PERSISTENCE_ANNOTATIONS = {{ .Values.transformer.persistence.annotations }}
-    TRANSFORMER_PERSISTENCE_SUBDIR = {{ .Values.transformer.persistence.subdir}}
+    TRANSFORMER_PERSISTENCE_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
+    TRANSFORMER_PERSISTENCE_STORAGE_CLASS = "{{ .Values.transformer.persistence.storageClass }}"
+    TRANSFORMER_PERSISTENCE_SIZE = "{{ .Values.transformer.persistence.size }}"
+    TRANSFORMER_PERSISTENCE_ANNOTATIONS = "{{ .Values.transformer.persistence.annotations }}"
+    TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
 
 
     {{ if .Values.objectStore.enabled }}
