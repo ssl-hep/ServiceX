@@ -1,0 +1,25 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-cernopendata
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-cernopendata
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-cernopendata
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-did-finder-cernopendata
+        image: {{ .Values.didFinderCERNOpenData.image }}:{{ .Values.didFinderCERNOpenData.tag }}
+        imagePullPolicy: {{ .Values.didFinderCERNOpenData.pullPolicy }}
+        env:
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+        args:
+          - --rabbit-uri
+          - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
