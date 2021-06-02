@@ -1,0 +1,35 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Extract tag name
+      shell: bash
+      run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+      id: extract_tag_name
+
+    - name: Install poetry
+      uses: Gr1N/setup-poetry@v4
+
+    - name: Create requirements file
+      shell: bash
+      run: poetry export -f requirements.txt -o requirements.txt
+
+    - name: Build DID-Finder Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: gordonwatts/servicex-did-finder-cernopendata:${{ steps.extract_tag_name.outputs.imagetag }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
