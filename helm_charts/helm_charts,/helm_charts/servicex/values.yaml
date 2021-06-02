@@ -47,6 +47,7 @@ app:
   allowedDIDSchemes:
     - rucio
     - demo
+    - cernopendata
 
   ingress:
     enabled: false
@@ -78,6 +79,11 @@ didFinder:
 didFinderDemo:
   image: gordonwatts/servicex-did-finder-demo
   tag: main
+  pullPolicy: Always
+
+didFinderCERNOpenData:
+  image: gordonwatts/servicex-did-finder-cernopendata
+  tag: async_implementation
   pullPolicy: Always
 
 # Settings for the preflight checker - this usually uses the same image as
