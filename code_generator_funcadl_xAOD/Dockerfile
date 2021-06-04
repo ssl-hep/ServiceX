@@ -1,6 +1,6 @@
 FROM python:3.7
 
-ARG APP_CONFIG_FILE="/home/servicex/app.conf"
+ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
 RUN useradd -ms /bin/bash servicex
 
@@ -20,8 +20,8 @@ COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
-COPY app.conf .
-ENV APP_CONFIG_FILE ${APP_CONFIG_FILE}
+COPY ${APP_CONFIG_FILE} .
+ENV APP_CONFIG_FILE /home/servicex/${APP_CONFIG_FILE}
 
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]

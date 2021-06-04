@@ -54,7 +54,7 @@ jobs:
     - name: Build ATLAS xAOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
-        APP_CONFIG_FILE: "/home/servicex/app.conf"
+        APP_CONFIG_FILE: "app.atlas.xaod.conf"
       with:
         name: sslhep/servicex_code_gen_atlas_xaod:${{ steps.extract_tag_name.outputs.imagetag }}
         username: ${{ secrets.DOCKER_USERNAME }}
@@ -65,7 +65,7 @@ jobs:
     - name: Build CMS AOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
-        APP_CONFIG_FILE: "/home/servicex/app.cms.aod.conf"
+        APP_CONFIG_FILE: "app.cms.aod.conf"
       with:
         name: sslhep/servicex_code_gen_cms_aod:${{ steps.extract_tag_name.outputs.imagetag }}
         username: ${{ secrets.DOCKER_USERNAME }}
