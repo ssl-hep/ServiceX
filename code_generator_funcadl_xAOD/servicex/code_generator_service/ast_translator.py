@@ -61,8 +61,10 @@ class AstTranslator:
         if isinstance(executor, str) or executor is None:
             if executor == 'CMS AOD':
                 self._exe = cms_aod_executor()
-            else:
+            elif executor == 'ATLAS xAOD':
                 self._exe = atlas_xaod_executor()
+            else:
+                raise ValueError(f'The executor name, {executor}, must be "CMS AOD" or "ATLAS xAOD" only.')
         else:
             self._exe = executor
 
