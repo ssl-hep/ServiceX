@@ -154,7 +154,8 @@ def log_stats(startup_time, elapsed_time, running_time=0.0):
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path'].encode('ascii', 'ignore')
+    _file_path = transform_request['file-path']
+    # .encode('ascii', 'ignore')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     _chunks = transform_request['chunk-size']
@@ -257,9 +258,9 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
     """
 
     logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
-    # os.system("voms-proxy-info --all")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path + '| tee log.txt')
-    os.system('/usr/bin/sync log.txt')
+    # This command is not available in all images!
+    # os.system('/usr/bin/sync log.txt')
     total_events, _ = parse_output_logs("log.txt")
     output_size = 0
     if os.path.exists(output_path) and os.path.isfile(output_path):
