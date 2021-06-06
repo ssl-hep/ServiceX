@@ -20,8 +20,8 @@ COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
-COPY ${APP_CONFIG_FILE} .
-ENV APP_CONFIG_FILE /home/servicex/${APP_CONFIG_FILE}
+COPY ${APP_CONFIG_FILE} app.conf
+ENV APP_CONFIG_FILE /home/servicex/app.conf
 
 EXPOSE 5000
-ENTRYPOINT ["./boot.sh"]
+ENTRYPOINT ["/home/servicex/boot.sh"]
