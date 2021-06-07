@@ -16,25 +16,26 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1.2.0
 
-    - name: Extract tag name
-      shell: bash
-      run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
-      id: extract_tag_name
+    - id: docker-tag
+      uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
+
+    # - name: Extract tag name
+    #   shell: bash
+    #   run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+    #   id: extract_tag_name
 
     - name: Build ATLAS xAOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/servicex_func_adl_atlas_xaod_transformer:${{ steps.extract_tag_name.outputs.imagetag }}
+        name: sslhep/servicex_func_adl_atlas_xaod_transformer:${{ steps.docker-tag.outputs.tag }}
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        tags: ${GITHUB_REF##*/}
         dockerfile: DockerfileATLASxAOD
     
     - name: Build CMS AOD Image
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: sslhep/servicex_func_adl_cms_aod_transformer:${{ steps.extract_tag_name.outputs.imagetag }}
+        name: sslhep/servicex_func_adl_cms_aod_transformer:${{ steps.docker-tag.outputs.tag }}
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        tags: ${GITHUB_REF##*/}
         dockerfile: DockerfileCMSAOD
