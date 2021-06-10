@@ -117,6 +117,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             saved_obj = TransformRequest.return_request(request_id)
             assert saved_obj
             assert saved_obj.did == 'rucio://123-45-678'
+            assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
             assert saved_obj.columns == "e.e, e.p"
