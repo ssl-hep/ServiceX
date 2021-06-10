@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from pytest import fixture
@@ -107,7 +107,8 @@ class ResourceTestBase:
     @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
-        transform_request.submit_time = 1000
+        transform_request.submit_time = datetime.min
+        transform_request.finish_time = None
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.tree_name = 'Events'

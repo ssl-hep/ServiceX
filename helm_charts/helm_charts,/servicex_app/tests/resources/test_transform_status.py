@@ -65,6 +65,7 @@ class TestTransformStatus(ResourceTestBase):
                                })
 
         assert response.status_code == 200
+        assert mock_request.finish_time is not None
         mock_request.save_to_db.assert_called()
 
     def test_post_status_bad_data(self, client):

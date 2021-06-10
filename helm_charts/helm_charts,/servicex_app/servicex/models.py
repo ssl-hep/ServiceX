@@ -141,6 +141,7 @@ class TransformRequest(db.Model):
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     title = db.Column(db.String(128), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
+    finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)

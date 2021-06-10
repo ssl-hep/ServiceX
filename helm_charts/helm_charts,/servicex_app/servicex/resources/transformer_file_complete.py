@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime, timezone
+
 from flask import request, current_app
 
 from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
@@ -64,6 +66,7 @@ class TransformerFileComplete(ServiceXResource):
             print("Job is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             submitted_request.status = "Complete"
+            submitted_request.finish_time = datetime.now(tz=timezone.utc)
             submitted_request.save_to_db()
 
         print(info)

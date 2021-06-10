@@ -47,10 +47,10 @@ class TestTransformFileComplete(ResourceTestBase):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+        fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'return_request',
-            return_value=self._generate_transform_request())
+            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+        )
 
         mock_files_remaining = mocker.PropertyMock(return_value=1)
         TransformRequest.files_remaining = mock_files_remaining
@@ -63,6 +63,7 @@ class TestTransformFileComplete(ResourceTestBase):
         response = client.put('/servicex/internal/transformation/1234/file-complete',
                               json=self._generate_file_complete_request())
         assert response.status_code == 200
+        assert fake_req.finish_time is None
         mock_transform_request_read.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
@@ -70,10 +71,10 @@ class TestTransformFileComplete(ResourceTestBase):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+        fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'return_request',
-            return_value=self._generate_transform_request())
+            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+        )
 
         mock_files_remaining = mocker.PropertyMock(return_value=0)
         TransformRequest.files_remaining = mock_files_remaining
@@ -87,6 +88,7 @@ class TestTransformFileComplete(ResourceTestBase):
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
+        assert fake_req.finish_time is not None
         mock_transform_request_read.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
                                                                              'my-ws')
