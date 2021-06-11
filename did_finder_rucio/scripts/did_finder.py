@@ -37,34 +37,6 @@ from servicex_did_finder_lib import default_command_line_args, start_did_finder
 from servicex.did_finder.lookup_request import LookupRequest
 
 
-async def find_files(rucio_adaptor: RucioAdapter, site: str, prefix: str, threads: int,
-                     did_name: str, info: Dict[str, Any]) \
-                     -> AsyncGenerator[Dict[str, Any], None]:
-    '''For each incoming did name, generate a list of files that ServiceX can process
-    from the rucio catalog
-
-    Args:
-        did_name (str): Rucio Dataset name
-        info (Dict[str, Any]): Various bits of info about the request.
-
-    Returns:
-        AsyncGenerator[Dict[str, any], None]: yield each file
-    '''
-
-    lookup_request = LookupRequest(
-        did=did_name,
-        rucio_adapter=rucio_adaptor,
-        site=site,
-        prefix=prefix,
-        chunk_size=1000,
-        threads=threads,
-        request_id=info['request-id']
-    )
-
-    async for f in lookup_request.lookup_files():
-        yield f
-
-
 def run_rucio_finder():
     '''Run the rucio finder
     '''
@@ -100,8 +72,17 @@ def run_rucio_finder():
         logger.info('Starting rucio DID finder')
 
         async def callback(did_name, info):
-            async for f in find_files(rucio_adapter, site, prefix, threads,
-                                      did_name, info):
+            lookup_request = LookupRequest(
+                did=did_name,
+                rucio_adapter=rucio_adapter,
+                site=site,
+                prefix=prefix,
+                chunk_size=1000,
+                threads=threads,
+                request_id=info['request-id']
+            )
+
+            async for f in lookup_request.lookup_files():
                 yield f
 
         start_did_finder('rucio',
