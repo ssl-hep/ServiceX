@@ -3,7 +3,8 @@
 {% from 'bootstrap/pagination.html' import render_pagination %}
 
 {% macro requests_table(pagination, humanize) %}
-  <table class="table">
+  <table class="table table-sm table-bordered table-striped">
+    <caption>All times in UTC</caption>
     <thead class="thead-dark">
       <tr>
         <th scope="col">Title</th>
