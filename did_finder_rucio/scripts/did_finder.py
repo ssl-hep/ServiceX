@@ -68,7 +68,7 @@ async def find_files(rucio_adaptor: RucioAdapter, site: str, prefix: str, thread
 def run_rucio_finder():
     '''Run the rucio finder
     '''
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
