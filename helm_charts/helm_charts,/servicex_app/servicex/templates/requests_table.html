@@ -8,7 +8,8 @@
       <tr>
         <th scope="col">Title</th>
         {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
-        <th scope="col">Submit time</th>
+        <th scope="col">Start time</th>
+        <th scope="col">Finish time</th>
         <th scope="col">Status</th>
         <th scope="col">Files completed</th>
         <th scope="col">Workers</th>
@@ -22,6 +23,7 @@
         </th>
         {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
         <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td>{{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}</td>
         <td>
           <div id="status-{{ req.request_id }}">
             {{ req.status }}
