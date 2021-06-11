@@ -28,7 +28,6 @@
 
 import argparse
 import logging
-from typing import Any, AsyncGenerator, Dict
 
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient

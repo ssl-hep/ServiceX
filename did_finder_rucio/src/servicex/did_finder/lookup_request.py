@@ -66,7 +66,7 @@ class LookupRequest:
                 Defaults to None.
             prefix (str, optional): Prefix for xcache use. Defaults to ''.
             chunk_size (int, optional): How to chunk rucio replica lookup. Defaults to 1000. In
-                                        general larger numbers are better: each round-trip is 
+                                        general larger numbers are better: each round-trip is
                                         costly, but the lookup is quite fast.
             threads (int, optional): How many simultaneous rucio lookups can run. Defaults to 1.
             request_id (str, optional): ServiceX Request ID that requested this DID.
