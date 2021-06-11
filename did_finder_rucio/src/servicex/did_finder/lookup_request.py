@@ -142,7 +142,8 @@ class LookupRequest:
         replicia_files = (stream.iterate(all_files)
                           | pipe.chunks(self.chunk_size)  # type:ignore
                           | pipe.map(self.replica_lookup,  # type:ignore
-                                     task_limit=self.num_threads)
+                                     task_limit=self.num_threads,
+                                     ordered=False)
                           | pipe.flatten(task_limit=1)  # type:ignore
                           )
 
