@@ -32,7 +32,7 @@ import logging
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from servicex.did_finder.rucio_adapter import RucioAdapter
-from servicex_did_finder_lib import default_command_line_args, start_did_finder
+from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
 from servicex.did_finder.lookup_request import LookupRequest
 
 
@@ -51,7 +51,7 @@ def run_rucio_finder():
                         help='Prefix to add to Xrootd URLs')
     parser.add_argument('--threads', dest='threads', action='store',
                         default=10, type=int, help="Number of threads to spawn")
-    default_command_line_args(parser)
+    add_did_finder_cnd_arguments(parser)
 
     args = parser.parse_args()
 
