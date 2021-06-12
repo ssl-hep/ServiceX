@@ -32,8 +32,9 @@ jobs:
         flake8
     - name: Test with pytest
       run: |
-        PYTHONPATH=./src:$PYTHONPATH coverage run -m pytest -r servicex
-        coverage xml
+        pip install pytest-cov
+        export PYTHONPATH=./src:$PYTHONPATH
+        pytest --cov=./tests --cov-report=xml
     - name: Report coverage using codecov
       if: github.event_name == 'push' && matrix.python-version == 3.8
       uses: codecov/codecov-action
