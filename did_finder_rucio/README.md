@@ -1,7 +1,7 @@
 # Rucio ServiceX-DID-finder
 
 ![CI/CD](https://github.com/ssl-hep/ServiceX-DID-finder/workflows/CI/CD/badge.svg)
-[![codecov](https://codecov.io/gh/ssl-hep/ServiceX-DID-finder/branch/master/graph/badge.svg)](https://codecov.io/gh/ssl-hep/ServiceX-DID-finder)
+[![codecov](https://codecov.io/gh/ssl-hep/ServiceX_DID_Finder_Rucio/branch/master/graph/badge.svg?token=xLpoqlrdE3)](https://codecov.io/gh/ssl-hep/ServiceX_DID_Finder_Rucio)
 
 For a given RUCIO DID and client site finds optimal access paths.
 
