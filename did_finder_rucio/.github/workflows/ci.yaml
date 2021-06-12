@@ -33,6 +33,7 @@ jobs:
     - name: Test with pytest
       run: |
         PYTHONPATH=./src:$PYTHONPATH coverage run -m pytest -r sx
+        coverage xml
     - name: Report coverage using codecov
       if: github.event_name == 'push' && matrix.python-version == 3.8
       uses: codecov/codecov-action@v1
