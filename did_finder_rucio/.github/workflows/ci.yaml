@@ -41,6 +41,7 @@ jobs:
       with:
         file: ./coverage.xml # optional
         flags: unittests # optional
+        verbose: true
 
   publish:
     needs: test
