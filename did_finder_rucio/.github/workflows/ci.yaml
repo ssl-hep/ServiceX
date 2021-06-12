@@ -33,10 +33,12 @@ jobs:
     - name: Test with pytest
       run: |
         PYTHONPATH=./src:$PYTHONPATH coverage run -m pytest -r sx
-    - name: Report coverage with Codecov
-      if: github.event_name == 'push'
-      run: |
-        codecov --token=${{ secrets.CODECOV_TOKEN }}
+    - name: Report coverage using codecov
+      if: github.event_name == 'push' && matrix.python-version == 3.8
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml # optional
+        flags: unittests # optional
 
   publish:
     needs: test
