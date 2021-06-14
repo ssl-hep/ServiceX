@@ -30,11 +30,12 @@ import os
 import zipfile
 from collections import namedtuple
 from tempfile import TemporaryDirectory
-from typing import Optional
+from typing import Optional, Union
 from pathlib import Path
 
-from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import \
-    atlas_xaod_executor
+from func_adl_xAOD.atlas.xaod.executor import atlas_xaod_executor
+from func_adl_xAOD.cms.aod.executor import cms_aod_executor
+from func_adl_xAOD.common.executor import executor
 from qastle import text_ast_to_python_ast
 
 GeneratedFileResult = namedtuple('GeneratedFileResult', 'hash output_dir')
@@ -48,15 +49,24 @@ class GenerateCodeException(BaseException):
 
 
 class AstTranslator:
-    def __init__(self, xaod_executor: Optional[atlas_xaod_executor] = None):
+    def __init__(self, executor: Optional[Union[executor, str]] = None):
         '''
         Create the ast translator objects
 
         Arguments
 
-            xaod_executor       The object that will do the translation
+            executor    The object that will do the translation if an executor is specified or
+                        if its a string then appropriate executor is chosen
         '''
-        self._exe = xaod_executor if xaod_executor is not None else atlas_xaod_executor()
+        if isinstance(executor, str) or executor is None:
+            if executor == 'CMS AOD':
+                self._exe = cms_aod_executor()
+            elif executor == 'ATLAS xAOD':
+                self._exe = atlas_xaod_executor()
+            else:
+                raise ValueError(f'The executor name, {executor}, must be "CMS AOD" or "ATLAS xAOD" only.')
+        else:
+            self._exe = executor
 
     @property
     def executor(self):
@@ -78,7 +88,7 @@ class AstTranslator:
             query_dir.mkdir(parents=True, exist_ok=True)
 
         self._exe.write_cpp_files(
-            self._exe.apply_ast_transformations(a), str(query_dir))
+            self._exe.apply_ast_transformations(a), query_dir)
 
     def translate_text_ast_to_zip(self, code: str) -> bytes:
         """Translate a text ast into a zip file as a memory stream
