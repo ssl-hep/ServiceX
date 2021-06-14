@@ -1,0 +1,43 @@
+FROM cmsopendata/cmssw_5_3_32:latest
+
+USER root
+# We need to turn off the `epel` repo as CERN has removed
+# all files connected with that.
+# Make sure python is ready to install a few extra (old) modules as well. 
+RUN yum-config-manager --disable epel &&\
+    yum -y update &&\
+    yum -y install openssl-devel
+
+# Install a modern version of Python
+WORKDIR /python-build
+RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tar.xz &&\
+    tar xf Python-3.6.2.tar.xz &&\
+    cd Python-3.6.2 &&\
+    ./configure &&\
+    make &&\
+    make altinstall &&\
+    rm -rf /python-build
+
+# Install everything needed to host/run the analysis jobs
+WORKDIR /servicex
+COPY requirements.txt .
+RUN python3.6 -m pip install --user safety==1.8.7
+RUN python3.6 -m pip install --user -r requirements.txt
+
+# Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
+# show up until much later!
+ENV PYTHONUNBUFFERED=1
+ENV INSTANCE="cms_aod_cpp_transformer"
+ENV DESC="CMS AOD CPP Transformer"
+
+# Copy over the source
+COPY validate_requests.py .
+
+# Dummpy proxy exporter
+RUN echo "#!/bin/bash" > proxy-exporter.sh &&\
+    echo "echo No Proxy Requred >> proxy-exporter.sh" &&\
+    chmod a+x proxy-exporter.sh
+
+COPY transformer.py transformer-actual.py
+COPY transformer-shim.py transformer.py
+WORKDIR /home/atlas
