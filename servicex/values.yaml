@@ -76,11 +76,6 @@ didFinder:
 
   site:
 
-didFinderDemo:
-  image: gordonwatts/servicex-did-finder-demo
-  tag: main
-  pullPolicy: Always
-
 didFinderCERNOpenData:
   image: gordonwatts/servicex-did-finder-cernopendata
   tag: async_implementation
