@@ -114,6 +114,21 @@ data:
     CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
     {{ end }}
 
-    DID_FINDER_DEFAULT_SCHEME = '{{ .Values.app.defaultDIDFinderScheme }}'
-    VALID_DID_SCHEMES = [ "{{ join "\",\"" .Values.app.allowedDIDSchemes }}" ]
+    {{- $didFinders := list }}
+    {{- if .Values.didFinderCERNOpenData.enabled }}
+      {{- $didFinders = append $didFinders "cernopendata" }}
+    {{- end }}
+    {{- if .Values.didFinder.enabled }}
+      {{- $didFinders = append $didFinders "rucio" }}
+    {{- end }}
+
+    {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
+    {{- if and (not $defaultScheme) .Values.didFinder.enabled }}
+    {{- $defaultScheme = "rucio" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinderCERNOpenData.enabled }}
+    {{- $defaultScheme = "cernopendata" }}
+    {{- end }}
+    DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
+    VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
 
