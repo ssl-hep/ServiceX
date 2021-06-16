@@ -42,12 +42,9 @@ app:
   mailgunDomain:
 
   # If user provides DID that lacks a schema, route the requests to this
-  # particular DID Finder
-  defaultDIDFinderScheme: rucio
-  allowedDIDSchemes:
-    - rucio
-    - demo
-    - cernopendata
+  # particular DID Finder. If left blank, the template will try to guess this
+  # giving Rucio a priority if available.
+  defaultDIDFinderScheme:
 
   ingress:
     enabled: false
@@ -67,6 +64,7 @@ app:
 
 # Settings for the Rucio DID Finder
 didFinder:
+  enabled: true
   image: sslhep/servicex-did-finder
   tag: develop
   pullPolicy: Always
@@ -77,8 +75,9 @@ didFinder:
   site:
 
 didFinderCERNOpenData:
-  image: gordonwatts/servicex-did-finder-cernopendata
-  tag: async_implementation
+  enabled: true
+  image: sslhep/servicex-did-finder-cernopendata
+  tag: develop
   pullPolicy: Always
 
 # Settings for the preflight checker - this usually uses the same image as

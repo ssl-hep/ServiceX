@@ -1,3 +1,4 @@
+{{ if .Values.didFinder.enabled}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -22,4 +23,4 @@ data:
     permission = {{ .Values.x509Secrets.vomsOrg }}
     schema = {{ .Values.x509Secrets.vomsOrg }}
     lfn2pfn_algorithm_default = hash
-
+{{ end }}

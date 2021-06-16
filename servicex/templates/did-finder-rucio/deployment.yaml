@@ -1,20 +1,21 @@
 ---
+{{ if .Values.didFinder.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-did-finder
+  name: {{ .Release.Name }}-did-finder-rucio
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-did-finder
+      app: {{ .Release.Name }}-did-finder-rucio
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-did-finder
+        app: {{ .Release.Name }}-did-finder-rucio
     spec:
       containers:
-      - name: {{ .Release.Name }}-did-finder
+      - name: {{ .Release.Name }}-did-finder-rucio
         image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
         command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
@@ -42,3 +43,4 @@ spec:
           secret:
             defaultMode: 292
             secretName: {{ .Release.Name }}-x509-proxy
+{{ end }}
