@@ -1,4 +1,5 @@
 ---
+{{ if .Values.didFinderCERNOpenData.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,3 +24,4 @@ spec:
         args:
           - --rabbit-uri
           - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+{{ end }}
