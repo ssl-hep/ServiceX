@@ -41,6 +41,7 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
 from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
+from hashlib import sha1
 import os
 import pyarrow.parquet as pq
 import pyarrow as pa
@@ -55,6 +56,7 @@ avg_cell_size = 42
 messaging = None
 object_store = None
 posix_path = None
+MAX_PATH_LEN = 255
 
 
 class ArrowIterator:
@@ -67,12 +69,20 @@ class ArrowIterator:
     def arrow_table(self):
         yield self.arrow
 
+def hash_path(path):
+    if len(path) > MAX_PATH_LEN:
+        hashfile = sha1(path.encode('utf-8')).hexdigest()
+        path = ''.join([
+            path[:MAX_PATH_LEN - len(hashfile) - 1],
+            '_', hashfile])
+
+    return(path)
 
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path']
+    _file_path = hash_path(transform_request['file-path'])
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     # _chunks = transform_request['chunks']
@@ -85,18 +95,18 @@ def callback(channel, method, properties, body):
                                     status_code="start",
                                     info="Starting")
 
-        root_file = _file_path.replace('/', ':')
+        root_file = hash_path(_file_path.replace('/', ':'))
         if not os.path.isdir(posix_path):
             os.makedirs(posix_path)
 
-        output_path = os.path.join(posix_path, root_file)
-        transform_single_file(_file_path, output_path+".parquet", servicex)
+        output_path = os.path.join(posix_path, root_file+".parquet")
+        transform_single_file(_file_path, hash_path(output_path), servicex)
 
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file+".parquet", output_path+".parquet")
-            os.remove(output_path+".parquet")
+            object_store.upload_file(_request_id, root_file, output_path)
+            os.remove(output_path)
 
         servicex.post_status_update(file_id=_file_id,
                                     status_code="complete",
