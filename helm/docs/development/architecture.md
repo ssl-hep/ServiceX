@@ -64,6 +64,31 @@ Some technical details of the above process:
 
 ![Architecture](../img/ServiceX-architecture.png)
 
+The lifecycle of a request is shown below:
+
+![Request Lifecycle](../img/ServiceX-request-lifecycle.png)
+
+The repositories that correspond to each component are given in the table 
+below:
+
+| Service | Repository |
+| --------|------------|
+| DID Finder  | [ServiceX_DID_Finder_lib](https://github.com/ssl-hep/ServiceX_DID_Finder_lib) |
+| |  [ServiceX_DID_Finder_Rucio](https://github.com/ssl-hep/ServiceX_DID_Finder_Rucio) |
+| | [ServiceX_DID_Finder_CERNOpenData](https://github.com/ssl-hep/ServiceX_DID_Finder_CERNOpenData) |
+| ServiceX Web Endpoint | [ServiceX App](https://github.com/ssl-hep/ServiceX_App) |
+| Code Generators | [ServiceX_Code_Generator](https://github.com/ssl-hep/ServiceX_Code_Generator) |
+| | [ServiceX_Code_Generator_Config_File](https://github.com/ssl-hep/ServiceX_Code_Generator_Config_File) |
+| | [ServiceX_Code_Generator_FuncADL_uproot](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_uproot) |
+| | [ServiceX_Code_Generator_FuncADL_xAOD](https://github.com/ssl-hep/ServiceX_Code_Generator_FuncADL_xAOD) |
+| Transformers | [ServiceX_Transformer_Template](https://github.com/ssl-hep/ServiceX_Transformer_Template) |
+| | [ServiceX_transformer](https://github.com/ssl-hep/ServiceX_transformer) |
+| | [ServiceX_Uproot_Transformer](https://github.com/ssl-hep/ServiceX_Uproot_Transformer) |
+| | [ServiceX_xAOD_CPP_transformer](https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer) |
+| Client Libraries | [servicex_clients](https://github.com/ssl-hep/servicex_clients) |
+| | [TCutToQastleWrapper](https://github.com/ssl-hep/TCutToQastleWrapper) |
+
+
 ### [ServiceX API Server](https://github.com/ssl-hep/ServiceX_App.git) (Flask app)
 This is the main entry point to ServiceX, and can be exposed outside the
 cluster.  It provides a REST API for creating transformation requests, posting
@@ -233,9 +258,11 @@ There are several distinct kinds of errors:
 * Timeouts
 
 ## Logging
-Output messages from the transformers are sent back to the flask app and persisted
-to the database. All other logs are available only through the Kubectl pod logging
-operation.
+Filebeats captures logging messages from various components and sends it to an Elasticsearch
+cluster for storage and presentation in Kibana dashboards.  In addition, transformers also 
+send messages to the flask app.  These messages are persisted to the database.  Finally, 
+components also write log messages to stdout.  These messages can be viewed using Kubectl's
+log command.
 
 
 ## Monitoring and Accounting
