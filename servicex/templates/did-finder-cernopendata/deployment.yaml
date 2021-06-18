@@ -1,5 +1,5 @@
 ---
-{{ if .Values.didFinderCERNOpenData.enabled}}
+{{ if .Values.didFinder.CERNOpenData.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: {{ .Release.Name }}-did-finder-cernopendata
-        image: {{ .Values.didFinderCERNOpenData.image }}:{{ .Values.didFinderCERNOpenData.tag }}
-        imagePullPolicy: {{ .Values.didFinderCERNOpenData.pullPolicy }}
+        image: {{ .Values.didFinder.CERNOpenData.image }}:{{ .Values.didFinder.CERNOpenData.tag }}
+        imagePullPolicy: {{ .Values.didFinder.CERNOpenData.pullPolicy }}
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}

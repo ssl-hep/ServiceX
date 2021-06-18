@@ -1,5 +1,5 @@
 ---
-{{ if .Values.didFinder.enabled}}
+{{ if .Values.didFinder.rucio.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,16 +16,16 @@ spec:
     spec:
       containers:
       - name: {{ .Release.Name }}-did-finder-rucio
-        image: {{ .Values.didFinder.image }}:{{ .Values.didFinder.tag }}
+        image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
         command: ["/usr/src/app/runme.sh"]
-        imagePullPolicy: {{ .Values.didFinder.pullPolicy }}
+        imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
           - name: SITE
-            value: {{ if .Values.didFinder.site }} --site {{ .Values.didFinder.site }} {{ end }}
+            value: {{ if .Values.didFinder.rucio.site }} --site {{ .Values.didFinder.rucio.site }} {{ end }}
           - name: DID_THREADS
-            value: "{{ .Values.didFinder.threads }}"
+            value: "{{ .Values.didFinder.rucio.threads }}"
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:
