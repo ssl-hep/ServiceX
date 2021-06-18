@@ -32,18 +32,18 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
 | `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request. If left blank, template will attempt to guess.    | -                                                 |
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
-| `didFinder.enabled`                            | Should we deploy the Rucio DID Finder?           | `true`                                              |
-| `didFinder.image`                    | Rucio DID Finder image name                            | `sslhep/servicex-did-finder`                            |
-| `didFinder.tag`                      | Rucio DID Finder image tag                             | `latest`                                                |
-| `didFinder.pullPolicy`               | Rucio DID Finder image pull policy                     | `Always`                                          |
-| `didFinder.site`                     | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
-| `didFinder.rucio_host`               | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
-| `didFinder.auth _host`               | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
-| `didFinder.threads`                  | Number of threads for pull replicas out of Rucio | 5
-| `didFinderCERNOpenData.enabled`      | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
-| `didFinderCERNOpenData.image`        | CERN OpenData DID Finder image name                            | `sslhep/servicex-did-finder`                            |
-| `didFinderCERNOpenData.tag`          | CERN OpenData DID Finder image tag                             | `latest`                                                |
-| `didFinderCERNOpenData.pullPolicy`   | CERN OpenData DID Finder image pull policy                     | `Always`                                          |
+| `didFinder.rucio.enabled`            | Should we deploy the Rucio DID Finder?           | `true`                                              |
+| `didFinder.rucio.image`              | Rucio DID Finder image name                            | `sslhep/servicex-did-finder`                            |
+| `didFinder.rucio.tag`                | Rucio DID Finder image tag                             | `latest`                                                |
+| `didFinder.rucio.pullPolicy`         | Rucio DID Finder image pull policy                     | `Always`                                          |
+| `didFinder.rucio.site`               | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
+| `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
+| `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
+| `didFinder.rucio.threads`            | Number of threads for pull replicas out of Rucio | 5
+| `didFinder.CERNOpenData.enabled`     | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
+| `didFinder.CERNOpenData.image`       | CERN OpenData DID Finder image name                            | `sslhep/servicex-did-finder`                            |
+| `didFinder.CERNOpenData.tag`         | CERN OpenData DID Finder image tag                             | `latest`                                                |
+| `didFinder.CERNOpenData.pullPolicy`  | CERN OpenData DID Finder image pull policy                     | `Always`                                          |
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `Always`                                          |

@@ -115,18 +115,18 @@ data:
     {{ end }}
 
     {{- $didFinders := list }}
-    {{- if .Values.didFinderCERNOpenData.enabled }}
+    {{- if .Values.didFinder.CERNOpenData.enabled }}
       {{- $didFinders = append $didFinders "cernopendata" }}
     {{- end }}
-    {{- if .Values.didFinder.enabled }}
+    {{- if .Values.didFinder.rucio.enabled }}
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
-    {{- if and (not $defaultScheme) .Values.didFinder.enabled }}
+    {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
     {{- $defaultScheme = "rucio" }}
     {{- end }}
-    {{- if and (not $defaultScheme) .Values.didFinderCERNOpenData.enabled }}
+    {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
     {{- $defaultScheme = "cernopendata" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
