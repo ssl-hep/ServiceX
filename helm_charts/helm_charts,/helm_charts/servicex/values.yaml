@@ -64,21 +64,22 @@ app:
 
 # Settings for the Rucio DID Finder
 didFinder:
-  enabled: true
-  image: sslhep/servicex-did-finder
-  tag: develop
-  pullPolicy: Always
-  rucio_host: https://voatlasrucio-server-prod.cern.ch:443
-  auth_host: https://voatlasrucio-auth-prod.cern.ch:443
-  threads: 5
+  rucio:
+    enabled: true
+    image: sslhep/servicex-did-finder
+    tag: develop
+    pullPolicy: Always
+    rucio_host: https://voatlasrucio-server-prod.cern.ch:443
+    auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+    threads: 5
+    site:
 
-  site:
+  CERNOpenData:
+    enabled: true
+    image: sslhep/servicex-did-finder-cernopendata
+    tag: develop
+    pullPolicy: Always
 
-didFinderCERNOpenData:
-  enabled: true
-  image: sslhep/servicex-did-finder-cernopendata
-  tag: develop
-  pullPolicy: Always
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer

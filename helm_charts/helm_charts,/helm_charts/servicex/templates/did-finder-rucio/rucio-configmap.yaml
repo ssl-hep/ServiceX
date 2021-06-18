@@ -1,4 +1,4 @@
-{{ if .Values.didFinder.enabled}}
+{{ if .Values.didFinder.rucio.enabled}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,8 +11,8 @@ metadata:
 data:
   rucio.cfg: |
     [client]
-    rucio_host = {{ .Values.didFinder.rucio_host }}
-    auth_host = {{ .Values.didFinder.auth_host }}
+    rucio_host = {{ .Values.didFinder.rucio.rucio_host }}
+    auth_host = {{ .Values.didFinder.rucio.auth_host }}
     auth_type = x509_proxy
     ca_cert = /etc/pki/tls/certs/ca-bundle.crt
     account = {{ .Values.gridAccount }}
