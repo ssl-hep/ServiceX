@@ -2,7 +2,8 @@
 
 servicex:
   # namespace where you have servicex deployed
-  namespace: default
+  namespace:
+    - default
 
 elasticsearch:
   host: atlas-kibana.mwt2.org
