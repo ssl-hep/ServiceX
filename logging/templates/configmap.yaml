@@ -7,6 +7,8 @@ metadata:
     k8s-app: servicex
 data:
   filebeat.yml: |-
+    logging.metrics.enabled: false
+    logging.level: info
     setup:
       kibana:
         host: {{ .Values.kibana.host }}
@@ -14,7 +16,6 @@ data:
         enabled: {{ .Values.kibana.dashboards.enabled }}
         kibana-index: {{ .Values.kibana.dashboards.index }}
     filebeat:
-
       autodiscover:
         providers:
           - type: kubernetes
@@ -22,8 +23,11 @@ data:
             templates:
               - condition:
                   and:
-                    - equals:
-                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - or:
+                      {{- range $.Values.servicex.namespace }}
+                      - equals:
+                          kubernetes.namespace: {{ . }}
+                      {{- end }}
                     - not:
                         equals: 
                           kubernetes.container.name: rabbitmq
@@ -78,8 +82,11 @@ data:
 
               - condition:
                   and:
-                    - equals:
-                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - or:
+                      {{- range $.Values.servicex.namespace }}
+                      - equals:
+                          kubernetes.namespace: {{ . }}
+                      {{- end }}
                     - equals: 
                         kubernetes.container.name: rabbitmq
                 config:
@@ -93,8 +100,11 @@ data:
 
               - condition:
                   and:
-                    - equals:
-                        kubernetes.namespace: {{ .Values.servicex.namespace }}
+                    - or:
+                      {{- range $.Values.servicex.namespace }}
+                      - equals:
+                          kubernetes.namespace: {{ . }}
+                      {{- end }}
                     - contains: 
                         kubernetes.pod.name: postgresql
                 config:
