@@ -20,9 +20,12 @@ To access the REST server you will need to run a Kubernetes Port-Forward:
 Optionally, you can use a port forward to access the RabbitMQ Dashboard:
   kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-rabbitmq-0 15672:15672
 and then visit http://localhost:15672
+
+if {{ and .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password }}
 Log in with
     username: {{ .Values.rabbitmq.auth.username }}
     password: {{ .Values.rabbitmq.auth.password }}
+{{ end }}
 
 {{ if .Values.postgres.enabled }}
 You can also connect to the deployed postgres server with your favorite SQL client
@@ -36,18 +39,21 @@ and connect with this JDBC Connection String:
 {{ if .Values.minio.ingress.enabled }}
 {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
 
-Since you delcared an internet ingress to Minio you can access it at
+Since you declared an internet ingress to Minio you can access it at
 {{ .Values.objectStore.publicURL | default $minio_ingress }}
 {{ else }}
-Finaly, you can interact with the minio object store with another Port-Forward:
+Finally, you can interact with the minio object store with another Port-Forward:
   export MINIO_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app=minio,release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
   kubectl port-forward $MINIO_POD_NAME 9000:9000
 
 You can use the minio browser by visiting:
     http://localhost:9000
 {{ end }}
+{{if and .Values.minio.accessKey  .Values.minio.secretKey }}
 Log in with
     Access Key: {{ .Values.minio.accessKey }}
     Secret Key: {{ .Values.minio.secretKey }}
+{{ end }}
+
 {{ end }}
 
