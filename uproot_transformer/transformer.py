@@ -42,7 +42,6 @@ from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
 import os
 import pyarrow.parquet as pq
-import pandas as pd
 import pyarrow as pa
 
 
