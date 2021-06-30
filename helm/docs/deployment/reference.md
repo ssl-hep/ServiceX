@@ -75,14 +75,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
 | `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' |
-| `transformer.persistence` | Should transformer write result to a persistent volume? | False |
 | `transformer.persistence.existingClaim` | Existing persistent volume claim | nil |
-| `transformer.persistence.storageClass` | Kubernetes storage class for dynamically provisioning persistent volume | nil |
-| `transformer.persistence.size` | Requested size of persistent volume | nil |
-| `transformer.persistence.annotations` | Annotation for persistent volume | nil |
 | `transformer.subdir` | Subdirectory of the mount to write transformer results to | nil |
-
-
 
 
 ## Logging chart
