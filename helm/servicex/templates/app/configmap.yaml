@@ -93,7 +93,7 @@ data:
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
     
 
-    TRANSFORMER_PERSISTENCE_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
+    TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
     TRANSFORMER_PERSISTENCE_STORAGE_CLASS = "{{ .Values.transformer.persistence.storageClass }}"
     TRANSFORMER_PERSISTENCE_SIZE = "{{ .Values.transformer.persistence.size }}"
     TRANSFORMER_PERSISTENCE_ANNOTATIONS = "{{ .Values.transformer.persistence.annotations }}"
