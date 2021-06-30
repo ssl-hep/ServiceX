@@ -12,7 +12,7 @@ pyarrow==3.0.0
 pytest==4.6.11
 pytest-mock==2.0.0
 requests==2.24.0
-servicex-transformer==1.0.0.dev7
+servicex-transformer==1.0.1
 uproot==4.0.1
 xxhash==1.4.4
 
