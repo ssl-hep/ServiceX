@@ -54,23 +54,4 @@ roleRef:
   kind: Role
   name: {{ template "servicex.fullname" . }}-configmap-manager
 
----
-
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: {{ template "servicex.fullname" . }}-pvc-manager
-  labels:
-    app: {{ template "servicex.name" . }}
-    chart: {{ template "servicex.chart" .  }}
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
-subjects:
-- kind: ServiceAccount
-  name: {{ template "servicex.fullname" . }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: {{ template "servicex.fullname" . }}-pvc-manager
-
 {{- end }}
