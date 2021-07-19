@@ -6,6 +6,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 
 | Parameter                            | Description                                      | Default                                                 |
 | ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `secrets`                            | Name of a secret deployed into the cluster. Must follow example_secrets.yaml | -        |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `Always`                                          |
