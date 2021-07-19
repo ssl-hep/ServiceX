@@ -30,6 +30,48 @@ spec:
           value: "/opt/servicex/app.conf"
         - name: INSTANCE_NAME
           value: {{ .Release.Name }}
+    {{- if .Values.secrets }}
+        - name: GLOBUS_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: globusClientID
+        - name: GLOBUS_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: globusClientSecret
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: secretKey
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: jwtSecretKey
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: minioAccessKey
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: minioSecretKey
+        - name: SLACK_SIGNING_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: slackSigningSecret
+        - name: MAILGUN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: mailgunAPIKey
+    {{- end }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .Values.app.pullPolicy }}
@@ -43,6 +85,7 @@ spec:
             mountPath: /opt/servicex
           - name: sqlite
             mountPath: /sqlite
+
         ports:
           - containerPort: 5000
 
