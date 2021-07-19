@@ -327,6 +327,28 @@ rabbitmq:
        cpu: 100m
   replicas: 3
 ```
+## Using SealedSecrets to Keep All Config In GitHub
+We use Bitnami's Sealed Secrets Controller to allow us to check all of the
+config into GitHub. 
+
+Install sealed secrets helm chart
+```bash
+ helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets       
+ helm install sealed-secrets --namespace kube-system sealed-secrets/sealed-secrets
+```
+
+You will need the `kubeseal` command on your computer. Follow instructions for
+[the various options](https://github.com/bitnami-labs/sealed-secrets#homebrew)
+
+Create a secrets file using the [example_secrets.yaml](../../example_secrets.yaml). 
+Encrypt it using kubeseal with 
+```console
+cat deployed_values/dev-secrets.yaml | kubeseal --controller-namespace kube-system --controller-name sealed-secrets --format yaml > deployed_values/dev-sealed-secrets.yaml                  
+```
+
+You can safely check `dev-sealed-secrets.yaml` into GitHub. When you deploy
+that file into the cluster, it will be unsealed and turned into a plaintext secret
+that can be mounted into the App's deployment as env vars.
 
 ## Autoscaling
 ServiceX should automatically scale up/down number of transformers. For this to work it uses Horizontal Pod Autoscaler (HPA). For the HPA to work, k8s cluster needs to be able to measure CPU utilization of the pods. This is easiest enabled by installing [metric-server](https://github.com/kubernetes-sigs/metrics-server). The latest one is easily installed and supports up to 100 nodes by default:
