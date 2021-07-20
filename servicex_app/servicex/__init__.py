@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from distutils.util import strtobool
 
 import os
 from flask import Flask
@@ -41,6 +42,22 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
 
+def _override_config_with_environ(app):
+    """
+    Use app.config as a guide to configuration settings that can be overridden from env
+    vars.
+    """
+    # Env vars will be strings. Convert boolean values
+    def _convert_string(value):
+        return value if value not in ["true", "false"] else strtobool(value)
+
+    # Create a dictionary of environment vars that have keys that match keys from the
+    # loaded config. These will override anything from the config file
+    return {k: (lambda key, value: _convert_string(os.environ[k]))(k, v) for (k, v)
+            in app.config.items()
+            if k in os.environ}
+
+
 def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
@@ -55,6 +72,7 @@ def create_app(test_config=None,
     JWTManager(app)
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
+        app.config.update(_override_config_with_environ(app))
     else:
         app.config.from_mapping(test_config)
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
