@@ -47,18 +47,19 @@ class TransformerManager:
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
                           generated_code_cm):
-        volume_mounts = [
-            client.V1VolumeMount(
-                name='x509-secret',
-                mount_path='/etc/grid-security-ro')
-        ]
+        volume_mounts = []
+        volumes = []
 
-        volumes = [
-            client.V1Volume(
+        if x509_secret:
+            volume_mounts.append(
+                client.V1VolumeMount(
+                    name='x509-secret',
+                    mount_path='/etc/grid-security-ro')
+            )
+            volumes.append(client.V1Volume(
                 name='x509-secret',
                 secret=client.V1SecretVolumeSource(secret_name=x509_secret)
-            )
-        ]
+            ))
 
         if generated_code_cm:
             volumes.append(client.V1Volume(
@@ -106,14 +107,18 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
-        python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
-                       "PYTHONPATH=/generated:$PYTHONPATH " +
-                       "python /servicex/transformer.py " +
-                       " --request-id " + request_id +
-                       " --rabbit-uri " + rabbitmq_uri +
-                       " --chunks " + str(chunk_size) +
-                       " --result-destination " + result_destination +
-                       " --result-format " + result_format]
+        if x509_secret:
+            python_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
+        else:
+            python_args = [" "]
+
+        python_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
+                          "python /servicex/transformer.py " + \
+                          " --request-id " + request_id + \
+                          " --rabbit-uri " + rabbitmq_uri + \
+                          " --chunks " + str(chunk_size) + \
+                          " --result-destination " + result_destination + \
+                          " --result-format " + result_format
 
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker

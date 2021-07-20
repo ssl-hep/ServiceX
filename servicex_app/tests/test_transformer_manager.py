@@ -96,8 +96,12 @@ class TestTransformerManager(ResourceTestBase):
             container = called_deployment.spec.template.spec.containers[0]
             assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
+            assert len(container.volume_mounts) == 1
+            assert container.volume_mounts[0].name == 'x509-secret'
+            assert container.volume_mounts[0].mount_path == '/etc/grid-security-ro'
             args = container.args
 
+            assert args[0].startswith('/servicex/proxy-exporter.sh & sleep 5 && ')
             assert _arg_value(args, '--rabbit-uri') == 'ampq://test.com'
             assert _arg_value(args, '--chunks') == '5000'
             assert _arg_value(args, '--result-destination') == 'kafka'
@@ -113,6 +117,10 @@ class TestTransformerManager(ResourceTestBase):
             assert autoscaling_spec.max_replicas == 17
             assert autoscaling_spec.scale_target_ref.name == 'transformer-1234'
             assert autoscaling_spec.target_cpu_utilization_percentage == 30
+
+            assert len(called_deployment.spec.template.spec.volumes) == 1
+            volume = called_deployment.spec.template.spec.volumes[0].secret
+            assert volume.secret_name == 'x509'
 
     def test_launch_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
@@ -283,6 +291,40 @@ class TestTransformerManager(ResourceTestBase):
             args = container.args
             assert _arg_value(args, '--result-destination') == 'kafka'
             assert _arg_value(args, '--brokerlist') == 'kafka.servicex.org'
+
+    def test_launch_transformer_jobs_no_certs(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_api = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+
+        transformer = TransformerManager('external-kubernetes')
+        cfg = {
+            'TRANSFORMER_CPU_LIMIT': 4,
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_MIN_REPLICAS': 3,
+            'TRANSFORMER_MAX_REPLICAS': 17,
+            'TRANSFORMER_X509_SECRET': None
+        }
+        client = self._test_client(transformation_manager=transformer,
+                                   extra_config=cfg)
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='kafka', result_format='arrow', x509_secret=None,
+                generated_code_cm=None)
+            called_deployment = mock_api.mock_calls[1][2]['body']
+            assert len(called_deployment.spec.template.spec.containers) == 1
+            container = called_deployment.spec.template.spec.containers[0]
+            assert len(container.volume_mounts) == 0
+            assert len(called_deployment.spec.template.spec.volumes) == 0
+            args = container.args
+            assert not args[0].startswith('/servicex/proxy-exporter.sh & sleep 5 && ')
 
     def test_shutdown_transformer_jobs(self, mocker):
         import kubernetes
