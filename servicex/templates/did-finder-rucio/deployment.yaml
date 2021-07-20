@@ -1,5 +1,8 @@
 ---
 {{ if .Values.didFinder.rucio.enabled}}
+  {{- if .Values.noCerts }}
+    {{- fail "Rucio DID Finder requires x509 Certs to be installed" }}
+  {{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

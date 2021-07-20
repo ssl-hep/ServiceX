@@ -82,7 +82,11 @@ data:
     TRANSFORMER_MIN_REPLICAS = {{ .Values.transformer.autoscaler.minReplicas }}
     TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
+    {{- if not .Values.noCerts }}
     TRANSFORMER_X509_SECRET="{{ .Release.Name }}-x509-proxy"
+    {{- else }}
+    TRANSFORMER_X509_SECRET=None
+    {{- end }}
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
 
     TRANSFORMER_MESSAGING = 'none'
