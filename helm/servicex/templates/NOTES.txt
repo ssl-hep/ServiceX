@@ -21,7 +21,7 @@ Optionally, you can use a port forward to access the RabbitMQ Dashboard:
   kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-rabbitmq-0 15672:15672
 and then visit http://localhost:15672
 
-if {{ and .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password }}
+{{ if and .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password }}
 Log in with
     username: {{ .Values.rabbitmq.auth.username }}
     password: {{ .Values.rabbitmq.auth.password }}
