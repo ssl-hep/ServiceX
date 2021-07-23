@@ -94,7 +94,7 @@
             progressBar.css("width", `${progress}%`);
             if (failed > 0) {
               progressBar.addClass("bg-warning");
-              $(`#files-failed-${req_id}`).text(`(${failed} falied)`);
+              $(`#files-failed-${req_id}`).text(`(${failed} failed)`);
             }
             if (status === "Complete" || status === "Fatal") {
               watched.delete(req_id);
