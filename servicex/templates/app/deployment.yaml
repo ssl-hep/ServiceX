@@ -66,6 +66,11 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: slackSigningSecret
+        - name: SIGNUP_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: slackSignupWebhook
         - name: MAILGUN_API_KEY
           valueFrom:
             secretKeyRef:
