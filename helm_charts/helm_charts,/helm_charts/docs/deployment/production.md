@@ -388,4 +388,6 @@ helm install -f my_values.yaml my_logging ssl-hep/logging
 
 You may check if pods are running correctly by listing pods in the kube-system namespace.
 
-To use UChicago infrastructure set elasticsearch host to 'atlas-kibana.mwt2.org', user and pass to 'river-dev-logs', kibana host to https://atlas-kibana.mwt2.org:5601 and kibana.dashboards.index to '.kibana-dev'
+To use UChicago infrastructure set elasticsearch host to 'atlas-kibana.mwt2.org', 
+kibana host to https://atlas-kibana.mwt2.org:5601 and kibana.dashboards.index to '.kibana-dev' and contact a ServiceX
+team member at UChicago to get login credentials.
