@@ -33,8 +33,8 @@ spec:
         volumeMounts:
         {{- if not .Values.noCerts }}
         - name: x509-secret
-            mountPath: /etc/grid-security-ro
-            readOnly: true
+          mountPath: /etc/grid-security-ro
+          readOnly: true
         {{- end }}
           {{ if .Values.hostMount }}
           - name: rootfiles
