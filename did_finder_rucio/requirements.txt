@@ -1,4 +1,4 @@
-rucio-clients>=1.24.2
+rucio-clients>=1.26.1
 pika==1.1.0
 servicex-did-finder-lib
 aiostream
