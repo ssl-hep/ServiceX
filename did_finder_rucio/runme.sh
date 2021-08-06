@@ -8,9 +8,9 @@ while true; do
     ls ${X509_USER_PROXY}
     RESULT=$?
     if [ $RESULT -eq 0 ]; then
-        echo "Got proxy."
         break
     fi
+    echo "INFO $INSTANCE_NAME did-finder none Waiting for the proxy."
     sleep 5
 done
 
