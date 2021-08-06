@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-mkdir -p /etc/grid-security
 
+proxydir=$(dirname ${X509_USER_PROXY})
+
+if [[ ! -d $proxydir ]]
+then
+    mkdir -p $proxydir
+fi
 
 while true; do
 
     while true; do 
-        cp /etc/grid-security-ro/x509up /etc/grid-security
+        cp /etc/grid-security-ro/x509up ${X509_USER_PROXY}
         RESULT=$?
         if [ $RESULT -eq 0 ]; then
             echo "INFO $INSTANCE_NAME did-finder none Got proxy."
-            chmod 600 /etc/grid-security/x509up
+            chmod 600 ${X509_USER_PROXY}
             break 
         else
             echo "WARNING $INSTANCE_NAME did-finder none An issue encountered when getting proxy."

@@ -26,113 +26,71 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
-import sys
-import traceback
+import argparse
+import logging
 
-import time
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
-import argparse
-import pika
-
-from servicex.did_finder.lookup_request import LookupRequest
 from servicex.did_finder.rucio_adapter import RucioAdapter
-from servicex.did_finder.servicex_adapter import ServiceXAdapter
-
-QUEUE_NAME = 'rucio_did_requests'
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--site', dest='site', action='store',
-                    default=None,
-                    help='XCache Site)')
-
-parser.add_argument('--prefix', dest='prefix', action='store',
-                    default='',
-                    help='Prefix to add to Xrootd URLs')
-
-parser.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
-                    default='host.docker.internal')
-
-parser.add_argument('--threads', dest='threads', action='store',
-                    default=10, type=int, help="Number of threads to spawn")
-
-# Gobble up the rest of the args as a list of DIDs
-parser.add_argument('did_list', nargs='*')
+from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
+from servicex.did_finder.lookup_request import LookupRequest
 
 
-# RabbitMQ Queue Callback Method
-def callback(channel, method, properties, body):
+def run_rucio_finder():
+    '''Run the rucio finder
+    '''
+    logger = logging.getLogger()
+
+    # Parse the command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--site', dest='site', action='store',
+                        default=None,
+                        help='XCache Site)')
+    parser.add_argument('--prefix', dest='prefix', action='store',
+                        default='',
+                        help='Prefix to add to Xrootd URLs')
+    parser.add_argument('--threads', dest='threads', action='store',
+                        default=10, type=int, help="Number of threads to spawn")
+    add_did_finder_cnd_arguments(parser)
+
+    args = parser.parse_args()
+
+    site = args.site
+    prefix = args.prefix
+    threads = args.threads
+    logger.info("ServiceX DID Finder starting up: "
+                f"Threads: {threads} Site: {site} Prefix: {prefix}")
+
+    # Initialize the finder
+    did_client = DIDClient()
+    replica_client = ReplicaClient()
+    rucio_adapter = RucioAdapter(did_client, replica_client)
+
+    # Run the DID Finder
     try:
-        did_request = json.loads(body)
-        print("----> ", did_request)
-        servicex = ServiceXAdapter(did_request['service-endpoint'])
-        did = did_request['did']
-        request_id = did_request['request_id']
+        logger.info('Starting rucio DID finder')
 
-        servicex.post_status_update("DID Request received")
-        lookup_request = LookupRequest(
-            request_id=request_id,
-            did=did,
-            rucio_adapter=rucio_adapter,
-            servicex_adapter=servicex,
-            site=site,
-            prefix=prefix,
-            chunk_size=1000,
-            threads=threads
-        )
+        async def callback(did_name, info):
+            lookup_request = LookupRequest(
+                did=did_name,
+                rucio_adapter=rucio_adapter,
+                site=site,
+                prefix=prefix,
+                chunk_size=1000,
+                threads=threads,
+                request_id=info['request-id']
+            )
 
-        lookup_request.lookup_files()
+            async for f in lookup_request.lookup_files():
+                yield f
 
-    except Exception:
-        traceback.print_exc()
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        servicex.post_status_update("DID Request failed " + str(exc_value))
+        start_did_finder('rucio',
+                         callback,
+                         parsed_args=args)
+
     finally:
-        channel.basic_ack(delivery_tag=method.delivery_tag)
+        logger.info('Done running rucio DID finder')
 
 
-def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
-    rabbitmq = None
-    retry_count = 0
-
-    while not rabbitmq:
-        try:
-            rabbitmq = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
-            _channel = rabbitmq.channel()
-            _channel.queue_declare(queue=QUEUE_NAME)
-
-            print("Connected to RabbitMQ. Ready to start consuming requests")
-
-            _channel.basic_consume(queue=QUEUE_NAME,
-                                   auto_ack=False,
-                                   on_message_callback=callback)
-            _channel.start_consuming()
-
-        except pika.exceptions.AMQPConnectionError as eek:
-            rabbitmq = None
-            retry_count += 1
-            if retry_count < retries:
-                print("Failed to connect to RabbitMQ. Waiting before trying again")
-                time.sleep(retry_interval)
-            else:
-                print("Failed to connect to RabbitMQ. Giving Up")
-                raise eek
-
-
-# Main Script
-args = parser.parse_args()
-
-site = args.site
-prefix = args.prefix
-threads = args.threads
-print("--------- ServiceX DID Finder ----------------")
-print("Threads: " + str(threads))
-print("Site: " + str(site))
-print("Prefix: " + str(prefix))
-
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client)
-
-init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
+if __name__ == "__main__":
+    run_rucio_finder()

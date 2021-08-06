@@ -1,5 +1,9 @@
 pytest>=3.6
 coverage
 pytest-mock
+pytest-asyncio
 flake8
 codecov==2.0.15
+jupyterlab
+func_adl_servicex
+matplotlib
