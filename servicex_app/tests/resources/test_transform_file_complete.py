@@ -67,6 +67,30 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
+    def test_put_transform_file_complete_unknown_files_remaining(self, mocker):
+        import servicex
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+        fake_req = self._generate_transform_request()
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+        )
+
+        mock_files_remaining = mocker.PropertyMock(return_value=None)
+        TransformRequest.files_remaining = mock_files_remaining
+
+        mocker.patch.object(DatasetFile, "get_by_id")
+        mocker.patch.object(TransformationResult, "save_to_db")
+        mocker.patch.object(TransformRequest, "save_to_db")
+
+        client = self._test_client(transformation_manager=mock_transformer_manager)
+        response = client.put('/servicex/internal/transformation/1234/file-complete',
+                              json=self._generate_file_complete_request())
+        assert response.status_code == 200
+        assert fake_req.finish_time is None
+        mock_transform_request_read.assert_called_with('1234')
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
     def test_put_transform_file_complete_no_files_remaining(self, mocker):
         import servicex
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
