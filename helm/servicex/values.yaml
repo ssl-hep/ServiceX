@@ -96,9 +96,11 @@ preflight:
 # Code Generator service
 codeGen:
   enabled: true
-  image: sslhep/servicex_code_gen_func_adl_xaod
+  image: sslhep/servicex_code_gen_atlas_xaod
   # For uproot deployment
   # image: sslhep/servicex_code_gen_func_adl_uproot
+  # for CMS Run 1 AOD OpenData
+  # image: sslhep/servicex_code_gen_cms_aod
   tag: develop
   pullPolicy: Always
 
