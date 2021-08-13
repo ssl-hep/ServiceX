@@ -96,7 +96,7 @@ gridAccount: <your CERN ID>
 codeGen:
   # Choose one of the following images to include in your values.yaml:
   # For xAOD
-  image: sslhep/servicex_code_gen_func_adl_xaod
+  image: sslhep/servicex_code_gen_atlas_xaod
 
   # Or for flat ROOT files
   image: sslhep/servicex_code_gen_func_adl_uproot
