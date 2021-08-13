@@ -18,7 +18,7 @@ app:
     enabled: true
     clusterIssuer: letsencrypt-prod-nginx
 codeGen:
-  image: sslhep/servicex_code_gen_func_adl_xaod
+  image: sslhep/servicex_code_gen_atlas_xaod
 
 didFinder:
   pullPolicy: Always
