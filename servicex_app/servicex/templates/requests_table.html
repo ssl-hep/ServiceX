@@ -24,7 +24,9 @@
         </th>
         {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
         <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-        <td>{{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}</td>
+        <td id="finish-time-{{ req.request_id }}">
+          {{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}
+        </td>
         <td>
           <div id="status-{{ req.request_id }}">
             {{ req.status }}
@@ -100,6 +102,8 @@
               watched.delete(req_id);
               $(`#progress-${req_id}`).remove();
               $(`#replicas-${req_id}`).text("-")
+              const [d, t] = data["finish-time"].split("T")
+              $(`#finish-time-${req_id}`).text(`${d} ${t.split(".")[0]}`)
             }
           })
       }));
