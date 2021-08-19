@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -92,6 +94,7 @@ class TestTransformStatus(ResourceTestBase):
         servicex.models.TransformRequest.statistics = mock_statistics
 
         fake_transform_request = self._generate_transform_request()
+        fake_transform_request.finish_time = datetime.max
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'return_request',
@@ -100,11 +103,12 @@ class TestTransformStatus(ResourceTestBase):
 
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 200
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         assert response.json == {
             "status": fake_transform_request.status,
             'request-id': "1234",
-            "submit-time": fake_transform_request.submit_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "finish-time": fake_transform_request.finish_time,
+            "submit-time": fake_transform_request.submit_time.strftime(iso_fmt),
+            "finish-time": fake_transform_request.finish_time.strftime(iso_fmt),
             'files-processed': mock_files_processed.return_value,
             'files-remaining': mock_files_remaining.return_value,
             'files-skipped': mock_files_failed.return_value,
