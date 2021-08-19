@@ -57,7 +57,6 @@ class FileTransformationStatus(ServiceXResource):
                                  info=status.info[:max_string_size])
         file_status.save_to_db()
 
-        print(file_status)
         try:
             db.session.commit()
         except Exception:

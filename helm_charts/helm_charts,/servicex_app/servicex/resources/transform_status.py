@@ -50,14 +50,21 @@ class TransformationStatus(ServiceXResource):
 
         status_request = status_request_parser.parse_args()
 
+        # Format timestamps with military timezone, given that they are in UTC.
+        # See https://stackoverflow.com/a/42777551/8534196
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         result_dict = {
             "status": transform.status,
             "request-id": request_id,
+            "submit-time": transform.submit_time.strftime(iso_fmt),
+            "finish-time": transform.finish_time,
             "files-processed": transform.files_processed,
             "files-skipped": transform.files_failed,
             "files-remaining": transform.files_remaining,
             "stats": transform.statistics
         }
+        if transform.finish_time is not None:
+            result_dict["finish-time"] = transform.finish_time.strftime(iso_fmt)
 
         if status_request.details:
             result_dict['details'] = TransformationResult.to_json_list(
