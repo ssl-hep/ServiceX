@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime, timezone
+
 import kubernetes
 from flask import current_app
 
@@ -39,18 +41,18 @@ class TransformStop(ServiceXResource):
 
     @auth_required
     def get(self, request_id: str):
-        transform = TransformRequest.return_request(request_id)
-        if not transform:
+        transform_req = TransformRequest.return_request(request_id)
+        if not transform_req:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
-        elif transform.complete:
+        elif transform_req.complete:
             msg = f"Transform request with id {request_id} is already complete."
             return {"message": msg}, 400
 
         manager: TransformerManager = TransformStart.transformer_manager
         namespace = current_app.config['TRANSFORMER_NAMESPACE']
 
-        if transform.status == "Running":
+        if transform_req.status == "Running":
             try:
                 manager.shutdown_transformer_job(request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
@@ -59,6 +61,7 @@ class TransformStop(ServiceXResource):
                 else:
                     return {'message': exc.reason}, exc.status
 
-        transform.status = "Stopped"
-        transform.save_to_db()
+        transform_req.status = "Stopped"
+        transform_req.finish_time = datetime.now(tz=timezone.utc)
+        transform_req.save_to_db()
         db.session.commit()

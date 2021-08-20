@@ -28,6 +28,7 @@ class TestTransformStart(ResourceTestBase):
         resp = client.get("/servicex/transformation/1234/stop")
         assert resp.status_code == 200
         assert fake_transform.status == "Stopped"
+        assert fake_transform.finish_time is not None
         mock_manager.shutdown_transformer_job.assert_not_called()
 
     def test_running(self, client, mock_manager, fake_transform):
@@ -37,6 +38,7 @@ class TestTransformStart(ResourceTestBase):
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == "Stopped"
+        assert fake_transform.finish_time is not None
 
     def test_running_deployment_not_found(self, client, mock_manager, fake_transform):
         fake_transform.status = "Running"
@@ -47,6 +49,7 @@ class TestTransformStart(ResourceTestBase):
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == "Stopped"
+        assert fake_transform.finish_time is not None
 
     def test_running_k8s_exception(self, client, mock_manager, fake_transform):
         fake_transform.status = "Running"
@@ -57,6 +60,7 @@ class TestTransformStart(ResourceTestBase):
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == "Running"
+        assert fake_transform.finish_time is None
 
     @pytest.mark.parametrize("status", [
         "Complete",
