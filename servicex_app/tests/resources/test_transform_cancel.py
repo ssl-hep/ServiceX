@@ -7,8 +7,8 @@ from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
 
 
-class TestTransformStart(ResourceTestBase):
-    module = "servicex.resources.transform_stop"
+class TestTransformCancel(ResourceTestBase):
+    module = "servicex.resources.transform_cancel"
 
     @pytest.fixture
     def mock_manager(self, mocker) -> MagicMock:
@@ -25,37 +25,37 @@ class TestTransformStart(ResourceTestBase):
 
     def test_submitted(self, client, mock_manager, fake_transform):
         fake_transform.status = "Submitted"
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
-        assert fake_transform.status == "Stopped"
+        assert fake_transform.status == "Canceled"
         assert fake_transform.finish_time is not None
         mock_manager.shutdown_transformer_job.assert_not_called()
 
     def test_running(self, client, mock_manager, fake_transform):
         fake_transform.status = "Running"
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
-        assert fake_transform.status == "Stopped"
+        assert fake_transform.status == "Canceled"
         assert fake_transform.finish_time is not None
 
     def test_running_deployment_not_found(self, client, mock_manager, fake_transform):
         fake_transform.status = "Running"
         exc = k8s.client.exceptions.ApiException(status=404)
         mock_manager.shutdown_transformer_job.side_effect = exc
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
-        assert fake_transform.status == "Stopped"
+        assert fake_transform.status == "Canceled"
         assert fake_transform.finish_time is not None
 
     def test_running_k8s_exception(self, client, mock_manager, fake_transform):
         fake_transform.status = "Running"
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
         mock_manager.shutdown_transformer_job.side_effect = exc
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 403
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
         mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
@@ -65,15 +65,15 @@ class TestTransformStart(ResourceTestBase):
     @pytest.mark.parametrize("status", [
         "Complete",
         "Fatal",
-        "Stopped"
+        "Canceled"
     ])
     def test_complete(self, client, fake_transform, status: str):
         fake_transform.status = status
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 400
-        assert "already complete" in resp.json["message"]
+        assert "not in progress" in resp.json["message"]
 
     def test_404(self, client):
-        resp = client.get("/servicex/transformation/1234/stop")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 404
         assert "Transformation request not found" in resp.json["message"]

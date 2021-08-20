@@ -129,7 +129,7 @@ class TestTransformationStart(ResourceTestBase):
             'return_request',
             return_value=mock_request)
 
-        mock_request.status = "Stopped"
+        mock_request.status = "Canceled"
         response = client.post('/servicex/internal/transformation/1234/start',
                                json={'max-event-size': 4567})
         assert response.status_code == 409

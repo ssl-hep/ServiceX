@@ -37,7 +37,7 @@ from servicex.resources.transform_start import TransformStart
 from servicex.transformer_manager import TransformerManager
 
 
-class TransformStop(ServiceXResource):
+class TransformCancel(ServiceXResource):
 
     @auth_required
     def get(self, request_id: str):
@@ -46,7 +46,7 @@ class TransformStop(ServiceXResource):
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
         elif transform_req.complete:
-            msg = f"Transform request with id {request_id} is already complete."
+            msg = f"Transform request with id {request_id} is not in progress."
             return {"message": msg}, 400
 
         manager: TransformerManager = TransformStart.transformer_manager
@@ -61,7 +61,7 @@ class TransformStop(ServiceXResource):
                 else:
                     return {'message': exc.reason}, exc.status
 
-        transform_req.status = "Stopped"
+        transform_req.status = "Canceled"
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
         db.session.commit()

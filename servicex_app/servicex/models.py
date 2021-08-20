@@ -217,7 +217,7 @@ class TransformRequest(db.Model):
 
     @property
     def complete(self) -> bool:
-        return self.status in {"Complete", "Fatal", "Stopped"}
+        return self.status in {"Complete", "Fatal", "Canceled"}
 
     @property
     def incomplete(self) -> bool:
