@@ -35,6 +35,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status \
         import TransformationStatus, TransformationStatusInternal
+    from servicex.resources.transform_stop import TransformStop
     from servicex.resources.file_transform_status import FileTransformationStatus
     from servicex.resources.all_transformation_requests import AllTransformationRequests
     from servicex.resources.transformation_request import TransformationRequest
@@ -110,6 +111,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationStatus, prefix + "/status")
+    api.add_resource(TransformStop, prefix + "/stop")
     api.add_resource(TransformErrors, prefix + "/errors")
     api.add_resource(DeploymentStatus, prefix + "/deployment-status")
 

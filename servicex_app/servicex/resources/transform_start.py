@@ -29,11 +29,12 @@ from flask import current_app
 
 from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
+from servicex.transformer_manager import TransformerManager
 
 
 class TransformStart(ServiceXResource):
     @classmethod
-    def make_api(cls, transformer_manager):
+    def make_api(cls, transformer_manager: TransformerManager):
         """Initializes the transformer manage for this resource."""
         cls.transformer_manager = transformer_manager
         return cls
@@ -45,6 +46,10 @@ class TransformStart(ServiceXResource):
         """
         from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.return_request(request_id)
+
+        if submitted_request.status == "Stopped":
+            return {"message": "Transform request stopped by user."}, 409
+
         submitted_request.status = 'Running'
         submitted_request.save_to_db()
         db.session.commit()
@@ -61,7 +66,7 @@ class TransformStart(ServiceXResource):
                                    num_partitions=100)
 
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
-            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
             x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
             generated_code_cm = submitted_request.generated_code_cm
 
@@ -69,7 +74,7 @@ class TransformStart(ServiceXResource):
                 image=submitted_request.image, request_id=request_id,
                 workers=submitted_request.workers,
                 chunk_size=submitted_request.chunk_size, rabbitmq_uri=rabbitmq_uri,
-                namespace=namepsace,
+                namespace=namespace,
                 x509_secret=x509_secret,
                 generated_code_cm=generated_code_cm,
                 result_destination=submitted_request.result_destination,

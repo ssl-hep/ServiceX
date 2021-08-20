@@ -216,8 +216,12 @@ class TransformRequest(db.Model):
         return datetime.utcnow() - self.submit_time
 
     @property
+    def complete(self) -> bool:
+        return self.status in {"Complete", "Fatal", "Stopped"}
+
+    @property
     def incomplete(self) -> bool:
-        return self.status not in {"Complete", "Fatal"}
+        return self.status in {"Submitted", "Running"}
 
     @property
     def submitter_name(self):
