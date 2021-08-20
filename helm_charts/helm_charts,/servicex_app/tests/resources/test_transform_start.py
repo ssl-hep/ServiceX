@@ -116,3 +116,21 @@ class TestTransformationStart(ResourceTestBase):
         mock_kafka_topic_manager.assert_not_called()
 
         mock_request.save_to_db.assert_called()
+
+    def test_stopped(self, client, mocker):
+        import servicex
+        from servicex.transformer_manager import TransformerManager
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
+        mock_request = self._generate_transform_request()
+        mock_request.save_to_db = mocker.Mock()
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=mock_request)
+
+        mock_request.status = "Stopped"
+        response = client.post('/servicex/internal/transformation/1234/start',
+                               json={'max-event-size': 4567})
+        assert response.status_code == 409
+        mock_transform_request_read.assert_called_with('1234')
