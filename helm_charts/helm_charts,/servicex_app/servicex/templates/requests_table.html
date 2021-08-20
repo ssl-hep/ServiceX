@@ -98,7 +98,7 @@
               progressBar.addClass("bg-warning");
               $(`#files-failed-${req_id}`).text(`(${failed} failed)`);
             }
-            if (status === "Complete" || status === "Fatal") {
+            if (status === "Complete" || status === "Fatal" || status === "Stopped") {
               watched.delete(req_id);
               $(`#progress-${req_id}`).remove();
               $(`#replicas-${req_id}`).text("-")
