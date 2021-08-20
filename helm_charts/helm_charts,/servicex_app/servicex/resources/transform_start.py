@@ -47,8 +47,8 @@ class TransformStart(ServiceXResource):
         from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.return_request(request_id)
 
-        if submitted_request.status == "Stopped":
-            return {"message": "Transform request stopped by user."}, 409
+        if submitted_request.status == "Canceled":
+            return {"message": "Transform request canceled by user."}, 409
 
         submitted_request.status = 'Running'
         submitted_request.save_to_db()
