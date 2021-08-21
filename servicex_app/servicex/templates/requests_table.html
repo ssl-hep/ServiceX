@@ -14,6 +14,7 @@
         <th scope="col">Status</th>
         <th scope="col">Files completed</th>
         <th scope="col">Workers</th>
+        <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -47,6 +48,16 @@
           </div>
         </td>
         <td id="replicas-{{ req.request_id }}">-</td>
+        <td>
+          {% if req.incomplete %}
+            <button id="cancel-{{ req.request_id }}"
+                    onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
+                    type="button"
+                    class="btn btn-danger btn-sm">
+              Cancel
+            </button>
+          {% endif %}
+        </td>
       </tr>
     {% endfor %}
     </tbody>
@@ -101,6 +112,7 @@
             if (status === "Complete" || status === "Fatal" || status === "Canceled") {
               watched.delete(req_id);
               $(`#progress-${req_id}`).remove();
+              $(`#cancel-${req_id}`).remove();
               $(`#replicas-${req_id}`).text("-")
               const [d, t] = data["finish-time"].split("T")
               $(`#finish-time-${req_id}`).text(`${d} ${t.split(".")[0]}`)

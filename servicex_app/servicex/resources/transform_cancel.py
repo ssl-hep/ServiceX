@@ -65,3 +65,5 @@ class TransformCancel(ServiceXResource):
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
         db.session.commit()
+
+        return {"message": f"Canceled transformation request {request_id}"}, 200
