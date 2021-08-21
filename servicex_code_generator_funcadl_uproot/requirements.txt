@@ -3,4 +3,4 @@ Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-WTF==0.14.3
 func-adl==1.0.0a18
-func-adl-uproot==1.2
+func-adl-uproot==1.4
