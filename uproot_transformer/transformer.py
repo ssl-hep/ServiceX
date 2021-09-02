@@ -52,6 +52,7 @@ avg_cell_size = 42
 
 messaging = None
 object_store = None
+posix_path = None
 
 
 class ArrowIterator:
@@ -83,7 +84,7 @@ def callback(channel, method, properties, body):
                                     info="Starting")
 
         root_file = _file_path.replace('/', ':')
-        output_path = '/home/atlas/' + root_file
+        output_path = posix_path + root_file
         transform_single_file(_file_path, output_path+".parquet", servicex)
 
         tock = time.time()
@@ -178,15 +179,21 @@ if __name__ == "__main__":
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     print(args.result_destination, args.output_dir)
-    if args.output_dir:
-            messaging = None
-            object_store = None
-    elif args.result_destination == 'kafka':
+
+    if args.result_destination == 'kafka':
         messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
         object_store = None
     elif args.result_destination == 'object-store':
         messaging = None
+        posix_path = "/home/atlas"
         object_store = ObjectStoreManager()
+    elif args.result_destination == 'volume':
+        messaging = None
+        object_store = None
+        posix_path = args.output_dir
+    elif args.output_dir:
+        messaging = None
+        object_store = None
 
     compile_code()
 
