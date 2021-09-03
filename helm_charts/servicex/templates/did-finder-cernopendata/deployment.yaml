@@ -23,5 +23,10 @@ spec:
             value: {{ .Release.Name }}
         args:
           - --rabbit-uri
+    {{- if .Values.secrets }}
+          - amqp://user:{{ .Values.secrets.rabbitmq-password }}@{{ .Release.Name }}-rabbitmq:5672
+    {{- end }}
+    {{- else }}
           - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+    {{- end }}
 {{ end }}

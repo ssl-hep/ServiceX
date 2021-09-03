@@ -23,8 +23,14 @@ spec:
         command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
+    {{- if .Values.secrets }}
+          - name: RMQ_URI
+            value: amqp://user:{{ .Values.secrets.rabbitmq-password }}@{{ .Release.Name }}-rabbitmq:5672
+    {{- end }}
+    {{- else }}
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+    {{- end }}
           - name: SITE
             value: {{ if .Values.didFinder.rucio.site }} --site {{ .Values.didFinder.rucio.site }} {{ end }}
           - name: DID_THREADS
@@ -37,7 +43,6 @@ spec:
           - name: x509-secret
             mountPath: /etc/grid-security-ro
             readOnly: true
-
       volumes:
         - name: rucio-cfg
           configMap:
