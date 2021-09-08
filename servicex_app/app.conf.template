@@ -67,6 +67,14 @@ TRANSFORMER_VALIDATE_DOCKER_IMAGE = True
 
 TRANSFORMER_MESSAGING = 'none'
 
+# --- Support for POSIX volumes in transformers ---
+
+# Set this if you have created a PVC and want the transformers to mount it
+TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = ""
+
+# The directory where the volume will be mounted (must have trailing /)
+TRANSFORMER_PERSISTENCE_SUBDIR = "output/"
+
 TRANSFORMER_DEFAULT_IMAGE = "sslhep/servicex_func_adl_xaod_transformer:develop"
 
 OBJECT_STORE_ENABLED = False

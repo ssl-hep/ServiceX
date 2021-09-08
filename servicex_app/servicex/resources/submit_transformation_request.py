@@ -84,7 +84,8 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
             TransformRequest.KAFKA_DEST,
-            TransformRequest.OBJECT_STORE_DEST
+            TransformRequest.OBJECT_STORE_DEST,
+            TransformRequest.VOLUME_DEST
         ])
         cls.parser.add_argument(
             'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
