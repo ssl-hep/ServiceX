@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from distutils.util import strtobool
+import sys
 
 import os
 from flask import Flask
@@ -123,6 +124,15 @@ def create_app(test_config=None,
             docker_repo_adapter = DockerRepoAdapter()
         else:
             docker_repo_adapter = provided_docker_repo_adapter
+
+        if transformer_manager and \
+                'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' in app.config and \
+                app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
+                not transformer_manager.persistent_volume_claim_exists(
+                    app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'],
+                    app.config['TRANSFORMER_NAMESPACE']):
+            print("Supplied Transformer Persistent Volume Claim Doesn't exist")
+            sys.exit(-1)
 
         api = Api(app)
 

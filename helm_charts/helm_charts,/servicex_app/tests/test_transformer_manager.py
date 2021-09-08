@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from types import SimpleNamespace
+
 import base64
 import zipfile
 
@@ -44,11 +46,20 @@ def _env_value(env_list, env_name):
 
 
 class TestTransformerManager(ResourceTestBase):
+
     @pytest.fixture
     def mock_kubernetes(self, mocker):
-        mock_kubernetes = mocker.MagicMock(name="mock_kubernetes")
+        mock_kubernetes = mocker.Mock(name="mock_kubernetes")
         mocker.patch('servicex.transformer_manager.kubernetes', mock_kubernetes)
         mocker.patch('servicex.transformer_manager.client', mock_kubernetes.client)
+        return mock_kubernetes
+
+    @pytest.fixture
+    def transformer_manager(self, mocker):
+        mock_kubernetes = mocker.Mock(name="mock_kubernetes")
+        mocker.patch('servicex.transformer_manager.kubernetes', mock_kubernetes)
+        mocker.patch('servicex.transformer_manager.client', mock_kubernetes.client)
+
         return mock_kubernetes
 
     def test_init_external_kubernetes(self, mock_kubernetes):
@@ -70,9 +81,14 @@ class TestTransformerManager(ResourceTestBase):
 
         mocker.patch.object(kubernetes.config, 'load_kube_config')
         mock_api = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+        mock_core_api = mocker.patch.object(kubernetes.client, 'CoreV1Api')
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
+
+        mock_core_api.list_namespaced_persistent_volume_claim = mocker.Mock(
+            return_value=[])
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
@@ -81,6 +97,8 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
         }
+
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
         client = self._test_client(transformation_manager=transformer,
                                    extra_config=cfg)
 
@@ -129,7 +147,8 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
@@ -137,6 +156,8 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(
             extra_config=cfg, transformation_manager=transformer
         )
@@ -158,7 +179,8 @@ class TestTransformerManager(ResourceTestBase):
         mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         additional_config = {
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo',
@@ -167,6 +189,8 @@ class TestTransformerManager(ResourceTestBase):
         }
 
         transformer = TransformerManager('external-kubernetes')
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(
             extra_config=additional_config, transformation_manager=transformer
         )
@@ -192,13 +216,16 @@ class TestTransformerManager(ResourceTestBase):
         mocker.patch.object(kubernetes.config, 'load_kube_config')
         mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(
             extra_config=cfg, transformation_manager=transformer
         )
@@ -226,7 +253,8 @@ class TestTransformerManager(ResourceTestBase):
         mocker.patch.object(kubernetes.config, 'load_kube_config')
         mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
         my_config = {
@@ -237,6 +265,7 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
             extra_config=my_config, transformation_manager=transformer
@@ -260,6 +289,90 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
             assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
 
+    def test_launch_transformer_jobs_with_provided_claim(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+
+        transformer = TransformerManager('external-kubernetes')
+        my_config = {
+            'OBJECT_STORE_ENABLED': False,
+            'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': 'my-pvc',
+            'TRANSFORMER_PERSISTENCE_SUBDIR': 'output-data',
+            'TRANSFORMER_AUTOSCALE_ENABLED': False,
+            'TRANSFORMER_CPU_LIMIT': 1
+        }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=my_config, transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='volume',
+                result_format='parquet', x509_secret='x509',
+                generated_code_cm=None)
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, '--result-destination') == 'volume'
+            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--result-format') == 'parquet'
+
+            posix_vol = next(filter(lambda v: v.name == 'posix-volume',
+                                    called_job.spec.template.spec.volumes))
+            assert posix_vol.persistent_volume_claim.claim_name == 'my-pvc'
+
+            posix_vol_mount = next(filter(lambda m: m.name == 'posix-volume',
+                                          container.volume_mounts))
+            assert posix_vol_mount.mount_path == '/posix_volume'
+
+    def test_launch_transformer_jobs_with_posix_emptydir(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+
+        transformer = TransformerManager('external-kubernetes')
+        my_config = {
+            'OBJECT_STORE_ENABLED': False,
+            'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': None,
+            'TRANSFORMER_PERSISTENCE_SUBDIR': 'output-data',
+            'TRANSFORMER_AUTOSCALE_ENABLED': False,
+            'TRANSFORMER_CPU_LIMIT': 1
+        }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=my_config, transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='volume',
+                result_format='parquet', x509_secret='x509',
+                generated_code_cm=None)
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, '--result-destination') == 'volume'
+            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--result-format') == 'parquet'
+
+            posix_vol = next(filter(lambda v: v.name == 'posix-volume',
+                                    called_job.spec.template.spec.volumes))
+            assert posix_vol.empty_dir
+
+            posix_vol_mount = next(filter(lambda m: m.name == 'posix-volume',
+                                          container.volume_mounts))
+            assert posix_vol_mount.mount_path == '/posix_volume'
+
     def test_launch_transformer_jobs_with_kafka_broker(self, mocker):
         import kubernetes
 
@@ -267,7 +380,8 @@ class TestTransformerManager(ResourceTestBase):
         mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
 
@@ -275,6 +389,9 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
+
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(
             extra_config=cfg, transformation_manager=transformer
         )
@@ -309,6 +426,8 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_X509_SECRET': None
         }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(transformation_manager=transformer,
                                    extra_config=cfg)
 
@@ -340,15 +459,19 @@ class TestTransformerManager(ResourceTestBase):
                             return_value=mock_core_api)
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(transformation_manager=transformer)
 
         with client.application.app_context():
             transformer.shutdown_transformer_job('1234', 'my-ns')
-            mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
-                                                                     namespace='my-ns')
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name='transformer-1234',
+                namespace='my-ns')
             mock_core_api.delete_namespaced_config_map.assert_called_with(
                 name='1234-generated-source',
                 namespace='my-ns'
@@ -371,9 +494,12 @@ class TestTransformerManager(ResourceTestBase):
                             return_value=mock_core_api)
 
         mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api', return_value=mock_autoscaling)
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
 
         transformer = TransformerManager('external-kubernetes')
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(
             extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False},
             transformation_manager=transformer,
@@ -381,8 +507,9 @@ class TestTransformerManager(ResourceTestBase):
 
         with client.application.app_context():
             transformer.shutdown_transformer_job('1234', 'my-ns')
-            mock_api.delete_namespaced_deployment.assert_called_with(name='transformer-1234',
-                                                                     namespace='my-ns')
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name='transformer-1234',
+                namespace='my-ns')
             mock_core_api.delete_namespaced_config_map.assert_called_with(
                 name='1234-generated-source',
                 namespace='my-ns'
@@ -413,8 +540,8 @@ class TestTransformerManager(ResourceTestBase):
         mock_create_namespaced_config_map.assert_called()
         calls = mock_create_namespaced_config_map.call_args
         "foo.sh" in calls[1]['body'].binary_data.keys()
-        assert calls[1]['body'].binary_data['foo.sh'] == base64.\
-            b64encode(b"hi there").\
+        assert calls[1]['body'].binary_data['foo.sh'] == base64. \
+            b64encode(b"hi there"). \
             decode("ascii")
         assert calls[1]['namespace'] == 'servicex'
         assert calls[1]['body'].metadata.name == 'my-request-generated-source'
@@ -427,6 +554,9 @@ class TestTransformerManager(ResourceTestBase):
         mock_deployment_list.items = [mock_deployment]
 
         transformer_manager = TransformerManager('external-kubernetes')
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True)
+
         client = self._test_client(
             extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False},
             transformation_manager=transformer_manager,
@@ -443,6 +573,9 @@ class TestTransformerManager(ResourceTestBase):
         mock_deployment_list.items = []
 
         transformer_manager = TransformerManager('external-kubernetes')
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True)
+
         client = self._test_client(
             extra_config={'TRANSFORMER_AUTOSCALE_ENABLED': False},
             transformation_manager=transformer_manager,
@@ -451,3 +584,46 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             status = transformer_manager.get_deployment_status("1234")
             assert status is None
+
+    def test_persistent_claim_exists(self, mock_kubernetes,
+                                     mocker):
+        mock_coreV1 = mocker.Mock()
+        mock_kubernetes.client.CoreV1Api = mocker.Mock(return_value=mock_coreV1)
+
+        mock_persistent_volume_claims = SimpleNamespace()
+        mock_persistent_volume_claims.items = [
+            SimpleNamespace(
+                metadata=SimpleNamespace(name='foo'),
+                status=SimpleNamespace(phase='Bound')
+            ),
+            SimpleNamespace(
+                metadata=SimpleNamespace(name='bar'),
+                status=SimpleNamespace(phase='Unbound')
+            )
+
+        ]
+        mock_coreV1.list_namespaced_persistent_volume_claim = \
+            mocker.Mock(return_value=mock_persistent_volume_claims)
+
+        test_transformer_manager = TransformerManager('external-kubernetes')
+
+        assert test_transformer_manager.persistent_volume_claim_exists("foo", 'my-ns')
+        mock_coreV1.list_namespaced_persistent_volume_claim.assert_called_with(
+            namespace='my-ns', watch=False)
+        assert not test_transformer_manager.persistent_volume_claim_exists("bar", 'my-ns')
+        assert not test_transformer_manager.persistent_volume_claim_exists("baz", 'my-ns')
+
+    def test_die_when_claim_missing(self, mocker, mock_kubernetes):
+        transformer_manager = TransformerManager('external-kubernetes')
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=False)
+
+        mock_exit = mocker.Mock()
+        mocker.patch('servicex.sys.exit', mock_exit)
+
+        client = self._test_client(
+            transformation_manager=transformer_manager
+        )
+
+        with client.application.app_context():
+            mock_exit.assert_called_with(-1)

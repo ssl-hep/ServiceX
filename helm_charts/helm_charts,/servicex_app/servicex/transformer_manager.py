@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
 import base64
 from typing import Optional
 
@@ -34,6 +36,7 @@ from flask import current_app
 
 
 class TransformerManager:
+    POSIX_VOLUME_MOUNT = "/posix_volume"
 
     def __init__(self, manager_mode):
         if manager_mode == 'internal-kubernetes':
@@ -46,7 +49,7 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
-                          generated_code_cm):
+                          generated_code_cm, namespace):
         volume_mounts = []
         volumes = []
 
@@ -107,6 +110,9 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
+        if result_destination == 'volume':
+            TransformerManager.create_posix_volume(volumes, volume_mounts)
+
         if x509_secret:
             python_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
         else:
@@ -119,6 +125,11 @@ class TransformerManager:
                           " --chunks " + str(chunk_size) + \
                           " --result-destination " + result_destination + \
                           " --result-format " + result_format
+
+        if result_destination == 'volume':
+            python_args[0] += " --output-dir " + os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'])
 
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker
@@ -173,6 +184,41 @@ class TransformerManager:
         return deployment
 
     @staticmethod
+    def create_posix_volume(volumes, volume_mounts):
+        if 'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' not in current_app.config or \
+                not current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']:
+            empty_dir = client.V1Volume(
+                name='posix-volume',
+                empty_dir=client.V1EmptyDirVolumeSource())
+            volumes.append(empty_dir)
+        else:
+            volumes.append(
+                client.V1Volume(
+                    name='posix-volume',
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']
+                    )
+                )
+            )
+
+        volume_mounts.append(
+            client.V1VolumeMount(mount_path=TransformerManager.POSIX_VOLUME_MOUNT,
+                                 name='posix-volume'))
+
+    def persistent_volume_claim_exists(self, claim_name, namespace):
+        api = client.CoreV1Api()
+
+        pvcs = api.list_namespaced_persistent_volume_claim(namespace=namespace, watch=False)
+        for pvc in pvcs.items:
+            if pvc.metadata.name == claim_name:
+                if pvc.status.phase == 'Bound':
+                    return True
+                else:
+                    print(f"Volume Claim '{claim_name} found, but it is not bound")
+                    return False
+        return False
+
+    @staticmethod
     def create_hpa_object(request_id):
         target = client.V1CrossVersionObjectReference(
             api_version="apps/v1",
@@ -220,7 +266,7 @@ class TransformerManager:
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm)
+                                     x509_secret, kafka_broker, generated_code_cm, namespace)
 
         self._create_job(api_v1, job, namespace)
 

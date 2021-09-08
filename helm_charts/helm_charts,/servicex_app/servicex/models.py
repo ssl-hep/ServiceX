@@ -134,6 +134,7 @@ class TransformRequest(db.Model):
     __tablename__ = 'requests'
     OBJECT_STORE_DEST = 'object-store'
     KAFKA_DEST = 'kafka'
+    VOLUME_DEST = 'volume'
 
     _cache = {}
 
