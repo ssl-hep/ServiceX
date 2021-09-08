@@ -84,7 +84,10 @@ def callback(channel, method, properties, body):
                                     info="Starting")
 
         root_file = _file_path.replace('/', ':')
-        output_path = posix_path + root_file
+        if not os.path.isdir(posix_path):
+            os.makedirs(posix_path)
+
+        output_path = os.path.join(posix_path, root_file)
         transform_single_file(_file_path, output_path+".parquet", servicex)
 
         tock = time.time()
