@@ -13,6 +13,7 @@ nav:
     - 'Deployment Guide':
         - Basic deployments: deployment/basic.md
         - Production deployments: deployment/production.md
+        - Columnar Data Output Options: deployment/output_options.md
         - Reference: deployment/reference.md
     - 'Developer Guide':
         - Architecture: development/architecture.md
