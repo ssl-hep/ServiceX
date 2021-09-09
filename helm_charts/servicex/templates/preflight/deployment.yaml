@@ -22,8 +22,19 @@ spec:
             value: "/servicex/.bashrc"
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS 
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+        {{- end }}
         {{- if not .Values.noCerts }}
+          {{- if .Values.secrets }}
+        args: ["/servicex/proxy-exporter.sh & sleep 5 && python /servicex/validate_requests.py --rabbit-uri amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+          {{- else }}
         args: ["/servicex/proxy-exporter.sh & sleep 5 && python /servicex/validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.auth.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
+          {{- end }}
         {{- else }}
         args: ["python /servicex/validate_requests.py --rabbit-uri amqp://user:{{.Values.rabbitmq.auth.password}}@{{ .Release.Name }}-rabbitmq:5672/%2F"]
         {{- end }}
