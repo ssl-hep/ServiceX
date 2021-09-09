@@ -28,7 +28,8 @@ def servicex_file():
     endpoint_url = get_correct_url(request)
     body = f"""\
     api_endpoints:
-      - endpoint: {endpoint_url}
+      - name: {backend_type}
+        endpoint: {endpoint_url}
         token: {user.refresh_token}
         type: {backend_type}
     """

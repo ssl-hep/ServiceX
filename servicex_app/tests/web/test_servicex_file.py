@@ -16,7 +16,8 @@ class TestServiceXFile(WebTestBase):
         response: Response = client.get(url_for('servicex-file'))
         expected = """\
         api_endpoints:
-          - endpoint: http://localhost/
+          - name: xaod
+            endpoint: http://localhost/
             token: abcdef
             type: xaod
         """
