@@ -24,9 +24,13 @@ spec:
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
     {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom: 
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
           - name: RMQ_URI
-            value: amqp://user:{{ .Values.secrets.rabbitmq-password }}@{{ .Release.Name }}-rabbitmq:5672
-    {{- end }}
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672
     {{- else }}
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
@@ -51,4 +55,4 @@ spec:
           secret:
             defaultMode: 292
             secretName: {{ .Release.Name }}-x509-proxy
-{{ end }}
+{{- end }}
