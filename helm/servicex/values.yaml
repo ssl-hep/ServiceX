@@ -120,7 +120,9 @@ transformer:
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
   persistence: 
-     existingClaim: 
+     existingClaim:
+
+     # Make sure subdir has trailing slash
      subdir:
 
   # For uproot deployment
