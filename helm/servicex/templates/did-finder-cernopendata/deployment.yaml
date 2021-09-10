@@ -21,7 +21,18 @@ spec:
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS 
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+        {{- end }}
         args:
           - --rabbit-uri
+    {{- if .Values.secrets }}
+          - amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672
+    {{- else }}
           - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+    {{- end }}
 {{ end }}
