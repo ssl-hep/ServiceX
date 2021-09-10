@@ -116,6 +116,15 @@ transformer:
   pullPolicy: Always
   cpuLimit: 1
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
+
+  # For enabling volume output destination for transformers. Supports attaching
+  # an existing PVC to transformers
+  persistence: 
+     existingClaim:
+
+     # Make sure subdir has trailing slash
+     subdir:
+
   # For uproot deployment
   #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
 
