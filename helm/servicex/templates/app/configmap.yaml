@@ -91,6 +91,10 @@ data:
 
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
+    
+
+    TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
+    TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
 
 
     {{ if .Values.objectStore.enabled }}
@@ -108,6 +112,8 @@ data:
     {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.port -}}
     MINIO_PUBLIC_URL = '{{- .Values.objectStore.publicURL | default $internal_minio }}'
     {{ end }}
+
+    
 
     {{ else }}
     OBJECT_STORE_ENABLED = False
