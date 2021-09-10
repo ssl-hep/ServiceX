@@ -38,7 +38,11 @@ You can also connect to the deployed postgres server with your favorite SQL clie
   kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-postgresql-0 5432:5432
 
 and connect with this JDBC Connection String:
+{{ if .Values.secrets }}
+    postgresql://{{  .Values.postgresql.postgresqlUsername }}:[postgresql-password from {{.Values.secrets}} ]@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+{{ else }}
     postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+{{ end }}
 {{ end }}
 
 {{ if .Values.objectStore.enabled }}
