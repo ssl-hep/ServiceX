@@ -19,8 +19,18 @@ spec:
         - name: check-postgresql
           image: "ncsa/checks:latest"
           env:
+        {{- if .Values.secrets }}
+            - name: PG_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: postgresql-password
+            - name: PG_URI
+              value: 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+        {{- else }}
             - name: PG_URI
               value: 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+        {{- end }}
       {{- end }}
       containers:
       - name: {{ .Release.Name }}-servicex-app
@@ -51,16 +61,6 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: jwtSecretKey
-        - name: MINIO_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.secrets }}
-              key: minioAccessKey
-        - name: MINIO_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.secrets }}
-              key: minioSecretKey
         - name: SLACK_SIGNING_SECRET
           valueFrom:
             secretKeyRef:
@@ -76,6 +76,36 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: mailgunAPIKey
+        - name: RMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: rabbitmq-password
+        - name: RABBIT_MQ_URL
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F"
+        - name: TRANSFORMER_RABBIT_MQ_URL
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: postgresql-password
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: accesskey
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: secretkey
+    {{- end }}
+    {{- if .Values.secrets }}
+          {{- if .Values.postgres.enabled }}
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://{{  .Values.postgresql.postgresqlUsername }}:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}"
+          {{- end }}
     {{- end }}
         tty: true
         stdin: true
