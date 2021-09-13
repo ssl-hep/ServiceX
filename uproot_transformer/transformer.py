@@ -139,9 +139,9 @@ def transform_single_file(file_path, output_path, servicex=None):
 
         start_serialization = time.time()
         try:
-            arrow = ak.to_arrow_table(awkward_array)
+            arrow = ak.to_arrow_table(awkward_array, explode_records=True)
         except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None))
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=True)
         end_serialization = time.time()
         print(f'awkward Array -> Arrow: {round(end_serialization - start_serialization, 2)} sec')
 
