@@ -35,10 +35,8 @@ spec:
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
     {{- end }}
-          - name: RUCIO_LATITUDE
-            value: {{ if .Values.didFinder.rucio.servicex_latitude }} --site {{ .Values.didFinder.rucio.servicex_latitude }} {{ end }}
-          - name: RUCIO_LONGITUDE
-            value: {{ if .Values.didFinder.rucio.servicex_longitude }} --site {{ .Values.didFinder.rucio.servicex_longitude }} {{ end }}
+          - name: SITE
+            value: {{ if .Values.didFinder.rucio.site }} --site {{ .Values.didFinder.rucio.site }} {{ end }}
           - name: DID_THREADS
             value: "{{ .Values.didFinder.rucio.threads }}"
           - name: INSTANCE_NAME
