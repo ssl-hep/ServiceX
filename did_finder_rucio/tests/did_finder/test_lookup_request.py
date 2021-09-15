@@ -163,7 +163,7 @@ class TestLookupRequest:
                 "adler32": "efb2b057",
                 "events": 1000,
                 "bytes": 689123
-             }
+            }
         ]
 
         input_data = [
@@ -189,7 +189,7 @@ class TestLookupRequest:
             [
                 {'name': "file1", 'scope': "fork"},
                 {'name': "file2", 'scope': 'fork'}
-            ], None)
+            ])
         mock_sel_path.assert_called_with(
             mock_rucio.find_replicas.return_value[0],
             '',
