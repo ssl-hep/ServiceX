@@ -51,7 +51,6 @@ async def to_thread(func, *args, **kwargs):
 class LookupRequest:
     def __init__(self, did: str,
                  rucio_adapter: RucioAdapter,
-                 site: Optional[str] = None,
                  prefix: str = '',
                  chunk_size: int = 1000,
                  threads: int = 1,
@@ -62,8 +61,6 @@ class LookupRequest:
         Args:
             did (str): The DID we are going to lookup
             rucio_adapter (RucioAdapter): Thread safe rucio lookup object
-            site (Optional[str], optional): Our site to improve locality of rucio lookup.
-                Defaults to None.
             prefix (str, optional): Prefix for xcache use. Defaults to ''.
             chunk_size (int, optional): How to chunk rucio replica lookup. Defaults to 1000. In
                                         general larger numbers are better: each round-trip is
@@ -73,7 +70,6 @@ class LookupRequest:
                 Defaults to 'bogus-id'.
         '''
         self.did = did
-        self.site = site
         self.prefix = prefix
         self.rucio_adapter = rucio_adapter
         self.chunk_size = chunk_size
@@ -103,7 +99,7 @@ class LookupRequest:
 
         tick = datetime.now()
         found_replicants = to_thread(self.rucio_adapter.find_replicas,
-                                     file_list, self.site)
+                                     file_list)
         replicas = list(await found_replicants)
         tock = datetime.now()
         self.logger.info(f"Read {len(replicas)} replicas in {str(tock - tick)}",
@@ -116,7 +112,7 @@ class LookupRequest:
                 'adler32': r['adler32'],
                 'file_size': r['bytes'],
                 'file_events': 0,
-                'file_path': RucioAdapter.get_sel_path(r, self.prefix, self.site)
+                'file_path': RucioAdapter.get_sel_path(r, self.prefix)
             }
 
     async def lookup_files(self):

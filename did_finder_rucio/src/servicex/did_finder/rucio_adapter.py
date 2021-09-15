@@ -64,7 +64,7 @@ class RucioAdapter:
             self.logger.warning(f"{did} not found")
             return None
 
-    def find_replicas(self, files, site):
+    def find_replicas(self, files):
         g_replicas = None
         while not g_replicas:
             try:
@@ -83,22 +83,19 @@ class RucioAdapter:
         return g_replicas
 
     @staticmethod
-    def get_sel_path(replica, prefix, site):
+    def get_sel_path(replica, prefix):
         sel_path = None
 
         if 'pfns' not in replica:
             return None
 
-        sitename = ''
-        if site:
-            sitename = site
-
         for fpath, meta in replica['pfns'].items():
-            if meta['type'] == 'DISK' and sitename in fpath:
+            if meta['type'] == 'DISK':
                 sel_path = fpath
                 break
 
         if not sel_path:
-            sel_path = sorted(replica['pfns'].keys())[-1]
+            RucioAdapter.logger.warning('No DISK replica found.')
+            return
 
         return prefix+sel_path

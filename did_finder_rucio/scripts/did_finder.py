@@ -43,9 +43,6 @@ def run_rucio_finder():
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--site', dest='site', action='store',
-                        default=None,
-                        help='XCache Site)')
     parser.add_argument('--prefix', dest='prefix', action='store',
                         default='',
                         help='Prefix to add to Xrootd URLs')
@@ -55,11 +52,10 @@ def run_rucio_finder():
 
     args = parser.parse_args()
 
-    site = args.site
     prefix = args.prefix
     threads = args.threads
     logger.info("ServiceX DID Finder starting up: "
-                f"Threads: {threads} Site: {site} Prefix: {prefix}")
+                f"Threads: {threads} Prefix: {prefix}")
 
     # Initialize the finder
     did_client = DIDClient()
@@ -74,7 +70,6 @@ def run_rucio_finder():
             lookup_request = LookupRequest(
                 did=did_name,
                 rucio_adapter=rucio_adapter,
-                site=site,
                 prefix=prefix,
                 chunk_size=1000,
                 threads=threads,
