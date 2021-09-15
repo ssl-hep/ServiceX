@@ -152,7 +152,10 @@ Service which looks up a datasets that should be processed, gets a list of paths
 and number of events for all the files in the dataset.  This is done usig the
 Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
 
-Since there may be multiple replcias of each file, the DID finder can let Rucio know servicex location (latitude and longitude) so that Rucio can deliver replicas sorted according to their closeness.
+Since there may be multiple replcias of each file, the DID finder has an
+optional `site` setting which indicates a prefered site from which to serve
+replicas.  If there are no replicas hosted at that site, the DID finder will
+simply return the first replica from the list returned from Rucio.
 
 To improve performance, the DID finder is multi-threaded to maintain multiple
 simultaneous requests to Rucio. 
