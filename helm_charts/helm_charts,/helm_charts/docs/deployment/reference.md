@@ -37,7 +37,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.rucio.image`              | Rucio DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.rucio.tag`                | Rucio DID Finder image tag                             | `latest`                                                |
 | `didFinder.rucio.pullPolicy`         | Rucio DID Finder image pull policy                     | `Always`                                          |
-| `didFinder.rucio.site`               | Tier 2 site that DID finder should prefer. If blank will just return a random replica from Rucio        |      |
+| `didFinder.rucio.servicex_latitude`        | Latitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | 41.78 |
+| `didFinder.rucio.servicex_longitude`        | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | -87.7 |
 | `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
 | `didFinder.rucio.threads`            | Number of threads for pull replicas out of Rucio | 5
