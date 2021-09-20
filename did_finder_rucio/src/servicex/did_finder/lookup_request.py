@@ -61,11 +61,10 @@ class LookupRequest:
         lookup_start = datetime.now()
         all_files = self.rucio_adapter.list_files_for_did(self.did)
         lookup_finish = datetime.now()
-        if not all_files:
-            raise Exception(f'DID not found {self.did}')
 
         ds_size = 0
         total_paths = 0
+        avg_replicas = 0
         for af in all_files:
             ds_size += af['file_size']
             total_paths += len(af['file_path'])
@@ -77,12 +76,15 @@ class LookupRequest:
             """
             af['file_path'] = af['file_path'][0]
 
+        if len(all_files):
+            avg_replicas = float(total_paths)/len(all_files)
+
         self.logger.info(f"Dataset contains {len(all_files)} files. " +
                          f"Lookup took {str(lookup_finish-lookup_start)}",
                          extra={
                              'requestId': self.request_id,
                              'size': ds_size,
-                             'avg_replicas': float(total_paths)/len(all_files)
+                             'avg_replicas': avg_replicas
                          })
 
         return all_files

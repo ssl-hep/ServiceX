@@ -29,8 +29,6 @@
 import logging
 import xmltodict
 
-from rucio.common.exception import DataIdentifierNotFound
-
 
 class RucioAdapter:
     def __init__(self, replica_client):
@@ -73,15 +71,15 @@ class RucioAdapter:
         together with checksum and filesize.
         """
         parsed_did = self.parse_did(did)
-        try:
-            reps = self.replica_client.list_replicas(
-                [{'scope': parsed_did['scope'], 'name': parsed_did['name']}],
-                schemes=['root'],
-                metalink=True,
-                sort='geoip'
-            )
-            g_files = []
-            d = xmltodict.parse(reps)
+        reps = self.replica_client.list_replicas(
+            [{'scope': parsed_did['scope'], 'name': parsed_did['name']}],
+            schemes=['root'],
+            metalink=True,
+            sort='geoip'
+        )
+        g_files = []
+        d = xmltodict.parse(reps)
+        if 'file' in d['metalink']:
             for f in d['metalink']['file']:
                 g_files.append(
                     {
@@ -91,7 +89,4 @@ class RucioAdapter:
                         'file_path': self.get_paths(f['url'])
                     }
                 )
-            return g_files
-        except DataIdentifierNotFound:
-            self.logger.warning(f"{did} not found")
-            return None
+        return g_files

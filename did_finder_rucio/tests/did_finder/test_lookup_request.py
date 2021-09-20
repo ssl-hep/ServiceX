@@ -38,60 +38,39 @@ class TestLookupRequest:
         assert request.rucio_adapter == mock_rucio
         assert request.did == 'my-did'
 
-    @pytest
-    def test_lookup_files(self, mocker):
-        'Good lookup, chunk size is same as file size'
+        def test_lookup_files(self, mocker):
+            'Good lookup, chunk size is same as file size'
+            mock_rucio = mocker.MagicMock(RucioAdapter)
+            rucio_file_list = [
+                {
+                    "scope": "my-scope",
+                    "name": "file"+str(i),
+                    "bytes": 31400,
+                    "events": 5000
+                } for i in range(10)
+            ]
+
+            mock_rucio.list_files_for_did.return_value = rucio_file_list
+
+            mock_rucio.find_replicas.return_value = [
+                {
+                    'adler32': 21231,
+                    'bytes': 1122233344,
+                }
+            ]
+
+            request = LookupRequest("my-did", mock_rucio)
+
+            assert len(request.lookup_files()) == 10
+
+            mock_rucio.list_files_for_did.assert_called_with("my-did")
+
+    @pytest.mark.asyncio
+    async def test_lookup_files_empty_did(self, mocker):
+        'Make sure that a DID with zero files correctly returns zero files'
         mock_rucio = mocker.MagicMock(RucioAdapter)
-        rucio_file_list = [
-            {
-                "scope": "my-scope",
-                "name": "file"+str(i),
-                "bytes": 31400,
-                "events": 5000
-            } for i in range(10)
-        ]
+        mock_rucio.list_files_for_did.return_value = []
 
-        mock_rucio.list_files_for_did.return_value = rucio_file_list
+        request = LookupRequest("my-did", mock_rucio)
 
-        mock_rucio.find_replicas.return_value = [
-            {
-                'adler32': 21231,
-                'bytes': 1122233344,
-            }
-        ]
-
-        request = LookupRequest(
-            "my-did",
-            mock_rucio,
-            chunk_size=1)
-
-        assert len(request.lookup_files()) == 10
-
-        mock_rucio.list_files_for_did.assert_called_with("my-did")
-
-    @pytest
-    def test_lookup_files_empty_did(self, mocker):
-        'Make sure that a DID with zero files correctly returns zero files from its iterator'
-        mock_rucio = mocker.MagicMock(RucioAdapter)
-        mock_rucio.list_files_for_did.return_value = iter([])
-
-        request = LookupRequest(
-            "my-did",
-            mock_rucio)
-
-        assert len(request.lookup_files()) == 0
-
-    @pytest
-    def test_lookup_files_did_not_found(self, mocker):
-        'Make sure exception is thrown if DID is not found'
-        mock_rucio = mocker.MagicMock(RucioAdapter)
-        mock_rucio.list_files_for_did.return_value = None
-
-        request = LookupRequest(
-            "my-did",
-            mock_rucio)
-
-        with pytest.raises(Exception) as e:
-            request.lookup_files()
-
-        assert "DID not found" in str(e)
+        assert len(await request.lookup_files()) == 0

@@ -20,19 +20,21 @@ class LookupRequest:
 
         ds_size = 0
         total_paths = 0
+        avg_replicas = 0
         for af in all_files:
             ds_size += af['file_size']
             total_paths += len(af['file_path'])
             if self.prefix:
                 af['file_path'] = [self.prefix+fp for fp in af['file_path']]
-
+        if len(all_files):
+            avg_replicas = float(total_paths)/len(all_files)
         print(
             f"Dataset contains {len(all_files)} files.",
             f"Lookup took {str(lookup_finish-lookup_start)}",
             {
                 'requestId': self.request_id,
                 'size': ds_size,
-                'avg_replicas': float(total_paths)/len(all_files)
+                'avg_replicas': avg_replicas
             })
 
         return all_files
