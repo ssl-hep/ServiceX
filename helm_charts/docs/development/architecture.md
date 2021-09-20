@@ -150,15 +150,14 @@ The database schema used to store information is shown below:
 ### DID Finder
 Service which looks up a datasets that should be processed, gets a list of paths
 and number of events for all the files in the dataset.  This is done usig the
-Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio. 
+Rucio API. The DID finder uses an x509 proxy to authenticate to Rucio.
 
-Since there may be multiple replcias of each file, the DID finder has an
-optional `site` setting which indicates a prefered site from which to serve
-replicas.  If there are no replicas hosted at that site, the DID finder will
-simply return the first replica from the list returned from Rucio.
+Since there may be multiple replicas of each file, the DID finder can let Rucio know the 
+location of the servicex instance (latitude and longitude) so that Rucio can deliver replicas 
+sorted according to their closeness.
 
 To improve performance, the DID finder is multi-threaded to maintain multiple
-simultaneous requests to Rucio. 
+simultaneous requests to Rucio.
 
 The DID finder receives datasets to resolve via a RabbitMQ queue. The very first
 result it finds is submitted back to the flask app via a POST to the `preflight`
