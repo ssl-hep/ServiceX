@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-import servicex
 from servicex.did_finder.lookup_request import LookupRequest
 from servicex.did_finder.rucio_adapter import RucioAdapter
 
@@ -38,10 +37,9 @@ class TestLookupRequest:
         request = LookupRequest("my-did", mock_rucio)
         assert request.rucio_adapter == mock_rucio
         assert request.did == 'my-did'
-        assert request.chunk_size == 1000
 
-    @pytest.mark.asyncio
-    async def test_lookup_files(self, mocker):
+    @pytest
+    def test_lookup_files(self, mocker):
         'Good lookup, chunk size is same as file size'
         mock_rucio = mocker.MagicMock(RucioAdapter)
         rucio_file_list = [
@@ -65,139 +63,35 @@ class TestLookupRequest:
         request = LookupRequest(
             "my-did",
             mock_rucio,
-            threads=5,
             chunk_size=1)
 
-        output_files = []
-        async for f in request.lookup_files():
-            output_files.append(f)
-        assert len(output_files) == 10
+        assert len(request.lookup_files()) == 10
 
         mock_rucio.list_files_for_did.assert_called_with("my-did")
 
-    @pytest.mark.asyncio
-    async def test_lookup_files_chunked(self, mocker):
-        'Good lookup, make sure chunking is set correctly'
-        mock_rucio = mocker.MagicMock(RucioAdapter)
-        rucio_file_list = [
-            {
-                "scope": "my-scope",
-                "name": "file"+str(i),
-                "bytes": 31400,
-                "events": 5000
-            } for i in range(10)
-        ]
-
-        mock_rucio.list_files_for_did.return_value = iter(rucio_file_list)
-        # Chunk size is 2, so return 2 files with each find_replicas call
-        mock_rucio.find_replicas.return_value = [
-            {
-                'adler32': 21231,
-                'bytes': 1122233344,
-            },
-            {
-                'adler32': 212312,
-                'bytes': 11222333442,
-            }
-
-        ]
-
-        request = LookupRequest(
-            "my-did",
-            mock_rucio,
-            threads=5,
-            chunk_size=2)
-
-        output_files = []
-        async for f in request.lookup_files():
-            output_files.append(f)
-        assert len(output_files) == 10
-
-        mock_rucio.list_files_for_did.assert_called_with("my-did")
-
-    @pytest.mark.asyncio
-    async def test_lookup_files_empty_did(self, mocker):
+    @pytest
+    def test_lookup_files_empty_did(self, mocker):
         'Make sure that a DID with zero files correctly returns zero files from its iterator'
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.list_files_for_did.return_value = iter([])
 
         request = LookupRequest(
             "my-did",
-            mock_rucio,
-            threads=5,
-            chunk_size=2)
+            mock_rucio)
 
-        output_files = []
-        async for f in request.lookup_files():
-            output_files.append(f)
-        assert len(output_files) == 0
+        assert len(request.lookup_files()) == 0
 
-    @pytest.mark.asyncio
-    async def test_lookup_files_did_not_found(self, mocker):
+    @pytest
+    def test_lookup_files_did_not_found(self, mocker):
         'Make sure exception is thrown if DID is not found'
         mock_rucio = mocker.MagicMock(RucioAdapter)
         mock_rucio.list_files_for_did.return_value = None
 
         request = LookupRequest(
             "my-did",
-            mock_rucio,
-            threads=5,
-            chunk_size=2)
+            mock_rucio)
 
         with pytest.raises(Exception) as e:
-            async for _ in request.lookup_files():
-                pass
+            request.lookup_files()
 
         assert "DID not found" in str(e)
-
-    @pytest.mark.asyncio
-    async def test_replica_lookup(self, mocker):
-        mock_rucio = mocker.MagicMock(RucioAdapter)
-        mock_rucio.find_replicas.return_value = [
-            {
-                "adler32": "efb2b057",
-                "events": 1000,
-                "bytes": 689123
-            },
-            {
-                "adler32": "efb2b057",
-                "events": 1000,
-                "bytes": 689123
-             }
-        ]
-
-        input_data = [
-            {
-                'name': 'file1',
-                'scope': 'fork'
-            },
-            {
-                'name': 'file2',
-                'scope': 'fork'
-            }
-        ]
-
-        mock_sel_path = mocker.patch.object(
-            servicex.did_finder.rucio_adapter.RucioAdapter, "get_sel_path")  # type:ignore
-        mock_sel_path.return_value = "mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1"
-
-        request = LookupRequest("my-did", mock_rucio, chunk_size=2)
-        list_of_files = []
-        async for f in request.replica_lookup(input_data):
-            list_of_files.append(f)
-        mock_rucio.find_replicas.assert_called_with(
-            [
-                {'name': "file1", 'scope': "fork"},
-                {'name': "file2", 'scope': 'fork'}
-            ], None)
-        mock_sel_path.assert_called_with(
-            mock_rucio.find_replicas.return_value[0],
-            '',
-            None
-        )
-
-        assert len(list_of_files) == 2
-        assert list_of_files[0]['adler32'] == 'efb2b057'
-        assert list_of_files[0]['file_events'] == 0
-        assert list_of_files[0]['file_path'] == \
-            'mc15_13TeV:DAOD_STDM3.05630052._000013.pool.root.1'

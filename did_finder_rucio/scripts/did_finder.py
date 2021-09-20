@@ -29,7 +29,6 @@
 import argparse
 import logging
 
-from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from servicex.did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
@@ -43,28 +42,20 @@ def run_rucio_finder():
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--site', dest='site', action='store',
-                        default=None,
-                        help='XCache Site)')
     parser.add_argument('--prefix', dest='prefix', action='store',
                         default='',
                         help='Prefix to add to Xrootd URLs')
-    parser.add_argument('--threads', dest='threads', action='store',
-                        default=10, type=int, help="Number of threads to spawn")
     add_did_finder_cnd_arguments(parser)
 
     args = parser.parse_args()
 
-    site = args.site
     prefix = args.prefix
-    threads = args.threads
-    logger.info("ServiceX DID Finder starting up: "
-                f"Threads: {threads} Site: {site} Prefix: {prefix}")
+    logger.info("ServiceX DID Finder starting up. "
+                f"Prefix: {prefix}")
 
     # Initialize the finder
-    did_client = DIDClient()
     replica_client = ReplicaClient()
-    rucio_adapter = RucioAdapter(did_client, replica_client)
+    rucio_adapter = RucioAdapter(replica_client)
 
     # Run the DID Finder
     try:
@@ -74,15 +65,11 @@ def run_rucio_finder():
             lookup_request = LookupRequest(
                 did=did_name,
                 rucio_adapter=rucio_adapter,
-                site=site,
                 prefix=prefix,
-                chunk_size=1000,
-                threads=threads,
                 request_id=info['request-id']
             )
 
-            async for f in lookup_request.lookup_files():
-                yield f
+            return lookup_request.lookup_files()
 
         start_did_finder('rucio',
                          callback,
