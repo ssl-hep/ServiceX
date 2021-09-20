@@ -12,9 +12,11 @@ from servicex.did_finder.lookup_request import LookupRequest
 
 replica_client = ReplicaClient()
 rucio_adapter = RucioAdapter(replica_client)
-
+scope = 'data15_13TeV'
+name = 'data15_13TeV.00283429.physics_Main.deriv.DAOD_PHYS.r9264_p3083_p4165_tid21568817_00'
+ds = scope+':'+name
 lookup_request = LookupRequest(
-    did='data15_13TeV:data15_13TeV.00283429.physics_Main.deriv.DAOD_PHYS.r9264_p3083_p4165_tid21568817_00',
+    did=ds,
     rucio_adapter=rucio_adapter,
     request_id='request-id'
 )
