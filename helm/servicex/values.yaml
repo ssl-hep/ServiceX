@@ -18,7 +18,6 @@ objectStore:
 postgres:
   enabled: false
 
-
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
@@ -29,8 +28,8 @@ app:
   validateTransformerImage: true
 
   # Globus configuration - obtain these at https://auth.globus.org/v2/web/developers
-  globusClientID: 
-  globusClientSecret: 
+  globusClientID:
+  globusClientSecret:
 
   # Specify an email address for the first admin user
   adminEmail: admin@example.com
@@ -74,14 +73,14 @@ didFinder:
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
     threads: 5
-    site:
+    servicex_latitude: 41.78
+    servicex_longitude: -87.7
 
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
     tag: develop
     pullPolicy: Always
-
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
@@ -104,11 +103,10 @@ codeGen:
   tag: develop
   pullPolicy: Always
 
-
 # Pull policy for the worker pods - the image and version are specified as
 # part of the transform request
 transformer:
-  autoscaler: 
+  autoscaler:
     enabled: true
     cpuScaleThreshold: 30
     minReplicas: 1
@@ -119,11 +117,11 @@ transformer:
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
-  persistence: 
-     existingClaim:
+  persistence:
+    existingClaim:
 
-     # Make sure subdir has trailing slash
-     subdir:
+    # Make sure subdir has trailing slash
+    subdir:
 
   # For uproot deployment
   #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
@@ -143,8 +141,7 @@ rabbitmq:
     password: leftfoot1
   # This is needed for Windows users
   volumePermissions:
-      enabled: true
-
+    enabled: true
 
 # Values for the Postgresql Chart
 postgresql:
@@ -153,7 +150,6 @@ postgresql:
   persistence:
     enabled: false
 
-
 # Values for Minio Chart
 minio:
   # For easy testing we don't require PVs for minio
@@ -161,8 +157,6 @@ minio:
     enabled: false
   accessKey: miniouser
   secretKey: leftfoot1
-
-
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false
