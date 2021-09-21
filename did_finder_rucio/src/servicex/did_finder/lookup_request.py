@@ -88,7 +88,7 @@ class LookupRequest:
             'lookup_duration': (lookup_finish-lookup_start).total_seconds()
         }
         self.logger.info(
-            f"Lookup finished. " +
+            "Lookup finished. " +
             f"Metric: {json.dumps(metric)}"
         )
 
