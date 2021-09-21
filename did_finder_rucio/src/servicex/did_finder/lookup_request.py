@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import json
 from datetime import datetime
 from servicex.did_finder.rucio_adapter import RucioAdapter
 
@@ -79,12 +80,15 @@ class LookupRequest:
         if len(all_files):
             avg_replicas = float(total_paths)/len(all_files)
 
-        self.logger.info(f"Dataset contains {len(all_files)} files. " +
-                         f"Lookup took {str(lookup_finish-lookup_start)}",
-                         extra={
-                             'requestId': self.request_id,
-                             'size': ds_size,
-                             'avg_replicas': avg_replicas
-                         })
+        metric = {
+            'requestId': self.request_id,
+            'n_files': len(all_files),
+            'size': ds_size,
+            'avg_replicas': avg_replicas
+        }
+        self.logger.info(
+            f"Lookup took {str(lookup_finish-lookup_start)} " +
+            f"Metric: {json.dumps(metric)}"
+        )
 
         return all_files
