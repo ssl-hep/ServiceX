@@ -84,10 +84,11 @@ class LookupRequest:
             'requestId': self.request_id,
             'n_files': len(all_files),
             'size': ds_size,
-            'avg_replicas': avg_replicas
+            'avg_replicas': avg_replicas,
+            'lookup_duration': (lookup_finish-lookup_start).total_seconds()
         }
         self.logger.info(
-            f"Lookup took {str(lookup_finish-lookup_start)} " +
+            f"Lookup finished. " +
             f"Metric: {json.dumps(metric)}"
         )
 
