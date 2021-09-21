@@ -36,9 +36,9 @@ spec:
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
     {{- end }}
           - name: RUCIO_LATITUDE
-            value: {{ .Values.didFinder.rucio.servicex_latitude }}
+            value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE
-            value: {{ .Values.didFinder.rucio.servicex_longitude }}
+            value: "{{ .Values.didFinder.rucio.servicex_longitude }}"
           - name: DID_THREADS
             value: "{{ .Values.didFinder.rucio.threads }}"
           - name: INSTANCE_NAME
