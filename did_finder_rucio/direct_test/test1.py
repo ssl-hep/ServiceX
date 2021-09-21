@@ -33,7 +33,11 @@ loop = asyncio.get_event_loop()
 tasks = [
     loop.create_task(t1('dataset', 'unexisting')),
     loop.create_task(
-        t1('data15_13TeV', 'data15_13TeV.00283429.physics_Main.deriv.DAOD_PHYS.r9264_p3083_p4165_tid21568817_00'))
+        t1(
+            'data15_13TeV',
+            'data15_13TeV.00283429.physics_Main.deriv.DAOD_PHYS.r9264_p3083_p4165_tid21568817_00'
+        )
+    )
 ]
 loop.run_until_complete(asyncio.wait(tasks))
 loop.close()
