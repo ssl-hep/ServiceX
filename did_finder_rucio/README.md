@@ -50,3 +50,13 @@ associated with the provided Certs. A template .cfg file is provided in this
 repo's `config` directory. Ordinarily this would be constructed by the helm chart.
 
 To get an optimal (usually closest) file replica, two environment variables have to be set: RUCIO_LATITUDE and RUCIO_LONGITUDE. This is normally done through helm chart values.
+
+To run a standalone test against for example ATLAS rucio instance do:
+
+```bash
+setupATLAS
+lsetup rucio
+voms-proxy-init
+pip install -r requirements.txt
+python3 direct_test/test1.py
+```
