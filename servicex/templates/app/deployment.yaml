@@ -55,7 +55,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}
-              key: secretKey
+              key: flaskSecretKey
         - name: JWT_SECRET_KEY
           valueFrom:
             secretKeyRef:
