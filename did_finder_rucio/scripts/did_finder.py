@@ -50,7 +50,7 @@ def run_rucio_finder():
     args = parser.parse_args()
 
     prefix = args.prefix
-    
+
     logger.info("ServiceX DID Finder starting up. "
                 f"Prefix: {prefix}")
 
