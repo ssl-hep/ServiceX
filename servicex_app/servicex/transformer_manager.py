@@ -28,6 +28,7 @@
 import os
 
 import base64
+import traceback
 from typing import Optional
 
 import kubernetes
@@ -277,23 +278,27 @@ class TransformerManager:
 
     @staticmethod
     def shutdown_transformer_job(request_id, namespace):
-        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
-            autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+        try:
+            if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+                autoscaler_api = kubernetes.client.AutoscalingV1Api()
+                autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+                    name="transformer-" + request_id,
+                    namespace=namespace
+                )
+
+            api_v1 = client.AppsV1Api()
+            api_v1.delete_namespaced_deployment(
                 name="transformer-" + request_id,
                 namespace=namespace
             )
 
-        api_v1 = client.AppsV1Api()
-        api_v1.delete_namespaced_deployment(
-            name="transformer-" + request_id,
-            namespace=namespace
-        )
-
-        api_core = client.CoreV1Api()
-        configmap_name = "{}-generated-source".format(request_id)
-        api_core.delete_namespaced_config_map(name=configmap_name,
-                                              namespace=namespace)
+            api_core = client.CoreV1Api()
+            configmap_name = "{}-generated-source".format(request_id)
+            api_core.delete_namespaced_config_map(name=configmap_name,
+                                                  namespace=namespace)
+        except Exception as eek:
+            print(f"Exception during Job {request_id} Shut Down", eek)
+            traceback.print_last()
 
     @staticmethod
     def get_deployment_status(
