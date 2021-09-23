@@ -61,10 +61,14 @@ class TransformerFileComplete(ServiceXResource):
         )
         rec.save_to_db()
 
+        # Commit here to avoid race condition with other file complete messages which
+        # could result in miscounting completed files.
+        db.session.commit()
+
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining <= 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            print("Job is all done... shutting down transformers")
+            print(f"Job {request_id} is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             transform_req.status = "Complete"
             transform_req.finish_time = datetime.now(tz=timezone.utc)
