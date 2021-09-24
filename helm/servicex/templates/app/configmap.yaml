@@ -72,6 +72,10 @@ data:
 
     TRANSFORMER_NAMESPACE="{{ .Release.Namespace }}"
 
+    {{ if .Values.transformer.priorityClassName }}
+    TRANSFORMER_PRIORITY_CLASS="{{ .Values.transformer.priorityClassName }}"
+    {{ end }}
+
     TRANSFORMER_PULL_POLICY = '{{ .Values.transformer.pullPolicy }}'
 
     TRANSFORMER_MANAGER_ENABLED = True
