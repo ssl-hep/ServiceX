@@ -55,34 +55,38 @@ class LookupRequest:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
-    async def lookup_files(self):
+    def lookup_files(self):
         """
         lookup files, add cache prefix if needed.
         """
-        lookup_start = datetime.now()
-        all_files = self.rucio_adapter.list_files_for_did(self.did)
-        lookup_finish = datetime.now()
-
+        n_files = 0
         ds_size = 0
         total_paths = 0
         avg_replicas = 0
-        for af in all_files:
-            ds_size += af['file_size']
-            total_paths += len(af['file_path'])
-            if self.prefix:
-                af['file_path'] = [self.prefix+fp for fp in af['file_path']]
-            """
-            TODO: remove the following line once we are clear to return multiple
-            file replica paths.
-            """
-            af['file_path'] = af['file_path'][0]
+        lookup_start = datetime.now()
 
-        if len(all_files):
-            avg_replicas = float(total_paths)/len(all_files)
+        for ds_files in self.rucio_adapter.list_files_for_did(self.did):
+            for af in ds_files:
+                n_files += 1
+                ds_size += af['file_size']
+                total_paths += len(af['file_path'])
+                if self.prefix:
+                    af['file_path'] = [self.prefix+fp for fp in af['file_path']]
+                """
+                TODO: remove the following line once we are clear to return multiple
+                file replica paths.
+                """
+                af['file_path'] = af['file_path'][0]
+            yield ds_files
+
+        lookup_finish = datetime.now()
+
+        if n_files:
+            avg_replicas = float(total_paths)/n_files
 
         metric = {
             'requestId': self.request_id,
-            'n_files': len(all_files),
+            'n_files': n_files,
             'size': ds_size,
             'avg_replicas': avg_replicas,
             'lookup_duration': (lookup_finish-lookup_start).total_seconds()
@@ -91,5 +95,3 @@ class LookupRequest:
             "Lookup finished. " +
             f"Metric: {json.dumps(metric)}"
         )
-
-        return all_files

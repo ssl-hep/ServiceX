@@ -29,6 +29,7 @@
 import argparse
 import logging
 
+from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from servicex.did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
@@ -55,8 +56,9 @@ def run_rucio_finder():
                 f"Prefix: {prefix}")
 
     # Initialize the finder
+    did_client = DIDClient()
     replica_client = ReplicaClient()
-    rucio_adapter = RucioAdapter(replica_client)
+    rucio_adapter = RucioAdapter(did_client, replica_client)
 
     # Run the DID Finder
     try:
@@ -69,9 +71,8 @@ def run_rucio_finder():
                 prefix=prefix,
                 request_id=info['request-id']
             )
-            all_files = await lookup_request.lookup_files()
-            for fi in all_files:
-                yield fi
+            for files in lookup_request.lookup_files():
+                yield files
 
         start_did_finder('rucio',
                          callback,

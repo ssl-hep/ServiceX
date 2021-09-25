@@ -28,10 +28,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import xmltodict
+from rucio.common.exception import DataIdentifierNotFound
 
 
 class RucioAdapter:
-    def __init__(self, replica_client):
+    def __init__(self, did_client, replica_client):
+        self.did_client = did_client
         self.replica_client = replica_client
 
         # set logging to a null handler
@@ -53,6 +55,27 @@ class RucioAdapter:
             d['scope'], d['name'] = '', did
         return d
 
+    def list_datasets_for_did(self, did):
+        parsed_did = self.parse_did(did)
+        try:
+            datasets = []
+            did_info = self.did_client.get_did(parsed_did['scope'], parsed_did['name'])
+            if did_info['type'] == 'CONTAINER':
+                self.logger.info(f"{did} is a container of {did_info['length']} datasets.")
+                content = self.did_client.list_content(parsed_did['scope'], parsed_did['name'])
+                for c in content:
+                    datasets.append([c['scope'], c['name']])
+            elif did_info['type'] == 'DATASET':
+                datasets.append([parsed_did['scope'], parsed_did['name']])
+                self.logger.info(f"{did} is a dataset with {did_info['length']} files.")
+            else:
+                self.logger.info(f"{did} is a file: {did_info}.")
+                datasets.append([parsed_did['scope'], parsed_did['name']])
+            return datasets
+        except DataIdentifierNotFound:
+            self.logger.warning(f"{did} not found")
+            return None
+
     @staticmethod
     def get_paths(replicas):
         """
@@ -70,23 +93,30 @@ class RucioAdapter:
         parses it, and returns a sorted list of all possible paths,
         together with checksum and filesize.
         """
-        parsed_did = self.parse_did(did)
-        reps = self.replica_client.list_replicas(
-            [{'scope': parsed_did['scope'], 'name': parsed_did['name']}],
-            schemes=['root'],
-            metalink=True,
-            sort='geoip'
-        )
-        g_files = []
-        d = xmltodict.parse(reps)
-        if 'file' in d['metalink']:
-            for f in d['metalink']['file']:
-                g_files.append(
-                    {
-                        'adler32': f['hash']['#text'],
-                        'file_size': int(f['size'], 10),
-                        'file_events': 0,
-                        'file_path': self.get_paths(f['url'])
-                    }
-                )
-        return g_files
+        datasets = self.list_datasets_for_did(did)
+        for ds in datasets:
+            reps = self.replica_client.list_replicas(
+                [{'scope': ds[0], 'name': ds[1]}],
+                schemes=['root'],
+                metalink=True,
+                sort='geoip'
+            )
+            d = xmltodict.parse(reps)
+
+            g_files = []
+            if 'file' in d['metalink']:
+                # if only one file, xml returns a dict and not a list.
+                if isinstance(d['metalink']['file'], dict):
+                    mfile = [d['metalink']['file']]
+                else:
+                    mfile = d['metalink']['file']
+                for f in mfile:
+                    g_files.append(
+                        {
+                            'adler32': f['hash']['#text'],
+                            'file_size': int(f['size'], 10),
+                            'file_events': 0,
+                            'file_path': self.get_paths(f['url'])
+                        }
+                    )
+            yield g_files
