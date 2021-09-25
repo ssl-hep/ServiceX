@@ -77,7 +77,7 @@ class LookupRequest:
                 file replica paths.
                 """
                 af['file_path'] = af['file_path'][0]
-            yield ds_files
+                yield af
 
         lookup_finish = datetime.now()
 

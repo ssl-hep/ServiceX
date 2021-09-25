@@ -38,7 +38,7 @@ async def t1(scope, name):
 
     count = 0
     for laf in lookup_request.lookup_files():
-        count += len(laf)
+        count += 1
     print(f'found {count} files')
 
 loop = asyncio.get_event_loop()
