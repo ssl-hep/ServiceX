@@ -72,7 +72,8 @@ def run_rucio_finder():
                 request_id=info['request-id']
             )
             for files in lookup_request.lookup_files():
-                yield files
+                for f in files:
+                    yield f
 
         start_did_finder('rucio',
                          callback,
