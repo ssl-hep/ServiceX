@@ -82,10 +82,21 @@ class RucioAdapter:
         extracts all the replica paths in a list sorted according
         to their priorities.
         """
+        if isinstance(replicas, dict):
+            replicas = [replicas]
         paths = [None] * len(replicas)
         for replica in replicas:
             paths[int(replica['@priority'], 10)-1] = replica['#text']
         return paths
+
+    @staticmethod
+    def get_adler(data):
+        if '#text' in data:
+            return data['#text']
+        for cks in data:
+            if 'adler32' in cks['@type']:
+                return cks['#text']
+        return None
 
     def list_files_for_did(self, did):
         """
@@ -113,7 +124,7 @@ class RucioAdapter:
                 for f in mfile:
                     g_files.append(
                         {
-                            'adler32': f['hash']['#text'],
+                            'adler32': self.get_adler(f['hash']),
                             'file_size': int(f['size'], 10),
                             'file_events': 0,
                             'file_path': self.get_paths(f['url'])
