@@ -73,6 +73,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.autoscaler.minReplicas` | Minimum number of transformer pods per request   | 1 |
 | `transformer.autoscaler.maxReplicas` | Maximum number of transformer pods per request   | 20 |
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
+| `transformer.priorityClassName`      | priorityClassName for transformer pods (Not setting it means getting global default) | Not Set |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
 | `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' |
 | `transformer.persistence.existingClaim` | Existing persistent volume claim | nil |
