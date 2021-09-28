@@ -156,9 +156,6 @@ Since there may be multiple replicas of each file, the DID finder can let Rucio 
 location of the servicex instance (latitude and longitude) so that Rucio can deliver replicas 
 sorted according to their closeness.
 
-To improve performance, the DID finder is multi-threaded to maintain multiple
-simultaneous requests to Rucio.
-
 The DID finder receives datasets to resolve via a RabbitMQ queue. The very first
 result it finds is submitted back to the flask app via a POST to the `preflight`
 endpoint. This is treated as a sample file to drive the preflight check.
