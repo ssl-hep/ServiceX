@@ -27,7 +27,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
-
+import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
 
 
@@ -55,47 +55,79 @@ class RucioAdapter:
             d['scope'], d['name'] = '', did
         return d
 
-    def list_files_for_did(self, did):
+    def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
         try:
-            g_files = self.did_client.list_files(parsed_did['scope'], parsed_did['name'])
-            return g_files
+            datasets = []
+            did_info = self.did_client.get_did(parsed_did['scope'], parsed_did['name'])
+            if did_info['type'] == 'CONTAINER':
+                self.logger.info(f"{did} is a container of {did_info['length']} datasets.")
+                content = self.did_client.list_content(parsed_did['scope'], parsed_did['name'])
+                for c in content:
+                    datasets.append([c['scope'], c['name']])
+            elif did_info['type'] == 'DATASET':
+                datasets.append([parsed_did['scope'], parsed_did['name']])
+                self.logger.info(f"{did} is a dataset with {did_info['length']} files.")
+            else:
+                self.logger.info(f"{did} is a file: {did_info}.")
+                datasets.append([parsed_did['scope'], parsed_did['name']])
+            return datasets
         except DataIdentifierNotFound:
             self.logger.warning(f"{did} not found")
             return None
 
-    def find_replicas(self, files):
-        g_replicas = None
-        while not g_replicas:
-            try:
-                if type(files) == list:
-                    file_list = files
-                else:
-                    file_list = [{'scope': files['scope'], 'name': files['name']}]
-
-                g_replicas = self.replica_client.list_replicas(
-                    dids=file_list,
-                    schemes=['root'],
-                    client_location=None)
-
-            except Exception as e:
-                self.logger.exception(f"ERROR READING REPLICA {e}")
-        return g_replicas
+    @staticmethod
+    def get_paths(replicas):
+        """
+        extracts all the replica paths in a list sorted according
+        to their priorities.
+        """
+        if isinstance(replicas, dict):
+            replicas = [replicas]
+        paths = [None] * len(replicas)
+        for replica in replicas:
+            paths[int(replica['@priority'], 10)-1] = replica['#text']
+        return paths
 
     @staticmethod
-    def get_sel_path(replica, prefix):
-        sel_path = None
+    def get_adler(data):
+        if '#text' in data:
+            return data['#text']
+        for cks in data:
+            if 'adler32' in cks['@type']:
+                return cks['#text']
+        return None
 
-        if 'pfns' not in replica:
-            return None
+    def list_files_for_did(self, did):
+        """
+        from rucio, gets list of file replicas in metalink xml,
+        parses it, and returns a sorted list of all possible paths,
+        together with checksum and filesize.
+        """
+        datasets = self.list_datasets_for_did(did)
+        for ds in datasets:
+            reps = self.replica_client.list_replicas(
+                [{'scope': ds[0], 'name': ds[1]}],
+                schemes=['root'],
+                metalink=True,
+                sort='geoip'
+            )
+            d = xmltodict.parse(reps)
 
-        for fpath, meta in replica['pfns'].items():
-            if meta['type'] == 'DISK':
-                sel_path = fpath
-                break
-
-        if not sel_path:
-            RucioAdapter.logger.warning('No DISK replica found.')
-            return
-
-        return prefix+sel_path
+            g_files = []
+            if 'file' in d['metalink']:
+                # if only one file, xml returns a dict and not a list.
+                if isinstance(d['metalink']['file'], dict):
+                    mfile = [d['metalink']['file']]
+                else:
+                    mfile = d['metalink']['file']
+                for f in mfile:
+                    g_files.append(
+                        {
+                            'adler32': self.get_adler(f['hash']),
+                            'file_size': int(f['size'], 10),
+                            'file_events': 0,
+                            'file_path': self.get_paths(f['url'])
+                        }
+                    )
+            yield g_files
