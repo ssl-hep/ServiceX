@@ -41,7 +41,6 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.rucio.servicex_longitude`        | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | -87.7 |
 | `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
-| `didFinder.rucio.threads`            | Number of threads for pull replicas out of Rucio | 5
 | `didFinder.CERNOpenData.enabled`     | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
 | `didFinder.CERNOpenData.image`       | CERN OpenData DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.CERNOpenData.tag`         | CERN OpenData DID Finder image tag                             | `latest`                                                |
