@@ -39,8 +39,6 @@ spec:
             value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE
             value: "{{ .Values.didFinder.rucio.servicex_longitude }}"
-          - name: DID_THREADS
-            value: "{{ .Values.didFinder.rucio.threads }}"
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:
