@@ -34,6 +34,8 @@ TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@host.docker.internal:30672/%2F
 RABBIT_RETRIES = 12
 RABBIT_RETRY_INTERVAL = 10
 
+# With the default None value, pods will get the global default if cluster has such priorityclass defined
+TRANSFORMER_PRIORITY_CLASS = None
 
 # This will be mounted into the transformer pod's /data directory
 TRANSFORMER_LOCAL_PATH="/Users/bengal1/dev/IRIS-HEP/data"

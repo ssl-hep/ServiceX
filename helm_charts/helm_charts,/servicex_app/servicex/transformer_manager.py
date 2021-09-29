@@ -155,6 +155,7 @@ class TransformerManager:
             metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
                 restart_policy="Always",
+                priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
                 containers=[container],
                 volumes=volumes))
 
