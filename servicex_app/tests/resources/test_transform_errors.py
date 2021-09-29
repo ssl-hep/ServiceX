@@ -35,7 +35,7 @@ class TestTransformErrors(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
 
         file_error_result = [
@@ -70,7 +70,7 @@ class TestTransformErrors(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=None)
 
         response = client.get('/servicex/transformation/1234/errors')

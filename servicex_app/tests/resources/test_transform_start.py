@@ -38,7 +38,7 @@ class TestTransformationStart(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         from servicex.kafka_topic_manager import KafkaTopicManager
@@ -96,7 +96,7 @@ class TestTransformationStart(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         client = self._test_client(
@@ -126,7 +126,7 @@ class TestTransformationStart(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         mock_request.status = "Canceled"

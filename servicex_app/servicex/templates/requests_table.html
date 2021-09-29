@@ -41,10 +41,16 @@
         </td>
         <td>
           <div>
-            <span id="files-processed-{{ req.request_id }}">{{ humanize.intcomma(req.files_processed) }}</span> of
-            <span>{{ humanize.intcomma(req.files or "Unknown") }}</span></div>
-          <div id="files-failed-{{ req.request_id }}">
-            {% if req.files_failed %}({{ req.files_failed }} failed){% endif %}
+            <a id="files-processed-{{ req.request_id }}"
+               href="/transformation-request/{{ req.id }}/results?status=success">
+              {{ humanize.intcomma(req.files_processed) }}
+            </a> of
+            <span>{{ humanize.intcomma(req.files or "Unknown") }}</span>
+          </div>
+          <div {% if not req.files_failed %}style="display: none"{% endif %}
+              id="files-failed-wrapper-{{ req.request_id }}">
+              (<a id="files-failed-{{ req.request_id }}"
+                 href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
           </div>
         </td>
         <td id="replicas-{{ req.request_id }}">-</td>
@@ -107,7 +113,8 @@
             progressBar.css("width", `${progress}%`);
             if (failed > 0) {
               progressBar.addClass("bg-warning");
-              $(`#files-failed-${req_id}`).text(`(${failed} failed)`);
+              $(`#files-failed-wrapper-${req_id}`).show();
+              $(`#files-failed-${req_id}`).text(failed);
             }
             if (status === "Complete" || status === "Fatal" || status === "Canceled") {
               watched.delete(req_id);

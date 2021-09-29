@@ -43,7 +43,7 @@ status_request_parser.add_argument('details', type=bool, default=False,
 class TransformationStatus(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        transform = TransformRequest.return_request(request_id)
+        transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
@@ -103,7 +103,7 @@ class TransformationStatusInternal(ServiceXResource):
             print(status.info)
             print("+--------------------------------------------+")
 
-            submitted_request = TransformRequest.return_request(request_id)
+            submitted_request = TransformRequest.lookup(request_id)
             submitted_request.status = 'Fatal'
             submitted_request.finish_time = datetime.now(tz=timezone.utc)
             submitted_request.failure_description = status.info

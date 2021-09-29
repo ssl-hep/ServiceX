@@ -114,7 +114,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.finish_time is None
@@ -166,7 +166,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.did == 'rucio://123-45-678'
 
@@ -199,7 +199,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request_id = response.json['request_id']
 
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.request_id == request_id
@@ -336,7 +336,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_object_store.create_bucket.assert_called_with(request_id)
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'parquet'
@@ -351,7 +351,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request_id = response.json['request_id']
 
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.submitted_by == mock_requesting_user.id
 
@@ -362,6 +362,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.title == title

@@ -37,7 +37,7 @@ class TestTransformStatus(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
             TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         response = client.post('/servicex/internal/transformation/1234/status',
@@ -56,7 +56,7 @@ class TestTransformStatus(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
             TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         response = client.post('/servicex/internal/transformation/1234/status',
@@ -97,7 +97,7 @@ class TestTransformStatus(ResourceTestBase):
         fake_transform_request.finish_time = datetime.max
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=fake_transform_request
         )
 
@@ -126,7 +126,7 @@ class TestTransformStatus(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=None)
 
         response = client.get('/servicex/transformation/1234/status')

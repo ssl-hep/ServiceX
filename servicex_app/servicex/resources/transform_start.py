@@ -45,7 +45,7 @@ class TransformStart(ServiceXResource):
         :param request_id: UUID of transformation request.
         """
         from servicex.kafka_topic_manager import KafkaTopicManager
-        submitted_request = TransformRequest.return_request(request_id)
+        submitted_request = TransformRequest.lookup(request_id)
 
         if submitted_request.status == "Canceled":
             return {"message": "Transform request canceled by user."}, 409

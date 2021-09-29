@@ -38,7 +38,7 @@ class TestAddFileToDataset(ResourceTestBase):
         import servicex
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
@@ -70,7 +70,7 @@ class TestAddFileToDataset(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=root_file_transform_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
@@ -97,7 +97,7 @@ class TestAddFileToDataset(ResourceTestBase):
         import servicex
         mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)

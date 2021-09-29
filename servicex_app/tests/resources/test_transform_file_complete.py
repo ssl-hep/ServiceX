@@ -49,7 +49,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+            servicex.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=1)
@@ -73,7 +73,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+            servicex.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=None)
@@ -97,7 +97,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_request', return_value=fake_req
+            servicex.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=0)
@@ -123,7 +123,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=None
         )
 
@@ -151,7 +151,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
 
         mock_files_remaining = mocker.PropertyMock(return_value=1)
@@ -181,7 +181,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
 
         mock_files_remaining = mocker.PropertyMock(return_value=0)

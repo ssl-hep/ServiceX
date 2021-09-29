@@ -35,7 +35,7 @@ class TestFilesetComplete(ResourceTestBase):
         submitted_request = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=submitted_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
