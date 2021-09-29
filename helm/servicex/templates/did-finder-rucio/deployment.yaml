@@ -35,6 +35,10 @@ spec:
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
     {{- end }}
+    {{- if .Values.didFinder.rucio.cachePrefix }}
+          - name: CACHE_PREFIX
+            value: "{{ .Values.didFinder.rucio.cachePrefix }}"
+    {{- end }}
           - name: RUCIO_LATITUDE
             value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE

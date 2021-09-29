@@ -21,6 +21,10 @@ spec:
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+        {{- if .Values.didFinder.CERNOpenData.cachePrefix }} 
+          - name: CACHE_PREFIX
+            value: "{{ .Values.didFinder.CERNOpenData.cachePrefix }}"
+        {{- end }}
         {{- if .Values.secrets }}
           - name: RMQ_PASS 
             valueFrom:
