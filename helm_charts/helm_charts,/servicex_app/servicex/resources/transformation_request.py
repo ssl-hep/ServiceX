@@ -39,7 +39,7 @@ class TransformationRequest(ServiceXResource):
     @auth_required
     def get(self, request_id):
         # Validate that the user is an admin or submitted the request
-        transform = TransformRequest.return_request(request_id)
+        transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404

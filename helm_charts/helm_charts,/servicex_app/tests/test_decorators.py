@@ -113,7 +113,7 @@ class TestDecorators(WebTestBase):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
         mock = mocker.patch('servicex.resources.transformation_request'
-                            '.TransformRequest.return_request').return_value
+                            '.TransformRequest.lookup').return_value
         mock.to_json.return_value = data
         with client.application.app_context():
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
@@ -151,7 +151,7 @@ class TestDecorators(WebTestBase):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
         mock = mocker.patch('servicex.resources.transformation_request'
-                            '.TransformRequest.return_request').return_value
+                            '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
         mock.to_json.return_value = data
         with client.application.app_context():
@@ -166,7 +166,7 @@ class TestDecorators(WebTestBase):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
         mock = mocker.patch('servicex.resources.transformation_request'
-                            '.TransformRequest.return_request').return_value
+                            '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
         mock.to_json.return_value = data
         with client.session_transaction() as sess:

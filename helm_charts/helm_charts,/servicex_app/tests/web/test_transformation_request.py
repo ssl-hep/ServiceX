@@ -2,42 +2,40 @@ from flask import Response, url_for
 
 from pytest import fixture
 
+from servicex.models import TransformRequest
 from .web_test_base import WebTestBase
 
 
 class TestTransformationRequest(WebTestBase):
+    endpoint = "transformation_request"
+    module = "servicex.web.transformation_request"
     template_name = 'transformation_request.html'
 
     @fixture
-    def mock_tr(self, mocker):
-        return mocker.patch("servicex.web.transformation_request.TransformRequest")
+    def mock_tr_cls(self, mocker):
+        return mocker.patch(f"{self.module}.TransformRequest")
 
-    def test_get_by_primary_key(self, client, mock_tr, captured_templates):
+    @fixture
+    def mock_tr(self, mock_tr_cls) -> TransformRequest:
         req = self._test_transformation_req()
-        mock_tr.query.get.return_value = req
-        resp: Response = client.get(url_for('transformation_request', id_=req.id))
+        mock_tr_cls.lookup.return_value = req
+        return req
+
+    def test_get_by_primary_key(self, client, mock_tr: TransformRequest, captured_templates):
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
         assert resp.status_code == 200
         template, context = captured_templates[0]
         assert template.name == self.template_name
-        assert context["req"] == req
-        mock_tr.query.get.assert_called_once_with(str(req.id))
-        mock_tr.query.filter_by.assert_not_called()
+        assert context["req"] == mock_tr
 
-    def test_get_by_uuid(self, client, mocker, mock_tr, captured_templates):
-        req = self._test_transformation_req()
-        mock_query = mocker.MagicMock()
-        mock_tr.query.filter_by.return_value = mock_query
-        mock_query.one.return_value = req
-        resp: Response = client.get(url_for('transformation_request', id_=req.request_id))
+    def test_get_by_uuid(self, client, mock_tr: TransformRequest, captured_templates):
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.request_id))
         assert resp.status_code == 200
         template, context = captured_templates[0]
         assert template.name == self.template_name
-        assert context["req"] == req
-        mock_tr.query.filter_by.assert_called_once_with(request_id=req.request_id)
-        mock_tr.query.get.assert_not_called()
-        mock_query.one.assert_called_once()
+        assert context["req"] == mock_tr
 
-    def test_404(self, client, mock_tr):
-        mock_tr.query.get.return_value = None
-        resp: Response = client.get(url_for('transformation_request', id_=1))
+    def test_404(self, client, mock_tr_cls):
+        mock_tr_cls.lookup.return_value = None
+        resp: Response = client.get(url_for(self.endpoint, id_=1))
         assert resp.status_code == 404

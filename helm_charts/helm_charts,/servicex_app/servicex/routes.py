@@ -65,6 +65,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.web.api_token import api_token
     from servicex.web.servicex_file import servicex_file
     from servicex.web.transformation_request import transformation_request
+    from servicex.web.transformation_results import transformation_results
 
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
@@ -93,6 +94,11 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
         '/transformation-request/<id_>',
         'transformation_request',
         transformation_request
+    )
+    app.add_url_rule(
+        '/transformation-request/<id_>/results',
+        'transformation_results',
+        transformation_results
     )
 
     # User management and Authentication Endpoints

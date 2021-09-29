@@ -39,7 +39,7 @@ class FilesetComplete(ServiceXResource):
 
     def put(self, request_id):
         summary = request.get_json()
-        rec = TransformRequest.return_request(request_id)
+        rec = TransformRequest.lookup(request_id)
         self.lookup_result_processor.report_fileset_complete(
             rec,
             num_files=summary['files'],

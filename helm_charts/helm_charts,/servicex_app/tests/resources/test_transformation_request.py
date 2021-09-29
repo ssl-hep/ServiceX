@@ -7,7 +7,7 @@ class TestTransformationRequest(ResourceTestBase):
         import servicex
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=self._generate_transform_request())
         client = self._test_client(extra_config={'OBJECT_STORE_ENABLED': False})
         response = client.get('/servicex/transformation/1234')
@@ -35,7 +35,7 @@ class TestTransformationRequest(ResourceTestBase):
         object_store_transform_request.result_destination = 'object-store'
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=object_store_transform_request)
 
         local_config = {
@@ -78,7 +78,7 @@ class TestTransformationRequest(ResourceTestBase):
         kafka_transform_request.result_destination = 'kafka'
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=kafka_transform_request)
 
         local_config = {
@@ -112,7 +112,7 @@ class TestTransformationRequest(ResourceTestBase):
     def test_get_single_request_404(self, mocker, client):
         import servicex
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_request',
+            servicex.models.TransformRequest, 'lookup',
             return_value=None)
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 404

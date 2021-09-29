@@ -20,7 +20,7 @@ class TestTransformCancel(ResourceTestBase):
         mock_transform_request_cls = mocker.patch(f"{self.module}.TransformRequest")
         fake_transform = self._generate_transform_request()
         fake_transform.save_to_db = mocker.Mock()
-        mock_transform_request_cls.return_request.return_value = fake_transform
+        mock_transform_request_cls.lookup.return_value = fake_transform
         return fake_transform
 
     def test_submitted(self, client, mock_manager, fake_transform):

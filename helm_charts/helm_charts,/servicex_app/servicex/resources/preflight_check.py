@@ -42,7 +42,7 @@ class PreflightCheck(ServiceXResource):
 
     def post(self, request_id):
         body = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
+        submitted_request = TransformRequest.lookup(request_id)
 
         try:
             self.lookup_result_processor.publish_preflight_request(

@@ -38,7 +38,7 @@ class TransformErrors(ServiceXResource):
         Fetches errors for a given transformation request.
         :param request_id: UUID of transformation request.
         """
-        transform = TransformRequest.return_request(request_id)
+        transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             return {'message': msg}, 404
