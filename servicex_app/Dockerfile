@@ -5,14 +5,14 @@ RUN useradd -ms /bin/bash servicex
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
+COPY README.rst README.rst
 COPY setup.py setup.py
 COPY setup.cfg setup.cfg
-COPY README.rst README.rst
+COPY requirements.txt requirements.txt
 RUN pip install -e .
 RUN pip install gunicorn
 RUN pip install safety && \
     pip freeze | safety check
-
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
