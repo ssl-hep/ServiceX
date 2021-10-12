@@ -114,6 +114,4 @@ dmypy.json
 .pyre/
 .vscode/settings.json
 
-# Requirements should always be locally generated
-requirements.txt
-poetry.lock
+.idea/
