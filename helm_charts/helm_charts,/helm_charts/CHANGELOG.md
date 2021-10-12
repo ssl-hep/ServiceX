@@ -4,12 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unrelased]
+## [1.0.0-RC.4] - 2021-10-8
 ### Added
+- Cleaned up and improved documentation
+- Examples for ATLAS, tcut, and CMS
+- ServiceX Logo
+- User frontend and dashboard
+- Min and Max workers for Autoscaling
+- Searchable Logging via FileBeats
+- Support for multiple DID Finders via schemes
+- CERN OpenData DID Finder
+- Mounting secrets instead of reading them from values.yaml
+- Option to skip x509 
+- Option for transformers to write to mounted volumes instead of Minio buckets
+- Lat/Long settings for Rucio DID Finder
+
 ### Changed
+- Make ingress class annotation value configurable
+- Default `PullyPolicy` is `Always` for all images
+- DIDFinder is now RucioDIDFinder
+- Rucio DID Finder uses more efficient MetaLink property to find replicas
+
 ### Fixed
 - Bug in X509 secrets where it would error out when secret exists
+- Inaccuracies in the NOTES for the helm chart
+- Autoscaling settings
+
+
 ### Removed
+- Direct ElasticSearch logging
+- Site option for DID Finder
+
 
 ## [1.0.0-RC.3] - 2020-10-8
 ### Added
