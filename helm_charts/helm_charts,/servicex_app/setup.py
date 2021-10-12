@@ -26,11 +26,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import io
+from pip._internal.req import parse_requirements
 
 from setuptools import find_packages, setup
 
 with io.open('README.rst', 'rt', encoding='utf8') as f:
     readme = f.read()
+
+
+def load_requirements(fname):
+    reqs = parse_requirements(fname, session='build')
+    return [str(ir.requirement) for ir in reqs]
+
 
 setup(
     name='servicex_app',
@@ -44,26 +51,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=[
-        'flask>=1.1.2, <2.0',
-        'Flask-WTF',
-        'wtforms',
-        'email-validator',
-        'pika',
-        'flask-restful',
-        'flask-jwt-extended>=3.0, <4.0',
-        'passlib',
-        'flask-sqlalchemy',
-        'Flask-Migrate',
-        'confluent_kafka',
-        'kubernetes',
-        'minio',
-        'psycopg2',
-        'globus_sdk',
-        'cryptography',
-        'bootstrap-flask',
-        'humanize'
-    ],
+    install_requires=load_requirements("requirements.txt"),
     extras_require={
         'test': [
             'pytest>=5.2',
