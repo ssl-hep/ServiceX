@@ -28,11 +28,11 @@
 import os
 
 import base64
-import traceback
 from typing import Optional
 
 import kubernetes
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 from flask import current_app
 
 
@@ -70,7 +70,7 @@ class TransformerManager:
                 name='generated-code',
                 config_map=client.V1ConfigMapVolumeSource(
                     name=generated_code_cm)
-                )
+            )
             )
             volume_mounts.append(
                 client.V1VolumeMount(mount_path="/generated", name='generated-code'))
@@ -256,10 +256,13 @@ class TransformerManager:
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
         # Create job
-        api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
-            body=hpa,
-            namespace=namespace)
-        print("Job created. status='%s'" % str(api_response.status))
+        try:
+            api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
+                body=hpa,
+                namespace=namespace)
+            print("Job created. status='%s'" % str(api_response.status))
+        except ApiException as e:
+            print("Exception during HPA Creation:", e)
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
@@ -286,20 +289,25 @@ class TransformerManager:
                     name="transformer-" + request_id,
                     namespace=namespace
                 )
+        except ApiException as e:
+            print(f"Exception during Job {request_id} HPA Shut Down", e)
 
+        try:
             api_v1 = client.AppsV1Api()
             api_v1.delete_namespaced_deployment(
                 name="transformer-" + request_id,
                 namespace=namespace
             )
+        except ApiException as e:
+            print(f"Exception during Job {request_id} Deployment Shut Down", e)
 
+        try:
             api_core = client.CoreV1Api()
             configmap_name = "{}-generated-source".format(request_id)
             api_core.delete_namespaced_config_map(name=configmap_name,
                                                   namespace=namespace)
-        except Exception as eek:
-            print(f"Exception during Job {request_id} Shut Down", eek)
-            traceback.print_last()
+        except ApiException as e:
+            print(f"Exception during Job {request_id} ConfigMap cleanup", e)
 
     @staticmethod
     def get_deployment_status(
