@@ -74,12 +74,14 @@ didFinder:
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
     servicex_latitude: 41.78
     servicex_longitude: -87.7
+    cachePrefix:
 
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
     tag: develop
     pullPolicy: Always
+    cachePrefix:
 
 # Settings for the preflight checker - this usually uses the same image as
 # the transformer
