@@ -39,12 +39,14 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.rucio.pullPolicy`         | Rucio DID Finder image pull policy                     | `Always`                                          |
 | `didFinder.rucio.servicex_latitude`        | Latitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | 41.78 |
 | `didFinder.rucio.servicex_longitude`        | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | -87.7 |
+| `didFinder.rucio.cachePrefix`        | Prefix string to stick in front of file paths. Useful for XCache | |
 | `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
 | `didFinder.CERNOpenData.enabled`     | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
 | `didFinder.CERNOpenData.image`       | CERN OpenData DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.CERNOpenData.tag`         | CERN OpenData DID Finder image tag                             | `latest`                                                |
 | `didFinder.CERNOpenData.pullPolicy`  | CERN OpenData DID Finder image pull policy                     | `Always`                                          |
+| `didFinder.rucio.cachePrefix`        | Prefix string to stick in front of file paths. Useful for XCache | |
 | `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
 | `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
 | `preflight.pullPolicy`               | Preflight image pull policy                      | `Always`                                          |
