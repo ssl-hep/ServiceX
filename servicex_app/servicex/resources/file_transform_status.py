@@ -36,6 +36,7 @@ from servicex.models import FileStatus, max_string_size
 class FileTransformationStatus(ServiceXResource):
 
     def __init__(self):
+        super().__init__()
         self.status_parser = reqparse.RequestParser()
         self.status_parser.add_argument('timestamp', help='This field cannot be blank',
                                         required=True)
@@ -56,10 +57,10 @@ class FileTransformationStatus(ServiceXResource):
                                  status=status['status-code'],
                                  info=status.info[:max_string_size])
         file_status.save_to_db()
-
+        self.logger.info(f"Saved file status: {file_status}")
         try:
             db.session.commit()
         except Exception:
-            print("*******Error saving file status record")
+            self.logger.exception("Error saving file status record")
         finally:
             return "Ok"

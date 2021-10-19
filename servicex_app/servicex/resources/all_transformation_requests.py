@@ -38,13 +38,16 @@ parser.add_argument('submitted_by', type=int, location='args')
 
 
 class AllTransformationRequests(ServiceXResource):
+
     @auth_required
     def get(self):
         args = parser.parse_args()
         query_id = args.get('submitted_by')
         transforms: List[TransformRequest]
         if query_id:
+            self.logger.debug(f"Querying transform request by id: {query_id}")
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
+            self.logger.debug("Querying for all  transform requests")
             transforms = TransformRequest.query.all()
         return TransformRequest.return_json(transforms)

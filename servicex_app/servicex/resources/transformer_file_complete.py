@@ -41,9 +41,12 @@ class TransformerFileComplete(ServiceXResource):
 
     def put(self, request_id):
         info = request.get_json()
+        self.logger.info(info)
         transform_req = TransformRequest.lookup(request_id)
         if transform_req is None:
-            return {"message": f"Request not found with id: '{request_id}'"}, 404
+            msg = f"Request not found with id: '{request_id}'"
+            self.logger.error(msg)
+            return {"message": msg}, 404
 
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
@@ -68,7 +71,7 @@ class TransformerFileComplete(ServiceXResource):
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            print(f"Job {request_id} is all done... shutting down transformers")
+            self.logger.info(f"Job {request_id} is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             transform_req.status = "Complete"
             transform_req.finish_time = datetime.now(tz=timezone.utc)

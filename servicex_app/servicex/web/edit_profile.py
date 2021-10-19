@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from flask import session, render_template, redirect, url_for, request, flash
+from flask import session, render_template, redirect, url_for, \
+    request, flash, current_app
 
 from servicex.models import db, UserModel
 from servicex.decorators import oauth_required
@@ -23,8 +24,9 @@ def edit_profile():
             user.updated_at = datetime.utcnow()
             db.session.commit()
             flash("Your profile has been saved!", 'success')
+            current_app.logger.info(f"Updated profile for {user.name}")
             return redirect(url_for('profile'))
         else:
-            print("Edit Profile Form errors", form.errors)
+            current_app.logger.error(f"Edit Profile Form errors {form.errors}")
             flash("Profile could not be saved. Please fix invalid fields below.", 'danger')
     return render_template("profile_form.html", form=form, action="Edit Profile")

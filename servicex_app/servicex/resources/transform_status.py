@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
 from datetime import datetime, timezone
 
 from flask_restful import reqparse
@@ -46,6 +47,7 @@ class TransformationStatus(ServiceXResource):
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
+            self.logger.error(msg)
             return {'message': msg}, 404
 
         status_request = status_request_parser.parse_args()
@@ -70,7 +72,7 @@ class TransformationStatus(ServiceXResource):
             result_dict['details'] = TransformationResult.to_json_list(
                 transform.results
             )
-
+        self.logger.info(f"Got transformation: {result_dict}")
         return jsonify(result_dict)
 
 
@@ -85,23 +87,14 @@ status_parser.add_argument('source', required=False)
 
 
 class TransformationStatusInternal(ServiceXResource):
-
     def post(self, request_id):
         status = status_parser.parse_args()
         status.request_id = request_id
         if status.severity == "fatal":
-            print("+--------------------------------------------+")
-            print(r"""
-  ______   _______       _        ______ _____  _____   ____  _____
- |  ____/\|__   __|/\   | |      |  ____|  __ \|  __ \ / __ \|  __ \
- | |__ /  \  | |  /  \  | |      | |__  | |__) | |__) | |  | | |__) |
- |  __/ /\ \ | | / /\ \ | |      |  __| |  _  /|  _  /| |  | |  _  /
- | | / ____ \| |/ ____ \| |____  | |____| | \ \| | \ \| |__| | | \ \
- |_|/_/    \_\_/_/    \_\______| |______|_|  \_\_|  \_\\____/|_|  \_\
-            """)
-            print(f"+ Fatal error reported for {request_id} from {status.source}")
-            print(status.info)
-            print("+--------------------------------------------+")
+            self.logger.error(f"+ Fatal error reported for {request_id} from " +
+                              f"{status.source}: {status.info}")
+            sys.stderr.write(f"+ Fatal error reported for {request_id} from " +
+                             f"{status.source}: {status.info}\n")
 
             submitted_request = TransformRequest.lookup(request_id)
             submitted_request.status = 'Fatal'
