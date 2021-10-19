@@ -18,5 +18,7 @@ class DeploymentStatus(ServiceXResource):
         status = manager.get_deployment_status(request_id)
         if status is None:
             msg = f"Deployment not found for request with id: '{request_id}'"
+            self.logger.error(msg)
             return {'message': msg}, 404
+        self.logger.info(f"Got status request: {status.to_dict()}")
         return jsonify(status.to_dict())

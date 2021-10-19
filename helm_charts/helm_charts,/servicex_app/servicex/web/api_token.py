@@ -1,4 +1,4 @@
-from flask import redirect, url_for, session, flash
+from flask import redirect, url_for, session, flash, current_app
 from flask_jwt_extended import create_refresh_token
 
 from servicex.models import db, UserModel
@@ -12,5 +12,6 @@ def api_token():
     user: UserModel = UserModel.find_by_sub(sub)
     user.refresh_token = create_refresh_token(sub)
     db.session.commit()
+    current_app.logger.info(f"Generated new API token for {sub}")
     flash("Your new API token has been generated!", 'success')
     return redirect(url_for('profile'))

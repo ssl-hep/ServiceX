@@ -19,6 +19,7 @@ def servicex_file():
     if not matches or len(matches) > 1:
         msg = "Could not generate a servicex.yaml config file. " \
               "Unable to infer filetype supported by this ServiceX instance."
+        current_app.logger.error(msg)
         flash(msg, category='error')
         return redirect(url_for('profile'))
     backend_type = matches[0]

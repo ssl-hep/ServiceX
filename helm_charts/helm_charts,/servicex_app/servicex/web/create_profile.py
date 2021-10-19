@@ -42,11 +42,12 @@ def create_profile():
                     res.raise_for_status()
                     msg_segments += ["Your account is pending approval.",
                                      "We'll email you when it's ready."]
+                current_app.logger.info(f"Created profile for {new_user.id}")
                 flash(' '.join(msg_segments), 'success')
                 return redirect(url_for('profile'))
             except requests.exceptions.HTTPError as err:
-                print("Error in response from Slack webhook:", err)
+                current_app.logger.error(f"Error in response from Slack webhook: {err}")
         else:
-            print("Create Profile Form errors", form.errors)
+            current_app.logger.error(f"Create Profile Form error: {form.errors}")
             flash("Profile could not be saved. Please fix invalid fields below.", 'danger')
     return render_template("profile_form.html", form=form, action="Create Profile")
