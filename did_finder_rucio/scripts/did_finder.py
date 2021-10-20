@@ -43,9 +43,6 @@ def run_rucio_finder():
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--prefix', dest='prefix', action='store',
-                        default='',
-                        help='Prefix to add to Xrootd URLs')
     add_did_finder_cnd_arguments(parser)
 
     args = parser.parse_args()
