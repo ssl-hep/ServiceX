@@ -1,15 +1,7 @@
-from flask import render_template, request, session
-from flask_sqlalchemy import Pagination
-
 from servicex.decorators import oauth_required
-from servicex.models import TransformRequest
+from servicex.web.dashboard import dashboard
 
 
 @oauth_required
 def user_dashboard():
-    page = request.args.get('page', 1, type=int)
-    pagination: Pagination = TransformRequest.query\
-        .filter_by(submitted_by=session["user_id"])\
-        .order_by(TransformRequest.finish_time.desc(), TransformRequest.submit_time.desc())\
-        .paginate(page=page, per_page=15, error_out=False)
-    return render_template("user_dashboard.html", pagination=pagination)
+    return dashboard("user_dashboard.html", user_specific=True)
