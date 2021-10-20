@@ -13,6 +13,8 @@ while true; do
     sleep 5
 done
 
+if [ -z $CACHE_PREFIX ]; then export PREFIX_ARG=""; else export PREFIX_ARG="--prefix $CACHE_PREFIX"; fi
+
 export PYTHONPATH=./src
-python3 scripts/did_finder.py --rabbit-uri $RMQ_URI
+python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $PREFIX_ARG
 
