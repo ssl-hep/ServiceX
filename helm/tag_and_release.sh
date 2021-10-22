@@ -85,7 +85,7 @@ popd || exit 0
 
 # Publish the chart
 helm package servicex
-mv servicex-$2 ../ssl-helm-charts
+mv servicex-$2.tgz ../ssl-helm-charts
 
 pushd .. || exit 0
 helm repo index ssl-helm-charts --url https://ssl-hep.github.io/ssl-helm-charts/
@@ -94,5 +94,6 @@ cd ssl-helm-charts
 git add index.yaml
 git add servicex-$2
 git commit -m "Release $1"
+git push origin gh-pages
 pop || exit 0
 echo "Version $1 has been released!"
