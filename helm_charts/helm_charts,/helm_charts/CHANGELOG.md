@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-RC.4] - 2021-10-8
 ### Added
+- Support for xCache in DID Finders
+- Sorting of results in web page  
 - Cleaned up and improved documentation
 - Examples for ATLAS, tcut, and CMS
 - ServiceX Logo
