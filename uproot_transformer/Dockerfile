@@ -15,7 +15,7 @@ RUN apt-get install gnupg2 -y \
 RUN conda install --yes \
     -c conda-forge \
     lz4 \
-    xrootd==4.11.0 \
+    xrootd==5.1.1 \
     tini==0.18.0 \
     && conda clean -tipsy
 
