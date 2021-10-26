@@ -20,7 +20,7 @@ return a binary zip file as output. To start that up, use the following
 docker command:
 
 ```
- docker run -it --rm -p 5000:5000  sslhep/servicex_code_gen_funcadl_uproot:latest
+ docker run -it --rm -p 5000:5000  sslhep/servicex_code_gen_func_adl_uproot:latest
 ```
 
 You can now make queries against port 5000.
@@ -31,7 +31,7 @@ This container will also do that for you:
 
 ```
 AST="(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))" 
-echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_funcadl_uproot:latest translate -z /zip/junk.zip
+echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_func_adl_uproot:latest translate -z /zip/junk.zip
 ```
 
 After running, that will leave a `zip` file in your home directory that contains 
@@ -54,7 +54,7 @@ docker run --rm -it \
   --mount type=bind,source=$(pwd),target=/code \
   --mount type=bind,source=$(pwd)/generated,target=/generated \
   --entrypoint bash \
-  sslhep/servicex_code_gen_funcadl_uproot:develop 
+  sslhep/servicex_code_gen_func_adl_uproot:develop 
 ```
 
 Then cd to /code and run the script as
