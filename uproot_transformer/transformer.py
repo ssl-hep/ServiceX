@@ -30,6 +30,7 @@ import sys
 import traceback
 
 import awkward as ak
+import uproot
 import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
@@ -44,7 +45,8 @@ import os
 import pyarrow.parquet as pq
 import pyarrow as pa
 
-
+# Needed until we use xrootd>=5.2.0 (see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22)
+uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 
 # How many bytes does an average awkward array cell take up. This is just
 # a rule of thumb to calculate chunksize
