@@ -72,6 +72,11 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
+| 'minioCleanup.image'                 | Minio cleanup image name                         | 'sslhep/minio-cleanup' |
+| 'minioCleanup.tag'                   | Minio cleanup image tag                          | 'latest' |
+| 'minioCleanup.threads'               | Number of threads to use when processing         | 3 |
+| 'minioCleanup.maxStorage'            | Max storage to use (can use M, G,T suffixes      | '1T' |
+| 'minioCleanup.maxTTL'                | Max number of days to keep results               | 30 |
 | `transformer.autoscaler.enabled`     | Enable/disable horizontal pod autoscaler for transformers |  True |
 | `transformer.autoscaler.cpuScaleThreshold` | CPU percentage threshold for pod scaling   | 30 |
 | `transformer.autoscaler.minReplicas` | Minimum number of transformer pods per request   | 1 |

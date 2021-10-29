@@ -165,6 +165,19 @@ minio:
     enabled: false
   accessKey: miniouser
   secretKey: leftfoot1
+  # optional setting pointing to the location of the minio instance
+  uri: https://minio.uri
+
+# Values for Minio Chart
+minioCleanup:
+  image: sslhep/minio_cleanup
+  tag: develop
+  # max storage to use, can use M, G, T to indicate megabytes (2^20), 
+  # gigabytes (2^30), and terabytes (2^40)
+  maxStorage: 1T
+  # number of days to allow results to remain in the cache before removing
+  maxTTL: 30
+  threads: 3
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false

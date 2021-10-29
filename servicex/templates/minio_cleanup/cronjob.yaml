@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-minio-cleanup
+spec:
+  schedule: "0 * * * *"
+  jobTemplate: 
+    spec:
+      concurrencyPolicy: "Forbid"
+      template:
+        spec:
+          containers:
+          - name: {{ .Release.Name }}-minio-cleanup
+            image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
+            command: ["/bin/cleanup_minio.py"]
+            imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
+            env:
+              - name: THREADS
+                value: "{{ .Values.minioCleanup.threads }}"
+              - name: MINIO_URL
+            {{- if .Values.minio.uri -}}
+                value: "{{ .Values.minio.url }}"
+            {{- else }}
+                value: '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
+            {{- end }}
+              - name: MAX_STORAGE
+                value: "{{ .Values.minioCleanup.maxStorage }}"
+              - name: MAX_TTL
+                value: "{{ .Values.minioCleanup.maxTTL }}"
+            {{- if .Values.secrets }}
+              - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets }}
+                      key: accesskey
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets }}
+                      key: secretkey
+            {{- end }}`
+            args: ["--max-size", "$(MAX_STORAGE)"]
