@@ -8,7 +8,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformCancel(ResourceTestBase):
-    module = "servicex.resources.transform_cancel"
+    module = "servicex.resources.transformation.cancel"
 
     @pytest.fixture
     def mock_manager(self, mocker) -> MagicMock:

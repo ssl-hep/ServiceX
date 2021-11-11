@@ -6,6 +6,8 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestDeploymentStatus(ResourceTestBase):
+    module = "servicex.resources.transformation.deployment"
+
     @fixture
     def mock_deployment_status(self) -> MagicMock:
         mock_deployment_status = MagicMock()
@@ -26,9 +28,7 @@ class TestDeploymentStatus(ResourceTestBase):
         mock_transform_start = mocker.MagicMock()
         mock_transformer_mgr = mock_transform_start.transformer_manager
         mock_transformer_mgr.get_deployment_status.return_value = mock_deployment_status
-        mocker.patch(
-            'servicex.resources.deployment_status.TransformStart', mock_transform_start
-        )
+        mocker.patch(f'{self.module}.TransformStart', mock_transform_start)
         response = client.get("/servicex/transformation/1234/deployment-status")
         assert response.status_code == 200
         assert response.json == mock_deployment_status.to_dict.return_value
@@ -37,8 +37,6 @@ class TestDeploymentStatus(ResourceTestBase):
         mock_transform_start = mocker.MagicMock()
         mock_transformer_mgr = mock_transform_start.transformer_manager
         mock_transformer_mgr.get_deployment_status.return_value = None
-        mocker.patch(
-            'servicex.resources.deployment_status.TransformStart', mock_transform_start
-        )
+        mocker.patch(f'{self.module}.TransformStart', mock_transform_start)
         response = client.get("/servicex/transformation/1234/deployment-status")
         assert response.status_code == 404

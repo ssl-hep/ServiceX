@@ -31,21 +31,24 @@ from flask import current_app as app
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, code_gen_service,
                lookup_result_processor, docker_repo_adapter):
-    from servicex.resources.submit_transformation_request import SubmitTransformationRequest
-    from servicex.resources.transform_start import TransformStart
-    from servicex.resources.transform_status \
-        import TransformationStatus, TransformationStatusInternal
-    from servicex.resources.transform_cancel import TransformCancel
-    from servicex.resources.file_transform_status import FileTransformationStatus
-    from servicex.resources.all_transformation_requests import AllTransformationRequests
-    from servicex.resources.transformation_request import TransformationRequest
-    from servicex.resources.add_file_to_dataset import AddFileToDataset
-    from servicex.resources.preflight_check import PreflightCheck
-    from servicex.resources.fileset_complete import FilesetComplete
-    from servicex.resources.transformer_file_complete import TransformerFileComplete
-    from servicex.resources.transform_errors import TransformErrors
+
     from servicex.resources.info import Info
-    from servicex.resources.deployment_status import DeploymentStatus
+
+    from servicex.resources.internal.add_file_to_dataset import AddFileToDataset
+    from servicex.resources.internal.file_transform_status import FileTransformationStatus
+    from servicex.resources.internal.fileset_complete import FilesetComplete
+    from servicex.resources.internal.preflight_check import PreflightCheck
+    from servicex.resources.internal.transform_start import TransformStart
+    from servicex.resources.internal.transform_status import TransformationStatusInternal
+    from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
+
+    from servicex.resources.transformation.submit import SubmitTransformationRequest
+    from servicex.resources.transformation.status import TransformationStatus
+    from servicex.resources.transformation.cancel import CancelTransform
+    from servicex.resources.transformation.get_all import AllTransformationRequests
+    from servicex.resources.transformation.get_one import TransformationRequest
+    from servicex.resources.transformation.errors import TransformErrors
+    from servicex.resources.transformation.deployment import DeploymentStatus
 
     from servicex.resources.users.all_users import AllUsers
     from servicex.resources.users.token_refresh import TokenRefresh
@@ -117,9 +120,9 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationStatus, prefix + "/status")
-    api.add_resource(TransformCancel, prefix + "/cancel")
     api.add_resource(TransformErrors, prefix + "/errors")
     api.add_resource(DeploymentStatus, prefix + "/deployment-status")
+    api.add_resource(CancelTransform, prefix + "/cancel")
 
     # Internal service endpoints
     api.add_resource(TransformationStatusInternal,
