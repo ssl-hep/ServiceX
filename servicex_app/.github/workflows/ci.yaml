@@ -29,7 +29,7 @@ jobs:
     - name: Check for vulnerabilities in libraries
       run: |
         pip install safety
-        pip freeze | safety check
+        pip freeze | safety check -i 42050
     - name: Lint with Flake8
       run: |
         flake8
