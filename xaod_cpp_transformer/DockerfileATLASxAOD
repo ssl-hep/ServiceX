@@ -27,7 +27,7 @@ ENV PYTHONUNBUFFERED=1
 ENV INSTANCE="atlas_xaod_cpp_transformer"
 ENV DESC="ATLAS xAOD CPP Transformer"
 
-ENV X509_USER_PROXY=/etc/grid-security/x509up
+ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR /etc/grid-security/certificates
 
 # Copy over the source

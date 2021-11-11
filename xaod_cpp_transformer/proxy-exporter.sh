@@ -1,25 +1,28 @@
 #!/usr/bin/env bash
-mkdir -p /etc/grid-security
 
+proxydir=$(dirname ${X509_USER_PROXY})
+
+if [[ ! -d $proxydir ]]
+then
+    mkdir -p $proxydir
+fi
 
 while true; do
 
-    date
-
-    while true; do 
-        cp /etc/grid-security-ro/x509up /etc/grid-security
+    while true; do
+        cp /etc/grid-security-ro/x509up ${X509_USER_PROXY}
         RESULT=$?
         if [ $RESULT -eq 0 ]; then
-            echo "Got proxy."
-            chmod 600 /etc/grid-security/x509up
-            break 
+            echo "INFO $INSTANCE_NAME xAOD-Transformer none Got proxy."
+            chmod 600 ${X509_USER_PROXY}
+            break
         else
-            echo "Warning: An issue encountered when getting proxy."
+            echo "WARNING $INSTANCE_NAME xAOD-Transformer none An issue encountered when getting proxy."
             sleep 5
         fi
     done
 
-    # Refresh every 10 hours.
-    sleep 36000
+   # Refresh every hour
+   sleep 3600
 
 done
