@@ -2,7 +2,7 @@ from flask import jsonify
 
 from servicex.decorators import auth_required
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.resources.transform_start import TransformStart
+from servicex.resources.internal.transform_start import TransformStart
 from servicex.transformer_manager import TransformerManager
 
 

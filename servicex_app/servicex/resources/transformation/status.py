@@ -25,48 +25,49 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from datetime import datetime, timezone
-
-import kubernetes
-from flask import current_app
+from flask_restful import reqparse
+from flask import jsonify
 
 from servicex.decorators import auth_required
-from servicex.models import TransformRequest, db
+from servicex.models import TransformationResult, TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.resources.transform_start import TransformStart
-from servicex.transformer_manager import TransformerManager
 
 
-class TransformCancel(ServiceXResource):
+status_request_parser = reqparse.RequestParser()
+status_request_parser.add_argument('details', type=bool, default=False,
+                                   required=False, location='args')
 
+
+class TransformationStatus(ServiceXResource):
     @auth_required
-    def get(self, request_id: str):
-        transform_req = TransformRequest.lookup(request_id)
-        if not transform_req:
+    def get(self, request_id):
+        transform = TransformRequest.lookup(request_id)
+        if not transform:
             msg = f'Transformation request not found with id: {request_id}'
-            self.logger.warning(msg)
+            self.logger.error(msg)
             return {'message': msg}, 404
-        elif transform_req.complete:
-            msg = f"Transform request with id {request_id} is not in progress."
-            self.logger.warning(msg)
-            return {"message": msg}, 400
 
-        manager: TransformerManager = TransformStart.transformer_manager
-        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+        status_request = status_request_parser.parse_args()
 
-        if transform_req.status == "Running":
-            try:
-                manager.shutdown_transformer_job(request_id, namespace)
-            except kubernetes.client.exceptions.ApiException as exc:
-                if exc.status == 404:
-                    pass
-                else:
-                    self.logger.error(f"Got Kubernetes api exception: {exc.reason}")
-                    return {'message': exc.reason}, exc.status
+        # Format timestamps with military timezone, given that they are in UTC.
+        # See https://stackoverflow.com/a/42777551/8534196
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        result_dict = {
+            "status": transform.status,
+            "request-id": request_id,
+            "submit-time": transform.submit_time.strftime(iso_fmt),
+            "finish-time": transform.finish_time,
+            "files-processed": transform.files_processed,
+            "files-skipped": transform.files_failed,
+            "files-remaining": transform.files_remaining,
+            "stats": transform.statistics
+        }
+        if transform.finish_time is not None:
+            result_dict["finish-time"] = transform.finish_time.strftime(iso_fmt)
 
-        transform_req.status = "Canceled"
-        transform_req.finish_time = datetime.now(tz=timezone.utc)
-        transform_req.save_to_db()
-        db.session.commit()
-
-        return {"message": f"Canceled transformation request {request_id}"}, 200
+        if status_request.details:
+            result_dict['details'] = TransformationResult.to_json_list(
+                transform.results
+            )
+        self.logger.info(f"Got transformation: {result_dict}")
+        return jsonify(result_dict)
