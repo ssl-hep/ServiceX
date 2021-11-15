@@ -69,20 +69,30 @@ class ArrowIterator:
     def arrow_table(self):
         yield self.arrow
 
-def hash_path(path):
-    if len(path) > MAX_PATH_LEN:
-        hashfile = sha1(path.encode('utf-8')).hexdigest()
-        path = ''.join([
-            path[:MAX_PATH_LEN - len(hashfile) - 1],
-            '_', hashfile])
 
-    return(path)
+def hash_path(file_name):
+    """
+    Make the path safe for object store or POSIX, by keeping the length
+    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
+    forty character hash.
+    :param file_name: Input filename
+    :return: Safe path string
+    """
+    if len(file_name) > MAX_PATH_LEN:
+        hash = sha1(file_name.encode('utf-8')).hexdigest()
+        return ''.join([
+            '_', hash,
+            file_name[-1 * (MAX_PATH_LEN - len(hash) - 1):],
+        ])
+    else:
+        return file_name
+
 
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = hash_path(transform_request['file-path'])
+    _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     # _chunks = transform_request['chunks']
@@ -95,17 +105,18 @@ def callback(channel, method, properties, body):
                                     status_code="start",
                                     info="Starting")
 
-        root_file = hash_path(_file_path.replace('/', ':'))
+        root_file = _file_path.replace('/', ':')
         if not os.path.isdir(posix_path):
             os.makedirs(posix_path)
 
-        output_path = os.path.join(posix_path, root_file+".parquet")
-        transform_single_file(_file_path, hash_path(output_path), servicex)
+        safe_output_file = hash_path(root_file+".parquet")
+        output_path = os.path.join(posix_path, safe_output_file)
+        transform_single_file(_file_path, output_path, servicex)
 
         tock = time.time()
 
         if object_store:
-            object_store.upload_file(_request_id, root_file, output_path)
+            object_store.upload_file(_request_id, safe_output_file, output_path)
             os.remove(output_path)
 
         servicex.post_status_update(file_id=_file_id,
