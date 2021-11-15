@@ -217,13 +217,6 @@ transactionally secure reprocessing
  Furthermore, there is no use of Minio user identities, so all files are saved
  in the same namespace with no quota enforcement.
 
-<!-- ### Kafka
- Kafka used to be an option for output. 
-
- <B>TODO:
-  * if abandoned, it should be removed everywhere. Currently search for "kafka" returns 257 results in 34 files.
- </B> -->
-
 ### Pre-Flight Check 
  Attempts to transform a sample file using the same Docker image as the 
  transformers. If this fails, no transformers will be launched. This validates
