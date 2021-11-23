@@ -32,6 +32,7 @@
 
 import datetime
 import json
+import logging
 import os
 import sys
 import time
@@ -63,6 +64,31 @@ parser.add_argument("--tree", dest='tree', action='store',
                     help='Tree from which columns will be inspected')
 
 
+# function to initialize logging
+def initialize_logging(request=None):
+    """
+    Get a logger and initialize it so that it outputs the correct format
+
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+
+    log = logging.getLogger()
+    if 'INSTANCE_NAME' in os.environ:
+        instance = os.environ['INSTANCE_NAME']
+    else:
+        instance = 'Unknown'
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} uproot_transformer {} ".format(instance, request) +
+                                  '%(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
+
+
 def validate_request(file_name):
     print("Validating file: " + file_name)
 
@@ -71,6 +97,7 @@ def validate_request(file_name):
             "max-event-size": 0
         })
     except Exception as eek:
+        logger.exception("Could not compile generated code: {}".format(eek))
         return False, "Could not compile generated code "+str(eek)
 
 
@@ -92,6 +119,7 @@ def callback(channel, method, properties, body):
     validation_request = json.loads(body)
 
     service_endpoint = validation_request[u'service-endpoint']
+    logger.info("Validation request received")
     post_status_update(service_endpoint,
                        "Validation Request received")
 
@@ -99,9 +127,11 @@ def callback(channel, method, properties, body):
     (valid, info) = validate_request(validation_request[u'file-path'])
 
     if valid:
+        logger.info("Request validated")
         post_status_update(service_endpoint,  "Request validated")
         post_transform_start(service_endpoint, info)
     else:
+        logger.error("Validation Request failed " + info)
         post_status_update(service_endpoint, "Validation Request failed "+info)
 
     print(valid, info)
@@ -118,7 +148,7 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
             _channel = rabbitmq.channel()
             _channel.queue_declare(queue='validation_requests')
 
-            print("Connected to RabbitMQ. Ready to start consuming requests")
+            logger.info("Connected to RabbitMQ. Ready to start consuming requests")
 
             _channel.basic_consume(queue='validation_requests',
                                    auto_ack=False,
@@ -129,20 +159,21 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
             rabbitmq = None
             retry_count += 1
             if retry_count < retries:
-                print("Failed to connect to RabbitMQ. Waiting before trying again")
+                logger.error("Failed to connect to RabbitMQ (attempt {}). ".format(retry_count) +
+                             "Waiting before trying again.")
                 time.sleep(retry_interval)
             else:
-                print("Failed to connect to RabbitMQ. Giving Up")
+                logger.error("Failed to connect to RabbitMQ. Giving Up")
                 raise eek
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-
+    logger  = initialize_logging()
     if args.path:
         # checks the file
         (valid, info) = validate_request(args.path)
-        print(valid, info)
+        logger.info(valid, info)
         sys.exit(0)
 
     init_rabbit_mq(args.rabbit_uri, retries=12, retry_interval=10)
