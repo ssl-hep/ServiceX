@@ -230,7 +230,8 @@ def transform_single_file(file_path, output_path, servicex=None):
         start_transform = time.time()
         awkward_array = generated_transformer.run_query(file_path)
         end_transform = time.time()
-        logger.info(f'generated_transformer.py in {round(end_transform - start_transform, 2)} sec')
+        logger.info('Ran generated_transformer.py in ' +
+                    f'{round(end_transform - start_transform, 2)} sec')
 
         start_serialization = time.time()
         try:
@@ -245,6 +246,8 @@ def transform_single_file(file_path, output_path, servicex=None):
             writer = pq.ParquetWriter(output_path, arrow.schema)
             writer.write_table(table=arrow)
             writer.close()
+            output_size = os.stat(output_path).st_size
+            logger.info("Wrote {} bytes after transforming {}".format(output_size, file_path))
 
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
