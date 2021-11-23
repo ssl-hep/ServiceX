@@ -35,6 +35,8 @@ from typing import NamedTuple
 
 import awkward as ak
 import psutil as psutil
+import uproot
+import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
@@ -44,11 +46,13 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
 from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
+from hashlib import sha1
+import os
 import pyarrow.parquet as pq
-import pandas as pd
 import pyarrow as pa
 
-
+# Needed until we use xrootd>=5.2.0 (see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22)
+uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 
 # How many bytes does an average awkward array cell take up. This is just
 # a rule of thumb to calculate chunksize
@@ -56,6 +60,8 @@ avg_cell_size = 42
 
 messaging = None
 object_store = None
+posix_path = None
+MAX_PATH_LEN = 255
 
 
 class TimeTuple(NamedTuple):
@@ -143,6 +149,24 @@ def get_process_info():
                      system=time_stats.system+time_stats.children_system,
                      iowait=time_stats.iowait)
 
+  
+def hash_path(file_name):
+    """
+    Make the path safe for object store or POSIX, by keeping the length
+    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
+    forty character hash.
+    :param file_name: Input filename
+    :return: Safe path string
+    """
+    if len(file_name) > MAX_PATH_LEN:
+        hash = sha1(file_name.encode('utf-8')).hexdigest()
+        return ''.join([
+            '_', hash,
+            file_name[-1 * (MAX_PATH_LEN - len(hash) - 1):],
+        ])
+    else:
+        return file_name
+
 
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
@@ -166,14 +190,18 @@ def callback(channel, method, properties, body):
                                     info="Starting")
 
         root_file = _file_path.replace('/', ':')
-        output_path = '/home/atlas/' + root_file
-        transform_single_file(_file_path, output_path+".parquet", servicex)
+        if not os.path.isdir(posix_path):
+            os.makedirs(posix_path)
+
+        safe_output_file = hash_path(root_file+".parquet")
+        output_path = os.path.join(posix_path, safe_output_file)
+        transform_single_file(_file_path, output_path, servicex)
 
         tock = time.time()
         total_time = round(tock - tick, 2)
         if object_store:
-            object_store.upload_file(_request_id, root_file+".parquet", output_path+".parquet")
-            os.remove(output_path+".parquet")
+            object_store.upload_file(_request_id, safe_output_file, output_path)
+            os.remove(output_path)
 
         servicex.post_status_update(file_id=_file_id,
                                     status_code="complete",
@@ -235,9 +263,9 @@ def transform_single_file(file_path, output_path, servicex=None):
 
         start_serialization = time.time()
         try:
-            arrow = ak.to_arrow_table(awkward_array)
+            arrow = ak.to_arrow_table(awkward_array, explode_records=True)
         except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None))
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=True)
         end_serialization = time.time()
         serialization_time = round(end_serialization - start_serialization, 2)
         logger.info(f'awkward Array -> Arrow in {serialization_time} sec')
@@ -285,11 +313,21 @@ if __name__ == "__main__":
             messaging = None
             object_store = None
     elif args.result_destination == 'kafka':
+
+    if args.result_destination == 'kafka':
         messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
         object_store = None
     elif args.result_destination == 'object-store':
         messaging = None
+        posix_path = "/home/atlas"
         object_store = ObjectStoreManager()
+    elif args.result_destination == 'volume':
+        messaging = None
+        object_store = None
+        posix_path = args.output_dir
+    elif args.output_dir:
+        messaging = None
+        object_store = None
 
     compile_code()
     startup_time = get_process_info()
