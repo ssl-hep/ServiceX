@@ -68,7 +68,7 @@ myCmd = """
                   <  /etc/grid-certs-ro/passphrase
                   """
 os.system(myCmd % args.voms)
-f = "/etc/grid-security/x509up"
+f = "/tmp/x509up"
 
 if not secret_name:
     sys.exit(0)
