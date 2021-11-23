@@ -103,8 +103,13 @@ data:
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
+    {{ if  .Values.minio.publicurl }}
+    MINIO_URL = '{{ .Values.minio.publicurl }}'
+    MINIO_TRANSFORMER = '{{ .Values.minio.publicurl }}'
+    {{ else }}
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
     MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
+    {{ end }}
     MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
     MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
 
