@@ -32,9 +32,10 @@ from rucio.common.exception import DataIdentifierNotFound
 
 
 class RucioAdapter:
-    def __init__(self, did_client, replica_client):
+    def __init__(self, did_client, replica_client, report_logical_files=False):
         self.did_client = did_client
         self.replica_client = replica_client
+        self.report_logical_files = report_logical_files
 
         # set logging to a null handler
         self.logger = logging.getLogger(__name__)
@@ -122,12 +123,17 @@ class RucioAdapter:
                 else:
                     mfile = d['metalink']['file']
                 for f in mfile:
+                    # Path is either a list of replicas or a single logical name
+                    path = self.get_paths(f['url']) \
+                        if not self.report_logical_files else \
+                        [f['identity']]
+
                     g_files.append(
                         {
                             'adler32': self.get_adler(f['hash']),
                             'file_size': int(f['size'], 10),
                             'file_events': 0,
-                            'file_path': self.get_paths(f['url'])
+                            'file_path': path
                         }
                     )
             yield g_files

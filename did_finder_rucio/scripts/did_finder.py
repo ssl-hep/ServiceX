@@ -43,6 +43,7 @@ def run_rucio_finder():
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("--report-logical-files", action="store_true")
     add_did_finder_cnd_arguments(parser)
 
     args = parser.parse_args()
@@ -52,10 +53,13 @@ def run_rucio_finder():
     logger.info("ServiceX DID Finder starting up. "
                 f"Prefix: {prefix}")
 
+    if args.report_logical_files:
+        logger.info("---- DID Finder Only Returning Logical Names, not replicas -----")
+
     # Initialize the finder
     did_client = DIDClient()
     replica_client = ReplicaClient()
-    rucio_adapter = RucioAdapter(did_client, replica_client)
+    rucio_adapter = RucioAdapter(did_client, replica_client, args.report_logical_files)
 
     # Run the DID Finder
     try:
