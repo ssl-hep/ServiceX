@@ -1,5 +1,5 @@
 {{- if .Values.app.ingress.enabled -}}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -23,11 +23,17 @@ spec:
     http:
       paths:
       - path: /servicex/internal
+        pathType: Prefix
         backend:
-          serviceName: {{ .Values.app.ingress.defaultBackend }}
-          servicePort: 80
+          service:
+            name: {{ .Values.app.ingress.defaultBackend }}
+            port: 
+              number: 80
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: {{ .Release.Name }}-servicex-app
-          servicePort: 8000
+          service:
+            name: {{ .Release.Name }}-servicex-app
+            port: 
+              number: 8000
 {{- end }}
