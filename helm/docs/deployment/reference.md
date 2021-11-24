@@ -40,6 +40,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.rucio.servicex_latitude`        | Latitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | 41.78 |
 | `didFinder.rucio.servicex_longitude`        | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.        | -87.7 |
 | `didFinder.rucio.cachePrefix`        | Prefix string to stick in front of file paths. Useful for XCache | |
+| `didFinder.rucio.reportLogicalFiles` | For CMS xCache sites, we don't want the replicas, only logical names. Set to true to get this behavior | false |
 | `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
 | `didFinder.CERNOpenData.enabled`     | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
