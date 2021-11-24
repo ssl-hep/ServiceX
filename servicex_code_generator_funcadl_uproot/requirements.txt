@@ -2,6 +2,6 @@
 Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-WTF==0.14.3
-func-adl==1.0.0a18
-func-adl-uproot==1.4
-qastle==0.11.0
+func-adl==2.3
+func-adl-uproot==1.8.0
+qastle==0.15.0
