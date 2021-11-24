@@ -14,7 +14,8 @@ while true; do
 done
 
 if [ -z $CACHE_PREFIX ]; then export PREFIX_ARG=""; else export PREFIX_ARG="--prefix $CACHE_PREFIX"; fi
-
 export PYTHONPATH=./src
-python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $PREFIX_ARG
+
+# Assume $REPORT_LOGICAL_FILES is set to --report-logical-files to activate
+python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $PREFIX_ARG $REPORT_LOGICAL_FILES
 
