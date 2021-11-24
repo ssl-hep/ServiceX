@@ -149,7 +149,7 @@ def get_process_info():
                      system=time_stats.system+time_stats.children_system,
                      iowait=time_stats.iowait)
 
-  
+
 def hash_path(file_name):
     """
     Make the path safe for object store or POSIX, by keeping the length
@@ -310,10 +310,8 @@ if __name__ == "__main__":
 
     logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
     if args.output_dir:
-            messaging = None
-            object_store = None
-    elif args.result_destination == 'kafka':
-
+        messaging = None
+        object_store = None
     if args.result_destination == 'kafka':
         messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
         object_store = None
