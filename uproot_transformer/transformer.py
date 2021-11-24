@@ -35,7 +35,6 @@ import time
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
-from servicex.transformer.kafka_messaging import KafkaMessaging
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
@@ -49,10 +48,6 @@ import pyarrow as pa
 # Needed until we use xrootd>=5.2.0 (see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22)
 uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 
-# How many bytes does an average awkward array cell take up. This is just
-# a rule of thumb to calculate chunksize
-avg_cell_size = 42
-
 messaging = None
 object_store = None
 posix_path = None
@@ -60,9 +55,8 @@ MAX_PATH_LEN = 255
 
 
 class ArrowIterator:
-    def __init__(self, arrow, chunk_size, file_path):
+    def __init__(self, arrow, file_path):
         self.arrow = arrow
-        self.chunk_size = chunk_size
         self.file_path = file_path
         self.attr_name_list = ["not available"]
 
@@ -95,7 +89,6 @@ def callback(channel, method, properties, body):
     _file_path = transform_request['file-path']
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    # _chunks = transform_request['chunks']
     servicex = ServiceXAdapter(_server_endpoint)
 
     tick = time.time()
@@ -186,8 +179,7 @@ def transform_single_file(file_path, output_path, servicex=None):
                                    object_store=None,
                                    messaging=messaging)
 
-        #Todo implement chunk size parameter
-        transformer = ArrowIterator(arrow, chunk_size=1000, file_path=file_path)
+        transformer = ArrowIterator(arrow, file_path=file_path)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
 
@@ -202,14 +194,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("-----", sys.path)
-    kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     print(args.result_destination, args.output_dir)
 
-    if args.result_destination == 'kafka':
-        messaging = KafkaMessaging(kafka_brokers, args.max_message_size)
-        object_store = None
-    elif args.result_destination == 'object-store':
+    if args.result_destination == 'object-store':
         messaging = None
         posix_path = "/home/atlas"
         object_store = ObjectStoreManager()

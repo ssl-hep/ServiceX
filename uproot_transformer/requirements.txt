@@ -1,9 +1,7 @@
 awkward==1.5.0
 codecov==2.0.17
-confluent-kafka==1.4.0
 coverage==4.5.2
 flake8==3.5.0
-kafka-python==2.0.1
 lz4==2.2.1
 minio==5.0.10
 numpy==1.21.2
