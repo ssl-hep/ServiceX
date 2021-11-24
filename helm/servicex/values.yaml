@@ -75,6 +75,7 @@ didFinder:
     servicex_latitude: 41.78
     servicex_longitude: -87.7
     cachePrefix:
+    reportLogicalFiles: false
 
   CERNOpenData:
     enabled: true

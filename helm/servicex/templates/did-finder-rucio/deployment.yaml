@@ -39,6 +39,10 @@ spec:
           - name: CACHE_PREFIX
             value: "{{ .Values.didFinder.rucio.cachePrefix }}"
     {{- end }}
+    {{- if .Values.didFinder.rucio.reportLogicalFiles }}
+          - name: REPORT_LOGICAL_FILES
+            value: "--report-logical-files"
+    {{- end }}
           - name: RUCIO_LATITUDE
             value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE
