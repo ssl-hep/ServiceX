@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-import sys
 import logging
 import os
 import time
@@ -305,7 +304,6 @@ if __name__ == "__main__":
 
     logger = initialize_logging(args.request_id)
 
-    logger.info("-----", sys.path)
     kafka_brokers = TransformerArgumentParser.extract_kafka_brokers(args.brokerlist)
 
     logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
