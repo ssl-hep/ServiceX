@@ -103,9 +103,9 @@ data:
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
-    {{ if  .Values.minio.publicurl }}
-    MINIO_URL = '{{ .Values.minio.publicurl }}'
-    MINIO_TRANSFORMER = '{{ .Values.minio.publicurl }}'
+    {{ if not .Values.objectStore.internal }}
+    MINIO_URL = '{{ .Values.objectStore.publicURL }}'
+    MINIO_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
     {{ else }}
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
     MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'

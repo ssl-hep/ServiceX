@@ -10,6 +10,7 @@ secrets:
 # want to have the option of delivering results as parquet files
 objectStore:
   enabled: true
+  internal: false
   publicURL:
 
 # Enable deployment of a full postgres sql database. This is advisable for
@@ -160,8 +161,6 @@ minio:
     enabled: false
   accessKey: miniouser
   secretKey: leftfoot1
-  # optional setting pointing to the location of the minio instance
-  uri: https://minio.uri
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false
