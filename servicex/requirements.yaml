@@ -5,7 +5,7 @@ dependencies:
   - name: minio
     version: ">=5.0.32"
     repository: https://helm.min.io/
-    condition: objectStore.enabled, objectStore.internal
+    condition: objectStore.internal, objectStore.enabled
   - name: postgresql
     version: 8.3.*
     repository: https://charts.bitnami.com/bitnami/
