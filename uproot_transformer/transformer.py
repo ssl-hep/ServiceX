@@ -261,10 +261,11 @@ def transform_single_file(file_path, output_path, servicex=None):
                     f'{round(end_transform - start_transform, 2)} sec')
 
         start_serialization = time.time()
+        explode_records = bool(awkward_array.fields)
         try:
-            arrow = ak.to_arrow_table(awkward_array, explode_records=True)
+            arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
         except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=True)
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=explode_records)
         end_serialization = time.time()
         serialization_time = round(end_serialization - start_serialization, 2)
         logger.info(f'awkward Array -> Arrow in {serialization_time} sec')
