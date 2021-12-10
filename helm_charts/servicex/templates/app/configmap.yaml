@@ -106,9 +106,9 @@ data:
       {{ if not .Values.objectStore.internal }}
     # using external minio 
     MINIO_URL = '{{ .Values.objectStore.publicURL }}'
-    MINIO_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
+    MINIO_URL_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL }}'
-    MINIO_SECURED = {{ ternary "True" "False" (contains "https" .Values.objectStore.publicURL) }}
+    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.usetls }}
       {{ else }}
     # using internal minio 
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
