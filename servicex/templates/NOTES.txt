@@ -48,6 +48,12 @@ and connect with this JDBC Connection String:
 {{ if .Values.objectStore.enabled }}
   {{ if not .Values.objectStore.internal }}
 Using an external minio object store at {{ .Values.objectStore.publicURL }}
+    {{ if .Values.objectStore.usetls }}
+with a https connection. 
+    {{ else }}
+with a http connection.
+    {{ end }}
+
 
   {{ else if .Values.minio.ingress.enabled }}
 {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
