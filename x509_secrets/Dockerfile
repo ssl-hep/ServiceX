@@ -28,7 +28,7 @@ COPY . .
 # build  
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
-ENV X509_USER_PROXY /etc/grid-security/x509up
+ENV X509_USER_PROXY /tmp/x509up
 
 CMD sh -c "python3 x509_updater.py --voms $VOMS"
 
