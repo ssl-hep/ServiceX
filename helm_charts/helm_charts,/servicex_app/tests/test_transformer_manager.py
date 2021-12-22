@@ -289,6 +289,50 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
             assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
 
+    def test_launch_transformer_jobs_with_secure_object_store(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, 'load_kube_config')
+        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
+                            return_value=mock_autoscaling)
+
+        transformer = TransformerManager('external-kubernetes')
+        my_config = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
+            'MINIO_SECURED': 'True',
+            'TRANSFORMER_CPU_LIMIT': 1,
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+        }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=my_config, transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store',
+                result_format='parquet', x509_secret='x509',
+                generated_code_cm=None)
+            called_job = mock_kubernetes.mock_calls[1][2]['body']
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, '--result-destination') == 'object-store'
+            assert _arg_value(args, '--result-format') == 'parquet'
+
+            env = container.env
+            assert _env_value(env, 'MINIO_URL') == 'rolling-snail-minio:9000'
+            assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
+            assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
+            assert _env_value(env, 'MINIO_SECURED') == 'True'
+
     def test_launch_transformer_jobs_with_provided_claim(self, mocker):
         import kubernetes
 

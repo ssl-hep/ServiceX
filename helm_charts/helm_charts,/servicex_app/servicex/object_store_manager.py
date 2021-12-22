@@ -29,10 +29,10 @@
 
 class ObjectStoreManager:
 
-    def __init__(self, url, username, password):
+    def __init__(self, url, username, password, use_https=False):
         from minio import Minio
         self.minio_client = Minio(endpoint=url, access_key=username,
-                                  secret_key=password, secure=False)
+                                  secret_key=password, secure=use_https)
 
     def create_bucket(self, bucket_name):
         self.minio_client.make_bucket(bucket_name)

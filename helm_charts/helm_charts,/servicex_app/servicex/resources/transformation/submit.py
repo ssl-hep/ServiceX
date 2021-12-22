@@ -99,7 +99,6 @@ class SubmitTransformationRequest(ServiceXResource):
         try:
             args = self.parser.parse_args()
             config = current_app.config
-            print("object store ", self.object_store)
 
             request_id = str(uuid.uuid4())
             image = args["image"]
@@ -109,7 +108,6 @@ class SubmitTransformationRequest(ServiceXResource):
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
-
             if did:
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
@@ -123,6 +121,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     args['result-destination'] == \
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
+                # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
             if args['result-destination'] == TransformRequest.KAFKA_DEST:
@@ -228,7 +227,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
                 db.session.commit()
 
-            self.logger.info(f"Transoformation request submitted with id: {request_id}")
+            self.logger.info(f"Transformation request submitted with id: {request_id}")
             return {
                 "request_id": str(request_id)
             }
