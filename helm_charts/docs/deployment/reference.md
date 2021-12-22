@@ -65,6 +65,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `noCerts`                            | Set to true to disable x509 certs and only use open data | false                                            |
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
+| `objectstore.internal`               | Deploy a captive minio instance with this chart? | true      | 
 | `objectstore.publicURL`              | What URL should the client use to download files? If set, this is given whether ingress is enabled or not  | nil |      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
 | `minio.accessKey`                    | Access key to log into minio                     | miniouser |
