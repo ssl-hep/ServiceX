@@ -6,11 +6,12 @@
 # The chart will mount environment variables from here into the app.
 secrets:
 
-# Enable deployment of Minio Object Store with this chart - use this if you
-# want to have the option of delivering results as parquet files
 objectStore:
+  # Enable use of ObjectStore for results.
   enabled: true
-  internal: false
+
+  # Enable deployment of Minio Object Store with this chart
+  internal: true
   publicURL:
 
 # Enable deployment of a full postgres sql database. This is advisable for
