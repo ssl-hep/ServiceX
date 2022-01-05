@@ -32,25 +32,42 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarToggle">
-        <div class="navbar-nav mr-auto">
-          <a class="nav-item nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
+
+        <!-- Navbar Left Side -->
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
+          </li>
         {% if not config['ENABLE_AUTH'] %}
-          <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
+          <li class="nav-item">
+            <a href="{{ url_for('global-dashboard') }}" class="nav-link">Dashboard</a>
+          </li>
         {% endif %}
-        </div>
+        </ul>
+
+      {% if config["ENABLE_AUTH"] %}
         <!-- Navbar Right Side -->
-        {% if config['ENABLE_AUTH'] %}
-          <div class="navbar-nav">
-          {% if not session['is_authenticated'] %}
-            <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>
-          {% else %}
-            <a href=" {{ url_for('user-dashboard') }}" class="nav-item nav-link">{{ session['name'] }}</a>
-            <a href="{{ url_for('sign_out') }}" class="nav-item nav-link">
-              <i class="fa fa-sign-out" aria-hidden="true"></i>
+        <ul class="navbar-nav">
+        {% if not session['is_authenticated'] %}
+          <li class="nav-item">
+            <a href="{{ url_for('sign_in') }}" class="nav-link">Sign In</a>
+          </li>
+        {% else %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{ session["name"] }}
             </a>
-          {% endif %}
-          </div>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a href="{{ url_for('user-dashboard') }}" class="dropdown-item">Dashboard</a>
+              <a href="{{ url_for('profile') }}" class="dropdown-item">Profile</a>
+              <div class="dropdown-divider"></div>
+              <a href="{{ url_for('sign_out') }}" class="dropdown-item">Sign out</a>
+            </div>
+          </li>
         {% endif %}
+        </ul>
+      {% endif %}
+
       </div>
     </div>
   </nav>
