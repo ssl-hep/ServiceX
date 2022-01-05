@@ -162,6 +162,10 @@ minio:
     enabled: false
   accessKey: miniouser
   secretKey: leftfoot1
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 60
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false
