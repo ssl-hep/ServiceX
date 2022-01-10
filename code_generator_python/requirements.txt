@@ -1,0 +1,4 @@
+# Requirements needed to run the app.
+Flask==1.1.2
+Flask-RESTful==0.3.8
+Flask-WTF==0.14.3
