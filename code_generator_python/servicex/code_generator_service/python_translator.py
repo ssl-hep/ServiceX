@@ -29,8 +29,6 @@ import os
 import zipfile
 from collections import namedtuple
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
-from pathlib import Path
 import base64
 
 GeneratedFileResult = namedtuple('GeneratedFileResult', 'hash output_dir')
@@ -46,7 +44,7 @@ class GenerateCodeException(BaseException):
 class PythonTranslator:
     def __init__(self):
         pass
-    
+
     def zipdir(self, path: str, zip_handle: zipfile.ZipFile) -> None:
         """Given a `path` to a directory, zip up its contents into a zip file.
         Arguments:
@@ -75,7 +73,7 @@ class PythonTranslator:
 
         os.system("ls -lht " + query_file_path)
         return GeneratedFileResult(hash, query_file_path)
-    
+
     def translate_text_python_to_zip(self, code: str) -> bytes:
         """Translate a text python into a zip file as a memory stream
 
