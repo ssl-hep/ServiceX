@@ -92,6 +92,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 4,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,
@@ -105,8 +109,8 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == cfg['TRANSFORMER_MIN_REPLICAS']
@@ -121,8 +125,7 @@ class TestTransformerManager(ResourceTestBase):
 
             assert args[0].startswith('/servicex/proxy-exporter.sh & sleep 5 && ')
             assert _arg_value(args, '--rabbit-uri') == 'ampq://test.com'
-            assert _arg_value(args, '--chunks') == '5000'
-            assert _arg_value(args, '--result-destination') == 'kafka'
+            assert _arg_value(args, '--result-destination') == 'object-store'
 
             limits = container.resources.limits
             assert "cpu" in limits
@@ -152,6 +155,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
@@ -165,8 +172,8 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == 17
@@ -183,6 +190,10 @@ class TestTransformerManager(ResourceTestBase):
                             return_value=mock_autoscaling)
 
         additional_config = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo',
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
@@ -198,8 +209,8 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret='x509',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
@@ -221,6 +232,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
@@ -233,8 +248,8 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm="my-config-map")
             called_job = mock_kubernetes.mock_calls[1][2]['body']
@@ -274,7 +289,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None)
@@ -356,7 +371,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None)
@@ -398,7 +413,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None)
@@ -417,42 +432,6 @@ class TestTransformerManager(ResourceTestBase):
                                           container.volume_mounts))
             assert posix_vol_mount.mount_path == '/posix_volume'
 
-    def test_launch_transformer_jobs_with_kafka_broker(self, mocker):
-        import kubernetes
-
-        mocker.patch.object(kubernetes.config, 'load_kube_config')
-        mock_kubernetes = mocker.patch.object(kubernetes.client, 'AppsV1Api')
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(kubernetes.client, 'AutoscalingV1Api',
-                            return_value=mock_autoscaling)
-
-        transformer = TransformerManager('external-kubernetes')
-
-        cfg = {
-            'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
-        }
-
-        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
-
-        client = self._test_client(
-            extra_config=cfg, transformation_manager=transformer
-        )
-
-        with client.application.app_context():
-            transformer.launch_transformer_jobs(
-                image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow',
-                kafka_broker='kafka.servicex.org', x509_secret='x509',
-                generated_code_cm=None)
-            called_job = mock_kubernetes.mock_calls[1][2]['body']
-            container = called_job.spec.template.spec.containers[0]
-            args = container.args
-            assert _arg_value(args, '--result-destination') == 'kafka'
-            assert _arg_value(args, '--brokerlist') == 'kafka.servicex.org'
-
     def test_launch_transformer_jobs_no_certs(self, mocker):
         import kubernetes
 
@@ -464,6 +443,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 4,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,
@@ -478,8 +461,8 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
-                result_destination='kafka', result_format='arrow', x509_secret=None,
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                result_destination='object-store', result_format='arrow', x509_secret=None,
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert len(called_deployment.spec.template.spec.containers) == 1

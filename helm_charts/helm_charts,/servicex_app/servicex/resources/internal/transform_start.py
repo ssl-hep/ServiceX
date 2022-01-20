@@ -44,7 +44,6 @@ class TransformStart(ServiceXResource):
         Starts a transformation request, deploys transformers, and updates record.
         :param request_id: UUID of transformation request.
         """
-        from servicex.kafka_topic_manager import KafkaTopicManager
         submitted_request = TransformRequest.lookup(request_id)
 
         if submitted_request.status == "Canceled":
@@ -56,15 +55,6 @@ class TransformStart(ServiceXResource):
 
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
 
-            if submitted_request.result_destination == 'kafka':
-                # Setup the kafka topic with the correct number of partitions and max
-                # message size
-                max_message_size = 1920000
-                kafka = KafkaTopicManager(submitted_request.kafka_broker)
-                kafka.create_topic(request_id,
-                                   max_message_size=max_message_size,
-                                   num_partitions=100)
-
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
             x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
@@ -73,10 +63,9 @@ class TransformStart(ServiceXResource):
             self.transformer_manager.launch_transformer_jobs(
                 image=submitted_request.image, request_id=request_id,
                 workers=submitted_request.workers,
-                chunk_size=submitted_request.chunk_size, rabbitmq_uri=rabbitmq_uri,
+                rabbitmq_uri=rabbitmq_uri,
                 namespace=namespace,
                 x509_secret=x509_secret,
                 generated_code_cm=generated_code_cm,
                 result_destination=submitted_request.result_destination,
-                result_format=submitted_request.result_format,
-                kafka_broker=submitted_request.kafka_broker)
+                result_format=submitted_request.result_format)

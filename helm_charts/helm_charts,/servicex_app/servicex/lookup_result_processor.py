@@ -56,18 +56,10 @@ class LookupResultProcessor:
             'columns': submitted_request.columns,
             'file-path': dataset_file.file_path,
             'tree-name': submitted_request.tree_name,
-            'chunk-size': submitted_request.chunk_size,
-
             "service-endpoint": self.advertised_endpoint +
             "servicex/internal/transformation/" + request_id,
-
             "result-destination": submitted_request.result_destination
         }
-
-        if submitted_request.result_destination == 'kafka':
-            transform_request.update(
-                {'kafka-broker': submitted_request.kafka_broker}
-            )
 
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                             routing_key=request_id,

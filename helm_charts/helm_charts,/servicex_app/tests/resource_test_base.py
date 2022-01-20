@@ -115,13 +115,10 @@ class ResourceTestBase:
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.tree_name = 'Events'
-        transform_request.chunk_size = 1000
         transform_request.workers = 42
         transform_request.did = '123-456-789'
         transform_request.image = 'ssl-hep/foo:latest'
-        transform_request.result_destination = 'kafka'
         transform_request.result_format = 'arrow'
-        transform_request.kafka_broker = 'http://ssl-hep.org.kafka:12345'
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
         transform_request.status = "Submitted"

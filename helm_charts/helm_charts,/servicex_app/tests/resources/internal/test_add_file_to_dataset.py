@@ -66,7 +66,6 @@ class TestAddFileToDataset(ResourceTestBase):
 
         root_file_transform_request = self._generate_transform_request()
         root_file_transform_request.result_destination = 'root'
-        root_file_transform_request.kafka_broker = None
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
