@@ -42,9 +42,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = {
             'did': 'rucio://123-45-678',
             'columns': "e.e, e.p",
-            'result-destination': 'kafka',
-            'kafka': {'broker': 'ssl.hep.kafka:12332'},
-            'chunk-size': 500,
+            'result-destination': 'object-store',
             'workers': 10
         }
         request.update(kwargs)
@@ -122,10 +120,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.title is None
             assert saved_obj.columns == "e.e, e.p"
             assert saved_obj.image == current_app.config["TRANSFORMER_DEFAULT_IMAGE"]
-            assert saved_obj.chunk_size == 500
             assert saved_obj.workers == 10
-            assert saved_obj.result_destination == 'kafka'
-            assert saved_obj.kafka_broker == "ssl.hep.kafka:12332"
+            assert saved_obj.result_destination == 'object-store'
             assert saved_obj.app_version == "3.14.15"
             assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
 
@@ -206,7 +202,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.columns is None
             assert saved_obj.selection == 'test-string'
             assert saved_obj.image == 'ssl-hep/func_adl:latest'
-            assert saved_obj.chunk_size is None
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'root-file'

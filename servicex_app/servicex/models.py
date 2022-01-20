@@ -133,7 +133,6 @@ class UserModel(db.Model):
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
     OBJECT_STORE_DEST = 'object-store'
-    KAFKA_DEST = 'kafka'
     VOLUME_DEST = 'volume'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -146,11 +145,9 @@ class TransformRequest(db.Model):
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     image = db.Column(db.String(128), nullable=True)
-    chunk_size = db.Column(db.Integer, nullable=True)
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
-    kafka_broker = db.Column(db.String(128), nullable=True)
     workflow_name = db.Column(db.String(40), nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
@@ -177,11 +174,9 @@ class TransformRequest(db.Model):
             'selection': self.selection,
             'tree-name': self.tree_name,
             'image': self.image,
-            'chunk-size': self.chunk_size,
             'workers': self.workers,
             'result-destination': self.result_destination,
             'result-format': self.result_format,
-            'kafka-broker': self.kafka_broker,
             'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status,

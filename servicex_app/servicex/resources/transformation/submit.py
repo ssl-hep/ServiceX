@@ -78,20 +78,14 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('image',
                                 default=current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
         cls.parser.add_argument('tree-name')
-        cls.parser.add_argument('chunk-size', type=int)
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
-            TransformRequest.KAFKA_DEST,
             TransformRequest.OBJECT_STORE_DEST,
             TransformRequest.VOLUME_DEST
         ])
         cls.parser.add_argument(
             'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
         )
-
-        cls.parser.add_argument('kafka', type=dict)
-        kafka_parser = reqparse.RequestParser()
-        kafka_parser.add_argument('broker', location=('kafka'))
         return cls
 
     @auth_required
@@ -124,11 +118,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            if args['result-destination'] == TransformRequest.KAFKA_DEST:
-                broker = args['kafka']['broker']
-            else:
-                broker = None
-
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
                 if not self.docker_repo_adapter.check_image_exists(image):
                     msg = f"Requested transformer docker image doesn't exist: {image}"
@@ -146,10 +135,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 selection=args['selection'],
                 tree_name=args['tree-name'],
                 image=image,
-                chunk_size=args['chunk-size'],
                 result_destination=args['result-destination'],
                 result_format=args['result-format'],
-                kafka_broker=broker,
                 workers=args['workers'],
                 workflow_name=_workflow_name(args),
                 status='Submitted',

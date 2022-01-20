@@ -54,8 +54,8 @@ class TransformerManager:
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
     @staticmethod
-    def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
-                          result_destination, result_format, x509_secret, kafka_broker,
+    def create_job_object(request_id, image, rabbitmq_uri, workers,
+                          result_destination, result_format, x509_secret,
                           generated_code_cm, namespace):
         volume_mounts = []
         volumes = []
@@ -132,7 +132,6 @@ class TransformerManager:
                           "python /servicex/transformer.py " + \
                           " --request-id " + request_id + \
                           " --rabbit-uri " + rabbitmq_uri + \
-                          " --chunks " + str(chunk_size) + \
                           " --result-destination " + result_destination + \
                           " --result-format " + result_format
 
@@ -140,9 +139,6 @@ class TransformerManager:
             python_args[0] += " --output-dir " + os.path.join(
                 TransformerManager.POSIX_VOLUME_MOUNT,
                 current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'])
-
-        if kafka_broker:
-            python_args[0] += " --brokerlist "+kafka_broker
 
         resources = client.V1ResourceRequirements(
             limits={"cpu": current_app.config['TRANSFORMER_CPU_LIMIT']}
@@ -277,14 +273,14 @@ class TransformerManager:
         except ApiException as e:
             logger.exception(f"Exception during HPA Creation: {e}")
 
-    def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
+    def launch_transformer_jobs(self, image, request_id, workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
-                                result_destination, result_format, kafka_broker=None,
+                                result_destination, result_format
                                 ):
         api_v1 = client.AppsV1Api()
-        job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
+        job = self.create_job_object(request_id, image, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm, namespace)
+                                     x509_secret, generated_code_cm, namespace)
 
         self._create_job(api_v1, job, namespace)
 

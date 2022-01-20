@@ -41,12 +41,6 @@ class TestTransformationStart(ResourceTestBase):
             'lookup',
             return_value=mock_request)
 
-        from servicex.kafka_topic_manager import KafkaTopicManager
-        mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
-        mock_kafka_constructor = mocker.patch(
-            'servicex.kafka_topic_manager.KafkaTopicManager',
-            return_value=mock_kafka_topic_manager)
-
         cfg = {
             'TRANSFORMER_MANAGER_ENABLED': True,
             'TRANSFORMER_X509_SECRET': 'my-x509-secret'
@@ -68,20 +62,12 @@ class TestTransformationStart(ResourceTestBase):
             .assert_called_with(image='ssl-hep/foo:latest',
                                 request_id='1234',
                                 workers=42,
-                                chunk_size=1000,
                                 generated_code_cm=None,
                                 rabbitmq_uri='amqp://trans.rabbit',
                                 namespace='my-ws',
-                                result_destination='kafka',
+                                result_destination=None,
                                 result_format='arrow',
-                                x509_secret='my-x509-secret',
-                                kafka_broker='http://ssl-hep.org.kafka:12345')
-
-        mock_kafka_constructor.assert_called_with('http://ssl-hep.org.kafka:12345')
-
-        mock_kafka_topic_manager.create_topic.assert_called_with('1234',
-                                                                 max_message_size=1920000,
-                                                                 num_partitions=100)
+                                x509_secret='my-x509-secret')
         mock_request.save_to_db.assert_called()
 
     def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):
@@ -89,8 +75,6 @@ class TestTransformationStart(ResourceTestBase):
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-        from servicex.kafka_topic_manager import KafkaTopicManager
-        mock_kafka_topic_manager = mocker.MagicMock(KafkaTopicManager)
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
 
@@ -113,7 +97,6 @@ class TestTransformationStart(ResourceTestBase):
 
         mock_transformer_manager.\
             launch_transformer_jobs.assert_not_called()
-        mock_kafka_topic_manager.assert_not_called()
 
         mock_request.save_to_db.assert_called()
 

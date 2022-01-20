@@ -73,40 +73,9 @@ class TestLookupResutProcessor(ResourceTestBase):
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "/foo/bar.root",
                  "tree-name": "Events",
-                 "chunk-size": 1000,
                  "service-endpoint":
                      "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
                  'result-destination': 'object-store'
-                 }))
-
-    def test_add_file_to_dataset_kafka(self, mocker, mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          "http://cern.analysis.ch:5000/")
-        dataset_file = DatasetFile(request_id="BR549",
-                                   file_path="/foo/bar.root",
-                                   adler32='12345',
-                                   file_size=1024,
-                                   file_events=500)
-
-        dataset_file.id = 42
-        dataset_file.save_to_db = mocker.Mock()
-        processor.add_file_to_dataset(self._generate_transform_request(), dataset_file)
-
-        dataset_file.save_to_db.assert_called()
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='transformation_requests',
-            routing_key='BR549',
-            body=json.dumps(
-                {"request-id": 'BR549',
-                 "file-id": 42,
-                 "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "/foo/bar.root",
-                 "tree-name": "Events",
-                 "chunk-size": 1000,
-                 "service-endpoint":
-                     "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-                 'result-destination': 'kafka',
-                 'kafka-broker': 'http://ssl-hep.org.kafka:12345'
                  }))
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):

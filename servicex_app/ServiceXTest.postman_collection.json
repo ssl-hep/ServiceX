@@ -266,7 +266,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"file-list\":[\n\t\t\t\"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/3d/89/DAOD_STDM3.05630052._000005.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/91/60/DAOD_STDM3.05630052._000006.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/fb/85/DAOD_STDM3.05630052._000007.pool.root.1\"\n\t\t],\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:v0.2\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+							"raw": "{\n\t\"file-list\":[\n\t\t\t\"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/3d/89/DAOD_STDM3.05630052._000005.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/91/60/DAOD_STDM3.05630052._000006.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/fb/85/DAOD_STDM3.05630052._000007.pool.root.1\"\n\t\t],\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:v0.2\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 1\n}\t"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation",
@@ -313,7 +313,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\"\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\"\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 1\n}\t"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation",
@@ -360,7 +360,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"did\": \"user.kchoi:user.kchoi.NtupleForServiceX\",\n\t\"tree-name\": \"JET_CategoryReduction_JET_Flavor_Composition__1down\",\n\t\"columns\": \"MUON_MS__1down;2\",\n\t\"image\": \"sslhep/servicex-transformer:nano-aod\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 1\n}\t"
+							"raw": "{\n\t\"did\": \"user.kchoi:user.kchoi.NtupleForServiceX\",\n\t\"tree-name\": \"JET_CategoryReduction_JET_Flavor_Composition__1down\",\n\t\"columns\": \"MUON_MS__1down;2\",\n\t\"image\": \"sslhep/servicex-transformer:nano-aod\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"workers\": 1\n}\t"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation",
@@ -407,7 +407,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"chunk-size\": 7000,\n\t\"workers\": 100\n}\t"
+							"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 100\n}\t"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation",
@@ -438,7 +438,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"workers\": 100\n}"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation/:request_id",
@@ -499,7 +499,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"messaging-backend\": \"kafka\",\n\t\"kafka-broker\": \"servicex-kafka-1.slateci.net:19092\",\n\t\"chunk-size\": 9000,\n\t\"workers\": 100\n}"
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"workers\": 100\n}"
 						},
 						"url": {
 							"raw": "{{host}}/servicex/transformation",

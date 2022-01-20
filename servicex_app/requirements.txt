@@ -8,7 +8,6 @@ flask-jwt-extended>=3.0,<4.0
 passlib
 flask-sqlalchemy
 Flask-Migrate
-confluent_kafka
 kubernetes
 minio
 psycopg2
