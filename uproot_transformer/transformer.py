@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-import sys
 import logging
 import os
 import time
@@ -251,10 +250,11 @@ def transform_single_file(file_path, output_path, servicex=None):
                     f'{round(end_transform - start_transform, 2)} sec')
 
         start_serialization = time.time()
+        explode_records = bool(awkward_array.fields)
         try:
-            arrow = ak.to_arrow_table(awkward_array, explode_records=True)
+            arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
         except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=True)
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=explode_records)
         end_serialization = time.time()
         serialization_time = round(end_serialization - start_serialization, 2)
         logger.info(f'awkward Array -> Arrow in {serialization_time} sec')
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         object_store = None
     if args.result_destination == 'object-store':
         messaging = None
-        posix_path = "/home/atlas"
+        posix_path = "/home/output"
         object_store = ObjectStoreManager()
     elif args.result_destination == 'volume':
         messaging = None
