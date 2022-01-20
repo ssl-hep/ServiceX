@@ -332,7 +332,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
-                chunk_size=5000, rabbitmq_uri='ampq://test.com', namespace='my-ns',
+                rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None)
