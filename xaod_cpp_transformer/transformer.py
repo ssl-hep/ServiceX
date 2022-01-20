@@ -46,10 +46,6 @@ import psutil
 # from typing import NamedTuple
 from collections import namedtuple
 
-
-# How many bytes does an average awkward array cell take up. This is just
-# a rule of thumb to calculate chunksize
-avg_cell_size = 42
 MAX_RETRIES = 3
 
 messaging = None
@@ -95,7 +91,8 @@ def parse_output_logs(logfile):
         matches = events_processed_re.finditer(buf)
         for m in matches:
             events_processed = int(m.group(1))
-        logger.info("{} events processed out of {} total events".format(events_processed, total_events))
+        logger.info("{} events processed out of {} total events".format(
+            events_processed, total_events))
     return total_events, events_processed
 
 
@@ -155,10 +152,8 @@ def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_path = transform_request['file-path']
-    # .encode('ascii', 'ignore')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    _chunks = transform_request['chunk-size']
     servicex = ServiceXAdapter(_server_endpoint)
 
     servicex.post_status_update(file_id=_file_id,
@@ -172,14 +167,14 @@ def callback(channel, method, properties, body):
     total_events = 0
     output_size = 0
     total_time = 0
-    start_process_times = get_process_info()
+    start_process_info = get_process_info()
     while not file_done:
         try:
             # Do the transform
             root_file = _file_path.replace('/', ':')
             output_path = '/home/atlas/' + root_file
             logger.info("Processing {}, file id: {}".format(root_file, _file_id))
-            (total_events, output_size) = transform_single_file(_file_path, output_path, _chunks, servicex)
+            (total_events, output_size) = transform_single_file(_file_path, output_path, servicex)
 
             tock = time.time()
             total_time = round(tock - tick, 2)
@@ -195,7 +190,7 @@ def callback(channel, method, properties, body):
                                        total_time=total_time,
                                        total_events=total_events,
                                        total_bytes=output_size)
-            logger.info("Time to successfully process {}: {} seconds".format(root_file, total_time))
+            logger.info("Time to process {}: {} seconds".format(root_file, total_time))
             file_done = True
 
         except Exception as error:
@@ -226,10 +221,10 @@ def callback(channel, method, properties, body):
                                             info="Try: " + str(file_retries) +
                                                  " error: " + str(error)[0:1024])
 
-    stop_process_times = get_process_info()
-    elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
-                                      system=stop_process_times.system - start_process_times.system,
-                                      iowait=stop_process_times.iowait - start_process_times.iowait)
+    stop_process_info = get_process_info()
+    elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
+                                      system=stop_process_info.system - start_process_info.system,
+                                      iowait=stop_process_info.iowait - start_process_info.iowait)
     stop_time = timeit.default_timer()
     log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
     record = {'filename': _file_path,
@@ -246,19 +241,19 @@ def callback(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, chunks, servicex=None):
+def transform_single_file(file_path, output_path, servicex=None):
     """
     Transform a single file and return some information about output
 
     :param file_path: path for file to process
     :param output_path: path to file
-    :param chunks: size of chunk
     :param servicex: servicex instance
     :return: Tuple with (total_events: Int, output_size: Int)
     """
 
     logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
-    r = os.system('bash /generated/runner.sh -r -d ' + file_path + ' -o ' + output_path + '| tee log.txt')
+    r = os.system('bash /generated/runner.sh -r -d ' + file_path +
+                  ' -o ' + output_path + '| tee log.txt')
     # This command is not available in all images!
     # os.system('/usr/bin/sync log.txt')
     total_events, _ = parse_output_logs("log.txt")
@@ -290,11 +285,11 @@ def transform_single_file(file_path, output_path, chunks, servicex=None):
                                    messaging=messaging)
         # NB: We're converting the *output* ROOT file to Arrow arrays
         event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
-                                      attr_name_list=attr_name_list, chunk_size=chunks)
+                                      attr_name_list=attr_name_list)
         transformer = UprootTransformer(event_iterator)
         arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
                                              file_id=None, request_id=args.request_id)
-        logger.info("Kafka Timings: "+str(arrow_writer.messaging_timings))
+        logger.info("Timings: "+str(arrow_writer.messaging_timings))
     return total_events, output_size
 
 
@@ -306,8 +301,10 @@ def compile_code():
     if r != 0:
         with open('log.txt', 'r') as f:
             errors = f.read()
-            logger.error("Unable to compile the code - error return: " + str(r) + 'errors: ' + errors)
-            raise RuntimeError("Unable to compile the code - error return: " + str(r) + "errors: \n" + errors)
+            logger.error("Unable to compile the code - error return: " +
+                         str(r) + 'errors: ' + errors)
+            raise RuntimeError("Unable to compile the code - error return: " +
+                               str(r) + "errors: \n" + errors)
 
 
 if __name__ == "__main__":
@@ -317,11 +314,7 @@ if __name__ == "__main__":
 
     logger = initialize_logging(args.request_id)
 
-    if args.result_destination == 'kafka':
-        msg = "Kafka is no longer supported as a transport mechanism"
-        logger.error(msg)
-        sys.stderr.write(msg + "\n")
-    elif not args.output_dir and args.result_destination == 'object-store':
+    if not args.output_dir and args.result_destination == 'object-store':
         messaging = None
         object_store = ObjectStoreManager()
 
