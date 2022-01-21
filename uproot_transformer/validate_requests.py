@@ -41,12 +41,8 @@ import requests
 import argparse
 import pika
 
-# What is the largest message we want to send (in megabytes).
-# Note this must be less than the kafka broker setting if we are using kafka
-default_max_message_size = 14.5
-
 parser = argparse.ArgumentParser(
-    description='Validate a request and create kafka topic.')
+    description='Validate a request.')
 
 parser.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
                     default='host.docker.internal')
@@ -169,7 +165,7 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logger  = initialize_logging()
+    logger = initialize_logging()
     if args.path:
         # checks the file
         (valid, info) = validate_request(args.path)
