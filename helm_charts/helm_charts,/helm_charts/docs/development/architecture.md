@@ -156,11 +156,8 @@ Since there may be multiple replicas of each file, the DID finder can let Rucio 
 location of the servicex instance (latitude and longitude) so that Rucio can deliver replicas 
 sorted according to their closeness.
 
-The DID finder receives datasets to resolve via a RabbitMQ queue. The very first
-result it finds is submitted back to the flask app via a POST to the `preflight`
-endpoint. This is treated as a sample file to drive the preflight check.
-
-This replica as well as all subsequent replicas are reported to the app via
+The DID finder receives datasets to resolve via a RabbitMQ queue. 
+Resolved file replics are reported to the app via
 POSTs to the `/files` endpoint. After the final file has posted in this way, a
 PUT is sent to the `/complete` endpoint to let the service know all file
 replicas have been reported. This message contains summary information about the
