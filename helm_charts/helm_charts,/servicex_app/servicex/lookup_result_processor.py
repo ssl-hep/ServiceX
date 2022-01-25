@@ -33,19 +33,6 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor = rabbitmq_adaptor
         self.advertised_endpoint = advertised_endpoint
 
-    def publish_preflight_request(self, submitted_request, file_path):
-        preflight_request = {
-            'request-id': submitted_request.request_id,
-            'columns': submitted_request.columns,
-            'file-path': file_path,
-            "service-endpoint": self.advertised_endpoint +
-            "servicex/internal/transformation/" + submitted_request.request_id
-        }
-
-        self.rabbitmq_adaptor.basic_publish(exchange='',
-                                            routing_key='validation_requests',
-                                            body=json.dumps(preflight_request))
-
     def add_file_to_dataset(self, submitted_request, dataset_file):
         request_id = submitted_request.request_id
         dataset_file.save_to_db()

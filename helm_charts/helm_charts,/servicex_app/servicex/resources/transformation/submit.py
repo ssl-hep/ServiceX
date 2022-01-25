@@ -191,10 +191,6 @@ class SubmitTransformationRequest(ServiceXResource):
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
             else:
-                # Request a preflight check on the first file
-                self.lookup_result_processor.publish_preflight_request(
-                    request_rec,
-                    file_list[0])
 
                 for file_path in file_list:
                     file_record = DatasetFile(request_id=request_id,

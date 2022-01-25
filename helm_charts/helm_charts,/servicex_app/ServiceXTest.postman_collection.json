@@ -522,64 +522,6 @@
 					"response": []
 				},
 				{
-					"name": "Request Preflight",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "7d4fe1e5-d465-4948-97ac-bd48c03cd9d8",
-								"exec": [
-									"// example using pm.response.to.have",
-									"pm.test(\"response is ok\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"timestamp\": \"2019-08-16T17:52:39.451950\",\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
-						},
-						"url": {
-							"raw": "{{host}}/servicex/transformation/:request_id/preflight?:",
-							"host": [
-								"{{host}}"
-							],
-							"path": [
-								"servicex",
-								"transformation",
-								":request_id",
-								"preflight"
-							],
-							"query": [
-								{
-									"key": ":",
-									"value": null
-								}
-							],
-							"variable": [
-								{
-									"key": "request_id",
-									"value": "{{token}}"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Add File",
 					"event": [
 						{
