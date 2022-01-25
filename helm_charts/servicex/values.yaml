@@ -92,15 +92,6 @@ didFinder:
     pullPolicy: Always
     cachePrefix:
 
-# Settings for the preflight checker - this usually uses the same image as
-# the transformer
-preflight:
-  image: sslhep/servicex_func_adl_xaod_transformer
-  # For uproot deployment
-  # image: sslhep/servicex_func_adl_uproot_transformer
-  tag: develop
-  pullPolicy: Always
-
 #
 # Code Generator service
 codeGen:
@@ -122,7 +113,7 @@ transformer:
     minReplicas: 1
     maxReplicas: 20
   pullPolicy: Always
-  priorityClassName: 
+  priorityClassName:
   cpuLimit: 1
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
 
