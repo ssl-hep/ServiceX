@@ -72,11 +72,6 @@ class LookupRequest:
                 total_paths += len(af['file_path'])
                 if self.prefix:
                     af['file_path'] = [self.prefix+fp for fp in af['file_path']]
-                """
-                TODO: remove the following line once we are clear to return multiple
-                file replica paths.
-                """
-                af['file_path'] = af['file_path'][0]
                 yield af
 
         lookup_finish = datetime.now()
