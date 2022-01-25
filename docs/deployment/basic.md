@@ -113,14 +113,6 @@ codeGen:
   # Or for miniAOD
   image: sslhep/servicex_code_gen_config_file
 
-preflight:
-  # Choose one of the following images to include in your values.yaml:
-  # For xAOD
-  image: sslhep/servicex_func_adl_xaod_transformer
-
-  # For miniAOD or flat ROOT files
-  image: sslhep/servicex_func_adl_uproot_transformer
-
 didFinder:
   # For ATLAS:
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443

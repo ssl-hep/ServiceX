@@ -1,0 +1,85 @@
+app:
+  adminEmail: change@me.edu
+  pullPolicy: Always
+  auth: true
+  replicas: 1
+  slackSigningSecret: See README for instructions
+  newSignupWebhook: See README for instructions
+
+  # Globus configuration - obtain these at https://auth.globus.org/v2/web/developers
+  globusClientID: See README for instructions
+  globusClientSecret: See README for instructions
+
+  # Mailgun configuration
+  mailgunApiKey: See README for instructions
+  mailgunDomain: servicex.ssl-hep.org
+
+  ingress:
+    enabled: true
+    clusterIssuer: letsencrypt-prod-nginx
+codeGen:
+  image: sslhep/servicex_code_gen_atlas_xaod
+
+didFinder:
+  pullPolicy: Always
+  rucio:
+    servicex_latitude: 41.78
+    servicex_longitude: -87.7
+
+objectStore:
+  enabled: true
+  publicURL: xaod-minio.servicex.ssl-hep.org
+
+gridAccount: changeme
+
+minio:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod-nginx
+      acme.cert-manager.io/http01-edit-in-place: "true"
+    hosts:
+      - "xaod-minio.servicex.ssl-hep.org"
+    tls:
+      - hosts:
+          - xaod-minio.servicex.ssl-hep.org
+        secretName: xaod-minio-tls
+    mode: standalone
+    replicas: 1
+
+postgres:
+  enabled: true
+postgresql:
+  metrics:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  persistence:
+    enabled: true
+    storageClass: rook-ceph-block
+rabbitmq:
+  metrics:
+    enabled: false
+    plugins: rabbitmq_prometheus
+    podAnnotations:
+      prometheus.io/port: "9419"
+      prometheus.io/scrape: "true"
+    prometheusRule:
+      additionalLabels: {}
+      enabled: false
+      namespace: ""
+      rules: []
+    serviceMonitor:
+      additionalLabels: {}
+      enabled: true
+      honorLabels: false
+      interval: 30s
+    persistence:
+      enabled: true
+      storageClass: rook-ceph-block
+transformer:
+  autoscaler:
+    enabled: false
+  pullPolicy: Always
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:v1.0.0-rc.3
