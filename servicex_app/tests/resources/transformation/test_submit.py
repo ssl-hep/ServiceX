@@ -244,10 +244,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 200
 
-        mock_processor.publish_preflight_request.assert_called_once()
-        preflight_call = mock_processor.publish_preflight_request.call_args
-        assert preflight_call[0][1] == 'file1'
-
         mock_processor.add_file_to_dataset.assert_called()
         add_file_calls = mock_processor.add_file_to_dataset.call_args_list
         assert mock_processor.add_file_to_dataset.call_count == 2

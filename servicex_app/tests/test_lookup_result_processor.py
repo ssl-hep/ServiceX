@@ -32,21 +32,7 @@ from servicex.models import DatasetFile
 from tests.resource_test_base import ResourceTestBase
 
 
-class TestLookupResutProcessor(ResourceTestBase):
-
-    def test_publish_preflight_request(self, mocker,  mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor, "http://foo.com/")
-        processor.publish_preflight_request(self._generate_transform_request(),
-                                            "root1.root")
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='',
-            routing_key='validation_requests',
-            body=json.dumps(
-                {"request-id": 'BR549',
-                 "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "root1.root",
-                 "service-endpoint": "http://foo.com/servicex/internal/transformation/BR549"
-                 }))
+class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_file_to_dataset(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor,

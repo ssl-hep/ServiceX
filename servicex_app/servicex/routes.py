@@ -37,7 +37,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.internal.add_file_to_dataset import AddFileToDataset
     from servicex.resources.internal.file_transform_status import FileTransformationStatus
     from servicex.resources.internal.fileset_complete import FilesetComplete
-    from servicex.resources.internal.preflight_check import PreflightCheck
     from servicex.resources.internal.transform_start import TransformStart
     from servicex.resources.internal.transform_status import TransformationStatusInternal
     from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
@@ -131,10 +130,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     AddFileToDataset.make_api(lookup_result_processor)
     api.add_resource(AddFileToDataset,
                      '/servicex/internal/transformation/<string:request_id>/files')
-
-    PreflightCheck.make_api(lookup_result_processor)
-    api.add_resource(PreflightCheck,
-                     '/servicex/internal/transformation/<string:request_id>/preflight')
 
     FilesetComplete.make_api(lookup_result_processor)
     api.add_resource(FilesetComplete,
