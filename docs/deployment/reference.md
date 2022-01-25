@@ -48,9 +48,6 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.CERNOpenData.tag`         | CERN OpenData DID Finder image tag                             | `latest`                                                |
 | `didFinder.CERNOpenData.pullPolicy`  | CERN OpenData DID Finder image pull policy                     | `Always`                                          |
 | `didFinder.rucio.cachePrefix`        | Prefix string to stick in front of file paths. Useful for XCache | |
-| `preflight.image`                    | Preflight image name                             | `sslhep/servicex-transformer`                           |
-| `preflight.tag`                      | Preflight image tag                              | `latest`                                                |
-| `preflight.pullPolicy`               | Preflight image pull policy                      | `Always`                                          |
 | `codeGen.enabled`                    | Enable deployment of code generator service?     | `true`                                                  |
 | `codeGen.image`                      | Code Gen image name                              | `sslhep/servicex_code_gen_funcadl_xaod`                 |
 | `codeGen.tag`                        | Code Gen image tag                               | `latest`                                                |

@@ -29,8 +29,8 @@ x509Secrets:
   vomsOrg: cms
 
 objectStore:
-    enabled: true
-    publicURL: uproot-minio.servicex.ssl-hep.org
+  enabled: true
+  publicURL: uproot-minio.servicex.ssl-hep.org
 
 gridAccount: changeme
 minio:
@@ -41,7 +41,7 @@ minio:
       cert-manager.io/cluster-issuer: letsencrypt-prod-nginx
       acme.cert-manager.io/http01-edit-in-place: "true"
     hosts:
-    - "uproot-minio.servicex.ssl-hep.org"
+      - "uproot-minio.servicex.ssl-hep.org"
   persistence:
     enabled: false
   metrics:
@@ -57,14 +57,12 @@ postgresql:
   persistence:
     enabled: true
     storageClass: rook-ceph-block
-preflight:
-  pullPolicy: Always
 rabbitmq:
   metrics:
     enabled: false
     plugins: rabbitmq_prometheus
     podAnnotations:
-      prometheus.io/port: '9419'
+      prometheus.io/port: "9419"
       prometheus.io/scrape: "true"
     prometheusRule:
       additionalLabels: {}
@@ -83,4 +81,3 @@ transformer:
   autoscalerEnabled: false
   pullPolicy: Always
   defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:v1.0.0-rc.3
-
