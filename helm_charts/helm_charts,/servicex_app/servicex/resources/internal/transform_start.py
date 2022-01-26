@@ -34,6 +34,25 @@ from servicex.transformer_manager import TransformerManager
 
 class TransformStart(ServiceXResource):
     @classmethod
+    def start_transformers(cls, transformer_manager: TransformerManager,
+                           config: dict,
+                           request_rec: TransformRequest):
+        rabbitmq_uri = config['TRANSFORMER_RABBIT_MQ_URL']
+        namespace = config['TRANSFORMER_NAMESPACE']
+        x509_secret = config['TRANSFORMER_X509_SECRET']
+        generated_code_cm = request_rec.generated_code_cm
+
+        transformer_manager.launch_transformer_jobs(
+            image=request_rec.image, request_id=request_rec.request_id,
+            workers=request_rec.workers,
+            rabbitmq_uri=rabbitmq_uri,
+            namespace=namespace,
+            x509_secret=x509_secret,
+            generated_code_cm=generated_code_cm,
+            result_destination=request_rec.result_destination,
+            result_format=request_rec.result_format)
+
+    @classmethod
     def make_api(cls, transformer_manager: TransformerManager):
         """Initializes the transformer manage for this resource."""
         cls.transformer_manager = transformer_manager
@@ -54,18 +73,7 @@ class TransformStart(ServiceXResource):
         db.session.commit()
 
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-
-            rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
-            generated_code_cm = submitted_request.generated_code_cm
-
-            self.transformer_manager.launch_transformer_jobs(
-                image=submitted_request.image, request_id=request_id,
-                workers=submitted_request.workers,
-                rabbitmq_uri=rabbitmq_uri,
-                namespace=namespace,
-                x509_secret=x509_secret,
-                generated_code_cm=generated_code_cm,
-                result_destination=submitted_request.result_destination,
-                result_format=submitted_request.result_format)
+            TransformStart.start_transformers(
+                self.transformer_manager,
+                current_app.config,
+                submitted_request)

@@ -60,7 +60,7 @@ class TestTransformationStart(ResourceTestBase):
         mock_transformer_manager. \
             launch_transformer_jobs \
             .assert_called_with(image='ssl-hep/foo:latest',
-                                request_id='1234',
+                                request_id='BR549',
                                 workers=42,
                                 generated_code_cm=None,
                                 rabbitmq_uri='amqp://trans.rabbit',

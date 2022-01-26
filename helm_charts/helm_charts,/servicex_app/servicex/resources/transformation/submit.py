@@ -33,6 +33,7 @@ from flask import current_app
 from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
 
+from servicex.resources.internal.transform_start import TransformStart
 from servicex.did_parser import DIDParser
 from servicex.decorators import auth_required
 from servicex.models import TransformRequest, DatasetFile, db
@@ -54,12 +55,14 @@ def _workflow_name(transform_request):
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
-                 code_gen_service, lookup_result_processor, docker_repo_adapter):
+                 code_gen_service, lookup_result_processor, docker_repo_adapter,
+                 transformer_manager):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
+        cls.transformer_manager = transformer_manager
 
         cls.parser = reqparse.RequestParser()
         cls.parser.add_argument('title',
@@ -209,6 +212,13 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
 
                 db.session.commit()
+
+                if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                    TransformStart.start_transformers(
+                        self.transformer_manager,
+                        current_app.config,
+                        request_rec
+                    )
 
             self.logger.info(f"Transformation request submitted with id: {request_id}")
             return {
