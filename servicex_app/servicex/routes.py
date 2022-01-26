@@ -76,7 +76,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          object_store=object_store,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor,
-                                         docker_repo_adapter=docker_repo_adapter)
+                                         docker_repo_adapter=docker_repo_adapter,
+                                         transformer_manager=transformer_manager)
 
     # Web Frontend Routes
     app.add_url_rule('/', 'home', home)

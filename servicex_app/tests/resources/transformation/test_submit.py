@@ -234,15 +234,27 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                              ))
 
     def test_submit_transformation_file_list(self, mocker):
+        from servicex.transformer_manager import TransformerManager
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
+
         request = self._generate_transformation_request()
         request['did'] = None
         request['file-list'] = ["file1", "file2"]
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        client = self._test_client(lookup_result_processor=mock_processor)
+        cfg = {
+            'TRANSFORMER_MANAGER_ENABLED': True,
+            'TRANSFORMER_X509_SECRET': 'my-x509-secret'
+        }
+
+        client = self._test_client(extra_config=cfg,
+                                   lookup_result_processor=mock_processor,
+                                   transformation_manager=mock_transformer_manager)
 
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 200
+        request_id = response.json['request_id']
 
         mock_processor.add_file_to_dataset.assert_called()
         add_file_calls = mock_processor.add_file_to_dataset.call_args_list
@@ -253,6 +265,20 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor.report_fileset_complete.assert_called()
         fileset_complete_call = mock_processor.report_fileset_complete.call_args
         assert fileset_complete_call[1]['num_files'] == 2
+        with client.application.app_context():
+            submitted_request = TransformRequest.lookup(request_id)
+
+            mock_transformer_manager. \
+                launch_transformer_jobs \
+                .assert_called_with(image=submitted_request.image,
+                                    request_id=submitted_request.request_id,
+                                    workers=submitted_request.workers,
+                                    generated_code_cm=submitted_request.generated_code_cm,
+                                    rabbitmq_uri='amqp://trans.rabbit',
+                                    namespace='my-ws',
+                                    result_destination=submitted_request.result_destination,
+                                    result_format=submitted_request.result_format,
+                                    x509_secret='my-x509-secret')
 
     def test_submit_transformation_request_bad_image(
         self, mocker, mock_docker_repo_adapter
