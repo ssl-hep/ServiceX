@@ -30,7 +30,7 @@ import sys
 
 import os
 from flask import Flask
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap5
 from flask_jwt_extended import (JWTManager)
 from flask_restful import Api
 
@@ -68,7 +68,7 @@ def create_app(test_config=None,
                provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
-    Bootstrap(app)
+    Bootstrap5(app)
 
     JWTManager(app)
     if not test_config:
