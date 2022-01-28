@@ -16,6 +16,9 @@ objectStore:
   # turn off https connections to minio, should be off if using internal
   # minio
   useTLS: false
+  # set clients to use a https connection to connect to minio, should be 
+  # set to true unless using a devel setup
+  useClientTLS: true
 
 # Enable deployment of a full postgres sql database. This is advisable for
 # bigger clusters where there will be several workers hitting the database
