@@ -144,6 +144,10 @@ data:
     {{- if .Values.didFinder.rucio.enabled }}
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
+    {{- if .Values.didFinder.girder.enabled }}
+      {{- $didFinders = append $didFinders "girder" }}
+    {{- end }}
+
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
@@ -152,6 +156,10 @@ data:
     {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
     {{- $defaultScheme = "cernopendata" }}
     {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.girder.enabled }}
+    {{- $defaultScheme = "girder" }}
+    {{- end }}
+
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
 

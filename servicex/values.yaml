@@ -86,6 +86,13 @@ didFinder:
     pullPolicy: Always
     cachePrefix:
 
+  girder:
+    enabled: true
+    image: pondd/servicex-did-finder-girder
+    tag: preflight-removal
+    pullPolicy: Always
+
+
 #
 # Code Generator service
 codeGen:
