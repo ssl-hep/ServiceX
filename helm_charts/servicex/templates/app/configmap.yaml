@@ -103,6 +103,13 @@ data:
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
+    # default to using a https connection to the client unless explicitly
+    # turned off
+      {{ if .Values.objectStore.useClientTLS  }}
+    MINIO_CLIENT_SECURED = True
+      {{ else }}
+    MINIO_CLIENT_SECURED = False
+      {{ end }}
       {{ if not .Values.objectStore.internal }}
     # using external minio 
     MINIO_URL = '{{ .Values.objectStore.publicURL }}'
