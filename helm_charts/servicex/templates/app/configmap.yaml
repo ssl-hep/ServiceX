@@ -115,7 +115,7 @@ data:
     MINIO_URL = '{{ .Values.objectStore.publicURL }}'
     MINIO_URL_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL }}'
-    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.usetls }}
+    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.useTLS }}
       {{ else }}
     # using internal minio 
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
@@ -124,7 +124,7 @@ data:
     {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
     # Using minio ingress
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default $minio_ingress }}'
-    MINIO_SECURED = {{ ternary "True" "False" (not (empty .Values.minio.ingress.tls)) }}
+    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
     {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.port -}}
     # No minio ingress
