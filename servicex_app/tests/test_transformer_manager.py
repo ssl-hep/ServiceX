@@ -319,7 +319,7 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
             'MINIO_ACCESS_KEY': 'itsame',
             'MINIO_SECRET_KEY': 'shhh',
-            'MINIO_SECURED': 'True',
+            'MINIO_ENCRYPT': 'True',
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
@@ -346,7 +346,7 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, 'MINIO_URL') == 'rolling-snail-minio:9000'
             assert _env_value(env, 'MINIO_ACCESS_KEY') == 'itsame'
             assert _env_value(env, 'MINIO_SECRET_KEY') == 'shhh'
-            assert _env_value(env, 'MINIO_SECURED') == 'True'
+            assert _env_value(env, 'MINIO_ENCRYPT') == 'True'
 
     def test_launch_transformer_jobs_with_provided_claim(self, mocker):
         import kubernetes

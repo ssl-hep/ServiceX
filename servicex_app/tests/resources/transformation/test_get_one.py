@@ -41,7 +41,7 @@ class TestTransformationRequest(ResourceTestBase):
         local_config = {
             'OBJECT_STORE_ENABLED': True,
             'MINIO_PUBLIC_URL': 'minio.servicex.com:9000',
-            'MINIO_SECURED': True,
+            'MINIO_ENCRYPT': True,
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1'
         }
