@@ -105,17 +105,17 @@ data:
     OBJECT_STORE_ENABLED = True
     # default to using a https connection to the client unless explicitly
     # turned off
-      {{ if .Values.objectStore.useClientTLS  }}
-    MINIO_CLIENT_SECURED = True
+      {{ if .Values.objectStore.publicClientUseTLS  }}
+    MINIO_ENCRYPT_PUBLIC = True
       {{ else }}
-    MINIO_CLIENT_SECURED = False
+    MINIO_ENCRYPT_PUBLIC = False
       {{ end }}
       {{ if not .Values.objectStore.internal }}
     # using external minio 
     MINIO_URL = '{{ .Values.objectStore.publicURL }}'
     MINIO_URL_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL }}'
-    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.useTLS }}
+    MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
       {{ else }}
     # using internal minio 
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
@@ -124,7 +124,7 @@ data:
     {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
     # Using minio ingress
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default $minio_ingress }}'
-    MINIO_SECURED = {{ ternary "True" "False" .Values.objectStore.useTLS }}
+    MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
     {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.port -}}
     # No minio ingress
