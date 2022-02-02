@@ -28,6 +28,7 @@
 import json
 import logging
 import os
+import sys
 import time
 import timeit
 from typing import NamedTuple
@@ -48,7 +49,6 @@ import pyarrow.parquet as pq
 # see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22
 uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 
-messaging = None
 object_store = None
 posix_path = None
 MAX_PATH_LEN = 255
@@ -271,15 +271,6 @@ def transform_single_file(file_path, output_path, servicex=None):
         logger.exception(mesg)
         raise RuntimeError(mesg)
 
-    if messaging:
-        arrow_writer = ArrowWriter(file_format=args.result_format,
-                                   object_store=None,
-                                   messaging=messaging)
-
-    transformer = ArrowIterator(arrow, file_path=file_path)
-    arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
-                                         file_id=None, request_id=args.request_id)
-
 
 def compile_code():
     import generated_transformer
@@ -292,23 +283,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = initialize_logging(args.request_id)
-    logger.info("-----", sys.path)
+    logger.info(f"sys.path: {sys.path}")
     logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
 
     if args.output_dir:
-        messaging = None
         object_store = None
     if args.result_destination == 'object-store':
-        messaging = None
         posix_path = "/home/output"
         object_store = ObjectStoreManager()
     elif args.result_destination == 'volume':
-        messaging = None
         object_store = None
         posix_path = args.output_dir
-    elif args.output_dir:
-        messaging = None
-        object_store = None
 
     compile_code()
     startup_time = get_process_info()
