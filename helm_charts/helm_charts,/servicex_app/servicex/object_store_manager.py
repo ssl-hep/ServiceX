@@ -31,7 +31,6 @@ class ObjectStoreManager:
 
     def __init__(self, url, username, password, use_https=False):
         from minio import Minio
-        print(f"obj_store params: {url} {username} {password} {use_https}")
         self.minio_client = Minio(endpoint=url, access_key=username,
                                   secret_key=password, secure=use_https)
 
