@@ -4,6 +4,7 @@ ServiceX is a data delivery service for high energy physicists working on the AT
 Requests to ServiceX can be made in Python using the [func-ADL](https://pypi.org/project/func-adl-servicex/1.0/) analysis description language or TCut selection strings.
 
 ## Prerequisites
+
 - Python 3.6, 3.7, or 3.8
 - Member of the ATLAS or CMS collaborations
 
@@ -13,33 +14,33 @@ Requests to ServiceX can be made in Python using the [func-ADL](https://pypi.org
 pip install servicex-clients
 ```
 
-This is an umbrella package which includes all of the frontend client 
-libraries used to communicate with a ServiceX backend. 
-There are multiple ways to specify a request, but we will use 
+This is an umbrella package which includes all of the frontend client
+libraries used to communicate with a ServiceX backend.
+There are multiple ways to specify a request, but we will use
 func-ADL in this tutorial.
 
 ## Selecting an endpoint
-To use the ServiceX client, you will need a ServiceX API token issued by a 
-ServiceX backend instance. Each ServiceX instance is dedicated to a specific 
+
+To use the ServiceX client, you will need a ServiceX API token issued by a
+ServiceX backend instance. Each ServiceX instance is dedicated to a specific
 experiment and file format.
-You can use one of the centrally-managed instances of ServiceX running on the 
-University of Chicago's River cluster:
+You can use one of the centrally-managed instances of ServiceX running on the
+University of Chicago's Analysis Facility cluster:
 
 | Endpoint                                   | Collaboration | Type   | Input        |
 |-----------------------------               |------         |-----   |-------       |
-| https://xaod.servicex.ssl-hep.org          | ATLAS         | xaod   | xAOD files   |
-| https://uproot-atlas.servicex.ssl-hep.org  | ATLAS         | uproot | Flat ntuples |
+| <https://xaod.servicex.af.uchicago.edu/>        | ATLAS         | xaod   | xAOD files   |
+| <https://uproot-atlas.servicex.af.uchicago.edu/>  | ATLAS         | uproot | Flat ntuples |
 
+Visit the instance that meets your needs. Click on the _Sign-in_ button in the
+upper right hand corner. You will be asked to authenticate via GlobusAuth and
+complete a registration form. Once this form is submitted, it will be reviewed
+by SSL staff. You will receive an email upon approval.
 
-Visit the instance that meets your needs. Click on the _Sign-in_ button in the 
-upper right hand corner. You will be asked to authenticate via GlobusAuth and 
-complete a registration form. Once this form is submitted, it will be reviewed 
-by SSL staff. You will receive an email upon approval. 
-
-At this time you may return to the ServiceX page. Click on your name in the 
+At this time you may return to the ServiceX page. Click on your name in the
 upper right hand corner and then select _Profile_ tab. Click on the download
-button to have a servicex.yaml file generated with your access token and 
-downloaded to your computer. 
+button to have a servicex.yaml file generated with your access token and
+downloaded to your computer.
 
 ![Download button](../img/download-servicex-yaml.jpg)
 
@@ -48,8 +49,8 @@ the [servicex_frontend search path](https://github.com/ssl-hep/ServiceX_frontend
 
 The remainder of this guide will use the xAOD instance.
 
-
 ## First request
+
 Once you've been approved, you're ready to go!
 
 You can interact with ServiceX by making a transformation request. A transformation request includes the following information:
@@ -77,6 +78,7 @@ print(df)
 ```
 
 Expected output:
+
 ```
             JetPt
 entry            
@@ -111,6 +113,7 @@ print(df)
 ```
 
 Expected output:
+
 ```
                                                    JetPT
 0      [56970.56, 57738.047, 24149.762, 15421.779, 14...

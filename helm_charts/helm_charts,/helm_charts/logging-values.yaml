@@ -3,8 +3,8 @@
 servicex:
   # namespace where you have servicex deployed
   namespace:
-    - default
-    - servicex
+    - servicex-uproot
+    - servicex-xaod
 
 elasticsearch:
   host: "atlas-kibana.mwt2.org"
