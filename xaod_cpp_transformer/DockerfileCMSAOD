@@ -30,9 +30,6 @@ ENV PYTHONUNBUFFERED=1
 ENV INSTANCE="cms_aod_cpp_transformer"
 ENV DESC="CMS AOD CPP Transformer"
 
-# Copy over the source
-COPY validate_requests.py .
-
 # Dummpy proxy exporter
 RUN echo "#!/bin/bash" > proxy-exporter.sh &&\
     echo "echo No Proxy Requred >> proxy-exporter.sh" &&\

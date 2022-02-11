@@ -32,7 +32,6 @@ ENV X509_CERT_DIR /etc/grid-security/certificates
 
 # Copy over the source
 COPY proxy-exporter.sh .
-COPY validate_requests.py .
 
 COPY transformer.py .
 WORKDIR /home/atlas
