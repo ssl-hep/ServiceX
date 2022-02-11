@@ -52,6 +52,7 @@ uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 object_store = None
 posix_path = None
 MAX_PATH_LEN = 255
+MAX_RETRIES = 3
 
 
 class TimeTuple(NamedTuple):
@@ -161,81 +162,121 @@ def hash_path(file_name):
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path']
+    _file_paths = transform_request['paths'].split(',')
+    logger.info("File replicas: {}".format(_file_paths))
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
 
     tick = time.time()
-    start_process_times = get_process_info()
+
+    file_done = False
+    file_retries = 0
     total_events = 0
     output_size = 0
     total_time = 0
-    try:
-        # Do the transform
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="start",
-                                    info="Starting")
+    start_process_times = get_process_info()
+    this_file_retries = MAX_RETRIES*len(_file_paths)
+    while not file_done:
+        try:
+            for _file_path in _file_paths:
 
-        root_file = _file_path.replace('/', ':')
-        if not os.path.isdir(posix_path):
-            os.makedirs(posix_path)
+                # Do the transform
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="start",
+                                            info="Starting")
 
-        safe_output_file = hash_path(root_file+".parquet")
-        output_path = os.path.join(posix_path, safe_output_file)
-        transform_single_file(_file_path, output_path, servicex)
+                root_file = _file_path.replace('/', ':')
+                if not os.path.isdir(posix_path):
+                    os.makedirs(posix_path)
 
-        tock = time.time()
-        total_time = round(tock - tick, 2)
-        if object_store:
-            object_store.upload_file(_request_id, safe_output_file, output_path)
-            os.remove(output_path)
+                safe_output_file = hash_path(root_file+".parquet")
+                output_path = os.path.join(posix_path, safe_output_file)
+                transform_single_file(_file_path, output_path, servicex)
 
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="complete",
-                                    info="Success")
+                tock = time.time()
+                total_time = round(tock - tick, 2)
+                if object_store:
+                    object_store.upload_file(_request_id, safe_output_file, output_path)
+                    os.remove(output_path)
 
-        servicex.put_file_complete(_file_path, _file_id, "success",
-                                   num_messages=0,
-                                   total_time=total_time,
-                                   total_events=0,
-                                   total_bytes=0)
-        logger.info("Time to successfully process {}: {} seconds".format(root_file, total_time))
-        stop_process_times = get_process_info()
-        elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
-                                          system=stop_process_times.system - start_process_times.system,
-                                          iowait=stop_process_times.iowait - start_process_times.iowait)
-        stop_time = timeit.default_timer()
-        log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
-        record = {'filename': _file_path,
-                  'file-id': _file_id,
-                  'output-size': output_size,
-                  'events': total_events,
-                  'request-id': _request_id,
-                  'user-time': elapsed_process_times.user,
-                  'system-time': elapsed_process_times.system,
-                  'io-wait': elapsed_process_times.iowait,
-                  'total-time': elapsed_process_times.total_time,
-                  'wall-time': total_time}
-        logger.info("Metric: {}".format(json.dumps(record)))
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="complete",
+                                            info="Success")
 
-    except Exception as error:
-        logger.exception(f"Received exception doing transform: {error}")
+                servicex.put_file_complete(_file_path, _file_id, "success",
+                                           num_messages=0,
+                                           total_time=total_time,
+                                           total_events=0,
+                                           total_bytes=0)
+                logger.info("Time to successfully process {}: {} seconds".format(
+                    root_file, total_time))
+                stop_process_times = get_process_info()
+                elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
+                                                  system=stop_process_times.system - start_process_times.system,
+                                                  iowait=stop_process_times.iowait - start_process_times.iowait)
+                stop_time = timeit.default_timer()
+                log_stats(startup_time, elapsed_process_times,
+                          running_time=(stop_time - start_time))
+                record = {'filename': _file_path,
+                          'file-id': _file_id,
+                          'output-size': output_size,
+                          'events': total_events,
+                          'request-id': _request_id,
+                          'user-time': elapsed_process_times.user,
+                          'system-time': elapsed_process_times.system,
+                          'io-wait': elapsed_process_times.iowait,
+                          'total-time': elapsed_process_times.total_time,
+                          'wall-time': total_time}
+                logger.info("Metric: {}".format(json.dumps(record)))
+                file_done = True
+                break
 
-        transform_request['error'] = str(error)
-        channel.basic_publish(exchange='transformation_failures',
-                              routing_key=_request_id + '_errors',
-                              body=json.dumps(transform_request))
+        except Exception as error:
+            file_retries += 1
+            if file_retries == this_file_retries:
+                logger.exception(f"Received exception doing transform: {error}")
 
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="failure",
-                                    info=f"error: {error}")
+                transform_request['error'] = str(error)
+                channel.basic_publish(exchange='transformation_failures',
+                                      routing_key=_request_id + '_errors',
+                                      body=json.dumps(transform_request))
 
-        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                   status='failure', num_messages=0, total_time=0,
-                                   total_events=0, total_bytes=0)
-    finally:
-        channel.basic_ack(delivery_tag=method.delivery_tag)
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="failure",
+                                            info=f"error: {error}")
+
+                servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+                                           status='failure', num_messages=0, total_time=0,
+                                           total_events=0, total_bytes=0)
+            else:
+                logger.warning("Retry {} of {} for {}: {}".format(file_retries,
+                                                                  MAX_RETRIES,
+                                                                  root_file,
+                                                                  error))
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="retry",
+                                            info="Try: " + str(file_retries) +
+                                                 " error: " + str(error)[0:1024])
+
+    stop_process_info = get_process_info()
+    elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
+                                      system=stop_process_info.system - start_process_info.system,
+                                      iowait=stop_process_info.iowait - start_process_info.iowait)
+    stop_time = timeit.default_timer()
+    log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
+    record = {'filename': _file_path,
+              'file-id': _file_id,
+              'output-size': output_size,
+              'events': total_events,
+              'request-id': _request_id,
+              'user-time': elapsed_process_times.user,
+              'system-time': elapsed_process_times.system,
+              'io-wait': elapsed_process_times.iowait,
+              'total-time': elapsed_process_times.total_time,
+              'wall-time': total_time}
+    logger.info("Metric: {}".format(json.dumps(record)))
+    channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def transform_single_file(file_path, output_path, servicex=None):
@@ -254,7 +295,8 @@ def transform_single_file(file_path, output_path, servicex=None):
         try:
             arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
         except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None), explode_records=explode_records)
+            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
+                                      explode_records=explode_records)
         end_serialization = time.time()
         serialization_time = round(end_serialization - start_serialization, 2)
         logger.info(f'awkward Array -> Arrow in {serialization_time} sec')
