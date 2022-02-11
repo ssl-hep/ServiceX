@@ -152,8 +152,7 @@ def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_paths = transform_request['paths'].split(',')
-    print('all replicas:', _file_paths)
-    _file_path = _file_paths[0]
+    logger.info("File replicas".format(_file_paths))
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
@@ -170,34 +169,40 @@ def callback(channel, method, properties, body):
     output_size = 0
     total_time = 0
     start_process_info = get_process_info()
+    this_file_retries = MAX_RETRIES*len(_file_paths)
     while not file_done:
         try:
-            # Do the transform
-            root_file = _file_path.replace('/', ':')
-            output_path = '/home/atlas/' + root_file
-            logger.info("Processing {}, file id: {}".format(root_file, _file_id))
-            (total_events, output_size) = transform_single_file(_file_path, output_path, servicex)
+            for _file_path in _file_paths:
 
-            tock = time.time()
-            total_time = round(tock - tick, 2)
-            if object_store:
-                object_store.upload_file(_request_id, root_file, output_path)
-                os.remove(output_path)
+                # Do the transform
+                logger.info("Trying file {}".format(_file_path))
+                root_file = _file_path.replace('/', ':')
+                output_path = '/home/atlas/' + root_file
+                logger.info("Processing {}, file id: {}".format(root_file, _file_id))
+                (total_events, output_size) = transform_single_file(
+                    _file_path, output_path, servicex)
 
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="complete",
-                                        info="Total time " + str(total_time))
-            servicex.put_file_complete(_file_path, _file_id, "success",
-                                       num_messages=0,
-                                       total_time=total_time,
-                                       total_events=total_events,
-                                       total_bytes=output_size)
-            logger.info("Time to process {}: {} seconds".format(root_file, total_time))
-            file_done = True
+                tock = time.time()
+                total_time = round(tock - tick, 2)
+                if object_store:
+                    object_store.upload_file(_request_id, root_file, output_path)
+                    os.remove(output_path)
+
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="complete",
+                                            info="Total time " + str(total_time))
+                servicex.put_file_complete(_file_path, _file_id, "success",
+                                           num_messages=0,
+                                           total_time=total_time,
+                                           total_events=total_events,
+                                           total_bytes=output_size)
+                logger.info("Time to process {}: {} seconds".format(root_file, total_time))
+                file_done = True
+                break
 
         except Exception as error:
             file_retries += 1
-            if file_retries == MAX_RETRIES:
+            if file_retries == this_file_retries:
                 transform_request['error'] = str(error)
                 channel.basic_publish(exchange='transformation_failures',
                                       routing_key=_request_id + '_errors',
