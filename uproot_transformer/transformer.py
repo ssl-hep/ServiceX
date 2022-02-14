@@ -304,7 +304,7 @@ def transform_single_file(file_path, output_path, servicex=None):
         start_transform = time.time()
         awkward_array = generated_transformer.run_query(file_path)
         end_transform = time.time()
-        total_events = ak.num(awkward_array, axis=0)
+        total_events = 0  # need to make this size of the array...
         logger.info('Ran generated_transformer.py in ' +
                     f'{round(end_transform - start_transform, 2)} sec')
 
