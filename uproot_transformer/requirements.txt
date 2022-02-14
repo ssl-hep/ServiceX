@@ -1,7 +1,7 @@
 awkward==1.7.0
 # codecov==2.0.17
-coverage==4.5.2
-flake8==3.5.0
+# coverage==4.5.2
+# flake8==3.5.0
 lz4==2.2.1
 minio==5.0.10
 numpy==1.21.2
@@ -12,7 +12,7 @@ pyarrow==3.0.0
 # requests==2.24.0
 servicex-transformer==1.0.3
 uproot==4.1.9
-vector==0.8.4
+# vector==0.8.4
 # xxhash==1.4.4
 psutil==5.8.0
 
