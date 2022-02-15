@@ -26,8 +26,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-import re
+import logging
+import os
+import sys
 import time
+import timeit
+from collections import namedtuple
+import re
+
+import psutil
+import uproot
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
@@ -36,15 +44,7 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
 from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
-import uproot
-import os
-import sys
 
-import logging
-import timeit
-import psutil
-# from typing import NamedTuple
-from collections import namedtuple
 
 MAX_RETRIES = 3
 
@@ -96,7 +96,6 @@ def parse_output_logs(logfile):
     return total_events, events_processed
 
 
-# class TimeTuple(NamedTuple):
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
     Named tuple to store process time information.
@@ -258,7 +257,7 @@ def transform_single_file(file_path, output_path, servicex=None):
     :return: Tuple with (total_events: Int, output_size: Int)
     """
 
-    logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
+    logger.info(f"Transforming a single path: {file_path} into {output_path}")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path +
                   ' -o ' + output_path + '| tee log.txt')
     # This command is not available in all images!
