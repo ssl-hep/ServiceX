@@ -19,7 +19,7 @@ spec:
       # Before launching the main container, copy the certs and set their permissions accordingly
       initContainers:
         - name: take-data-dir-ownership
-          image: alpine:3.6
+          image: {{ .Values.x509Secrets.initImage }}
           command: ["/bin/sh","-c"]
           args: ["cp /etc/grid-certs-ro/usercert.pem /etc/grid-certs; chmod 600 /etc/grid-certs/usercert.pem; cp /etc/grid-certs-ro/userkey.pem /etc/grid-certs; chmod 400 /etc/grid-certs/userkey.pem"]
           env:
