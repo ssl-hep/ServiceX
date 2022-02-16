@@ -31,6 +31,8 @@ app:
   image: sslhep/servicex_app
   tag: 20220323-1932-stable
   pullPolicy: Always
+
+  checksImage: ncsa/checks:latest
   replicas: 1
   auth: false
   validateTransformerImage: true
@@ -136,6 +138,7 @@ x509Secrets:
   pullPolicy: Always
   vomsOrg: atlas
 
+  initImage: alpine:3.6
 # Values for the RabbitMQ Chart
 rabbitmq:
   # For easy testing we don't require PVs for rabbit

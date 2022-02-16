@@ -10,6 +10,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `Always`                                          |
+| `app.checksImage`                    | ServiceX init container image for checks         | `ncsa/checks:latest`                                    |
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
 | `app.replicas`                       | Number of App pods to start. Experimental!       | 1                                                       |
@@ -56,6 +57,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
 | `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `Always`                                          |
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
+| `x509Secrets.initImage`              | X509 Secret Service init container image         | `alpine:3.6`                                            |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster       | `true`
 | `hostMount`                          | Optional path to mount in transformers as /data  | -
 | `gridAccount`                        | CERN User account name to access Rucio           | -
