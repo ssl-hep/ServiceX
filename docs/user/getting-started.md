@@ -32,6 +32,9 @@ University of Chicago's Analysis Facility cluster:
 | <https://xaod.servicex.af.uchicago.edu/>        | ATLAS         | xaod   | xAOD files   |
 | <https://uproot-atlas.servicex.af.uchicago.edu/>  | ATLAS         | uproot | Flat ntuples |
 
+You can view the status of these production servers along with our current
+development servers by viewing the [Server Status Dashboard](https://dashboard-integration.servicex.ssl-hep.org).
+
 Visit the instance that meets your needs. Click on the _Sign-in_ button in the
 upper right hand corner. You will be asked to authenticate via GlobusAuth and
 complete a registration form. Once this form is submitted, it will be reviewed
