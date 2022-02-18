@@ -36,7 +36,6 @@ fi
 git checkout develop
 git pull --ff-only origin develop
 
-git checkout -b v$1
 
 # Update the app version and chart version in the chart
 sed -e "s/appVersion: .*$/appVersion: $1/" -e "s/version: .*$/version: $2/" servicex/Chart.yaml > servicex/Chart.new.yaml
@@ -44,44 +43,16 @@ mv servicex/Chart.new.yaml servicex/Chart.yaml
 git add servicex/Chart.yaml
 
 # Point all images in values.yaml to the new deployment
-sed -e "s/  tag: develop/  tag: v$1/" -e "s/:develop/:v$1/" servicex/values.yaml > servicex/values.new.yaml
+sed -E -e "s/  tag:\s*.+$/  tag: v$1/" -e "s/defaultTransformerImage:\s*(.+):.*/defaultTransformerImage: \1:$1 /" servicex/values.yaml > servicex/values.new.yaml
+
 mv servicex/values.new.yaml servicex/values.yaml
 git add servicex/values.yaml
 
 git commit -m "Deploy version $1"
+git push origin develop
+
+git tag -a v$1 -m "Helm chart version $2"
 git push origin v$1
-
-pushd ../Servicex_App || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../X509_Secrets || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../ServiceX_DID_Finder_Rucio || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../ServiceX_DID_Finder_CERNOpenData || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../ServiceX_xAOD_CPP_transformer || exit 0
-echo "-- Skipping release of ../ServiceX_xAOD_CPP_transformer"
-popd || exit 0
-
-pushd ../ServiceX_Uproot_Transformer || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../ServiceX_Code_Generator_FuncADL_xAOD || exit 0
-./tag_and_release.sh $1
-popd || exit 0
-
-pushd ../ServiceX_Code_Generator_FuncADL_uproot || exit 0
-./tag_and_release.sh $1
-popd || exit 0
 
 # Publish the chart
 helm package servicex
@@ -92,8 +63,8 @@ helm repo index ssl-helm-charts --url https://ssl-hep.github.io/ssl-helm-charts/
 
 cd ssl-helm-charts
 git add index.yaml
-git add servicex-$2
+git add servicex-$2.tgz
 git commit -m "Release $1"
 git push origin gh-pages
-pop || exit 0
+popd || exit 0
 echo "Version $1 has been released!"
