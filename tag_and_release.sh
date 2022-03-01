@@ -31,6 +31,14 @@
 #
 if [ "$#" -ne 2 ]; then
     echo "Usage: tag_release.sh serviceX_version chart_version"
+    exit 1
+fi
+
+if [ ! -d "../ssl-helm-charts" ]; then
+  echo "Helm chart repo not available. Creating one now"
+  pushd ..
+  git clone https://github.com/ssl-hep/ssl-helm-charts.git
+  popd
 fi
 
 git checkout develop
