@@ -29,6 +29,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
+set -e
 if [ "$#" -ne 2 ]; then
     echo "Usage: tag_release.sh serviceX_version chart_version"
     exit 1
