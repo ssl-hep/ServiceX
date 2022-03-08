@@ -6,6 +6,8 @@ servicex:
     - servicex
     - servicex-int-uproot
     - servicex-int-xaod
+    - servicex-prod-uproot
+    - servicex-prod-xaod
     - servicex-testing-1
     - servicex-testing-2
     - servicex-testing-3
