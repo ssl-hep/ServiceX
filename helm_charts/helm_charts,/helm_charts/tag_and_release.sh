@@ -52,7 +52,7 @@ mv servicex/Chart.new.yaml servicex/Chart.yaml
 git add servicex/Chart.yaml
 
 # Point all images in values.yaml to the new deployment
-sed -E -e "s/  tag:\s*.+$/  tag: v$1/" -e "s/defaultTransformerImage:\s*(.+):.*/defaultTransformerImage: \1:$1 /" servicex/values.yaml > servicex/values.new.yaml
+sed -E -e "s/  tag:\s*.+$/  tag: $1/" -e "s/defaultTransformerImage:\s*(.+):.*/defaultTransformerImage: \1:$1 /" servicex/values.yaml > servicex/values.new.yaml
 
 mv servicex/values.new.yaml servicex/values.yaml
 git add servicex/values.yaml
