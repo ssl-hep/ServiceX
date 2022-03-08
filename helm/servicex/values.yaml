@@ -29,7 +29,7 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: v20220307-2203-stable
+  tag: 20220307-2203-stable
   pullPolicy: Always
   replicas: 1
   auth: false
@@ -76,7 +76,7 @@ didFinder:
   rucio:
     enabled: true
     image: sslhep/servicex-did-finder
-    tag: v20220307-2203-stable
+    tag: 20220307-2203-stable
     pullPolicy: Always
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -88,7 +88,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    tag: v20220307-2203-stable
+    tag: 20220307-2203-stable
     pullPolicy: Always
     cachePrefix:
 
@@ -101,7 +101,7 @@ codeGen:
   # image: sslhep/servicex_code_gen_func_adl_uproot
   # for CMS Run 1 AOD OpenData
   # image: sslhep/servicex_code_gen_cms_aod
-  tag: v20220307-2203-stable
+  tag: 20220307-2203-stable
   pullPolicy: Always
 
 # Pull policy for the worker pods - the image and version are specified as
@@ -115,7 +115,7 @@ transformer:
   pullPolicy: Always
   priorityClassName:
   cpuLimit: 1
-  defaultTransformerImage:  sslhep/servicex_func_adl_xaod_transformer:20220307-2203-stable 
+  defaultTransformerImage:   sslhep/servicex_func_adl_xaod_transformer:20220307-2203-stable 
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
@@ -126,11 +126,11 @@ transformer:
     subdir:
 
   # For uproot deployment
-  #  defaultTransformerImage:  sslhep/servicex_func_adl_uproot_transformer:20220307-2203-stable 
+  #  defaultTransformerImage:   sslhep/servicex_func_adl_uproot_transformer:20220307-2203-stable 
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: v20220307-2203-stable
+  tag: 20220307-2203-stable
   pullPolicy: Always
   vomsOrg: atlas
 
