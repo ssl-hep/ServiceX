@@ -6,3 +6,5 @@ func-adl==2.3
 func-adl.ast==2.3
 func-adl-uproot==1.8.0
 qastle==0.15.0
+# Incompatibility between flask and the latest itsdangerous
+itsdangerous==2.0.1
