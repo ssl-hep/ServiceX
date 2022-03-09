@@ -11,8 +11,6 @@ COPY setup.cfg setup.cfg
 COPY requirements.txt requirements.txt
 RUN pip install -e .
 RUN pip install gunicorn
-RUN pip install safety && \
-    pip freeze | safety check -i 42050
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
