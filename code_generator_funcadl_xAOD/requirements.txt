@@ -3,3 +3,6 @@ Flask==1.1.2
 Flask-RESTful==0.3.8
 Flask-WTF==0.14.3
 func-adl-xAOD==1.4.1
+
+# pinned to since Flask doesn't work with latest version of itsdangerous
+itsdangerous==2.0.1
