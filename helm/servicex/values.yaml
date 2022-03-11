@@ -13,6 +13,12 @@ objectStore:
   # Enable deployment of Minio Object Store with this chart
   internal: true
   publicURL:
+  # turn off https connections to minio, should be off if using internal
+  # minio
+  useTLS: false
+  # set clients to use a https connection to connect to minio, should be 
+  # set to true unless using a devel setup
+  publicClientUseTLS: true
 
 # Enable deployment of a full postgres sql database. This is advisable for
 # bigger clusters where there will be several workers hitting the database
@@ -23,7 +29,7 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: develop
+  tag: 20220309-2035-stable
   pullPolicy: Always
   replicas: 1
   auth: false
@@ -70,7 +76,7 @@ didFinder:
   rucio:
     enabled: true
     image: sslhep/servicex-did-finder
-    tag: develop
+    tag: 20220309-2035-stable
     pullPolicy: Always
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -82,18 +88,9 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    tag: develop
+    tag: 20220309-2035-stable
     pullPolicy: Always
     cachePrefix:
-
-# Settings for the preflight checker - this usually uses the same image as
-# the transformer
-preflight:
-  image: sslhep/servicex_func_adl_xaod_transformer
-  # For uproot deployment
-  # image: sslhep/servicex_func_adl_uproot_transformer
-  tag: develop
-  pullPolicy: Always
 
 #
 # Code Generator service
@@ -104,7 +101,7 @@ codeGen:
   # image: sslhep/servicex_code_gen_func_adl_uproot
   # for CMS Run 1 AOD OpenData
   # image: sslhep/servicex_code_gen_cms_aod
-  tag: develop
+  tag: 20220309-2035-stable
   pullPolicy: Always
 
 # Pull policy for the worker pods - the image and version are specified as
@@ -116,9 +113,9 @@ transformer:
     minReplicas: 1
     maxReplicas: 20
   pullPolicy: Always
-  priorityClassName: 
+  priorityClassName:
   cpuLimit: 1
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:develop
+  defaultTransformerImage:     sslhep/servicex_func_adl_xaod_transformer:20220309-2035-stable 
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
@@ -129,11 +126,11 @@ transformer:
     subdir:
 
   # For uproot deployment
-  #  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:develop
+  #  defaultTransformerImage:     sslhep/servicex_func_adl_uproot_transformer:20220309-2035-stable 
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: develop
+  tag: 20220309-2035-stable
   pullPolicy: Always
   vomsOrg: atlas
 

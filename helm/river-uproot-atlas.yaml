@@ -56,8 +56,6 @@ postgresql:
   persistence:
     enabled: true
     storageClass: rook-ceph-block
-preflight:
-  pullPolicy: Always
 rabbitmq:
   metrics:
     enabled: false
