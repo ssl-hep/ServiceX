@@ -11,6 +11,9 @@ data:
   app.conf: |
     INSTANCE_NAME = '{{ .Release.Name }}'
     
+    CHART = '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    APP_IMAGE_TAG = '{{ .Values.app.tag }}'
+
     #SERVER_NAME = '127.0.0.1:5000'
     # this is the session secret, used to protect the Flask session. You should
     # use a longer secret string known only to your application
@@ -92,7 +95,6 @@ data:
     TRANSFORMER_X509_SECRET=None
     {{- end }}
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
-
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
     
@@ -147,8 +149,10 @@ data:
     {{- $didFinders := list }}
     {{- if .Values.didFinder.CERNOpenData.enabled }}
       {{- $didFinders = append $didFinders "cernopendata" }}
+    DID_CERNOPENDATA_FINDER_TAG = '{{ .Values.didFinder.CERNOpenData.tag }}'
     {{- end }}
     {{- if .Values.didFinder.rucio.enabled }}
+    DID_RUCIO_FINDER_TAG = '{{ .Values.didFinder.rucio.tag }}'
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
 
