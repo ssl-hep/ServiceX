@@ -94,7 +94,7 @@ data:
     {{- else }}
     TRANSFORMER_X509_SECRET=None
     {{- end }}
-
+    TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
     
