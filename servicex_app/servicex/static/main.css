@@ -24,20 +24,3 @@ body {
   border-radius: 3px;
   margin-bottom: 20px;
 }
-
-.component_versions {
-  /* width: 50%; */
-  border: none;
-  padding: 5px;
-}
-
-.component_versions th {
-  border: none;
-  padding: 5px;
-  background: #F0F0F0;
-}
-
-.component_versions td {
-  border: none;
-  padding: 5px;
-}
