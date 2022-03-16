@@ -86,7 +86,6 @@
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
         .then((resp) => resp.json())
         .then((data) => {
-          { #console.log(`${req_id} deployment`, data);# }
           $(`#replicas-${req_id}`).text(data["replicas"]);
         });
     }));
@@ -98,7 +97,6 @@
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
         .then((resp) => resp.json())
         .then((data) => {
-          { #console.log(`${req_id} status`, data);# }
           const status = data["status"];
           const processed = data["files-processed"];
           const remaining = data["files-remaining"];
