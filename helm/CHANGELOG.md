@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [20220311-2056-stable] - 2022-03-16
+### Added
+- Support for Bring-your-own Object Store
+
+### Changed
+- X509 User Proxies are mounted in /tmp so containers can be run without root permissions
+- Option to report logical files instead of replicas to support CMS style xCache
+
+### Fixed
+- Updated to current version of Bootstrap web page framework
+
+### Removed
+- Preflight Check step
+- Kafka streaming
+
 ## [1.0.0-RC.4] - 2021-10-8
 ### Added
 - Support for xCache in DID Finders
