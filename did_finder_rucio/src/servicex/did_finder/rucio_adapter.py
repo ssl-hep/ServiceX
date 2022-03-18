@@ -138,6 +138,9 @@ class RucioAdapter:
                     mfile = d['metalink']['file']
                 for f in mfile:
                     # Path is either a list of replicas or a single logical name
+                    if 'url' not in f:
+                        self.logger.error(f"File {f['identity']} has no replicas.")
+                        continue
                     path = self.get_paths(f['url']) \
                         if not self.report_logical_files else \
                         [f['identity']]
