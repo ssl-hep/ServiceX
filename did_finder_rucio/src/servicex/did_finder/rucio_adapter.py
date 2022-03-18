@@ -118,6 +118,8 @@ class RucioAdapter:
         together with checksum and filesize.
         """
         datasets = self.list_datasets_for_did(did)
+        if not datasets:
+            return
         for ds in datasets:
             reps = self.replica_client.list_replicas(
                 [{'scope': ds[0], 'name': ds[1]}],
