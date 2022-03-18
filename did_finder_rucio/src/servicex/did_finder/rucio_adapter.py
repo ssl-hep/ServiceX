@@ -29,6 +29,7 @@
 import logging
 import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
+from rucio.client.scopeclient import ScopeClient
 
 
 class RucioAdapter:
@@ -36,13 +37,12 @@ class RucioAdapter:
         self.did_client = did_client
         self.replica_client = replica_client
         self.report_logical_files = report_logical_files
-
+        self.all_scopes = []
         # set logging to a null handler
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
-    @staticmethod
-    def parse_did(did):
+    def parse_did(self, did):
         """
         Parse a DID string into the scope and name
         Allow for no scope to be included
@@ -52,12 +52,24 @@ class RucioAdapter:
         d = dict()
         if ':' in did:
             d['scope'], d['name'] = did.split(":")
-        else:
-            d['scope'], d['name'] = '', did
-        return d
+            return d
+
+        if not self.all_scopes:
+            uns_scopes = ScopeClient().list_scopes()
+            self.all_scopes = sorted(uns_scopes, key=len, reverse=True)
+
+        for sc in self.all_scopes:
+            if did.startswith(sc):
+                d['scope'], d['name'] = sc, did
+                return d
+
+        self.logger.error(f"Scope of the dataset {did} could not be determined.")
+        return None
 
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
+        if not parsed_did:
+            return None
         try:
             datasets = []
             did_info = self.did_client.get_did(parsed_did['scope'], parsed_did['name'])
