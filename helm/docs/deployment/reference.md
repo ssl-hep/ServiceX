@@ -1,7 +1,7 @@
-# ServiceX Helm Chart Reference 
+# ServiceX Helm Chart Reference
 
-The following table lists the configurable parameters of the ServiceX chart and 
-their default values. Note that you may also wish to change some of the default 
+The following table lists the configurable parameters of the ServiceX chart and
+their default values. Note that you may also wish to change some of the default
 parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq) or [minio](https://github.com/minio/charts) subcharts.
 
 | Parameter                            | Description                                      | Default                                                 |
@@ -26,13 +26,13 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.ingress.tls.enabled`            | Enable TLS for ServiceX API Ingress resource     | false                                                   |
 | `app.ingress.tls.secretName`         | Name of TLS Secret used for ServiceX API server  | `{{.Release.Name}}-app-tls`                             |
 | `app.ingress.tls.clusterIssuer`      | Specify a ClusterIssuer if using cert-manager    | -                                                       |
-| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |    
+| `app.resources`                      | Pass in Kubernetes pod resource spec to deployment to change CPU and memory | { }                          |
 | `app.slackSigningSecret`             | Signing secret for Slack application             | -
 | `app.newSignupWebhook`               | Slack webhook URL for new signups                | -
 | `app.mailgunApiKey`                  | API key to send Mailgun emails to newly approved users | -
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
 | `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request. If left blank, template will attempt to guess.    | -                                                 |
-| `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               | 
+| `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               |
 | `didFinder.rucio.enabled`            | Should we deploy the Rucio DID Finder?           | `true`                                              |
 | `didFinder.rucio.image`              | Rucio DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.rucio.tag`                | Rucio DID Finder image tag                             | `latest`                                                |
@@ -56,13 +56,13 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `x509Secrets.tag`                    | X509 Secret Service image tag                    | `latest`                                                |
 | `x509Secrets.pullPolicy`             | X509 Secret Service image pull policy            | `Always`                                          |
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
-| `rbacEnabled`                        | Specify if rbac is enabled in your cluster	      | `true`
-| `hostMount`                          | Optional path to mount in transformers as /data  | - 
+| `rbacEnabled`                        | Specify if rbac is enabled in your cluster       | `true`
+| `hostMount`                          | Optional path to mount in transformers as /data  | -
 | `gridAccount`                        | CERN User account name to access Rucio           | -
 | `noCerts`                            | Set to true to disable x509 certs and only use open data | false                                            |
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
-| `objectstore.internal`               | Deploy a captive minio instance with this chart? | true      | 
+| `objectstore.internal`               | Deploy a captive minio instance with this chart? | true      |
 | `objectstore.publicURL`              | What URL should the client use to download files? If set, this is given whether ingress is enabled or not  | nil |      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
 | `minio.accessKey`                    | Access key to log into minio                     | miniouser |
@@ -76,10 +76,10 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.priorityClassName`      | priorityClassName for transformer pods (Not setting it means getting global default) | Not Set |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
-| `transformer.defaultTransformerImage` | Default image for the transformers - must match the codeGen | 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3' |
+| `transformer.defaultTransformerImage` | Default image for the transformers | 'sslhep/servicex_func_adl_xaod_transformer' |
+| `transformer.defaultTransformerTag` | Default image for the transformers - must match the codeGen | '1.0.0-RC.3' |
 | `transformer.persistence.existingClaim` | Existing persistent volume claim | nil |
 | `transformer.subdir` | Subdirectory of the mount to write transformer results to (should end with trailing /) | nil |
-
 
 ## Logging chart
 
@@ -93,7 +93,6 @@ The following table lists the configurable parameters of the Logging chart and t
 | `elasticsearch.user` | Elasticsearch user with appropriate roles | river-dev-logs  |
 | `elasticsearch.pass` | Elasticsearch pass | river-dev-logs  |
 | `elasticsearch.protocol` | SSL support | https  |
-| `kibana.host` | address of the Kibana endpoint | https://atlas-kibana.mwt2.org:5601 |
+| `kibana.host` | address of the Kibana endpoint | <https://atlas-kibana.mwt2.org:5601> |
 | `kibana.dashboards.enabled` | If not there dashboards will be created. | false |
 | `kibana.dashboards.index` | Kibana system index | .kibana-dev  |
-
