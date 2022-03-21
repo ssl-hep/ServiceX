@@ -80,4 +80,5 @@ rabbitmq:
 transformer:
   autoscalerEnabled: false
   pullPolicy: Always
-  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer:v1.0.0-rc.3
+  defaultTransformerImage: sslhep/servicex_func_adl_uproot_transformer
+  defaultTransformerTag: v1.0.0-rc.3

@@ -96,7 +96,7 @@ data:
     {{- end }}
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
     TRANSFORMER_MESSAGING = 'none'
-    TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}"
+    TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}:{{ .Values.transformer.defaultTransformerTag }}"
     
 
     TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
