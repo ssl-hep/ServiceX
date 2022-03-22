@@ -3,10 +3,10 @@ dependencies:
   repository: https://charts.bitnami.com/bitnami/
   version: 8.24.13
 - name: minio
-  repository: https://helm.min.io/
-  version: 8.0.10
+  repository: https://charts.bitnami.com/bitnami/
+  version: 11.2.11
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami/
   version: 8.3.4
-digest: sha256:8bbaf3c50bbf412f09b29d67221d3b4961d6478a5e78b4fa77fd4f2c9e2c837f
-generated: "2022-03-24T15:18:11.459748-05:00"
+digest: sha256:06c9361299b31de58cc5bde106099cfe7716c99e9a8d3abf5c684fbaee7c6d2e
+generated: "2022-04-18T12:02:07.598205798-05:00"
