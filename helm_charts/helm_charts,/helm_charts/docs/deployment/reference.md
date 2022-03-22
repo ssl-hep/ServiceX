@@ -67,8 +67,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `objectstore.internal`               | Deploy a captive minio instance with this chart? | true      |
 | `objectstore.publicURL`              | What URL should the client use to download files? If set, this is given whether ingress is enabled or not  | nil |      |
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
-| `minio.accessKey`                    | Access key to log into minio                     | miniouser |
-| `minio.accessKey`                    | Secret key to log into minio                     | leftfoot1 |
+| `minio.auth.rootUser`                | Username to log into minio                       | miniouser |
+| `minio.auth.rootPassword`            | Password key to log into minio                   | leftfoot1 |
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
 | `transformer.autoscaler.enabled`     | Enable/disable horizontal pod autoscaler for transformers |  True |
