@@ -71,10 +71,10 @@ You can use the minio browser by visiting:
 {{ if .Values.secrets }}
 Log in with minio-accesskey and minio-secretkey from {{ .Values.secrets }} secret that you set up.
 {{ else }}
-{{if and .Values.minio.accessKey  .Values.minio.secretKey }}
+{{if and .Values.minio.auth.rootUser  .Values.minio.auth.rootPassword }}
 Log in with 
-    Access Key: {{ .Values.minio.accessKey }}
-    Secret Key: {{ .Values.minio.secretKey }}
+    User: {{ .Values.minio.auth.rootUser }}
+    Pass: {{ .Values.minio.auth.rootPassword }}
 {{ end }}
 {{ end }}
 
