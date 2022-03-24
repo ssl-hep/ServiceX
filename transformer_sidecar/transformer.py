@@ -17,14 +17,15 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
 import json
 import logging
@@ -33,16 +34,14 @@ import shutil
 import sys
 import time
 import timeit
-import subprocess
 from typing import NamedTuple
 import psutil as psutil
-from hashlib import sha1
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
-from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
+from servicex.transformer.transformer_argument_parser import (
+    TransformerArgumentParser)
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-from servicex.transformer.arrow_writer import ArrowWriter
 
 from queue import Queue
 from threading import Thread
@@ -54,6 +53,7 @@ posix_path = None
 MAX_PATH_LEN = 255
 files_to_upload = []
 failed = False
+
 
 class TimeTuple(NamedTuple):
     """
@@ -73,6 +73,7 @@ class TimeTuple(NamedTuple):
         """
         return self.user + self.system + self.iowait
 
+
 # function to initialize logging
 def initialize_logging(request=None):
     """
@@ -88,7 +89,8 @@ def initialize_logging(request=None):
     else:
         instance = 'Unknown'
     formatter = logging.Formatter('%(levelname)s ' +
-                                  "{} transformer {} ".format(instance, request) +
+                                  "{} transformer {} ".format(instance,
+                                                              request) +
                                   '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -103,22 +105,31 @@ def log_stats(startup_time, elapsed_time, running_time=0.0):
     Log statistics about transformer execution
 
     :param startup_time: time to initialize and run cpp transformer
-    :param elapsed_time:  elapsed time spent by processing file (sys, user, iowait)
-    :param running_time:  total time to run script
+    :param elapsed_time: elapsed time spent by processing file
+                         (sys, user, iowait)
+    :param running_time: total time to run script
     :return: None
     """
-    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
-                                                                  startup_time.system) +
-                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
-                                                                  elapsed_time.system) +
-                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
-    logger.info("Total running time {}".format(running_time))
+    logger.info(
+        "Startup process times  user: {} sys: {} ".format(
+                                                       startup_time.user,
+                                                       startup_time.system) +
+        "iowait: {} total: {}".format(startup_time.iowait,
+                                      startup_time.total_time))
+    logger.info(
+        "File processing times  user: {} sys: {} ".format(
+                                                       elapsed_time.user,
+                                                       elapsed_time.system) +
+        "iowait: {} total: {}".format(elapsed_time.iowait,
+                                      elapsed_time.total_time))
+    logger.info(
+        "Total running time {}".format(running_time))
 
 
 def get_process_info():
     """
-    Get process information (just cpu, sys, iowait times right now) and return it
+    Get process information (just cpu, sys, iowait times right now) and
+    return it
 
     :return: TimeTuple with timing information
     """
@@ -139,8 +150,6 @@ def callback(channel, method, properties, body):
     logger.info(transform_request)
     servicex = ServiceXAdapter(_server_endpoint)
 
-    
-    tick = time.time()
     start_process_times = get_process_info()
     total_events = 0
     output_size = 0
@@ -150,7 +159,6 @@ def callback(channel, method, properties, body):
                                     status_code="start",
                                     info="Starting")
 
-        root_dir = _file_path.replace('/', ':')
         if not os.path.isdir(posix_path):
             os.makedirs(posix_path)
 
@@ -158,10 +166,10 @@ def callback(channel, method, properties, body):
         request_path = os.path.join(output_path, _request_id)
         if not os.path.isdir(request_path):
             os.makedirs(request_path)
-        jsonfile = _file_path.replace('/','-') + '.json'
-        with open(os.path.join(request_path,jsonfile), 'w') as outfile:
+        jsonfile = _file_path.replace('/', '-') + '.json'
+        with open(os.path.join(request_path, jsonfile), 'w') as outfile:
             json.dump(transform_request, outfile)
-        
+
         try:
             watch(logger,
                   request_path,
@@ -174,11 +182,17 @@ def callback(channel, method, properties, body):
         shutil.rmtree(request_path)
 
         stop_process_times = get_process_info()
-        elapsed_process_times = TimeTuple(user=stop_process_times.user - start_process_times.user,
-                                          system=stop_process_times.system - start_process_times.system,
-                                          iowait=stop_process_times.iowait - start_process_times.iowait)
+        user = stop_process_times.user - start_process_times.user
+        system = stop_process_times.system - start_process_times.system
+        iowait = stop_process_times.iowait - start_process_times.iowait
+        elapsed_process_times = TimeTuple(user=user,
+                                          system=system,
+                                          iowait=iowait)
+
         stop_time = timeit.default_timer()
-        log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
+        log_stats(startup_time,
+                  elapsed_process_times,
+                  running_time=(stop_time - start_time))
         record = {'filename': _file_path,
                   'file-id': _file_id,
                   'output-size': output_size,
@@ -204,27 +218,28 @@ def callback(channel, method, properties, body):
                                     info=f"error: {error}")
 
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                   status='failure', num_messages=0, total_time=0,
-                                   total_events=0, total_bytes=0)
+                                   status='failure', num_messages=0,
+                                   total_time=0, total_events=0,
+                                   total_bytes=0)
     finally:
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def output_consumer(q,logger, transform_request, obj_store, servicex):
+def output_consumer(q, logger, transform_request, obj_store, servicex):
     while True:
         _request_id = transform_request['request-id']
         _file_path = transform_request['file-path']
         _file_id = transform_request['file-id']
         tick = time.time()
         item = q.get()
-        filepath,filename = item.rsplit('/',1)
-    
+        filepath, filename = item.rsplit('/', 1)
+
         if obj_store:
-            obj_store.upload_file(_request_id, filename,item)
+            obj_store.upload_file(_request_id, filename, item)
 
         tock = time.time()
         total_time = round(tock - tick, 2)
-    
+
         servicex.post_status_update(file_id=_file_id,
                                     status_code="complete",
                                     info="Success")
@@ -235,16 +250,20 @@ def output_consumer(q,logger, transform_request, obj_store, servicex):
                                    total_events=0,
                                    total_bytes=0)
 
-        logger.info("Time to successfully process {}: {} seconds".format(filepath, total_time))
+        logger.info(
+            "Time to successfully process {}: {} seconds".format(
+                                                            filepath,
+                                                            total_time))
         logger.info('Removed {fn} from directory.'.format(fn=item))
         q.task_done()
 
+
 class FileQueueHandler(FileSystemEventHandler):
-    def __init__(self,logger,queue):
+    def __init__(self, logger, queue):
         self.logger = logger
         self.queue = queue
 
-    def on_modified(self,event):
+    def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith('.log'):
             with open(event.src_path) as log:
                 text = log.read()
@@ -252,12 +271,11 @@ class FileQueueHandler(FileSystemEventHandler):
             if 'Exception' in text:
                 global failed
                 failed = True
-         
 
-    def on_created(self,event):
+    def on_created(self, event):
         if not event.is_directory and not event.src_path.endswith('.log'):
             self.logger.info('File {fn} created.'.format(
-                             fn = event.src_path))
+                             fn=event.src_path))
 
             # check if file still being written, if not run upload
             while True:
@@ -271,12 +289,17 @@ class FileQueueHandler(FileSystemEventHandler):
                     time.sleep(1)
             try:
                 self.queue.put(event.src_path)
-                self.logger.info('Added {fn} to queue.'.format(fn=event.src_path))
+                self.logger.info(
+                    'Added {fn} to queue.'.format(fn=event.src_path))
             except Exception as e:
-                self.logger.error('Failed to add file to queue: {fn}.'.format(fn=event.src_path))
+                self.logger.exception(
+                    'Failed to add file to queue {fn}: {e}'.format(
+                                                            fn=event.src_path,
+                                                            e=e))
 
-def watch(logger, request_path, transform_request=None, object_store=None, servicex=None):
 
+def watch(logger, request_path,
+          transform_request=None, object_store=None, servicex=None):
     # Start output queue
     q = Queue()
 
@@ -284,10 +307,12 @@ def watch(logger, request_path, transform_request=None, object_store=None, servi
     observer = Observer()
 
     # Start consumer
-    Thread(target=output_consumer,args=(q,logger,transform_request,object_store,servicex),daemon=True).start()
+    Thread(target=output_consumer,
+           args=(q, logger, transform_request, object_store, servicex),
+           daemon=True).start()
 
     # Initialize logging event handler
-    event_handler = FileQueueHandler(logger,q)
+    event_handler = FileQueueHandler(logger, q)
 
     # Schedule Observer
     observer.schedule(event_handler, request_path, recursive=False)
@@ -302,10 +327,10 @@ def watch(logger, request_path, transform_request=None, object_store=None, servi
         logger.info('Stopping observer.')
         observer.stop()
         raise Exception('Transform failed...')
-        #sys.exit()
 
     observer.join()
     q.join()
+
 
 if __name__ == "__main__":
     start_time = timeit.default_timer()
@@ -314,7 +339,8 @@ if __name__ == "__main__":
 
     logger = initialize_logging(args.request_id)
     logger.info("----- {}".format(sys.path))
-    logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
+    logger.info(f"result destination: {args.result_destination} \
+                  output dir: {args.output_dir}")
 
     if args.output_dir:
         object_store = None
@@ -330,4 +356,6 @@ if __name__ == "__main__":
     startup_time = get_process_info()
 
     if args.request_id:
-        rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
+        rabbitmq = RabbitMQManager(args.rabbit_uri,
+                                   args.request_id,
+                                   callback)
