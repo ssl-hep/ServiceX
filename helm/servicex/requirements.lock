@@ -1,12 +1,12 @@
 dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami/
-  version: 8.24.12
+  version: 8.24.13
 - name: minio
   repository: https://helm.min.io/
   version: 8.0.10
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami/
   version: 8.3.4
-digest: sha256:447bafe39d2285c3d26592156369337bee11008b669bd931617141c9ac454775
-generated: "2021-12-22T10:40:09.484083-06:00"
+digest: sha256:8bbaf3c50bbf412f09b29d67221d3b4961d6478a5e78b4fa77fd4f2c9e2c837f
+generated: "2022-03-24T15:18:11.459748-05:00"
