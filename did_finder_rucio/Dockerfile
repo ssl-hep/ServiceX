@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir 
 
-RUN yum clean
+RUN yum clean all
 RUN yum -y update
 
 RUN yum install -y https://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm
