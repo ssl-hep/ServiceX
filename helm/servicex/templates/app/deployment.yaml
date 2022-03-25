@@ -40,6 +40,10 @@ spec:
           value: "/opt/servicex/app.conf"
         - name: INSTANCE_NAME
           value: {{ .Release.Name }}
+    {{- if .Values.app.logLevel }}    
+        - name: LOG_LEVEL
+          value: {{ .Values.app.logLevel | upper }}
+    {{- end }}
     {{- if .Values.secrets }}
         - name: GLOBUS_CLIENT_ID
           valueFrom:
