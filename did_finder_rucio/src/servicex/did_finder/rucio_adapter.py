@@ -133,7 +133,7 @@ class RucioAdapter:
                             'adler32': self.get_adler(f['hash']),
                             'file_size': int(f['size'], 10),
                             'file_events': 0,
-                            'file_path': path
+                            'paths': path
                         }
                     )
             yield g_files

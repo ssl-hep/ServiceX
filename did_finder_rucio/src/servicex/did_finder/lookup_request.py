@@ -69,9 +69,9 @@ class LookupRequest:
             for af in ds_files:
                 n_files += 1
                 ds_size += af['file_size']
-                total_paths += len(af['file_path'])
+                total_paths += len(af['paths'])
                 if self.prefix:
-                    af['file_path'] = [self.prefix+fp for fp in af['file_path']]
+                    af['paths'] = [self.prefix+fp for fp in af['paths']]
                 yield af
 
         lookup_finish = datetime.now()
