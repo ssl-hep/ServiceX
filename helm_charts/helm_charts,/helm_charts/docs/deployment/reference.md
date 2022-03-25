@@ -9,6 +9,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `secrets`                            | Name of a secret deployed into the cluster. Must follow example_secrets.yaml | -        |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
+| `app.logLevel`                       | Logging level for ServiceX web app (uses standard unix levels)               | `WARNING`                                                |
 | `app.pullPolicy`                     | ServiceX image pull policy                       | `Always`                                          |
 | `app.rabbitmq.retries`               | Number of times to retry connecting to RabbitMQ on startup | 12                                            |
 | `app.rabbitmq.retry_interval`        | Number of seconds to wait between RabbitMQ retries on startup | 10                                         |
