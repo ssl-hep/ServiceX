@@ -30,6 +30,7 @@ postgres:
 app:
   image: sslhep/servicex_app
   tag: 20220311-2056-stable
+  logLevel: 'WARNING' # set to DEBUG, INFO, WARNING, ERROR, FATAL
   pullPolicy: Always
   replicas: 1
   auth: false
