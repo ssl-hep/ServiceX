@@ -48,7 +48,7 @@ class TestAddFileToDataset(ResourceTestBase):
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
-                                  'file_path': '/foo/bar.root',
+                                  'paths': ["/foo/bar1.root", "/foo/bar2.root"],
                                   'adler32': '12345',
                                   'file_size': 1024,
                                   'file_events': 500
@@ -78,7 +78,7 @@ class TestAddFileToDataset(ResourceTestBase):
         client = self._test_client(lookup_result_processor=mock_processor)
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
-                                  'file_path': '/foo/bar.root',
+                                  'paths': ["/foo/bar1.root", "/foo/bar2.root"],
                                   'adler32': '12345',
                                   'file_size': 1024,
                                   'file_events': 500
@@ -106,10 +106,11 @@ class TestAddFileToDataset(ResourceTestBase):
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
-                                  'file_path': '/foo/bar.root',
+                                  'paths': [123, 123],
                                   'adler32': '12345',
                                   'file_size': 1024,
                                   'file_events': 500
                               })
         assert response.status_code == 500
-        assert response.json == {'message': 'Something went wrong: Test'}
+        assert response.json == {
+            'message': 'Something went wrong: sequence item 0: expected str instance, int found'}

@@ -44,7 +44,7 @@ class AddFileToDataset(ServiceXResource):
             submitted_request = TransformRequest.lookup(request_id)
             self.logger.info(f"Submitted request: {submitted_request} for {request_id}")
             db_record = DatasetFile(request_id=request_id,
-                                    file_path=add_file_request['file_path'],
+                                    paths=','.join(add_file_request['paths']),
                                     adler32=add_file_request['adler32'],
                                     file_events=add_file_request['file_events'],
                                     file_size=add_file_request['file_size'])

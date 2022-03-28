@@ -140,7 +140,7 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_dataset_file.adler32 = '123-455'
         mock_dataset_file.file_size = 0
         mock_dataset_file.file_events = 0
-        mock_dataset_file.file_path = '/foo/bar.root'
+        mock_dataset_file.paths = ["/foo/bar1.root", "/foo/bar2.root"],
         mock_dataset_file.request_id = 'BR549'
         return mock_dataset_file
 

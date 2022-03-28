@@ -259,8 +259,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor.add_file_to_dataset.assert_called()
         add_file_calls = mock_processor.add_file_to_dataset.call_args_list
         assert mock_processor.add_file_to_dataset.call_count == 2
-        assert add_file_calls[0][0][1].file_path == 'file1'
-        assert add_file_calls[1][0][1].file_path == 'file2'
+        assert add_file_calls[0][0][1].paths == 'file1'
+        assert add_file_calls[1][0][1].paths == 'file2'
 
         mock_processor.report_fileset_complete.assert_called()
         fileset_complete_call = mock_processor.report_fileset_complete.call_args

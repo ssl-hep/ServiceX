@@ -44,7 +44,7 @@ class TransformErrors(ServiceXResource):
             return {'message': msg}, 404
         results = [{
             "pod-name": result[1].pod_name,
-            "file": result[0].file_path,
+            "file": result[0].paths[0],
             "events": result[0].file_events,
             "info": result[1].info
         } for result in FileStatus.failures_for_request(request_id)]
