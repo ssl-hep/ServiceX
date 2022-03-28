@@ -28,7 +28,6 @@
 import json
 import logging
 import os
-import sys
 import time
 import timeit
 from collections import namedtuple
@@ -168,13 +167,12 @@ def callback(channel, method, properties, body):
     output_size = 0
     total_time = 0
     start_process_info = get_process_info()
-    this_file_retries = MAX_RETRIES*len(_file_paths)
-    while not file_done:
-        try:
-            for _file_path in _file_paths:
+    for attempt in range(MAX_RETRIES):
+        for _file_path in _file_paths:
+            try:
 
                 # Do the transform
-                logger.info("Trying file {}".format(_file_path))
+                logger.info("Attempt {}. Trying path {}".format(attempt, _file_path))
                 root_file = _file_path.replace('/', ':')
                 output_path = '/home/atlas/' + root_file
                 logger.info("Processing {}, file id: {}".format(root_file, _file_id))
@@ -199,33 +197,30 @@ def callback(channel, method, properties, body):
                 file_done = True
                 break
 
-        except Exception as error:
-            file_retries += 1
-            if file_retries == this_file_retries:
-                transform_request['error'] = str(error)
-                channel.basic_publish(exchange='transformation_failures',
-                                      routing_key=_request_id + '_errors',
-                                      body=json.dumps(transform_request))
-                servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                           status='failure', num_messages=0, total_time=total_time,
-                                           total_events=total_events, total_bytes=output_size)
-
-                servicex.post_status_update(file_id=_file_id,
-                                            status_code="failure",
-                                            info="error: " + str(error))
-
-                file_done = True
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                logger.exception("Received exception")
-            else:
-                logger.warning("Retry {} of {} for {}: {}".format(file_retries,
-                                                                  MAX_RETRIES,
-                                                                  root_file,
-                                                                  error))
+            except Exception as error:
+                file_retries += 1
+                logger.warning("Failed attempt {} of {} for {}: {}".format(attempt,
+                                                                           MAX_RETRIES,
+                                                                           root_file,
+                                                                           error))
                 servicex.post_status_update(file_id=_file_id,
                                             status_code="retry",
                                             info="Try: " + str(file_retries) +
-                                                 " error: " + str(error)[0:1024])
+                                            " error: " + str(error)[0:1024])
+
+        if file_done:
+            break
+
+    if not file_done:
+        channel.basic_publish(exchange='transformation_failures',
+                              routing_key=_request_id + '_errors',
+                              body=json.dumps(transform_request))
+        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+                                   status='failure', num_messages=0, total_time=0,
+                                   total_events=0, total_bytes=0)
+        servicex.post_status_update(file_id=_file_id,
+                                    status_code="failure",
+                                    info="error.")
 
     stop_process_info = get_process_info()
     elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
