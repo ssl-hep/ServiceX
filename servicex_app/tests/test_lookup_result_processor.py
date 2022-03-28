@@ -38,7 +38,7 @@ class TestLookupResultProcessor(ResourceTestBase):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
         dataset_file = DatasetFile(request_id="BR549",
-                                   file_path="/foo/bar.root",
+                                   paths=["/foo/bar1.root", "/foo/bar2.root"],
                                    adler32='12345',
                                    file_size=1024,
                                    file_events=500)
@@ -57,7 +57,7 @@ class TestLookupResultProcessor(ResourceTestBase):
                 {"request-id": 'BR549',
                  "file-id": 42,
                  "columns": 'electron.eta(), muon.pt()',
-                 "file-path": "/foo/bar.root",
+                 "paths": ["/foo/bar1.root", "/foo/bar2.root"],
                  "tree-name": "Events",
                  "service-endpoint":
                      "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",

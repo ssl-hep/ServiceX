@@ -333,7 +333,8 @@ class DatasetFile(db.Model):
                            ForeignKey('requests.request_id'),
                            unique=False,
                            nullable=False)
-    file_path = db.Column(db.String(512), unique=False, nullable=False)
+
+    paths = db.Column(db.Text(), unique=False, nullable=False)
 
     adler32 = db.Column(db.String(48), nullable=True)
     file_size = db.Column(db.BigInteger, nullable=True)

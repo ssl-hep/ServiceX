@@ -40,7 +40,7 @@ class TestTransformErrors(ResourceTestBase):
 
         file_error_result = [
             (DatasetFile(
-                file_path="/foo.bar/baz.root",
+                paths=["/foo/bar1.root", "/foo/bar2.root"],
                 file_events=42
             ), FileStatus(
                 pod_name='openthepodhal',
@@ -56,7 +56,7 @@ class TestTransformErrors(ResourceTestBase):
         assert response.status_code == 200
         assert response.json == {'errors': [
             {'pod-name': 'openthepodhal',
-             'file': '/foo.bar/baz.root',
+             'file': '/foo/bar1.root',
              'events': 42,
              'info': "sorry I can't"
              }

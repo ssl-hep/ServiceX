@@ -41,7 +41,7 @@ class LookupResultProcessor:
             'request-id': request_id,
             'file-id': dataset_file.id,
             'columns': submitted_request.columns,
-            'file-path': dataset_file.file_path,
+            'paths': dataset_file.paths,
             'tree-name': submitted_request.tree_name,
             "service-endpoint": self.advertised_endpoint +
             "servicex/internal/transformation/" + request_id,

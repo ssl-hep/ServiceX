@@ -194,10 +194,9 @@ class SubmitTransformationRequest(ServiceXResource):
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
             else:
-
-                for file_path in file_list:
+                for paths in file_list:
                     file_record = DatasetFile(request_id=request_id,
-                                              file_path=file_path,
+                                              paths=paths,
                                               adler32="xxx",
                                               file_events=0,
                                               file_size=0)
