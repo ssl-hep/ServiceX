@@ -50,7 +50,7 @@ async def test_working_call():
 
         assert len(files) == 1
         assert isinstance(files[0], dict)
-        assert files[0]['file_path'] == 'root://root.idiot.it/dude'
+        assert files[0]['paths'][0] == 'root://root.idiot.it/dude'
 
 
 @pytest.mark.asyncio
