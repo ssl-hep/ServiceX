@@ -26,8 +26,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-import re
+import logging
+import os
+import sys
 import time
+import timeit
+from collections import namedtuple
+import re
+
+import psutil
+import uproot
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
@@ -36,15 +44,7 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from servicex.transformer.uproot_events import UprootEvents
 from servicex.transformer.uproot_transformer import UprootTransformer
 from servicex.transformer.arrow_writer import ArrowWriter
-import uproot
-import os
-import sys
 
-import logging
-import timeit
-import psutil
-# from typing import NamedTuple
-from collections import namedtuple
 
 MAX_RETRIES = 3
 
@@ -96,7 +96,6 @@ def parse_output_logs(logfile):
     return total_events, events_processed
 
 
-# class TimeTuple(NamedTuple):
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
     Named tuple to store process time information.
@@ -151,7 +150,8 @@ def log_stats(startup_time, elapsed_time, running_time=0.0):
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path']
+    _file_paths = transform_request['paths'].split(',')
+    logger.info("File replicas: {}".format(_file_paths))
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
@@ -168,34 +168,40 @@ def callback(channel, method, properties, body):
     output_size = 0
     total_time = 0
     start_process_info = get_process_info()
+    this_file_retries = MAX_RETRIES*len(_file_paths)
     while not file_done:
         try:
-            # Do the transform
-            root_file = _file_path.replace('/', ':')
-            output_path = '/home/atlas/' + root_file
-            logger.info("Processing {}, file id: {}".format(root_file, _file_id))
-            (total_events, output_size) = transform_single_file(_file_path, output_path, servicex)
+            for _file_path in _file_paths:
 
-            tock = time.time()
-            total_time = round(tock - tick, 2)
-            if object_store:
-                object_store.upload_file(_request_id, root_file, output_path)
-                os.remove(output_path)
+                # Do the transform
+                logger.info("Trying file {}".format(_file_path))
+                root_file = _file_path.replace('/', ':')
+                output_path = '/home/atlas/' + root_file
+                logger.info("Processing {}, file id: {}".format(root_file, _file_id))
+                (total_events, output_size) = transform_single_file(
+                    _file_path, output_path, servicex)
 
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="complete",
-                                        info="Total time " + str(total_time))
-            servicex.put_file_complete(_file_path, _file_id, "success",
-                                       num_messages=0,
-                                       total_time=total_time,
-                                       total_events=total_events,
-                                       total_bytes=output_size)
-            logger.info("Time to process {}: {} seconds".format(root_file, total_time))
-            file_done = True
+                tock = time.time()
+                total_time = round(tock - tick, 2)
+                if object_store:
+                    object_store.upload_file(_request_id, root_file, output_path)
+                    os.remove(output_path)
+
+                servicex.post_status_update(file_id=_file_id,
+                                            status_code="complete",
+                                            info="Total time " + str(total_time))
+                servicex.put_file_complete(_file_path, _file_id, "success",
+                                           num_messages=0,
+                                           total_time=total_time,
+                                           total_events=total_events,
+                                           total_bytes=output_size)
+                logger.info("Time to process {}: {} seconds".format(root_file, total_time))
+                file_done = True
+                break
 
         except Exception as error:
             file_retries += 1
-            if file_retries == MAX_RETRIES:
+            if file_retries == this_file_retries:
                 transform_request['error'] = str(error)
                 channel.basic_publish(exchange='transformation_failures',
                                       routing_key=_request_id + '_errors',
@@ -251,7 +257,7 @@ def transform_single_file(file_path, output_path, servicex=None):
     :return: Tuple with (total_events: Int, output_size: Int)
     """
 
-    logger.info("Transforming a single path: " + str(file_path) + " into " + output_path)
+    logger.info(f"Transforming a single path: {file_path} into {output_path}")
     r = os.system('bash /generated/runner.sh -r -d ' + file_path +
                   ' -o ' + output_path + '| tee log.txt')
     # This command is not available in all images!

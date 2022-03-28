@@ -1,4 +1,4 @@
-FROM atlas/analysisbase:21.2.157
+FROM atlas/analysisbase:21.2.199
 
 USER root
 RUN yum -y update
