@@ -1,6 +1,8 @@
 FROM atlas/analysisbase:21.2.199
 
 USER root
+
+RUN yum clean all
 RUN yum -y update
 
 RUN yum install -y https://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-latest.rpm
