@@ -4,8 +4,12 @@ Simply do:
 setupATLAS
 lsetup rucio
 voms-proxy-init
+git clone https://github.com/ssl-hep/ServiceX_DID_Finder_Rucio.git
+cd ServiceX_DID_Finder_Rucio
 pip install -r requirements.txt
-python3 direct_test/test1.py
+cp direct_test/test1.py src
+cd src
+python3 test1.py
 """
 import asyncio
 
@@ -59,8 +63,8 @@ tasks = [
     ),
     loop.create_task(
         t1(
-            'data18_13TeV',
-            'data18_13TeV.periodB.physics_Main.PhysCont.DAOD_PHYS.grp18_v01_p4150'
+            'data17_13TeV',
+            'data17_13TeV.00339070.physics_Main.deriv.DAOD_PHYS.r10258_p3399_p4356_tid23589107_00'
         )
     ),
     # loop.create_task(
