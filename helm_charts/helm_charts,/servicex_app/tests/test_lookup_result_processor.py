@@ -61,6 +61,7 @@ class TestLookupResultProcessor(ResourceTestBase):
                  "tree-name": "Events",
                  "service-endpoint":
                      "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                 "chunk-size": "1000",
                  'result-destination': 'object-store'
                  }))
 

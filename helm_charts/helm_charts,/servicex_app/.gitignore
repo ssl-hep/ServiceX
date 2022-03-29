@@ -13,3 +13,4 @@ dist/
 .pytest_cache/
 .vscode/settings.json
 venv/
+.venv/
