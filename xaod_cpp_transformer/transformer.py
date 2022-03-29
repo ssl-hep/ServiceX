@@ -252,7 +252,7 @@ def transform_single_file(file_path, output_path, servicex=None):
     :return: Tuple with (total_events: Int, output_size: Int)
     """
 
-    logger.info(f"Transforming a single path: {file_path} into {output_path}")
+    logger.info("Transforming a single path: {} into {}".format(file_path, output_path))
     r = os.system('bash /generated/runner.sh -r -d ' + file_path +
                   ' -o ' + output_path + '| tee log.txt')
     # This command is not available in all images!
