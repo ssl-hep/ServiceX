@@ -38,8 +38,7 @@ from typing import NamedTuple
 import psutil as psutil
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
-from servicex.transformer.transformer_argument_parser import (
-    TransformerArgumentParser)
+from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 
@@ -88,10 +87,10 @@ def initialize_logging(request=None):
         instance = os.environ['INSTANCE_NAME']
     else:
         instance = 'Unknown'
-    formatter = logging.Formatter('%(levelname)s ' +
-                                  "{} transformer {} ".format(instance,
-                                                              request) +
-                                  '%(message)s')
+    formatter = logging.Formatter('%(levelname)s '
+                                  + "{} transformer {} ".format(instance,
+                                                                request)
+                                  + '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
@@ -110,20 +109,13 @@ def log_stats(startup_time, elapsed_time, running_time=0.0):
     :param running_time: total time to run script
     :return: None
     """
-    logger.info(
-        "Startup process times  user: {} sys: {} ".format(
-                                                       startup_time.user,
-                                                       startup_time.system) +
-        "iowait: {} total: {}".format(startup_time.iowait,
-                                      startup_time.total_time))
-    logger.info(
-        "File processing times  user: {} sys: {} ".format(
-                                                       elapsed_time.user,
-                                                       elapsed_time.system) +
-        "iowait: {} total: {}".format(elapsed_time.iowait,
-                                      elapsed_time.total_time))
-    logger.info(
-        "Total running time {}".format(running_time))
+    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
+                                                                  startup_time.system) +
+                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
+    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
+                                                                  elapsed_time.system) +
+                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
+    logger.info("Total running time {}".format(running_time))
 
 
 def get_process_info():
@@ -135,8 +127,8 @@ def get_process_info():
     """
     process_info = psutil.Process()
     time_stats = process_info.cpu_times()
-    return TimeTuple(user=time_stats.user+time_stats.children_user,
-                     system=time_stats.system+time_stats.children_system,
+    return TimeTuple(user=time_stats.user + time_stats.children_user,
+                     system=time_stats.system + time_stats.children_system,
                      iowait=time_stats.iowait)
 
 
@@ -251,9 +243,7 @@ def output_consumer(q, logger, transform_request, obj_store, servicex):
                                    total_bytes=0)
 
         logger.info(
-            "Time to successfully process {}: {} seconds".format(
-                                                            filepath,
-                                                            total_time))
+            "Time to successfully process {}: {} seconds".format(filepath, total_time))
         logger.info('Removed {fn} from directory.'.format(fn=item))
         q.task_done()
 
@@ -293,9 +283,7 @@ class FileQueueHandler(FileSystemEventHandler):
                     'Added {fn} to queue.'.format(fn=event.src_path))
             except Exception as e:
                 self.logger.exception(
-                    'Failed to add file to queue {fn}: {e}'.format(
-                                                            fn=event.src_path,
-                                                            e=e))
+                    'Failed to add file to queue {fn}: {e}'.format(fn=event.src_path, e=e))
 
 
 def watch(logger, request_path,

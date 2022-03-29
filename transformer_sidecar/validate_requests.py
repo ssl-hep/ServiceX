@@ -17,20 +17,18 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # this code gets requests in state: Created, Validates request on one file
 # if request valid (all branches exist) it sets request state to Defined
-# if not it sets state to Failed, deletes all the paths
-# belonging to that request.
+# if not it sets state to Failed, deletes all the paths belonging to that request.
 
 import datetime
 import json
@@ -80,12 +78,9 @@ def initialize_logging(request=None):
         instance = os.environ['INSTANCE_NAME']
     else:
         instance = 'Unknown'
-    formatter = logging.Formatter(
-                            '%(levelname)s ' +
-                            "{} uproot_transformer {} ".format(
-                                                           instance,
-                                                           request) +
-                            '%(message)s')
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} uproot_transformer {} ".format(instance, request) +
+                                  '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
@@ -149,13 +144,11 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 
     while not rabbitmq:
         try:
-            rabbitmq = pika.BlockingConnection(
-                pika.URLParameters(rabbitmq_url))
+            rabbitmq = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
             _channel = rabbitmq.channel()
             _channel.queue_declare(queue='validation_requests')
 
-            logger.info(
-                "Connected to RabbitMQ. Ready to start consuming requests")
+            logger.info("Connected to RabbitMQ. Ready to start consuming requests")
 
             _channel.basic_consume(queue='validation_requests',
                                    auto_ack=False,
@@ -166,10 +159,8 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
             rabbitmq = None
             retry_count += 1
             if retry_count < retries:
-                logger.error(
-                    "Failed to connect to RabbitMQ (attempt {}). ".format(
-                       retry_count) +
-                    "Waiting before trying again.")
+                logger.error("Failed to connect to RabbitMQ (attempt {}). ".format(retry_count) +
+                             "Waiting before trying again.")
                 time.sleep(retry_interval)
             else:
                 logger.error("Failed to connect to RabbitMQ. Giving Up")
@@ -178,7 +169,7 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logger = initialize_logging()
+    logger  = initialize_logging()
     if args.path:
         # checks the file
         (valid, info) = validate_request(args.path)
