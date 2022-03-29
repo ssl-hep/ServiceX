@@ -45,6 +45,7 @@ class LookupResultProcessor:
             'tree-name': submitted_request.tree_name,
             "service-endpoint": self.advertised_endpoint +
             "servicex/internal/transformation/" + request_id,
+            "chunk-size": "1000",
             "result-destination": submitted_request.result_destination
         }
 
