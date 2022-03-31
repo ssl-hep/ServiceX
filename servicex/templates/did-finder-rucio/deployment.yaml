@@ -52,6 +52,8 @@ spec:
           {{- if ((.Values.didFinder.rucio.memcache).enabled) }}
           - name: MEMCACHE
             value: "True" 
+          - name: MEMCACHE_TTL
+            value: "{{ .Values.didFinder.rucio.memcache.ttl }}" 
           {{- end }}
         volumeMounts:
           - name: rucio-cfg
