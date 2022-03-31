@@ -61,7 +61,7 @@ spec:
             readOnly: true
       {{- if ((.Values.didFinder.rucio.memcache).enabled) }}
       - name: {{ .Release.Name }}-did-finder-rucio-memcache
-        image: memcached:{{ .Values.didFinder.rucio.memcache.tag }}
+        image: {{ .Values.didFinder.rucio.memcache.image }}:{{ .Values.didFinder.rucio.memcache.tag }}
       {{- end }}
       volumes:
         - name: rucio-cfg
