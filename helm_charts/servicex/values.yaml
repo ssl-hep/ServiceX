@@ -84,6 +84,9 @@ didFinder:
     servicex_longitude: -87.7
     cachePrefix:
     reportLogicalFiles: false
+    memcache:
+      enabled: true
+      tag: alpine
 
   CERNOpenData:
     enabled: true
