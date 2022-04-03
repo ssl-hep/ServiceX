@@ -1,22 +1,6 @@
-FROM cmsopendata/cmssw_5_3_32:latest
+FROM sslhep/servicex_func_adl_cms_aod_transformer@819047bfc995d073f2da695a5f6ab03c8d52d205de466f964ce572223fe8dfa3
 
 USER root
-# We need to turn off the `epel` repo as CERN has removed
-# all files connected with that.
-# Make sure python is ready to install a few extra (old) modules as well. 
-RUN yum-config-manager --disable epel &&\
-    yum -y update &&\
-    yum -y install openssl-devel
-
-# Install a modern version of Python
-WORKDIR /python-build
-RUN wget https://www.python.org/ftp/python/3.6.2/Python-3.6.2.tar.xz &&\
-    tar xf Python-3.6.2.tar.xz &&\
-    cd Python-3.6.2 &&\
-    ./configure &&\
-    make &&\
-    make altinstall &&\
-    rm -rf /python-build
 
 # Install everything needed to host/run the analysis jobs
 WORKDIR /servicex
