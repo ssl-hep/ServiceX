@@ -7,6 +7,7 @@ WORKDIR /servicex
 COPY requirements.txt .
 RUN python3.6 -m pip install --user safety==1.8.7
 RUN python3.6 -m pip install --user -r requirements.txt
+RUN python3.6 -m pip list
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
