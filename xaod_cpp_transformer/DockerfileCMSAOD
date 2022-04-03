@@ -1,4 +1,4 @@
-FROM sslhep/servicex_func_adl_cms_aod_transformer@819047bfc995d073f2da695a5f6ab03c8d52d205de466f964ce572223fe8dfa3
+FROM sslhep/servicex_func_adl_cms_aod_transformer@sha256:819047bfc995d073f2da695a5f6ab03c8d52d205de466f964ce572223fe8dfa3
 
 USER root
 
