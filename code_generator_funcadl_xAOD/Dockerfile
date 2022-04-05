@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.9
 
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
@@ -13,6 +13,7 @@ RUN pip install safety==1.9.0
 RUN safety check -r requirements.txt
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
+RUN pip list
 
 COPY boot.sh ./
 COPY servicex/ ./servicex
