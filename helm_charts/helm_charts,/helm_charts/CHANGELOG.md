@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - DID Finder now returns an ordered list of replicas. If transformer is unable
 to open a replica then it can go down the list to find an accesible file
+- DID finder can take URI parameters `files`, `rucio://datset-name?files=10` and it will
+  return only 10 files from the dataset. By default all flies are returned
+- DID finder can take URI prameter `get`, `rucio://data-set?get=availible` and only files
+  in a dataset that are availible will be returned. If `all` is supplied instead, then all
+  files must be returned. Anything less throws an error.
 - About page on web ui to show the deployed version information
 ### Changed
 - In helm chart, split the default transformer image into two values. One for image
