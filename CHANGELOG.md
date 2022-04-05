@@ -14,6 +14,8 @@ to open a replica then it can go down the list to find an accesible file
   in a dataset that are availible will be returned. If `all` is supplied instead, then all
   files must be returned. Anything less throws an error.
 - About page on web ui to show the deployed version information
+- xAOD code generator now works with metadata allowing one to alter its behavior on-the-fly to support
+  all collections and obejcts in the ATLAS xAOD
 ### Changed
 - In helm chart, split the default transformer image into two values. One for image
 name and a second one for just the tag. This makes it easier for the deployment
