@@ -143,7 +143,7 @@ class RucioAdapter:
                         continue
                     path = self.get_paths(f['url']) \
                         if not self.report_logical_files else \
-                        [f['identity']]
+                        [f['identity'].strip('cms:')]
 
                     g_files.append(
                         {
