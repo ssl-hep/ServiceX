@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased 1.0.30
+### Added
+- DID Finder now returns an ordered list of replicas. If transformer is unable
+to open a replica then it can go down the list to find an accesible file
+- About page on web ui to show the deployed version information
+### Changed
+- In helm chart, split the default transformer image into two values. One for image
+name and a second one for just the tag. This makes it easier for the deployment
+script to update the transformer tag.
+- 
+### Fixed
+- Correct missing permissions required to use POSIX volume for transform results
+- Rucio DID Finder correctly handles files for which there are no replicas
+
+### Removed
 
 ## 20220323-1932-stable - 2022-03-23
 
