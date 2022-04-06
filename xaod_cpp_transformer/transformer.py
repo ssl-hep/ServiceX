@@ -276,21 +276,6 @@ def transform_single_file(file_path, output_path, servicex=None):
             logger.error(mesg)
             raise RuntimeError(mesg)
 
-    if not object_store:
-        flat_file = uproot.open(output_path)
-        flat_tree_name = flat_file.keys()[0]
-        attr_name_list = flat_file[flat_tree_name].keys()
-
-        arrow_writer = ArrowWriter(file_format=args.result_format,
-                                   object_store=object_store,
-                                   messaging=messaging)
-        # NB: We're converting the *output* ROOT file to Arrow arrays
-        event_iterator = UprootEvents(file_path=output_path, tree_name=flat_tree_name,
-                                      attr_name_list=attr_name_list)
-        transformer = UprootTransformer(event_iterator)
-        arrow_writer.write_branches_to_arrow(transformer=transformer, topic_name=args.request_id,
-                                             file_id=None, request_id=args.request_id)
-        logger.info("Timings: "+str(arrow_writer.messaging_timings))
     return total_events, output_size
 
 
