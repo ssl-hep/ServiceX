@@ -120,6 +120,7 @@ class RucioAdapter:
         datasets = self.list_datasets_for_did(did)
         if not datasets:
             return
+        no_replica_files = 0
         for ds in datasets:
             reps = self.replica_client.list_replicas(
                 [{'scope': ds[0], 'name': ds[1]}],
@@ -140,6 +141,7 @@ class RucioAdapter:
                     # Path is either a list of replicas or a single logical name
                     if 'url' not in f:
                         self.logger.error(f"File {f['identity']} has no replicas.")
+                        no_replica_files += 1
                         continue
                     path = self.get_paths(f['url']) \
                         if not self.report_logical_files else \
@@ -154,3 +156,7 @@ class RucioAdapter:
                         }
                     )
             yield g_files
+
+        if no_replica_files > 0:
+            raise ValueError(f'Dataset {did} is missing replicas for {no_replica_files} '
+                             'of its files.')
