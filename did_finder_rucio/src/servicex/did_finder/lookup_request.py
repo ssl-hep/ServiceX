@@ -64,7 +64,6 @@ class LookupRequest:
         total_paths = 0
         avg_replicas = 0
         lookup_start = datetime.now()
-        self.logger.info("Starting Lookup of {}".format(self.did))
 
         for ds_files in self.rucio_adapter.list_files_for_did(self.did):
             for af in ds_files:
