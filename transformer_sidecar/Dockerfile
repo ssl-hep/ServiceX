@@ -18,7 +18,12 @@ ENV PYTHONUNBUFFERED=1
 # Copy over the source
 COPY transformer.py \
      validate_requests.py \
+     scripts/proxy-exporter.sh \
+     scripts/watch.sh \
      ./
+
+ENV X509_USER_PROXY=/tmp/grid-security/x509up
+ENV X509_CERT_DIR /etc/grid-security/certificates
 
 RUN useradd -ms /bin/bash output -G sudo && passwd -d output
 RUN chgrp -R 0 /home/output && chmod -R g+rwX /home/output

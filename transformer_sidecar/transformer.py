@@ -156,9 +156,18 @@ def callback(channel, method, properties, body):
 
         output_path = posix_path
         request_path = os.path.join(output_path, _request_id)
+        # creating output dir for transform output files
         if not os.path.isdir(request_path):
             os.makedirs(request_path)
+        scripts_path = os.path.join(output_path,'scripts')
+        # creating scripts dir for access by science transformer
+        if not os.path.isdir(scripts_path):
+            os.makedirs(scripts_path)
+        shutil.copy('watch.sh', scripts_path)
+        shutil.copy('proxy-exporter.sh',scripts_path)
+
         jsonfile = _file_path.replace('/', '-') + '.json'
+        # creating json file for use by science transformer
         with open(os.path.join(request_path, jsonfile), 'w') as outfile:
             json.dump(transform_request, outfile)
 
@@ -258,7 +267,8 @@ class FileQueueHandler(FileSystemEventHandler):
             with open(event.src_path) as log:
                 text = log.read()
 
-            if 'Exception' in text:
+            flags = ['exception', 'fatal']
+            if any(flag in text.lower() for flag in flags):
                 global failed
                 failed = True
 
@@ -287,7 +297,9 @@ class FileQueueHandler(FileSystemEventHandler):
 
 
 def watch(logger, request_path,
-          transform_request=None, object_store=None, servicex=None):
+          transform_request=None, 
+          object_store=None, 
+          servicex=None):
     # Start output queue
     q = Queue()
 
@@ -322,7 +334,7 @@ def watch(logger, request_path,
 
 if __name__ == "__main__":
     start_time = timeit.default_timer()
-    parser = TransformerArgumentParser(description="Girder Transformer")
+    parser = TransformerArgumentParser(description="ServiceX Transformer")
     args = parser.parse_args()
 
     logger = initialize_logging(args.request_id)
