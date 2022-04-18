@@ -93,7 +93,7 @@ class LookupRequest:
 
         cachedResults = []
         if self.mcclient:
-            cachedResults = self.getCachedResults(self.did)
+            cachedResults = self.getCachedResults()
 
         if cachedResults:
             for af in cachedResults:
