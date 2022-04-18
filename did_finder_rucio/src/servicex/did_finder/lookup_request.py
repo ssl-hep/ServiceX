@@ -91,7 +91,6 @@ class LookupRequest:
         avg_replicas = 0
         lookup_start = datetime.now()
 
-        cachedResults = []
         if self.mcclient:
             cachedResults = self.getCachedResults()
 
@@ -99,6 +98,7 @@ class LookupRequest:
             for af in cachedResults:
                 yield af
         else:
+            cachedResults = []
             for ds_files in self.rucio_adapter.list_files_for_did(self.did):
                 for af in ds_files:
                     n_files += 1
