@@ -29,7 +29,7 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: 20220323-1932-stable
+  tag: 20220418-1418-stable
   pullPolicy: Always
 
   checksImage: ncsa/checks:latest
@@ -78,7 +78,7 @@ didFinder:
   rucio:
     enabled: true
     image: sslhep/servicex-did-finder
-    tag: 20220323-1932-stable
+    tag: 20220418-1418-stable
     pullPolicy: Always
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -90,7 +90,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    tag: 20220323-1932-stable
+    tag: 20220418-1418-stable
     pullPolicy: Always
     cachePrefix:
 
@@ -103,7 +103,7 @@ codeGen:
   # image: sslhep/servicex_code_gen_func_adl_uproot
   # for CMS Run 1 AOD OpenData
   # image: sslhep/servicex_code_gen_cms_aod
-  tag: 20220323-1932-stable
+  tag: 20220418-1418-stable
   pullPolicy: Always
 
 # Pull policy for the worker pods - the image and version are specified as
@@ -134,7 +134,7 @@ transformer:
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: 20220323-1932-stable
+  tag: 20220418-1418-stable
   pullPolicy: Always
   vomsOrg: atlas
 
