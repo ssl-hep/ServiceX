@@ -72,7 +72,7 @@ class LookupRequest:
         self.logger.addHandler(logging.NullHandler())
         if os.getenv("MEMCACHE") == 'True':
             self.mcclient = Client('localhost', serde=JsonSerde())
-        self.ttl = os.getenv("MEMCACHE_TTL")
+        self.ttl = int(os.getenv("MEMCACHE_TTL"))
 
     def getCachedResults(self):
         res = self.mcclient.get(self.did)
