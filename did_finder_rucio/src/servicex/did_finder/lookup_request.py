@@ -28,6 +28,8 @@
 import os
 import logging
 import json
+import zlib
+import base64
 from datetime import datetime
 from servicex.did_finder.rucio_adapter import RucioAdapter
 from pymemcache.client.base import Client
@@ -35,16 +37,15 @@ from pymemcache.client.base import Client
 
 class JsonSerde(object):
     def serialize(self, key, value):
-        if isinstance(value, str):
-            return value, 1
-        return json.dumps(value), 2
+        cv = base64.b64encode(
+            zlib.compress(
+                json.dumps(value).encode('utf-8')
+            )
+        ).decode('ascii')
+        return cv, 1
 
     def deserialize(self, key, value, flags):
-        if flags == 1:
-            return value
-        if flags == 2:
-            return json.loads(value)
-        raise Exception("Unknown serialization format")
+        return json.loads(zlib.decompress(base64.b64decode(value)))
 
 
 class LookupRequest:
@@ -97,8 +98,12 @@ class LookupRequest:
         if cachedResults:
             self.logger.info('Cache hit. Found {} files'.format(len(cachedResults)))
             for af in cachedResults:
+                n_files += 1
+                ds_size += af['file_size']
+                total_paths += len(af['paths'])
                 yield af
         else:
+            self.logger.info('Cache miss. Doing Rucio lookup.')
             cachedResults = []
             for ds_files in self.rucio_adapter.list_files_for_did(self.did):
                 for af in ds_files:
