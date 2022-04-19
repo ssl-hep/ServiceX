@@ -95,6 +95,7 @@ class LookupRequest:
             cachedResults = self.getCachedResults()
 
         if cachedResults:
+            self.logger.info('Cache hit. Found {} files'.format(len(cachedResults)))
             for af in cachedResults:
                 yield af
         else:
