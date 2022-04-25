@@ -49,9 +49,9 @@ from watchdog.events import FileSystemEventHandler
 
 object_store = None
 posix_path = None
-MAX_PATH_LEN = 255
-files_to_upload = []
-failed = False
+FAILED = False
+COMPLETED = False
+TIMEOUT = 30
 
 
 class TimeTuple(NamedTuple):
@@ -159,15 +159,14 @@ def callback(channel, method, properties, body):
         # creating output dir for transform output files
         if not os.path.isdir(request_path):
             os.makedirs(request_path)
-        scripts_path = os.path.join(output_path,'scripts')
         # creating scripts dir for access by science transformer
+        scripts_path = os.path.join(output_path, 'scripts')
         if not os.path.isdir(scripts_path):
             os.makedirs(scripts_path)
         shutil.copy('watch.sh', scripts_path)
         shutil.copy('proxy-exporter.sh',scripts_path)
-
-        jsonfile = _file_path.replace('/', '-') + '.json'
         # creating json file for use by science transformer
+        jsonfile = str(_file_id) + '.json'
         with open(os.path.join(request_path, jsonfile), 'w') as outfile:
             json.dump(transform_request, outfile)
 
@@ -177,7 +176,11 @@ def callback(channel, method, properties, body):
                   transform_request,
                   object_store=object_store,
                   servicex=servicex)
+            global COMPLETED
+            COMPLETED = False
         except Exception as e:
+            global FAILED
+            FAILED = True
             raise e
 
         shutil.rmtree(request_path)
@@ -235,8 +238,9 @@ def output_consumer(q, logger, transform_request, obj_store, servicex):
         item = q.get()
         filepath, filename = item.rsplit('/', 1)
 
+        new_filename = _file_path.replace('/',':') + ':' + filename
         if obj_store:
-            obj_store.upload_file(_request_id, filename, item)
+            obj_store.upload_file(_request_id, new_filename, item)
 
         tock = time.time()
         total_time = round(tock - tick, 2)
@@ -250,12 +254,22 @@ def output_consumer(q, logger, transform_request, obj_store, servicex):
                                    total_time=total_time,
                                    total_events=0,
                                    total_bytes=0)
-
         logger.info(
             "Time to successfully process {}: {} seconds".format(filepath, total_time))
+        os.remove(item) 
         logger.info('Removed {fn} from directory.'.format(fn=item))
         q.task_done()
 
+        timeout_start = time.time()
+        while q.empty():
+            if time.time() < timeout_start + TIMEOUT:
+                time.sleep(1)
+            else:
+                logger.info('QUEUE is empty. Setting completed = True')
+                global COMPLETED
+                COMPLETED = True
+                break
+                            
 
 class FileQueueHandler(FileSystemEventHandler):
     def __init__(self, logger, queue):
@@ -269,8 +283,8 @@ class FileQueueHandler(FileSystemEventHandler):
 
             flags = ['exception', 'fatal']
             if any(flag in text.lower() for flag in flags):
-                global failed
-                failed = True
+                global FAILED
+                FAILED = True
 
     def on_created(self, event):
         if not event.is_directory and not event.src_path.endswith('.log'):
@@ -295,9 +309,8 @@ class FileQueueHandler(FileSystemEventHandler):
                 self.logger.exception(
                     'Failed to add file to queue {fn}: {e}'.format(fn=event.src_path, e=e))
 
-
 def watch(logger, request_path,
-          transform_request=None, 
+          transform_request, 
           object_store=None, 
           servicex=None):
     # Start output queue
@@ -319,11 +332,17 @@ def watch(logger, request_path,
 
     # Start the observer
     observer.start()
-    while not failed:
+    
+    while not (FAILED or COMPLETED):
         # Set the thread sleep time
         time.sleep(1)
 
-    if failed:
+    if COMPLETED:
+        logger.info('Stopping observer. All work is done.')
+        observer.stop()
+        return
+    
+    if FAILED:
         logger.info('Stopping observer.')
         observer.stop()
         raise Exception('Transform failed...')
