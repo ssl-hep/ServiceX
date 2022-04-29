@@ -145,7 +145,7 @@ class RabbitAdaptor(object):
                 continue
 
     def bind_queue_to_exchange(self, exchange, queue):
-        current_app.logger.info('Binding queue %s to exchange %s', (queue, exchange))
+        current_app.logger.info(f"Binding queue {queue} to exchange {exchange}")
 
         while True:
             try:

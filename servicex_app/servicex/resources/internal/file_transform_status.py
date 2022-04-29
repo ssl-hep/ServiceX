@@ -26,7 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import datetime
+import json
 
+from flask import current_app
 from flask_restful import reqparse
 from servicex.models import db
 from servicex.resources.servicex_resource import ServiceXResource
@@ -47,7 +49,7 @@ class FileTransformationStatus(ServiceXResource):
 
     def post(self, request_id, file_id):
         status = self.status_parser.parse_args()
-        print(status)
+        current_app.logger.info(f"Metric: {status}", extra={'requestId': request_id})
         status.request_id = request_id
         file_status = FileStatus(file_id=file_id, request_id=request_id,
                                  timestamp=datetime.datetime.strptime(
@@ -57,10 +59,21 @@ class FileTransformationStatus(ServiceXResource):
                                  status=status['status-code'],
                                  info=status.info[:max_string_size])
         file_status.save_to_db()
-        self.logger.info(f"Saved file status: {file_status}")
+        current_app.logger.info(f"file_id: {file_id} status: {file_status.status}",
+                                extra={'requestId': request_id})
+        status_dict = {'file_id': file_id,
+                       'request_id': request_id,
+                       'timestamp': status.timestamp,
+                       'pod_name': status['pod-name'],
+                       'status': status['status-code'],
+                       'info': status.info[:max_string_size]}
+        current_app.logger.debug(f"Metric: {json.dumps(status_dict)}",
+                                 extra={'requestId': request_id})
+
         try:
             db.session.commit()
         except Exception:
-            self.logger.exception("Error saving file status record")
+            current_app.logger.exception("Error saving file status record",
+                                         extra={'requestId': request_id})
         finally:
             return "Ok"

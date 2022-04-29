@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, current_app
 
 from servicex.decorators import auth_required
 from servicex.resources.servicex_resource import ServiceXResource
@@ -18,7 +18,7 @@ class DeploymentStatus(ServiceXResource):
         status = manager.get_deployment_status(request_id)
         if status is None:
             msg = f"Deployment not found for request with id: '{request_id}'"
-            self.logger.error(msg)
+            current_app.logger.error(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
-        self.logger.info(f"Got status request: {status.to_dict()}")
+        current_app.logger.info(f"Got status request: {status.to_dict()}")
         return jsonify(status.to_dict())

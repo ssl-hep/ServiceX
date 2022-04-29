@@ -28,6 +28,7 @@
 import re
 
 import requests
+from flask import current_app
 
 
 class DockerRepoAdapter:
@@ -51,5 +52,6 @@ class DockerRepoAdapter:
         if r.status_code == 404:
             return False
 
-        print("Requested Image: "+tagged_image+" exists, last updated "+r.json()['last_updated'])
+        current_app.logger.info(f"Requested Image: {tagged_image} exists, "
+                                f"last updated {r.json()['last_updated']}")
         return True

@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request
+from flask import request, current_app
 
 from servicex.models import TransformRequest, DatasetFile
 from servicex.resources.servicex_resource import ServiceXResource
@@ -42,7 +42,8 @@ class AddFileToDataset(ServiceXResource):
             from servicex.models import db
             add_file_request = request.get_json()
             submitted_request = TransformRequest.lookup(request_id)
-            self.logger.info(f"Submitted request: {submitted_request} for {request_id}")
+            current_app.logger.info(f"Submitted request: {submitted_request}",
+                                    extra={'requestId': request_id})
             db_record = DatasetFile(request_id=request_id,
                                     paths=','.join(add_file_request['paths']),
                                     adler32=add_file_request['adler32'],
@@ -52,12 +53,14 @@ class AddFileToDataset(ServiceXResource):
             self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             db.session.commit()
-            self.logger.info(f"Got file-id: {db_record.id} for request-id:{str(request_id)}")
+            current_app.logger.info(f"Got file-id: {db_record.id}",
+                                    extra={'requestId': request_id})
             return {
                 "request-id": str(request_id),
                 "file-id": db_record.id
             }
 
         except Exception as e:
-            self.logger.exception("Exception occurred when adding file to dataset")
+            current_app.logger.exception("Exception occurred when adding file to dataset",
+                                         extra={'requestId': request_id})
             return {'message': f"Something went wrong: {e}"}, 500

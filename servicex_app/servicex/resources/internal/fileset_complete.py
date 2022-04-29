@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request
+from flask import request, current_app
 
 from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
@@ -40,7 +40,8 @@ class FilesetComplete(ServiceXResource):
     def put(self, request_id):
         summary = request.get_json()
         rec = TransformRequest.lookup(request_id)
-        self.logger.info(f"Completed fileset for request: {request_id}")
+        current_app.logger.info("Completed fileset for request",
+                                extra={'requestId': request_id})
         self.lookup_result_processor.report_fileset_complete(
             rec,
             num_files=summary['files'],

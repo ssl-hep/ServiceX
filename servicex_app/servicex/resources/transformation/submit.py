@@ -93,11 +93,11 @@ class SubmitTransformationRequest(ServiceXResource):
 
     @auth_required
     def post(self):
+        request_id = str(uuid.uuid4())  # make sure we have a request id for all messages
         try:
             args = self.parser.parse_args()
             config = current_app.config
 
-            request_id = str(uuid.uuid4())
             image = args["image"]
             did = args.get("did")
             file_list = args.get("file-list")
@@ -111,7 +111,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
                 if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
-                    self.logger.warning(msg)
+                    current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
 
             if self.object_store and \
@@ -124,7 +124,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
                 if not self.docker_repo_adapter.check_image_exists(image):
                     msg = f"Requested transformer docker image doesn't exist: {image}"
-                    self.logger.error(msg)
+                    current_app.logger.error(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
 
             user = self.get_requesting_user()
@@ -174,7 +174,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     queue=request_id+"_errors")
 
             except Exception:
-                self.logger.exception("Unable to create transformer exchange")
+                current_app.logger.exception("Unable to create transformer exchange",
+                                             extra={'requestId': request_id})
                 return {'message': "Error setting up transformer queues"}, 503
 
             request_rec.save_to_db()
@@ -219,17 +220,20 @@ class SubmitTransformationRequest(ServiceXResource):
                         request_rec
                     )
 
-            self.logger.info(f"Transformation request submitted with id: {request_id}")
+            current_app.logger.info("Transformation request submitted",
+                                    extra={'requestId': request_id})
             return {
                 "request_id": str(request_id)
             }
         except BadRequest as bad_request:
             msg = f'The json request was malformed: {str(bad_request)}'
-            self.logger.error(msg)
+            current_app.logger.error(msg, extra={'requestId': request_id})
             return {'message': msg}, 400
         except ValueError as eek:
-            self.logger.exception("Failed to submit transform request")
+            current_app.logger.exception("Failed to submit transform request",
+                                         extra={'requestId': request_id})
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception:
-            self.logger.exception("Got exception while submitting transformation request")
+            current_app.logger.exception("Got exception while submitting transformation request",
+                                         extra={'requestId': request_id})
             return {'message': 'Something went wrong'}, 500

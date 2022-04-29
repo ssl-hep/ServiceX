@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
 import os
 
 import base64
@@ -41,16 +40,12 @@ class TransformerManager:
     POSIX_VOLUME_MOUNT = "/posix_volume"
 
     def __init__(self, manager_mode):
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
-
         if manager_mode == 'internal-kubernetes':
             kubernetes.config.load_incluster_config()
         elif manager_mode == 'external-kubernetes':
             kubernetes.config.load_kube_config()
         else:
-            logger.error(f"Manager mode {manager_mode} not valid")
+            current_app.logger.error(f"Manager mode {manager_mode} not valid")
             raise ValueError('Manager mode '+manager_mode+' not valid')
 
     @staticmethod
@@ -221,7 +216,8 @@ class TransformerManager:
                 if pvc.status.phase == 'Bound':
                     return True
                 else:
-                    self.logger.warning(f"Volume Claim '{claim_name} found, but it is not bound")
+                    current_app.logger.warning(f"Volume Claim '{claim_name} found, "
+                                               f"but it is not bound")
                     return False
         return False
 
@@ -256,22 +252,18 @@ class TransformerManager:
         api_response = api_instance.create_namespaced_deployment(
             body=job,
             namespace=namespace)
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        logger.info(f"Job created. status={api_response.status}")
+        current_app.logger.info(f"Job created. status={api_response.status}")
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
         # Create job
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
         try:
             api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa,
                 namespace=namespace)
-            logger.info(f"Job created. status={api_response.status}")
+            current_app.logger.info(f"Job created. status={api_response.status}")
         except ApiException as e:
-            logger.exception(f"Exception during HPA Creation: {e}")
+            current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
     def launch_transformer_jobs(self, image, request_id, workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
@@ -291,8 +283,6 @@ class TransformerManager:
 
     @staticmethod
     def shutdown_transformer_job(request_id, namespace):
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
         try:
             if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
                 autoscaler_api = kubernetes.client.AutoscalingV1Api()
@@ -301,7 +291,7 @@ class TransformerManager:
                     namespace=namespace
                 )
         except ApiException:
-            logger.exception(f"Exception during Job {request_id} HPA Shut Down")
+            current_app.logger.exception(f"Exception during Job {request_id} HPA Shut Down")
 
         try:
             api_v1 = client.AppsV1Api()
@@ -310,7 +300,7 @@ class TransformerManager:
                 namespace=namespace
             )
         except ApiException:
-            logger.exception(f"Exception during Job {request_id} Deployment Shut Down")
+            current_app.logger.exception(f"Exception during Job {request_id} Deployment Shut Down")
 
         try:
             api_core = client.CoreV1Api()
@@ -318,7 +308,7 @@ class TransformerManager:
             api_core.delete_namespaced_config_map(name=configmap_name,
                                                   namespace=namespace)
         except ApiException:
-            logger.exception(f"Exception during Job {request_id} ConfigMap cleanup")
+            current_app.logger.exception(f"Exception during Job {request_id} ConfigMap cleanup")
 
     @staticmethod
     def get_deployment_status(

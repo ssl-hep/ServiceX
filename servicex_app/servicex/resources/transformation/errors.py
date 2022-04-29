@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask import current_app
+
 from servicex.decorators import auth_required
 from servicex.models import TransformRequest, FileStatus
 from servicex.resources.servicex_resource import ServiceXResource
@@ -40,7 +42,8 @@ class TransformErrors(ServiceXResource):
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
-            self.logger.error("When looking up errors, " + msg)
+            current_app.logger.error("When looking up errors, " + msg,
+                                     extra={'requestId': request_id})
             return {'message': msg}, 404
         results = [{
             "pod-name": result[1].pod_name,
