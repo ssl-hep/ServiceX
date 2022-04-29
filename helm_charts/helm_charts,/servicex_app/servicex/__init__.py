@@ -25,10 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
 from distutils.util import strtobool
 import sys
 
 import os
+
 from flask import Flask
 from flask_bootstrap import Bootstrap5
 from flask_jwt_extended import (JWTManager)
@@ -41,6 +43,27 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
+
+
+class ServiceXFormatter(logging.Formatter):
+    """
+    Need a custom formatter to allow for logging with request ids that vary.
+    Normally log messages are "level instance component request_id msg" and
+    request_id gets set by initialize_logging but we need a handler that'll let
+    us pass in the request id and have that embedded in the log message
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format record with request id if present, otherwise assume None
+
+        :param record: LogRecord
+        :return: formatted log message
+        """
+
+        if not hasattr(record, "requestId"):
+            setattr(record, "requestId", None)
+        return super().format(record)
 
 
 def _override_config_with_environ(app):
@@ -71,12 +94,42 @@ def create_app(test_config=None,
     Bootstrap5(app)
 
     JWTManager(app)
+
+    # setup logging
+    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+    formatter = ServiceXFormatter('%(levelname)s ' +
+                                  f"{instance} servicex_app " +
+                                  '%(requestId)s %(message)s')
+    servicex_handler = logging.StreamHandler()
+    servicex_handler.setFormatter(formatter)
+    if app.debug:
+        servicex_handler.setLevel('DEBUG')
+        app.logger.level = logging.DEBUG
+    else:
+        levels = {
+            'DEBUG': logging.DEBUG,
+            'INFO': logging.INFO,
+            'WARNING': logging.WARNING,
+            'WARN': logging.WARNING,
+            'ERROR': logging.ERROR,
+            'CRITICAL': logging.CRITICAL
+        }
+        level = os.environ.get('LOG_LEVEL', 'WARNING').upper()
+        servicex_handler.setLevel(levels[level])
+        app.logger.level = levels[level]
+
+    # remove current handlers and add our own
+    for h in app.logger.handlers:
+        app.logger.removeHandler(h)
+    app.logger.addHandler(servicex_handler)
+    app.logger.info("Initialized logging")
+
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
         app.config.update(_override_config_with_environ(app))
     else:
         app.config.from_mapping(test_config)
-        print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
+        app.logger.info(f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}")
 
     with app.app_context():
         # Validate did-finder scheme
@@ -139,7 +192,7 @@ def create_app(test_config=None,
                 not transformer_manager.persistent_volume_claim_exists(
                     app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'],
                     app.config['TRANSFORMER_NAMESPACE']):
-            print("Supplied Transformer Persistent Volume Claim Doesn't exist")
+            app.logger.error("Supplied Transformer Persistent Volume Claim Doesn't exist")
             sys.exit(-1)
 
         api = Api(app)

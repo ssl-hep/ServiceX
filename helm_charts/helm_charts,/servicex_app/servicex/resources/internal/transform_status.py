@@ -1,6 +1,6 @@
-import sys
 from datetime import datetime, timezone
 
+from flask import current_app
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest, db
@@ -22,10 +22,9 @@ class TransformationStatusInternal(ServiceXResource):
         status = status_parser.parse_args()
         status.request_id = request_id
         if status.severity == "fatal":
-            self.logger.error(f"+ Fatal error reported for {request_id} from " +
-                              f"{status.source}: {status.info}")
-            sys.stderr.write(f"+ Fatal error reported for {request_id} from " +
-                             f"{status.source}: {status.info}\n")
+            current_app.logger.error(f"Fatal error reported from "
+                                     f"{status.source}: {status.info}",
+                                     extra={'requestId': request_id})
 
             submitted_request = TransformRequest.lookup(request_id)
             submitted_request.status = 'Fatal'
@@ -34,4 +33,4 @@ class TransformationStatusInternal(ServiceXResource):
             submitted_request.save_to_db()
             db.session.commit()
         else:
-            print(status)
+            current_app.logger.info(f"Metric: {status}", extra={'requestId': request_id})

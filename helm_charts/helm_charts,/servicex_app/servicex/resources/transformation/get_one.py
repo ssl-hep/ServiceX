@@ -42,7 +42,7 @@ class TransformationRequest(ServiceXResource):
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
-            self.logger.error(msg)
+            current_app.logger.error(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
         transform_json = transform.to_json()
         if current_app.config['OBJECT_STORE_ENABLED'] and \

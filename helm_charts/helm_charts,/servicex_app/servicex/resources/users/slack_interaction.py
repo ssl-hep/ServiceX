@@ -27,7 +27,7 @@ class SlackInteraction(ServiceXResource):
 
         secret = current_app.config.get('SLACK_SIGNING_SECRET')
         if not secret:
-            print("Slack interaction received but no Slack app configured")
+            current_app.logger.error("Slack interaction received but no Slack app configured")
             respond(response_url, missing_slack_app())
             return Response(status=403)
 

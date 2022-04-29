@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from typing import List
 
+from flask import current_app
 from flask_restful import reqparse
 
 from servicex.decorators import auth_required
@@ -45,9 +46,9 @@ class AllTransformationRequests(ServiceXResource):
         query_id = args.get('submitted_by')
         transforms: List[TransformRequest]
         if query_id:
-            self.logger.debug(f"Querying transform request by id: {query_id}")
+            current_app.logger.debug(f"Querying transform request by id: {query_id}")
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
-            self.logger.debug("Querying for all  transform requests")
+            current_app.logger.debug("Querying for all  transform requests")
             transforms = TransformRequest.query.all()
         return TransformRequest.return_json(transforms)

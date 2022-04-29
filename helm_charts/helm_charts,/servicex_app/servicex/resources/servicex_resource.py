@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional
-import logging
 
 import pkg_resources
 from flask import current_app
@@ -42,9 +41,6 @@ class ServiceXResource(Resource):
         Initialize object
         """
         super().__init__()
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
 
     @classmethod
     def _generate_advertised_endpoint(cls, endpoint):

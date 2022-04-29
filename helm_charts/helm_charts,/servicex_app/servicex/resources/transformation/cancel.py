@@ -44,11 +44,11 @@ class CancelTransform(ServiceXResource):
         transform_req = TransformRequest.lookup(request_id)
         if not transform_req:
             msg = f'Transformation request not found with id: {request_id}'
-            self.logger.warning(msg)
+            current_app.logger.warning(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
         elif transform_req.complete:
             msg = f"Transform request with id {request_id} is not in progress."
-            self.logger.warning(msg)
+            current_app.logger.warning(msg, extra={'requestId': request_id})
             return {"message": msg}, 400
 
         manager: TransformerManager = TransformStart.transformer_manager
@@ -61,7 +61,8 @@ class CancelTransform(ServiceXResource):
                 if exc.status == 404:
                     pass
                 else:
-                    self.logger.error(f"Got Kubernetes api exception: {exc.reason}")
+                    current_app.logger.error(f"Got Kubernetes api exception: {exc.reason}",
+                                             extra={'requestId': request_id})
                     return {'message': exc.reason}, exc.status
 
         transform_req.status = "Canceled"
