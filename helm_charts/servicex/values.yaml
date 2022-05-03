@@ -16,7 +16,7 @@ objectStore:
   # turn off https connections to minio, should be off if using internal
   # minio
   useTLS: false
-  # set clients to use a https connection to connect to minio, should be 
+  # set clients to use a https connection to connect to minio, should be
   # set to true unless using a devel setup
   publicClientUseTLS: true
 
@@ -29,9 +29,11 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: 20220311-2056-stable
+  tag: 20220418-1418-stable
   logLevel: 'WARNING' # set to DEBUG, INFO, WARNING, ERROR, FATAL
   pullPolicy: Always
+
+  checksImage: ncsa/checks:latest
   replicas: 1
   auth: false
   validateTransformerImage: true
@@ -77,7 +79,7 @@ didFinder:
   rucio:
     enabled: true
     image: sslhep/servicex-did-finder
-    tag: 20220311-2056-stable
+    tag: 20220418-1418-stable
     pullPolicy: Always
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -89,7 +91,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    tag: 20220311-2056-stable
+    tag: 20220418-1418-stable
     pullPolicy: Always
     cachePrefix:
 
@@ -102,7 +104,7 @@ codeGen:
   # image: sslhep/servicex_code_gen_func_adl_uproot
   # for CMS Run 1 AOD OpenData
   # image: sslhep/servicex_code_gen_cms_aod
-  tag: 20220311-2056-stable
+  tag: 20220418-1418-stable
   pullPolicy: Always
 
 # Pull policy for the worker pods - the image and version are specified as
@@ -116,7 +118,8 @@ transformer:
   pullPolicy: Always
   priorityClassName:
   cpuLimit: 1
-  defaultTransformerImage:  sslhep/servicex_func_adl_xaod_transformer:20220311-2056-stable 
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultTransformerTag: 20220418-1418-stable
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
@@ -127,14 +130,16 @@ transformer:
     subdir:
 
   # For uproot deployment
-  #  defaultTransformerImage:  sslhep/servicex_func_adl_uproot_transformer:20220311-2056-stable 
+  #  defaultTransformerImage:  sslhep/servicex_func_adl_uproot_transformer
+  #  defaultTransformerTag: 20220418-1418-stable
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: 20220311-2056-stable
+  tag: 20220418-1418-stable
   pullPolicy: Always
   vomsOrg: atlas
 
+  initImage: alpine:3.6
 # Values for the RabbitMQ Chart
 rabbitmq:
   # For easy testing we don't require PVs for rabbit
