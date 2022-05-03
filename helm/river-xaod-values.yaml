@@ -82,4 +82,5 @@ transformer:
   autoscaler:
     enabled: false
   pullPolicy: Always
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer:v1.0.0-rc.3
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultTransformerTag: v1.0.0-rc.3
