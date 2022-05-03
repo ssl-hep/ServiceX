@@ -4,8 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased 1.0.30
+### Added
+- DID Finder now returns an ordered list of replicas. If transformer is unable
+to open a replica then it can go down the list to find an accesible file
+- DID finder can take URI parameters `files`, `rucio://datset-name?files=10` and it will
+  return only 10 files from the dataset. By default all flies are returned
+- DID finder can take URI prameter `get`, `rucio://data-set?get=availible` and only files
+  in a dataset that are availible will be returned. If `all` is supplied instead, then all
+  files must be returned. Anything less throws an error.
+- About page on web ui to show the deployed version information
+- xAOD code generator now works with metadata allowing one to alter its behavior on-the-fly to support
+  all collections and obejcts in the ATLAS xAOD
+### Changed
+- In helm chart, split the default transformer image into two values. One for image
+name and a second one for just the tag. This makes it easier for the deployment
+script to update the transformer tag.
+- 
+### Fixed
+- Correct missing permissions required to use POSIX volume for transform results
+- Rucio DID Finder correctly handles files for which there are no replicas
 
-## [20220323-????-stable] - 2022-03-23
+### Removed
+
+## 20220323-1932-stable - 2022-03-23
 
 ### Added
 - noIndex, noFollow to avoid robots crawling of the web frontend

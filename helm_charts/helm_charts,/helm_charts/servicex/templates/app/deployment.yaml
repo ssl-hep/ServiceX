@@ -17,7 +17,7 @@ spec:
       {{- if .Values.postgres.enabled }}
       initContainers:
         - name: check-postgresql
-          image: "ncsa/checks:latest"
+          image: {{ .Values.app.checksImage }}
           env:
         {{- if .Values.secrets }}
             - name: PG_PASS
