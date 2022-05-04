@@ -30,6 +30,7 @@ postgres:
 app:
   image: sslhep/servicex_app
   tag: 20220418-1418-stable
+  logLevel: 'WARNING' # set to DEBUG, INFO, WARNING, ERROR, FATAL
   pullPolicy: Always
 
   checksImage: ncsa/checks:latest
