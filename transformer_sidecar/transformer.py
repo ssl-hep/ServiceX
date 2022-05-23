@@ -56,6 +56,7 @@ COMPLETED = False
 TIMEOUT = 30
 EVENTS = 0
 TOTAL_EVENTS = 0
+TOTAL_SIZE = 0
 
 
 class TimeTuple(NamedTuple):
@@ -150,7 +151,6 @@ def callback(channel, method, properties, body):
     servicex = ServiceXAdapter(_server_endpoint)
 
     start_process_times = get_process_info()
-    output_size = 0
     total_time = 0
 
     for _file_path in _file_paths:
@@ -209,7 +209,7 @@ def callback(channel, method, properties, body):
 
             record = {'filename': _file_path,
                       'file-id': _file_id,
-                      'output-size': output_size,
+                      'output-size': TOTAL_SIZE,
                       'events': int(TOTAL_EVENTS),
                       'request-id': _request_id,
                       'user-time': elapsed_process_times.user,
@@ -263,7 +263,7 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
                                    num_messages=0,
                                    total_time=total_time,
                                    total_events=int(TOTAL_EVENTS),
-                                   total_bytes=0)
+                                   total_bytes=TOTAL_SIZE)
 
         logger.info(
             "Time to successfully process {}: {} seconds".format(filepath, total_time))
@@ -323,6 +323,9 @@ class FileQueueHandler(FileSystemEventHandler):
                     break
                 else:
                     time.sleep(1)
+            
+            global TOTAL_SIZE
+            TOTAL_SIZE = os.stat(event.src_path).st_size
                 
             # add file to queue for upload
             try:
