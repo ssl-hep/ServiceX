@@ -30,6 +30,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import time
@@ -49,9 +50,12 @@ from watchdog.events import FileSystemEventHandler
 
 object_store = None
 posix_path = None
+
 FAILED = False
 COMPLETED = False
 TIMEOUT = 30
+EVENTS = 0
+TOTAL_EVENTS = 0
 
 
 class TimeTuple(NamedTuple):
@@ -136,104 +140,110 @@ def get_process_info():
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
-    _file_path = transform_request['file-path']
+    if 'file-path' in transform_request:
+        _file_paths = [transform_request['file-path']]
+    else:
+        _file_paths = transform_request['paths'].split(',')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     logger.info(transform_request)
     servicex = ServiceXAdapter(_server_endpoint)
 
     start_process_times = get_process_info()
-    total_events = 0
     output_size = 0
     total_time = 0
-    try:
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="start",
-                                    info="Starting")
 
-        if not os.path.isdir(posix_path):
-            os.makedirs(posix_path)
-
-        output_path = posix_path
-        request_path = os.path.join(output_path, _request_id)
-        # creating output dir for transform output files
-        if not os.path.isdir(request_path):
-            os.makedirs(request_path)
-        # creating scripts dir for access by science transformer
-        scripts_path = os.path.join(output_path, 'scripts')
-        if not os.path.isdir(scripts_path):
-            os.makedirs(scripts_path)
-        shutil.copy('watch.sh', scripts_path)
-        shutil.copy('proxy-exporter.sh',scripts_path)
-        # creating json file for use by science transformer
-        jsonfile = str(_file_id) + '.json'
-        with open(os.path.join(request_path, jsonfile), 'w') as outfile:
-            json.dump(transform_request, outfile)
-
+    for _file_path in _file_paths:
         try:
-            watch(logger,
-                  request_path,
-                  transform_request,
-                  object_store=object_store,
-                  servicex=servicex)
-            global COMPLETED
-            COMPLETED = False
-        except Exception as e:
-            global FAILED
-            FAILED = True
-            raise e
+            servicex.post_status_update(file_id=_file_id,
+                                        status_code="start",
+                                        info="Starting")
 
-        shutil.rmtree(request_path)
+            if not os.path.isdir(posix_path):
+                os.makedirs(posix_path)
+            output_path = posix_path
+            request_path = os.path.join(output_path, _request_id)
+            # creating output dir for transform output files
+            if not os.path.isdir(request_path):
+                os.makedirs(request_path)
+            # creating scripts dir for access by science transformer
+            scripts_path = os.path.join(output_path, 'scripts')
+            if not os.path.isdir(scripts_path):
+                os.makedirs(scripts_path)
+            shutil.copy('watch.sh', scripts_path)
+            shutil.copy('proxy-exporter.sh',scripts_path)
+            # creating json file for use by science transformer
+            jsonfile = str(_file_id) + '.json'
+            with open(os.path.join(request_path, jsonfile), 'w') as outfile:
+                json.dump(transform_request, outfile)
 
-        stop_process_times = get_process_info()
-        user = stop_process_times.user - start_process_times.user
-        system = stop_process_times.system - start_process_times.system
-        iowait = stop_process_times.iowait - start_process_times.iowait
-        elapsed_process_times = TimeTuple(user=user,
-                                          system=system,
-                                          iowait=iowait)
+            try:
+                watch(logger,
+                      request_path,
+                      _request_id,
+                      _file_id,
+                      _file_path,
+                      object_store=object_store,
+                      servicex=servicex)
+                global COMPLETED
+                COMPLETED = False
+            except Exception as e:
+                global FAILED
+                FAILED = True
+                raise e
 
-        stop_time = timeit.default_timer()
-        log_stats(startup_time,
-                  elapsed_process_times,
-                  running_time=(stop_time - start_time))
-        record = {'filename': _file_path,
-                  'file-id': _file_id,
-                  'output-size': output_size,
-                  'events': total_events,
-                  'request-id': _request_id,
-                  'user-time': elapsed_process_times.user,
-                  'system-time': elapsed_process_times.system,
-                  'io-wait': elapsed_process_times.iowait,
-                  'total-time': elapsed_process_times.total_time,
-                  'wall-time': total_time}
-        logger.info("Metric: {}".format(json.dumps(record)))
+            shutil.rmtree(request_path)
 
-    except Exception as error:
-        logger.exception(f"Received exception doing transform: {error}")
+            stop_process_times = get_process_info()
+            user = stop_process_times.user - start_process_times.user
+            system = stop_process_times.system - start_process_times.system
+            iowait = stop_process_times.iowait - start_process_times.iowait
+            elapsed_process_times = TimeTuple(user=user,
+                                              system=system,
+                                              iowait=iowait)
 
-        transform_request['error'] = str(error)
-        channel.basic_publish(exchange='transformation_failures',
-                              routing_key=_request_id + '_errors',
-                              body=json.dumps(transform_request))
+            stop_time = timeit.default_timer()
+            log_stats(startup_time,
+                      elapsed_process_times,
+                      running_time=(stop_time - start_time))
 
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="failure",
-                                    info=f"error: {error}")
+            record = {'filename': _file_path,
+                      'file-id': _file_id,
+                      'output-size': output_size,
+                      'events': int(TOTAL_EVENTS),
+                      'request-id': _request_id,
+                      'user-time': elapsed_process_times.user,
+                      'system-time': elapsed_process_times.system,
+                      'io-wait': elapsed_process_times.iowait,
+                      'total-time': elapsed_process_times.total_time,
+                      'wall-time': total_time}
+            logger.info("Metric: {}".format(json.dumps(record)))
 
-        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                   status='failure', num_messages=0,
-                                   total_time=0, total_events=0,
-                                   total_bytes=0)
-    finally:
-        channel.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as error:
+            logger.exception(f"Received exception doing transform: {error}")
+
+            transform_request['error'] = str(error)
+            channel.basic_publish(exchange='transformation_failures',
+                                  routing_key=_request_id + '_errors',
+                                  body=json.dumps(transform_request))
+
+            servicex.post_status_update(file_id=_file_id,
+                                        status_code="failure",
+                                        info=f"error: {error}")
+
+            servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+                                       status='failure', num_messages=0,
+                                       total_time=0, total_events=0,
+                                       total_bytes=0)
+        finally:
+            channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def output_consumer(q, logger, transform_request, obj_store, servicex):
+def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servicex):
     while True:
-        _request_id = transform_request['request-id']
-        _file_path = transform_request['file-path']
-        _file_id = transform_request['file-id']
+        _request_id = request_id
+        _file_id = file_id
+        _file_path = file_path
         tick = time.time()
         item = q.get()
         filepath, filename = item.rsplit('/', 1)
@@ -252,8 +262,9 @@ def output_consumer(q, logger, transform_request, obj_store, servicex):
         servicex.put_file_complete(_file_path, _file_id, "success",
                                    num_messages=0,
                                    total_time=total_time,
-                                   total_events=0,
+                                   total_events=int(TOTAL_EVENTS),
                                    total_bytes=0)
+
         logger.info(
             "Time to successfully process {}: {} seconds".format(filepath, total_time))
         os.remove(item) 
@@ -281,17 +292,28 @@ class FileQueueHandler(FileSystemEventHandler):
             with open(event.src_path) as log:
                 text = log.read()
 
-            flags = ['exception', 'fatal']
+            global FAILED, COMPLETED, EVENTS, TOTAL_EVENTS
+            flags = ['fatal'] # ,'exception']
             if any(flag in text.lower() for flag in flags):
-                global FAILED
+                logger.info('Found exception. Exiting.')
                 FAILED = True
+
+            try:
+                matches = re.findall(r'[\d\s]+events processed out of[\d\s]+total events',text)
+                EVENTS, TOTAL_EVENTS = re.findall(r'[\d]+',matches[0])
+                if (int(EVENTS) == 0) or (int(TOTAL_EVENTS) == 0): #int(EVENTS) < int(TOTAL_EVENTS)?
+                    FAILED = True
+                    logger.info("Failed to process all events: {num}/{den}".format(num=EVENTS,den=TOTAL_EVENTS))
+            except:
+                EVENTS,TOTAL_EVENTS = (0, 0)
+
 
     def on_created(self, event):
         if not event.is_directory and not event.src_path.endswith('.log'):
             self.logger.info('File {fn} created.'.format(
                              fn=event.src_path))
-
-            # check if file still being written, if not run upload
+            
+            # check if file still being written/copied
             while True:
                 file_start = os.stat(event.src_path).st_size
                 time.sleep(1)
@@ -301,6 +323,8 @@ class FileQueueHandler(FileSystemEventHandler):
                     break
                 else:
                     time.sleep(1)
+                
+            # add file to queue for upload
             try:
                 self.queue.put(event.src_path)
                 self.logger.info(
@@ -309,8 +333,11 @@ class FileQueueHandler(FileSystemEventHandler):
                 self.logger.exception(
                     'Failed to add file to queue {fn}: {e}'.format(fn=event.src_path, e=e))
 
+
 def watch(logger, request_path,
-          transform_request, 
+          request_id,
+          file_id,
+          file_path,
           object_store=None, 
           servicex=None):
     # Start output queue
@@ -321,14 +348,14 @@ def watch(logger, request_path,
 
     # Start consumer
     Thread(target=output_consumer,
-           args=(q, logger, transform_request, object_store, servicex),
+           args=(q, logger, request_id, file_id, file_path, object_store, servicex),
            daemon=True).start()
 
     # Initialize logging event handler
     event_handler = FileQueueHandler(logger, q)
 
     # Schedule Observer
-    observer.schedule(event_handler, request_path, recursive=False)
+    observer.schedule(event_handler, request_path)
 
     # Start the observer
     observer.start()
@@ -341,7 +368,7 @@ def watch(logger, request_path,
         logger.info('Stopping observer. All work is done.')
         observer.stop()
         return
-    
+
     if FAILED:
         logger.info('Stopping observer.')
         observer.stop()
