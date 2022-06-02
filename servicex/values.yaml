@@ -168,10 +168,11 @@ minio:
   # optional setting pointing to the location of the minio instance
   uri: https://minio.uri
 
-# Values for Minio Chart
+# Values for Minio cleanup service
 minioCleanup:
   image: sslhep/minio_cleanup
   tag: develop
+  pullPolicy: Always
   # max storage to use, can use M, G, T to indicate megabytes (2^20), 
   # gigabytes (2^30), and terabytes (2^40)
   maxStorage: 1T

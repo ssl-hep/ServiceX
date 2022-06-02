@@ -5,24 +5,24 @@ metadata:
   name: {{ .Release.Name }}-minio-cleanup
 spec:
   schedule: "0 * * * *"
+  concurrencyPolicy: "Forbid"
   jobTemplate: 
     spec:
-      concurrencyPolicy: "Forbid"
       template:
         spec:
           containers:
           - name: {{ .Release.Name }}-minio-cleanup
             image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
             command: ["/bin/cleanup_minio.py"]
-            imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
+            imagePullPolicy: {{ .Values.minioCleanup.pullPolicy }}
             env:
               - name: THREADS
                 value: "{{ .Values.minioCleanup.threads }}"
               - name: MINIO_URL
-            {{- if .Values.minio.uri -}}
-                value: "{{ .Values.minio.url }}"
+            {{- if .Values.minio.uri }}
+                value: "{{ .Values.minio.uri }}"
             {{- else }}
-                value: '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
+                value: "{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}"
             {{- end }}
               - name: MAX_STORAGE
                 value: "{{ .Values.minioCleanup.maxStorage }}"
@@ -39,5 +39,5 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.secrets }}
                       key: secretkey
-            {{- end }}`
+            {{- end }}
             args: ["--max-size", "$(MAX_STORAGE)"]
