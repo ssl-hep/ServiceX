@@ -41,3 +41,4 @@ spec:
                       key: secretkey
             {{- end }}
             args: ["--max-size", "$(MAX_STORAGE)"]
+          restartPolicy: Never
