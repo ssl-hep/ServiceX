@@ -73,6 +73,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
 | `minio.ingress.hosts`                | List of hosts to associate with ingress controller | nil |
 | 'minioCleanup.image'                 | Minio cleanup image name                         | 'sslhep/minio-cleanup' |
+| 'minioCleanup.pullPolicy'            | Minio cleanup image pull policy                         | 'Always' |
 | 'minioCleanup.tag'                   | Minio cleanup image tag                          | 'latest' |
 | 'minioCleanup.threads'               | Number of threads to use when processing         | 3 |
 | 'minioCleanup.maxStorage'            | Max storage to use (can use M, G,T suffixes      | '1T' |
