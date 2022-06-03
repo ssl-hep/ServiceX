@@ -65,6 +65,7 @@ class LookupRequest:
         avg_replicas = 0
         lookup_start = datetime.now()
 
+        full_file_list = []
         for ds_files in self.rucio_adapter.list_files_for_did(self.did):
             for af in ds_files:
                 n_files += 1
@@ -72,7 +73,8 @@ class LookupRequest:
                 total_paths += len(af['paths'])
                 if self.prefix:
                     af['paths'] = [self.prefix+fp for fp in af['paths']]
-                yield af
+                full_file_list.append(af)
+        yield full_file_list
 
         lookup_finish = datetime.now()
 
