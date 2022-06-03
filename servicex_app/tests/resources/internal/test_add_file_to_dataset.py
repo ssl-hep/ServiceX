@@ -29,10 +29,6 @@ from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
 
-def set_dataset_file_id(submitted_request, dataset_file):
-    dataset_file.id = "42"
-
-
 class TestAddFileToDataset(ResourceTestBase):
     def test_put_new_file(self, mocker):
         import servicex
@@ -42,7 +38,6 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=self._generate_transform_request())
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset.side_effect = set_dataset_file_id
 
         client = self._test_client(lookup_result_processor=mock_processor)
 
@@ -57,8 +52,40 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
         mock_processor.add_file_to_dataset.assert_called()
         assert response.json == {
-            "request-id": '1234',
-            "file-id": '42'
+            "request-id": '1234'
+        }
+
+    def test_put_new_file_bulk(self, mocker):
+        import servicex
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'lookup',
+            return_value=self._generate_transform_request())
+
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(lookup_result_processor=mock_processor)
+
+        response = client.put('/servicex/internal/transformation/1234/files',
+                              json=[
+                                  {
+                                      'paths': ["/foo/bar1.root", "/foo/bar2.root"],
+                                      'adler32': '12345',
+                                      'file_size': 1024,
+                                      'file_events': 500
+                                  },
+                                  {
+                                      'paths': ["/foo1/bar1.root", "/foo1/bar2.root"],
+                                      'adler32': '12345',
+                                      'file_size': 2048,
+                                      'file_events': 500
+                                  }
+                              ])
+        assert response.status_code == 200
+        mock_transform_request_read.assert_called_with('1234')
+        mock_processor.add_file_to_dataset.assert_called()
+        assert response.json == {
+            "request-id": '1234'
         }
 
     def test_put_new_file_root_dest(self, mocker):
@@ -73,7 +100,6 @@ class TestAddFileToDataset(ResourceTestBase):
             return_value=root_file_transform_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset.side_effect = set_dataset_file_id
 
         client = self._test_client(lookup_result_processor=mock_processor)
         response = client.put('/servicex/internal/transformation/1234/files',
@@ -88,8 +114,7 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_processor.add_file_to_dataset.assert_called()
 
         assert response.json == {
-            "request-id": '1234',
-            "file-id": "42"
+            "request-id": '1234'
         }
 
     def test_put_new_file_with_exception(self, mocker):

@@ -42,22 +42,26 @@ class AddFileToDataset(ServiceXResource):
             from servicex.models import db
             add_file_request = request.get_json()
             submitted_request = TransformRequest.lookup(request_id)
-            current_app.logger.info(f"Submitted request: {submitted_request}",
-                                    extra={'requestId': request_id})
-            db_record = DatasetFile(request_id=request_id,
-                                    paths=','.join(add_file_request['paths']),
-                                    adler32=add_file_request['adler32'],
-                                    file_events=add_file_request['file_events'],
-                                    file_size=add_file_request['file_size'])
+            self.logger.info(f"Submitted request: {submitted_request} for {request_id}")
 
-            self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
+            # check if the request is bulk or single file
+            if type(add_file_request) is dict:
+                add_file_request = [add_file_request]
 
-            db.session.commit()
-            current_app.logger.info(f"Got file-id: {db_record.id}",
-                                    extra={'requestId': request_id})
+            for afr in add_file_request:
+                db_record = DatasetFile(request_id=request_id,
+                                        paths=','.join(afr['paths']),
+                                        adler32=afr['adler32'],
+                                        file_events=afr['file_events'],
+                                        file_size=afr['file_size'])
+
+                self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
+
+                db.session.commit()
+                self.logger.info(f"Got file-id: {db_record.id} for request-id:{str(request_id)}")
+
             return {
-                "request-id": str(request_id),
-                "file-id": db_record.id
+                "request-id": str(request_id)
             }
 
         except Exception as e:
