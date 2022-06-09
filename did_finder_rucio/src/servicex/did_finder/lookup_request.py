@@ -113,10 +113,9 @@ class LookupRequest:
                     if self.prefix:
                         af['paths'] = [self.prefix+fp for fp in af['paths']]
                     full_file_list.append(af)
+            if self.mcclient:
+                self.setCachedResults(full_file_list)
             yield full_file_list
-
-        if self.mcclient:
-            self.setCachedResults(full_file_list)
 
         lookup_finish = datetime.now()
 
