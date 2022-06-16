@@ -163,8 +163,9 @@ minio:
   # For easy testing we don't require PVs for minio
   persistence:
     enabled: false
-  accessKey: miniouser
-  secretKey: leftfoot1
+  auth:
+    rootUser: miniouser
+    rootPassword: leftfoot1
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false

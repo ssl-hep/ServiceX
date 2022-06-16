@@ -120,21 +120,21 @@ data:
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
       {{ else }}
     # using internal minio 
-    MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
-    MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}'
+    MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
+    MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
         {{ if .Values.minio.ingress.enabled }}
     {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
     # Using minio ingress
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default $minio_ingress }}'
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
-    {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.port -}}
+    {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.ports.api -}}
     # No minio ingress
     MINIO_PUBLIC_URL = '{{- .Values.objectStore.publicURL | default $internal_minio }}'
         {{ end }}
       {{ end }}
-    MINIO_ACCESS_KEY = '{{ .Values.minio.accessKey }}'
-    MINIO_SECRET_KEY = '{{ .Values.minio.secretKey }}'
+    MINIO_ACCESS_KEY = '{{ .Values.minio.auth.rootUser }}'
+    MINIO_SECRET_KEY = '{{ .Values.minio.auth.rootPassword }}'
 
     {{ else }}
     # no object store
