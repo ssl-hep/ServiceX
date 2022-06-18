@@ -14,10 +14,11 @@ RUN apt-get install gnupg2 -y \
 
 RUN conda install --yes \
     -c conda-forge \
+    conda-build \
     lz4 \
     xrootd==5.1.1 \
     tini==0.18.0 \
-    && conda clean -tipsy
+    && conda build purge-all && conda clean -ti
 
 RUN conda install --yes \
     -c conda-forge \
@@ -27,7 +28,7 @@ RUN conda install --yes \
     pandas==0.25.3 \
     numba==0.48.0 \
     scipy==1.4.1 \
-    && conda clean -tipsy
+    && conda build purge-all && conda clean -ti
 
 RUN apt update && \
     apt upgrade -y && \
