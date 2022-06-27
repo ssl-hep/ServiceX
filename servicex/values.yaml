@@ -153,8 +153,10 @@ rabbitmq:
 
 # Values for the Postgresql Chart
 postgresql:
-  postgresqlDatabase: servicex
-  postgresqlPassword: leftfoot1
+  auth:
+    username: servicex-db
+    database: servicex
+    password: leftfoot1
   persistence:
     enabled: false
 

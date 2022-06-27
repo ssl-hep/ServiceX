@@ -39,9 +39,9 @@ You can also connect to the deployed postgres server with your favorite SQL clie
 
 and connect with this JDBC Connection String:
 {{ if .Values.secrets }}
-    postgresql://{{  .Values.postgresql.postgresqlUsername }}:[postgresql-password from {{.Values.secrets}} ]@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+    postgresql://{{  .Values.postgresql.auth.username}}:[postgresql-password from {{.Values.secrets}} ]@localhost:5432/{{ .Values.postgresql.auth.database }}
 {{ else }}
-    postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+    postgresql://{{  .Values.postgresql.auth.username}}:{{ .Values.postgresql.auth.password }}@localhost:5432/{{ .Values.postgresql.auth.database }}
 {{ end }}
 {{ end }}
 
