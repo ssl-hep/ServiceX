@@ -177,6 +177,7 @@ def callback(channel, method, properties, body):
             with open(os.path.join(request_path, jsonfile), 'w') as outfile:
                 json.dump(transform_request, outfile)
 
+            # run watch function
             try:
                 watch(logger,
                       request_path,
@@ -245,16 +246,20 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
         _file_id = file_id
         _file_path = file_path
         tick = time.time()
+        # get file from queue
         item = q.get()
         filepath, filename = item.rsplit('/', 1)
-
+        
+        # update filename
         new_filename = _file_path.replace('/',':') + ':' + filename
+        # upload file if obj_store is specified
         if obj_store:
             obj_store.upload_file(_request_id, new_filename, item)
 
         tock = time.time()
         total_time = round(tock - tick, 2)
 
+        # update status with ServiceX
         servicex.post_status_update(file_id=_file_id,
                                     status_code="complete",
                                     info="Success")
@@ -271,6 +276,7 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
         logger.info('Removed {fn} from directory.'.format(fn=item))
         q.task_done()
 
+        # wait for specified timeout to ensure no more files added to queue
         timeout_start = time.time()
         while q.empty():
             if time.time() < timeout_start + TIMEOUT:
@@ -288,16 +294,19 @@ class FileQueueHandler(FileSystemEventHandler):
         self.queue = queue
 
     def on_modified(self, event):
+        # if *.log file detected read file
         if not event.is_directory and event.src_path.endswith('.log'):
             with open(event.src_path) as log:
                 text = log.read()
-
+    
+            # scan for flag keywords and raise exception if detected
             global FAILED, COMPLETED, EVENTS, TOTAL_EVENTS
             flags = ['fatal'] # ,'exception']
             if any(flag in text.lower() for flag in flags):
                 logger.info('Found exception. Exiting.')
                 FAILED = True
 
+            # look for event counts, set to 0 if not found
             try:
                 matches = re.findall(r'[\d\s]+events processed out of[\d\s]+total events',text)
                 EVENTS, TOTAL_EVENTS = re.findall(r'[\d]+',matches[0])
