@@ -153,10 +153,14 @@ rabbitmq:
 
 # Values for the Postgresql Chart
 postgresql:
-  postgresqlDatabase: servicex
-  postgresqlPassword: leftfoot1
-  persistence:
-    enabled: false
+  global:
+    postgresql:
+      auth:
+        postgresPassword: leftfoot1
+        database: servicex
+  primary:
+    persistence:
+      enabled: false
 
 # Values for Minio Chart
 minio:

@@ -7,6 +7,6 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami/
     condition: objectStore.internal, objectStore.enabled
   - name: postgresql
-    version: 8.3.*
+    version: 11.6.*
     repository: https://charts.bitnami.com/bitnami/
     condition: postgres.enabled

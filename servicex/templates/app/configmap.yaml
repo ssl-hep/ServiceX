@@ -51,7 +51,7 @@ data:
     MAILGUN_DOMAIN = '{{ .Values.app.mailgunDomain }}'
 
     {{ if .Values.postgres.enabled }}
-    SQLALCHEMY_DATABASE_URI = 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
     {{ else }}
     SQLALCHEMY_DATABASE_URI = 'sqlite:////sqlite/app.db'
     {{ end }}
