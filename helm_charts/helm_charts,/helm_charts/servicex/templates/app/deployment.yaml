@@ -26,10 +26,10 @@ spec:
                   name: {{ .Values.secrets }}
                   key: postgresql-password
             - name: PG_URI
-              value: 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+              value: 'postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
         {{- else }}
             - name: PG_URI
-              value: 'postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}'
+              value: 'postgresql://postgres:{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
         {{- end }}
       {{- end }}
       containers:
@@ -106,7 +106,7 @@ spec:
     {{- if .Values.secrets }}
           {{- if .Values.postgres.enabled }}
         - name: SQLALCHEMY_DATABASE_URI
-          value: "postgresql://{{  .Values.postgresql.postgresqlUsername }}:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresqlDatabase }}"
+          value: "postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresql.auth.database }}"
           {{- end }}
     {{- end }}
         tty: true
