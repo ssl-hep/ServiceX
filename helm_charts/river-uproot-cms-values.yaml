@@ -54,9 +54,10 @@ postgresql:
     enabled: false
     serviceMonitor:
       enabled: false
-  persistence:
-    enabled: true
-    storageClass: rook-ceph-block
+  primary:
+    persistence:
+      enabled: true
+      storageClass: rook-ceph-block
 rabbitmq:
   metrics:
     enabled: false
