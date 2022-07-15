@@ -2,7 +2,7 @@ pytest>=3.6
 coverage
 pytest-mock
 flake8
-codecov==2.0.15
+codecov==2.0.16
 jupyterlab
 func_adl_servicex
 matplotlib
