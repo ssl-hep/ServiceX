@@ -123,9 +123,8 @@ data:
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
     MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
         {{ if .Values.minio.ingress.enabled }}
-    {{- $minio_ingress := index .Values.minio.ingress.hosts 0 -}}
     # Using minio ingress
-    MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default $minio_ingress }}'
+    MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default .Values.minio.ingress.hostname }}'
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
     {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.ports.api -}}
