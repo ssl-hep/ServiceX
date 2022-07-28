@@ -58,7 +58,7 @@ with a http connection.
   {{ else if .Values.minio.ingress.enabled }}
 
 Since you declared an internet ingress to Minio you can access it at
-{{ .Values.objectStore.publicURL | .Values.minio.ingress.hostname }}
+{{ .Values.objectStore.publicURL | default .Values.minio.ingress.hostname }}
   {{ else }}
 Finally, you can interact with the minio object store with another Port-Forward:
   export MINIO_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app=minio,release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
