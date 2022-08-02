@@ -106,7 +106,7 @@ spec:
     {{- if .Values.secrets }}
           {{- if .Values.postgres.enabled }}
         - name: SQLALCHEMY_DATABASE_URI
-          value: "postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.postgresql.auth.database }}"
+          value: "postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}"
           {{- end }}
     {{- end }}
         tty: true
