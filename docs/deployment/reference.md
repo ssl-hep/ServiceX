@@ -45,6 +45,10 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `didFinder.rucio.reportLogicalFiles` | For CMS xCache sites, we don't want the replicas, only logical names. Set to true to get this behavior | false |
 | `didFinder.rucio.rucio_host`         | URL for Rucio service to use                     | `https://voatlasrucio-server-prod.cern.ch:443`          |
 | `didFinder.rucio.auth _host`         | URL to obtain Rucio authentication               | `https://voatlasrucio-auth-prod.cern.ch:443`            |
+|  `didFinder.rucio.memcache.enabled` | Should use memcache to store results returned by the DID lookup? | true |
+|  `didFinder.rucio.memcache.image` | Docker image for memcache | memcached |
+|  `didFinder.rucio.memcache.tag` | Tag of the memcache image | alpine |
+|  `didFinder.rucio.memcache.ttl` | How long should memcache results be considered valid (in seconds) | 86400 |
 | `didFinder.CERNOpenData.enabled`     | Should we deploy the CERN OpenData DID Finder?           | `true`                                              |
 | `didFinder.CERNOpenData.image`       | CERN OpenData DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.CERNOpenData.tag`         | CERN OpenData DID Finder image tag                             | `latest`                                                |
