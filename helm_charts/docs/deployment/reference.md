@@ -74,8 +74,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `postgres.enabled`                   | Deploy a postgres database into cluster? If not, we use a sqllite db | false  |
 | `minio.auth.rootUser`                | Username to log into minio                       | miniouser |
 | `minio.auth.rootPassword`            | Password key to log into minio                   | leftfoot1 |
-| `minio.ingress.enabled`              | Should minio chart deploy an ingress to the service? | false |
-| `minio.ingress.hostname`             | Hostname  associate with ingress controller      | nil |
+| `minio.apiIngress.enabled`              | Should minio chart deploy an ingress to the service? | false |
+| `minio.apiIngress.hostname`             | Hostname  associate with ingress controller      | nil |
 | `transformer.autoscaler.enabled`     | Enable/disable horizontal pod autoscaler for transformers |  True |
 | `transformer.autoscaler.cpuScaleThreshold` | CPU percentage threshold for pod scaling   | 30 |
 | `transformer.autoscaler.minReplicas` | Minimum number of transformer pods per request   | 1 |
