@@ -90,7 +90,7 @@ didFinder:
     memcache:
       enabled: true
       image: memcached
-      tag: 20220829-2112-stable
+      tag: alpine
       ttl: 86400
 
   CERNOpenData:
