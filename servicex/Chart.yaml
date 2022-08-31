@@ -2,4 +2,4 @@ apiVersion: v1
 description: Install ServiceX deployment - HEP Columnar Data Delivery Service
 name: servicex
 version: 1.0.31-RC.10
-appVersion: 20220829-2112-stable
+appVersion: 20220831-0243-stable
