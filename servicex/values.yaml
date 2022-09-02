@@ -8,7 +8,7 @@ secrets:
 
 objectStore:
   # Enable use of ObjectStore for results.
-  enabled: true
+  enabled: false
 
   # Enable deployment of Minio Object Store with this chart
   internal: true
