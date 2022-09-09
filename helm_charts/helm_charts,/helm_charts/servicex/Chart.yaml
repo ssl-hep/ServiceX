@@ -3,3 +3,10 @@ description: Install ServiceX deployment - HEP Columnar Data Delivery Service
 name: servicex
 version: 1.0.31-RC.10
 appVersion: 20220831-0243-stable
+maintainers:
+  - name: BenGalewsky
+    url: https://github.com/BenGalewsky
+  - name: sthapa
+    url: https://github.com/sthapa
+  - name: ivukotic
+    url: https://github.com/ivukotic
