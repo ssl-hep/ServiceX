@@ -21,22 +21,27 @@ jobs:
           python-version: 3.7
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.2.1
+        uses: helm/chart-testing-action@v2.3.0
+
+      - name: add bitnami repos to helm
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
 
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs servicex)
+          ct version
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/servicex )
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
 
       - name: Run chart-testing (lint)
-        run: ct lint --target-branch ${{ github.event.repository.default_branch } --chart-dirs servicex}
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/servicex --charts servicex
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --chart-dirs servicex
+        run: ct install --chart-dirs ${GITHUB_WORKSPACE}/servicex --charts servicex
