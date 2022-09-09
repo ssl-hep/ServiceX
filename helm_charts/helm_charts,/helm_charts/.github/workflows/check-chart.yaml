@@ -27,7 +27,7 @@ jobs:
         id: list-changed
         run: |
           ct version
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/servicex --charts servicex )
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/servicex )
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
