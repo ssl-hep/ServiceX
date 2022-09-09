@@ -44,3 +44,4 @@ jobs:
 
       - name: Run chart-testing (install)
         run: ct install --chart-dirs ${GITHUB_WORKSPACE}/servicex --charts servicex
+        if: steps.list-changed.outputs.changed == 'true'
