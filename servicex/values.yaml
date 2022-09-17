@@ -26,11 +26,18 @@ objectStore:
 postgres:
   enabled: false
 
+logging:
+  logstash:
+    enabled: true
+    host: servicex.atlas-ml.org
+    port: 5959
+    protocol: TCP
+
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
   tag: 20220831-0243-stable
-  logLevel: 'WARNING'  # set to DEBUG, INFO, WARNING, ERROR, FATAL
+  logLevel: "WARNING" # set to DEBUG, INFO, WARNING, ERROR, FATAL
   pullPolicy: Always
 
   checksImage: ncsa/checks:latest
@@ -72,7 +79,7 @@ app:
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
     retries: 12
-    retry_interval: 10  # seconds
+    retry_interval: 10 # seconds
 
 # Settings for the Rucio DID Finder
 didFinder:
