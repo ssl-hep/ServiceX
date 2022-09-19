@@ -1,0 +1,18 @@
+flask>=1.1.2,<2.0
+Flask-WTF
+wtforms
+email-validator==1.1.2
+pika
+flask-restful
+flask-jwt-extended>=3.0,<4.0
+passlib
+flask-sqlalchemy
+Flask-Migrate
+kubernetes
+minio
+psycopg2
+globus_sdk
+cryptography
+bootstrap-flask
+humanize
+MarkupSafe == 2.0.1

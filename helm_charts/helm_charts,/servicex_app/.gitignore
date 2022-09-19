@@ -1,0 +1,16 @@
+sqlite
+app.conf
+.idea
+__pycache__/
+*.pyc
+servicex.egg-info/
+.coverage
+htmlcov/
+coverage.xml
+build/
+dist/
+.cache
+.pytest_cache/
+.vscode/settings.json
+venv/
+.venv/

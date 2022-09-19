@@ -1,0 +1,2 @@
+ignore:
+  - "servicex/__init__.py"  # Most of this is bypassed during test setup

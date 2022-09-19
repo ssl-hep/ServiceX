@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="content-section">
+    <div class="row justify-content-between align-items-center">
+      <h4 class="mb-3 col-auto">Transformation Request</h4>
+    </div>
+    <dl class="row">
+      <dt class="col-sm-3">Title</dt>
+      <dd class="col-sm-9">{{ req.title or "Untitled" }}</dd>
+
+      <dt class="col-sm-3">ID</dt>
+      <dd class="col-sm-9">{{ req.id }}</dd>
+
+      <dt class="col-sm-3">Request ID</dt>
+      <dd class="col-sm-9">{{ req.request_id }}</dd>
+
+      <dt class="col-sm-3">Status</dt>
+      <dd class="col-sm-9">{{ req.status }}</dd>
+
+    {% if config['ENABLE_AUTH'] %}
+      <dt class="col-sm-3">Submitted by</dt>
+      <dd class="col-sm-9">{{ req.submitter_name }}</dd>
+    {% endif %}
+
+      <dt class="col-sm-3">Submitted at</dt>
+      <dd class="col-sm-9">{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</dd>
+
+      <dt class="col-sm-3">Data ID</dt>
+      <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
+
+      <dt class="col-sm-3">Selection</dt>
+      <dd class="col-sm-9">{{ req.selection }}</dd>
+
+      <dt class="col-sm-3">Files</dt>
+      <dd class="col-sm-9">{{ humanize.intcomma(req.files) }}</dd>
+
+      <dt class="col-sm-3">Files Remaining</dt>
+      <dd class="col-sm-9">{{ humanize.intcomma(req.files_remaining) }}</dd>
+
+      <dt class="col-sm-3">Files Skipped</dt>
+      <dd class="col-sm-9">{{ humanize.intcomma(req.files_skipped) }}</dd>
+
+      <dt class="col-sm-3">Total Events</dt>
+      <dd class="col-sm-9">{{ humanize.intcomma(req.total_events) }}</dd>
+
+      <dt class="col-sm-3">Total Size</dt>
+      <dd class="col-sm-9">{{ humanize.naturalsize(req.total_bytes or 0) }}</dd>
+
+      <dt class="col-sm-3">DID Lookup Time</dt>
+      <dd class="col-sm-9">{{ req.did_lookup_time }}s</dd>
+
+    {% if req.failure_description %}
+      <dt class="col-sm-3">Failure Description</dt>
+      <dd class="col-sm-9">{{ req.failure_description }} s</dd>
+    {% endif %}
+
+    </dl>
+  </div>
+{% endblock %}
