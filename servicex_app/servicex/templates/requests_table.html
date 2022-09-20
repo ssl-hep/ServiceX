@@ -1,0 +1,134 @@
+{% from 'bootstrap5/table.html' import render_table %}
+{% from 'bootstrap5/pagination.html' import render_pager %}
+{% from 'bootstrap5/pagination.html' import render_pagination %}
+
+{% macro requests_table(pagination, humanize) %}
+<table class="table table-sm table-bordered table-striped">
+  <caption>All times in UTC.</caption>
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Title</th>
+      {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
+      <th scope="col">Start time</th>
+      <th scope="col">Finish time</th>
+      <th scope="col">Status</th>
+      <th scope="col">Files completed</th>
+      <th scope="col">Workers</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for req in pagination.items %}
+    <tr>
+      <th scope="row" style="word-break: break-all">
+        <a href="/transformation-request/{{ req.id }}">{{ req.title or "Untitled" }}</a>
+      </th>
+      {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
+      <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td id="finish-time-{{ req.request_id }}">
+        {{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}
+      </td>
+      <td>
+        <div id="status-{{ req.request_id }}">
+          {{ req.status }}
+        </div>
+        {% if req.incomplete %}
+        <div class="progress" id="progress-{{ req.request_id }}">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
+          </div>
+        </div>
+        {% endif %}
+      </td>
+      <td>
+        <div>
+          <a id="files-processed-{{ req.request_id }}"
+            href="/transformation-request/{{ req.id }}/results?status=success">
+            {{ humanize.intcomma(req.files_processed) }}
+          </a> of
+          <span>{{ humanize.intcomma(req.files or "Unknown") }}</span>
+        </div>
+        <div {% if not req.files_failed %}style="display: none" {% endif %}
+          id="files-failed-wrapper-{{ req.request_id }}">
+          (<a id="files-failed-{{ req.request_id }}"
+            href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
+        </div>
+      </td>
+      <td id="replicas-{{ req.request_id }}">-</td>
+      <td>
+        {% if req.incomplete %}
+        <button id="cancel-{{ req.request_id }}"
+          onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
+          type="button" class="btn btn-danger btn-sm">
+          Cancel
+        </button>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if pagination.items %}
+{{ render_pagination(pagination, align='center') }}
+{% else %}
+{% include "get_started.html" %}
+{% endif %}
+{% endmacro %}
+
+{% macro requests_table_update_script(pagination) %}
+<script>
+  let watched = new Set(
+    {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
+    );
+  console.log(watched);
+
+  function update_replicas() {
+    Promise.all([...watched].map((req_id) => {
+      return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
+        .then((resp) => resp.json())
+        .then((data) => {
+          $(`#replicas-${req_id}`).text(data["replicas"]);
+        });
+    }));
+    setTimeout(update_replicas, 30000);
+  }
+
+  function update_progress() {
+    Promise.all([...watched].map((req_id) => {
+      return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
+        .then((resp) => resp.json())
+        .then((data) => {
+          const status = data["status"];
+          const processed = data["files-processed"];
+          const remaining = data["files-remaining"];
+          const failed = data["files-skipped"];
+          const progress = processed / (processed + failed + remaining) * 100;
+
+          $(`#status-${req_id}`).text(status);
+          $(`#files-processed-${req_id}`).text(processed);
+          const progressBar = $(`#progress-bar-${req_id}`)
+          progressBar.text(`${Math.floor(progress)}%`)
+          progressBar.css("width", `${progress}%`);
+          if (failed > 0) {
+            progressBar.addClass("bg-warning");
+            $(`#files-failed-wrapper-${req_id}`).show();
+            $(`#files-failed-${req_id}`).text(failed);
+          }
+          if (status === "Complete" || status === "Fatal" || status === "Canceled") {
+            watched.delete(req_id);
+            $(`#progress-${req_id}`).remove();
+            $(`#cancel-${req_id}`).remove();
+            $(`#replicas-${req_id}`).text("-")
+            const [d, t] = data["finish-time"].split("T")
+            $(`#finish-time-${req_id}`).text(`${d} ${t.split(".")[0]}`)
+          }
+        })
+    }));
+    setTimeout(update_progress, 5000);
+  }
+
+  $(document).ready(function () {
+    update_replicas();
+    update_progress();
+  })
+</script>
+{% endmacro %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% from 'requests_table.html' import requests_table, requests_table_update_script %}
+{% from 'sort_dropdown.html' import sort_dropdown %}
+
+{% block content %}
+
+  <div>
+    <div class="content-section">
+      <div class="row justify-content-between align-items-center">
+        <h4 class="mb-3 col-auto">Transformation Requests</h4>
+        {{ sort_dropdown(dropdown_options, active_sort, active_order) }}
+      </div>
+      {{ requests_table(pagination, humanize) }}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {{ requests_table_update_script(pagination) }}
+{% endblock %}

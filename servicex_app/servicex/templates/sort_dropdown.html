@@ -1,0 +1,13 @@
+{% macro sort_dropdown(options, active_sort, active_order) %}
+  <div class="dropdown col-auto">
+    <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="dropdownMenuButton"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Sort: <b>{{ active_sort.title() }} ({{ active_order }})</b>
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for sort, order in options %}
+          <a href="?sort={{ sort }}&order={{ order }}" class="dropdown-item">{{ sort.title() }} ({{ order }})</a>
+        {% endfor %}
+    </div>
+  </div>
+{% endmacro %}

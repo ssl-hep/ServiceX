@@ -1,0 +1,824 @@
+{
+	"info": {
+		"_postman_id": "c67201a2-0200-48dd-97f5-435243af8975",
+		"name": "ServiceXTest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4b6cf9ce-d817-4cb4-b0ad-ac8bf4d839cd",
+								"exec": [
+									"var data = JSON.parse(responseBody)\r",
+									"postman.setEnvironmentVariable(\"access_token\", data.access_token)\r",
+									"postman.setEnvironmentVariable(\"refresh_token\", data.refresh_token)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/login?username=admin&password=helloworld&email=admin@example.com",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"login"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "admin"
+								},
+								{
+									"key": "password",
+									"value": "helloworld"
+								},
+								{
+									"key": "email",
+									"value": "admin@example.com"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/registration?username=newuser&password=password",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"registration"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "newuser"
+								},
+								{
+									"key": "password",
+									"value": "password"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Signup Webhook",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"text\": \"New signup from jane@example.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{newSignupWebhook}}",
+							"host": [
+								"{{newSignupWebhook}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/users",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Pending Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/pending",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"pending"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Accept Pending User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "john",
+									"type": "text"
+								}
+							],
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/accept",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"accept"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "fc239c86-be0c-453a-8b62-e68c5ce5453a",
+								"exec": [
+									"let id = 2\r",
+									"pm.variables.set(\"id\", id)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/users/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"users",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "40c1f377-2c96-4df4-9252-9e412ce9f031",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "99c41965-0f60-44aa-bb9b-cc7f80782c47",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Transformation Requests",
+			"item": [
+				{
+					"name": "submit with file list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "73a5f10e-d8bc-413b-b078-6189214921f5",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+									"",
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"file-list\":[\n\t\t\t\"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/3d/89/DAOD_STDM3.05630052._000005.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/91/60/DAOD_STDM3.05630052._000006.pool.root.1\",\n\t\t\t \"root://dcache-atlas-xrootd-wan.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/fb/85/DAOD_STDM3.05630052._000007.pool.root.1\"\n\t\t],\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:v0.2\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 1\n}\t"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "submit with DID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "885c3447-f625-4a65-98e9-d542ed32e752",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+									"",
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\"\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')) (lambda (list e) (call (attr e 'Jets') ''))) (lambda (list j) (call (attr j 'pt')))) (list 'jet_pt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 1\n}\t"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "HTT Flat Ntuple",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8ee151b2-2dd4-4990-93c3-b18dd3a7bf99",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+									"",
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"did\": \"user.kchoi:user.kchoi.NtupleForServiceX\",\n\t\"tree-name\": \"JET_CategoryReduction_JET_Flavor_Composition__1down\",\n\t\"columns\": \"MUON_MS__1down;2\",\n\t\"image\": \"sslhep/servicex-transformer:nano-aod\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"parquet\",\n\t\"workers\": 1\n}\t"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "submit big transformation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1cbe295e-ca8b-499b-83df-e56e85abcd1d",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", jsonData['request_id']);",
+									"",
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"did\": \"data17_13TeV:data17_13TeV.periodK.physics_Main.PhysCont.DAOD_STDM7.grp22_v01_p3713\",\n\t\"selection\": \"(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds:bogus')) (lambda (list e) (call (attr e 'Jets') 'AntiKt4EMTopoJets'))) (lambda (list j) (/ (call (attr j 'pt')) 1000.0))) (list 'JetPt') 'analysis' 'junk.root')\",\n\t\"image\": \"sslhep/servicex_xaod_cpp_transformer:develop\",\n\t\"result-destination\": \"object-store\",\n\t\"result-format\": \"root-file\",\n\t\"workers\": 100\n}\t"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transformation",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"workers\": 100\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Transformations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f1176981-90cf-4c35-a4c7-6806723ce884",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"did\": \"mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00\",\n\t\"columns\": \"Electrons.pt(), Electrons.eta(), Electrons.phi(), Electrons.e(), Muons.pt(), Muons.eta(), Muons.phi(), Muons.e()\",\n\t\"image\": \"sslhep/servicex-transformer:rabbitmq\",\n\t\"workers\": 100\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "58685c07-b4c4-4912-a71e-bb17e088854e",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"timestamp\": \"2019-08-16T17:52:39.451950\",\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id/files",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id",
+								"files"
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fileset Complete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "30118a4c-f39e-43a8-ad6b-b34f0816bbd6",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"timestamp\": '2019-08-16T17:52:39.451950',\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\",\n        \"file-id\": 12,\n        \"status\": \"done\",\n        \"num-messages\": 100,\n        \"total-time\": 32,\n        \"total-events\": 10000,\n        \"total-bytes\": 3203,\n        \"avg-rate\": 30.3\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id/complete",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id",
+								"complete"
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start Transformation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "77d40247-99db-4c4c-bc09-35220eb820c1",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"max-event-size\": 1024,\n\t\"timestamp\": \"2019-08-16T17:52:39.451950\",\n\t\"file_path\": \"root://xcache.mwt2.org:1094//root://dcache-atlas-xrootd.desy.de:1094//pnfs/desy.de/atlas/dq2/atlaslocalgroupdisk/rucio/mc15_13TeV/8a/f1/DAOD_STDM3.05630052._000001.pool.root.1\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id/start",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id",
+								"start"
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "File Complete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4a537f48-b182-4ab8-94a7-2f7f0541fb29",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\t'status': 'success', \n\t'num-messages': 10, \n\t'total-time': 33.43976902961731, \n\t'file-path': '/data/AOD.11182705._000001.pool.root.1'\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id/file-complete",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id",
+								"file-complete"
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "37e8f2e7-12a4-4591-ad71-1d5f2a64c572",
+								"exec": [
+									"// example using pm.response.to.have",
+									"pm.test(\"response is ok\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\t'status': 'success', \n\t'num-messages': 10, \n\t'total-time': 33.43976902961731, \n\t'file-path': '/data/AOD.11182705._000001.pool.root.1'\n}"
+						},
+						"url": {
+							"raw": "{{host}}/servicex/transformation/:request_id/status",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"servicex",
+								"transformation",
+								":request_id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "request_id",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "b3695c8c-78a7-48c5-ba98-c0058a3cdf11",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "8dde37a1-5f3a-4739-86be-ee0f0fc9a729",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

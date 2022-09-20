@@ -1,0 +1,106 @@
+#SERVER_NAME = '127.0.0.1:5000'
+# this is the session secret, used to protect the Flask session. You should
+# use a longer secret string known only to your application
+# details are beyond the scope of this example
+SECRET_KEY = 'abc123!'
+
+# Base URL of documentation
+DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/latest/'
+
+# Enable JWT auth on public endpoints
+ENABLE_AUTH=False
+
+# Globus configuration - obtained at https://auth.globus.org/v2/web/developers
+GLOBUS_CLIENT_ID='globus-client-id'
+GLOBUS_CLIENT_SECRET='globus-client-secret'
+
+# JWT admin email address
+JWT_ADMIN='admin@example.com'
+
+# Number of seconds the JWTs are valid for
+JWT_REFRESH_TOKEN_EXPIRES=False
+JWT_ACCESS_TOKEN_EXPIRES=21600 # Six hours
+
+# Based on https://codeburst.io/jwt-authorization-in-flask-c63c1acf4eeb
+SQLALCHEMY_DATABASE_URI = 'sqlite:///sqlite/app.db'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SECRET_KEY = 'some-secret-string'
+JWT_SECRET_KEY = 'jwt-secret-string'
+
+RABBIT_MQ_URL= 'amqp://user:leftfoot1@localhost:30672/%2F'
+TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@host.docker.internal:30672/%2F?heartbeat=9000'
+
+# Keep retrying every ten seconds for two minutes before giving up
+RABBIT_RETRIES = 12
+RABBIT_RETRY_INTERVAL = 10
+
+# With the default None value, pods will get the global default if cluster has such priorityclass defined
+TRANSFORMER_PRIORITY_CLASS = None
+
+# This will be mounted into the transformer pod's /data directory
+TRANSFORMER_LOCAL_PATH="/Users/bengal1/dev/IRIS-HEP/data"
+TRANSFORMER_NAMESPACE="default"
+TRANSFORMER_X509_SECRET="aspiring-mole-x509-proxy"
+
+ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
+
+TRANSFORMER_MANAGER_ENABLED = True
+
+# Set to True to use transformer pod autoscaling. If False then it will always
+# start the requested number of transformers
+TRANSFORMER_AUTOSCALE_ENABLED = True
+
+# Set min and max replicas for autoscaler
+TRANSFORMER_MIN_REPLICAS = 1
+TRANSFORMER_MAX_REPLICAS = 20
+
+# Use one core per transformer
+TRANSFORMER_CPU_LIMIT = 1
+
+# CPU threshold for HPA (in percent) to spawn additional transformers
+TRANSFORMER_CPU_SCALE_THRESHOLD = 70
+
+TRANSFORMER_MANAGER_MODE = 'external-kubernetes'
+
+# Should we validate the docker image exists on DockerHub?
+# Set to False if you are doing local development and don't want to
+# push your image
+TRANSFORMER_VALIDATE_DOCKER_IMAGE = True
+
+TRANSFORMER_MESSAGING = 'none'
+
+# --- Support for POSIX volumes in transformers ---
+
+# Set this if you have created a PVC and want the transformers to mount it
+TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = ""
+
+# The directory where the volume will be mounted (must have trailing /)
+TRANSFORMER_PERSISTENCE_SUBDIR = "output/"
+
+TRANSFORMER_DEFAULT_IMAGE = "sslhep/servicex_func_adl_xaod_transformer:develop"
+
+OBJECT_STORE_ENABLED = False
+MINIO_URL = 'localhost:9000'
+MINIO_ACCESS_KEY = 'miniouser'
+MINIO_SECRET_KEY = 'leftfoot1'
+
+# Will be shared with the client so they can find the minio endpoint
+MINIO_PUBLIC_URL = 'localhost:9000'
+MINIO_ENCRYPT_PUBLIC = True
+MINIO_ENCRYPT = False
+
+CODE_GEN_SERVICE_URL = 'http://localhost:5001'
+CODE_GEN_IMAGE = "sslhep/servicex_code_gen_func_adl_xaod:develop"
+
+# If no scheme is included in a requests DID, it will be routed to the Rucio
+# DID Finder
+DID_FINDER_DEFAULT_SCHEME = 'rucio'
+VALID_DID_SCHEMES = ['rucio']
+
+# Slack integration requires the app's signing secret and a signup webhook
+SLACK_SIGNING_SECRET = 'some-secret' # Found at https://api.slack.com/apps/<id>
+SIGNUP_WEBHOOK_URL = '' # Create at https://api.slack.com/apps/<app-id>/incoming-webhooks
+
+# Mailgun configuration
+MAILGUN_API_KEY = ''
+MAILGUN_DOMAIN = ''

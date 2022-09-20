@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  {% if title %}
+  <title>ServiceX - {{ title }}</title>
+  {% else %}
+  <title>ServiceX</title>
+  {% endif %}
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+  <!-- FontAwesome -->
+  <script src="https://use.fontawesome.com/541a85adb4.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+
+</head>
+
+<body>
+  <header class="site-header">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand mr-4" href="/">ServiceX</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle"
+          aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarToggle">
+
+          <!-- Navbar Left Side -->
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
+            </li>
+            {% if not config['ENABLE_AUTH'] %}
+            <li class="nav-item">
+              <a href="{{ url_for('global-dashboard') }}" class="nav-link">Dashboard</a>
+            </li>
+            {% endif %}
+          </ul>
+
+          {% if config["ENABLE_AUTH"] %}
+          <!-- Navbar Right Side -->
+          <ul class="navbar-nav">
+            {% if not session['is_authenticated'] %}
+            <li class="nav-item">
+              <a href="{{ url_for('sign_in') }}" class="nav-link">Sign In</a>
+            </li>
+            {% else %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                {{ session["name"] }}
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a href="{{ url_for('user-dashboard') }}" class="dropdown-item">Dashboard</a>
+                <a href="{{ url_for('profile') }}" class="dropdown-item">Profile</a>
+                <a href="{{ url_for('about') }}" class="dropdown-item">About</a>
+                <div class="dropdown-divider"></div>
+                <a href="{{ url_for('sign_out') }}" class="dropdown-item">Sign out</a>
+              </div>
+            </li>
+            {% endif %}
+          </ul>
+          {% endif %}
+
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main role="main" class="container">
+    <div class="row">
+      {% block nav %}{% endblock %}
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- JS, Popper.js, and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+
+  <!-- Custom JS -->
+  <script>
+    // Enable tooltips
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover' })
+    })
+
+    // Mark current endpoint as active
+    $(document).ready(function () {
+      $("#{{request.endpoint}}").addClass("active");
+    })
+  </script>
+
+  <!-- Page-specific JS -->
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

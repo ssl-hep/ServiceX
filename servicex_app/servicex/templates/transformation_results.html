@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% from 'bootstrap5/table.html' import render_table %}
+{% from 'bootstrap5/pagination.html' import render_pager %}
+{% from 'bootstrap5/pagination.html' import render_pagination %}
+
+{% block content %}
+<div>
+  <div class="content-section">
+    <h4 class="mb-3">
+      Results for Transformation
+      <a href="/transformation-request/{{ treq.request_id }}">{{ treq.request_id }}</a>
+    </h4>
+    <table class="table table-sm table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">File Path</th>
+          <th scope="col">Status</th>
+          <th scope="col">Time</th>
+          <th scope="col">Events</th>
+          <th scope="col">Bytes</th>
+          <th scope="col">Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in pagination.items %}
+        <tr>
+          <th scope="row">{{ res.file_id }}</th>
+          <td style="word-break: break-all">{{ res.file_path }}</td>
+          <td>{{ res.transform_status }}</td>
+          <td>{{ res.transform_time }}</td>
+          <td>{{ res.total_events }}</td>
+          <td>{{ res.total_bytes }}</td>
+          <td>{{ res.avg_rate }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if pagination.items %}
+    {{ render_pagination(pagination, align='center') }}
+    {% else %}
+    <div>No results found!</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
