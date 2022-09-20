@@ -1,0 +1,13 @@
+# Requirements needed to run the app.
+Flask==1.1.2
+Flask-RESTful==0.3.8
+Flask-WTF==0.14.3
+func-adl==2.3
+func-adl.ast==2.3
+func-adl-uproot==1.8.0
+qastle==0.15.0
+# Incompatibility between flask and the latest itsdangerous
+itsdangerous==2.0.1
+# Avoid import error in Flask
+werkzeug==2.0.3
+jinja2==3.0.3
