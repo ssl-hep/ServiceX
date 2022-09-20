@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-servicex-app
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-servicex-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-servicex-app
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    spec:
+      serviceAccountName: {{ template "servicex.fullname" . }}
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        - name: check-postgresql
+          image: {{ .Values.app.checksImage }}
+          env:
+        {{- if .Values.secrets }}
+            - name: PG_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: postgresql-password
+            - name: PG_URI
+              value: 'postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
+        {{- else }}
+            - name: PG_URI
+              value: 'postgresql://postgres:{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
+        {{- end }}
+      {{- end }}
+      containers:
+      - name: {{ .Release.Name }}-servicex-app
+        image: {{ .Values.app.image }}:{{ .Values.app.tag }}
+        env:
+        - name: APP_CONFIG_FILE
+          value: "/opt/servicex/app.conf"
+        - name: INSTANCE_NAME
+          value: {{ .Release.Name }}
+        - name: LOG_LEVEL
+          value: {{ .Values.app.logLevel | upper }}
+    {{- if .Values.secrets }}
+        - name: GLOBUS_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: globusClientID
+        - name: GLOBUS_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: globusClientSecret
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: flaskSecretKey
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: jwtSecretKey
+        - name: SLACK_SIGNING_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: slackSigningSecret
+        - name: SIGNUP_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: slackSignupWebhook
+        - name: MAILGUN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: mailgunAPIKey
+        - name: RMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: rabbitmq-password
+        - name: RABBIT_MQ_URL
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F"
+        - name: TRANSFORMER_RABBIT_MQ_URL
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: postgresql-password
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: accesskey
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: secretkey
+    {{- end }}
+    {{- if .Values.secrets }}
+          {{- if .Values.postgres.enabled }}
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://postgres:$(PG_PASS)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}"
+          {{- end }}
+    {{- end }}
+        tty: true
+        stdin: true
+        imagePullPolicy: {{ .Values.app.pullPolicy }}
+        {{- if .Values.app.resources }}
+        resources:
+{{ toYaml .Values.app.resources | indent 10 }}
+        {{- end }}
+
+        volumeMounts:
+          - name: app-cfg
+            mountPath: /opt/servicex
+          - name: sqlite
+            mountPath: /sqlite
+
+        ports:
+          - containerPort: 5000
+
+      volumes:
+        - name: app-cfg
+          configMap:
+            name:  {{ .Release.Name }}-flask-config
+        - name: sqlite
+          emptyDir: {}

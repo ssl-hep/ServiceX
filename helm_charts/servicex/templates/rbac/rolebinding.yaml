@@ -1,0 +1,57 @@
+{{- if .Values.rbacEnabled }}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "servicex.fullname" . }}-job-manager
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" .  }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+subjects:
+- kind: ServiceAccount
+  name: {{ template "servicex.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "servicex.fullname" . }}-job-manager
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "servicex.fullname" . }}-x509-secret-manager
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" .  }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+subjects:
+- kind: ServiceAccount
+  name: {{ template "servicex.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "servicex.fullname" . }}-x509-secret-manager
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "servicex.fullname" . }}-configmap-manager
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" .  }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+subjects:
+- kind: ServiceAccount
+  name: {{ template "servicex.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "servicex.fullname" . }}-configmap-manager
+
+{{- end }}

@@ -1,0 +1,76 @@
+---
+{{ if .Values.didFinder.rucio.enabled}}
+  {{- if .Values.noCerts }}
+    {{- fail "Rucio DID Finder requires x509 Certs to be installed" }}
+  {{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-rucio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-rucio
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-rucio
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-did-finder-rucio
+        image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
+        command: ["/usr/src/app/runme.sh"]
+        imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
+        env:
+          {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom: 
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: RMQ_URI
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- else }}
+          - name: RMQ_URI
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- end }}
+          {{- if .Values.didFinder.rucio.cachePrefix }}
+          - name: CACHE_PREFIX
+            value: "{{ .Values.didFinder.rucio.cachePrefix }}"
+          {{- end }}
+          {{- if .Values.didFinder.rucio.reportLogicalFiles }}
+          - name: REPORT_LOGICAL_FILES
+            value: "--report-logical-files"
+          {{- end }}
+          - name: RUCIO_LATITUDE
+            value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
+          - name: RUCIO_LONGITUDE
+            value: "{{ .Values.didFinder.rucio.servicex_longitude }}"
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+          {{- if ((.Values.didFinder.rucio.memcache).enabled) }}
+          - name: MEMCACHE
+            value: "True" 
+          - name: MEMCACHE_TTL
+            value: "{{ .Values.didFinder.rucio.memcache.ttl }}" 
+          {{- end }}
+        volumeMounts:
+          - name: rucio-cfg
+            mountPath: /opt/rucio/etc/
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+      {{- if ((.Values.didFinder.rucio.memcache).enabled) }}
+      - name: {{ .Release.Name }}-did-finder-rucio-memcache
+        image: {{ .Values.didFinder.rucio.memcache.image }}:{{ .Values.didFinder.rucio.memcache.tag }}
+      {{- end }}
+      volumes:
+        - name: rucio-cfg
+          configMap:
+            name: {{ .Release.Name }}-rucio-config
+        - name: x509-secret
+          secret:
+            defaultMode: 292
+            secretName: {{ .Release.Name }}-x509-proxy
+{{- end }}

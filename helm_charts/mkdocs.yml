@@ -1,0 +1,27 @@
+site_name: ServiceX
+nav:
+    - Home: index.md
+    - Introduction: introduction.md
+    - 'User Guide':
+        - Getting started: user/getting-started.md
+        - Specifying a request: user/requests.md
+        - Outreach: user/outreach.md
+    - 'Examples':
+        - ATLAS xAOD Example: user/func_adl_xaod.ipynb
+        # - TCut Intro: user/tcut_intro.ipynb
+        # - Advanced xAOD with Func-ADL: user/func_adl_xaod.ipynb
+    - 'Deployment Guide':
+        - Basic deployments: deployment/basic.md
+        - Production deployments: deployment/production.md
+        - Columnar Data Output Options: deployment/output_options.md
+        - Reference: deployment/reference.md
+    - 'Developer Guide':
+        - Architecture: development/architecture.md
+        - Contributing: development/contributing.md
+theme:
+    name: readthedocs
+    highlightjs: true
+    hljs_languages:
+        - yaml
+plugins:
+    - mkdocs-jupyter

@@ -1,0 +1,38 @@
+{{- if .Values.codeGen.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-code-gen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-code-gen
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-code-gen
+    spec:
+      serviceAccountName: {{ template "servicex.fullname" . }}
+      containers:
+      - name: {{ .Release.Name }}-code-gen
+        image: {{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}
+        env:
+        - name: APP_CONFIG_FILE
+          value: "/opt/servicex/app.conf"
+        - name: INSTANCE_NAME
+          value: {{ .Release.Name }}
+        tty: true
+        stdin: true
+        imagePullPolicy: {{ .Values.codeGen.pullPolicy }}
+        volumeMounts:
+          - name: app-cfg
+            mountPath: /opt/servicex
+        ports:
+          - containerPort: 5000
+
+      volumes:
+        - name: app-cfg
+          configMap:
+            name:  {{ .Release.Name }}-flask-config
+{{- end }}
