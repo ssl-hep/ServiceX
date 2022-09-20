@@ -37,3 +37,4 @@ done
 
 git filter-repo --force --replace-refs delete-no-add --path-rename helm_charts/migrate.sh:migrate.sh
 git commit -m "Mono repo Merge complete"
+git push origin --force

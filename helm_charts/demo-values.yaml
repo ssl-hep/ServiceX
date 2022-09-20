@@ -1,6 +1,0 @@
-didFinder:
-  # For easy testing, we set this to be a publicly accessable xAOD File
-  # The DID Finder will always just return this file instead of connecting
-  # To rucio to actually resolve the dataset
-  # Set this to empty to actually use the DID Finder
-  staticFile: 'https://recastwww.web.cern.ch/recastwww/data/reana-recast-demo/mc15_13TeV.123456.cap_recast_demo_signal_one.root'
