@@ -37,7 +37,8 @@ logging:
 app:
   image: sslhep/servicex_app
   tag: 20220831-0243-stable
-  logLevel: "WARNING" # set to DEBUG, INFO, WARNING, ERROR, FATAL
+  # log level can be set to DEBUG, INFO, WARNING, ERROR or FATAL
+  logLevel: "WARNING"
   pullPolicy: Always
 
   checksImage: ncsa/checks:latest
@@ -79,7 +80,8 @@ app:
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
     retries: 12
-    retry_interval: 10 # seconds
+    # retry interval is in seconds
+    retry_interval: 10
 
 # Settings for the Rucio DID Finder
 didFinder:
