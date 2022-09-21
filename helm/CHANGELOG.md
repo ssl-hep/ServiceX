@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - option to use direct to logstash logging.
+- Move to python 3.10
 
 ### Removed
 
@@ -18,14 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased 1.0.30
 
 ## 1.0.31
+
 ### Added
-- DID Finder and Rucio performance updates: file and metadata operations now 
+
+- DID Finder and Rucio performance updates: file and metadata operations now
 occur using bulk updates instead of file by file.  memcached has been added to cache information
 from rucio
-- Postgresql and MinIO chart changes: ServiceX now uses MinIO 11.2 and PostgreSQL 11.6 
+- Postgresql and MinIO chart changes: ServiceX now uses MinIO 11.2 and PostgreSQL 11.6
 as provided by Bitnami
 
 ## 1.0.30
+
 ### Added
 
 - DID Finder now returns an ordered list of replicas. If transformer is unable
