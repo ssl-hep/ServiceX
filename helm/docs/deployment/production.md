@@ -60,17 +60,16 @@ different value, such as `traefik`.
 
 ### Adding an Ingress to Minio
 ServiceX stores files in a Minio object store which is deployed as a 
-subchart. The Helm chart for Minio has it's own support for an Ingress,
+subchart. The Helm chart for Minio has its own support for an Ingress,
 which we can activate like so:
 
 ```yaml
 minio:
-  ingress:
+  apiIngress:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: <ingress class>
-    hosts:
-    - my-release-minio.servicex.ssl-hep.org
+    hostname: my-release-minio.servicex.ssl-hep.org
 ```
 
 Unlike the ServiceX Ingress, the subchart doesn't know the name of our 
@@ -159,16 +158,16 @@ Adding TLS to the Minio subchart is slightly different.
 The configuration is as follows:
 ```yaml
 minio:
-  ingress:
+  apiIngress:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: <ingress class>
-    hosts:
-    - my-release-minio.servicex.ssl-hep.org
-    tls:
-    - hosts:
-      - my-release-minio.servicex.ssl-hep.org
-      secretName: my-release-minio-tls
+    hostname: my-release-minio.servicex.ssl-hep.org
+    tls: true
+    extraTls:
+      - hosts:
+        - my-release-minio.servicex.ssl-hep.org
+        secretName: my-release-minio-tls
 ```
 Remember to replace `my-release` and `servicex.ssl-hep.org` with your Helm release name and app ingress host, respectively. 
 Here, you must specify a secret name; there is no default.
@@ -201,18 +200,18 @@ For more information, see the cert-manager [guide to securing nginx-ingress](htt
 To enable TLS for Minio, use the following configuration:
 ```yaml
 minio:
-  ingress:
+  apiIngress:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: <ingress class>
       cert-manager.io/cluster-issuer: letsencrypt-prod
       acme.cert-manager.io/http01-edit-in-place: "true"
-    hosts:
-    - my-release-minio.servicex.ssl-hep.org
-    tls:
-    - hosts:
-      - my-release-minio.servicex.ssl-hep.org
-      secretName: my-release-minio-tls
+    hostname: my-release-minio.servicex.ssl-hep.org
+    tls: true
+    extraTls:
+       - hosts:
+         - my-release-minio.servicex.ssl-hep.org
+         secretName: my-release-minio-tls
 ```
 Once again, remember to replace `my-release` and `servicex.ssl-hep.org` with 
 your Helm release name and app ingress host, respectively.

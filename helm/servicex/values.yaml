@@ -16,7 +16,7 @@ objectStore:
   # turn off https connections to minio, should be off if using internal
   # minio
   useTLS: false
-  # set clients to use a https connection to connect to minio, should be 
+  # set clients to use a https connection to connect to minio, should be
   # set to true unless using a devel setup
   publicClientUseTLS: true
 
@@ -29,8 +29,11 @@ postgres:
 # Settings for the Flask App
 app:
   image: sslhep/servicex_app
-  tag: 20220309-2035-stable
+  tag: 20220831-0243-stable
+  logLevel: 'WARNING'  # set to DEBUG, INFO, WARNING, ERROR, FATAL
   pullPolicy: Always
+
+  checksImage: ncsa/checks:latest
   replicas: 1
   auth: false
   validateTransformerImage: true
@@ -69,14 +72,14 @@ app:
   # RabbitMQ can take up to one minute to start up. Simplify app startup by waiting for it
   rabbitmq:
     retries: 12
-    retry_interval: 10 # seconds
+    retry_interval: 10  # seconds
 
 # Settings for the Rucio DID Finder
 didFinder:
   rucio:
     enabled: true
     image: sslhep/servicex-did-finder
-    tag: 20220309-2035-stable
+    tag: 20220831-0243-stable
     pullPolicy: Always
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
@@ -84,11 +87,16 @@ didFinder:
     servicex_longitude: -87.7
     cachePrefix:
     reportLogicalFiles: false
+    memcache:
+      enabled: true
+      image: memcached
+      tag: alpine
+      ttl: 86400
 
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    tag: 20220309-2035-stable
+    tag: 20220831-0243-stable
     pullPolicy: Always
     cachePrefix:
 
@@ -101,7 +109,7 @@ codeGen:
   # image: sslhep/servicex_code_gen_func_adl_uproot
   # for CMS Run 1 AOD OpenData
   # image: sslhep/servicex_code_gen_cms_aod
-  tag: 20220309-2035-stable
+  tag: 20220831-0243-stable
   pullPolicy: Always
 
 # Pull policy for the worker pods - the image and version are specified as
@@ -115,7 +123,8 @@ transformer:
   pullPolicy: Always
   priorityClassName:
   cpuLimit: 1
-  defaultTransformerImage:     sslhep/servicex_func_adl_xaod_transformer:20220309-2035-stable 
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultTransformerTag: 20220831-0243-stable
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
@@ -126,14 +135,16 @@ transformer:
     subdir:
 
   # For uproot deployment
-  #  defaultTransformerImage:     sslhep/servicex_func_adl_uproot_transformer:20220309-2035-stable 
+  #  defaultTransformerImage:  sslhep/servicex_func_adl_uproot_transformer
+  #  defaultTransformerTag: 20220831-0243-stable
 
 x509Secrets:
   image: sslhep/x509-secrets
-  tag: 20220309-2035-stable
+  tag: 20220831-0243-stable
   pullPolicy: Always
   vomsOrg: atlas
 
+  initImage: alpine:3.6
 # Values for the RabbitMQ Chart
 rabbitmq:
   # For easy testing we don't require PVs for rabbit
@@ -147,25 +158,30 @@ rabbitmq:
 
 # Values for the Postgresql Chart
 postgresql:
-  postgresqlDatabase: servicex
-  postgresqlPassword: leftfoot1
-  persistence:
-    enabled: false
+  global:
+    postgresql:
+      auth:
+        postgresPassword: leftfoot1
+        database: servicex
+  primary:
+    persistence:
+      enabled: false
 
 # Values for Minio Chart
 minio:
   # For easy testing we don't require PVs for minio
   persistence:
     enabled: false
-  accessKey: miniouser
-  secretKey: leftfoot1
   livenessProbe:
     enabled: true
     initialDelaySeconds: 120
     periodSeconds: 60
+  auth:
+    rootUser: miniouser
+    rootPassword: leftfoot1
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
 noCerts: false
 gridAccount: <your account>
 
-rbacEnabled: True
+rbacEnabled: true

@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.31
+### Added
+- DID Finder and Rucio performance updates: file and metadata operations now 
+occur using bulk updates instead of file by file.  memcached has been added to cache information
+from rucio
+- Postgresql and MinIO chart changes: ServiceX now uses MinIO 11.2 and PostgreSQL 11.6 
+as provided by Bitnami
+
+## 1.0.30
+### Added
+- DID Finder now returns an ordered list of replicas. If transformer is unable
+to open a replica then it can go down the list to find an accesible file
+- DID finder can take URI parameters `files`, `rucio://datset-name?files=10` and it will
+  return only 10 files from the dataset. By default all flies are returned
+- DID finder can take URI prameter `get`, `rucio://data-set?get=availible` and only files
+  in a dataset that are availible will be returned. If `all` is supplied instead, then all
+  files must be returned. Anything less throws an error.
+- About page on web ui to show the deployed version information
+- xAOD code generator now works with metadata allowing one to alter its behavior on-the-fly to support
+  all collections and obejcts in the ATLAS xAOD
+### Changed
+- In helm chart, split the default transformer image into two values. One for image
+name and a second one for just the tag. This makes it easier for the deployment
+script to update the transformer tag.
+- 
+### Fixed
+- Correct missing permissions required to use POSIX volume for transform results
+- Rucio DID Finder correctly handles files for which there are no replicas
+
+### Removed
+
+## 20220323-1932-stable - 2022-03-23
+
+### Added
+- noIndex, noFollow to avoid robots crawling of the web frontend
+- About page listing versions of all the components
+- Added support for requests without rucio scope.
+
+### Fixed
+- User dashboard table is now updating again
+- Added default transformer tag parameter.
+- Correct handling of datasets with file(s) without any replicas.
+
+
+## [20220311-2056-stable] - 2022-03-16
+### Added
+- Support for Bring-your-own Object Store
+
+### Changed
+- X509 User Proxies are mounted in /tmp so containers can be run without root permissions
+- Option to report logical files instead of replicas to support CMS style xCache
+
+### Fixed
+- Updated to current version of Bootstrap web page framework
+
+### Removed
+- Preflight Check step
+- Kafka streaming
+
 ## [1.0.0-RC.4] - 2021-10-8
 ### Added
 - Support for xCache in DID Finders

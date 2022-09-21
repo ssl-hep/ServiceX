@@ -2,6 +2,9 @@
 
 # ServiceX - Data Delivery for the HEP Community
 
+![Uproot Status](https://github.com/ssl-hep/servicex-backend-tests/actions/workflows/daily_servicex_uproot_test_af.yml/badge.svg) 
+![xAOD Status](https://github.com/ssl-hep/servicex-backend-tests/actions/workflows/daily_servicex_xaod_test_af.yml/badge.svg)
+
 ServiceX is an on-demand service that delivers data straight from the grid to high energy physics analysts in an easy, flexible, and highly performant manner.
 
 ## Features
