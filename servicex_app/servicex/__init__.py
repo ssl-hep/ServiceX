@@ -33,6 +33,7 @@ import os
 
 from flask import Flask
 from flask_bootstrap import Bootstrap5
+from flask_cors import CORS
 from flask_jwt_extended import (JWTManager)
 from flask_restful import Api
 
@@ -92,6 +93,7 @@ def create_app(test_config=None,
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
     Bootstrap5(app)
+    CORS(app)
 
     JWTManager(app)
 
