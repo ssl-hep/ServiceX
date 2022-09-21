@@ -26,7 +26,7 @@ Your account will need to have permission to:
   - Peform Rolebindings
 - [Helm 3](https://helm.sh/docs/intro/install/) installed.
 - Python 3.6+
-- A valid set of CERN X509 certificates in the `~/.globus` directory.
+- A valid set of CERN X509 certificates (`usercert.pem` and `userkey.pem`)in the `~/.globus` directory.
 
 If you don't have access to a cluster, you can enable a single node
 Kubernetes cluster on your desktop
@@ -57,8 +57,9 @@ servicex --namespace <default> init --cert-dir ~/.globus
 ```
 
 By default, this will look for the certificates in your `~/.globus` directory.
-You can pass another directory with the `--cert-dir` argument.
-You will be prompted for the passphrase that secures your X509 private key.
+You can pass another directory with the `--cert-dir` argument. It is assumed 
+that they are named `usercert.pem` and `userkey.pem`.  You will be prompted for 
+the passphrase that secures your X509 private key.
 
 The installed secrets can be used by any ServiceX instance deployed into the
 given namespace.
