@@ -181,6 +181,10 @@ minio:
   # For easy testing we don't require PVs for minio
   persistence:
     enabled: false
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 60
   auth:
     rootUser: miniouser
     rootPassword: leftfoot1
