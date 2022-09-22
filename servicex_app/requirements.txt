@@ -11,7 +11,7 @@ flask-sqlalchemy
 Flask-Migrate
 kubernetes
 minio
-psycopg2-binary
+psycopg2
 globus_sdk
 cryptography
 bootstrap-flask
