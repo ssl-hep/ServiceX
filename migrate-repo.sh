@@ -42,11 +42,11 @@ GIT_REMOTE_SERVICEX_DID_FINDER_RUCIO="https://github.com/ssl-hep/ServiceX_DID_Fi
 GIT_REMOTE_SERVICEX_UPROOT_TRANSFORMER="https://github.com/ssl-hep/ServiceX_Uproot_Transformer.git"
 GIT_REMOTE_SERVICEX_XAOD_CPP_TRANSFORMER="https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer.git"
 
-brew update && brew upgrade && brew install git-filter-repo
+# brew update && brew upgrade && brew install git-filter-repo
 
 repo_list=("${GIT_REMOTE_SERVICEX}" "${GIT_REMOTE_SERVICEX_APP}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_UPROOT}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_xAOD}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_PYTHON}" "${GIT_REMOTE_SERVICEX_DID_FINDER_CERNOPENDATA}" "${GIT_REMOTE_SERVICEX_DID_FINDER_RUCIO}" "${GIT_REMOTE_SERVICEX_UPROOT_TRANSFORMER}" "${GIT_REMOTE_SERVICEX_XAOD_CPP_TRANSFORMER}")
 
-folder_list=("helm_charts" "servicex_app" "servicex_code_generator_funcadl_uproot" "servicex_code_generator_funcadl_xAOD" "servicex_code_generator_python" "servicex_did_finder_cernopendata" "servicex_did_finder_rucio" "servicex_uproot_transformer" "servicex_xaod_cpp_transformer")
+folder_list=("helm" "servicex_app" "code_generator_funcadl_uproot" "code_generator_funcadl_xAOD" "code_generator_python" "did_finder_cernopendata" "did_finder_rucio" "uproot_transformer" "xaod_cpp_transformer")
 
 branches_list=("develop" "develop" "develop" "develop" "main" "develop" "develop" "develop" "develop")
 
@@ -70,3 +70,24 @@ git filter-repo --force --replace-refs delete-no-add --path-rename "${folder_lis
 git commit -m "Mono repo Merge complete"
 git remote add origin https://github.com/ssl-hep/ServiceX-monorepo.git
 git push origin --force
+
+# Now clean up the directory structure
+git mv helm/docs .
+git mv helm/examples .
+git mv helm/.readthedocs.yml .
+git mv helm/README.md .
+git mv helm/CHANGELOG.md .
+git mv helm/LICENSE .
+git mv helm/mkdocs.yml .
+mkdir .github
+git mv helm/.github/ISSUE_TEMPLATE ./.github
+git mv helm/.github/FUNDING.yml ./.github
+git add .github
+git rm helm/tag_and_release.sh
+git rm servicex_app/tag_and_release.sh
+git rm code_generator_funcadl_uproot/tag_and_release.sh
+git rm code_generator_funcadl_xAOD/tag_and_release.sh
+git rm did_finder_cernopendata/tag_and_release.sh
+git rm did_finder_rucio/tag_and_release.sh
+git rm uproot_transformer/tag_and_release.sh
+git commit -m "Fixup directories after mono repo merge"
