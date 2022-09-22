@@ -26,9 +26,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
+from logging import Logger
 
 from flask import request, current_app
 
+from servicex import TransformerManager
 from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 
@@ -70,14 +72,17 @@ class TransformerFileComplete(ServiceXResource):
 
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            current_app.logger.info("Job is all done... shutting down transformers",
-                                    extra={'requestId': request_id})
-            self.transformer_manager.shutdown_transformer_job(request_id, namespace)
-            transform_req.status = "Complete"
-            transform_req.finish_time = datetime.now(tz=timezone.utc)
-            transform_req.save_to_db()
-
+            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
         db.session.commit()
 
         return "Ok"
+
+    @staticmethod
+    def transform_complete(logger: Logger, transform_req: TransformRequest,
+                           transformer_manager: TransformerManager):
+        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+        logger.info(f"Job {transform_req.request_id} is all done... shutting down transformers")
+        transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
+        transform_req.status = "Complete"
+        transform_req.finish_time = datetime.now(tz=timezone.utc)
+        transform_req.save_to_db()

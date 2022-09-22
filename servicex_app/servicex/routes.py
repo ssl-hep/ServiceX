@@ -134,7 +134,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AddFileToDataset,
                      '/servicex/internal/transformation/<string:request_id>/files')
 
-    FilesetComplete.make_api(lookup_result_processor)
+    FilesetComplete.make_api(lookup_result_processor, transformer_manager)
     api.add_resource(FilesetComplete,
                      '/servicex/internal/transformation/<string:request_id>/complete')
 

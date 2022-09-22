@@ -29,12 +29,14 @@ from flask import request, current_app
 
 from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
+from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
 
 
 class FilesetComplete(ServiceXResource):
     @classmethod
-    def make_api(cls, lookup_result_processor):
+    def make_api(cls, lookup_result_processor, transformer_manager):
         cls.lookup_result_processor = lookup_result_processor
+        cls.transformer_manager = transformer_manager
         return cls
 
     def put(self, request_id):
@@ -51,3 +53,8 @@ class FilesetComplete(ServiceXResource):
             did_lookup_time=summary['elapsed-time']
         )
         db.session.commit()
+
+        if summary['files'] == 0:
+            TransformerFileComplete.transform_complete(current_app.logger,
+                                                       rec,
+                                                       self.transformer_manager)

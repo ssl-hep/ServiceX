@@ -108,13 +108,13 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker.patch.object(TransformRequest, "save_to_db")
 
         client = self._test_client(transformation_manager=mock_transformer_manager)
-        response = client.put('/servicex/internal/transformation/1234/file-complete',
+        response = client.put('/servicex/internal/transformation/BR549/file-complete',
                               json=self._generate_file_complete_request())
 
         assert response.status_code == 200
         assert fake_req.finish_time is not None
-        mock_transform_request_read.assert_called_with('1234')
-        mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
+        mock_transform_request_read.assert_called_with('BR549')
+        mock_transformer_manager.shutdown_transformer_job.assert_called_with('BR549',
                                                                              'my-ws')
 
     def test_put_transform_file_complete_unknown_request_id(self, mocker):
