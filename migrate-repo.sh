@@ -41,14 +41,16 @@ GIT_REMOTE_SERVICEX_DID_FINDER_CERNOPENDATA="https://github.com/ssl-hep/ServiceX
 GIT_REMOTE_SERVICEX_DID_FINDER_RUCIO="https://github.com/ssl-hep/ServiceX_DID_Finder_Rucio.git"
 GIT_REMOTE_SERVICEX_UPROOT_TRANSFORMER="https://github.com/ssl-hep/ServiceX_Uproot_Transformer.git"
 GIT_REMOTE_SERVICEX_XAOD_CPP_TRANSFORMER="https://github.com/ssl-hep/ServiceX_xAOD_CPP_transformer.git"
+GIT_REMOTE_SERVICEX_SIDECAR_TRANSFORMER="https://github.com/ssl-hep/ServiceX_Sidecar_Transformer.git"
+GIT_REMOTE_X509_SECRETS="https://github.com/ssl-hep/X509_Secrets.git"
 
 # brew update && brew upgrade && brew install git-filter-repo
 
-repo_list=("${GIT_REMOTE_SERVICEX}" "${GIT_REMOTE_SERVICEX_APP}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_UPROOT}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_xAOD}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_PYTHON}" "${GIT_REMOTE_SERVICEX_DID_FINDER_CERNOPENDATA}" "${GIT_REMOTE_SERVICEX_DID_FINDER_RUCIO}" "${GIT_REMOTE_SERVICEX_UPROOT_TRANSFORMER}" "${GIT_REMOTE_SERVICEX_XAOD_CPP_TRANSFORMER}")
+repo_list=("${GIT_REMOTE_SERVICEX}" "${GIT_REMOTE_SERVICEX_APP}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_UPROOT}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_FUNCADL_xAOD}" "${GIT_REMOTE_SERVICEX_CODE_GENERATOR_PYTHON}" "${GIT_REMOTE_SERVICEX_DID_FINDER_CERNOPENDATA}" "${GIT_REMOTE_SERVICEX_DID_FINDER_RUCIO}" "${GIT_REMOTE_SERVICEX_UPROOT_TRANSFORMER}" "${GIT_REMOTE_SERVICEX_XAOD_CPP_TRANSFORMER}" "${GIT_REMOTE_SERVICEX_SIDECAR_TRANSFORMER}" "${GIT_REMOTE_X509_SECRETS}")
 
-folder_list=("helm" "servicex_app" "code_generator_funcadl_uproot" "code_generator_funcadl_xAOD" "code_generator_python" "did_finder_cernopendata" "did_finder_rucio" "uproot_transformer" "xaod_cpp_transformer")
+folder_list=("helm" "servicex_app" "code_generator_funcadl_uproot" "code_generator_funcadl_xAOD" "code_generator_python" "did_finder_cernopendata" "did_finder_rucio" "uproot_transformer" "xaod_cpp_transformer" "transformer_sidecar" "x509_secrets")
 
-branches_list=("develop" "develop" "develop" "develop" "main" "develop" "develop" "develop" "develop")
+branches_list=("develop" "develop" "develop" "develop" "main" "develop" "develop" "develop" "develop" "main" "develop")
 
 migrated=()
 
