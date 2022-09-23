@@ -35,7 +35,7 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `app.mailgunDomain`                  | Sender domain for emails (should be verified through Mailgun) | -
 | `app.defaultDIDFinderScheme`         | DID Finder scheme if none provided in request. If left blank, template will attempt to guess.    | -                                                 |
 | `app.validateTransformerImage`       | Should docker image name be validated at DockerHub? | `true`                                               |
-| `didFinder.rucio.enabled`            | Should we deploy the Rucio DID Finder?           | `true`                                              |
+| `didFinder.rucio.enabled`            | Should we deploy the Rucio DID Finder?           | `false`                                              |
 | `didFinder.rucio.image`              | Rucio DID Finder image name                            | `sslhep/servicex-did-finder`                            |
 | `didFinder.rucio.tag`                | Rucio DID Finder image tag                             | `latest`                                                |
 | `didFinder.rucio.pullPolicy`         | Rucio DID Finder image pull policy                     | `Always`                                          |

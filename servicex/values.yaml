@@ -77,7 +77,7 @@ app:
 # Settings for the Rucio DID Finder
 didFinder:
   rucio:
-    enabled: true
+    enabled: false
     image: sslhep/servicex-did-finder
     tag: 20220831-0243-stable
     pullPolicy: Always
@@ -88,7 +88,7 @@ didFinder:
     cachePrefix:
     reportLogicalFiles: false
     memcache:
-      enabled: true
+      enabled: false
       image: memcached
       tag: alpine
       ttl: 86400
