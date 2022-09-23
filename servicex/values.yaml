@@ -181,7 +181,7 @@ minio:
     rootPassword: leftfoot1
 
 ###### Settings for Authenticating with the CERN Infrastructure #######
-noCerts: false
+noCerts: true
 gridAccount: <your account>
 
 rbacEnabled: true
