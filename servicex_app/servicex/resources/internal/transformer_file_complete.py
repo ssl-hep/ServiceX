@@ -43,7 +43,7 @@ class TransformerFileComplete(ServiceXResource):
 
     def put(self, request_id):
         info = request.get_json()
-        current_app.logger.info(f"Metric: {info}", extra={'requestId': request_id})
+        current_app.logger.info("Metric", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
         if transform_req is None:
             msg = f"Request not found with id: '{request_id}'"

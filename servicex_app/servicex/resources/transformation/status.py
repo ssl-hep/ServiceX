@@ -67,6 +67,6 @@ class TransformationStatus(ServiceXResource):
 
         if status_request.details:
             result_dict['details'] = TransformationResult.to_json_list(transform.results)
-        current_app.logger.info(f"Metric: {result_dict}",
-                                extra={'requestId': request_id})
+        current_app.logger.info("Metric",
+                                extra={'requestId': request_id, 'metric': result_dict})
         return jsonify(result_dict)

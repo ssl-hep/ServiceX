@@ -1,4 +1,4 @@
-flask>=1.1.2,<2.0
+flask
 Flask-WTF
 Flask-Cors
 wtforms
@@ -13,7 +13,8 @@ kubernetes
 minio
 psycopg2
 globus_sdk
-cryptography
-bootstrap-flask
+cryptography == 38.0.1
+bootstrap-flask == 2.1.0
 humanize
 MarkupSafe == 2.0.1
+python-logstash == 0.4.8

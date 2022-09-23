@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import logstash
 from distutils.util import strtobool
 import sys
 
@@ -46,7 +47,10 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
 
-class ServiceXFormatter(logging.Formatter):
+instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+
+
+class StreamFormatter(logging.Formatter):
     """
     Need a custom formatter to allow for logging with request ids that vary.
     Normally log messages are "level instance component request_id msg" and
@@ -65,6 +69,35 @@ class ServiceXFormatter(logging.Formatter):
         if not hasattr(record, "requestId"):
             setattr(record, "requestId", None)
         return super().format(record)
+
+
+class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
+
+    def format(self, record):
+        message = {
+            '@timestamp': self.format_timestamp(record.created),
+            '@version': '1',
+            'message': record.getMessage(),
+            'host': self.host,
+            'path': record.pathname,
+            'tags': self.tags,
+            'type': self.message_type,
+            'instance': instance,
+            'component': 'servicex_app',
+
+            # Extra Fields
+            'level': record.levelname,
+            'logger_name': record.name,
+        }
+
+        # Add extra fields
+        message.update(self.get_extra_fields(record))
+
+        # If exception, add debug info
+        if record.exc_info:
+            message.update(self.get_debug_fields(record))
+
+        return self.serialize(message)
 
 
 def _override_config_with_environ(app):
@@ -98,32 +131,42 @@ def create_app(test_config=None,
     JWTManager(app)
 
     # setup logging
-    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
-    formatter = ServiceXFormatter('%(levelname)s ' +
-                                  f"{instance} servicex_app " +
-                                  '%(requestId)s %(message)s')
-    servicex_handler = logging.StreamHandler()
-    servicex_handler.setFormatter(formatter)
-    if app.debug:
-        servicex_handler.setLevel('DEBUG')
-        app.logger.level = logging.DEBUG
-    else:
-        levels = {
-            'DEBUG': logging.DEBUG,
-            'INFO': logging.INFO,
-            'WARNING': logging.WARNING,
-            'WARN': logging.WARNING,
-            'ERROR': logging.ERROR,
-            'CRITICAL': logging.CRITICAL
-        }
-        level = os.environ.get('LOG_LEVEL', 'WARNING').upper()
-        servicex_handler.setLevel(levels[level])
-        app.logger.level = levels[level]
 
-    # remove current handlers and add our own
+    logstash_host = os.environ.get('LOGSTASH_HOST')
+    logstash_port = os.environ.get('LOGSTASH_PORT')
+
+    levels = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'WARN': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
+    level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+    if app.debug:
+        level = "DEBUG"
+    app.logger.level = levels[level]
+
+    # remove current handlers
     for h in app.logger.handlers:
         app.logger.removeHandler(h)
-    app.logger.addHandler(servicex_handler)
+
+    stream_handler = logging.StreamHandler()
+    stream_formatter = StreamFormatter('%(levelname)s ' +
+                                       f"{instance} servicex_app " +
+                                       '%(requestId)s %(message)s')
+    stream_handler.setFormatter(stream_formatter)
+    stream_handler.setLevel(levels[level])
+    app.logger.addHandler(stream_handler)
+
+    if (logstash_host and logstash_port):
+        logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
+        logstash_formatter = LogstashFormatter('logstash', None, None)
+        logstash_handler.setFormatter(logstash_formatter)
+        logstash_handler.setLevel(levels[level])
+        app.logger.addHandler(logstash_handler)
+
     app.logger.info("Initialized logging")
 
     if not test_config:
