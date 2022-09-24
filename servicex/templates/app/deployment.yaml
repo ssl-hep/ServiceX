@@ -42,6 +42,14 @@ spec:
           value: {{ .Release.Name }}
         - name: LOG_LEVEL
           value: {{ .Values.app.logLevel | upper }}
+        {{- if .Values.logging.logstash.enabled }}
+        - name: LOGSTASH_HOST
+          value: {{ .Values.logging.logstash.host }}
+        - name: LOGSTASH_PORT
+          value: {{ .Values.logging.logstash.port }}
+        - name: LOGSTASH_PROTOCOL
+          value: {{ .Values.logging.logstash.protocol }}
+        {{- end }}
     {{- if .Values.secrets }}
         - name: GLOBUS_CLIENT_ID
           valueFrom:
