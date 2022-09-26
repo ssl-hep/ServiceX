@@ -133,7 +133,7 @@ transformer:
   priorityClassName:
   cpuLimit: 1
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultTransformerTag: 20220831-0243-stable
+  defaultTransformerTag: 20220926-1720-stable
 
   # For enabling volume output destination for transformers. Supports attaching
   # an existing PVC to transformers
@@ -145,7 +145,7 @@ transformer:
 
   # For uproot deployment
   #  defaultTransformerImage:  sslhep/servicex_func_adl_uproot_transformer
-  #  defaultTransformerTag: 20220831-0243-stable
+  #  defaultTransformerTag: 20220926-1720-stable
 
 x509Secrets:
   image: sslhep/x509-secrets
