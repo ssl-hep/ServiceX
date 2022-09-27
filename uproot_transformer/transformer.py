@@ -35,20 +35,14 @@ from collections import namedtuple
 import re
 
 import psutil
-# import uproot
 import awkward as ak
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-# from servicex.transformer.arrow_writer import ArrowWriter
 from hashlib import sha1
 import pyarrow.parquet as pq
-
-# Needed until we use xrootd>=5.2.0
-# see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22
-# uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
 
 MAX_RETRIES = 3
 

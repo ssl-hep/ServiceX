@@ -4,14 +4,6 @@
 FROM continuumio/miniconda3:4.12.0
 
 RUN apt-get update -y && apt-get install gnupg2 -y 
-# \
-# && wget -q -O - https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3 | apt-key add - \
-# && echo "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core" >> /etc/apt/sources.list \
-# && apt-get --allow-releaseinfo-change update \
-# && apt-get install -y ca-policy-egi-core \
-# && apt-get purge -y gnupg2 \
-# && apt-get autoremove -y \
-# && rm -rf /var/lib/apt/lists/*
 
 RUN conda install --yes \
     -c conda-forge \
@@ -27,7 +19,6 @@ RUN conda install --yes \
     cytoolz \
     numpy==1.23.3 \
     pandas==1.5.0 \
-    # numba==0.50.1 \
     scipy==1.6.0 \
     && conda build purge-all && conda clean -ti
 
@@ -41,8 +32,6 @@ RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 COPY requirements.txt .
 RUN /opt/conda/bin/pip install safety==1.9.0
 
-# BenGalewsky Feb 1, 2022 - there is an unfixed numpy vulnerability
-# https://github.com/numpy/numpy/issues/19038
 RUN safety check -r requirements.txt -i 44715 -i44716 -i 44717
 RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 
