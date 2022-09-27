@@ -1,7 +1,7 @@
 # based on https://github.com/dask/dask-docker/blob/master/base/Dockerfile
 # but more permissive about image size due to read-only requirement in openshift
 # FROM daskdev/dask:2.9.0
-FROM continuumio/miniconda3:4.7.12
+FROM continuumio/miniconda3:4.12.0
 
 RUN apt-get install gnupg2 -y \
     && wget -q -O - https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3 | apt-key add - \
