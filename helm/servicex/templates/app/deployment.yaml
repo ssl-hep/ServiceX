@@ -39,16 +39,16 @@ spec:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
         - name: INSTANCE_NAME
-          value: {{ .Release.Name }}
+          value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
-          value: {{ .Values.app.logLevel | upper }}
+          value: "{{ .Values.app.logLevel | upper }}"
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
-          value: {{ .Values.logging.logstash.host }}
+          value: "{{ .Values.logging.logstash.host }}"
         - name: LOGSTASH_PORT
-          value: {{ .Values.logging.logstash.port }}
+          value: "{{ .Values.logging.logstash.port }}"
         - name: LOGSTASH_PROTOCOL
-          value: {{ .Values.logging.logstash.protocol }}
+          value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
     {{- if .Values.secrets }}
         - name: GLOBUS_CLIENT_ID
