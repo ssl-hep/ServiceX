@@ -1,0 +1,20 @@
+flask
+Flask-WTF
+Flask-Cors
+wtforms
+email-validator==1.1.2
+pika
+flask-restful
+flask-jwt-extended>=3.0,<4.0
+passlib
+flask-sqlalchemy
+Flask-Migrate
+kubernetes
+minio
+psycopg2
+globus_sdk
+cryptography == 38.0.1
+bootstrap-flask == 2.1.0
+humanize
+MarkupSafe == 2.0.1
+python-logstash == 0.4.8

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="content-section">
+    <div class="row justify-content-between align-items-center">
+      <h4 class="mb-3 col-auto">Your Profile</h4>
+      <div class="col-auto">
+        <a href="{{ url_for('edit_profile') }}"
+            title="Edit Profile"
+            data-toggle="tooltip"
+            class="col-auto btn btn-outline-primary">
+        Edit
+        </a>
+      </div>
+    </div>
+    <dl class="row">
+      <dt class="col-sm-3">Name</dt>
+      <dd class="col-sm-9">{{ user.name }}</dd>
+
+      <dt class="col-sm-3">Email</dt>
+      <dd class="col-sm-9">{{ user.email }}</dd>
+
+      <dt class="col-sm-3">Institution</dt>
+      <dd class="col-sm-9">{{ user.institution }}</dd>
+
+      <dt class="col-sm-3">Experiment</dt>
+      <dd class="col-sm-9">{{ user.experiment }}</dd>
+
+      <dt class="col-sm-3">Status</dt>
+      <dd class="col-sm-9">{{ "Pending" if user.pending else "Approved" }}</dd>
+
+      <dt class="col-sm-3">API token</dt>
+      <dd class="col-sm-9 row">
+        <div class="col" style="word-break: break-all">
+          <code class="text-muted">**********{{ user.refresh_token[-6:] }}</code>
+        </div>
+        <div class="d-flex flex-row justify-content-center">
+          <button class="btn btn-sm btn-outline-secondary"
+                  id="copy-btn"
+                  type="button"
+                  data-value="{{ user.refresh_token }}"
+                  title="Copy to clipboard"
+                  data-toggle="tooltip">
+            <i class="fa fa-copy"></i>
+          </button>
+          <a class="mx-3" href="{{ url_for('servicex-file') }}" download>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Download config"
+                    data-toggle="tooltip">
+              <i class="fa fa-download"></i>
+            </button>
+          </a>
+          <div data-target="#exampleModal" data-toggle="modal">
+            <button class="btn btn-sm btn-outline-warning"
+                    type="button"
+                    title="Regenerate"
+                    data-toggle="tooltip">
+              <i class="fa fa-refresh"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Regenerate API token</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                  Generating a new API token will invalidate the current token.
+                  You must update any environments using your API token to use
+                  the newly generated token.
+              </div>
+              <div class="modal-body">
+                Are you sure you want to regenerate your token?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-outline" data-dismiss="modal">Cancel
+                </button>
+                <a class="btn btn-primary" href="{{ url_for('api_token') }}">Continue</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dd>
+    </dl>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script>
+      const copyBtn = document.getElementById('copy-btn')
+
+      // Adapted from https://github.com/twbs/bootstrap/blob/c28934cb1871d6b6bd6a866660493a1137de17c6/site/assets/js/application.js
+      copyBtn.addEventListener('click', function (event) {
+          navigator.clipboard.writeText(this.getAttribute('data-value'))
+              .then(() => {
+                  $('#copy-btn').attr('data-original-title', 'Copied!')
+                      .tooltip('show')
+                      .attr('data-original-title', 'Copy to clipboard');
+              })
+              .catch(() => {
+                  $('#copy-btn').attr('data-original-title', 'Copying error')
+                      .tooltip('show')
+                      .attr('data-original-title', 'Copy to clipboard');
+              });
+      })
+  </script>
+{% endblock %}

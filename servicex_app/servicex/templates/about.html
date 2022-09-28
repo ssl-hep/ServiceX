@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<div class="justify-content-center" style="flex-wrap: nowrap">
+
+    <h1 style="text-align:center">ServiceX version: {{ config['CHART']}} </h1>
+
+    <table class="table table-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th>Component</th>
+                <th>Version<br></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>App</td>
+                <td>{{ config['APP_IMAGE_TAG']}}</td>
+            </tr>
+            <tr>
+                <td>DID Finder Rucio</td>
+                <td>{{ config['DID_RUCIO_FINDER_TAG']}}</td>
+            </tr>
+            <tr>
+                <td>DID Finder CERN Open Data</td>
+                <td>{{ config['DID_CERNOPENDATA_FINDER_TAG']}}</td>
+            </tr>
+            <tr>
+                <td>Code Generator FuncADL</td>
+                <td>{{ config['CODE_GEN_IMAGE']}}</td>
+            </tr>
+            <tr>
+                <td>xAOD CPP Transformer (default)</td>
+                <td>{{ config['TRANSFORMER_DEFAULT_IMAGE']}}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
