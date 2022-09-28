@@ -1,0 +1,26 @@
+name: Docker Hub
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1.2.0
+
+    - name: Extract tag name
+      shell: bash
+      run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+      id: extract_tag_name
+
+    - name: Build Sidecar Transformer Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: sslhep/servicex_sidecar_transformer:${{ steps.extract_tag_name.outputs.imagetag }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
