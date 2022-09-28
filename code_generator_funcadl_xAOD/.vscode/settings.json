@@ -1,0 +1,25 @@
+{
+    "cSpell.words": [
+        "Codecov",
+        "Dlib",
+        "LINQ",
+        "envvar",
+        "gwatts",
+        "jsonify",
+        "localds",
+        "microservice",
+        "noqa",
+        "pytest",
+        "qastle",
+        "servicex",
+        "setuptools",
+        "xaod"
+    ],
+    "pyright.openFilesOnly": false,
+    "python.linting.flake8Enabled": true,
+    "python.pythonPath": ".venv\\Scripts\\python.exe",
+    "python.linting.flake8Args": [
+        "--ignore=E501"
+    ],
+    "restructuredtext.confPath": "",
+}

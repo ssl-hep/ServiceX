@@ -1,0 +1,9 @@
+# Requirements needed to dev this code - also install requirements.txt
+pytest>=3.6
+pytest-flask
+pytest-cov
+pytest-mock
+autopep8
+flake8
+coverage
+codecov

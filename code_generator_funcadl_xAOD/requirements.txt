@@ -1,0 +1,14 @@
+# Requirements needed to run the app.
+Flask==1.1.2
+Flask-RESTful==0.3.8
+Flask-WTF==0.14.3
+func-adl-xAOD==2.0.1
+
+# pinned since Flask doesn't work with latest version of itsdangerous
+itsdangerous==2.0.1
+# Pinned back to the bug-fix releases of 2.0 as that matches
+# where flask 1.1.2 was released
+jinja2==2.11.3
+# And jinja2 requires a less recent version of markupsafe and Werkzeug
+markupsafe==1.1.1
+Werkzeug==1.0.1
