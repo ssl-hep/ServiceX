@@ -1,0 +1,28 @@
+name: Docker CMS
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1.2.0
+
+    - id: docker-tag
+      uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
+
+    - name: Build CMS AOD Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: sslhep/servicex_func_adl_cms_aod_transformer:${{ steps.docker-tag.outputs.tag }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: DockerfileCMSAOD

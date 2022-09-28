@@ -1,0 +1,25 @@
+FROM sslhep/servicex_func_adl_cms_aod_transformer@sha256:819047bfc995d073f2da695a5f6ab03c8d52d205de466f964ce572223fe8dfa3
+
+USER root
+
+# Install everything needed to host/run the analysis jobs
+WORKDIR /servicex
+COPY requirements.txt .
+RUN python3.6 -m pip install --user safety==1.8.7
+RUN python3.6 -m pip install --user -r requirements.txt
+RUN python3.6 -m pip list
+
+# Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
+# show up until much later!
+ENV PYTHONUNBUFFERED=1
+ENV INSTANCE="cms_aod_cpp_transformer"
+ENV DESC="CMS AOD CPP Transformer"
+
+# Dummpy proxy exporter
+RUN echo "#!/bin/bash" > proxy-exporter.sh &&\
+    echo "echo No Proxy Requred >> proxy-exporter.sh" &&\
+    chmod a+x proxy-exporter.sh
+
+COPY transformer.py transformer-actual.py
+COPY transformer-shim.py transformer.py
+WORKDIR /home/atlas
