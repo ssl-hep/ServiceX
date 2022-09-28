@@ -1,0 +1,63 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install -r requirements.txt
+        python -m pip install -r requirements_test.txt
+        pip list
+    - name: Lint with Flake8
+      run: |
+        flake8
+    - name: Test with pytest
+      run: |
+        pip install pytest-cov
+        export PYTHONPATH=./src:$PYTHONPATH
+        pytest --cov=./src --cov-report=xml
+    - name: Report coverage using codecov
+      if: github.event_name == 'push' && matrix.python-version == 3.8
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml # optional
+        flags: unittests # optional
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Extract tag name
+      shell: bash
+      run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+      id: extract_tag_name
+
+    - name: Build DID-Finder Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: sslhep/servicex-did-finder:${{ steps.extract_tag_name.outputs.imagetag }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        tag: "${GITHUB_REF##*/}"
+
