@@ -53,15 +53,6 @@ setup(
     zip_safe=False,
     install_requires=load_requirements("requirements.txt"),
     extras_require={
-        'test': [
-            'pytest>=5.2',
-            'pytest-flask==1.0.0',
-            'coverage>=5.2',
-            'codecov==2.1.8',
-            'pytest-mock==3.2.0',
-            'flake8>=3.8',
-            'blinker',
-            'pre-commit'
-        ],
+        'test': load_requirements("requirements_test.txt")
     },
 )
