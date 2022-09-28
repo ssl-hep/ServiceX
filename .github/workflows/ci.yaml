@@ -1,0 +1,95 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "*"
+  pull_request:
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Read file contents
+        working-directory: ./.github/workflows
+        id: set-matrix
+        run: |
+          content=`cat deploy-config.json`
+          # the following lines are only required for multi line json
+          content="${content//'%'/'%25'}"
+          content="${content//$'\n'/'%0A'}"
+          content="${content//$'\r'/'%0D'}"
+          # end of optional handling for multi line json
+          echo "::set-output name=matrix::$content"
+      - run: |
+          echo "${{ steps.set-matrix.outputs.matrix }}"
+
+  test-servicex:
+    needs: build-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ 3.7 ]
+        app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+        if: ${{ matrix.app.test_required }}
+      - name: Install dependencies
+        working-directory: ${{ matrix.app.dir_name }}
+        if: ${{ matrix.app.test_required }}
+        run: |
+          echo "${{ matrix.app }}"
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements_test.txt
+          pip list
+      - name: Lint with Flake8
+        working-directory: ${{ matrix.app.dir_name }}
+        if: ${{ matrix.app.test_required }}
+        run: |
+          flake8
+      - name: Test with pytest
+        working-directory: ${{ matrix.app.dir_name }}
+        if: ${{ matrix.app.test_required }}
+        run: |
+          python -m coverage run -m pytest -r sx
+      - name: Report coverage with Codecov
+        working-directory: ${{ matrix.app.dir_name }}
+        if: ${{ matrix.app.test_required }}
+        run: |
+          codecov --token=${{ secrets.CODECOV_TOKEN }}
+
+  publish-servicex:
+    needs: test-servicex
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@master
+      - name: Extract tag name
+        working-directory: ${{ matrix.app.dir_name }}
+        shell: bash
+        run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+        id: extract_tag_name
+
+      - name: Build Uproot Image
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          context: ${{ matrix.app.dir_name }}
+          name: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          if: ${{ matrix.app.dockerfile }}
+          dockerfile: ${{ matrix.app.dockerfile }}
