@@ -3,20 +3,13 @@
 # FROM daskdev/dask:2.9.0
 FROM continuumio/miniconda3:4.12.0
 
-RUN apt-get install gnupg2 -y \
-    && wget -q -O - https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3 | apt-key add - \
-    && echo "deb http://repository.egi.eu/sw/production/cas/1/current egi-igtf core" >> /etc/apt/sources.list \
-    && apt-get --allow-releaseinfo-change update \
-    && apt-get install -y ca-policy-egi-core \
-    && apt-get purge -y gnupg2 \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install gnupg2 -y 
 
 RUN conda install --yes \
     -c conda-forge \
     conda-build \
     lz4 \
-    xrootd==5.1.1 \
+    xrootd==5.4.3 \
     tini==0.18.0 \
     && conda build purge-all && conda clean -ti
 
@@ -24,10 +17,9 @@ RUN conda install --yes \
     -c conda-forge \
     python-blosc \
     cytoolz \
-    numpy==1.18.1 \
-    pandas==0.25.3 \
-    numba==0.48.0 \
-    scipy==1.4.1 \
+    numpy==1.23.3 \
+    pandas==1.5.0 \
+    scipy==1.6.0 \
     && conda build purge-all && conda clean -ti
 
 RUN apt update && \
@@ -40,8 +32,6 @@ RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 COPY requirements.txt .
 RUN /opt/conda/bin/pip install safety==1.9.0
 
-# BenGalewsky Feb 1, 2022 - there is an unfixed numpy vulnerability
-# https://github.com/numpy/numpy/issues/19038
 RUN safety check -r requirements.txt -i 44715 -i44716 -i 44717
 RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 
