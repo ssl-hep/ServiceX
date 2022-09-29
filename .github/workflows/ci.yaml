@@ -52,22 +52,21 @@ jobs:
           python -m pip install --upgrade pip poetry
           poetry install --no-root
           pip list
-          poetry shell
       - name: Lint with Flake8
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          flake8
+          poetry run flake8
       - name: Test with pytest
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          python -m coverage run -m pytest -r sx
+          poetry run python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          codecov --token=${{ secrets.CODECOV_TOKEN }}
+          poetry run codecov --token=${{ secrets.CODECOV_TOKEN }}
 
   publish-servicex:
     needs: test-servicex
