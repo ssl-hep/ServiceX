@@ -6,7 +6,7 @@
   },
   {
     "image_name": "servicex_code_gen_python",
-    "dir_name": "servicex_code_gen_python",
+    "dir_name": "code_gen_python",
     "test_required": true
   },
   {
