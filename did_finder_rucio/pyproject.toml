@@ -14,12 +14,13 @@ servicex-did-finder-lib = "^1.2"
 xmltodict = "^0.13.0"
 wheel = "^0.37.1"
 pymemcache = "^3.5.2"
-pytest = "^3.6"
+pytest = "^5.2"
 coverage = "^6.5.0"
 flake8 = "^5.0.4"
-codecov = "2.0.16"
+codecov = "2.1.8"
 jupyterlab = "^3.4.7"
 func-adl-servicex = "^2.0"
+pytest-mock = "^3.9.0"
 
 
 [build-system]

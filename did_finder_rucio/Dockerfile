@@ -24,9 +24,10 @@ RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 # (default was SHELL [ "/bin/sh", "-c" ])
 # https://docs.docker.com/engine/reference/builder/#shell
 
-COPY requirements.txt requirements.txt
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
 
-RUN python3 -m pip install -r requirements.txt
+RUN poetry install --no-root
 
 COPY . .
 
