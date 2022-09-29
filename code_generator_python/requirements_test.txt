@@ -1,5 +1,0 @@
-# Requirements needed to dev this code - also install requirements.txt
-flake8
-pytest
-coverage
-codecov
