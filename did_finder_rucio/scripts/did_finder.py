@@ -31,9 +31,9 @@ import logging
 
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
-from servicex.did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
-from servicex.did_finder.lookup_request import LookupRequest
+from rucio_did_finder.lookup_request import LookupRequest
 
 
 def run_rucio_finder():
