@@ -9,11 +9,9 @@ WORKDIR /usr/src/app
 USER root
 # RUN yum -y update
 
-COPY requirements.txt requirements.txt
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install -r requirements.txt
-
-RUN python3 -m pip list > /python_installed_packages.txt
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+RUN poetry install --no-root
 
 # Bring over the main scripts
 COPY src/servicex_did_finder_cernopendata .

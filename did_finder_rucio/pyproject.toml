@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "did-finder-rucio"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "did_finder_rucio"}]
+
+[tool.poetry.dependencies]
+python = "~3.7"
+rucio-clients = "^1.26.1"
+pika = "1.1.0"
+servicex-did-finder-lib = "^1.2"
+xmltodict = "^0.13.0"
+wheel = "^0.37.1"
+pymemcache = "^3.5.2"
+pytest = "^3.6"
+coverage = "^6.5.0"
+flake8 = "^5.0.4"
+codecov = "2.0.16"
+jupyterlab = "^3.4.7"
+func-adl-servicex = "^2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
