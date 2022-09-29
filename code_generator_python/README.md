@@ -1,4 +1,8 @@
+<!-- @format -->
+
 # ServiceX_Code_Generator_Python
+
+# Dummy test
 
 This code generator takes python code/function and passes it unmodified for use by the transformer.
 
@@ -18,7 +22,8 @@ cat selection.py | base64
 ```
 
 Then in the json the "selection" key will take the base64-encoded string:
-``` 
+
+```
 selection: "ZGVmIHRyYW5zZm9ybV95dChkcyk6CiAgICBzbGMgPSBkcy5yW2RzLmRvbWFpbl9jZW50ZXJbMF0sIDosIDpdLnBsb3QoKCJnYXMiLCAiZGVuc2l0eSIpKQogICAgc2FjID0gc2xjLmZyYlsoImdhcyIsICJkZW5zaXR5IildLmQKICAgIHJldHVybiBzYWMK"
 ```
 
@@ -35,8 +40,8 @@ def transform_yt(ds):
 
 if __name__ == "__main__":
     dataset = "girder://579fb0aa7b6f0800011ea3b6#item"
-    
-    ds = ServiceXDataset(dataset, 
+
+    ds = ServiceXDataset(dataset,
                          backend_name = "python"
     )
     selection = ServiceXPythonFunction(ds)
