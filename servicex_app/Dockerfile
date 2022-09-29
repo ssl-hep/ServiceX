@@ -9,6 +9,10 @@ COPY README.rst README.rst
 COPY setup.py setup.py
 COPY setup.cfg setup.cfg
 COPY requirements.txt requirements.txt
+
+# Just needed for setup.py to initialize
+COPY requirements_test.txt requirements_test.txt
+
 RUN pip install -e .
 RUN pip install gunicorn
 
