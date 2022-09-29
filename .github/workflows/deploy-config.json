@@ -45,11 +45,12 @@
     "image_name": "servicex_func_adl_cms_aod_transformer",
     "dir_name": "xaod_cpp_transformer",
     "dockerfile": "xaod_cpp_transformer/DockerfileCMSAOD",
+    "test_required": false
   },
   {
     "image_name": "servicex_func_adl_cms_aod_transformer",
     "dir_name": "code_generator_funcadl_xAOD",
-    "test_required": true
+    "test_required": false
   },
   {
     "image_name": "servicex_code_gen_cms_aod",
