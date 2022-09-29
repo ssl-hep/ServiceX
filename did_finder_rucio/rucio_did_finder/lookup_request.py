@@ -31,7 +31,7 @@ import json
 import zlib
 import base64
 from datetime import datetime
-from servicex.did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 from pymemcache.client.base import Client
 
 

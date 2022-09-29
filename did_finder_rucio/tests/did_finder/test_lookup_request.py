@@ -25,10 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pytest
-
-from servicex.did_finder.lookup_request import LookupRequest
-from servicex.did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.lookup_request import LookupRequest
+from rucio_did_finder.rucio_adapter import RucioAdapter
 
 
 class TestLookupRequest:
@@ -64,13 +62,3 @@ class TestLookupRequest:
             assert len(request.lookup_files()) == 10
 
             mock_rucio.list_files_for_did.assert_called_with("my-did")
-
-    @pytest.mark.asyncio
-    async def test_lookup_files_empty_did(self, mocker):
-        'Make sure that a DID with zero files correctly returns zero files'
-        mock_rucio = mocker.MagicMock(RucioAdapter)
-        mock_rucio.list_files_for_did.return_value = []
-
-        request = LookupRequest("my-did", mock_rucio)
-
-        assert len(await request.lookup_files()) == 0
