@@ -6,11 +6,9 @@ WORKDIR /home/servicex
 RUN mkdir ./servicex
 
 COPY README.rst README.rst
-COPY setup.py setup.py
-COPY setup.cfg setup.cfg
-COPY requirements.txt requirements.txt
-RUN pip install -e .
-RUN pip install gunicorn
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+RUN poetry install --no-root
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
