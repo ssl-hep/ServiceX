@@ -70,7 +70,7 @@ jobs:
           codecov --token=${{ secrets.CODECOV_TOKEN }}
 
   publish-servicex:
-    needs: test-servicex
+    needs: [build-matrix, test-servicex]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
