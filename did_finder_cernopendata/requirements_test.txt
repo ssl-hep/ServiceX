@@ -5,3 +5,4 @@ func-adl-servicex
 matplotlib
 pytest-asyncio
 coverage
+codecov
