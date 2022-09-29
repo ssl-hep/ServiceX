@@ -5,12 +5,10 @@ RUN useradd -ms /bin/bash servicex
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
-COPY requirements.txt requirements.txt
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
 
-RUN pip install safety==1.9.0
-RUN safety check -r requirements.txt
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
+RUN poetry install --no-root
 
 COPY boot.sh ./
 COPY servicex/ ./servicex
