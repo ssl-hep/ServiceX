@@ -1,8 +1,0 @@
-pytest
-flake8
-jupyterlab
-func-adl-servicex
-matplotlib
-pytest-asyncio
-coverage
-codecov
