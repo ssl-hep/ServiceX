@@ -25,25 +25,25 @@
   },
   {
     "image_name": "servicex_sidecar_transformer",
-    "dir_name": "transformer_sidecar",
+    "dir_name": "transformer_sidecar"
   },
   {
     "image_name": "servicex_func_adl_uproot_transformer",
-    "dir_name": "uproot_transformer",
+    "dir_name": "uproot_transformer"
   },
   {
     "image_name": "x509-secrets",
-    "dir_name": "x509_secrets",
+    "dir_name": "x509_secrets"
   },
   {
     "image_name": "servicex_func_adl_xaod_transformer",
     "dir_name": "xaod_cpp_transformer",
-    "dockerfile": "xaod_cpp_transformer/DockerfileATLASxAOD",
+    "dockerfile": "xaod_cpp_transformer/DockerfileATLASxAOD"
   },
   {
     "image_name": "servicex_func_adl_cms_aod_transformer",
     "dir_name": "xaod_cpp_transformer",
-    "dockerfile": "xaod_cpp_transformer/DockerfileCMSAOD",
+    "dockerfile": "xaod_cpp_transformer/DockerfileCMSAOD"
   },
   {
     "image_name": "servicex_func_adl_cms_aod_transformer",
