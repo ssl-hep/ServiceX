@@ -19,9 +19,9 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas wlcg-voms-cms fetch-crl -y
 
-COPY requirements.txt requirements.txt
-
-RUN python3 -m pip install -r requirements.txt
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+RUN poetry install --no-root
 
 COPY . .
 
