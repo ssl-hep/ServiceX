@@ -69,7 +69,7 @@ jobs:
           poetry run codecov --token=${{ secrets.CODECOV_TOKEN }}
 
   publish-servicex:
-    needs: test-servicex
+    needs: [build-matrix, test-servicex]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -83,7 +83,7 @@ jobs:
         run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
         id: extract_tag_name
 
-      - name: Build Uproot Image
+      - name: Build Docker Image
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
           context: ${{ matrix.app.dir_name }}

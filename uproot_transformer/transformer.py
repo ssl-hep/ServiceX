@@ -44,6 +44,12 @@ from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from hashlib import sha1
 import pyarrow.parquet as pq
 
+
+# Needed. xrootd==5.4.3 did not fix it.
+# see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22
+import uproot
+uproot.open.defaults["xrootd_handler"] = uproot.MultithreadedXRootDSource
+
 MAX_RETRIES = 3
 
 object_store = None
