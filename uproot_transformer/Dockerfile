@@ -29,11 +29,9 @@ RUN apt update && \
 RUN useradd -ms /bin/bash output -G sudo && passwd -d output
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
-COPY requirements.txt .
-RUN /opt/conda/bin/pip install safety==1.9.0
-
-RUN safety check -r requirements.txt -i 44715 -i44716 -i 44717
-RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+RUN poetry install --no-root
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 
