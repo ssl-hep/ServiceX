@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "code-generator-funcadl-xaod"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "code_generator_funcadl_xaod"}]
+
+[tool.poetry.dependencies]
+python = "~3.7"
+Flask = "1.1.2"
+Flask-RESTful = "0.3.8"
+Flask-WTF = "0.14.3"
+func-adl-xAOD = "2.0.1"
+itsdangerous = "2.0.1"
+Jinja2 = "2.11.3"
+MarkupSafe = "1.1.1"
+Werkzeug = "1.0.1"
+pytest = "^5.2"
+pytest-flask = "^1.2.0"
+pytest-cov = "^4.0.0"
+pytest-mock = "^3.9.0"
+autopep8 = "^1.7.0"
+flake8 = "^5.0.4"
+coverage = "^6.5.0"
+codecov = "^2.1.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
