@@ -252,7 +252,7 @@ class TransformerManager:
         api_response = api_instance.create_namespaced_deployment(
             body=job,
             namespace=namespace)
-        current_app.logger.info(f"Job created. status={api_response.status}")
+        current_app.logger.info("Job created.", extra={'status': api_response.status})
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
@@ -261,7 +261,7 @@ class TransformerManager:
             api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa,
                 namespace=namespace)
-            current_app.logger.info(f"Job created. status={api_response.status}")
+            current_app.logger.info("Job created.", extra={'status': api_response.status})
         except ApiException as e:
             current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
@@ -317,7 +317,6 @@ class TransformerManager:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"
-        # selector = f"metadata.name=aeckart-servicex-app"
         results: kubernetes.client.AppsV1beta1DeploymentList
         results = api.list_namespaced_deployment(namespace, field_selector=selector)
         if not results.items:
