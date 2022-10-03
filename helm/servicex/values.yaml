@@ -112,8 +112,14 @@ transformer:
     maxReplicas: 20
     minReplicas: 1
   cpuLimit: 1
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultTransformerImage: sslhep/servicex_sidecar_transformer
   defaultTransformerTag: develop
+  scienceImage: # replace me
+  scienceImageTag: develop
+  language: python
+  exec: # replace me
+  outputDir: /servicex/output
+
   persistence:
     existingClaim: null
     subdir: null

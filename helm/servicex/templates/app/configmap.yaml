@@ -98,6 +98,10 @@ data:
     TRANSFORMER_MESSAGING = 'none'
     TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}:{{ .Values.transformer.defaultTransformerTag }}"
     
+    TRANSFORMER_SIDECAR_VOLUME_PATH = "{{ .Values.transformer.outputDir }}"
+    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.transformer.scienceImage }}:{{ .Values.transformer.scienceImageTag }}"
+    TRANSFORMER_LANGUAGE = "{{ .Values.transformer.language }}"
+    TRANSFORMER_EXEC = "{{ .Values.transformer.exec }}"
 
     TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
     TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
