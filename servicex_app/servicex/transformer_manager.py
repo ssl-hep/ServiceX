@@ -291,7 +291,7 @@ class TransformerManager:
                     namespace=namespace
                 )
         except ApiException:
-            current_app.logger.exception(f"Exception during Job HPA Shut Down", extra={
+            current_app.logger.exception("Exception during Job HPA Shut Down", extra={
                                          "requestId": request_id})
 
         try:
