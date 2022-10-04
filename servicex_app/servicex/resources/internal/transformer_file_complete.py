@@ -45,7 +45,6 @@ class TransformerFileComplete(ServiceXResource):
         info = request.get_json()
         current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
-        theLast = transform_req.files_remaining
         if transform_req is None:
             msg = f"Request not found with id: '{request_id}'"
             current_app.logger.error(msg, extra={'requestId': request_id})
@@ -78,9 +77,8 @@ class TransformerFileComplete(ServiceXResource):
             'files_failed': transform_req.files_failed,
             'files_skipped': transform_req.files_skipped
         })
-        # files_remaining = transform_req.files_remaining
-        # if files_remaining is not None and files_remaining == 0:
-        if theLast is not None and theLast == 1:
+        files_remaining = transform_req.files_remaining
+        if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
         return "Ok"
 
