@@ -69,18 +69,32 @@ class TransformerFileComplete(ServiceXResource):
         # Commit here to avoid race condition with other file complete messages which
         # could result in miscounting completed files.
         db.session.commit()
+        TransformerFileComplete.check_transform_complete(
+            current_app.logger, request_id, self.transformer_manager)
+        return "Ok"
 
-        current_app.logger.info("FileComplete", extra={
+    @staticmethod
+    def check_transform_complete(logger: Logger, request_id,
+                                 transformer_manager: TransformerManager):
+        transform_req = TransformRequest.lookup(request_id)
+
+        if transform_req is None:
+            msg = f"Request not found with id: '{request_id}'"
+            logger.error(msg, extra={'requestId': request_id})
+            return {"message": msg}, 404
+
+        logger.info("CheckTransferComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
             'files_processed': transform_req.files_processed,
             'files_failed': transform_req.files_failed,
             'files_skipped': transform_req.files_skipped
         })
+
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
-            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
-        return "Ok"
+            TransformerFileComplete.transform_complete(
+                logger, transform_req, transformer_manager)
 
     @staticmethod
     def transform_complete(logger: Logger, transform_req: TransformRequest,
