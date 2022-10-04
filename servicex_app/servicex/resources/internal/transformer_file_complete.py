@@ -93,8 +93,10 @@ class TransformerFileComplete(ServiceXResource):
 
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
-            TransformerFileComplete.transform_complete(
-                logger, transform_req, transformer_manager)
+            complete = transform_req.status
+            if complete is not None and complete != "Complete":
+                TransformerFileComplete.transform_complete(
+                    logger, transform_req, transformer_manager)
 
     @staticmethod
     def transform_complete(logger: Logger, transform_req: TransformRequest,
