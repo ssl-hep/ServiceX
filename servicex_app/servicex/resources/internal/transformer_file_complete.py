@@ -45,6 +45,7 @@ class TransformerFileComplete(ServiceXResource):
         info = request.get_json()
         current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
+        theLast = transform_req.files_remaining
         if transform_req is None:
             msg = f"Request not found with id: '{request_id}'"
             current_app.logger.error(msg, extra={'requestId': request_id})
@@ -69,36 +70,28 @@ class TransformerFileComplete(ServiceXResource):
         # Commit here to avoid race condition with other file complete messages which
         # could result in miscounting completed files.
         db.session.commit()
-        TransformerFileComplete.check_transform_complete(
-            current_app.logger, request_id, self.transformer_manager)
-        return "Ok"
 
-    @staticmethod
-    def check_transform_complete(logger: Logger, request_id,
-                                 transformer_manager: TransformerManager):
-        transform_req = TransformRequest.lookup(request_id)
-
-        if transform_req is None:
-            msg = f"Request not found with id: '{request_id}'"
-            logger.error(msg, extra={'requestId': request_id})
-            return {"message": msg}, 404
-
-        logger.info("CheckTransferComplete", extra={
+        current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
             'files_processed': transform_req.files_processed,
             'files_failed': transform_req.files_failed,
             'files_skipped': transform_req.files_skipped
         })
-
         # files_remaining = transform_req.files_remaining
         # if files_remaining is not None and files_remaining == 0:
-        if not transform_req.complete:
-            transform_req.status = "Complete"
-            transform_req.finish_time = datetime.now(tz=timezone.utc)
-            transform_req.save_to_db()
-            db.session.commit()
-            logger.info("Request completed. Shutting down transformers",
-                        extra={'requestId': transform_req.request_id})
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
+        if theLast is not None and theLast == 1:
+            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
+        return "Ok"
+
+    @staticmethod
+    def transform_complete(logger: Logger, transform_req: TransformRequest,
+                           transformer_manager: TransformerManager):
+        transform_req.status = "Complete"
+        transform_req.finish_time = datetime.now(tz=timezone.utc)
+        transform_req.save_to_db()
+        db.session.commit()
+        logger.info("Request completed. Shutting down transformers",
+                    extra={'requestId': transform_req.request_id})
+        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+        transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
