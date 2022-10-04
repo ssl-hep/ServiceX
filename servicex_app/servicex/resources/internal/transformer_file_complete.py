@@ -91,21 +91,14 @@ class TransformerFileComplete(ServiceXResource):
             'files_skipped': transform_req.files_skipped
         })
 
-        files_remaining = transform_req.files_remaining
-        if files_remaining is not None and files_remaining == 0:
-            complete = transform_req.status
-            if complete is not None and complete != "Complete":
-                TransformerFileComplete.transform_complete(
-                    logger, transform_req, transformer_manager)
-
-    @staticmethod
-    def transform_complete(logger: Logger, transform_req: TransformRequest,
-                           transformer_manager: TransformerManager):
-        transform_req.status = "Complete"
-        transform_req.finish_time = datetime.now(tz=timezone.utc)
-        transform_req.save_to_db()
-        db.session.commit()
-        logger.info("Request completed. Shutting down transformers",
-                    extra={'requestId': transform_req.request_id})
-        namespace = current_app.config['TRANSFORMER_NAMESPACE']
-        transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
+        # files_remaining = transform_req.files_remaining
+        # if files_remaining is not None and files_remaining == 0:
+        if not transform_req.complete:
+            transform_req.status = "Complete"
+            transform_req.finish_time = datetime.now(tz=timezone.utc)
+            transform_req.save_to_db()
+            db.session.commit()
+            logger.info("Request completed. Shutting down transformers",
+                        extra={'requestId': transform_req.request_id})
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
+            transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
