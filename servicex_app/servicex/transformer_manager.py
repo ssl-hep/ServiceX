@@ -291,7 +291,8 @@ class TransformerManager:
                     namespace=namespace
                 )
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} HPA Shut Down")
+            current_app.logger.exception(f"Exception during Job HPA Shut Down", extra={
+                                         "requestId": request_id})
 
         try:
             api_v1 = client.AppsV1Api()
@@ -300,7 +301,8 @@ class TransformerManager:
                 namespace=namespace
             )
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} Deployment Shut Down")
+            current_app.logger.exception("Exception during Job Deployment Shut Down", extra={
+                                         "requestId": request_id})
 
         try:
             api_core = client.CoreV1Api()
@@ -308,7 +310,8 @@ class TransformerManager:
             api_core.delete_namespaced_config_map(name=configmap_name,
                                                   namespace=namespace)
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} ConfigMap cleanup")
+            current_app.logger.exception("Exception during Job ConfigMap cleanup", extra={
+                                         "requestId": request_id})
 
     @staticmethod
     def get_deployment_status(
