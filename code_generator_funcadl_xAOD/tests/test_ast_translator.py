@@ -1,39 +1,38 @@
-from pathlib import Path
+import tempfile
+from pathlib import PosixPath
 
 import pytest
-from func_adl_xAOD.backend.xAODlib.atlas_xaod_executor import \
-    atlas_xaod_executor
-from servicex.code_generator_service import AstTranslator
-from servicex.code_generator_service.ast_translator import \
-    GenerateCodeException
+from func_adl_xAOD.atlas.xaod.executor import atlas_xaod_executor
+from servicex.xaod_code_generator.ast_translator import AstAODTranslator
+
+from servicex_codegen.code_generator import GenerateCodeException
 
 
 def test_ctor():
     'Make sure default ctor works'
-    a = AstTranslator()
+    a = AstAODTranslator("ATLAS xAOD")
     assert isinstance(a.executor, atlas_xaod_executor)
 
 
 def test_translate_good(mocker):
-    exe = mocker.MagicMock()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        exe = mocker.MagicMock()
 
-    def write_files(a, p: str):
-        with (Path(p) / 'junk.txt').open('w') as b_out:
-            b_out.write("hi")
+        query = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')))))"  # NOQA E501
+        translator = AstAODTranslator(exe=exe)
+        generated = translator.generate_code(
+            query,
+            cache_path=tmpdirname)
 
-    exe.write_cpp_files.side_effect = write_files
-
-    a = AstTranslator(xaod_executor=exe)
-    a.translate_text_ast_to_zip(
-        "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')))))")
-
-    exe.apply_ast_transformations.assert_called_once()
-    exe.write_cpp_files.assert_called_once()
+        assert generated.output_dir == tmpdirname
+        exe.apply_ast_transformations.assert_called()
+        assert exe.write_cpp_files.call_args[0][1] == PosixPath(tmpdirname)
 
 
 def test_translate_no_code(mocker):
-    exe = mocker.MagicMock()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        exe = mocker.MagicMock()
 
-    a = AstTranslator(xaod_executor=exe)
-    with pytest.raises(GenerateCodeException):
-        a.translate_text_ast_to_zip("")
+        translator = AstAODTranslator(exe=exe)
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code("", cache_path=tmpdirname)
