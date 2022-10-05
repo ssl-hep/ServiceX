@@ -53,5 +53,10 @@
     "image_name": "servicex_code_gen_cms_aod",
     "dir_name": "code_generator_funcadl_xAOD",
     "test_required": false
-  }
+  },
+  {
+  "image_name": "servicex_code_gen_atlas_xaod",
+  "dir_name": "code_generator_funcadl_xAOD",
+  "test_required": true
+}
 ]
