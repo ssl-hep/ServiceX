@@ -44,8 +44,8 @@ class AddFileToDataset(ServiceXResource):
             # or a list of file dictionaries.
             add_file_request = request.get_json()
             submitted_request = TransformRequest.lookup(request_id)
-            current_app.logger.info(f"Submitted request: {submitted_request}",
-                                    extra={'requestId': request_id})
+            current_app.logger.debug(f"Adding files to request: {submitted_request}",
+                                     extra={'requestId': request_id})
 
             # check if the request is bulk or single file
             if type(add_file_request) is dict:
@@ -61,8 +61,11 @@ class AddFileToDataset(ServiceXResource):
                 self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             db.session.commit()
-            current_app.logger.info(f"Got {len(add_file_request)} files.",
-                                    extra={'requestId': request_id})
+            current_app.logger.info("Adding files.",
+                                    extra={
+                                        'requestId': request_id,
+                                        'nfiles': len(add_file_request)
+                                    })
 
             return {
                 "request-id": str(request_id)

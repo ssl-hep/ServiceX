@@ -15,8 +15,8 @@ app:
     tls:
       clusterIssuer: null
       enabled: false
-      secretName: '{{.Release.Name}}-app-tls'
-  logLevel: WARNING
+      secretName: "{{.Release.Name}}-app-tls"
+  logLevel: INFO
   mailgunApiKey: null
   mailgunDomain: null
   pullPolicy: Always
