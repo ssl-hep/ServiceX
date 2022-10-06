@@ -238,7 +238,7 @@ def callback(channel, method, properties, body):
     _file_paths = transform_request['paths'].split(',')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    logger.info("To transform", extra={'path': _file_paths,
+    logger.info("To transform", extra={'fpath': _file_paths,
                                        'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
 
@@ -259,7 +259,7 @@ def callback(channel, method, properties, body):
 
                 # Do the transform
                 logger.info("Starting transformation.", extra={
-                            'attempt': attempt, 'path': _file_path,
+                            'attempt': attempt, 'fpath': _file_path,
                             'requestId': _request_id, 'fileId': _file_id
                             })
 
@@ -302,7 +302,7 @@ def callback(channel, method, properties, body):
                 file_retries += 1
                 logger.warning("Transformation failed.",
                                extra={
-                                   'attempt': attempt, 'path': _file_path,
+                                   'attempt': attempt, 'fpath': _file_path,
                                    'requestId': _request_id, 'fileId': _file_id,
                                    'error': error
                                })
@@ -425,5 +425,5 @@ if __name__ == "__main__":
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        logger.info("Transform a single file", extra={'path': args.path})
+        logger.info("Transform a single file", extra={'fpath': args.path})
         transform_single_file(args.path, args.output_dir)
