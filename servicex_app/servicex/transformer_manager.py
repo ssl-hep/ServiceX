@@ -91,7 +91,7 @@ class TransformerManager:
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(
                 field_path="metadata.name"))
-        env += client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
+        env += [client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)]
 
         # provide pods with level and logging server info
         env += [
