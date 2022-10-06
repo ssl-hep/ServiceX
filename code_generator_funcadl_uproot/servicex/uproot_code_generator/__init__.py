@@ -25,48 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
-
-from flask import Flask
-from flask_restful import Api
-from servicex.code_generator_service.generate_code import GenerateCode
-from servicex.code_generator_service.ast_translator import AstTranslator
 
 
-def handle_invalid_usage(error: BaseException):
-    from flask import jsonify
-    response = jsonify({"message": str(error)})
-    response.status_code = 400
-    return response
+import servicex_codegen
+from servicex.uproot_code_generator.ast_translator import AstUprootTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
-    """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
-    if not test_config:
-        app.config.from_envvar('APP_CONFIG_FILE')
-    else:
-        app.config.from_mapping(test_config)
-
-    with app.app_context():
-
-        if not provided_translator:
-            translator = AstTranslator()
-        else:
-            translator = provided_translator
-
-        api = Api(app)
-        GenerateCode.make_api(translator)
-
-        api.add_resource(GenerateCode, '/servicex/generated-code')
-
-    app.errorhandler(Exception)(handle_invalid_usage)
-
-    return app
+    return servicex_codegen.create_app(test_config,
+                                       provided_translator=provided_translator
+                                       if provided_translator else AstUprootTranslator()
+                                       )
