@@ -1,6 +1,1 @@
-# Requirements needed to run the app.
-flask>=1.1.2,<2.0
-Flask-RESTful==0.3.8
-Flask-WTF==0.14.3
-MarkupSafe==2.0.1
-Jinja2<3.0,>=2.10.1
+servicex-code-gen-lib==0.1a10
