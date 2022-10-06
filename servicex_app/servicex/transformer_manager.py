@@ -95,7 +95,7 @@ class TransformerManager:
 
         # provide pods with level and logging server info
         env += [
-            client.V1EnvVar("LOG_LEVEL", value=current_app.logger.level),
+            client.V1EnvVar("LOG_LEVEL", value=os.environ.get('LOG_LEVEL', 'INFO').upper()),
             client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get('LOGSTASH_HOST')),
             client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get('LOGSTASH_PORT'))
         ]

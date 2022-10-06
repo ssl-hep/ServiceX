@@ -125,7 +125,7 @@ def initialize_logging(request=None):
     """
 
     log = logging.getLogger()
-    log.level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+    log.level = getattr(logging, os.environ.get('LOG_LEVEL'), 20)
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
