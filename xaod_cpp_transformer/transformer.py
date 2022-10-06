@@ -111,7 +111,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
         return self.serialize(message)
 
 
-def initialize_logging(request=None):
+def initialize_logging():
     """
     Get a logger and initialize it so that it outputs the correct format
 
@@ -374,7 +374,7 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description=os.environ["DESC"])
     args = parser.parse_args()
 
-    logger = initialize_logging(args.request_id)
+    logger = initialize_logging()
 
     if args.output_dir:
         object_store = None
@@ -387,9 +387,15 @@ if __name__ == "__main__":
 
     compile_code()
     startup_time = get_process_info()
+    logger.info("Startup finished.",
+                extra={
+                    'user': startup_time.user, 'sys': startup_time.system,
+                    'iowait': startup_time.iowait, 'total': startup_time.total_time
+                })
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
+        logger.info("Transform a single file", extra={'path': args.path})
         transform_single_file(args.path, args.output_dir)

@@ -31,9 +31,8 @@ import logstash
 import os
 import sys
 import time
-import timeit
 from collections import namedtuple
-import re
+# import re
 
 import psutil
 import awkward as ak
@@ -44,7 +43,7 @@ from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 from hashlib import sha1
 import pyarrow.parquet as pq
-
+import generated_transformer
 
 # Needed. xrootd==5.4.3 did not fix it.
 # see https://github.com/ssl-hep/ServiceX_Uproot_Transformer/issues/22
@@ -116,7 +115,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
         return self.serialize(message)
 
 
-def initialize_logging(request=None):
+def initialize_logging():
     """
     Get a logger and initialize it so that it outputs the correct format
 
@@ -149,27 +148,27 @@ def initialize_logging(request=None):
     return log
 
 
-def parse_output_logs(logfile):
-    """
-    Parse output from runner.sh and output appropriate log messages
-    :param logfile: path to logfile
-    :return:  Tuple with (total_events: Int, processed_events: Int)
-    """
-    total_events = 0
-    events_processed = 0
-    total_events_re = re.compile(r'Processing events \d+-(\d+)')
-    events_processed_re = re.compile(r'Processed (\d+) events')
-    with open(logfile, 'r') as f:
-        buf = f.read()
-        match = total_events_re.search(buf)
-        if match:
-            total_events = int(match.group(1))
-        matches = events_processed_re.finditer(buf)
-        for m in matches:
-            events_processed = int(m.group(1))
-        logger.info("{} events processed out of {} total events".format(
-            events_processed, total_events))
-    return total_events, events_processed
+# def parse_output_logs(logfile):
+#     """
+#     Parse output from runner.sh and output appropriate log messages
+#     :param logfile: path to logfile
+#     :return:  Tuple with (total_events: Int, processed_events: Int)
+#     """
+#     total_events = 0
+#     events_processed = 0
+#     total_events_re = re.compile(r'Processing events \d+-(\d+)')
+#     events_processed_re = re.compile(r'Processed (\d+) events')
+#     with open(logfile, 'r') as f:
+#         buf = f.read()
+#         match = total_events_re.search(buf)
+#         if match:
+#             total_events = int(match.group(1))
+#         matches = events_processed_re.finditer(buf)
+#         for m in matches:
+#             events_processed = int(m.group(1))
+#         logger.info("{} events processed out of {} total events".format(
+#             events_processed, total_events))
+#     return total_events, events_processed
 
 
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
@@ -202,24 +201,6 @@ def get_process_info():
     return TimeTuple(user=time_stats.user+time_stats.children_user,
                      system=time_stats.system+time_stats.children_system,
                      iowait=time_stats.iowait)
-
-
-def log_stats(startup_time, elapsed_time, running_time=0.0):
-    """
-    Log statistics about transformer execution
-
-    :param startup_time: time to initialize and run cpp transformer
-    :param elapsed_time:  elapsed time spent by processing file (sys, user, iowait)
-    :param running_time:  total time to run script
-    :return: None
-    """
-    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
-                                                                  startup_time.system) +
-                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
-                                                                  elapsed_time.system) +
-                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
-    logger.info("Total running time {}".format(running_time))
 
 
 class ArrowIterator:
@@ -255,16 +236,15 @@ def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_paths = transform_request['paths'].split(',')
-    logger.info("File replicas: {}".format(_file_paths))
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    logger.info("To transform", extra={'path': _file_paths,
+                                       'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
 
-    servicex.post_status_update(file_id=_file_id,
-                                status_code="start",
-                                info="Starting")
-
-    tick = time.time()
+    # servicex.post_status_update(file_id=_file_id,
+    #                             status_code="start",
+    #                             info="Starting")
 
     file_done = False
     file_retries = 0
@@ -274,10 +254,15 @@ def callback(channel, method, properties, body):
     start_process_info = get_process_info()
     for attempt in range(MAX_RETRIES):
         for _file_path in _file_paths:
+
             try:
 
                 # Do the transform
-                logger.info(f"Attempt {attempt}. Trying path {_file_path}")
+                logger.info("Starting transformation.", extra={
+                            'attempt': attempt, 'path': _file_path,
+                            'requestId': _request_id, 'fileId': _file_id
+                            })
+
                 root_file = _file_path.replace('/', ':')
                 if not os.path.isdir(posix_path):
                     os.makedirs(posix_path)
@@ -285,38 +270,46 @@ def callback(channel, method, properties, body):
                 safe_output_file = hash_path(root_file+".parquet")
                 output_path = os.path.join(posix_path, safe_output_file)
 
+                stime = time.time()
                 (total_events, output_size) = transform_single_file(
                     _file_path, output_path, servicex)
+                ttime = time.time()
 
-                tock = time.time()
-                total_time = round(tock - tick, 2)
                 if object_store:
                     object_store.upload_file(_request_id, safe_output_file, output_path)
                     os.remove(output_path)
+                utime = time.time()
 
-                servicex.post_status_update(file_id=_file_id,
-                                            status_code="complete",
-                                            info="Total time " + str(total_time))
+                # servicex.post_status_update(file_id=_file_id,
+                #                             status_code="complete",
+                #                             info="Total time " + str(total_time))
                 servicex.put_file_complete(_file_path, _file_id, "success",
                                            num_messages=0,
                                            total_time=total_time,
                                            total_events=0,
                                            total_bytes=0)
-                logger.info("Time tos process {}: {} seconds".format(
-                    root_file, total_time))
+                logger.info("Attempt succesful.",
+                            extra={
+                                'attempt': attempt,
+                                'requestId': _request_id, 'fileId': _file_id,
+                                'transform_time': round(ttime-stime, 3),
+                                'upload_time': round(utime-ttime, 3)
+                            })
                 file_done = True
                 break
 
             except Exception as error:
                 file_retries += 1
-                logger.warning("Failed attempt {} of {} for {}: {}".format(attempt,
-                                                                           MAX_RETRIES,
-                                                                           root_file,
-                                                                           error))
-                servicex.post_status_update(file_id=_file_id,
-                                            status_code="retry",
-                                            info="Try: " + str(file_retries) +
-                                            " error: " + str(error)[0:1024])
+                logger.warning("Transformation failed.",
+                               extra={
+                                   'attempt': attempt, 'path': _file_path,
+                                   'requestId': _request_id, 'fileId': _file_id,
+                                   'error': error
+                               })
+                # servicex.post_status_update(file_id=_file_id,
+                #                             status_code="retry",
+                #                             info="Try: " + str(file_retries) +
+                #                             " error: " + str(error)[0:1024])
 
         if file_done:
             break
@@ -328,27 +321,24 @@ def callback(channel, method, properties, body):
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
                                    total_events=0, total_bytes=0)
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="failure",
-                                    info="error.")
+        # servicex.post_status_update(file_id=_file_id,
+        #                             status_code="failure",
+        #                             info="error.")
 
     stop_process_info = get_process_info()
-    elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
-                                      system=stop_process_info.system - start_process_info.system,
-                                      iowait=stop_process_info.iowait - start_process_info.iowait)
-    stop_time = timeit.default_timer()
-    log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
-    record = {'filename': _file_path,
-              'file-id': _file_id,
-              'output-size': output_size,
-              'events': total_events,
-              'request-id': _request_id,
-              'user-time': elapsed_process_times.user,
-              'system-time': elapsed_process_times.system,
-              'io-wait': elapsed_process_times.iowait,
-              'total-time': elapsed_process_times.total_time,
-              'wall-time': total_time}
-    logger.info("Metric: {}".format(json.dumps(record)))
+    elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
+                              system=stop_process_info.system - start_process_info.system,
+                              iowait=stop_process_info.iowait - start_process_info.iowait)
+
+    logger.info("File processed.", extra={
+        'requestId': _request_id, 'fileId': _file_id,
+        'output-size': output_size,
+        'events': total_events,
+        'user': elapsed_times.user,
+        'sys': elapsed_times.system,
+        'iowait': elapsed_times.iowait
+    })
+
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -361,39 +351,43 @@ def transform_single_file(file_path, output_path, servicex=None):
     :param servicex: servicex instance
     :return: Tuple with (total_events: Int, output_size: Int)
     """
-    logger.info(f"Transforming a single path: {file_path} into {output_path}")
-
+    total_events = 0
+    output_size = 0
     try:
-        import generated_transformer
-        start_transform = time.time()
-        awkward_array = generated_transformer.run_query(file_path)
-        end_transform = time.time()
-        total_events = 0  # need to make this size of the array...
-        logger.info('Ran generated_transformer.py in ' +
-                    f'{round(end_transform - start_transform, 2)} sec')
+        stime = time.time()
 
-        start_serialization = time.time()
+        awkward_array = generated_transformer.run_query(file_path)
+        total_events = ak.count(awkward_array, axis=0)
+
+        ttime = time.time()
+
         explode_records = bool(awkward_array.fields)
         try:
             arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
         except TypeError:
             arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
                                       explode_records=explode_records)
-        end_serialization = time.time()
-        serialization_time = round(end_serialization - start_serialization, 2)
-        logger.info(f'awkward Array -> Arrow in {serialization_time} sec')
+
+        etime = time.time()
 
         if output_path:
             writer = pq.ParquetWriter(output_path, arrow.schema)
             writer.write_table(table=arrow)
             writer.close()
             output_size = os.stat(output_path).st_size
-            logger.info(f"Wrote {output_size} bytes after transforming {file_path}")
 
+        wtime = time.time()
+
+        logger.info('Detailed transformer times.', extra={
+            'query_time': round(ttime - stime, 3),
+            'serialization': round(etime - ttime, 3),
+            'writing': round(wtime - etime, 3)
+        })
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         logger.exception(mesg)
         raise RuntimeError(mesg)
+
     return total_events, output_size
 
 
@@ -403,12 +397,11 @@ def compile_code():
 
 
 if __name__ == "__main__":
-    start_time = timeit.default_timer()
     parser = TransformerArgumentParser(description="Uproot Transformer")
     args = parser.parse_args()
 
-    logger = initialize_logging(args.request_id)
-    logger.info(f"sys.path: {sys.path}")
+    logger = initialize_logging()
+    logger.debug(f"sys.path: {sys.path}")
     logger.info(f"result destination: {args.result_destination}  output dir: {args.output_dir}")
 
     if args.output_dir:
@@ -422,10 +415,15 @@ if __name__ == "__main__":
 
     compile_code()
     startup_time = get_process_info()
+    logger.info("Startup finished.",
+                extra={
+                    'user': startup_time.user, 'sys': startup_time.system,
+                    'iowait': startup_time.iowait
+                })
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        logger.info("Transform a single file ", args.path)
+        logger.info("Transform a single file", extra={'path': args.path})
         transform_single_file(args.path, args.output_dir)
