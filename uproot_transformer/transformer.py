@@ -357,7 +357,7 @@ def transform_single_file(file_path, output_path, servicex=None):
         stime = time.time()
 
         awkward_array = generated_transformer.run_query(file_path)
-        total_events = ak.count(awkward_array, axis=0)
+        total_events = ak.num(awkward_array, axis=0)
 
         ttime = time.time()
 
