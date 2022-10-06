@@ -148,29 +148,6 @@ def initialize_logging():
     return log
 
 
-# def parse_output_logs(logfile):
-#     """
-#     Parse output from runner.sh and output appropriate log messages
-#     :param logfile: path to logfile
-#     :return:  Tuple with (total_events: Int, processed_events: Int)
-#     """
-#     total_events = 0
-#     events_processed = 0
-#     total_events_re = re.compile(r'Processing events \d+-(\d+)')
-#     events_processed_re = re.compile(r'Processed (\d+) events')
-#     with open(logfile, 'r') as f:
-#         buf = f.read()
-#         match = total_events_re.search(buf)
-#         if match:
-#             total_events = int(match.group(1))
-#         matches = events_processed_re.finditer(buf)
-#         for m in matches:
-#             events_processed = int(m.group(1))
-#         logger.info("{} events processed out of {} total events".format(
-#             events_processed, total_events))
-#     return total_events, events_processed
-
-
 class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     """
     Named tuple to store process time information.
@@ -242,10 +219,6 @@ def callback(channel, method, properties, body):
                                        'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
 
-    # servicex.post_status_update(file_id=_file_id,
-    #                             status_code="start",
-    #                             info="Starting")
-
     file_done = False
     file_retries = 0
     total_events = 0
@@ -280,14 +253,11 @@ def callback(channel, method, properties, body):
                     os.remove(output_path)
                 utime = time.time()
 
-                # servicex.post_status_update(file_id=_file_id,
-                #                             status_code="complete",
-                #                             info="Total time " + str(total_time))
                 servicex.put_file_complete(_file_path, _file_id, "success",
                                            num_messages=0,
                                            total_time=total_time,
-                                           total_events=0,
-                                           total_bytes=0)
+                                           total_events=total_events,
+                                           total_bytes=output_size)
                 logger.info("Attempt succesful.",
                             extra={
                                 'attempt': attempt,
@@ -306,10 +276,6 @@ def callback(channel, method, properties, body):
                                    'requestId': _request_id, 'fileId': _file_id,
                                    'error': error
                                })
-                # servicex.post_status_update(file_id=_file_id,
-                #                             status_code="retry",
-                #                             info="Try: " + str(file_retries) +
-                #                             " error: " + str(error)[0:1024])
 
         if file_done:
             break
@@ -321,9 +287,6 @@ def callback(channel, method, properties, body):
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
                                    total_events=0, total_bytes=0)
-        # servicex.post_status_update(file_id=_file_id,
-        #                             status_code="failure",
-        #                             info="error.")
 
     stop_process_info = get_process_info()
     elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,

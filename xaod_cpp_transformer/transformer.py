@@ -227,10 +227,6 @@ def callback(channel, method, properties, body):
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
 
-    servicex.post_status_update(file_id=_file_id,
-                                status_code="start",
-                                info=os.environ["DESC"])
-
     if not os.path.isdir(posix_path):
         os.makedirs(posix_path)
 
@@ -261,9 +257,6 @@ def callback(channel, method, properties, body):
                     object_store.upload_file(_request_id, root_file, output_path)
                     os.remove(output_path)
 
-                servicex.post_status_update(file_id=_file_id,
-                                            status_code="complete",
-                                            info="Total time " + str(total_time))
                 servicex.put_file_complete(_file_path, _file_id, "success",
                                            num_messages=0,
                                            total_time=total_time,
@@ -279,10 +272,6 @@ def callback(channel, method, properties, body):
                                                                            MAX_RETRIES,
                                                                            root_file,
                                                                            error))
-                servicex.post_status_update(file_id=_file_id,
-                                            status_code="retry",
-                                            info="Try: " + str(file_retries) +
-                                            " error: " + str(error)[0:1024])
 
         if file_done:
             break
@@ -294,9 +283,6 @@ def callback(channel, method, properties, body):
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                    status='failure', num_messages=0, total_time=0,
                                    total_events=0, total_bytes=0)
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="failure",
-                                    info="error.")
 
     stop_process_info = get_process_info()
     elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
