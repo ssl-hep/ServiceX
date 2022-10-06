@@ -25,30 +25,41 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request, Response
-from flask_restful import Resource
-from servicex.code_generator_service.ast_translator import AstTranslator
+import os
+
+from func_adl.ast import ast_hash
+from func_adl_uproot.translation import generate_python_source
+from qastle import text_ast_to_python_ast
+
+from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
+    GenerateCodeException
 
 
-class GenerateCode(Resource):
-    @classmethod
-    def make_api(cls, translator: AstTranslator):
-        cls.translator = translator
-        return cls
+class AstUprootTranslator(CodeGenerator):
+    # Generate the code. Ignoring caching for now
+    def generate_code(self, query, cache_path: str):
 
-    def post(self):
-        try:
-            code = request.data.decode('utf8')
-            zip_data = self.translator.translate_text_ast_to_zip(code)
+        if len(query) == 0:
+            raise GenerateCodeException("Requested codegen for an empty string.")
 
-            # Send the response back to you-know-what.
-            response = Response(
-                response=zip_data,
-                status=200, mimetype='application/octet-stream')
-            return response
-        except BaseException as e:
-            print(str(e))
-            import traceback
-            import sys
-            traceback.print_exc(file=sys.stdout)
-            return {'Message': str(e)}, 500
+        body = text_ast_to_python_ast(query).body
+        if len(body) != 1:
+            raise GenerateCodeException(
+                f'Requested codegen for "{query}" yielded no code statements (or too many).')  # noqa: E501
+        a = body[0].value
+
+        hash = ast_hash.calc_ast_hash(a)
+        query_file_path = os.path.join(cache_path, hash)
+
+        # Create the files to run in that location.
+        if not os.path.exists(query_file_path):
+            os.makedirs(query_file_path)
+
+        src = generate_python_source(a)
+        print(query_file_path)
+        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+            python_file.write(src)
+
+        os.system("ls -lht " + query_file_path)
+
+        return GeneratedFileResult(hash, query_file_path)
