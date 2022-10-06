@@ -1,7 +1,7 @@
 # A script that will take as input a text (on the command line) and
 # write out a zip file.
 import sys
-from servicex.code_generator_service.python_translator import PythonTranslator
+from servicex.xaod_code_generator.python_translator import PythonTranslator
 
 if __name__ == "__main__":
     import argparse

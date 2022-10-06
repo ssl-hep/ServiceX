@@ -32,13 +32,28 @@
 # modification, are permitted provided that the following conditions are met:
 #
 import base64
+import os
+import tempfile
 
-from servicex.code_generator_service.python_translator import \
+from servicex.python_code_generator.python_translator import \
     PythonTranslator
 
 
-def test_translate_text_python_to_zip():
-    translator = PythonTranslator()
-    code = base64.b64encode(b"import os")
-    bytes = translator.translate_text_python_to_zip(code)
-    assert bytes
+def test_generate_code():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = base64.b64encode(b"import os")
+        expected_hash = "a38bdacb36e788c0d25f43451c429460"
+        result = translator.generate_code(code, tmpdirname)
+        assert result.hash == expected_hash
+        assert result.output_dir == os.path.join(tmpdirname, expected_hash)
+
+
+def test_generate_code_with_str():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = "import os"
+        expected_hash = "a38bdacb36e788c0d25f43451c429460"
+        result = translator.generate_code(code, tmpdirname)
+        assert result.hash == expected_hash
+        assert result.output_dir == os.path.join(tmpdirname, expected_hash)

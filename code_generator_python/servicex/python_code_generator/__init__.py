@@ -1,4 +1,4 @@
-# Copyright (c) 2021, University of Illinois/NCSA
+# Copyright (c) 2022, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,30 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request, Response
-from flask_restful import Resource
-from servicex.code_generator_service.python_translator import PythonTranslator
 
 
-class GenerateCode(Resource):
-    @classmethod
-    def make_api(cls, translator: PythonTranslator):
-        cls.translator = translator
-        return cls
+import servicex_codegen
+from servicex.python_code_generator.python_translator import PythonTranslator
 
-    def post(self):
-        try:
-            code = request.data
-            zip_data = self.translator.translate_text_python_to_zip(code)
-            print(zip_data)
-            # Send the response back to you-know-what.
-            response = Response(
-                response=zip_data,
-                status=200, mimetype='type/text')
-            return response
-        except BaseException as e:
-            print(str(e))
-            import traceback
-            import sys
-            traceback.print_exc(file=sys.stdout)
-            return {'Message': str(e)}, 500
+
+def create_app(test_config=None, provided_translator=None):
+    return servicex_codegen.create_app(test_config,
+                                       provided_translator=provided_translator
+                                       if provided_translator else PythonTranslator()
+                                       )
