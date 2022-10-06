@@ -177,10 +177,10 @@ def callback(channel, method, properties, body):
             try:
 
                 # Do the transform
-                logger.info("Attempt {}. Trying path {}".format(attempt, _file_path))
+                logger.info(f"Attempt {attempt}. Trying path {_file_path}")
                 root_file = _file_path.replace('/', ':')
                 output_path = os.path.join(posix_path, root_file)
-                logger.info("Processing {}, file id: {}".format(root_file, _file_id))
+                logger.info(f"Processing {root_file}, file id: {_file_id}")
                 (total_events, output_size) = transform_single_file(
                     _file_path, output_path, servicex)
 

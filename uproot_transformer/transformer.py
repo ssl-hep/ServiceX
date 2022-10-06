@@ -209,7 +209,7 @@ def callback(channel, method, properties, body):
             try:
 
                 # Do the transform
-                logger.info("Attempt {}. Trying path {}".format(attempt, _file_path))
+                logger.info(f"Attempt {attempt}. Trying path {_file_path}")
                 root_file = _file_path.replace('/', ':')
                 if not os.path.isdir(posix_path):
                     os.makedirs(posix_path)
@@ -320,7 +320,7 @@ def transform_single_file(file_path, output_path, servicex=None):
             writer.write_table(table=arrow)
             writer.close()
             output_size = os.stat(output_path).st_size
-            logger.info("Wrote {} bytes after transforming {}".format(output_size, file_path))
+            logger.info(f"Wrote {output_size} bytes after transforming {file_path}")
 
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
