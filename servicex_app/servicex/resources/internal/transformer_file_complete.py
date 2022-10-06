@@ -43,7 +43,7 @@ class TransformerFileComplete(ServiceXResource):
 
     def put(self, request_id):
         info = request.get_json()
-        current_app.logger.info("Metric", extra={'requestId': request_id, 'metric': info})
+        current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
         if transform_req is None:
             msg = f"Request not found with id: '{request_id}'"
@@ -70,19 +70,26 @@ class TransformerFileComplete(ServiceXResource):
         # could result in miscounting completed files.
         db.session.commit()
 
+        current_app.logger.info("FileComplete", extra={
+            'requestId': request_id,
+            'files_remaining': transform_req.files_remaining,
+            'files_processed': transform_req.files_processed,
+            'files_failed': transform_req.files_failed,
+            'files_skipped': transform_req.files_skipped
+        })
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
-        db.session.commit()
-
         return "Ok"
 
     @staticmethod
     def transform_complete(logger: Logger, transform_req: TransformRequest,
                            transformer_manager: TransformerManager):
-        namespace = current_app.config['TRANSFORMER_NAMESPACE']
-        logger.info(f"Job {transform_req.request_id} is all done... shutting down transformers")
-        transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)
         transform_req.status = "Complete"
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
+        db.session.commit()
+        logger.info("Request completed. Shutting down transformers",
+                    extra={'requestId': transform_req.request_id})
+        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+        transformer_manager.shutdown_transformer_job(transform_req.request_id, namespace)

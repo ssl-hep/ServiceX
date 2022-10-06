@@ -52,22 +52,28 @@ instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 class StreamFormatter(logging.Formatter):
     """
-    Need a custom formatter to allow for logging with request ids that vary.
-    Normally log messages are "level instance component request_id msg" and
-    request_id gets set by initialize_logging but we need a handler that'll let
-    us pass in the request id and have that embedded in the log message
+    A custom formatter that adds extras.
+    Normally log messages are "level instance component msg extra: {}"
     """
+    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
+                'pathname', 'filename', 'module', 'exc_info',
+                'exc_text', 'stack_info', 'lineno', 'funcName',
+                'created', 'msecs', 'relativeCreated', 'thread',
+                'threadName', 'processName', 'process', 'message']
 
     def format(self, record: logging.LogRecord) -> str:
         """
-        Format record with request id if present, otherwise assume None
-
         :param record: LogRecord
         :return: formatted log message
         """
 
-        if not hasattr(record, "requestId"):
-            setattr(record, "requestId", None)
+        string = super().format(record)
+        extra = {k: v for k, v in record.__dict__.items()
+                 if k not in self.def_keys}
+        if len(extra) > 0:
+            string += " extra: " + str(extra)
+        return string
+
         return super().format(record)
 
 
@@ -155,7 +161,7 @@ def create_app(test_config=None,
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
                                        f"{instance} servicex_app " +
-                                       '%(requestId)s %(message)s')
+                                       '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(levels[level])
     app.logger.addHandler(stream_handler)
