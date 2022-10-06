@@ -128,7 +128,7 @@ def initialize_logging(request=None):
                                        '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
-    log.logger.addHandler(stream_handler)
+    log.addHandler(stream_handler)
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
@@ -137,9 +137,9 @@ def initialize_logging(request=None):
         logstash_formatter = LogstashFormatter('logstash', None, None)
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(log.level)
-        log.logger.addHandler(logstash_handler)
+        log.addHandler(logstash_handler)
 
-    log.logger.info("Initialized logging")
+    log.info("Initialized logging")
 
     return log
 
