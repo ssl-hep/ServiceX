@@ -6,6 +6,7 @@ servicex-transformer==1.0.4-rc1
 uproot==4.1.9
 vector==0.8.4
 psutil==5.8.0
+python-logstash == 0.4.8
 
 # There is no way the small amount of code written in this repo needs all this - are these
 # dependencies and they should just included there?

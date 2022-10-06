@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import logging
+import logstash
 import os
 import time
 import timeit
@@ -34,15 +35,15 @@ from collections import namedtuple
 import re
 
 import psutil
-import uproot
+# import uproot
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-from servicex.transformer.uproot_events import UprootEvents
-from servicex.transformer.uproot_transformer import UprootTransformer
-from servicex.transformer.arrow_writer import ArrowWriter
+# from servicex.transformer.uproot_events import UprootEvents
+# from servicex.transformer.uproot_transformer import UprootTransformer
+# from servicex.transformer.arrow_writer import ArrowWriter
 
 
 MAX_RETRIES = 3
@@ -50,6 +51,64 @@ MAX_RETRIES = 3
 messaging = None
 object_store = None
 posix_path = None
+
+instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+
+
+class StreamFormatter(logging.Formatter):
+    """
+    A custom formatter that adds extras.
+    Normally log messages are "level instance component msg extra: {}"
+    """
+    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
+                'pathname', 'filename', 'module', 'exc_info',
+                'exc_text', 'stack_info', 'lineno', 'funcName',
+                'created', 'msecs', 'relativeCreated', 'thread',
+                'threadName', 'processName', 'process', 'message']
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        :param record: LogRecord
+        :return: formatted log message
+        """
+
+        string = super().format(record)
+        extra = {k: v for k, v in record.__dict__.items()
+                 if k not in self.def_keys}
+        if len(extra) > 0:
+            string += " extra: " + str(extra)
+        return string
+
+        return super().format(record)
+
+
+class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
+
+    def format(self, record):
+        message = {
+            '@timestamp': self.format_timestamp(record.created),
+            '@version': '1',
+            'message': record.getMessage(),
+            'host': self.host,
+            'path': record.pathname,
+            'tags': self.tags,
+            'type': self.message_type,
+            'instance': instance,
+            'component': 'uproot transformer',
+
+            # Extra Fields
+            'level': record.levelname,
+            'logger_name': record.name,
+        }
+
+        # Add extra fields
+        message.update(self.get_extra_fields(record))
+
+        # If exception, add debug info
+        if record.exc_info:
+            message.update(self.get_debug_fields(record))
+
+        return self.serialize(message)
 
 
 def initialize_logging(request=None):
@@ -61,15 +120,27 @@ def initialize_logging(request=None):
     """
 
     log = logging.getLogger()
-    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
-    formatter = logging.Formatter('%(levelname)s ' +
-                                  "{} {} {} ".format(instance, os.environ["INSTANCE"], request) +
-                                  '%(message)s')
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    handler.setLevel(logging.INFO)
-    log.addHandler(handler)
-    log.setLevel(logging.INFO)
+    log.level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+
+    stream_handler = logging.StreamHandler()
+    stream_formatter = StreamFormatter('%(levelname)s ' +
+                                       f"{instance} uproot_transformer " +
+                                       '%(message)s')
+    stream_handler.setFormatter(stream_formatter)
+    stream_handler.setLevel(log.level)
+    log.logger.addHandler(stream_handler)
+
+    logstash_host = os.environ.get('LOGSTASH_HOST')
+    logstash_port = os.environ.get('LOGSTASH_PORT')
+    if (logstash_host and logstash_port):
+        logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
+        logstash_formatter = LogstashFormatter('logstash', None, None)
+        logstash_handler.setFormatter(logstash_formatter)
+        logstash_handler.setLevel(log.level)
+        log.logger.addHandler(logstash_handler)
+
+    log.logger.info("Initialized logging")
+
     return log
 
 
@@ -151,7 +222,7 @@ def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_paths = transform_request['paths'].split(',')
-    logger.info("File replicas: {}".format(_file_paths))
+    logger.info(f"File replicas: {_file_paths}")
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
