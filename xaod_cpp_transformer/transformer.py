@@ -66,7 +66,7 @@ class StreamFormatter(logging.Formatter):
                 'created', 'msecs', 'relativeCreated', 'thread',
                 'threadName', 'processName', 'process', 'message']
 
-    def format(self, record: logging.LogRecord) -> str:
+    def format(self, record):
         """
         :param record: LogRecord
         :return: formatted log message
