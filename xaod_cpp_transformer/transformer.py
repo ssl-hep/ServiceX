@@ -124,7 +124,7 @@ def initialize_logging():
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} uproot_transformer " +
+                                       instance + " xaod_transformer " +
                                        '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
@@ -222,7 +222,7 @@ def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_paths = transform_request['paths'].split(',')
-    logger.info(f"File replicas: {_file_paths}")
+    logger.info("File replicas", extra={'path': _file_paths})
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     servicex = ServiceXAdapter(_server_endpoint)
@@ -244,10 +244,10 @@ def callback(channel, method, properties, body):
             try:
 
                 # Do the transform
-                logger.info(f"Attempt {attempt}. Trying path {_file_path}")
+                # logger.info(f"Attempt {attempt}. Trying path {_file_path}")
                 root_file = _file_path.replace('/', ':')
                 output_path = os.path.join(posix_path, root_file)
-                logger.info(f"Processing {root_file}, file id: {_file_id}")
+                # logger.info(f"Processing {root_file}, file id: {_file_id}")
                 (total_events, output_size) = transform_single_file(
                     _file_path, output_path, servicex)
 
