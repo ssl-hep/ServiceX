@@ -30,7 +30,6 @@ import logging
 import logstash
 import os
 import time
-import timeit
 from collections import namedtuple
 import re
 
@@ -215,7 +214,6 @@ def log_stats(startup_time, elapsed_time):
     logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
                                                                   elapsed_time.system) +
                 "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
-    logger.info("Total running time {}".format(running_time))
 
 
 # noinspection PyUnusedLocal
@@ -289,7 +287,7 @@ def callback(channel, method, properties, body):
     elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
                                       system=stop_process_info.system - start_process_info.system,
                                       iowait=stop_process_info.iowait - start_process_info.iowait)
-    stop_time = timeit.default_timer()
+
     log_stats(startup_time, elapsed_process_times)
     record = {'filename': _file_path,
               'file-id': _file_id,
