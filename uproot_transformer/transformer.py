@@ -83,8 +83,6 @@ class StreamFormatter(logging.Formatter):
             string += " extra: " + str(extra)
         return string
 
-        return super().format(record)
-
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
 

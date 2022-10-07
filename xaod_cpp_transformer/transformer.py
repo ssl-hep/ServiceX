@@ -79,8 +79,6 @@ class StreamFormatter(logging.Formatter):
             string += " extra: " + str(extra)
         return string
 
-        return super().format(record)
-
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
 
@@ -199,7 +197,7 @@ def get_process_info():
                      iowait=time_stats.iowait)
 
 
-def log_stats(startup_time, elapsed_time, running_time=0.0):
+def log_stats(startup_time, elapsed_time):
     """
     Log statistics about transformer execution
 
@@ -289,7 +287,7 @@ def callback(channel, method, properties, body):
                                       system=stop_process_info.system - start_process_info.system,
                                       iowait=stop_process_info.iowait - start_process_info.iowait)
     stop_time = timeit.default_timer()
-    log_stats(startup_time, elapsed_process_times, running_time=(stop_time - start_time))
+    log_stats(startup_time, elapsed_process_times)
     record = {'filename': _file_path,
               'file-id': _file_id,
               'output-size': output_size,
@@ -356,7 +354,6 @@ def compile_code():
 
 
 if __name__ == "__main__":
-    start_time = timeit.default_timer()
     parser = TransformerArgumentParser(description=os.environ["DESC"])
     args = parser.parse_args()
 
@@ -376,12 +373,12 @@ if __name__ == "__main__":
     logger.info("Startup finished.",
                 extra={
                     'user': startup_time.user, 'sys': startup_time.system,
-                    'iowait': startup_time.iowait, 'total': startup_time.total_time
+                    'iowait': startup_time.iowait
                 })
 
     if args.request_id and not args.path:
         rabbitmq = RabbitMQManager(args.rabbit_uri, args.request_id, callback)
 
     if args.path:
-        logger.info("Transform a single file", extra={'path': args.path})
+        logger.info("Transform a single file", extra={'fpath': args.path})
         transform_single_file(args.path, args.output_dir)
