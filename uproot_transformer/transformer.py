@@ -217,6 +217,9 @@ def callback(channel, method, properties, body):
                                        'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
 
+    if not os.path.isdir(posix_path):
+        os.makedirs(posix_path)
+
     file_done = False
     file_retries = 0
     total_events = 0
@@ -235,8 +238,6 @@ def callback(channel, method, properties, body):
                             })
 
                 root_file = _file_path.replace('/', ':')
-                if not os.path.isdir(posix_path):
-                    os.makedirs(posix_path)
 
                 safe_output_file = hash_path(root_file+".parquet")
                 output_path = os.path.join(posix_path, safe_output_file)

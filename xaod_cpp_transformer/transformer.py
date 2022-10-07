@@ -162,8 +162,8 @@ def parse_output_logs(logfile):
         matches = events_processed_re.finditer(buf)
         for m in matches:
             events_processed = int(m.group(1))
-        logger.info("{} events processed out of {} total events".format(
-            events_processed, total_events))
+        # logger.info("{} events processed out of {} total events".format(
+        #     events_processed, total_events))
     return total_events, events_processed
 
 
@@ -199,37 +199,19 @@ def get_process_info():
                      iowait=time_stats.iowait)
 
 
-def log_stats(startup_time, elapsed_time):
-    """
-    Log statistics about transformer execution
-
-    :param startup_time: time to initialize and run cpp transformer
-    :param elapsed_time:  elapsed time spent by processing file (sys, user, iowait)
-    :param running_time:  total time to run script
-    :return: None
-    """
-    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
-                                                                  startup_time.system) +
-                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
-                                                                  elapsed_time.system) +
-                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
-
-
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
     _file_paths = transform_request['paths'].split(',')
-    logger.info("File replicas", extra={'path': _file_paths})
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    logger.info("To transform", extra={'fpath': _file_paths,
+                                       'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
 
     if not os.path.isdir(posix_path):
         os.makedirs(posix_path)
-
-    tick = time.time()
 
     file_done = False
     file_retries = 0
@@ -237,40 +219,54 @@ def callback(channel, method, properties, body):
     output_size = 0
     total_time = 0
     start_process_info = get_process_info()
-
     for attempt in range(MAX_RETRIES):
         for _file_path in _file_paths:
+
             try:
 
                 # Do the transform
-                # logger.info(f"Attempt {attempt}. Trying path {_file_path}")
+                logger.info("Starting transformation.", extra={
+                            'attempt': attempt, 'fpath': _file_path,
+                            'requestId': _request_id, 'fileId': _file_id
+                            })
+
                 root_file = _file_path.replace('/', ':')
+
                 output_path = os.path.join(posix_path, root_file)
-                # logger.info(f"Processing {root_file}, file id: {_file_id}")
+
+                stime = time.time()
                 (total_events, output_size) = transform_single_file(
                     _file_path, output_path, servicex)
+                ttime = time.time()
 
-                tock = time.time()
-                total_time = round(tock - tick, 2)
                 if object_store:
                     object_store.upload_file(_request_id, root_file, output_path)
                     os.remove(output_path)
+                utime = time.time()
 
                 servicex.put_file_complete(_file_path, _file_id, "success",
                                            num_messages=0,
                                            total_time=total_time,
                                            total_events=total_events,
                                            total_bytes=output_size)
-                logger.info("Time to process {}: {} seconds".format(root_file, total_time))
+                logger.info("Attempt succesful.",
+                            extra={
+                                'attempt': attempt,
+                                'requestId': _request_id, 'fileId': _file_id,
+                                'transform_time': round(ttime-stime, 3),
+                                'upload_time': round(utime-ttime, 3)
+                            })
                 file_done = True
                 break
 
             except Exception as error:
                 file_retries += 1
-                logger.warning("Failed attempt {} of {} for {}: {}".format(attempt,
-                                                                           MAX_RETRIES,
-                                                                           root_file,
-                                                                           error))
+                logger.warning("Transformation failed.",
+                               extra={
+                                   'attempt': attempt, 'fpath': _file_path,
+                                   'requestId': _request_id, 'fileId': _file_id,
+                                   'error': error
+                               })
 
         if file_done:
             break
@@ -284,22 +280,19 @@ def callback(channel, method, properties, body):
                                    total_events=0, total_bytes=0)
 
     stop_process_info = get_process_info()
-    elapsed_process_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
-                                      system=stop_process_info.system - start_process_info.system,
-                                      iowait=stop_process_info.iowait - start_process_info.iowait)
+    elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
+                              system=stop_process_info.system - start_process_info.system,
+                              iowait=stop_process_info.iowait - start_process_info.iowait)
 
-    log_stats(startup_time, elapsed_process_times)
-    record = {'filename': _file_path,
-              'file-id': _file_id,
-              'output-size': output_size,
-              'events': total_events,
-              'request-id': _request_id,
-              'user-time': elapsed_process_times.user,
-              'system-time': elapsed_process_times.system,
-              'io-wait': elapsed_process_times.iowait,
-              'total-time': elapsed_process_times.total_time,
-              'wall-time': total_time}
-    logger.info("Metric: {}".format(json.dumps(record)))
+    logger.info("File processed.", extra={
+        'requestId': _request_id, 'fileId': _file_id,
+        'output-size': output_size,
+        'events': total_events,
+        'user': elapsed_times.user,
+        'sys': elapsed_times.system,
+        'iowait': elapsed_times.iowait
+    })
+
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -313,17 +306,24 @@ def transform_single_file(file_path, output_path, servicex=None):
     :return: Tuple with (total_events: Int, output_size: Int)
     """
 
-    logger.info("Transforming a single path: {} into {}".format(file_path, output_path))
+    stime = time.time()
     r = os.system('bash /generated/runner.sh -r -d ' + file_path +
                   ' -o ' + output_path + '| tee log.txt')
     # This command is not available in all images!
     # os.system('/usr/bin/sync log.txt')
+    ttime = time.time()
+
     total_events, _ = parse_output_logs("log.txt")
     output_size = 0
     if os.path.exists(output_path) and os.path.isfile(output_path):
         output_size = os.stat(output_path).st_size
-        logger.info("Wrote {} bytes after transforming {}".format(output_size, file_path))
+        # logger.info("Wrote {} bytes after transforming {}".format(output_size, file_path))
 
+    wtime = time.time()
+    logger.info('Detailed transformer times.', extra={
+        'query_time': round(ttime - stime, 3),
+        'parsing_log': round(wtime - ttime, 3)
+    })
     reason_bad = None
     if r != 0:
         reason_bad = "Error return from transformer: " + str(r)
