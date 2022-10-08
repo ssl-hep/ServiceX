@@ -117,6 +117,11 @@ def initialize_logging():
     """
 
     log = logging.getLogger()
+
+    # remove current handlers
+    for h in log.handlers:
+        log.removeHandler(h)
+
     log.level = getattr(logging, os.environ.get('LOG_LEVEL'), 20)
 
     # stream_handler = logging.StreamHandler()
