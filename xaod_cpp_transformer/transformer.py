@@ -119,16 +119,16 @@ def initialize_logging():
     log = logging.getLogger()
     log.level = getattr(logging, os.environ.get('LOG_LEVEL'), 20)
 
-    stream_handler = logging.StreamHandler()
-    stream_formatter = logging.Formatter('%(levelname)s ' +
-                                         "{} {} ".format(instance, os.environ["INSTANCE"]) +
-                                         '%(message)s')
+    # stream_handler = logging.StreamHandler()
+    # stream_formatter = logging.Formatter('%(levelname)s ' +
+    #                                      "{} {} ".format(instance, os.environ["INSTANCE"]) +
+    #                                      '%(message)s')
     # stream_formatter = StreamFormatter('%(levelname)s ' +
     #                                    instance + " xaod_transformer " +
     #                                    '%(message)s')
-    stream_handler.setFormatter(stream_formatter)
-    stream_handler.setLevel(log.level)
-    log.addHandler(stream_handler)
+    # stream_handler.setFormatter(stream_formatter)
+    # stream_handler.setLevel(log.level)
+    # log.addHandler(stream_handler)
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
