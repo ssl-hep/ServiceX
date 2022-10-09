@@ -54,29 +54,29 @@ posix_path = None
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
-class StreamFormatter(logging.Formatter):
-    """
-    A custom formatter that adds extras.
-    Normally log messages are "level instance component msg extra: {}"
-    """
-    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
-                'pathname', 'filename', 'module', 'exc_info',
-                'exc_text', 'stack_info', 'lineno', 'funcName',
-                'created', 'msecs', 'relativeCreated', 'thread',
-                'threadName', 'processName', 'process', 'message']
+# class StreamFormatter(logging.Formatter):
+#     """
+#     A custom formatter that adds extras.
+#     Normally log messages are "level instance component msg extra: {}"
+#     """
+#     def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
+#                 'pathname', 'filename', 'module', 'exc_info',
+#                 'exc_text', 'stack_info', 'lineno', 'funcName',
+#                 'created', 'msecs', 'relativeCreated', 'thread',
+#                 'threadName', 'processName', 'process', 'message']
 
-    def format(self, record):
-        """
-        :param record: LogRecord
-        :return: formatted log message
-        """
+#     def format(self, record):
+#         """
+#         :param record: LogRecord
+#         :return: formatted log message
+#         """
 
-        string = super().format(record)
-        extra = {k: v for k, v in record.__dict__.items()
-                 if k not in self.def_keys}
-        if len(extra) > 0:
-            string += " extra: " + str(extra)
-        return string
+#         string = super().format(record)
+#         extra = {k: v for k, v in record.__dict__.items()
+#                  if k not in self.def_keys}
+#         if len(extra) > 0:
+#             string += " extra: " + str(extra)
+#         return string
 
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
@@ -119,8 +119,8 @@ def initialize_logging():
     log = logging.getLogger()
 
     # remove current handlers
-    for h in log.handlers:
-        log.removeHandler(h)
+    # for h in log.handlers:
+    #     log.removeHandler(h)
 
     log.level = getattr(logging, os.environ.get('LOG_LEVEL'), 20)
 
@@ -128,9 +128,9 @@ def initialize_logging():
     stream_formatter = logging.Formatter('%(levelname)s ' +
                                          "{} {} ".format(instance, os.environ["INSTANCE"]) +
                                          '%(message)s')
-    stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       instance + " xaod_transformer " +
-                                       '%(message)s')
+    # stream_formatter = StreamFormatter('%(levelname)s ' +
+    #                                    instance + " xaod_transformer " +
+    #                                    '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
     log.addHandler(stream_handler)
