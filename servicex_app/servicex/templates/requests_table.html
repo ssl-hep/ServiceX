@@ -79,7 +79,7 @@
   let watched = new Set(
     {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
     );
-  console.log(watched);
+  // console.log(watched);
 
   function update_replicas() {
     Promise.all([...watched].map((req_id) => {
