@@ -34,15 +34,11 @@ from collections import namedtuple
 import re
 
 import psutil
-# import uproot
 
 from servicex.transformer.servicex_adapter import ServiceXAdapter
 from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-# from servicex.transformer.uproot_events import UprootEvents
-# from servicex.transformer.uproot_transformer import UprootTransformer
-# from servicex.transformer.arrow_writer import ArrowWriter
 
 
 MAX_RETRIES = 3
@@ -54,29 +50,29 @@ posix_path = None
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
-# class StreamFormatter(logging.Formatter):
-#     """
-#     A custom formatter that adds extras.
-#     Normally log messages are "level instance component msg extra: {}"
-#     """
-#     def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
-#                 'pathname', 'filename', 'module', 'exc_info',
-#                 'exc_text', 'stack_info', 'lineno', 'funcName',
-#                 'created', 'msecs', 'relativeCreated', 'thread',
-#                 'threadName', 'processName', 'process', 'message']
+class StreamFormatter(logging.Formatter):
+    """
+    A custom formatter that adds extras.
+    Normally log messages are "level instance component msg extra: {}"
+    """
+    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
+                'pathname', 'filename', 'module', 'exc_info',
+                'exc_text', 'stack_info', 'lineno', 'funcName',
+                'created', 'msecs', 'relativeCreated', 'thread',
+                'threadName', 'processName', 'process', 'message']
 
-#     def format(self, record):
-#         """
-#         :param record: LogRecord
-#         :return: formatted log message
-#         """
+    def format(self, record):
+        """
+        :param record: LogRecord
+        :return: formatted log message
+        """
 
-#         string = super().format(record)
-#         extra = {k: v for k, v in record.__dict__.items()
-#                  if k not in self.def_keys}
-#         if len(extra) > 0:
-#             string += " extra: " + str(extra)
-#         return string
+        string = super().format(record)
+        extra = {k: v for k, v in record.__dict__.items()
+                 if k not in self.def_keys}
+        if len(extra) > 0:
+            string += " extra: " + str(extra)
+        return string
 
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
@@ -163,8 +159,6 @@ def parse_output_logs(logfile):
         matches = events_processed_re.finditer(buf)
         for m in matches:
             events_processed = int(m.group(1))
-        # logger.info("{} events processed out of {} total events".format(
-        #     events_processed, total_events))
     return total_events, events_processed
 
 
@@ -288,8 +282,6 @@ def callback(channel, method, properties, body):
 
     logger.info("File processed.", extra={
         'requestId': _request_id, 'fileId': _file_id,
-        'output-size': output_size,
-        'events': total_events,
         'user': elapsed_times.user,
         'sys': elapsed_times.system,
         'iowait': elapsed_times.iowait

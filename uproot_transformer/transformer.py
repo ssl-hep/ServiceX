@@ -32,7 +32,6 @@ import os
 import sys
 import time
 from collections import namedtuple
-# import re
 
 import psutil
 import awkward as ak
@@ -295,8 +294,6 @@ def callback(channel, method, properties, body):
 
     logger.info("File processed.", extra={
         'requestId': _request_id, 'fileId': _file_id,
-        'output-size': output_size,
-        'events': total_events,
         'user': elapsed_times.user,
         'sys': elapsed_times.system,
         'iowait': elapsed_times.iowait
