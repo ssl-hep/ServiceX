@@ -218,7 +218,7 @@ def callback(channel, method, properties, body):
     file_retries = 0
     total_events = 0
     output_size = 0
-    total_time = 0
+    tot_time_start = time.time()
     start_process_info = get_process_info()
     for attempt in range(MAX_RETRIES):
         for _file_path in _file_paths:
@@ -247,7 +247,7 @@ def callback(channel, method, properties, body):
 
                 servicex.put_file_complete(_file_path, _file_id, "success",
                                            num_messages=0,
-                                           total_time=total_time,
+                                           total_time=utime-tot_time_start,
                                            total_events=total_events,
                                            total_bytes=output_size)
                 logger.info("Attempt succesful.",
@@ -277,7 +277,8 @@ def callback(channel, method, properties, body):
                               routing_key=_request_id + '_errors',
                               body=json.dumps(transform_request))
         servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
-                                   status='failure', num_messages=0, total_time=0,
+                                   status='failure', num_messages=0,
+                                   total_time=time.time()-tot_time_start,
                                    total_events=0, total_bytes=0)
 
     stop_process_info = get_process_info()
