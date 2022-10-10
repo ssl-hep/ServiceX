@@ -88,6 +88,9 @@ postgresql:
         database: servicex
         postgresPassword: leftfoot1
   primary:
+    resources:
+      requests:
+        cpu: 2
     persistence:
       enabled: false
 rabbitmq:
