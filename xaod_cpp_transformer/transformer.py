@@ -91,7 +91,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             'tags': self.tags,
             'type': self.message_type,
             'instance': instance,
-            'component': 'xado transformer',
+            'component': 'xaod transformer',
 
             # Extra Fields
             'level': record.levelname,
@@ -117,10 +117,6 @@ def initialize_logging():
     """
 
     log = logging.getLogger()
-
-    # remove current handlers
-    # for h in log.handlers:
-    #     log.removeHandler(h)
 
     log.level = getattr(logging, os.environ.get('LOG_LEVEL'), 20)
 
@@ -181,7 +177,7 @@ class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     # system: float
     # iowait: float
 
-    @ property
+    @property
     def total_time(self):
         """
         Return total time spent by process
