@@ -91,7 +91,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             'tags': self.tags,
             'type': self.message_type,
             'instance': instance,
-            'component': 'uproot transformer',
+            'component': 'xado transformer',
 
             # Extra Fields
             'level': record.levelname,
@@ -136,13 +136,13 @@ def initialize_logging():
     log.addHandler(stream_handler)
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
-    logstash_port = os.environ.get('LOGSTASH_PORT')
-    if (logstash_host and logstash_port):
+    logstash_port = int(os.environ.get('LOGSTASH_PORT', 5959))
+    if logstash_host:
         logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
         logstash_formatter = LogstashFormatter('logstash', None, None)
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(log.level)
-        # log.addHandler(logstash_handler)
+        log.addHandler(logstash_handler)
 
     log.info("Initialized logging")
 
@@ -181,7 +181,7 @@ class TimeTuple(namedtuple("TimeTupleInit", ["user", "system", "iowait"])):
     # system: float
     # iowait: float
 
-    @property
+    @ property
     def total_time(self):
         """
         Return total time spent by process
@@ -338,7 +338,7 @@ def transform_single_file(file_path, output_path, servicex=None):
         with open('log.txt', 'r') as f:
             errors = f.read()
             mesg = "Failed to transform input file {}: ".format(file_path) + \
-                   "{} -- errors: {}".format(reason_bad, errors)
+                "{} -- errors: {}".format(reason_bad, errors)
             logger.error(mesg)
             raise RuntimeError(mesg)
 
