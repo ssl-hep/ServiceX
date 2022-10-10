@@ -61,7 +61,6 @@ class FileTransformationStatus(ServiceXResource):
                                 extra={
                                     'requestId': request_id,
                                     'file_id': file_id,
-                                    'request_id': request_id,
                                     'timestamp': status.timestamp,
                                     'pod_name': status['pod-name'],
                                     'status': status['status-code'],

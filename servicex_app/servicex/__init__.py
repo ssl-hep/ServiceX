@@ -141,18 +141,10 @@ def create_app(test_config=None,
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
 
-    levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'WARN': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
     level = os.environ.get('LOG_LEVEL', 'INFO').upper()
     if app.debug:
         level = "DEBUG"
-    app.logger.level = levels[level]
+    app.logger.level = getattr(logging, level, None)
 
     # remove current handlers
     for h in app.logger.handlers:
@@ -163,14 +155,14 @@ def create_app(test_config=None,
                                        f"{instance} servicex_app " +
                                        '%(message)s')
     stream_handler.setFormatter(stream_formatter)
-    stream_handler.setLevel(levels[level])
+    stream_handler.setLevel(level)
     app.logger.addHandler(stream_handler)
 
     if (logstash_host and logstash_port):
         logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
         logstash_formatter = LogstashFormatter('logstash', None, None)
         logstash_handler.setFormatter(logstash_formatter)
-        logstash_handler.setLevel(levels[level])
+        logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
 
     app.logger.info("Initialized logging")

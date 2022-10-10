@@ -91,9 +91,14 @@ class TransformerManager:
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(
                 field_path="metadata.name"))
-        env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
+        env += [client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)]
 
-        env = env + [env_var_pod_name]
+        # provide pods with level and logging server info
+        env += [
+            client.V1EnvVar("LOG_LEVEL", value=os.environ.get('LOG_LEVEL', 'INFO').upper()),
+            client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get('LOGSTASH_HOST')),
+            client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get('LOGSTASH_PORT'))
+        ]
 
         # Provide each pod with an environment var holding that instance name
         if "INSTANCE_NAME" in current_app.config:
