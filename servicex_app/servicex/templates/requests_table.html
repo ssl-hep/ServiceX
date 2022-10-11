@@ -79,17 +79,28 @@
   let watched = new Set(
     {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
     );
-  // console.log(watched);
+  console.log(watched);
 
-  function update_replicas() {
-    Promise.all([...watched].map((req_id) => {
+  // function update_replicas() {
+  //   Promise.all([...watched].map((req_id) => {
+  //     return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
+  //       .then((resp) => resp.json())
+  //       .then((data) => {
+  //         $(`#replicas-${req_id}`).text(data["replicas"]);
+  //       });
+  //   }));
+  //   setTimeout(update_replicas, 30000);
+  // }
+
+  function update_pods(req_id) {
+    Promise.all((req_id) => {
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
         .then((resp) => resp.json())
         .then((data) => {
           $(`#replicas-${req_id}`).text(data["replicas"]);
         });
-    }));
-    setTimeout(update_replicas, 30000);
+    });
+    setTimeout(update_pods, 30000);
   }
 
   function update_progress() {
@@ -117,17 +128,19 @@
             watched.delete(req_id);
             $(`#progress-${req_id}`).remove();
             $(`#cancel-${req_id}`).remove();
-            $(`#replicas-${req_id}`).text("-")
-            const [d, t] = data["finish-time"].split("T")
+            $(`#replicas-${req_id}`).text("-");
+            const [d, t] = data["finish-time"].split("T");
             $(`#finish-time-${req_id}`).text(`${d} ${t.split(".")[0]}`)
+          } else if (status === "Running") {
+            update_pods(req_id);
           }
         })
     }));
-    setTimeout(update_progress, 5000);
+    setTimeout(update_progress, 10000);
   }
 
   $(document).ready(function () {
-    update_replicas();
+    // update_replicas();
     update_progress();
   })
 </script>

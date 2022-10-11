@@ -35,7 +35,7 @@ def dashboard(template_name: str, user_specific=False):
     sort, order = args["sort"], args["order"]
     query = TransformRequest.query
     if user_specific:
-        query = query.filter_by(submitted_by=session["user_id"], status="Running")
+        query = query.filter_by(submitted_by=session["user_id"])
     pagination: Pagination = query \
         .order_by(getattr(model_attributes[sort], order)()) \
         .paginate(page=args["page"], per_page=15, error_out=False)
