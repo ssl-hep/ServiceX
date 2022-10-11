@@ -1,6 +1,5 @@
 from flask import Response, url_for
-from flask_sqlalchemy import Pagination
-
+from flask_sqlalchemy.pagination import Pagination
 from pytest import fixture
 
 from .web_test_base import WebTestBase

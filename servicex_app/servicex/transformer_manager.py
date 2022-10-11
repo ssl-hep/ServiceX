@@ -25,15 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
-
 import base64
+import os
 from typing import Optional
 
 import kubernetes
+from flask import current_app
 from kubernetes import client
 from kubernetes.client.rest import ApiException
-from flask import current_app
 
 
 class TransformerManager:

@@ -3,8 +3,7 @@ from datetime import datetime, timedelta
 
 import sqlalchemy as sqla
 from pytest import fixture
-
-from servicex.models import UserModel, TransformRequest, TransformationResult
+from servicex.models import TransformationResult, TransformRequest, UserModel
 
 
 class TestTransformRequest:

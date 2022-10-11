@@ -23,7 +23,7 @@ class TestAuthCallback(WebTestBase):
         assert mock_session.get('name') == id_token['name']
         assert mock_session.get('sub') == id_token['sub']
         assert response.status_code == 302
-        assert response.location == url_for('create_profile', _external=True)
+        assert response.location == url_for('create_profile')
 
     def test_auth_callback_incoming_existing(
         self, client, globus_client, user, mock_session
@@ -39,4 +39,4 @@ class TestAuthCallback(WebTestBase):
         assert mock_session.get('name') == id_token['name']
         assert mock_session.get('sub') == id_token['sub']
         assert response.status_code == 302
-        assert response.location == url_for('user-dashboard', _external=True)
+        assert response.location == url_for('user-dashboard')

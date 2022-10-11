@@ -25,14 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import base64
+import re
+import zipfile
 from types import SimpleNamespace
 
-import base64
-import zipfile
-
 import pytest
-import re
-from servicex import TransformerManager
+from servicex.transformer_manager import TransformerManager
 
 from tests.resource_test_base import ResourceTestBase
 

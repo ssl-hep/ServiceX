@@ -30,13 +30,12 @@ from unittest.mock import MagicMock
 
 from flask.testing import FlaskClient
 from pytest import fixture
-
 from servicex import create_app
-from servicex.models import TransformRequest
-from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
+from servicex.models import TransformRequest
+from servicex.rabbit_adaptor import RabbitAdaptor
 
 
 class ResourceTestBase:

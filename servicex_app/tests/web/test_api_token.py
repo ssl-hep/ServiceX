@@ -1,4 +1,4 @@
-from flask import url_for, Response
+from flask import Response, url_for
 
 from .web_test_base import WebTestBase
 
@@ -12,4 +12,4 @@ class TestApiToken(WebTestBase):
         assert user.refresh_token != 'jwt:refresh'
         assert db.session.commit.called_once()
         assert response.status_code == 302
-        assert response.location == url_for('profile', _external=True)
+        assert response.location == '/profile'

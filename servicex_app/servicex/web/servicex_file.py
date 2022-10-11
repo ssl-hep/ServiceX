@@ -3,9 +3,8 @@ from textwrap import dedent
 from urllib.parse import urlparse
 
 import flask
-from flask import current_app, flash, redirect, request, session, url_for, \
-    send_file
-
+from flask import (current_app, flash, redirect, request, send_file, session,
+                   url_for)
 from servicex.decorators import oauth_required
 from servicex.models import UserModel
 
@@ -35,7 +34,7 @@ def servicex_file():
         type: {backend_type}
     """
     return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
-                     as_attachment=True, attachment_filename="servicex.yaml")
+                     as_attachment=True, download_name="servicex.yaml")
 
 
 def get_correct_url(request: flask.Request) -> str:

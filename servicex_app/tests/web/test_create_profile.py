@@ -46,7 +46,7 @@ class TestCreateProfile(WebTestBase):
         mock_flash.assert_called_once()
         assert "Profile created!" in mock_flash.call_args[0][0]
         assert response.status_code == 302
-        assert response.location == url_for('profile', _external=True)
+        assert response.location == url_for('profile')
 
     def test_post_create_profile_invalid(self, client, mock_flash):
         with client.session_transaction() as sess:

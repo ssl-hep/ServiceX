@@ -30,7 +30,7 @@ from datetime import datetime, timedelta
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, ForeignKey, DateTime
+from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.mailgun_adaptor import MailgunAdaptor

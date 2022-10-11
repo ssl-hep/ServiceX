@@ -1,9 +1,10 @@
 from functools import wraps
 from typing import Callable
 
-from flask import redirect, request, session, url_for, current_app, \
-    make_response, Response
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask import (Response, current_app, make_response, redirect, request,
+                   session, url_for)
+from flask_jwt_extended import (get_jwt_identity, jwt_required,
+                                verify_jwt_in_request)
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from servicex.models import UserModel
@@ -42,19 +43,20 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             return fn(*args, **kwargs)
         try:
             verify_jwt_in_request()
+            user = UserModel.find_by_sub(get_jwt_identity())
+            if not user:
+                msg = 'Not Authorized: No user found matching this API token. ' \
+                    'Your account may have been deleted. ' \
+                    'Please visit the ServiceX website to obtain a new API token.'
+                return make_response({'message': msg}, 401)
+            elif user.pending:
+                msg = 'Not Authorized: Your account is still pending. ' \
+                    'An administrator should approve it shortly. If not, ' \
+                    'please contact the ServiceX admins via email or Slack.'
+                return make_response({'message': msg}, 401)
         except NoAuthorizationError as exc:
             return make_response({'message': str(exc)}, 401)
-        user = UserModel.find_by_sub(get_jwt_identity())
-        if not user:
-            msg = 'Not Authorized: No user found matching this API token. ' \
-                  'Your account may have been deleted. ' \
-                  'Please visit the ServiceX website to obtain a new API token.'
-            return make_response({'message': msg}, 401)
-        elif user.pending:
-            msg = 'Not Authorized: Your account is still pending. ' \
-                  'An administrator should approve it shortly. If not, ' \
-                  'please contact the ServiceX admins via email or Slack.'
-            return make_response({'message': msg}, 401)
+
         return fn(*args, **kwargs)
 
     return inner
@@ -75,11 +77,12 @@ def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                 return make_response({'message': msg}, 401)
         try:
             verify_jwt_in_request()
+            user = UserModel.find_by_sub(get_jwt_identity())
+            if not (user and user.admin):
+                return make_response({'message': msg}, 401)
         except NoAuthorizationError as exc:
             return make_response({'message': str(exc)}, 401)
-        user = UserModel.find_by_sub(get_jwt_identity())
-        if not (user and user.admin):
-            return make_response({'message': msg}, 401)
+
         return fn(*args, **kwargs)
 
     return inner

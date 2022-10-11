@@ -1,5 +1,5 @@
-from flask import current_app, render_template
 import requests
+from flask import current_app, render_template
 
 
 class MailgunAdaptor:
