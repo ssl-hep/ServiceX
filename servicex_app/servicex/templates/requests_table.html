@@ -101,7 +101,7 @@
           const processed = data["files-processed"];
           const remaining = data["files-remaining"];
           const failed = data["files-skipped"];
-          const progress = processed / (processed + failed + remaining) * 100;
+          const progress = processed + failed / (processed + failed + remaining) * 100;
 
           $(`#status-${req_id}`).text(status);
           $(`#files-processed-${req_id}`).text(processed);
