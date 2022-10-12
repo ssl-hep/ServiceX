@@ -23,11 +23,14 @@
       <th scope="row" style="word-break: break-all">
         <a href="/transformation-request/{{ req.id }}">{{ req.title or "Untitled" }}</a>
       </th>
+
       {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
       <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+
       <td id="finish-time-{{ req.request_id }}">
         {{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}
       </td>
+
       <td>
         <div id="status-{{ req.request_id }}">
           {{ req.status }}
@@ -39,19 +42,24 @@
         </div>
         {% endif %}
       </td>
+
       <td>
         <div>
           <a id="files-processed-{{ req.request_id }}"
             href="/transformation-request/{{ req.id }}/results?status=success">
             {{ humanize.intcomma(req.files_processed) }}
           </a> of
-          <span>{{ humanize.intcomma(req.files or "Unknown") }}</span>
+          <span id="files-total-{{ req.request_id }}">
+            {{ humanize.intcomma(req.files or "Unknown") }}
+          </span>
         </div>
+
         <div {% if not req.files_failed %}style="display: none" {% endif %}
           id="files-failed-wrapper-{{ req.request_id }}">
           (<a id="files-failed-{{ req.request_id }}"
             href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
         </div>
+
       </td>
       <td id="replicas-{{ req.request_id }}">-</td>
       <td>
@@ -81,17 +89,6 @@
     );
   // console.log(watched);
 
-  // function update_pods(req_id) {
-  //   new Promise((req_id) => {
-  //     return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
-  //       .then((resp) => resp.json())
-  //       .then((data) => {
-  //         $(`#replicas-${req_id}`).text(data["replicas"]);
-  //       });
-  //   });
-  //   setTimeout(update_pods, 5000);
-  // }
-
   function update_progress() {
     Promise.all([...watched].map((req_id) => {
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
@@ -101,10 +98,12 @@
           const processed = data["files-processed"];
           const remaining = data["files-remaining"];
           const failed = data["files-skipped"];
-          const progress = (processed + failed) / (processed + failed + remaining) * 100;
+          const total_files = processed + remaining + failed
+          const progress = (processed + failed) / total_files * 100;
 
           $(`#status-${req_id}`).text(status);
           $(`#files-processed-${req_id}`).text(processed);
+          $(`#files-total-${req_id}`).text(total_files);
           const progressBar = $(`#progress-bar-${req_id}`)
           progressBar.text(`${Math.floor(progress)}%`)
           progressBar.css("width", `${progress}%`);
@@ -125,8 +124,6 @@
         })
         .then((status) => {
           if (status === "Running") {
-            // update_pods(req_id)
-            console.log('pods of ', req_id);
             fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
               .then((resp) => resp.json())
               .then((data) => {
