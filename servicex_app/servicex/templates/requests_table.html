@@ -91,6 +91,7 @@
 
   function update_progress() {
     $('#spinner').show();
+    console.log("spinner show", Date.now());
     Promise.all([...watched].map((req_id) => {
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
         .then((resp) => resp.json())
@@ -134,6 +135,7 @@
         })
     })).then((data) => {
       $('#spinner').hide();
+      console.log("spinner hide", Date.now());
     });
     setTimeout(update_progress, 20000);
   }
