@@ -79,18 +79,7 @@
   let watched = new Set(
     {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
     );
-  console.log(watched);
-
-  // function update_replicas() {
-  //   Promise.all([...watched].map((req_id) => {
-  //     return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
-  //       .then((resp) => resp.json())
-  //       .then((data) => {
-  //         $(`#replicas-${req_id}`).text(data["replicas"]);
-  //       });
-  //   }));
-  //   setTimeout(update_replicas, 30000);
-  // }
+  // console.log(watched);
 
   function update_pods(req_id) {
     new Promise((req_id) => {
@@ -112,7 +101,7 @@
           const processed = data["files-processed"];
           const remaining = data["files-remaining"];
           const failed = data["files-skipped"];
-          const progress = processed + failed / (processed + failed + remaining) * 100;
+          const progress = (processed + failed) / (processed + failed + remaining) * 100;
 
           $(`#status-${req_id}`).text(status);
           $(`#files-processed-${req_id}`).text(processed);
@@ -136,7 +125,6 @@
         })
         .then((status) => {
           if (status === "Running") {
-            console.log('running:', req_id)
             update_pods(req_id);
           }
         })
@@ -145,7 +133,6 @@
   }
 
   $(document).ready(function () {
-    // update_replicas();
     update_progress();
   })
 </script>
