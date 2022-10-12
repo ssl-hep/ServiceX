@@ -26,6 +26,6 @@ body {
 }
 
 img.spinner {
-  scale: 50%;
+  /* scale: 50%; */
   visibility: hidden;
 }

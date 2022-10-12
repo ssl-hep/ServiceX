@@ -132,9 +132,10 @@
               });
           }
         })
-    }));
+    })).then((data) => {
+      $('#spinner').hide();
+    });
     setTimeout(update_progress, 20000);
-    $('#spinner').hide();
   }
 
   $(document).ready(function () {
