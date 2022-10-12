@@ -93,7 +93,7 @@
   // }
 
   function update_pods(req_id) {
-    Promise((req_id) => {
+    new Promise((req_id) => {
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
         .then((resp) => resp.json())
         .then((data) => {
