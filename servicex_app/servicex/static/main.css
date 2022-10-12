@@ -24,3 +24,8 @@ body {
   border-radius: 3px;
   margin-bottom: 20px;
 }
+
+img.spinner {
+  scale: 50%;
+  visibility: hidden;
+}
