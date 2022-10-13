@@ -36,7 +36,7 @@ class TestDecorators(WebTestBase):
             sess['is_authenticated'] = True
         response: Response = client.get(url_for('profile'))
         assert response.status_code == 302
-        assert response.location == url_for('create_profile', _external=True)
+        assert response.location == url_for('create_profile', _external=False)
 
     def test_oauth_decorator_saved(self, client, user, captured_templates):
         client.application.config['ENABLE_AUTH'] = True
