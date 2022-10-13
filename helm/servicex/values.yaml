@@ -90,7 +90,8 @@ postgresql:
   primary:
     resources:
       requests:
-        cpu: 2
+        # for production instances this should be set to 2 CPUs.
+        cpu: 250m
     persistence:
       enabled: false
 rabbitmq:
