@@ -29,3 +29,9 @@ img.spinner {
   /* scale: 50%; */
   visibility: hidden;
 }
+
+iframe {
+  border: 0;
+  width: 100%;
+  height: 1200px;
+}
