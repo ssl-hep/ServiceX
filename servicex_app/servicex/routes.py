@@ -58,6 +58,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     from servicex.web.home import home
     from servicex.web.about import about
+    from servicex.web.monitor import monitor
     from servicex.web.sign_in import sign_in
     from servicex.web.sign_out import sign_out
     from servicex.web.auth_callback import auth_callback
