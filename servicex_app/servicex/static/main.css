@@ -27,5 +27,5 @@ body {
 
 img.spinner {
   /* scale: 50%; */
-  visibility: hidden;
+  display: none;
 }
