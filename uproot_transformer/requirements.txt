@@ -2,7 +2,7 @@ awkward==1.7.0
 minio==7.1.12
 pika==1.1.0
 pyarrow==3.0.0
-servicex-transformer==1.0.5-rc2
+servicex-transformer==1.0.5-rc3
 uproot==4.1.9
 vector==0.8.4
 psutil==5.8.0
