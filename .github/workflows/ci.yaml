@@ -34,13 +34,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.7 ]
+        python-version: [3.7]
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
