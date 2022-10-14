@@ -10,7 +10,7 @@ passlib
 flask-sqlalchemy
 Flask-Migrate
 kubernetes
-minio
+minio==7.1.12
 psycopg2
 globus_sdk
 cryptography
