@@ -35,6 +35,7 @@ import shutil
 import sys
 import time
 import timeit
+from hashlib import sha1
 from typing import NamedTuple
 import psutil as psutil
 
@@ -57,6 +58,9 @@ TIMEOUT = 30
 EVENTS = 0
 TOTAL_EVENTS = 0
 TOTAL_SIZE = 0
+
+# Use this to make sure we don't generate output file names that are crazy long
+MAX_PATH_LEN = 255
 
 
 class TimeTuple(NamedTuple):
@@ -137,14 +141,51 @@ def get_process_info():
                      iowait=time_stats.iowait)
 
 
+def hash_path(file_name):
+    """
+    Make the path safe for object store or POSIX, by keeping the length
+    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
+    forty character hash.
+    :param file_name: Input filename
+    :return: Safe path string
+    """
+    if len(file_name) > MAX_PATH_LEN:
+        hash = sha1(file_name.encode('utf-8')).hexdigest()
+        return ''.join([
+            '_', hash,
+            file_name[-1 * (MAX_PATH_LEN - len(hash) - 1):],
+        ])
+    else:
+        return file_name
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
+    """
+    This is the main function for the transformer. It is called whenever a new message
+    is available on the rabbit queue. These messages represent a single file to be
+    transformed.
+
+    Each request may include a list of replicas to try. This service will loop through
+    the replicas and produce a json file for the science package to actually work from.
+    This control file will have the replica for it to try to transform along with a
+    path in the output directory for the generated parquet or root file to be written.
+
+    This json file is written to the shared volume and then a thread is kicked off to
+    wait for the json file to be deleted, which is the science package's way of showing
+    it is done with the request. There will either be a parquet/root file in the output
+    directory or at least a log file.
+
+    We will examine this log file to see if the transform succeeded or failed
+    """
     transform_request = json.loads(body)
     _request_id = transform_request['request-id']
+
+    # The transform can either include a single path, or a list of replicas
     if 'file-path' in transform_request:
         _file_paths = [transform_request['file-path']]
     else:
         _file_paths = transform_request['paths'].split(',')
+
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     logger.info(transform_request)
@@ -153,7 +194,9 @@ def callback(channel, method, properties, body):
     start_process_times = get_process_info()
     total_time = 0
 
+    # Loop through the replicas
     for _file_path in _file_paths:
+        logger.info(f"trying {_file_path}")
         try:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="start",
@@ -161,23 +204,39 @@ def callback(channel, method, properties, body):
 
             if not os.path.isdir(posix_path):
                 os.makedirs(posix_path)
+
             output_path = posix_path
             request_path = os.path.join(output_path, _request_id)
             # creating output dir for transform output files
             if not os.path.isdir(request_path):
                 os.makedirs(request_path)
-            # creating scripts dir for access by science transformer
+
+            # creating scripts dir for access by science container
             scripts_path = os.path.join(output_path, 'scripts')
             if not os.path.isdir(scripts_path):
                 os.makedirs(scripts_path)
             shutil.copy('watch.sh', scripts_path)
-            shutil.copy('proxy-exporter.sh',scripts_path)
+            shutil.copy('proxy-exporter.sh', scripts_path)
+
+            # Enrich the transform request to give more hints to the science container
+            transform_request['downloadPath'] = _file_path
+
+            # We want to sanitize the output file name - it should be tied to the input
+            # file name, but they can be quite long, so we generate a hash for the boring
+            # bits and chop them down as well as replacing shady characters.
+            transform_request['safeOutputFileName'] = os.path.join(
+                request_path,
+                hash_path(
+                    _file_path.replace('/', ':') +
+                    ".parquet")
+            )
+
             # creating json file for use by science transformer
             jsonfile = str(_file_id) + '.json'
             with open(os.path.join(request_path, jsonfile), 'w') as outfile:
                 json.dump(transform_request, outfile)
 
-            # run watch function
+            # run watch function to wait for the job to finish
             try:
                 watch(logger,
                       request_path,
@@ -301,7 +360,7 @@ class FileQueueHandler(FileSystemEventHandler):
     
             # scan for flag keywords and raise exception if detected
             global FAILED, COMPLETED, EVENTS, TOTAL_EVENTS
-            flags = ['fatal'] # ,'exception']
+            flags = ['fatal', 'runtimeerror']
             if any(flag in text.lower() for flag in flags):
                 logger.info('Found exception. Exiting.')
                 FAILED = True
@@ -352,6 +411,10 @@ def watch(logger, request_path,
           file_path,
           object_store=None, 
           servicex=None):
+    """
+    Use a queue to report files that are produced by the science container back to
+    ServiceX and upload them to Object Store.
+    """
     # Start output queue
     q = Queue()
 

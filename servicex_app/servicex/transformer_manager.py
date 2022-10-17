@@ -100,6 +100,13 @@ class TransformerManager:
         # Compute Environment Vars
         env = [client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc")]
 
+        # provide pods with level and logging server info
+        env += [
+            client.V1EnvVar("LOG_LEVEL", value=os.environ.get('LOG_LEVEL', 'INFO').upper()),
+            client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get('LOGSTASH_HOST')),
+            client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get('LOGSTASH_PORT'))
+        ]
+
         # Provide each pod with an environment var holding that pod's name
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(
@@ -169,7 +176,7 @@ class TransformerManager:
 
         # Configure Pod template container
         sidecar = client.V1Container(
-            name="transformer-sidecar-" + request_id,
+            name="transformer",
             image=current_app.config['TRANSFORMER_SCIENCE_IMAGE'],
             image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
             volume_mounts=volume_mounts,
@@ -181,7 +188,7 @@ class TransformerManager:
 
         # Configure Pod template container
         container = client.V1Container(
-            name="transformer-" + request_id,
+            name="sidecar",
             image=image,
             image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
             volume_mounts=volume_mounts,

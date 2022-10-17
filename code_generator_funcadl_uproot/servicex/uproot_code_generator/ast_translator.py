@@ -60,6 +60,10 @@ class AstUprootTranslator(CodeGenerator):
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(src)
 
+        # Transfer the templated main python script
+        shutil.copyfile("/home/servicex/servicex/templates/transformer.py",
+                        os.path.join(query_file_path, "transformer.py"))
+
         os.system("ls -lht " + query_file_path)
 
         return GeneratedFileResult(hash, query_file_path)
