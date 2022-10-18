@@ -8,13 +8,6 @@ on:
       - "*"
   pull_request:
   workflow_call:
-    secrets:
-      username:
-        required: true
-      password:
-        required: true
-      code_cov_token:
-        required: true
 
 
 jobs:
@@ -76,7 +69,7 @@ jobs:
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          codecov --token=${{ secrets.code_cov_token }}
+          codecov --token=${{ secrets.CODECOV_TOKEN }}
 
   publish-servicex:
     needs: [build-matrix, test-servicex]
@@ -97,7 +90,7 @@ jobs:
         with:
           context: ${{ matrix.app.dir_name }}
           name: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
-          username: ${{ secrets.username }}
-          password: ${{ secrets.password }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           if: ${{ matrix.app.dockerfile }}
           dockerfile: ${{ matrix.app.dockerfile }}
