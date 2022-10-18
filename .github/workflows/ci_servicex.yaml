@@ -7,6 +7,8 @@ on:
     tags:
       - "*"
   pull_request:
+  workflow_call:
+
 
 jobs:
   build-matrix:
