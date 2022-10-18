@@ -4,7 +4,7 @@
 FROM continuumio/miniconda3:4.7.12
 # FROM continuumio/miniconda3:4.12.0
 
-RUN apt-get update -y && apt-get install gnupg2 -y 
+RUN apt-get --allow-releaseinfo-change update -y && apt-get install gnupg2 -y 
 
 RUN conda install --yes \
     -c conda-forge \
