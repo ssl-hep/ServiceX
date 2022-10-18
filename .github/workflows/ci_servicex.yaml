@@ -9,9 +9,12 @@ on:
   pull_request:
   workflow_call:
     secrets:
-      username: ${{ secrets.DOCKER_USERNAME }}
-      password: ${{ secrets.DOCKER_PASSWORD }}
-      code_cov_token: ${{ secrets.CODECOV_TOKEN }}
+      username:
+        required: true
+      password:
+        required: true
+      code_cov_token:
+        required: true
 
 
 jobs:
