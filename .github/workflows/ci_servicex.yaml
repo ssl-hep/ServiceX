@@ -85,7 +85,6 @@ jobs:
         shell: bash
         run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
         id: extract_tag_name
-
       - name: Build Docker Image
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
