@@ -6,10 +6,10 @@ on:
 
 name: Create and Publish Helm Packages
 jobs:
-  call-ci-servicex:
-    uses: ./.github/workflows/ci_servicex.yaml
-  call-ci-helm-tests:
-    uses: ./.github/workflows/ci_helm_tests.yaml
+#  call-ci-servicex:
+#    uses: ./.github/workflows/ci_servicex.yaml
+#  call-ci-helm-tests:
+#    uses: ./.github/workflows/ci_helm_tests.yaml
   build:
     name: Create Release
     needs: [call-ci-servicex, call-ci-helm-tests]
@@ -52,7 +52,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'ssl-helm-charts'
-          destination-github-username: 'bengalewsky'
+          destination-github-username: 'ssl-hep'
           destination-repository-name: 'ssl-helm-charts'
           target-branch: 'gh-pages'
       - name: Pushes to flux-river-configs repository
@@ -61,7 +61,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'flux_river_configs'
-          destination-github-username: 'bengalewsky'
+          destination-github-username: 'ssl-hep'
           destination-repository-name: 'flux_river_configs'
           target-branch: 'main'
       - name: Create Release
