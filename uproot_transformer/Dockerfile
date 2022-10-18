@@ -17,8 +17,10 @@ RUN conda install --yes \
     -c conda-forge \
     python-blosc \
     cytoolz \
-    numpy==1.23.3 \
+    # numpy==1.23.3 \
+    numpy==1.18.1 \
     # pandas==1.5.0 \
+    # scipy==1.6.0 \
     scipy==1.4.1 \
     && conda build purge-all && conda clean -ti
 
