@@ -1,5 +1,4 @@
 from typing import List
-from wsgiref import headers
 
 import pytest
 from flask import Response, url_for

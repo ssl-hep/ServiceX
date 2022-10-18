@@ -1,5 +1,3 @@
-from wsgiref import headers
-
 from flask import Response, url_for
 from flask_jwt_extended import create_access_token
 from flask_sqlalchemy.pagination import Pagination

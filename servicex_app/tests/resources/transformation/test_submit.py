@@ -27,11 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 from unittest.mock import call
-from wsgiref import headers
 
 from flask import current_app
 from flask_jwt_extended import create_access_token
-from requests import head
 from servicex import LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
