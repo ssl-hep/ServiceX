@@ -8,8 +8,10 @@ name: Create and Publish Helm Packages
 jobs:
   call-ci-servicex:
     uses: ./.github/workflows/ci_servicex.yaml
+    secrets: inherit
   call-ci-helm-tests:
     uses: ./.github/workflows/ci_helm_tests.yaml
+    secrets: inherit
   build:
     name: Create Release
     needs: [call-ci-servicex, call-ci-helm-tests]
