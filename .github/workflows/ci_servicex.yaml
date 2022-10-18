@@ -66,6 +66,7 @@ jobs:
         run: |
           python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
+        secrets: inherit
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
@@ -88,6 +89,7 @@ jobs:
 
       - name: Build Docker Image
         uses: elgohr/Publish-Docker-Github-Action@master
+        secrets: inherit
         with:
           context: ${{ matrix.app.dir_name }}
           name: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
