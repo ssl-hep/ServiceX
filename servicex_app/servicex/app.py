@@ -28,10 +28,11 @@
 
 from flask_migrate import Migrate
 
-import servicex
 from servicex.models import db
 
-app = servicex.create_app()
+from . import create_app
+
+app = create_app()
 db.init_app(app)
 
 migrate = Migrate(app, db)

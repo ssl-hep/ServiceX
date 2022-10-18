@@ -1,7 +1,9 @@
 from typing import List
+from wsgiref import headers
 
 import pytest
 from flask import Response, url_for
+from flask_jwt_extended import create_access_token
 from flask_sqlalchemy.pagination import Pagination
 from servicex.models import TransformationResult, TransformRequest
 
@@ -14,6 +16,14 @@ class TestUserDashboard(WebTestBase):
     endpoint = "transformation_results"
     module = "servicex.web.transformation_results"
     template_name = 'transformation_results.html'
+
+    @staticmethod
+    def fake_header():
+        access_token = create_access_token('testuser')
+        headers = {
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+        return headers
 
     @pytest.fixture
     def mock_tr_cls(self, mocker):
@@ -37,7 +47,8 @@ class TestUserDashboard(WebTestBase):
         mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
         pagination = Pagination(mock_result_query, page=1, per_page=100, total=0, items=[])
         mock_result_query.paginate.return_value = pagination
-        response: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        response: Response = client.get(
+            url_for(self.endpoint, id_=mock_tr.id), headers=self.fake_header())
         assert response.status_code == 200
         mock_result_cls.query.filter_by.assert_called_once_with(request_id=mock_tr.request_id)
         template, context = captured_templates[0]
@@ -54,7 +65,7 @@ class TestUserDashboard(WebTestBase):
         mock_result_query.paginate.return_value = pagination
         query_params = {"status": status} if status is not None else {}
         url = url_for(self.endpoint, id_=mock_tr.id, **query_params)
-        response: Response = client.get(url)
+        response: Response = client.get(url, headers=self.fake_header())
         assert response.status_code == 200
         query_kwargs = {"transform_status": status} if status is not None else {}
         mock_result_cls.query.filter_by.assert_called_once_with(
@@ -66,5 +77,5 @@ class TestUserDashboard(WebTestBase):
 
     def test_404(self, client, mock_tr_cls):
         mock_tr_cls.lookup.return_value = None
-        resp: Response = client.get(url_for(self.endpoint, id_=1))
+        resp: Response = client.get(url_for(self.endpoint, id_=1), headers=self.fake_header())
         assert resp.status_code == 404

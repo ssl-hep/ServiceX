@@ -25,9 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import Response
-from pytest import fixture
+from email import header
+from wsgiref import headers
 
+from flask import Response
+from flask_jwt_extended import create_access_token
+from pytest import fixture
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -35,6 +38,14 @@ class TestAllTransformationRequest(ResourceTestBase):
     @staticmethod
     def example_json():
         return [{'request_id': '123'}, {'request_id': '456'}]
+
+    @staticmethod
+    def fake_header():
+        access_token = create_access_token('testuser')
+        headers = {
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+        return headers
 
     @fixture()
     def mock_return_json(self, mocker):
@@ -54,7 +65,7 @@ class TestAllTransformationRequest(ResourceTestBase):
         self, mock_jwt_extended, mock_return_json, mock_requesting_user
     ):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        response: Response = client.get('/servicex/transformation')
+        response: Response = client.get('/servicex/transformation', headers=self.fake_header())
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()
@@ -64,7 +75,8 @@ class TestAllTransformationRequest(ResourceTestBase):
     ):
         user_id = mock_requesting_user.id
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        response = client.get(f'/servicex/transformation?submitted_by={user_id}')
+        response = client.get(
+            f'/servicex/transformation?submitted_by={user_id}', headers=self.fake_header())
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()

@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from flask_jwt_extended import (create_access_token, decode_token, get_jti,
-                                get_jwt, get_jwt_identity, jwt_required)
+from flask_jwt_extended import (create_access_token, decode_token, get_jwt,
+                                get_jwt_identity, jwt_required)
 from flask_restful import Resource
 from servicex.models import UserModel
 

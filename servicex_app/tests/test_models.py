@@ -1,9 +1,8 @@
-import unittest.mock
 from datetime import datetime, timedelta
 
-import sqlalchemy as sqla
 from pytest import fixture
 from servicex.models import TransformationResult, TransformRequest, UserModel
+
 
 class TestTransformRequest:
     @fixture
@@ -107,4 +106,3 @@ class TestTransformRequest:
             request_id=request.request_id, transform_status="failure"
         )
         mock_result_cls.query.filter_by.return_value.count.assert_called_once()
-
