@@ -1,0 +1,76 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10, will be triggered when a new tag is pushed
+
+name: Create and Publish Helm Packages
+jobs:
+  call-ci-servicex:
+    uses: ./.github/workflows/ci_servicex.yaml
+  call-ci-helm-tests:
+    uses: ./.github/workflows/ci_helm_tests.yaml
+  build:
+    name: Create Release
+    needs: [call-ci-servicex, call-ci-helm-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Pull flux_river_configs
+        uses: actions/checkout@master
+        with:
+          repository: ssl-hep/flux_river_configs
+          ref: main
+          path: flux_river_configs
+      - name: Pull ssl-helm-charts
+        uses: actions/checkout@master
+        with:
+          repository: ssl-hep/ssl-helm-charts
+          ref: gh-pages
+          path: ssl-helm-charts
+      - name: Create release version env var
+        run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo $RELEASE_VERSION
+      - name: Create helm package
+        working-directory: ./helm
+        run: |
+          pwd
+          mkdir release-package
+          pip3 install ruamel.yaml
+          python3 ../.github/workflows/update_versions.py $RELEASE_VERSION
+          cat servicex/Chart.yaml
+          cat servicex/values.yaml
+          helm dependency update servicex
+          helm package servicex --destination release-package
+          helm repo index release-package --url https://ssl-hep.github.io/ssl-helm-charts/
+          mv release-package/* ../ssl-helm-charts/
+      - name: Pushes to ssl-helm-packages repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: 'ssl-helm-charts'
+          destination-github-username: 'bengalewsky'
+          destination-repository-name: 'ssl-helm-charts'
+          target-branch: 'gh-pages'
+      - name: Pushes to flux-river-configs repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: 'flux_river_configs'
+          destination-github-username: 'bengalewsky'
+          destination-repository-name: 'flux_river_configs'
+          target-branch: 'main'
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
