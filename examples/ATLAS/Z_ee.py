@@ -11,4 +11,4 @@ leptons_per_event_query = ds \
         .Where(lambda eles: len(eles) == 2) \
         .Select(lambda ls: (ls.Select(lambda e: e.pt()/1000.0), ls.Select(lambda e: e.eta()), ls.Select(lambda e: e.phi()), ls.Select(lambda e: e.m()/1000.0), ls.Select(lambda e: e.charge())))
 
-print(leptons_per_event_query.AsPandasDF(('electrons_pt', 'electrons_eta', 'electrons_phi', 'electrons_mass', 'electrons_charge')).value())
+print(leptons_per_event_query.AsPandasDF(['electrons_pt', 'electrons_eta', 'electrons_phi', 'electrons_mass', 'electrons_charge']).value())
