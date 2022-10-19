@@ -37,12 +37,6 @@ class ObjectStoreUploader(threading.Thread):
         def __init__(self, source_path: Path):
             self.source_path = source_path
 
-        def get_filename(self):
-            filepath, filename = self.source_path.rsplit('/', 1)
-
-            # update filename
-            new_filename = _file_path.replace('/', ':') + ':' + filename
-
         def is_complete(self):
             return not self.source_path
 
@@ -64,5 +58,6 @@ class ObjectStoreUploader(threading.Thread):
                 self.logger.info("We are done")
                 break
             else:
-                self.object_store.upload_file(self.request_id, new_filename, item)
-
+                self.object_store.upload_file(self.request_id,
+                                              item.source_path.name,
+                                              str(item.source_path))

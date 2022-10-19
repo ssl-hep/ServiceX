@@ -44,7 +44,8 @@ def object_store_manager(mocker):
 
 def test_shutdown(object_store_manager):
     queue = Queue()
-    uploader = ObjectStoreUploader(queue, object_store=object_store_manager,
+    uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
+                                   object_store=object_store_manager,
                                    logger=logging.getLogger())
     uploader.start()
     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar")))
@@ -54,9 +55,13 @@ def test_shutdown(object_store_manager):
 
 def test_upload(object_store_manager):
     queue = Queue()
-    uploader = ObjectStoreUploader(queue, object_store=object_store_manager,
+    uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
+                                   object_store=object_store_manager,
                                    logger=logging.getLogger())
     uploader.start()
-    queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar")))
+    queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar/test.parquet")))
+    queue.put(ObjectStoreUploader.WorkQueueItem(None))
     time.sleep(1)
-    object_store_manager.
+    object_store_manager.upload_file.assert_called_with("123-456",
+                                                        "test.parquet",
+                                                        "/foo/bar/test.parquet")

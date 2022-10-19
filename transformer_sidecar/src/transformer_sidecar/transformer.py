@@ -36,6 +36,7 @@ import sys
 import time
 import timeit
 from hashlib import sha1
+from pathlib import Path
 from typing import NamedTuple
 import psutil as psutil
 
@@ -45,10 +46,9 @@ from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
 
 from queue import Queue
-from threading import Thread
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 
+from object_store_uploader import ObjectStoreUploader
+from watched_directory import WatchedDirectory
 object_store = None
 posix_path = None
 
@@ -193,11 +193,13 @@ def callback(channel, method, properties, body):
 
     start_process_times = get_process_info()
     total_time = 0
+    total_events = 0
 
-    # Loop through the replicas
-    for _file_path in _file_paths:
-        logger.info(f"trying {_file_path}")
-        try:
+    transform_success = False
+    try:
+        # Loop through the replicas
+        for _file_path in _file_paths:
+            logger.info(f"trying {_file_path}")
             servicex.post_status_update(file_id=_file_id,
                                         status_code="start",
                                         info="Starting")
@@ -236,221 +238,89 @@ def callback(channel, method, properties, body):
             with open(os.path.join(request_path, jsonfile), 'w') as outfile:
                 json.dump(transform_request, outfile)
 
-            # run watch function to wait for the job to finish
-            try:
-                watch(logger,
-                      request_path,
-                      _request_id,
-                      _file_id,
-                      _file_path,
-                      object_store=object_store,
-                      servicex=servicex)
-                global COMPLETED
-                COMPLETED = False
-            except Exception as e:
-                global FAILED
-                FAILED = True
-                raise e
+            upload_queue = Queue()
+            watcher = WatchedDirectory(Path(request_path), upload_queue, logger=logger, servicex=servicex)
+            uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
+                                           object_store=object_store, logger=logger)
 
-            shutil.rmtree(request_path)
+            watcher.start()
+            uploader.start()
 
-            stop_process_times = get_process_info()
-            user = stop_process_times.user - start_process_times.user
-            system = stop_process_times.system - start_process_times.system
-            iowait = stop_process_times.iowait - start_process_times.iowait
-            elapsed_process_times = TimeTuple(user=user,
-                                              system=system,
-                                              iowait=iowait)
+            # Wait for both threads to complete
+            watcher.observer.join()
+            logger.info(f"Watched Directory Thread is done. Status is {watcher.status}")
+            uploader.join()
+            logger.info("Uploader is done")
 
-            stop_time = timeit.default_timer()
-            log_stats(startup_time,
-                      elapsed_process_times,
-                      running_time=(stop_time - start_time))
+            if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
+                transform_success = True
+                total_events = watcher.total_events
+                break
 
-            record = {'filename': _file_path,
-                      'file-id': _file_id,
-                      'output-size': TOTAL_SIZE,
-                      'events': int(TOTAL_EVENTS),
-                      'request-id': _request_id,
-                      'user-time': elapsed_process_times.user,
-                      'system-time': elapsed_process_times.system,
-                      'io-wait': elapsed_process_times.iowait,
-                      'total-time': elapsed_process_times.total_time,
-                      'wall-time': total_time}
-            logger.info("Metric: {}".format(json.dumps(record)))
+        shutil.rmtree(request_path)
 
-        except Exception as error:
-            logger.exception(f"Received exception doing transform: {error}")
+        stop_process_times = get_process_info()
+        user = stop_process_times.user - start_process_times.user
+        system = stop_process_times.system - start_process_times.system
+        iowait = stop_process_times.iowait - start_process_times.iowait
+        elapsed_process_times = TimeTuple(user=user,
+                                          system=system,
+                                          iowait=iowait)
 
-            transform_request['error'] = str(error)
-            channel.basic_publish(exchange='transformation_failures',
-                                  routing_key=_request_id + '_errors',
-                                  body=json.dumps(transform_request))
+        stop_time = timeit.default_timer()
+        log_stats(startup_time,
+                  elapsed_process_times,
+                  running_time=(stop_time - start_time))
 
+        record = {'filename': _file_path,
+                  'file-id': _file_id,
+                  'output-size': TOTAL_SIZE,
+                  'events': int(TOTAL_EVENTS),
+                  'request-id': _request_id,
+                  'user-time': elapsed_process_times.user,
+                  'system-time': elapsed_process_times.system,
+                  'io-wait': elapsed_process_times.iowait,
+                  'total-time': elapsed_process_times.total_time,
+                  'wall-time': total_time}
+        logger.info("Metric: {}".format(json.dumps(record)))
+
+        if transform_success:
+            servicex.post_status_update(file_id=_file_id,
+                                        status_code="complete",
+                                        info="Total time " + str(total_time))
+            servicex.put_file_complete(_file_path, _file_id, "success",
+                                       num_messages=0,
+                                       total_time=total_time,
+                                       total_events=watcher.total_events,
+                                       total_bytes=0)
+        else:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="failure",
-                                        info=f"error: {error}")
+                                        info=f"error: Could not transform file")
 
             servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,
                                        total_time=0, total_events=0,
                                        total_bytes=0)
-        finally:
-            channel.basic_ack(delivery_tag=method.delivery_tag)
 
+    except Exception as error:
+        logger.exception(f"Received exception doing transform: {error}")
 
-def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servicex):
-    while True:
-        _request_id = request_id
-        _file_id = file_id
-        _file_path = file_path
-        tick = time.time()
-        # get file from queue
-        item = q.get()
-        filepath, filename = item.rsplit('/', 1)
-        
-        # update filename
-        new_filename = _file_path.replace('/',':') + ':' + filename
-        # upload file if obj_store is specified
-        if obj_store:
-            obj_store.upload_file(_request_id, new_filename, item)
+        transform_request['error'] = str(error)
+        channel.basic_publish(exchange='transformation_failures',
+                              routing_key=_request_id + '_errors',
+                              body=json.dumps(transform_request))
 
-        tock = time.time()
-        total_time = round(tock - tick, 2)
-
-        # update status with ServiceX
         servicex.post_status_update(file_id=_file_id,
-                                    status_code="complete",
-                                    info="Success")
+                                    status_code="failure",
+                                    info=f"error: {error}")
 
-        servicex.put_file_complete(_file_path, _file_id, "success",
-                                   num_messages=0,
-                                   total_time=total_time,
-                                   total_events=int(TOTAL_EVENTS),
-                                   total_bytes=TOTAL_SIZE)
-
-        logger.info(
-            "Time to successfully process {}: {} seconds".format(filepath, total_time))
-        os.remove(item) 
-        logger.info('Removed {fn} from directory.'.format(fn=item))
-        q.task_done()
-
-        # wait for specified timeout to ensure no more files added to queue
-        timeout_start = time.time()
-        while q.empty():
-            if time.time() < timeout_start + TIMEOUT:
-                time.sleep(1)
-            else:
-                logger.info('QUEUE is empty. Setting completed = True')
-                global COMPLETED
-                COMPLETED = True
-                break
-                            
-
-class FileQueueHandler(FileSystemEventHandler):
-    def __init__(self, logger, queue):
-        self.logger = logger
-        self.queue = queue
-
-    def on_modified(self, event):
-        # if *.log file detected read file
-        if not event.is_directory and event.src_path.endswith('.log'):
-            with open(event.src_path) as log:
-                text = log.read()
-    
-            # scan for flag keywords and raise exception if detected
-            global FAILED, COMPLETED, EVENTS, TOTAL_EVENTS
-            flags = ['fatal', 'runtimeerror']
-            if any(flag in text.lower() for flag in flags):
-                logger.info('Found exception. Exiting.')
-                FAILED = True
-
-            # look for event counts, set to 0 if not found
-            try:
-                matches = re.findall(r'[\d\s]+events processed out of[\d\s]+total events',text)
-                EVENTS, TOTAL_EVENTS = re.findall(r'[\d]+',matches[0])
-                if (int(EVENTS) == 0) or (int(TOTAL_EVENTS) == 0): #int(EVENTS) < int(TOTAL_EVENTS)?
-                    FAILED = True
-                    logger.info("Failed to process all events: {num}/{den}".format(num=EVENTS,den=TOTAL_EVENTS))
-            except:
-                EVENTS,TOTAL_EVENTS = (0, 0)
-
-
-    def on_created(self, event):
-        if not event.is_directory and not event.src_path.endswith('.log'):
-            self.logger.info('File {fn} created.'.format(
-                             fn=event.src_path))
-            
-            # check if file still being written/copied
-            while True:
-                file_start = os.stat(event.src_path).st_size
-                time.sleep(1)
-                file_later = os.stat(event.src_path).st_size
-                comp = file_later - file_start
-                if comp == 0 and file_later != 0:
-                    break
-                else:
-                    time.sleep(1)
-            
-            global TOTAL_SIZE
-            TOTAL_SIZE = os.stat(event.src_path).st_size
-                
-            # add file to queue for upload
-            try:
-                self.queue.put(event.src_path)
-                self.logger.info(
-                    'Added {fn} to queue.'.format(fn=event.src_path))
-            except Exception as e:
-                self.logger.exception(
-                    'Failed to add file to queue {fn}: {e}'.format(fn=event.src_path, e=e))
-
-
-def watch(logger, request_path,
-          request_id,
-          file_id,
-          file_path,
-          object_store=None, 
-          servicex=None):
-    """
-    Use a queue to report files that are produced by the science container back to
-    ServiceX and upload them to Object Store.
-    """
-    # Start output queue
-    q = Queue()
-
-    # Initialize Observer
-    observer = Observer()
-
-    # Start consumer
-    Thread(target=output_consumer,
-           args=(q, logger, request_id, file_id, file_path, object_store, servicex),
-           daemon=True).start()
-
-    # Initialize logging event handler
-    event_handler = FileQueueHandler(logger, q)
-
-    # Schedule Observer
-    observer.schedule(event_handler, request_path)
-
-    # Start the observer
-    observer.start()
-    
-    while not (FAILED or COMPLETED):
-        # Set the thread sleep time
-        time.sleep(1)
-
-    if COMPLETED:
-        logger.info('Stopping observer. All work is done.')
-        observer.stop()
-        return
-
-    if FAILED:
-        logger.info('Stopping observer.')
-        observer.stop()
-        raise Exception('Transform failed...')
-
-    observer.join()
-    q.join()
+        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+                                   status='failure', num_messages=0,
+                                   total_time=0, total_events=0,
+                                   total_bytes=0)
+    finally:
+        channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 if __name__ == "__main__":

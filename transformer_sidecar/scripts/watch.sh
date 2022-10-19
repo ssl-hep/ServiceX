@@ -14,10 +14,12 @@ while true; do
             transform_result=$($lang "$cmd" "$download_path" "$output_file" >$file.log 2>&1)
             if [ $? == 0 ]; then
               echo "Success. skipping rest of input_files"
+              touch $file.done
               rm $file
               break
             else
               echo "Hmm, got $?"
+              touch $file.failed
               rm $file
             fi
           done;

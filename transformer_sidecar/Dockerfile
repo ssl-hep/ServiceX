@@ -22,11 +22,11 @@ RUN poetry config virtualenvs.create false && \
 ENV PYTHONUNBUFFERED=1
 
 # Copy over the source
-COPY transformer.py \
-    validate_requests.py \
-    scripts/proxy-exporter.sh \
-    scripts/watch.sh \
-    ./
+COPY src/ \
+     validate_requests.py \
+     scripts/proxy-exporter.sh \
+     scripts/watch.sh \
+     ./
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR /etc/grid-security/certificates

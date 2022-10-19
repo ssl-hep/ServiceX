@@ -150,8 +150,8 @@ class TransformerManager:
             python_args = [" "]
             mngr_args = [" "]
 
-        python_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
-                          "python /servicex/transformer.py " + \
+        python_args[0] += "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
+                          "python /servicex/transformer_sidecar/transformer.py " + \
                           " --request-id " + request_id + \
                           " --rabbit-uri " + rabbitmq_uri + \
                           " --result-destination " + result_destination + \
