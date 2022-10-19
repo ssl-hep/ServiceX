@@ -1,29 +1,14 @@
 # based on https://github.com/dask/dask-docker/blob/master/base/Dockerfile
 # but more permissive about image size due to read-only requirement in openshift
 # FROM daskdev/dask:2.9.0
-# FROM continuumio/miniconda3:4.7.12
-FROM continuumio/miniconda3:4.8.3
-# FROM continuumio/miniconda3:4.12.0
+FROM continuumio/miniconda3:4.12.0
 
-RUN apt-get --allow-releaseinfo-change update -y && apt-get install gnupg2 -y 
+RUN apt-get update -y && apt-get install gnupg2 -y 
 
 RUN conda install --yes \
     -c conda-forge \
     conda-build \
-    lz4 \
     xrootd==5.4.3 \
-    tini==0.18.0 \
-    && conda build purge-all && conda clean -ti
-
-RUN conda install --yes \
-    -c conda-forge \
-    python-blosc \
-    cytoolz \
-    # numpy==1.23.3 \
-    numpy==1.18.1 \
-    # pandas==1.5.0 \
-    # scipy==1.6.0 \
-    scipy==1.4.1 \
     && conda build purge-all && conda clean -ti
 
 RUN apt update && \
