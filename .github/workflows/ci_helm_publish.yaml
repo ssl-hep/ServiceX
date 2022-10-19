@@ -25,12 +25,14 @@ jobs:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
+          token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
         uses: actions/checkout@master
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
           path: ssl-helm-charts
+          token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Create release version env var
         run: |
           echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
