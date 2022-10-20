@@ -63,16 +63,16 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'ssl-helm-charts'
-          destination-github-username: 'prajwalkkumar'
+          destination-github-username: 'ssl-hep'
           destination-repository-name: 'ssl-helm-charts'
-          target-branch: 'master'
+          target-branch: 'gh-pages'
       - name: Pushes to flux-river-configs repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'flux_river_configs'
-          destination-github-username: 'prajwalkkumar'
+          destination-github-username: 'ssl-hep'
           destination-repository-name: 'flux_river_configs'
           target-branch: 'main'
       - name: Create Release
