@@ -6,15 +6,15 @@ on:
 
 name: Create and Publish Helm Packages
 jobs:
-#  call-ci-servicex:
-#    uses: ./.github/workflows/ci_servicex.yaml
-#    secrets: inherit
-#  call-ci-helm-tests:
-#    uses: ./.github/workflows/ci_helm_tests.yaml
-#    secrets: inherit
+  call-ci-servicex:
+    uses: ./.github/workflows/ci_servicex.yaml
+    secrets: inherit
+  call-ci-helm-tests:
+    uses: ./.github/workflows/ci_helm_tests.yaml
+    secrets: inherit
   build:
     name: Create Release
-#    needs: [call-ci-servicex, call-ci-helm-tests]
+    needs: [call-ci-servicex, call-ci-helm-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -41,40 +41,38 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.chart.spec.version = "$RELEASE_VERSION" | .spec.chart.spec.version style="double"' flux_river_configs/servicex-int-uproot/values.yaml &&
-            yq -i '.spec.chart.spec.version = "$RELEASE_VERSION" | .spec.chart.spec.version style="double"' flux_river_configs/servicex-int-xaod/values.yaml &&
-            yq -i '.appVersion = "$RELEASE_VERSION" | .appVersion style="double" | .version = "$RELEASE_VERSION" | .version style="double"' helm/servicex/Chart.yaml &&
-            yq -i '.app.tag = "$RELEASE_VERSION" | .app.tag style="double" |
-            .didfinder.rucio.tag = "$RELEASE_VERSION" | .didfinder.rucio.tag style="double" |
-            .didFinder.CERNOpendata.tag = "$RELEASE_VERSION" | .didFinder.CERNOpendata.tag style="double" |
-            .transformer.defaultTransformerTag = "$RELEASE_VERSION" | .transformer.defaultTransformerTag style="double" |
-            .x509secrets.tag = "$RELEASE_VERSION" | .x509secrets.tag style="double" |
-            .codeGen.tag = "$RELEASE_VERSION" | .codeGen.tag style="double" ' helm/servicex/values.yaml
+            yq -i '.spec.chart.spec.version = "'$RELEASE_VERSION'" | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-uproot/values.yaml &&
+            yq -i '.spec.chart.spec.version = "'$RELEASE_VERSION'" | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-xaod/values.yaml &&
+            yq -i '.appVersion = "'$RELEASE_VERSION'" | .appVersion style="double" | .version = "'$RELEASE_VERSION'"| .version style="double" ' helm/servicex/Chart.yaml &&
+            yq -i '.app.tag = "'$RELEASE_VERSION'" | .app.tag style="double" |
+            .didfinder.rucio.tag = "'$RELEASE_VERSION'" | .didfinder.rucio.tag style="double" |
+            .didFinder.CERNOpendata.tag = "'$RELEASE_VERSION'" | .didFinder.CERNOpendata.tag style="double" |
+            .transformer.defaultTransformerTag = "'$RELEASE_VERSION'" | .transformer.defaultTransformerTag style="double" |
+            .x509secrets.tag = "'$RELEASE_VERSION'" | .x509secrets.tag style="double" |
+            .codeGen.tag = "'$RELEASE_VERSION'" | .codeGen.tag style="double" ' helm/servicex/values.yaml
       - name: Create helm package
-        working-directory: ./ssl-helm-charts
+        working-directory: ./helm
         run: |
-          pwd
-          cat servicex/Chart.yaml
-          cat servicex/values.yaml
           helm dependency update servicex
           helm package servicex
-          helm repo index release-package --url https://ssl-hep.github.io/ssl-helm-charts/
+          mv servicex-$RELEASE_VERSION.tgz ../ssl-helm-charts
+          helm repo index ../ssl-helm-charts --url https://ssl-hep.github.io/ssl-helm-charts/
       - name: Pushes to ssl-helm-packages repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'ssl-helm-charts'
-          destination-github-username: 'ssl-hep'
+          destination-github-username: 'prajwalkkumar'
           destination-repository-name: 'ssl-helm-charts'
-          target-branch: 'gh-pages'
+          target-branch: 'master'
       - name: Pushes to flux-river-configs repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source-directory: 'flux_river_configs'
-          destination-github-username: 'ssl-hep'
+          destination-github-username: 'prajwalkkumar'
           destination-repository-name: 'flux_river_configs'
           target-branch: 'main'
       - name: Create Release
