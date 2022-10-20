@@ -1,0 +1,7 @@
+rabbitmq
+pyarrow
+psutil
+watchdog
+pika>=1.1.0
+minio>=7.1.0
+retry

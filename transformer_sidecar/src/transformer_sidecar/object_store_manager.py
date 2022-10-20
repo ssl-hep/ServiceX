@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,39 +25,40 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 import logging
-import threading
-from pathlib import Path
-from queue import Queue
-from transformer_sidecar.object_store_manager import ObjectStoreManager
+from minio.error import MinioException, S3Error
 
 
-class ObjectStoreUploader(threading.Thread):
-    class WorkQueueItem:
-        def __init__(self, source_path: Path):
-            self.source_path = source_path
+class ObjectStoreManager:
 
-        def is_complete(self):
-            return not self.source_path
+    def __init__(self, url=None, username=None, password=None, use_https=False):
 
-    def __init__(self, request_id: str,
-                 input_queue: Queue,
-                 object_store: ObjectStoreManager,
-                 logger: logging.Logger):
-        super().__init__(target=self.service_work_queue)
-        self.request_id = request_id
-        self.input_queue = input_queue
-        self.object_store = object_store
-        self.logger = logger
+        from minio import Minio
+        handler = logging.NullHandler()
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(handler)
 
-    def service_work_queue(self):
-        while True:
-            item = self.input_queue.get()
-            self.logger.info("Got an item")
-            if item.is_complete():
-                self.logger.info("We are done")
-                break
-            else:
-                self.object_store.upload_file(self.request_id,
-                                              item.source_path.name,
-                                              str(item.source_path))
+        if 'MINIO_ENCRYPT' in os.environ:
+            secure_connection = os.environ['MINIO_ENCRYPT'].lower() == "true"
+        else:
+            secure_connection = use_https
+        self.minio_client = Minio(endpoint=url if url else os.environ[
+            'MINIO_URL'],
+            access_key=username if username else os.environ[
+            'MINIO_ACCESS_KEY'],
+            secret_key=password if password else os.environ[
+            'MINIO_SECRET_KEY'],
+            secure=secure_connection)
+
+    def upload_file(self, bucket, object_name, path):
+        try:
+            result = self.minio_client.fput_object(bucket_name=bucket,
+                                                   object_name=object_name,
+                                                   file_path=path)
+            self.logger.debug(
+                "created object", result.object_name)
+        except MinioException:
+            self.logger.error("Minio error", exc_info=True)
+        except S3Error:
+            self.logger.error("S3Error", exc_info=True)

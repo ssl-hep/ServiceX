@@ -59,7 +59,7 @@ def test_result_file_added(mocker):
 
         time.sleep(3)
         mock_queue.put.assert_called
-        assert mock_queue.put.call_args[0][0].endswith("sample.txt")
+        assert mock_queue.put.call_args[0][0].source_path.name == "sample.txt"
         assert watched.status == WatchedDirectory.TransformStatus.RUNNING
 
 
@@ -83,11 +83,11 @@ def test_failure(mocker):
         mock_queue = mocker.MagicMock(Queue)
         watched = WatchedDirectory(path=Path(tmpdirname),
                                    result_upload_queue=mock_queue,
-                                   logger=logging,
+                                   logger=logging.getLogger(),
                                    servicex=None
                                    )
         watched.start()
-        with open(os.path.join(tmpdirname, "job.log"), "w") as done:
+        with open(os.path.join(tmpdirname, "job.failed"), "w") as done:
             done.write("RunTimeError: All messed up")
         time.sleep(1)
         assert watched.status == WatchedDirectory.TransformStatus.FAILURE

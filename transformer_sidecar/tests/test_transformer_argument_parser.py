@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,39 +25,41 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
-import threading
-from pathlib import Path
-from queue import Queue
-from transformer_sidecar.object_store_manager import ObjectStoreManager
+import argparse
+import sys
+from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 
 
-class ObjectStoreUploader(threading.Thread):
-    class WorkQueueItem:
-        def __init__(self, source_path: Path):
-            self.source_path = source_path
+class TestTransformerArgumentParser:
+    def test_init(self, mocker):
+        argparse.ArgumentParser.exit = mocker.Mock()
+        arg_parser = TransformerArgumentParser(description="Test Transformer")
+        sys.argv = ["foo", "bar"]
+        arg_parser.parse_args()
+        argparse.ArgumentParser.exit.assert_called()
 
-        def is_complete(self):
-            return not self.source_path
+    def test_parse(self, mocker):
+        arg_parser = TransformerArgumentParser(description="Test Transformer")
+        sys.argv = ["foo",
+                    "--path", "/foo/bar",
+                    "--tree", "Events",
+                    "--limit", "10",
+                    '--result-destination', 'object-store',
+                    '--result-format', 'arrow',
+                    '--rabbit-uri', "http://rabbit.org",
+                    '--request-id', "123-45-678"
+                    ]
 
-    def __init__(self, request_id: str,
-                 input_queue: Queue,
-                 object_store: ObjectStoreManager,
-                 logger: logging.Logger):
-        super().__init__(target=self.service_work_queue)
-        self.request_id = request_id
-        self.input_queue = input_queue
-        self.object_store = object_store
-        self.logger = logger
+        args = arg_parser.parse_args()
+        assert args.path == '/foo/bar'
+        assert args.tree == 'Events'
+        assert args.limit == 10
+        assert args.result_destination == 'object-store'
+        assert args.result_format == 'arrow'
+        assert args.rabbit_uri == "http://rabbit.org"
+        assert args.request_id == "123-45-678"
 
-    def service_work_queue(self):
-        while True:
-            item = self.input_queue.get()
-            self.logger.info("Got an item")
-            if item.is_complete():
-                self.logger.info("We are done")
-                break
-            else:
-                self.object_store.upload_file(self.request_id,
-                                              item.source_path.name,
-                                              str(item.source_path))
+    def test_extract_attr_list(self):
+        attrs = TransformerArgumentParser.extract_attr_list("a,b,c")
+        assert len(attrs) == 3
+        assert attrs == ['a', 'b', 'c']

@@ -30,7 +30,7 @@ import time
 from pathlib import Path
 from queue import Queue
 import pytest
-from servicex.transformer.object_store_manager import ObjectStoreManager
+from transformer_sidecar.object_store_manager import ObjectStoreManager
 
 
 from transformer_sidecar.object_store_uploader import ObjectStoreUploader

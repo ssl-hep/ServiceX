@@ -34,8 +34,8 @@ from queue import Queue
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from servicex.transformer.servicex_adapter import ServiceXAdapter
-from object_store_uploader import ObjectStoreUploader
+from transformer_sidecar.servicex_adapter import ServiceXAdapter
+from transformer_sidecar.object_store_uploader import ObjectStoreUploader
 from enum import Enum
 
 

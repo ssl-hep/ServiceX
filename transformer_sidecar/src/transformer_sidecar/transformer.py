@@ -39,10 +39,10 @@ from queue import Queue
 from typing import NamedTuple
 
 import psutil as psutil
-from servicex.transformer.object_store_manager import ObjectStoreManager
-from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-from servicex.transformer.servicex_adapter import ServiceXAdapter
-from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
+from object_store_manager import ObjectStoreManager
+from rabbit_mq_manager import RabbitMQManager
+from servicex_adapter import ServiceXAdapter
+from transformer_argument_parser import TransformerArgumentParser
 
 from object_store_uploader import ObjectStoreUploader
 from watched_directory import WatchedDirectory

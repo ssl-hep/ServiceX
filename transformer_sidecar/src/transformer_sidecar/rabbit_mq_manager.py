@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,39 +25,39 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from time import sleep
 import logging
-import threading
-from pathlib import Path
-from queue import Queue
-from transformer_sidecar.object_store_manager import ObjectStoreManager
+
+import pika
+import socket
 
 
-class ObjectStoreUploader(threading.Thread):
-    class WorkQueueItem:
-        def __init__(self, source_path: Path):
-            self.source_path = source_path
+class RabbitMQManager:
 
-        def is_complete(self):
-            return not self.source_path
+    def __init__(self, rabbit_uri, queue_name, callback):
+        success = False
 
-    def __init__(self, request_id: str,
-                 input_queue: Queue,
-                 object_store: ObjectStoreManager,
-                 logger: logging.Logger):
-        super().__init__(target=self.service_work_queue)
-        self.request_id = request_id
-        self.input_queue = input_queue
-        self.object_store = object_store
-        self.logger = logger
+        handler = logging.NullHandler()
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(handler)
 
-    def service_work_queue(self):
-        while True:
-            item = self.input_queue.get()
-            self.logger.info("Got an item")
-            if item.is_complete():
-                self.logger.info("We are done")
-                break
-            else:
-                self.object_store.upload_file(self.request_id,
-                                              item.source_path.name,
-                                              str(item.source_path))
+        while not success:
+            try:
+                self.rabbitmq = pika.BlockingConnection(
+                    pika.URLParameters(rabbit_uri)
+                )
+                _channel = self.rabbitmq.channel()
+
+                # Set to one since our ops take a long time.
+                # Give another client a chance
+                _channel.basic_qos(prefetch_count=1)
+
+                _channel.basic_consume(queue=queue_name,
+                                       auto_ack=False,
+                                       on_message_callback=callback)
+                _channel.start_consuming()
+                success = True
+                self.logger.info("Connected to RabbitMQ Broker")
+            except socket.gaierror:
+                self.logger.error("Failed to connect to RabbitMQ Broker.... retrying")
+                sleep(10)
