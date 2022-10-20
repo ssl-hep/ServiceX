@@ -15,8 +15,8 @@ app:
     tls:
       clusterIssuer: null
       enabled: false
-      secretName: '{{.Release.Name}}-app-tls'
-  logLevel: WARNING
+      secretName: "{{.Release.Name}}-app-tls"
+  logLevel: INFO
   mailgunApiKey: null
   mailgunDomain: null
   pullPolicy: Always
@@ -88,6 +88,10 @@ postgresql:
         database: servicex
         postgresPassword: leftfoot1
   primary:
+    resources:
+      requests:
+        # for production instances this should be set to 2 CPUs.
+        cpu: 250m
     persistence:
       enabled: false
 rabbitmq:

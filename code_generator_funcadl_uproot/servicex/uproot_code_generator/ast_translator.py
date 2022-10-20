@@ -27,46 +27,39 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 
-from flask import Flask
-from flask_restful import Api
-from servicex.code_generator_service.generate_code import GenerateCode
-from servicex.code_generator_service.ast_translator import AstTranslator
+from func_adl.ast import ast_hash
+from func_adl_uproot.translation import generate_python_source
+from qastle import text_ast_to_python_ast
+
+from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
+    GenerateCodeException
 
 
-def handle_invalid_usage(error: BaseException):
-    from flask import jsonify
-    response = jsonify({"message": str(error)})
-    response.status_code = 400
-    return response
+class AstUprootTranslator(CodeGenerator):
+    # Generate the code. Ignoring caching for now
+    def generate_code(self, query, cache_path: str):
 
+        if len(query) == 0:
+            raise GenerateCodeException("Requested codegen for an empty string.")
 
-def create_app(test_config=None, provided_translator=None):
-    """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True)
+        body = text_ast_to_python_ast(query).body
+        if len(body) != 1:
+            raise GenerateCodeException(
+                f'Requested codegen for "{query}" yielded no code statements (or too many).')  # noqa: E501
+        a = body[0].value
 
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+        hash = ast_hash.calc_ast_hash(a)
+        query_file_path = os.path.join(cache_path, hash)
 
-    if not test_config:
-        app.config.from_envvar('APP_CONFIG_FILE')
-    else:
-        app.config.from_mapping(test_config)
+        # Create the files to run in that location.
+        if not os.path.exists(query_file_path):
+            os.makedirs(query_file_path)
 
-    with app.app_context():
+        src = generate_python_source(a)
+        print(query_file_path)
+        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+            python_file.write(src)
 
-        if not provided_translator:
-            translator = AstTranslator(app.config['TARGET_BACKEND'])
-        else:
-            translator = provided_translator
+        os.system("ls -lht " + query_file_path)
 
-        api = Api(app)
-        GenerateCode.make_api(translator)
-
-        api.add_resource(GenerateCode, '/servicex/generated-code')
-
-    app.errorhandler(Exception)(handle_invalid_usage)
-
-    return app
+        return GeneratedFileResult(hash, query_file_path)

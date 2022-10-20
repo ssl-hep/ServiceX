@@ -50,22 +50,28 @@ instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 class StreamFormatter(logging.Formatter):
     """
-    Need a custom formatter to allow for logging with request ids that vary.
-    Normally log messages are "level instance component request_id msg" and
-    request_id gets set by initialize_logging but we need a handler that'll let
-    us pass in the request id and have that embedded in the log message
+    A custom formatter that adds extras.
+    Normally log messages are "level instance component msg extra: {}"
     """
+    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
+                'pathname', 'filename', 'module', 'exc_info',
+                'exc_text', 'stack_info', 'lineno', 'funcName',
+                'created', 'msecs', 'relativeCreated', 'thread',
+                'threadName', 'processName', 'process', 'message']
 
     def format(self, record: logging.LogRecord) -> str:
         """
-        Format record with request id if present, otherwise assume None
-
         :param record: LogRecord
         :return: formatted log message
         """
 
-        if not hasattr(record, "requestId"):
-            setattr(record, "requestId", None)
+        string = super().format(record)
+        extra = {k: v for k, v in record.__dict__.items()
+                 if k not in self.def_keys}
+        if len(extra) > 0:
+            string += " extra: " + str(extra)
+        return string
+
         return super().format(record)
 
 
@@ -133,18 +139,10 @@ def create_app(test_config=None,
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
 
-    levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'WARN': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
     level = os.environ.get('LOG_LEVEL', 'INFO').upper()
     if app.debug:
         level = "DEBUG"
-    app.logger.level = levels[level]
+    app.logger.level = getattr(logging, level, None)
 
     # remove current handlers
     for h in app.logger.handlers:
@@ -153,16 +151,16 @@ def create_app(test_config=None,
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
                                        f"{instance} servicex_app " +
-                                       '%(requestId)s %(message)s')
+                                       '%(message)s')
     stream_handler.setFormatter(stream_formatter)
-    stream_handler.setLevel(levels[level])
+    stream_handler.setLevel(level)
     app.logger.addHandler(stream_handler)
 
     if (logstash_host and logstash_port):
         logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
         logstash_formatter = LogstashFormatter('logstash', None, None)
         logstash_handler.setFormatter(logstash_formatter)
-        logstash_handler.setLevel(levels[level])
+        logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
 
     app.logger.info("Initialized logging")

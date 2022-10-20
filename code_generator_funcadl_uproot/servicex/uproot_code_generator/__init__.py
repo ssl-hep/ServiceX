@@ -25,30 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request, Response
-from flask_restful import Resource
-from servicex.code_generator_service.ast_translator import AstTranslator
 
 
-class GenerateCode(Resource):
-    @classmethod
-    def make_api(cls, translator: AstTranslator):
-        cls.translator = translator
-        return cls
+import servicex_codegen
+from servicex.uproot_code_generator.ast_translator import AstUprootTranslator
 
-    def post(self):
-        try:
-            code = request.data.decode('utf8')
-            zip_data = self.translator.translate_text_ast_to_zip(code)
 
-            # Send the response back to you-know-what.
-            response = Response(
-                response=zip_data,
-                status=200, mimetype='application/octet-stream')
-            return response
-        except BaseException as e:
-            print(str(e))
-            import traceback
-            import sys
-            traceback.print_exc(file=sys.stdout)
-            return {'Message': str(e)}, 500
+def create_app(test_config=None, provided_translator=None):
+    return servicex_codegen.create_app(test_config,
+                                       provided_translator=provided_translator
+                                       if provided_translator else AstUprootTranslator()
+                                       )

@@ -7,6 +7,8 @@ on:
     tags:
       - "*"
   pull_request:
+  workflow_call:
+
 
 jobs:
   build-matrix:
@@ -34,13 +36,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.7 ]
+        python-version: [3.7]
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
@@ -82,7 +84,6 @@ jobs:
         shell: bash
         run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
         id: extract_tag_name
-
       - name: Build Docker Image
         uses: elgohr/Publish-Docker-Github-Action@master
         with:

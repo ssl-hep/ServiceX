@@ -48,7 +48,6 @@ class FileTransformationStatus(ServiceXResource):
 
     def post(self, request_id, file_id):
         status = self.status_parser.parse_args()
-        current_app.logger.info("Metric", extra={'requestId': request_id, 'metric': status})
         status.request_id = request_id
         file_status = FileStatus(file_id=file_id, request_id=request_id,
                                  timestamp=datetime.datetime.strptime(
@@ -62,18 +61,12 @@ class FileTransformationStatus(ServiceXResource):
                                 extra={
                                     'requestId': request_id,
                                     'file_id': file_id,
-                                    'status': file_status.status})
-        current_app.logger.debug("File status",
-                                 extra={
-                                     'requestId': request_id,
-                                     'file_id': file_id,
-                                     'request_id': request_id,
-                                     'timestamp': status.timestamp,
-                                     'pod_name': status['pod-name'],
-                                     'status': status['status-code'],
-                                     'info': status.info[:max_string_size]
-                                 }
-                                 )
+                                    'timestamp': status.timestamp,
+                                    'pod_name': status['pod-name'],
+                                    'status': status['status-code'],
+                                    'info': status.info
+                                }
+                                )
 
         try:
             db.session.commit()

@@ -90,9 +90,14 @@ class TransformerManager:
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(
                 field_path="metadata.name"))
-        env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
+        env += [client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)]
 
-        env = env + [env_var_pod_name]
+        # provide pods with level and logging server info
+        env += [
+            client.V1EnvVar("LOG_LEVEL", value=os.environ.get('LOG_LEVEL', 'INFO').upper()),
+            client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get('LOGSTASH_HOST')),
+            client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get('LOGSTASH_PORT'))
+        ]
 
         # Provide each pod with an environment var holding that instance name
         if "INSTANCE_NAME" in current_app.config:
@@ -251,7 +256,7 @@ class TransformerManager:
         api_response = api_instance.create_namespaced_deployment(
             body=job,
             namespace=namespace)
-        current_app.logger.info(f"Job created. status={api_response.status}")
+        current_app.logger.info("Job created.", extra={'status': api_response.status})
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
@@ -260,7 +265,7 @@ class TransformerManager:
             api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa,
                 namespace=namespace)
-            current_app.logger.info(f"Job created. status={api_response.status}")
+            current_app.logger.info("Job created.", extra={'status': api_response.status})
         except ApiException as e:
             current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
@@ -290,7 +295,8 @@ class TransformerManager:
                     namespace=namespace
                 )
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} HPA Shut Down")
+            current_app.logger.exception("Exception during Job HPA Shut Down", extra={
+                                         "requestId": request_id})
 
         try:
             api_v1 = client.AppsV1Api()
@@ -299,7 +305,8 @@ class TransformerManager:
                 namespace=namespace
             )
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} Deployment Shut Down")
+            current_app.logger.exception("Exception during Job Deployment Shut Down", extra={
+                                         "requestId": request_id})
 
         try:
             api_core = client.CoreV1Api()
@@ -307,7 +314,8 @@ class TransformerManager:
             api_core.delete_namespaced_config_map(name=configmap_name,
                                                   namespace=namespace)
         except ApiException:
-            current_app.logger.exception(f"Exception during Job {request_id} ConfigMap cleanup")
+            current_app.logger.exception("Exception during Job ConfigMap cleanup", extra={
+                                         "requestId": request_id})
 
     @staticmethod
     def get_deployment_status(
@@ -316,7 +324,6 @@ class TransformerManager:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"
-        # selector = f"metadata.name=aeckart-servicex-app"
         results: kubernetes.client.AppsV1beta1DeploymentList
         results = api.list_namespaced_deployment(namespace, field_selector=selector)
         if not results.items:

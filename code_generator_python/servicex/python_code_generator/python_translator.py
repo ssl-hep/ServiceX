@@ -1,4 +1,4 @@
-# Copyright (c) 2021, University of Illinois/NCSA
+# Copyright (c) 2019, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,30 +25,34 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request, Response
-from flask_restful import Resource
-from servicex.code_generator_service.python_translator import PythonTranslator
+import base64
+import hashlib
+import os
+
+from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult
 
 
-class GenerateCode(Resource):
-    @classmethod
-    def make_api(cls, translator: PythonTranslator):
-        cls.translator = translator
-        return cls
+class PythonTranslator(CodeGenerator):
 
-    def post(self):
-        try:
-            code = request.data
-            zip_data = self.translator.translate_text_python_to_zip(code)
-            print(zip_data)
-            # Send the response back to you-know-what.
-            response = Response(
-                response=zip_data,
-                status=200, mimetype='type/text')
-            return response
-        except BaseException as e:
-            print(str(e))
-            import traceback
-            import sys
-            traceback.print_exc(file=sys.stdout)
-            return {'Message': str(e)}, 500
+    # Generate the code. Ignoring caching for now
+    def generate_code(self, query, cache_path: str):
+
+        # Hashlib doesn't work with unicode strings
+        if type(query) == str:
+            query = base64.b64encode(query.encode("ascii"))
+
+        hash = hashlib.md5(query).hexdigest()
+        query_file_path = os.path.join(cache_path, hash)
+
+        # Create the files to run in that location.
+        if not os.path.exists(query_file_path):
+            os.makedirs(query_file_path)
+
+        message_bytes = base64.b64decode(query)
+        src = message_bytes.decode('ascii')
+
+        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+            python_file.write(src)
+
+        os.system("ls -lht " + query_file_path)
+        return GeneratedFileResult(hash, query_file_path)

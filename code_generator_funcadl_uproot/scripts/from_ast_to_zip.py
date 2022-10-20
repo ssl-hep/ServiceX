@@ -1,7 +1,7 @@
 # A script that will take as input a text ast (on the command line) and
 # write out a zip file.
 import sys
-from servicex.code_generator_service.ast_translator import AstTranslator
+from servicex.xaod_code_generator.ast_translator import AstTranslator
 
 if __name__ == "__main__":
     import argparse
