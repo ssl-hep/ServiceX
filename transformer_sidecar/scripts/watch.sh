@@ -2,6 +2,7 @@
 lang=$1
 cmd=$2
 path=$3
+
 while true; do
     echo "Greetings from watch script"
     ls $path
@@ -11,7 +12,7 @@ while true; do
             output_file=`grep -o '"safeOutputFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
 
             echo "Attempting $download_path -> $output_file"
-            transform_result=$($lang "$cmd" "$download_path" "$output_file" >$file.log 2>&1)
+            transform_result=$($lang "$cmd" "$download_path" "$output_file" 2>&1 | tee $file.log )
             if [ $? == 0 ]; then
               echo "Success. skipping rest of input_files"
               touch $file.done

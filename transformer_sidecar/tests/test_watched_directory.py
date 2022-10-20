@@ -125,8 +125,3 @@ def test_log_without_events(mocker):
         assert watched.status == WatchedDirectory.TransformStatus.RUNNING
         assert watched.events == 0
         assert watched.total_events == 0
-
-
-
-
-

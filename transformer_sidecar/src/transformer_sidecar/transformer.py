@@ -30,25 +30,23 @@
 import json
 import logging
 import os
-import re
 import shutil
 import sys
-import time
 import timeit
 from hashlib import sha1
 from pathlib import Path
+from queue import Queue
 from typing import NamedTuple
-import psutil as psutil
 
-from servicex.transformer.servicex_adapter import ServiceXAdapter
-from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
+import psutil as psutil
 from servicex.transformer.object_store_manager import ObjectStoreManager
 from servicex.transformer.rabbit_mq_manager import RabbitMQManager
-
-from queue import Queue
+from servicex.transformer.servicex_adapter import ServiceXAdapter
+from servicex.transformer.transformer_argument_parser import TransformerArgumentParser
 
 from object_store_uploader import ObjectStoreUploader
 from watched_directory import WatchedDirectory
+
 object_store = None
 posix_path = None
 
@@ -158,6 +156,7 @@ def hash_path(file_name):
     else:
         return file_name
 
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     """
@@ -239,7 +238,8 @@ def callback(channel, method, properties, body):
                 json.dump(transform_request, outfile)
 
             upload_queue = Queue()
-            watcher = WatchedDirectory(Path(request_path), upload_queue, logger=logger, servicex=servicex)
+            watcher = WatchedDirectory(Path(request_path), upload_queue,
+                                       logger=logger, servicex=servicex)
             uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
                                            object_store=object_store, logger=logger)
 
@@ -291,12 +291,12 @@ def callback(channel, method, properties, body):
             servicex.put_file_complete(_file_path, _file_id, "success",
                                        num_messages=0,
                                        total_time=total_time,
-                                       total_events=watcher.total_events,
+                                       total_events=total_events,
                                        total_bytes=0)
         else:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="failure",
-                                        info=f"error: Could not transform file")
+                                        info="error: Could not transform file")
 
             servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,

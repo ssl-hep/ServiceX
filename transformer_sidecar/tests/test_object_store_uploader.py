@@ -37,6 +37,7 @@ from transformer_sidecar.object_store_uploader import ObjectStoreUploader
 logging.getLogger().addHandler(logging.StreamHandler())
 logging.getLogger().setLevel(logging.INFO)
 
+
 @pytest.fixture
 def object_store_manager(mocker):
     return mocker.MagicMock(ObjectStoreManager)
