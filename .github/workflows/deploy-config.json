@@ -6,7 +6,8 @@
   },
   {
     "image_name": "servicex_code_gen_python",
-    "dir_name": "code_generator_python"
+    "dir_name": "code_generator_python",
+    "test_required": true
   },
   {
     "image_name": "servicex-did-finder-cernopendata",
@@ -51,7 +52,7 @@
   {
     "image_name": "servicex_code_gen_cms_aod",
     "dir_name": "code_generator_funcadl_xAOD",
-    "test_required": false
+    "test_required": true
   },
   {
   "image_name": "servicex_code_gen_atlas_xaod",
