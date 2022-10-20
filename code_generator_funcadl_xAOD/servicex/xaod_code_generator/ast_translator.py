@@ -82,8 +82,9 @@ class AstAODTranslator(CodeGenerator):
             self._exe.apply_ast_transformations(a), path)
 
         # Transfer the templated pilot bash script
-        shutil.copyfile("/home/servicex/servicex/templates/transform_single_file.sh",
-                        os.path.join(path, "transform_single_file.sh"))
+        template_path = os.environ.get('TEMPLATE_PATH',
+                                       "/home/servicex/servicex/templates/transform_single_file.sh") # NOQA: 501
+        shutil.copyfile(template_path, os.path.join(path, "transform_single_file.sh"))
 
         os.system("ls -lht " + cache_path)
 

@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import PosixPath
 
@@ -18,6 +19,7 @@ def test_translate_good(mocker):
     with tempfile.TemporaryDirectory() as tmpdirname:
         exe = mocker.MagicMock()
 
+        os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.sh"
         query = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')))))"  # NOQA E501
         translator = AstAODTranslator(exe=exe)
         generated = translator.generate_code(
