@@ -1,2 +1,0 @@
-func-adl-xAOD==2.0.1
-servicex-code-gen-lib
