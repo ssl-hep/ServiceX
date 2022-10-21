@@ -28,8 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import json
-import logging
 import os
+import psutil as psutil
 import shutil
 import sys
 import timeit
@@ -38,24 +38,17 @@ from pathlib import Path
 from queue import Queue
 from typing import NamedTuple
 
-import psutil as psutil
 from object_store_manager import ObjectStoreManager
+from object_store_uploader import ObjectStoreUploader
 from rabbit_mq_manager import RabbitMQManager
 from servicex_adapter import ServiceXAdapter
 from transformer_argument_parser import TransformerArgumentParser
-
-from object_store_uploader import ObjectStoreUploader
+from transformer_sidecar.transformer_logging import initialize_logging
 from watched_directory import WatchedDirectory
 
 object_store = None
 posix_path = None
-
-FAILED = False
-COMPLETED = False
-TIMEOUT = 30
-EVENTS = 0
-TOTAL_EVENTS = 0
-TOTAL_SIZE = 0
+startup_time = None
 
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
@@ -78,51 +71,6 @@ class TimeTuple(NamedTuple):
         :return: sum of user, system, iowait times
         """
         return self.user + self.system + self.iowait
-
-
-# function to initialize logging
-def initialize_logging(request=None):
-    """
-    Get a logger and initialize it so that it outputs the correct format
-
-    :param request: Request id to insert into log messages
-    :return: logger with correct formatting that outputs to console
-    """
-
-    log = logging.getLogger()
-    if 'INSTANCE_NAME' in os.environ:
-        instance = os.environ['INSTANCE_NAME']
-    else:
-        instance = 'Unknown'
-    formatter = logging.Formatter('%(levelname)s '
-                                  + "{} transformer {} ".format(instance,
-                                                                request)
-                                  + '%(message)s')
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    handler.setLevel(logging.INFO)
-    log.addHandler(handler)
-    log.setLevel(logging.INFO)
-    return log
-
-
-def log_stats(startup_time, elapsed_time, running_time=0.0):
-    """
-    Log statistics about transformer execution
-
-    :param startup_time: time to initialize and run cpp transformer
-    :param elapsed_time: elapsed time spent by processing file
-                         (sys, user, iowait)
-    :param running_time: total time to run script
-    :return: None
-    """
-    logger.info("Startup process times  user: {} sys: {} ".format(startup_time.user,
-                                                                  startup_time.system) +
-                "iowait: {} total: {}".format(startup_time.iowait, startup_time.total_time))
-    logger.info("File processing times  user: {} sys: {} ".format(elapsed_time.user,
-                                                                  elapsed_time.system) +
-                "iowait: {} total: {}".format(elapsed_time.iowait, elapsed_time.total_time))
-    logger.info("Total running time {}".format(running_time))
 
 
 def get_process_info():
@@ -190,7 +138,7 @@ def callback(channel, method, properties, body):
     logger.info(transform_request)
     servicex = ServiceXAdapter(_server_endpoint)
 
-    start_process_times = get_process_info()
+    start_process_info = get_process_info()
     total_time = 0
     total_events = 0
 
@@ -211,13 +159,6 @@ def callback(channel, method, properties, body):
             # creating output dir for transform output files
             if not os.path.isdir(request_path):
                 os.makedirs(request_path)
-
-            # creating scripts dir for access by science container
-            scripts_path = os.path.join(output_path, 'scripts')
-            if not os.path.isdir(scripts_path):
-                os.makedirs(scripts_path)
-            shutil.copy('watch.sh', scripts_path)
-            shutil.copy('proxy-exporter.sh', scripts_path)
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -259,31 +200,6 @@ def callback(channel, method, properties, body):
 
         shutil.rmtree(request_path)
 
-        stop_process_times = get_process_info()
-        user = stop_process_times.user - start_process_times.user
-        system = stop_process_times.system - start_process_times.system
-        iowait = stop_process_times.iowait - start_process_times.iowait
-        elapsed_process_times = TimeTuple(user=user,
-                                          system=system,
-                                          iowait=iowait)
-
-        stop_time = timeit.default_timer()
-        log_stats(startup_time,
-                  elapsed_process_times,
-                  running_time=(stop_time - start_time))
-
-        record = {'filename': _file_path,
-                  'file-id': _file_id,
-                  'output-size': TOTAL_SIZE,
-                  'events': int(TOTAL_EVENTS),
-                  'request-id': _request_id,
-                  'user-time': elapsed_process_times.user,
-                  'system-time': elapsed_process_times.system,
-                  'io-wait': elapsed_process_times.iowait,
-                  'total-time': elapsed_process_times.total_time,
-                  'wall-time': total_time}
-        logger.info("Metric: {}".format(json.dumps(record)))
-
         if transform_success:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="complete",
@@ -302,6 +218,18 @@ def callback(channel, method, properties, body):
                                        status='failure', num_messages=0,
                                        total_time=0, total_events=0,
                                        total_bytes=0)
+
+        stop_process_info = get_process_info()
+        elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
+                                  system=stop_process_info.system - start_process_info.system,
+                                  iowait=stop_process_info.iowait - start_process_info.iowait)
+
+        logger.info("File processed.", extra={
+            'requestId': _request_id, 'fileId': _file_id,
+            'user': elapsed_times.user,
+            'sys': elapsed_times.system,
+            'iowait': elapsed_times.iowait
+        })
 
     except Exception as error:
         logger.exception(f"Received exception doing transform: {error}")
@@ -328,7 +256,7 @@ if __name__ == "__main__":
     parser = TransformerArgumentParser(description="ServiceX Transformer")
     args = parser.parse_args()
 
-    logger = initialize_logging(args.request_id)
+    logger = initialize_logging()
     logger.info("----- {}".format(sys.path))
     logger.info(f"result destination: {args.result_destination} \
                   output dir: {args.output_dir}")
@@ -344,7 +272,22 @@ if __name__ == "__main__":
     elif args.output_dir:
         object_store = None
 
+    if not os.path.isdir(posix_path):
+        os.makedirs(posix_path)
+
+    # creating scripts dir for access by science container
+    scripts_path = os.path.join(posix_path, 'scripts')
+    if not os.path.isdir(scripts_path):
+        os.makedirs(scripts_path)
+    shutil.copy('watch.sh', scripts_path)
+    shutil.copy('proxy-exporter.sh', scripts_path)
+
     startup_time = get_process_info()
+    logger.info("Startup finished.",
+                extra={
+                    'user': startup_time.user, 'sys': startup_time.system,
+                    'iowait': startup_time.iowait
+                })
 
     if args.request_id:
         rabbitmq = RabbitMQManager(args.rabbit_uri,

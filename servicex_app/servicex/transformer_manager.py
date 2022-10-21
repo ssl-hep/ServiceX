@@ -145,7 +145,7 @@ class TransformerManager:
 
         if x509_secret:
             python_args = [" "]
-            mngr_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
+            mngr_args = ["/servicex/output/scripts/proxy-exporter.sh & sleep 5 && "]
         else:
             python_args = [" "]
             mngr_args = [" "]

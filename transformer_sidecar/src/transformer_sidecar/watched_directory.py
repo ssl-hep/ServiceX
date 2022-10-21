@@ -151,6 +151,7 @@ class TransformerEventHandler(FileSystemEventHandler):
             # scan for flag keywords and skip any further log file analysis if found
             keywords = ['fatal', 'runtimeerror']
             if any(flag in text.lower() for flag in keywords):
+                self.logger.error(text)
                 self.logger.error('Found exception. Exiting.')
                 return
 
