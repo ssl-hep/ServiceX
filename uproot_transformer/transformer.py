@@ -53,6 +53,7 @@ MAX_RETRIES = 3
 
 object_store = None
 posix_path = None
+result_format = None
 MAX_PATH_LEN = 255
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
@@ -212,6 +213,7 @@ def callback(channel, method, properties, body):
     _file_paths = transform_request['paths'].split(',')
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
+    _tree = transform_request['tree-name']
     logger.info("To transform", extra={'fpath': _file_paths,
                                        'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
@@ -238,12 +240,17 @@ def callback(channel, method, properties, body):
 
                 root_file = _file_path.replace('/', ':')
 
-                safe_output_file = hash_path(root_file+".parquet")
+                if _result_format == 'parquet':
+                    safe_output_file = hash_path(root_file+(".parquet")
+                elif _result_format == 'root-file':
+                    safe_output_file = hash_path(root_file+'.root')
+                else:
+                    safe_output_file = hash_path(root_file)
                 output_path = os.path.join(posix_path, safe_output_file)
 
                 stime = time.time()
                 (total_events, output_size) = transform_single_file(
-                    _file_path, output_path, servicex)
+                    _file_path, output_path, result_format, _tree, servicex)
                 ttime = time.time()
 
                 if object_store:
@@ -302,7 +309,7 @@ def callback(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def transform_single_file(file_path, output_path, servicex=None):
+def transform_single_file(file_path, output_path, result_format, tree, servicex=None):
     """
     Transform a single file and return some information about output
 
@@ -321,21 +328,28 @@ def transform_single_file(file_path, output_path, servicex=None):
 
         ttime = time.time()
 
-        explode_records = bool(awkward_array.fields)
+        if result_format == 'parquet':
+            explode_records = bool(awkward_array.fields)
 
-        try:
-            arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
-        except TypeError:
-            arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
-                                      explode_records=explode_records)
+            try:
+                arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
+            except TypeError:
+                arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
+                                        explode_records=explode_records)
 
-        etime = time.time()
+            etime = time.time()
 
-        if output_path:
-            writer = pq.ParquetWriter(output_path, arrow.schema)
-            writer.write_table(table=arrow)
-            writer.close()
-            output_size = os.stat(output_path).st_size
+            if output_path:
+                writer = pq.ParquetWriter(output_path, arrow.schema)
+                writer.write_table(table=arrow)
+                writer.close()
+                output_size = os.stat(output_path).st_size
+        elif result_format == 'root':
+            if output_path:
+                with uproot.recreate(output_path) as writer:
+                    writer[tree] = awkward_array
+                    etime = time.time()
+                output_size = os.stat(output_path).st_size               
 
         wtime = time.time()
 
@@ -373,6 +387,8 @@ if __name__ == "__main__":
     elif args.result_destination == 'volume':
         object_store = None
         posix_path = args.output_dir
+    
+    result_format = args.result_format
 
     compile_code()
     startup_time = get_process_info()
