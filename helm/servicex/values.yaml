@@ -112,10 +112,15 @@ transformer:
     maxReplicas: 20
     minReplicas: 1
   cpuLimit: 1
-  defaultTransformerImage: sslhep/servicex_sidecar_transformer
-  defaultTransformerTag: develop
-  scienceImage: # replace me
-  scienceImageTag: develop
+
+  sidecarImage: sslhep/servicex_sidecar_transformer
+  sidecarTag: develop
+  sidecarPullPolicy: Always
+
+  defaultScienceContainerImage: # replace me
+  defaultScienceContainerTag: develop
+  scienceContainerPullPolicy: Always
+
   language: python
   exec: # replace me
   outputDir: /servicex/output
@@ -124,7 +129,6 @@ transformer:
     existingClaim: null
     subdir: null
   priorityClassName: null
-  pullPolicy: Always
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6

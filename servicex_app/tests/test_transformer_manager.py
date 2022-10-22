@@ -171,7 +171,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -210,7 +213,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
 
         transformer = TransformerManager('external-kubernetes')
@@ -255,7 +261,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -300,7 +309,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -347,7 +359,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -390,7 +405,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -436,7 +454,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -489,7 +510,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
             'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
+            'TRANSFORMER_EXEC': 'transform_data.py',
+            'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
+            'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 

@@ -79,8 +79,6 @@ data:
     TRANSFORMER_PRIORITY_CLASS="{{ .Values.transformer.priorityClassName }}"
     {{ end }}
 
-    TRANSFORMER_PULL_POLICY = '{{ .Values.transformer.pullPolicy }}'
-
     TRANSFORMER_MANAGER_ENABLED = True
 
     TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
@@ -96,10 +94,15 @@ data:
     {{- end }}
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
     TRANSFORMER_MESSAGING = 'none'
-    TRANSFORMER_DEFAULT_IMAGE = "{{ .Values.transformer.defaultTransformerImage }}:{{ .Values.transformer.defaultTransformerTag }}"
+    
+    TRANSFORMER_SIDECAR_IMAGE = "{{ .Values.transformer.sidecarImage }}:{{ .Values.transformer.sidecarTag }}"
+    TRANSFORMER_SIDECAR_PULL_POLICY = '{{ .Values.transformer.sidecarPullPolicy }}'
+
+    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.transformer.defaultScienceContainerImage }}:{{ .Values.transformer.defaultScienceContainerTag }}"
+    TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY = '{{ .Values.transformer.scienceContainerPullPolicy }}'
+
     
     TRANSFORMER_SIDECAR_VOLUME_PATH = "{{ .Values.transformer.outputDir }}"
-    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.transformer.scienceImage }}:{{ .Values.transformer.scienceImageTag }}"
     TRANSFORMER_LANGUAGE = "{{ .Values.transformer.language }}"
     TRANSFORMER_EXEC = "{{ .Values.transformer.exec }}"
 

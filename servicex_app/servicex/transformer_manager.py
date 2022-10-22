@@ -144,29 +144,31 @@ class TransformerManager:
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 
         if x509_secret:
-            python_args = [" "]
-            mngr_args = ["/servicex/output/scripts/proxy-exporter.sh & sleep 5 && "]
+            sidecar_command = " "
+            science_command = "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
+                              "do sleep 5;done &&" \
+                              " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
         else:
-            python_args = [" "]
-            mngr_args = [" "]
+            sidecar_command = " "
+            science_command = " "
 
-        python_args[0] += "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
-                          "python /servicex/transformer_sidecar/transformer.py " + \
-                          " --request-id " + request_id + \
-                          " --rabbit-uri " + rabbitmq_uri + \
-                          " --result-destination " + result_destination + \
-                          " --result-format " + result_format
+        sidecar_command += "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
+                           "python /servicex/transformer_sidecar/transformer.py " + \
+                           " --request-id " + request_id + \
+                           " --rabbit-uri " + rabbitmq_uri + \
+                           " --result-destination " + result_destination + \
+                           " --result-format " + result_format
 
         watch_path = os.path.join(current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH'],
                                   request_id)
-        mngr_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
-                        "bash {op}/scripts/watch.sh ".format(op=output_path) + \
-                        "{TL} ".format(TL=current_app.config['TRANSFORMER_LANGUAGE']) + \
-                        "{TC} ".format(TC=current_app.config['TRANSFORMER_EXEC']) + \
-                        watch_path
+        science_command += "PYTHONPATH=/generated:$PYTHONPATH " + \
+                           "bash {op}/scripts/watch.sh ".format(op=output_path) + \
+                           "{TL} ".format(TL=current_app.config['TRANSFORMER_LANGUAGE']) + \
+                           "{TC} ".format(TC=current_app.config['TRANSFORMER_EXEC']) + \
+                           watch_path
 
         if result_destination == 'volume':
-            python_args[0] += " --output-dir " + os.path.join(
+            sidecar_command += " --output-dir " + os.path.join(
                 TransformerManager.POSIX_VOLUME_MOUNT,
                 current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'])
 
@@ -175,26 +177,26 @@ class TransformerManager:
         )
 
         # Configure Pod template container
-        sidecar = client.V1Container(
+        science_container = client.V1Container(
             name="transformer",
-            image=current_app.config['TRANSFORMER_SCIENCE_IMAGE'],
-            image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
+            image=image,
+            image_pull_policy=current_app.config['TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY'],
             volume_mounts=volume_mounts,
             command=["bash", "-c"],
             env=env,
-            args=mngr_args,
+            args=[science_command],
             resources=resources
         )
 
         # Configure Pod template container
-        container = client.V1Container(
+        sidecar = client.V1Container(
             name="sidecar",
-            image=image,
-            image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
+            image=current_app.config['TRANSFORMER_SIDECAR_IMAGE'],
+            image_pull_policy=current_app.config['TRANSFORMER_SIDECAR_PULL_POLICY'],
             volume_mounts=volume_mounts,
-            command=["bash", "-c"],  # Can't get bash to pick up my .bashrc!
+            command=["bash", "-c"],
             env=env,
-            args=python_args,
+            args=[sidecar_command],
             resources=resources
         )
 
@@ -204,7 +206,7 @@ class TransformerManager:
             spec=client.V1PodSpec(
                 restart_policy="Always",
                 priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
-                containers=[container, sidecar],
+                containers=[sidecar, science_container],  # Containers are started in this order
                 volumes=volumes))
 
         # Create the specification of deployment
