@@ -12,14 +12,13 @@ while true; do
             output_file=`grep -o '"safeOutputFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
 
             echo "Attempting $download_path -> $output_file"
-            transform_result=$($lang "$cmd" "$download_path" "$output_file" 2>&1 | tee $file.log )
-            if [ $? == 0 ]; then
+            $lang "$cmd" "$download_path" "$output_file" 2>&1 | tee $file.log
+            if [ "${PIPESTATUS[0]}" == 0 ]; then
               echo "Success. skipping rest of input_files"
               touch $file.done
               rm $file
-              break
             else
-              echo "Hmm, got $?"
+              echo "Operation failed for $download_path"
               touch $file.failed
               rm $file
             fi

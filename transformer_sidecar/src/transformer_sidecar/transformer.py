@@ -138,6 +138,10 @@ def callback(channel, method, properties, body):
     logger.info(transform_request)
     servicex = ServiceXAdapter(_server_endpoint)
 
+    # creating output dir for transform output files
+    request_path = os.path.join(posix_path, _request_id)
+    os.makedirs(request_path, exist_ok=True)
+
     start_process_info = get_process_info()
     total_time = 0
     total_events = 0
@@ -150,15 +154,6 @@ def callback(channel, method, properties, body):
             servicex.post_status_update(file_id=_file_id,
                                         status_code="start",
                                         info="Starting")
-
-            if not os.path.isdir(posix_path):
-                os.makedirs(posix_path)
-
-            output_path = posix_path
-            request_path = os.path.join(output_path, _request_id)
-            # creating output dir for transform output files
-            if not os.path.isdir(request_path):
-                os.makedirs(request_path)
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -178,9 +173,14 @@ def callback(channel, method, properties, body):
             with open(os.path.join(request_path, jsonfile), 'w') as outfile:
                 json.dump(transform_request, outfile)
 
+            # Queue to communicate between WatchedDirectory and object file uploader
             upload_queue = Queue()
+
+            # Watch for new files appearing in the shared directory
             watcher = WatchedDirectory(Path(request_path), upload_queue,
                                        logger=logger, servicex=servicex)
+
+            # And upload them to the object store
             uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
                                            object_store=object_store, logger=logger)
 
@@ -193,10 +193,18 @@ def callback(channel, method, properties, body):
             uploader.join()
             logger.info("Uploader is done")
 
+            # Grab the logs
+            log_text = None
+            with open(os.path.join(request_path, jsonfile + '.log')) as log:
+                log_text = log.read()
+
             if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
                 transform_success = True
                 total_events = watcher.total_events
+                logger.info(log_text)
                 break
+
+        logger.error(log_text)
 
         shutil.rmtree(request_path)
 
@@ -243,7 +251,7 @@ def callback(channel, method, properties, body):
                                     status_code="failure",
                                     info=f"error: {error}")
 
-        servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+        servicex.put_file_complete(file_path=_file_paths[0], file_id=_file_id,
                                    status='failure', num_messages=0,
                                    total_time=0, total_events=0,
                                    total_bytes=0)
@@ -257,7 +265,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = initialize_logging()
-    logger.info("----- {}".format(sys.path))
     logger.info(f"result destination: {args.result_destination} \
                   output dir: {args.output_dir}")
 
@@ -272,13 +279,11 @@ if __name__ == "__main__":
     elif args.output_dir:
         object_store = None
 
-    if not os.path.isdir(posix_path):
-        os.makedirs(posix_path)
+    os.makedirs(posix_path, exist_ok=True)
 
     # creating scripts dir for access by science container
     scripts_path = os.path.join(posix_path, 'scripts')
-    if not os.path.isdir(scripts_path):
-        os.makedirs(scripts_path)
+    os.makedirs(scripts_path, exist_ok=True)
     shutil.copy('watch.sh', scripts_path)
     shutil.copy('proxy-exporter.sh', scripts_path)
 
