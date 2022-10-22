@@ -63,8 +63,8 @@ class AstUprootTranslator(CodeGenerator):
 
         # Transfer the templated main python script
         template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transformer.py")
-        shutil.copyfile(template_path, os.path.join(query_file_path, "transformer.py"))
+                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
+        shutil.copyfile(template_path, os.path.join(query_file_path, "transform_single_file.py"))
 
         os.system("ls -lht " + query_file_path)
 

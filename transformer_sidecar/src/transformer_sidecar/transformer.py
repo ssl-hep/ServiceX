@@ -31,7 +31,6 @@ import json
 import os
 import psutil as psutil
 import shutil
-import sys
 import timeit
 from hashlib import sha1
 from pathlib import Path

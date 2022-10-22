@@ -50,7 +50,7 @@ class TestGenerateCode:
             return_value="import foo")
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            os.environ['TEMPLATE_PATH'] = "servicex/templates/transformer.py"
+            os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
             query = "(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))" # NOQA E501
 
             translator = AstUprootTranslator()
