@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set +e
 
-echo "Compile"
-bash /generated/runner.sh -c
-if [ $? != 0 ]; then
-  echo "Compile step failed"
-  exit 1
+# If transformer has already run then we don't need to compile
+if [ ! -f /home/atlas/rel ]; then
+  echo "Compile"
+  bash /generated/runner.sh -c
+  if [ $? != 0 ]; then
+    echo "Compile step failed"
+    exit 1
+  fi
 fi
 
 echo "Transform a file $1 -> $2"
