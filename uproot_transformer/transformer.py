@@ -332,7 +332,7 @@ def transform_single_file(file_path, output_path, result_format, tree, servicex=
             etime = time.time()
             if output_path:
                 with uproot.recreate(output_path) as writer:
-                    writer[tree] = awkward_array
+                    writer['Events'] = awkward_array
                     etime = time.time()
                 output_size = os.stat(output_path).st_size 
         else:
