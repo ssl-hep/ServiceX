@@ -361,7 +361,8 @@ def transform_single_file(file_path, output_path, result_format, tree, servicex=
             'writing': round(wtime - etime, 3)
         })
     except Exception as error:
-        mesg = f"Failed to transform input file {file_path}: {error}"
+        import traceback
+        mesg = f"Failed to transform input file {file_path}: {error} in {''.join(traceback.format_tb(error.__traceback__))}"
         logger.exception(mesg)
         raise RuntimeError(mesg)
 
