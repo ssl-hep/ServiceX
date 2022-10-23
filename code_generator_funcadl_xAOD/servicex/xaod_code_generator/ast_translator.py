@@ -86,6 +86,11 @@ class AstAODTranslator(CodeGenerator):
                                        "/home/servicex/servicex/templates/transform_single_file.sh") # NOQA: 501
         shutil.copyfile(template_path, os.path.join(path, "transform_single_file.sh"))
 
+        capabilities_path = os.environ.get('CAPABILITIES_PATH',
+                                           "/home/servicex/transformer_capabilities.json")
+        shutil.copyfile(capabilities_path, os.path.join(path,
+                                                        "transformer_capabilities.json"))
+
         os.system("ls -lht " + cache_path)
 
         return GeneratedFileResult(hash, cache_path)

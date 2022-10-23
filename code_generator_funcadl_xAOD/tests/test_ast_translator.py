@@ -20,6 +20,7 @@ def test_translate_good(mocker):
         exe = mocker.MagicMock()
 
         os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.sh"
+        os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
         query = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')))))"  # NOQA E501
         translator = AstAODTranslator(exe=exe)
         generated = translator.generate_code(

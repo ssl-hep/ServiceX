@@ -1,0 +1,7 @@
+{
+  "name": "FuncADL based C++ transformer",
+  "description": "Two different transformers. One for ATLAS reads xAOD files. A second transformer reads CMS Run 1 AOD files",
+  "limitations": "Would be good to note what isn't implemented",
+  "file-formats": ["root"],
+  "stats-parser": "AODStats"
+}
