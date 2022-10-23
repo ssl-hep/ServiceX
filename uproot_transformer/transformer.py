@@ -246,7 +246,7 @@ def callback(channel, method, properties, body):
                 if result_format == 'parquet':
                     safe_output_file = hash_path(root_file+".parquet")
                 elif result_format == 'root-file':
-                    safe_output_file = hash_path(root_file+'.root')
+                    safe_output_file = hash_path(root_file+".root")
                 else:
                     safe_output_file = hash_path(root_file)
                 output_path = os.path.join(posix_path, safe_output_file)
@@ -306,8 +306,7 @@ def callback(channel, method, properties, body):
         'requestId': _request_id, 'fileId': _file_id,
         'user': elapsed_times.user,
         'sys': elapsed_times.system,
-        'iowait': elapsed_times.iowait,
-        'request': json.dumps(transform_request)
+        'iowait': elapsed_times.iowait
     })
 
     channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -366,7 +365,7 @@ def transform_single_file(file_path, output_path, result_format, tree, servicex=
         })
     except Exception as error:
         import traceback
-        mesg = f"Failed to transform input file {file_path}: {error} in {''.join(traceback.format_tb(error.__traceback__))}"
+        mesg = f"Failed to transform input file {file_path}: {error} in\n{''.join(traceback.format_tb(error.__traceback__))}"
         logger.exception(mesg)
         raise RuntimeError(mesg)
 
@@ -411,4 +410,4 @@ if __name__ == "__main__":
 
     if args.path:
         logger.info("Transform a single file", extra={'fpath': args.path})
-        transform_single_file(args.path, args.output_dir, result_format, args.tree)
+        transform_single_file(args.path, args.output_dir, result_format, default_tree_name)
