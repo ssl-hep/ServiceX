@@ -54,6 +54,7 @@ MAX_RETRIES = 3
 object_store = None
 posix_path = None
 result_format = None
+default_tree_name = None
 MAX_PATH_LEN = 255
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
@@ -214,6 +215,8 @@ def callback(channel, method, properties, body):
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
     _tree = transform_request['tree-name']
+    if _tree is None:
+        _tree = default_tree_name
     logger.info("To transform", extra={'fpath': _file_paths,
                                        'requestId': _request_id, 'fileId': _file_id})
     servicex = ServiceXAdapter(_server_endpoint)
@@ -393,6 +396,7 @@ if __name__ == "__main__":
         posix_path = args.output_dir
     
     result_format = args.result_format
+    default_tree_name = args.tree
 
     compile_code()
     startup_time = get_process_info()
