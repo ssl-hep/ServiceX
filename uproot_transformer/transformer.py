@@ -303,7 +303,8 @@ def callback(channel, method, properties, body):
         'requestId': _request_id, 'fileId': _file_id,
         'user': elapsed_times.user,
         'sys': elapsed_times.system,
-        'iowait': elapsed_times.iowait
+        'iowait': elapsed_times.iowait,
+        'request': json.dumps(transform_request)
     })
 
     channel.basic_ack(delivery_tag=method.delivery_tag)
