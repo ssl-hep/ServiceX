@@ -240,9 +240,9 @@ def callback(channel, method, properties, body):
 
                 root_file = _file_path.replace('/', ':')
 
-                if _result_format == 'parquet':
-                    safe_output_file = hash_path(root_file+(".parquet")
-                elif _result_format == 'root-file':
+                if result_format == 'parquet':
+                    safe_output_file = hash_path(root_file+".parquet")
+                elif result_format == 'root-file':
                     safe_output_file = hash_path(root_file+'.root')
                 else:
                     safe_output_file = hash_path(root_file)
@@ -328,7 +328,14 @@ def transform_single_file(file_path, output_path, result_format, tree, servicex=
 
         ttime = time.time()
 
-        if result_format == 'parquet':
+        if result_format == 'root-file':
+            etime = time.time()
+            if output_path:
+                with uproot.recreate(output_path) as writer:
+                    writer[tree] = awkward_array
+                    etime = time.time()
+                output_size = os.stat(output_path).st_size 
+        else:
             explode_records = bool(awkward_array.fields)
 
             try:
@@ -344,12 +351,7 @@ def transform_single_file(file_path, output_path, result_format, tree, servicex=
                 writer.write_table(table=arrow)
                 writer.close()
                 output_size = os.stat(output_path).st_size
-        elif result_format == 'root':
-            if output_path:
-                with uproot.recreate(output_path) as writer:
-                    writer[tree] = awkward_array
-                    etime = time.time()
-                output_size = os.stat(output_path).st_size               
+
 
         wtime = time.time()
 
@@ -403,4 +405,4 @@ if __name__ == "__main__":
 
     if args.path:
         logger.info("Transform a single file", extra={'fpath': args.path})
-        transform_single_file(args.path, args.output_dir)
+        transform_single_file(args.path, args.output_dir, result_format, args.tree)
