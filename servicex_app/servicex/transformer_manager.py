@@ -161,7 +161,8 @@ class TransformerManager:
 
         watch_path = os.path.join(current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH'],
                                   request_id)
-        science_command += "PYTHONPATH=/generated:$PYTHONPATH " + \
+        science_command += "cp /generated/transformer_capabilities.json {op} && " \
+                           "PYTHONPATH=/generated:$PYTHONPATH " \
                            "bash {op}/scripts/watch.sh ".format(op=output_path) + \
                            "{TL} ".format(TL=current_app.config['TRANSFORMER_LANGUAGE']) + \
                            "{TC} ".format(TC=current_app.config['TRANSFORMER_EXEC']) + \

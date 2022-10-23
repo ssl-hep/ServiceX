@@ -26,6 +26,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import time
 
 import json
 import os
@@ -285,6 +286,16 @@ if __name__ == "__main__":
     os.makedirs(scripts_path, exist_ok=True)
     shutil.copy('watch.sh', scripts_path)
     shutil.copy('proxy-exporter.sh', scripts_path)
+
+    logger.info("Waiting for capabilities file")
+    capabilities_file_path = Path(os.path.join(posix_path, 'transformer_capabilities.json'))
+    while not capabilities_file_path.is_file():
+        time.sleep(1)
+
+    with open(capabilities_file_path) as capabilities_file:
+        transformer_capabilities = json.load(capabilities_file)
+
+    logger.info(transformer_capabilities)
 
     startup_time = get_process_info()
     logger.info("Startup finished.",
