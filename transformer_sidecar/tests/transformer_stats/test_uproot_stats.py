@@ -25,28 +25,38 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# flake8: noqa
+
+import os
+
 from pathlib import Path
-import re
 
-from transformer_sidecar.transformer_stats import TransformerStats
+import tempfile
+
+from transformer_sidecar.transformer_stats.uproot_stats import UprootStats
 
 
-class AODStats(TransformerStats):
-    def __init__(self, log_path: Path):
-        super().__init__(log_path)
+def test_uproot_stats():
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as fp:
+        test_logfile_path = Path(fp.name)
+        fp.write("Transform stats: Total Events: 10000, resulting file size 102456'")
+        fp.close()
+        uproot_stats = UprootStats(test_logfile_path)
+        assert uproot_stats.total_events == 10000
+        assert uproot_stats.file_size == 102456
+        assert uproot_stats.error_info == "Unable to determine error cause. Please consult log files"
+        os.remove(test_logfile_path)
 
-        matches = re.findall(
-            r'Processed (\d+) events', self.log_body)
-        if len(matches) == 1:
-            self.total_events = int(matches[0])
-
-        # Look for incorrect property names
-        matches = re.findall(
-            r"/error: ('[^']+') has no member named ('[^']+'); did you mean ('[^']+')?/gm",
-            self.log_body
-        )
-        if matches:
-            err = matches[0]
-            self.error_info = \
-                "Property naming error: {cl} has not member named {bad}; did you mean {good}".\
-                format(cl=err[0], bad=err[1], good=err[2])
+def test_bad_property():
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as fp:
+        test_logfile_path = Path(fp.name)
+        fp.write("""
+ValueError: key "lep_ptttt" does not exist (not in record)        
+        """)
+        fp.close()
+        uproot_stats = UprootStats(test_logfile_path)
+        assert uproot_stats.total_events == 0
+        assert uproot_stats.file_size == 0
+        assert uproot_stats.error_info == "Property naming error: lep_ptttt not available in dataset"
+        os.remove(test_logfile_path)

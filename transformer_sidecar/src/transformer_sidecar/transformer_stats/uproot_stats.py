@@ -39,4 +39,11 @@ class UprootStats(TransformerStats):
             r'Transform stats: Total Events: (\d+), resulting file size (\d+)',
             self.log_body)
         if len(matches) == 1:
-            self.total_events, self.file_size = matches[0]
+            self.total_events, self.file_size = tuple(map(int, matches[0]))
+
+        # Look for bad property names
+        matches = re.findall(
+            r'ValueError: key "([^"]*)" does not exist', self.log_body)
+
+        if matches:
+            self.error_info = f"Property naming error: {matches[0]} not available in dataset"

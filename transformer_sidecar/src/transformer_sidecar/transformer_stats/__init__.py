@@ -37,3 +37,4 @@ class TransformerStats(ABC):
 
         self.total_events = 0
         self.file_size = 0
+        self.error_info = "Unable to determine error cause. Please consult log files"

@@ -215,6 +215,7 @@ def callback(channel, method, properties, body):
 
         if not transform_success:
             logger.error(f"HARD FAILURE FOR {_file_id}")
+            logger.error(transformer_stats.error_info)
             logger.error(transformer_stats.log_body)
 
         shutil.rmtree(request_path)
@@ -231,7 +232,7 @@ def callback(channel, method, properties, body):
         else:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="failure",
-                                        info="error: Could not transform file")
+                                        info=transformer_stats.error_info)
 
             servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,
