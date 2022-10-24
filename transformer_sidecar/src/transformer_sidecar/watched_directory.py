@@ -126,14 +126,6 @@ class TransformerEventHandler(FileSystemEventHandler):
         self.watched_directory.total_size = os.stat(event.src_path).st_size
 
         # add file to queue for upload
-        try:
-            self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(Path(event.src_path)))
-            self.logger.info(
-                'Added {fn} to queue.'.format(fn=event.src_path))
-        except Exception as e:
-            self.logger.exception(
-                'Failed to add file to queue {fn}: {e}'.format(fn=event.src_path, e=e))
-            self.watched_directory.stop(success=False)
-
-            # Terminate the upload thread too
-            self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(None))
+        self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(Path(event.src_path)))
+        self.logger.info(
+            'Added {fn} to queue.'.format(fn=event.src_path))
