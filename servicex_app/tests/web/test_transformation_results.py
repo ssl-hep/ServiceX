@@ -3,7 +3,6 @@ from typing import List
 import pytest
 from flask import Response, url_for
 from flask_jwt_extended import create_access_token
-from flask_sqlalchemy.pagination import Pagination
 from servicex.models import TransformationResult, TransformRequest
 
 from .web_test_base import WebTestBase
@@ -44,7 +43,7 @@ class TestUserDashboard(WebTestBase):
 
     def test_get_empty_state(self, client, mock_tr, mock_result_cls, captured_templates):
         mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
-        pagination = Pagination(mock_result_query, page=1, per_page=100, total=0, items=[])
+        pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=[])
         mock_result_query.paginate.return_value = pagination
         response: Response = client.get(
             url_for(self.endpoint, id_=mock_tr.id), headers=self.fake_header())
@@ -60,7 +59,7 @@ class TestUserDashboard(WebTestBase):
     ):
         mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
         items = [r for r in self._fake_transformation_results() if r.transform_status == status]
-        pagination = Pagination(mock_result_query, page=1, per_page=100, total=0, items=items)
+        pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=items)
         mock_result_query.paginate.return_value = pagination
         query_params = {"status": status} if status is not None else {}
         url = url_for(self.endpoint, id_=mock_tr.id, **query_params)

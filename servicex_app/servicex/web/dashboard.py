@@ -2,7 +2,6 @@ import itertools
 
 from flask import render_template, session
 from flask_restful import reqparse
-from flask_sqlalchemy.pagination import Pagination
 from servicex.models import TransformRequest
 
 model_attributes = {
@@ -34,13 +33,17 @@ def dashboard(template_name: str, user_specific=False):
     query = TransformRequest.query
     if user_specific:
         query = query.filter_by(submitted_by=session["user_id"])
-    pagination: Pagination = query \
-        .order_by(getattr(model_attributes[sort], order)()) \
+
+    sort_column = getattr(model_attributes, sort)
+    sort = sort_column.asc() if order == "asc" else sort_column.desc()
+
+    pagination = query \
+        .order_by(sort) \
         .paginate(page=args["page"], per_page=15, error_out=False)
     return render_template(
         template_name,
         pagination=pagination,
         dropdown_options=list(itertools.product(sort_choices, order_choices)),
         active_sort=sort,
-        active_order=order
+        active_order=order,
     )
