@@ -44,6 +44,9 @@ from rabbit_mq_manager import RabbitMQManager
 from servicex_adapter import ServiceXAdapter
 from transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
+from transformer_sidecar.transformer_stats import TransformerStats
+from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from watched_directory import WatchedDirectory
 
 object_store = None
@@ -105,6 +108,11 @@ def hash_path(file_name):
         return file_name
 
 
+def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> TransformerStats:
+    # Assume that the stats parser class has been imported
+    return globals()[stats_parser_name](logfile_path)
+
+
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     """
@@ -144,7 +152,6 @@ def callback(channel, method, properties, body):
 
     start_process_info = get_process_info()
     total_time = 0
-    total_events = 0
 
     transform_success = False
     try:
@@ -194,17 +201,21 @@ def callback(channel, method, properties, body):
             logger.info("Uploader is done")
 
             # Grab the logs
-            log_text = None
-            with open(os.path.join(request_path, jsonfile + '.log')) as log:
-                log_text = log.read()
+            transformer_stats = fill_stats_parser(
+                transformer_capabilities['stats-parser'],
+                Path(os.path.join(request_path, jsonfile + '.log'))
+                )
 
             if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
                 transform_success = True
-                total_events = watcher.total_events
-                logger.info(log_text)
+                logger.info(transformer_stats.log_body)
+                logger.info(f"Got some stats {transformer_stats.file_size} bytes, "
+                            f"{transformer_stats.total_events} events")
                 break
 
-        logger.error(log_text)
+        if not transform_success:
+            logger.error(f"HARD FAILURE FOR {_file_id}")
+            logger.error(transformer_stats.log_body)
 
         shutil.rmtree(request_path)
 
@@ -215,8 +226,8 @@ def callback(channel, method, properties, body):
             servicex.put_file_complete(_file_path, _file_id, "success",
                                        num_messages=0,
                                        total_time=total_time,
-                                       total_events=total_events,
-                                       total_bytes=0)
+                                       total_events=transformer_stats.total_events,
+                                       total_bytes=transformer_stats.file_size)
         else:
             servicex.post_status_update(file_id=_file_id,
                                         status_code="failure",

@@ -45,6 +45,8 @@ def transform_single_file(file_path: str, output_path: Path):
         print(f'Detailed transformer times. query_time:{round(ttime - stime, 3)} '
               f'serialization: {round(etime - ttime, 3)} '
               f'writing: {round(wtime - etime, 3)}')
+
+        print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)
