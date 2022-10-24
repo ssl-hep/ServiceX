@@ -27,16 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
-import re
 import time
+from enum import Enum
 from pathlib import Path
 from queue import Queue
-
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from transformer_sidecar.servicex_adapter import ServiceXAdapter
+from watchdog.observers import Observer
+
 from transformer_sidecar.object_store_uploader import ObjectStoreUploader
-from enum import Enum
+from transformer_sidecar.servicex_adapter import ServiceXAdapter
 
 
 class WatchedDirectory:
@@ -138,39 +137,3 @@ class TransformerEventHandler(FileSystemEventHandler):
 
             # Terminate the upload thread too
             self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(None))
-
-    def on_modified(self, event):
-        if event.is_directory:
-            return
-
-        # if *.log file detected read file
-        if event.src_path.endswith('.log'):
-            with open(event.src_path) as log:
-                text = log.read()
-
-            # scan for flag keywords and skip any further log file analysis if found
-            keywords = ['fatal', 'runtimeerror']
-            if any(flag in text.lower() for flag in keywords):
-                self.logger.error(text)
-                self.logger.error('Found exception. Exiting.')
-                return
-
-            # look for event counts, set to 0 if not found
-            try:
-                matches = re.findall(
-                    r'[\d\s]+events processed out of[\d\s]+total events', text)
-
-                if matches:
-                    events, total_events = re.findall(r'[\d]+', matches[0])
-                    print(f"Events {events}, totalEvents {total_events}")
-                    if (int(events) == 0) or (int(total_events) == 0):
-                        self.watched_directory.status = WatchedDirectory.TransformStatus.FAILURE
-                        self.logger.info(
-                            "Failed to process all events: {num}/{den}".format(num=events,
-                                                                               den=total_events))
-                    else:
-                        self.watched_directory.total_events = int(total_events)
-                        self.watched_directory.events = int(events)
-
-            except Exception as eek:
-                self.logger.exception("Exception processing log file", eek)

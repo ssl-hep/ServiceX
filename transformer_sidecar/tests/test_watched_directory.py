@@ -91,37 +91,3 @@ def test_failure(mocker):
             done.write("RunTimeError: All messed up")
         time.sleep(1)
         assert watched.status == WatchedDirectory.TransformStatus.FAILURE
-
-
-def test_reported_events(mocker):
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        mock_queue = mocker.MagicMock(Queue)
-        watched = WatchedDirectory(path=Path(tmpdirname),
-                                   result_upload_queue=mock_queue,
-                                   logger=logging,
-                                   servicex=None
-                                   )
-        watched.start()
-        with open(os.path.join(tmpdirname, "job.log"), "w") as done:
-            done.write("12 events processed out of 31 total events")
-        time.sleep(1)
-        assert watched.status == WatchedDirectory.TransformStatus.RUNNING
-        assert watched.events == 12
-        assert watched.total_events == 31
-
-
-def test_log_without_events(mocker):
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        mock_queue = mocker.MagicMock(Queue)
-        watched = WatchedDirectory(path=Path(tmpdirname),
-                                   result_upload_queue=mock_queue,
-                                   logger=logging,
-                                   servicex=None
-                                   )
-        watched.start()
-        with open(os.path.join(tmpdirname, "job.log"), "w") as done:
-            done.write("Just a random log message")
-        time.sleep(1)
-        assert watched.status == WatchedDirectory.TransformStatus.RUNNING
-        assert watched.events == 0
-        assert watched.total_events == 0
