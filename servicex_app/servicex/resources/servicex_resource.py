@@ -46,7 +46,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
     @staticmethod
-    @jwt_required()
+    @jwt_required(optional=True)
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
