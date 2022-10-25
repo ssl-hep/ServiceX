@@ -5,6 +5,9 @@ RUN useradd -ms /bin/bash servicex
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
+
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 

@@ -7,7 +7,10 @@ WORKDIR /usr/src/app
 
 # for CA certificates
 USER root
-RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir 
+RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
+
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
 
 RUN yum clean all
 RUN yum -y update

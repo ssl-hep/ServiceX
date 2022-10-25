@@ -8,6 +8,8 @@ WORKDIR /usr/src/app
 # for CA certificates
 USER root
 # RUN yum -y update
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
