@@ -38,10 +38,9 @@ def dashboard(template_name: str, user_specific=False):
         query = query.filter_by(submitted_by=session["user_id"])
 
     sort_column = model_attributes[sort]
-    sort = sort_column.asc() if order == "asc" else sort_column.desc()
-
+    sort_order = sort_column.asc() if order == "asc" else sort_column.desc()
     pagination = query \
-        .order_by(sort) \
+        .order_by(sort_order) \
         .paginate(page=args["page"], per_page=15, error_out=False)
     return render_template(
         template_name,
