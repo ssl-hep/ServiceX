@@ -11,7 +11,8 @@ RUN pip install poetry==$POETRY_VERSION
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN poetry install --no-root
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 COPY boot.sh ./
 COPY servicex/ ./servicex

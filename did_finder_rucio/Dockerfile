@@ -30,7 +30,9 @@ RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN poetry install --no-root
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
+
 
 COPY . .
 
