@@ -10,12 +10,13 @@ model_attributes = {
     "status": TransformRequest.status
 }
 parser = reqparse.RequestParser()
-parser.add_argument("page", default=1, type=int)
+parser.add_argument("page", default=1, type=int, location='args')
 sort_choices = tuple(model_attributes.keys())
 parser.add_argument(
     "sort",
     choices=sort_choices,
     default="finish",
+    location='args',
     help=f"Sort must be one of: {', '.join(map(repr, sort_choices))}."
 )
 order_choices = ("asc", "desc")
@@ -23,6 +24,7 @@ parser.add_argument(
     "order",
     choices=order_choices,
     default="desc",
+    location='args',
     help="Order must be 'asc' or 'desc'."
 )
 
@@ -31,10 +33,11 @@ def dashboard(template_name: str, user_specific=False):
     args = parser.parse_args()
     sort, order = args["sort"], args["order"]
     query = TransformRequest.query
+
     if user_specific:
         query = query.filter_by(submitted_by=session["user_id"])
 
-    sort_column = getattr(model_attributes, sort)
+    sort_column = model_attributes[sort]
     sort = sort_column.asc() if order == "asc" else sort_column.desc()
 
     pagination = query \
