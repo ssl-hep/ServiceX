@@ -10,7 +10,12 @@ RUN apt-get update && \
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 RUN python3 -m pip install --upgrade pip
-RUN poetry install --no-root
+
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!

@@ -10,6 +10,7 @@ USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
 ENV  POETRY_VERSION=1.2.1
+RUN python3 -m pip install --upgrade pip
 RUN pip install poetry==$POETRY_VERSION
 
 RUN yum clean all

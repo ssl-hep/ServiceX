@@ -9,6 +9,7 @@ WORKDIR /usr/src/app
 USER root
 # RUN yum -y update
 ENV  POETRY_VERSION=1.2.1
+RUN python3 -m pip install --upgrade pip
 RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml

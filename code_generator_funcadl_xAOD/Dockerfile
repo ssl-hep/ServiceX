@@ -2,6 +2,9 @@ FROM python:3.9
 
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
+
 RUN useradd -ms /bin/bash servicex
 
 WORKDIR /home/servicex
@@ -10,7 +13,8 @@ RUN mkdir ./servicex
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN poetry install --no-lock
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 RUN pip install gunicorn
 RUN pip list
 
