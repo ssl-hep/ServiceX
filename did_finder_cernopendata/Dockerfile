@@ -8,10 +8,16 @@ WORKDIR /usr/src/app
 # for CA certificates
 USER root
 # RUN yum -y update
-ENV  POETRY_VERSION=1.2.1
+ENV  POETRY_VERSION=1.2.2
 RUN python3 -m pip install --upgrade pip
-RUN pip install poetry==$POETRY_VERSION
 
+# There is a bug in poetry with no virtual env where it can delete this package
+# during install. If we delete it before installing poetry it will
+# recognize it as its own and handle it correctly
+# See: https://github.com/python-poetry/poetry/issues/5977
+RUN pip uninstall -y certifi
+
+RUN pip install poetry==$POETRY_VERSION
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
