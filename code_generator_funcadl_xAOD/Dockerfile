@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.7
 
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
