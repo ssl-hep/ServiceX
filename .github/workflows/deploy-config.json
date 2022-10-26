@@ -17,7 +17,7 @@
   {
     "image_name": "servicex-did-finder",
     "dir_name": "did_finder_rucio",
-    "test_required": true
+    "test_required": false
   },
   {
     "image_name": "servicex_code_gen_func_adl_uproot",

@@ -9,10 +9,6 @@ WORKDIR /usr/src/app
 USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
-ENV  POETRY_VERSION=1.2.1
-RUN python3 -m pip install --upgrade pip
-RUN pip install poetry==$POETRY_VERSION
-
 RUN yum clean all
 RUN yum -y update
 
@@ -28,16 +24,13 @@ RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 # (default was SHELL [ "/bin/sh", "-c" ])
 # https://docs.docker.com/engine/reference/builder/#shell
 
-COPY pyproject.toml pyproject.toml
-COPY poetry.lock poetry.lock
+COPY requirements.txt requirements.txt
 
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
-
+RUN python3 -m pip install -r requirements.txt
 
 COPY . .
 
-# build  
+# build
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /tmp/grid-security/x509up
