@@ -1,4 +1,4 @@
-FROM cernopendata/cernopendata-client:0.2.0
+FROM cernopendata/cernopendata-client:0.3.0
 
 LABEL maintainer Gordon Watts <gwatts@uw.edu>
 
@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 # for CA certificates
 USER root
 # RUN yum -y update
-ENV  POETRY_VERSION=1.2.1
+ENV  POETRY_VERSION=1.1.15
 RUN python3 -m pip install --upgrade pip
 RUN pip install poetry==$POETRY_VERSION
 
