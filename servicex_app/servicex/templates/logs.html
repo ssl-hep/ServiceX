@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+<iframe
+    src="https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-query-input=true&show-time-filter=true&hide-filter-bar=true">
+</iframe>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+
+    function set_params() {
+        $('#spinner').show();
+        $('#spinner').hide();
+    }
+
+    $(document).ready(function () {
+        set_params();
+    })
+</script>
+
+{% endblock %}
