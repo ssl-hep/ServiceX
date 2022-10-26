@@ -34,7 +34,9 @@
   },
   {
     "image_name": "x509-secrets",
-    "dir_name": "x509_secrets"
+    "dir_name": "x509_secrets",
+    "test_required": false
+
   },
   {
     "image_name": "servicex_func_adl_xaod_transformer",

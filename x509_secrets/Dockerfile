@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 # for CA certificates
 
-RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir 
+RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
 RUN yum -y update
 
@@ -19,16 +19,15 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas wlcg-voms-cms fetch-crl -y
 
-COPY pyproject.toml pyproject.toml
-COPY poetry.lock poetry.lock
-RUN poetry install --no-root
+COPY requirements.txt requirements.txt
+
+RUN python3 -m pip install -r requirements.txt
 
 COPY . .
 
-# build  
+# build
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /tmp/x509up
 
 CMD sh -c "python3 x509_updater.py --voms $VOMS"
-
