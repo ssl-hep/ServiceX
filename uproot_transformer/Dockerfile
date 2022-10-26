@@ -3,7 +3,7 @@
 # FROM daskdev/dask:2.9.0
 FROM continuumio/miniconda3:4.12.0
 
-RUN apt-get update -y && apt-get install gnupg2 -y 
+RUN apt-get update -y && apt-get install gnupg2 -y
 
 RUN conda install --yes \
     -c conda-forge \
@@ -18,9 +18,11 @@ RUN apt update && \
 RUN useradd -ms /bin/bash output -G sudo && passwd -d output
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
-COPY pyproject.toml pyproject.toml
-COPY poetry.lock poetry.lock
-RUN poetry install --no-root
+COPY requirements.txt .
+RUN /opt/conda/bin/pip install safety==1.9.0
+
+RUN safety check -r requirements.txt -i 44715 -i44716 -i 44717
+RUN /opt/conda/bin/pip install --no-cache-dir -r requirements.txt
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 

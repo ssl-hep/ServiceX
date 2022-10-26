@@ -22,7 +22,7 @@
   {
     "image_name": "servicex_code_gen_func_adl_uproot",
     "dir_name": "code_generator_funcadl_uproot",
-    "test_required": true
+    "test_required": false
   },
   {
     "image_name": "servicex_sidecar_transformer",
