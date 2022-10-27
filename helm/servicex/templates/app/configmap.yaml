@@ -166,8 +166,8 @@ data:
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
 
     {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.monitor }}
-    MONITOR_URL = '{{ tpl .Values.logging.logstash.monitor }}'
+    MONITOR_URL = '{{ tpl .Values.logging.logstash.monitor . }}'
     {{ end }}   
     {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.logs }}
-    LOGS_URL = '{{ tpl .Values.logging.logstash.logs }}'
+    LOGS_URL = '{{ tpl .Values.logging.logstash.logs . }}'
     {{ end }}   
