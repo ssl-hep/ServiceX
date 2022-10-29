@@ -1,4 +1,5 @@
-FROM ivukotic/rimage:latest
+ARG BASE_IMAGE=sslhep/sx-rucio-voms:latest
+FROM ${BASE_IMAGE}
 
 USER root
 
@@ -13,7 +14,7 @@ RUN yum -y update
 
 COPY requirements.txt requirements.txt
 
-RUN python3.9 -m pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 COPY . .
 
@@ -22,5 +23,5 @@ RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /tmp/x509up
 
-CMD sh -c "python3.9 x509_updater.py --voms $VOMS"
+CMD sh -c "python3 x509_updater.py --voms $VOMS"
 

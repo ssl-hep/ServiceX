@@ -34,14 +34,13 @@
   },
   {
     "image_name": "x509-secrets",
-    "dir_name": "x509_secrets",
+    "dir_name": "x509_secrets"
   },
   {
     "image_name": "servicex_func_adl_xaod_transformer",
     "dir_name": "xaod_cpp_transformer",
     "dockerfile": "xaod_cpp_transformer/DockerfileATLASxAOD",
     "test_required": false
-
   },
   {
     "image_name": "servicex_func_adl_cms_aod_transformer",
@@ -55,8 +54,8 @@
     "test_required": false
   },
   {
-  "image_name": "servicex_code_gen_atlas_xaod",
-  "dir_name": "code_generator_funcadl_xAOD",
-  "test_required": true
-}
+    "image_name": "servicex_code_gen_atlas_xaod",
+    "dir_name": "code_generator_funcadl_xAOD",
+    "test_required": true
+  }
 ]
