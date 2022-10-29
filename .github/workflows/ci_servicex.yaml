@@ -87,7 +87,7 @@ jobs:
           dockerfile: ${{ matrix.app.dockerfile }}
 
   publish-servicex:
-    needs: [build-matrix, test-servicex]
+    needs: [build-matrix, test-servicex, build-base]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
