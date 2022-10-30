@@ -7,8 +7,8 @@ readme = "README.md"
 packages = [{include = "code_generator_python"}]
 
 [tool.poetry.dependencies]
-python = "~3.7"
-servicex-code-gen-lib = "1.1.0a1"
+python = "~3.10"
+servicex-code-gen-lib = "1.1.0a2"
 
 
 [build-system]

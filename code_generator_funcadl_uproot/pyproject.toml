@@ -7,11 +7,11 @@ readme = "README.md"
 packages = [{include = "code_generator_funcadl_uproot"}]
 
 [tool.poetry.dependencies]
-python = "~3.7"
-servicex-code-gen-lib = "1.1.0a1"
-func-adl = "2.3"
-"func-adl.ast" = "2.3"
-func-adl-uproot = "1.8.0"
+python = "~3.10"
+servicex-code-gen-lib = "1.1.0a2"
+func-adl = "2.3.1"
+"func-adl.ast" = "2.3.1"
+func-adl-uproot = "1.9.0"
 qastle = "0.15.0"
 
 

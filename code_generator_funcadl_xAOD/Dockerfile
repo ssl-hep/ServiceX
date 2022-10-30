@@ -1,8 +1,8 @@
-FROM python:3.7
+FROM python:3.10
 
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
-ENV  POETRY_VERSION=1.2.1
+ENV  POETRY_VERSION=1.2.2
 RUN pip install poetry==$POETRY_VERSION
 
 RUN useradd -ms /bin/bash servicex
