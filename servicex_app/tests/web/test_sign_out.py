@@ -14,9 +14,9 @@ class TestSignOut(WebTestBase):
         response: Response = client.get(url_for('sign_out'))
         calls = reduce(lambda cs, token_info: cs + [
             mocker.call(token_info['access_token'],
-                        additional_params={'token_type_hint': 'access_token'}),
+                        body_params={'token_type_hint': 'access_token'}),
             mocker.call(token_info['refresh_token'],
-                        additional_params={'token_type_hint': 'refresh_token'})
+                        body_params={'token_type_hint': 'refresh_token'})
         ], oauth_tokens.values(), [])
         assert len(globus_client.mock_calls) == 2 * len(oauth_tokens)
         globus_client.oauth2_revoke_token.assert_has_calls(calls)

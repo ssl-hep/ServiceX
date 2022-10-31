@@ -217,12 +217,12 @@ class WebTestBase:
         mock_oauth_tokens.decode_id_token = \
             mocker.MagicMock(return_value=self._id_token())
         mock_oauth_tokens.by_resource_server = self._oauth_tokens()
-        client.oauth2_exchange_code_for_tokens = \
-            mocker.Mock(return_value=mock_oauth_tokens)
+
         mock_intro = mocker.Mock()
         mock_intro.data = {'identity_set': ['primary-oauth-id',
                                             'secondary-oauth-id']}
         client.oauth2_token_introspect = mocker.Mock(return_value=mock_intro)
+
         return client
 
     @fixture

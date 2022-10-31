@@ -14,8 +14,7 @@ def sign_out():
                          for token_info in session['tokens'].values()
                          for ty in ('access_token', 'refresh_token')
                          if token_info[ty] is not None):
-        client.oauth2_revoke_token(token,
-                                   additional_params={'token_type_hint': _type})
+        client.oauth2_revoke_token(token, body_params={'token_type_hint': _type})
 
     session.clear()
 
