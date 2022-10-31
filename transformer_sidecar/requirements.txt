@@ -1,6 +1,0 @@
-servicex-transformer
-pika
-rabbitmq
-pyarrow
-psutil
-watchdog

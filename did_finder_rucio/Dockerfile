@@ -24,9 +24,15 @@ RUN yum install osg-ca-certs voms voms-clients wlcg-voms-atlas fetch-crl -y
 # (default was SHELL [ "/bin/sh", "-c" ])
 # https://docs.docker.com/engine/reference/builder/#shell
 
-COPY requirements.txt requirements.txt
+ENV POETRY_VERSION=1.2.2
+RUN python3 -m pip install --upgrade pip
 
-RUN python3 -m pip install -r requirements.txt
+RUN pip install poetry==$POETRY_VERSION
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 COPY . .
 
