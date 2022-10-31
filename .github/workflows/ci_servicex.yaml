@@ -46,12 +46,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.2.2
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
           echo "${{ matrix.app }}"
-          python -m pip install --upgrade pip poetry
           poetry install --no-root --with=test
           pip list
       - name: Lint with Flake8
