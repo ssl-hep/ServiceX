@@ -28,20 +28,24 @@ kubernetes = "^25.3.0"
 globus-sdk = "^3.13.0"
 cryptography = "^38.0.1"
 bootstrap-flask = "^2.1.0"
-humanize = "^4.4.0"
-python-logstash = "^0.4.8"
-gunicorn = "^20.1.0"
-pytest = "^7.2.0"
-pytest-flask = "^1.2.0"
-coverage = "^6.5.0"
-codecov = "^2.1.12"
-pytest-mock = "^3.10.0"
-flake8 = "^5.0.4"
 blinker = "^1.5"
 pre-commit = "^2.20.0"
 minio = "^7.1.12"
 flask-migrate = "^3.1.0"
 psycopg2 = "^2.9.5"
+
+[tool.poetry.group.test]
+
+[tool.poetry.group.test.dependencies]
+flake8 = "^5.0.4"
+python-logstash = "^0.4.8"
+humanize = "^4.4.0"
+gunicorn = "^20.1.0"
+pytest-mock = "^3.10.0"
+codecov = "^2.1.12"
+pytest = "^7.2.0"
+pytest-flask = "^1.2.0"
+coverage = "^6.5.0"
 
 
 [build-system]
