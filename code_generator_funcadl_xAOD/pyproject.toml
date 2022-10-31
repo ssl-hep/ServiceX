@@ -9,7 +9,6 @@ packages = [{include = "code_generator_funcadl_xaod"}]
 [tool.poetry.dependencies]
 python = "~3.10"
 func-adl-xAOD = "2.0.1"
-servicex-code-gen-lib = "1.1.0a2"
 pytest-flask = "^1.2.0"
 pytest-cov = "^4.0.0"
 pytest-mock = "^3.10.0"
@@ -18,6 +17,7 @@ autopep8 = "^1.7.0"
 flake8 = "^5.0.4"
 coverage = "^6.5.0"
 codecov = "^2.1.12"
+servicex-code-gen-lib = "^1.0.0"
 
 
 
