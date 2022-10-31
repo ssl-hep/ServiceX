@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<iframe src="{{ config['MONITOR_URL'] }}"> </iframe>
+<iframe src="{{ config['LOGS_URL'] }}"> </iframe>
 {% endblock %}
+
 
 {% block scripts %}
 {{ super() }}
