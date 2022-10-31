@@ -29,21 +29,12 @@ import json
 from unittest.mock import call
 
 from flask import current_app
-from flask_jwt_extended import create_access_token
 from servicex import LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):
-
-    @staticmethod
-    def fake_header():
-        access_token = create_access_token('testuser')
-        headers = {
-            'Authorization': 'Bearer {}'.format(access_token)
-        }
-        return headers
 
     @staticmethod
     def _generate_transformation_request(**kwargs):

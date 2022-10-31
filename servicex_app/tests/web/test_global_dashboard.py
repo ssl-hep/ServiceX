@@ -1,19 +1,10 @@
 from flask import Response, url_for
-from flask_jwt_extended import create_access_token
 from pytest import fixture
 
 from .web_test_base import WebTestBase
 
 
 class TestGlobalDashboard(WebTestBase):
-
-    @staticmethod
-    def fake_header():
-        access_token = create_access_token('testuser')
-        headers = {
-            'Authorization': 'Bearer {}'.format(access_token)
-        }
-        return headers
 
     @fixture
     def mock_query(self, mocker):

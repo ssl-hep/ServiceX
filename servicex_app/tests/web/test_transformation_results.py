@@ -2,7 +2,6 @@ from typing import List
 
 import pytest
 from flask import Response, url_for
-from flask_jwt_extended import create_access_token
 from servicex.models import TransformationResult, TransformRequest
 
 from .web_test_base import WebTestBase
@@ -14,14 +13,6 @@ class TestUserDashboard(WebTestBase):
     endpoint = "transformation_results"
     module = "servicex.web.transformation_results"
     template_name = 'transformation_results.html'
-
-    @staticmethod
-    def fake_header():
-        access_token = create_access_token('testuser')
-        headers = {
-            'Authorization': 'Bearer {}'.format(access_token)
-        }
-        return headers
 
     @pytest.fixture
     def mock_tr_cls(self, mocker):

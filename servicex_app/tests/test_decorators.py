@@ -1,6 +1,5 @@
 
 from flask import Response, make_response, url_for
-from flask_jwt_extended import create_access_token
 
 from tests.web.web_test_base import WebTestBase
 
@@ -10,13 +9,6 @@ def fake_route() -> Response:
 
 
 class TestDecorators(WebTestBase):
-    @staticmethod
-    def fake_header():
-        access_token = create_access_token('testuser')
-        headers = {
-            'Authorization': 'Bearer {}'.format(access_token)
-        }
-        return headers
 
     def test_oauth_decorator_auth_disabled(self, client):
         from servicex.decorators import oauth_required
