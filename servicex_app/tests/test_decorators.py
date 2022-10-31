@@ -54,65 +54,6 @@ class TestDecorators(WebTestBase):
         assert template.name == "profile.html"
         assert context["user"] == user
 
-    '''def test_auth_decorator_auth_disabled(self, client):
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_auth_decorator_user_deleted(self, mocker, mock_jwt_extended):
-        mocker.patch('servicex.decorators.UserModel.find_by_sub',
-                     return_value=None)
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_auth_decorator_user_pending(self, mock_jwt_extended, user):
-        user.pending = True
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_auth_decorator_authorized(self, mocker, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_admin_decorator_auth_disabled(self, client):
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_admin_decorator_unauthorized(self, mocker, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        user.admin = False
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_admin_decorator_authorized(self, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        user.admin = True
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200'''
-
     def test_auth_decorator_integration_auth_disabled(self, mocker, client):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
