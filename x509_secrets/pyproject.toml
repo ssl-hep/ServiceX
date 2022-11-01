@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "x509_secrets"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 kubernetes = "^25.3.0"
 
 
