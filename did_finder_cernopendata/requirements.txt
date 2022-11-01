@@ -1,1 +1,1 @@
-servicex-did-finder-lib>=1.1a5
+servicex-did-finder-lib>=1.3
