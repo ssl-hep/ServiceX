@@ -18,7 +18,7 @@ spec:
         app: {{ .Release.Name }}-did-finder-rucio
     spec:
       containers:
-      - name: {{ .Release.Name }}-did-finder-rucio
+      - name: did-finder
         image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
         command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
@@ -62,7 +62,7 @@ spec:
             mountPath: /etc/grid-security-ro
             readOnly: true
       {{- if ((.Values.didFinder.rucio.memcache).enabled) }}
-      - name: {{ .Release.Name }}-did-finder-rucio-memcache
+      - name: memcache
         image: {{ .Values.didFinder.rucio.memcache.image }}:{{ .Values.didFinder.rucio.memcache.tag }}
       {{- end }}
       volumes:
