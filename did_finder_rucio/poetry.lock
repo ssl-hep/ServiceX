@@ -299,7 +299,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
 name = "rucio-clients"
-version = "1.29.7.post1"
+version = "1.29.8"
 description = "Rucio Client Lite Package"
 category = "main"
 optional = false
@@ -322,7 +322,7 @@ swift = ["python-swiftclient (>=3.13.1,<3.14.0)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "1.2"
+version = "1.3.1"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -419,7 +419,7 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "8e064057df8119105af7b363a958933adfc87b5c3e29510c49a1d602e379c381"
+content-hash = "e0063e7f453015fdca242d6e10fccde6df07329ef306457bdc134081457e95fc"
 
 [metadata.files]
 attrs = [
@@ -599,11 +599,11 @@ requests = [
     {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
 ]
 rucio-clients = [
-    {file = "rucio-clients-1.29.7.post1.tar.gz", hash = "sha256:45498d0711cc73f9fa2d4e9dcf137d01d9908224d717841cbdad9ceffc442685"},
+    {file = "rucio-clients-1.29.8.tar.gz", hash = "sha256:a4fe275ac3aec4711462694890b4712150cb8599d984895dbba713a233c88c7a"},
 ]
 servicex-did-finder-lib = [
-    {file = "ServiceX_DID_Finder_lib-1.2-py3-none-any.whl", hash = "sha256:2837636a84e223509490f95ac86834c00af97da38a90b5fcc43cac4e36059685"},
-    {file = "ServiceX_DID_Finder_lib-1.2.tar.gz", hash = "sha256:ee4bbf2776322b949a6c9a6e486ee7dbd73eb4953f8430f8b13cfa8bcca9238c"},
+    {file = "servicex_did_finder_lib-1.3.1-py3-none-any.whl", hash = "sha256:795f00b718e7e6836f84f5303addb74281851393c362f784492b618346714b42"},
+    {file = "servicex_did_finder_lib-1.3.1.tar.gz", hash = "sha256:34fc4e46850952e3ff6dc536e678dfef483f10b1bdc739b6f634e8b9fc42947c"},
 ]
 setuptools = [
     {file = "setuptools-65.5.0-py3-none-any.whl", hash = "sha256:f62ea9da9ed6289bfe868cd6845968a2c854d1427f8548d52cae02a42b4f0356"},

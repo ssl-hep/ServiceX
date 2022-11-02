@@ -10,7 +10,7 @@ packages = [{include = "did_finder_rucio"}]
 python = "^3.9"
 rucio-clients = "^1.29.7.post1"
 pika = "1.1.0"
-servicex-did-finder-lib = "1.2"
+servicex-did-finder-lib = "^1.3"
 xmltodict = "^0.13.0"
 wheel = "^0.37.1"
 pymemcache = "^4.0.0"
