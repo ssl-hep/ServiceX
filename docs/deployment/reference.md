@@ -11,6 +11,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `logging.logstash.host`              | Host running logstash listening for log data     | `servicex.atlas-ml.org` |
 | `logging.logstash.port`              | Port to send logging to                          | 5959 |
 | `logging.logstash.protocol`          | Protocol to be used (options are TCP and UDP)    | TCP |
+| `logging.logstash.monitor`           | Link to be shown inside Monitor web page iframe  | UC Kibana dashboard |
+  `logging.logstash.logs`              | Link to be shown inside Logs web page iframe     | UC Kibana dashboard |
 | `app.image`                          | ServiceX_App image name                          | `sslhep/servicex_app`                                   |
 | `app.tag`                            | ServiceX image tag                               | `latest`                                                |
 | `app.logLevel`                       | Logging level for ServiceX web app (uses standard unix levels) | `WARNING` |

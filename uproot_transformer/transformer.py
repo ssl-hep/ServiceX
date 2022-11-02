@@ -317,11 +317,12 @@ def transform_single_file(file_path, output_path, servicex=None):
         stime = time.time()
 
         awkward_array = generated_transformer.run_query(file_path)
-        total_events = ak.num(awkward_array, axis=0)
+        total_events = awkward_array.__len__()
 
         ttime = time.time()
 
         explode_records = bool(awkward_array.fields)
+
         try:
             arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
         except TypeError:

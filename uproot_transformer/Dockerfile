@@ -8,18 +8,7 @@ RUN apt-get update -y && apt-get install gnupg2 -y
 RUN conda install --yes \
     -c conda-forge \
     conda-build \
-    lz4 \
     xrootd==5.4.3 \
-    tini==0.18.0 \
-    && conda build purge-all && conda clean -ti
-
-RUN conda install --yes \
-    -c conda-forge \
-    python-blosc \
-    cytoolz \
-    numpy==1.23.3 \
-    pandas==1.5.0 \
-    scipy==1.6.0 \
     && conda build purge-all && conda clean -ti
 
 RUN apt update && \

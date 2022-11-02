@@ -100,38 +100,42 @@ entry
 [11355980 rows x 1 columns]
 ```
 
-### Uproot
+### uproot
+
+Instead of a rucio dataset, here we will use a file directly available over `https`,
+and a slightly more complex query, and we'll ask for the data to be locally downloaded
+so we can access the files directly.
 
 ```python
-import pandas as pd
 from func_adl_servicex import ServiceXSourceUpROOT
+import servicex
+import awkward as ak
 
-dataset_name = "data15_13TeV:data15_13TeV.00282784.physics_Main.deriv.DAOD_PHYSLITE.r9264_p3083_p4165_tid21568807_00"
-src = ServiceXSourceUpROOT(dataset_name, "CollectionTree")
-data = src.Select("lambda e: {'JetPT': e['AnalysisJetsAuxDyn.pt']}") \
-    .AsParquetFiles('junk.parquet') \
-    .value()
-df = pd.read_parquet(data[0])
-print(df)
+dataset_name = [
+    "https://xrootd-local.unl.edu:1094//store/user/AGC/nanoAOD/nanoaod15.root"
+]
+sx_dataset = servicex.ServiceXDataset(dataset_name, "uproot")
+ds = ServiceXSourceUpROOT(sx_dataset, "Events")
+
+data = ds.Select(
+    lambda evt: {
+        "pt": evt.GenJet_pt,
+        "eta": evt.GenJet_eta,
+        "phi": evt.GenJet_phi,
+        "mass": evt.GenJet_mass,
+    }
+).AsParquetFiles('junk.parquet').value()
+
+d = ak.from_parquet(data[0])
+print(d)
+print(len(d))
 ```
 
 Expected output:
 
-```
-                                                   JetPT
-0      [56970.56, 57738.047, 24149.762, 15421.779, 14...
-1      [123299.94, 89595.32, 75777.94, 18421.592, 164...
-2      [172519.64, 115030.47, 111144.8, 97817.69, 934...
-3      [28965.395, 15481.423, 14233.97, 16032.507, 12...
-4      [288785.3, 189529.4, 80025.805, 43544.61, 1581...
-...                                                  ...
-54238  [347737.28, 313428.75, 46344.66, 33925.395, 20...
-54239                   [45954.137, 41864.71, 15005.428]
-54240  [76411.27, 66487.41, 60403.04, 51341.3, 41749....
-54241                  [33027.637, 24204.908, 18219.818]
-54242                                                 []
-
-[54243 rows x 1 columns]
+```python
+[{pt: [36.3, 24.7], eta: [2.87, 3.13], phi: [, ... -2.15], mass: [12.3, 6.51, 3.98]}]
+349
 ```
 
 ## Next steps

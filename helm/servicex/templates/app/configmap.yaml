@@ -165,3 +165,9 @@ data:
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
 
+    {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.monitor }}
+    MONITOR_URL = {{ tpl .Values.logging.logstash.monitor . | quote}}
+    {{ end }}   
+    {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.logs }}
+    LOGS_URL = {{ tpl .Values.logging.logstash.logs . | quote}}
+    {{ end }}   
