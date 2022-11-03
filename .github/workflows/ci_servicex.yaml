@@ -100,7 +100,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ${{ matrix.app.dir_name }}
-          push: true
+          push: false
           tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
