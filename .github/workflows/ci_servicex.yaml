@@ -102,7 +102,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ${{ matrix.app.dir_name }}
-          load: true
           push: true
           tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
           cache-from: type=gha
