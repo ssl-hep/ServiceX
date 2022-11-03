@@ -12,6 +12,7 @@ func-adl-xAOD = "2.0.1"
 servicex-code-gen-lib = "^1.0.0"
 
 [tool.poetry.group.test]
+optional = true
 
 [tool.poetry.group.test.dependencies]
 pytest-flask = "^1.2.0"

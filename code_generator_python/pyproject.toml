@@ -11,6 +11,7 @@ python = "~3.10"
 servicex-code-gen-lib = "^1.0.0"
 
 [tool.poetry.group.test]
+optional = true
 
 [tool.poetry.group.test.dependencies]
 pytest-flask = "^1.2.0"

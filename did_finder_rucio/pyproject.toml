@@ -16,6 +16,7 @@ wheel = "^0.37.1"
 pymemcache = "^4.0.0"
 
 [tool.poetry.group.test]
+optional = true
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
