@@ -103,7 +103,7 @@ jobs:
         with:
           context: ${{ matrix.app.dir_name }}
           load: true
-          push: false
+          push: true
           tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
