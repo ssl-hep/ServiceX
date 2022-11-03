@@ -1,10 +1,10 @@
+name: Create and Publish Helm Packages
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10, will be triggered when a new tag is pushed
 
-name: Create and Publish Helm Packages
 jobs:
   call-ci-servicex:
     uses: ./.github/workflows/ci_servicex.yaml
