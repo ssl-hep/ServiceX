@@ -35,8 +35,12 @@ jobs:
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Create release version env var
         run: |
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-          echo $RELEASE_VERSION
+          # Remove leading v from version string
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" | sed s/v// >> $GITHUB_ENV
+          echo "$RELEASE_VERSION"
+          echo "DOCKER_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo "$DOCKER_TAG"
+
       - name: Set version in flux_river_configs
         uses: mikefarah/yq@master
         with:
@@ -44,12 +48,12 @@ jobs:
             yq -i '.spec.chart.spec.version = "'$RELEASE_VERSION'" | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-uproot/values.yaml &&
             yq -i '.spec.chart.spec.version = "'$RELEASE_VERSION'" | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-xaod/values.yaml &&
             yq -i '.appVersion = "'$RELEASE_VERSION'" | .appVersion style="double" | .version = "'$RELEASE_VERSION'"| .version style="double" ' helm/servicex/Chart.yaml &&
-            yq -i '.app.tag = "'$RELEASE_VERSION'" | .app.tag style="double" |
-            .didfinder.rucio.tag = "'$RELEASE_VERSION'" | .didfinder.rucio.tag style="double" |
-            .didFinder.CERNOpendata.tag = "'$RELEASE_VERSION'" | .didFinder.CERNOpendata.tag style="double" |
-            .transformer.defaultTransformerTag = "'$RELEASE_VERSION'" | .transformer.defaultTransformerTag style="double" |
-            .x509secrets.tag = "'$RELEASE_VERSION'" | .x509secrets.tag style="double" |
-            .codeGen.tag = "'$RELEASE_VERSION'" | .codeGen.tag style="double" ' helm/servicex/values.yaml
+            yq -i '.app.tag = "'$DOCKER_TAG'" | .app.tag style="double" |
+            .didfinder.rucio.tag = "'$DOCKER_TAG'" | .didfinder.rucio.tag style="double" |
+            .didFinder.CERNOpendata.tag = "'$DOCKER_TAG'" | .didFinder.CERNOpendata.tag style="double" |
+            .transformer.defaultTransformerTag = "'$DOCKER_TAG'" | .transformer.defaultTransformerTag style="double" |
+            .x509secrets.tag = "'$DOCKER_TAG'" | .x509secrets.tag style="double" |
+            .codeGen.tag = "'$DOCKER_TAG'" | .codeGen.tag style="double" ' helm/servicex/values.yaml
       - name: Create helm package
         working-directory: ./helm
         run: |
