@@ -13,7 +13,7 @@ dev = ["black", "coverage", "isort", "pre-commit", "pyenchant", "pylint"]
 name = "attrs"
 version = "22.1.0"
 description = "Classes Without Boilerplate"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.5"
 
@@ -57,7 +57,7 @@ test = ["pytest (>=6)", "pytest-cov"]
 name = "certifi"
 version = "2022.9.24"
 description = "Python package for providing Mozilla's CA Bundle."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -65,7 +65,7 @@ python-versions = ">=3.6"
 name = "charset-normalizer"
 version = "2.1.1"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6.0"
 
@@ -87,7 +87,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "codecov"
 version = "2.1.12"
 description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -107,7 +107,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7
 name = "coverage"
 version = "6.5.0"
 description = "Code coverage measurement for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -121,7 +121,7 @@ toml = ["tomli"]
 name = "exceptiongroup"
 version = "1.0.0"
 description = "Backport of PEP 654 (exception groups)"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -132,7 +132,7 @@ test = ["pytest (>=6)"]
 name = "flake8"
 version = "5.0.4"
 description = "the modular source code checker: pep8 pyflakes and co"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6.1"
 
@@ -245,7 +245,7 @@ test = ["flake8", "pytest", "pytest-cov"]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.5"
 
@@ -253,7 +253,7 @@ python-versions = ">=3.5"
 name = "iniconfig"
 version = "1.1.1"
 description = "iniconfig: brain-dead simple config-ini parsing"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -315,7 +315,7 @@ python-versions = ">=3.7"
 name = "mccabe"
 version = "0.7.0"
 description = "McCabe checker, plugin for flake8"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -342,7 +342,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 name = "pluggy"
 version = "1.0.0"
 description = "plugin and hook calling mechanisms for python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -354,7 +354,7 @@ testing = ["pytest", "pytest-benchmark"]
 name = "pycodestyle"
 version = "2.9.1"
 description = "Python style guide checker"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -362,7 +362,7 @@ python-versions = ">=3.6"
 name = "pyflakes"
 version = "2.5.0"
 description = "passive checker of Python programs"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -381,7 +381,7 @@ diagrams = ["jinja2", "railroad-diagrams"]
 name = "pytest"
 version = "7.2.0"
 description = "pytest: simple powerful testing with Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -401,7 +401,7 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.
 name = "pytest-cov"
 version = "4.0.0"
 description = "Pytest plugin for measuring coverage."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -432,7 +432,7 @@ docs = ["Sphinx", "sphinx-rtd-theme"]
 name = "pytest-mock"
 version = "3.10.0"
 description = "Thin-wrapper around the mock package for easier use with pytest"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -444,7 +444,7 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "pytz"
-version = "2022.5"
+version = "2022.6"
 description = "World timezone definitions, modern and historical"
 category = "main"
 optional = false
@@ -468,7 +468,7 @@ test = ["flake8", "pytest", "pytest-cov"]
 name = "requests"
 version = "2.28.1"
 description = "Python HTTP for Humans."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7, <4"
 
@@ -484,24 +484,18 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.0"
+version = "1.1.1"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-codecov = ">=2.1.12,<3.0.0"
-coverage = ">=6.5.0,<7.0.0"
-flake8 = ">=5.0.4,<6.0.0"
 Flask = ">=2.2.2,<3.0.0"
 Flask-RESTful = ">=0.3.9,<0.4.0"
 Flask-WTF = ">=1.0.1,<2.0.0"
 itsdangerous = ">=2.1.2,<3.0.0"
 Jinja2 = ">=3.1.2,<4.0.0"
-pytest = ">=7.1.3,<8.0.0"
-pytest-cov = ">=4.0.0,<5.0.0"
-pytest-mock = ">=3.10.0,<4.0.0"
 Werkzeug = ">=2.2.2,<3.0.0"
 
 [[package]]
@@ -537,7 +531,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -562,7 +556,7 @@ test = ["dask[array]", "flake8", "flake8-print (>=5)", "lz4", "pytest (>=4.6)", 
 name = "urllib3"
 version = "1.26.12"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4"
 
@@ -621,7 +615,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "1159f424f1fed014fa19e81852c1ffa57370569de20dd9ae38a5373a110cf780"
+content-hash = "d79eaecfd6206e413495a25ad80471d22f7be61cbe8ce9d1a13c4a567fa916a7"
 
 [metadata.files]
 aniso8601 = [
@@ -923,8 +917,8 @@ pytest-mock = [
     {file = "pytest_mock-3.10.0-py3-none-any.whl", hash = "sha256:f4c973eeae0282963eb293eb173ce91b091a79c1334455acfac9ddee8a1c784b"},
 ]
 pytz = [
-    {file = "pytz-2022.5-py2.py3-none-any.whl", hash = "sha256:335ab46900b1465e714b4fda4963d87363264eb662aab5e65da039c25f1f5b22"},
-    {file = "pytz-2022.5.tar.gz", hash = "sha256:c4d88f472f54d615e9cd582a5004d1e5f624854a6a27a6211591c251f22a6914"},
+    {file = "pytz-2022.6-py2.py3-none-any.whl", hash = "sha256:222439474e9c98fced559f1709d89e6c9cbf8d79c794ff3eb9f8800064291427"},
+    {file = "pytz-2022.6.tar.gz", hash = "sha256:e89512406b793ca39f5971bc999cc538ce125c0e51c27941bef4568b460095e2"},
 ]
 qastle = [
     {file = "qastle-0.15.0-py3-none-any.whl", hash = "sha256:6fab349333752dfa637bcf65d0c6a42c251721bc6e6a3a74e3dad6fb2e9b4d8e"},
@@ -935,8 +929,8 @@ requests = [
     {file = "requests-2.28.1.tar.gz", hash = "sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.0-py3-none-any.whl", hash = "sha256:462a19b8785aaa157bd47e4f24cabe77d49d9244699d423848b7131651bab8f0"},
-    {file = "servicex_code_gen_lib-1.1.0.tar.gz", hash = "sha256:711a441a5ebfcae975976d70f64f4f1bcb247ddee8309d0ed6d583620350fa2a"},
+    {file = "servicex_code_gen_lib-1.1.1-py3-none-any.whl", hash = "sha256:f598f60147239f088ce7fa535f1d1f633136384d37f9c6b41177d7b3cf7981f2"},
+    {file = "servicex_code_gen_lib-1.1.1.tar.gz", hash = "sha256:78c1afae78c723319df448c8783b0e4258f04d08a7119d001788234953c7ab78"},
 ]
 setuptools = [
     {file = "setuptools-65.5.0-py3-none-any.whl", hash = "sha256:f62ea9da9ed6289bfe868cd6845968a2c854d1427f8548d52cae02a42b4f0356"},
