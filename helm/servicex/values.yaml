@@ -24,21 +24,21 @@ app:
     retries: 12
     retry_interval: 10
   replicas: 1
-  tag: 20220928-0107-stable
+  tag: develop
   tokenExpires: false
   validateTransformerImage: true
 codeGen:
   enabled: true
   image: sslhep/servicex_code_gen_atlas_xaod
   pullPolicy: Always
-  tag: 20220928-0107-stable
+  tag: develop
 didFinder:
   CERNOpenData:
     cachePrefix: null
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
     pullPolicy: Always
-    tag: 20220926-1720-stable
+    tag: develop
   rucio:
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
     cachePrefix: null
@@ -54,7 +54,7 @@ didFinder:
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     servicex_latitude: 41.78
     servicex_longitude: -87.7
-    tag: 20220926-1720-stable
+    tag: develop
 gridAccount: <your account>
 logging:
   logstash:
@@ -113,7 +113,7 @@ transformer:
     minReplicas: 1
   cpuLimit: 1
   defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultTransformerTag: 20220928-0107-stable
+  defaultTransformerTag: develop
   persistence:
     existingClaim: null
     subdir: null
@@ -123,5 +123,5 @@ x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6
   pullPolicy: Always
-  tag: 20220928-0107-stable
+  tag: develop
   vomsOrg: atlas
