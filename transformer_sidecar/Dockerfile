@@ -7,9 +7,15 @@ RUN apt-get update && \
     -y python3-pip && \
     ln -s /usr/bin/python3 /usr/bin/python
 
-COPY requirements.txt .
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install -r requirements.txt
+
+ENV  POETRY_VERSION=1.2.1
+RUN pip install poetry==$POETRY_VERSION
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
@@ -17,10 +23,10 @@ ENV PYTHONUNBUFFERED=1
 
 # Copy over the source
 COPY transformer.py \
-     validate_requests.py \
-     scripts/proxy-exporter.sh \
-     scripts/watch.sh \
-     ./
+    validate_requests.py \
+    scripts/proxy-exporter.sh \
+    scripts/watch.sh \
+    ./
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR /etc/grid-security/certificates

@@ -17,24 +17,22 @@
   {
     "image_name": "servicex-did-finder",
     "dir_name": "did_finder_rucio",
-    "test_required": true
+    "test_required": false
   },
   {
     "image_name": "servicex_code_gen_func_adl_uproot",
     "dir_name": "code_generator_funcadl_uproot",
-    "test_required": true
-  },
-  {
-    "image_name": "servicex_sidecar_transformer",
-    "dir_name": "transformer_sidecar",
+    "test_required": false
   },
   {
     "image_name": "servicex_func_adl_uproot_transformer",
-    "dir_name": "uproot_transformer",
+    "dir_name": "uproot_transformer"
   },
   {
     "image_name": "x509-secrets",
     "dir_name": "x509_secrets",
+    "test_required": false
+
   },
   {
     "image_name": "servicex_func_adl_xaod_transformer",
@@ -52,7 +50,7 @@
   {
     "image_name": "servicex_code_gen_cms_aod",
     "dir_name": "code_generator_funcadl_xAOD",
-    "test_required": false
+    "test_required": true
   },
   {
   "image_name": "servicex_code_gen_atlas_xaod",

@@ -26,16 +26,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
-import logstash
-from distutils.util import strtobool
-import sys
-
 import os
+import sys
+from distutils.util import strtobool
 
+import logstash
 from flask import Flask
 from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
-from flask_jwt_extended import (JWTManager)
+from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
@@ -45,7 +44,6 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
-
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
@@ -258,8 +256,9 @@ def create_app(test_config=None,
         # Inject useful Python modules to make them available in all templates
         @app.context_processor
         def inject_modules():
-            import humanize
             import datetime
+
+            import humanize
             return dict(datetime=datetime, humanize=humanize)
 
     return app

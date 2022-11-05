@@ -1,5 +1,0 @@
-pytest>=3.6
-coverage
-pytest-mock
-flake8
-codecov==2.0.16

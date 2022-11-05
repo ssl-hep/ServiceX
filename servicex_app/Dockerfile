@@ -5,16 +5,14 @@ RUN useradd -ms /bin/bash servicex
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
+ENV  POETRY_VERSION=1.2.2
+RUN pip install poetry==$POETRY_VERSION
+
 COPY README.rst README.rst
-COPY setup.py setup.py
-COPY setup.cfg setup.cfg
-COPY requirements.txt requirements.txt
-
-# Just needed for setup.py to initialize
-COPY requirements_test.txt requirements_test.txt
-
-RUN pip install -e .
-RUN pip install gunicorn
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex

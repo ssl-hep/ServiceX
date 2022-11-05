@@ -3,7 +3,7 @@
 # FROM daskdev/dask:2.9.0
 FROM continuumio/miniconda3:4.12.0
 
-RUN apt-get update -y && apt-get install gnupg2 -y 
+RUN apt-get update -y && apt-get install gnupg2 -y
 
 RUN conda install --yes \
     -c conda-forge \

@@ -29,7 +29,6 @@ import json
 from unittest.mock import call
 
 from flask import current_app
-
 from servicex import LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
@@ -84,7 +83,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_bad_workflow(self, client):
         request = self._generate_transformation_request(columns=None, selection=None)
-        r = client.post('/servicex/transformation', json=request)
+        r = client.post('/servicex/transformation', json=request, headers=self.fake_header())
         assert r.status_code == 400
 
     def test_submit_transformation_bad_did_scheme(self, client):
@@ -100,7 +99,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
         response = client.post('/servicex/transformation',
-                               json=self._generate_transformation_request())
+                               json=self._generate_transformation_request(), headers=self.fake_header())
         assert response.status_code == 503
         assert response.json == {"message": "Error setting up transformer queues"}
 
@@ -108,7 +107,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         request = self._generate_transformation_request()
 
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
@@ -158,7 +158,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = self._generate_transformation_request()
         request['did'] = '123-45-678'  # No scheme
 
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
@@ -190,7 +191,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_code_gen_service
         )
 
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
 
@@ -252,7 +254,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    lookup_result_processor=mock_processor,
                                    transformation_manager=mock_transformer_manager)
 
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
 
@@ -300,7 +303,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             docker_repo_adapter=mock_docker_repo_adapter,
         )
         request = self._generate_transformation_request()
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         mock_docker_repo_adapter.check_image_exists.assert_not_called()
 
@@ -311,7 +315,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             mocker.Mock(side_effect=ValueError('This is the error message'))
         request = self._generate_transformation_request_xAOD_root_file()
         client = self._test_client(code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 400
 
     def test_submit_transformation_missing_dataset_source(self, client):
@@ -347,7 +352,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             "result-format": "parquet"
         })
 
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
 
@@ -363,7 +369,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     ):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         response = client.post('/servicex/transformation',
-                               json=self._generate_transformation_request())
+                               json=self._generate_transformation_request(), headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
 
@@ -375,7 +381,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_title(self, client):
         title = "Things Fall Apart"
         request = self._generate_transformation_request(title=title)
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/servicex/transformation',
+                               json=request, headers=self.fake_header())
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():

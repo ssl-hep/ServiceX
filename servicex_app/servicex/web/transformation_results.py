@@ -1,8 +1,7 @@
-from flask import render_template, request, abort
-from flask_sqlalchemy import Pagination
-
+from flask import abort, render_template, request
+from flask_sqlalchemy.pagination import Pagination
 from servicex.decorators import oauth_required
-from servicex.models import TransformRequest, TransformationResult
+from servicex.models import TransformationResult, TransformRequest
 
 
 @oauth_required

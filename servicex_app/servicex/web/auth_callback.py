@@ -3,6 +3,8 @@ from flask import flash, request, redirect, url_for, session
 from servicex.models import UserModel
 from .utils import load_app_client
 
+from globus_sdk import AuthClient, AccessTokenAuthorizer
+
 
 def auth_callback():
     """Handles the interaction with Globus Auth."""
@@ -25,7 +27,9 @@ def auth_callback():
     # Otherwise, we're coming back from Globus Auth with a code
     code = request.args.get('code')
     tokens = client.oauth2_exchange_code_for_tokens(code)
-    id_token = tokens.decode_id_token(client)
+    auth_tokens = tokens.by_resource_server["auth.globus.org"]
+    ac = AuthClient(authorizer=AccessTokenAuthorizer(auth_tokens["access_token"]))
+    id_token = ac.oauth2_userinfo()
 
     session.update(
         tokens=tokens.by_resource_server,

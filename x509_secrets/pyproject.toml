@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "x509-secrets"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "x509_secrets"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+kubernetes = "^25.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
