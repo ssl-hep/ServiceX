@@ -106,4 +106,5 @@ jobs:
           cache-to: type=${{ (matrix.app.cache_required && 'gha') || 'inline'}},mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
+        run: echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
           
