@@ -107,8 +107,8 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: type=${{ (matrix.app.cache_required && 'gha') || 'steps.extract_tag_name.outputs.imagetag' }}
-          cache-to: type=${{ (matrix.app.cache_required && 'gha') || 'inline'}},mode=max
+          cache-from: type=${{ (matrix.app.cache_required && 'gha') || steps.extract_tag_name.outputs.imagetag }}
+          cache-to: type=${{ (matrix.app.cache_required && 'gha,mode=max') || 'inline'}}
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
           
