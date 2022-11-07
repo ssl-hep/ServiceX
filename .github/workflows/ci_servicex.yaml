@@ -87,9 +87,11 @@ jobs:
         shell: bash
         run: echo "##[set-output name=imagetag;]$(echo sslhep/${{matrix.app.image_name}}:${GITHUB_REF##*/})"
         id: extract_tag_name
-      - name: Print Cache Status
+      - name: Print Cache Status and Tag Name
         shell: bash
-        run: echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
+        run: |
+           echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
+           echo "${{ steps.extract_tag_name.outputs.imagetag }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
