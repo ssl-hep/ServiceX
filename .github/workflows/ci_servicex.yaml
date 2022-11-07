@@ -105,7 +105,7 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: type=${{ (matrix.app.cache_required && 'gha') || 'type=registry,ref=steps.extract_tag_name.outputs.imagetag' }}
+          cache-from: type=${{ (matrix.app.cache_required && 'gha') || 'steps.extract_tag_name.outputs.imagetag' }}
           cache-to: type=${{ (matrix.app.cache_required && 'gha') || 'inline'}},mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
