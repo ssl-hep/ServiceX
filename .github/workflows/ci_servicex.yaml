@@ -95,7 +95,7 @@ jobs:
       - name: Print Cache Status and Tag Name
         shell: bash
         run: |
-           echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
+           echo "${{ (matrix.app.cache_required && 'gha') || 'registry' }}"
            echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
