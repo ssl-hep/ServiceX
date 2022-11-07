@@ -87,6 +87,9 @@ jobs:
         shell: bash
         run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
         id: extract_tag_name
+      - name: Print Cache Status
+        shell: bash
+        run: echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -106,5 +109,4 @@ jobs:
           cache-to: type=${{ (matrix.app.cache_required && 'gha') || 'inline'}},mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
-        run: echo "${{ (matrix.app.cache_required && 'gha') || 'inline' }}"
           
