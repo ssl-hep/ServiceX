@@ -102,8 +102,8 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: ${{ if(matrix.app.cache == true) }} type=gha ${{ else }} type=inline
-          cache-to: ${{ if(matrix.app.cache == true) }} type=gha,mode=max ${{ else }} type=inline,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
           
