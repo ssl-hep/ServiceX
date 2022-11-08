@@ -152,9 +152,9 @@ class TransformRequest(db.Model):
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, nullable=True)
-    files_completed = db.Column(db.Integer, default=0, nullable=True)
-    files_failed = db.Column(db.Integer, default=0, nullable=True)
-    files_remaining = db.Column(db.Integer, default=0, nullable=True)
+    files_completed = db.Column(db.Integer, default=0, nullable=False)
+    files_failed = db.Column(db.Integer, default=0, nullable=False)
+    files_remaining = db.Column(db.Integer, nullable=True)
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)

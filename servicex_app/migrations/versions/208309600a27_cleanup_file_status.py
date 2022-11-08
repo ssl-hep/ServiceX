@@ -23,7 +23,7 @@ def upgrade():
     # adding columns to requests so we don't need to always look up transform results
     op.add_column('requests', sa.Column('files_completed', sa.Integer(), nullable=False))
     op.add_column('requests', sa.Column('files_failed', sa.Integer(), nullable=False))
-    op.add_column('requests', sa.Column('files_remaining', sa.Integer(), nullable=False))
+    op.add_column('requests', sa.Column('files_remaining', sa.Integer(), nullable=True))
     op.drop_column('requests', 'files_skipped')
 
     # speeds up transform result lookups
