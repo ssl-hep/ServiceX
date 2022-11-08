@@ -1,7 +1,7 @@
 uproot==4.3.7
 awkward==1.10.1
 pyarrow==9.0.0
-servicex-transformer==1.0.7
+servicex-transformer==1.0.8rc01
 vector==0.8.4
 minio==7.1.12
 pika==1.1.0
