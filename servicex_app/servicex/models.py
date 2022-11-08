@@ -166,7 +166,7 @@ class TransformRequest(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
 
     def to_json(self):
         iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -217,6 +217,24 @@ class TransformRequest(db.Model):
                 return cls.query.filter_by(request_id=key).one()
         except NoResultFound:
             return None
+
+    @classmethod
+    def file_transformed_successfully(cls, key: Union[str, int]) -> None:
+        req = cls.query.filter_by(request_id=key).with_for_update().one()
+        req.files_completed += 1
+        db.session.commit()
+
+    @classmethod
+    def file_transformed_unsuccessfully(cls, key: Union[str, int]) -> None:
+        req = cls.query.filter_by(request_id=key).with_for_update().one()
+        req.files_failed += 1
+        db.session.commit()
+
+    @classmethod
+    def add_a_file(cls, rID) -> None:
+        req = cls.query.filter_by(request_id=rID).with_for_update().one()
+        req.files += 1
+        db.session.commit()
 
     @property
     def age(self) -> timedelta:
@@ -322,7 +340,7 @@ class TransformationResult(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
 
 
 class DatasetFile(db.Model):

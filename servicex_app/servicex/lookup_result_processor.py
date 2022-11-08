@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+from servicex.models import TransformRequest
 
 
 class LookupResultProcessor:
@@ -36,6 +37,8 @@ class LookupResultProcessor:
     def add_file_to_dataset(self, submitted_request, dataset_file):
         request_id = submitted_request.request_id
         dataset_file.save_to_db()
+
+        TransformRequest.add_a_file(request_id)
 
         transform_request = {
             'request-id': request_id,
@@ -57,7 +60,7 @@ class LookupResultProcessor:
                                 num_files,  total_events=0,
                                 total_bytes=0, did_lookup_time=0):
         # not really needed if correctly incremented in add_file to dataset
-        submitted_request.files = num_files
+        # submitted_request.files = num_files
         submitted_request.total_events = total_events
         submitted_request.total_bytes = total_bytes
         submitted_request.did_lookup_time = did_lookup_time

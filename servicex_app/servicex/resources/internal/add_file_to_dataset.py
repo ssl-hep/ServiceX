@@ -60,7 +60,6 @@ class AddFileToDataset(ServiceXResource):
 
                 self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
-            db.session.commit()
             current_app.logger.info("Adding files.",
                                     extra={
                                         'requestId': request_id,

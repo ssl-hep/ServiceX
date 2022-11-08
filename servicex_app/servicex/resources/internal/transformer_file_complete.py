@@ -51,12 +51,9 @@ class TransformerFileComplete(ServiceXResource):
             return {"message": msg}, 404
 
         if info['status'] == 'success':
-            transform_req.files_completed += 1
+            transform_req.file_transformed_successfully()
         else:
-            transform_req.files_failed += 1
-
-        transform_req.save_to_db()
-        db.session.commit()
+            transform_req.file_transformed_unsuccessfully()
 
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
@@ -73,10 +70,6 @@ class TransformerFileComplete(ServiceXResource):
             messages=info['num-messages']
         )
         rec.save_to_db()
-
-        # Commit here to avoid race condition with other file complete messages which
-        # could result in miscounting completed files.
-        db.session.commit()
 
         current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
