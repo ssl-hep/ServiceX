@@ -231,16 +231,16 @@ class TransformRequest(db.Model):
         db.session.commit()
 
     @classmethod
-    def add_a_file(cls, key: Union[str, int]) -> None:
+    def add_a_file(cls, key) -> None:
 
-        if isinstance(key, int) or key.isnumeric():
-            req = cls.query.get(key).with_for_update().one()
-            req.files += 1
-            db.session.commit()
-        else:
-            req = cls.query.filter_by(request_id=key).with_for_update().one()
-            req.files += 1
-            db.session.commit()
+        # if isinstance(key, int) or key.isnumeric():
+        #     req = cls.query.get(key).with_for_update().one()
+        #     req.files += 1
+        #     db.session.commit()
+        # else:
+        req = cls.query.filter_by(request_id=key).with_for_update().one()
+        req.files += 1
+        db.session.commit()
 
     @property
     def age(self) -> timedelta:
