@@ -45,9 +45,9 @@
 
       <td>
         <div>
-          <a id="files-processed-{{ req.request_id }}"
+          <a id="files-completed-{{ req.request_id }}"
             href="/transformation-request/{{ req.id }}/results?status=success">
-            {{ humanize.intcomma(req.files_processed) }}
+            {{ humanize.intcomma(req.files_completed) }}
           </a> of
           <span id="files-total-{{ req.request_id }}">
             {{ humanize.intcomma(req.files or "Unknown") }}
@@ -96,14 +96,14 @@
         .then((resp) => resp.json())
         .then((data) => {
           const status = data["status"];
-          const processed = data["files-processed"];
+          const processed = data["files-completed"];
           const remaining = data["files-remaining"];
-          const failed = data["files-skipped"];
+          const failed = data["files-failed"];
           const total_files = processed + remaining + failed
           const progress = (processed + failed) / total_files * 100;
 
           $(`#status-${req_id}`).text(status);
-          $(`#files-processed-${req_id}`).text(processed);
+          $(`#files-completed-${req_id}`).text(processed);
           $(`#files-total-${req_id}`).text(total_files);
           const progressBar = $(`#progress-bar-${req_id}`)
           progressBar.text(`${Math.floor(progress)}%`)

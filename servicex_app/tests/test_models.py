@@ -89,10 +89,10 @@ class TestTransformRequest:
         request.files = None
         assert request.files_remaining is None
 
-    def test_files_processed(self, mock_result_cls):
+    def test_files_completed(self, mock_result_cls):
         mock_result_cls.query.filter_by.return_value.count.return_value = 3
         request = TransformRequest(request_id="1234")
-        assert request.files_processed == 3
+        assert request.files_completed == 3
         mock_result_cls.query.filter_by.assert_called_once_with(
             request_id=request.request_id, transform_status="success"
         )

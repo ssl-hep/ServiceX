@@ -57,8 +57,8 @@ class TransformationStatus(ServiceXResource):
             "request-id": request_id,
             "submit-time": transform.submit_time.strftime(iso_fmt),
             "finish-time": transform.finish_time,
-            "files-processed": transform.files_processed,
-            "files-skipped": transform.files_failed,
+            "files-completed": transform.files_completed,
+            "files-failed": transform.files_failed,
             "files-remaining": transform.files_remaining,
             "stats": transform.statistics
         }

@@ -71,12 +71,12 @@ class TestLookupResultProcessor(ResourceTestBase):
         transform_request = self._generate_transform_request()
 
         processor.report_fileset_complete(transform_request,
-                                          num_files=1, num_skipped=2,
+                                          num_files=1, num_failed=2,
                                           total_events=3, total_bytes=4,
                                           did_lookup_time=5)
 
         assert transform_request.files == 1
-        assert transform_request.files_skipped == 2
+        assert transform_request.files_failed == 2
         assert transform_request.total_events == 3
         assert transform_request.total_bytes == 4
         assert transform_request.did_lookup_time == 5

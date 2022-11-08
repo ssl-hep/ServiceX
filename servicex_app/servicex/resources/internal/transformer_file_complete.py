@@ -73,9 +73,8 @@ class TransformerFileComplete(ServiceXResource):
         current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
-            'files_processed': transform_req.files_processed,
-            'files_failed': transform_req.files_failed,
-            'files_skipped': transform_req.files_skipped
+            'files_completed': transform_req.files_completed,
+            'files_failed': transform_req.files_failed
         })
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:

@@ -47,7 +47,7 @@ class FilesetComplete(ServiceXResource):
         self.lookup_result_processor.report_fileset_complete(
             rec,
             num_files=summary['files'],
-            num_skipped=summary['files-skipped'],
+            num_failed=summary['files-failed'],
             total_events=summary['total-events'],
             total_bytes=summary['total-bytes'],
             did_lookup_time=summary['elapsed-time']

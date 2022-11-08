@@ -152,7 +152,9 @@ class TransformRequest(db.Model):
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, nullable=True)
-    files_skipped = db.Column(db.Integer, nullable=True)
+    files_completed = db.Column(db.Integer, default=0, nullable=True)
+    files_failed = db.Column(db.Integer, default=0, nullable=True)
+    files_remaining = db.Column(db.Integer, default=0, nullable=True)
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
@@ -184,8 +186,8 @@ class TransformRequest(db.Model):
             'failure-info': self.failure_description,
             'app-version': self.app_version,
             'code-gen-image': self.code_gen_image,
-            'files-processed': self.files_processed,
-            'files-skipped': self.files_failed,
+            'files-completed': self.files_completed,
+            'files-failed': self.files_failed,
             'files-remaining': self.files_remaining,
             'submit-time': str(self.submit_time.strftime(iso_fmt)),
             'finish-time': str(self.finish_time)
@@ -237,30 +239,11 @@ class TransformRequest(db.Model):
 
     @property
     def result_count(self) -> int:
-        return TransformationResult.query.filter_by(request_id=self.request_id).count()
+        return self.files_completed+self.files_failed
 
     @property
     def results(self) -> List['TransformationResult']:
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
-
-    @property
-    def files_remaining(self) -> Optional[int]:
-        # During dataset lookup, the total number of files is unknown
-        if self.files is None:
-            return None
-        return self.files - self.result_count
-
-    @property
-    def files_processed(self) -> int:
-        return TransformationResult.query.filter_by(
-            request_id=self.request_id, transform_status="success"
-        ).count()
-
-    @property
-    def files_failed(self) -> int:
-        return TransformationResult.query.filter_by(
-            request_id=self.request_id, transform_status="failure"
-        ).count()
 
     @property
     def statistics(self) -> Optional[dict]:
@@ -359,30 +342,3 @@ class DatasetFile(db.Model):
 
     def get_path_id(self):
         return self.request_id+":"+str(self.id)
-
-
-class FileStatus(db.Model):
-    __tablename__ = 'file_status'
-
-    id = db.Column(db.Integer, primary_key=True)
-    file_id = db.Column(db.Integer, nullable=False)
-    request_id = db.Column(db.String(48),
-                           ForeignKey('requests.request_id'),
-                           unique=False,
-                           nullable=False)
-    status = db.Column(db.String(128), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    pod_name = db.Column(db.String(128), nullable=True)
-
-    info = db.Column(db.String(max_string_size), nullable=True)
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.flush()
-
-    @classmethod
-    def failures_for_request(cls, request_id):
-        return db.session.query(DatasetFile, FileStatus).filter(
-            FileStatus.request_id == request_id,
-            DatasetFile.request_id == FileStatus.request_id,
-            FileStatus.status == 'failure').all()
