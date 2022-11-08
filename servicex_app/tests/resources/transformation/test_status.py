@@ -42,7 +42,7 @@ class TestTransformStatus(ResourceTestBase):
             'files-processed': mock_files_completed.return_value,
             'files-remaining': mock_files_remaining.return_value,
             'files-failed': mock_files_failed.return_value,
-            'files-skipped': mock_files_completed.return_value,
+            'files-skipped': mock_files_failed.return_value,
             'stats': {
                 'total-messages': 123,
                 'min-time': 1,
