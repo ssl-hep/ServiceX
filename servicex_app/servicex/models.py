@@ -151,7 +151,7 @@ class TransformRequest(db.Model):
     workflow_name = db.Column(db.String(40), nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
-    files = db.Column(db.Integer, nullable=True)
+    files = db.Column(db.Integer, default=0, nullable=False)
     files_completed = db.Column(db.Integer, default=0, nullable=False)
     files_failed = db.Column(db.Integer, default=0, nullable=False)
 
