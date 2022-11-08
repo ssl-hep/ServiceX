@@ -39,8 +39,10 @@ class TestTransformStatus(ResourceTestBase):
             "submit-time": fake_transform_request.submit_time.strftime(iso_fmt),
             "finish-time": fake_transform_request.finish_time.strftime(iso_fmt),
             'files-completed': mock_files_completed.return_value,
+            'files-processed': mock_files_completed.return_value,
             'files-remaining': mock_files_remaining.return_value,
             'files-failed': mock_files_failed.return_value,
+            'files-skipped': mock_files_completed.return_value,
             'stats': {
                 'total-messages': 123,
                 'min-time': 1,
