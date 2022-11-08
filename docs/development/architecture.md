@@ -170,7 +170,6 @@ dataset. An example of a JSON message follows:
 ```json
 {
     "files": self.summary.files,
-    "files-failed": self.summary.files_failed,
     "total-events": self.summary.total_events,
     "total-bytes": self.summary.total_bytes,
     "elapsed-time": int(elapsed_time.total_seconds())

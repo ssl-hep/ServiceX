@@ -51,7 +51,6 @@ class TestFilesetComplete(ResourceTestBase):
         response = client.put('/servicex/internal/transformation/1234/complete',
                               json={
                                   'files': 17,
-                                  'files-failed': 2,
                                   'total-events': 1024,
                                   'total-bytes': 2046,
                                   'elapsed-time': 42
@@ -89,7 +88,6 @@ class TestFilesetComplete(ResourceTestBase):
         response = client.put('/servicex/internal/transformation/BR549/complete',
                               json={
                                   'files': 0,
-                                  'files-failed': 0,
                                   'total-events': 0,
                                   'total-bytes': 0,
                                   'elapsed-time': 0
