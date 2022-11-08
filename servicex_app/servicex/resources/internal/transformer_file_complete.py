@@ -51,9 +51,9 @@ class TransformerFileComplete(ServiceXResource):
             return {"message": msg}, 404
 
         if info['status'] == 'success':
-            transform_req.file_transformed_successfully()
+            TransformRequest.file_transformed_successfully(request_id)
         else:
-            transform_req.file_transformed_unsuccessfully()
+            TransformRequest.file_transformed_unsuccessfully(request_id)
 
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
