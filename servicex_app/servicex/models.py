@@ -221,13 +221,13 @@ class TransformRequest(db.Model):
     @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:
         req = cls.query.filter_by(request_id=key).with_for_update().one()
-        req.files_completed += 1
+        req.files_completed = req.files_completed + 1
         db.session.commit()
 
     @classmethod
     def file_transformed_unsuccessfully(cls, key: Union[str, int]) -> None:
         req = cls.query.filter_by(request_id=key).with_for_update().one()
-        req.files_failed += 1
+        req.files_failed = req.files_failed + 1
         db.session.commit()
 
     @classmethod
@@ -239,7 +239,7 @@ class TransformRequest(db.Model):
         #     db.session.commit()
         # else:
         req = cls.query.filter_by(request_id=key).with_for_update().one()
-        req.files += 1
+        req.files = req.files + 1
         db.session.commit()
 
     @property
