@@ -31,7 +31,8 @@ from logging import Logger
 from flask import request, current_app
 
 from servicex import TransformerManager
-from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
+# from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
+from servicex.models import TransformRequest, TransformationResult, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
