@@ -155,9 +155,6 @@ def callback(channel, method, properties, body):
 
     for _file_path in _file_paths:
         try:
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="start",
-                                        info="Starting")
 
             if not os.path.isdir(posix_path):
                 os.makedirs(posix_path)
@@ -171,7 +168,7 @@ def callback(channel, method, properties, body):
             if not os.path.isdir(scripts_path):
                 os.makedirs(scripts_path)
             shutil.copy('watch.sh', scripts_path)
-            shutil.copy('proxy-exporter.sh',scripts_path)
+            shutil.copy('proxy-exporter.sh', scripts_path)
             # creating json file for use by science transformer
             jsonfile = str(_file_id) + '.json'
             with open(os.path.join(request_path, jsonfile), 'w') as outfile:
@@ -228,10 +225,6 @@ def callback(channel, method, properties, body):
                                   routing_key=_request_id + '_errors',
                                   body=json.dumps(transform_request))
 
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="failure",
-                                        info=f"error: {error}")
-
             servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,
                                        total_time=0, total_events=0,
@@ -249,20 +242,15 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
         # get file from queue
         item = q.get()
         filepath, filename = item.rsplit('/', 1)
-        
+
         # update filename
-        new_filename = _file_path.replace('/',':') + ':' + filename
+        new_filename = _file_path.replace('/', ':') + ':' + filename
         # upload file if obj_store is specified
         if obj_store:
             obj_store.upload_file(_request_id, new_filename, item)
 
         tock = time.time()
         total_time = round(tock - tick, 2)
-
-        # update status with ServiceX
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="complete",
-                                    info="Success")
 
         servicex.put_file_complete(_file_path, _file_id, "success",
                                    num_messages=0,
@@ -272,7 +260,7 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
 
         logger.info(
             "Time to successfully process {}: {} seconds".format(filepath, total_time))
-        os.remove(item) 
+        os.remove(item)
         logger.info('Removed {fn} from directory.'.format(fn=item))
         q.task_done()
 
@@ -286,7 +274,7 @@ def output_consumer(q, logger, request_id, file_id, file_path, obj_store, servic
                 global COMPLETED
                 COMPLETED = True
                 break
-                            
+
 
 class FileQueueHandler(FileSystemEventHandler):
     def __init__(self, logger, queue):
@@ -298,30 +286,30 @@ class FileQueueHandler(FileSystemEventHandler):
         if not event.is_directory and event.src_path.endswith('.log'):
             with open(event.src_path) as log:
                 text = log.read()
-    
+
             # scan for flag keywords and raise exception if detected
             global FAILED, COMPLETED, EVENTS, TOTAL_EVENTS
-            flags = ['fatal'] # ,'exception']
+            flags = ['fatal']  # ,'exception']
             if any(flag in text.lower() for flag in flags):
                 logger.info('Found exception. Exiting.')
                 FAILED = True
 
             # look for event counts, set to 0 if not found
             try:
-                matches = re.findall(r'[\d\s]+events processed out of[\d\s]+total events',text)
-                EVENTS, TOTAL_EVENTS = re.findall(r'[\d]+',matches[0])
-                if (int(EVENTS) == 0) or (int(TOTAL_EVENTS) == 0): #int(EVENTS) < int(TOTAL_EVENTS)?
+                matches = re.findall(r'[\d\s]+events processed out of[\d\s]+total events', text)
+                EVENTS, TOTAL_EVENTS = re.findall(r'[\d]+', matches[0])
+                if (int(EVENTS) == 0) or (int(TOTAL_EVENTS) == 0):  # int(EVENTS) < int(TOTAL_EVENTS)?
                     FAILED = True
-                    logger.info("Failed to process all events: {num}/{den}".format(num=EVENTS,den=TOTAL_EVENTS))
+                    logger.info(
+                        "Failed to process all events: {num}/{den}".format(num=EVENTS, den=TOTAL_EVENTS))
             except:
-                EVENTS,TOTAL_EVENTS = (0, 0)
-
+                EVENTS, TOTAL_EVENTS = (0, 0)
 
     def on_created(self, event):
         if not event.is_directory and not event.src_path.endswith('.log'):
             self.logger.info('File {fn} created.'.format(
                              fn=event.src_path))
-            
+
             # check if file still being written/copied
             while True:
                 file_start = os.stat(event.src_path).st_size
@@ -332,10 +320,10 @@ class FileQueueHandler(FileSystemEventHandler):
                     break
                 else:
                     time.sleep(1)
-            
+
             global TOTAL_SIZE
             TOTAL_SIZE = os.stat(event.src_path).st_size
-                
+
             # add file to queue for upload
             try:
                 self.queue.put(event.src_path)
@@ -350,7 +338,7 @@ def watch(logger, request_path,
           request_id,
           file_id,
           file_path,
-          object_store=None, 
+          object_store=None,
           servicex=None):
     # Start output queue
     q = Queue()
@@ -371,7 +359,7 @@ def watch(logger, request_path,
 
     # Start the observer
     observer.start()
-    
+
     while not (FAILED or COMPLETED):
         # Set the thread sleep time
         time.sleep(1)

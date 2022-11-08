@@ -101,13 +101,6 @@ def validate_request(file_name):
         return False, "Could not compile generated code "+str(eek)
 
 
-def post_status_update(endpoint, status_msg):
-    requests.post(endpoint + "/status", data={
-        "timestamp": datetime.datetime.now().isoformat(),
-        "status": status_msg
-    })
-
-
 def post_transform_start(endpoint, info):
     requests.post(endpoint+"/start", json={
         "timestamp": datetime.datetime.now().isoformat(),
@@ -120,19 +113,15 @@ def callback(channel, method, properties, body):
 
     service_endpoint = validation_request[u'service-endpoint']
     logger.info("Validation request received")
-    post_status_update(service_endpoint,
-                       "Validation Request received")
 
     # checks the file
     (valid, info) = validate_request(validation_request[u'file-path'])
 
     if valid:
         logger.info("Request validated")
-        post_status_update(service_endpoint,  "Request validated")
         post_transform_start(service_endpoint, info)
     else:
         logger.error("Validation Request failed " + info)
-        post_status_update(service_endpoint, "Validation Request failed "+info)
 
     print(valid, info)
     channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -169,7 +158,7 @@ def init_rabbit_mq(rabbitmq_url, retries, retry_interval):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logger  = initialize_logging()
+    logger = initialize_logging()
     if args.path:
         # checks the file
         (valid, info) = validate_request(args.path)

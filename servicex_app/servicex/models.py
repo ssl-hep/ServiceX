@@ -155,6 +155,7 @@ class TransformRequest(db.Model):
     files_completed = db.Column(db.Integer, default=0, nullable=False)
     files_failed = db.Column(db.Integer, default=0, nullable=False)
     files_remaining = db.Column(db.Integer, nullable=True)
+
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
@@ -186,6 +187,7 @@ class TransformRequest(db.Model):
             'failure-info': self.failure_description,
             'app-version': self.app_version,
             'code-gen-image': self.code_gen_image,
+            'files': self.files,
             'files-completed': self.files_completed,
             'files-failed': self.files_failed,
             'files-remaining': self.files_remaining,
