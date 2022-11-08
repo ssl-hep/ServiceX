@@ -55,11 +55,11 @@ class TransformerFileComplete(ServiceXResource):
         else:
             TransformRequest.file_transformed_unsuccessfully(request_id)
 
-        dataset_file = DatasetFile.get_by_id(info['file-id'])
+        # dataset_file = DatasetFile.get_by_id(info['file-id'])
 
         rec = TransformationResult(
             did=transform_req.did,
-            file_id=dataset_file.id,
+            # file_id=dataset_file.id,
             request_id=request_id,
             file_path=info['file-path'],
             transform_status=info['status'],

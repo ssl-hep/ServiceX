@@ -36,7 +36,8 @@ class LookupResultProcessor:
 
     def add_file_to_dataset(self, submitted_request, dataset_file):
         request_id = submitted_request.request_id
-        dataset_file.save_to_db()
+
+        # dataset_file.save_to_db()
 
         TransformRequest.add_a_file(request_id)
 
