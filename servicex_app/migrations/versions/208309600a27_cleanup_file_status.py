@@ -23,7 +23,6 @@ def upgrade():
     # adding columns to requests so we don't need to always look up transform results
     op.add_column('requests', sa.Column('files_completed', sa.Integer(), nullable=False))
     op.add_column('requests', sa.Column('files_failed', sa.Integer(), nullable=False))
-    op.add_column('requests', sa.Column('files_remaining', sa.Integer(), nullable=True))
     op.drop_column('requests', 'files_skipped')
 
     # speeds up transform result lookups
@@ -49,7 +48,6 @@ def downgrade():
 
     op.drop_column('requests', 'files_completed')
     op.drop_column('requests', 'files_failed')
-    op.drop_column('requests', 'files_remaining')
     op.add_column('requests', sa.Column('files_skipped', sa.Integer(), nullable=True))
 
     op.drop_index(op.f('ix_transform_result_request_id'), table_name='transform_result')

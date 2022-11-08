@@ -154,7 +154,6 @@ class TransformRequest(db.Model):
     files = db.Column(db.Integer, nullable=True)
     files_completed = db.Column(db.Integer, default=0, nullable=False)
     files_failed = db.Column(db.Integer, default=0, nullable=False)
-    files_remaining = db.Column(db.Integer, nullable=True)
 
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
@@ -240,8 +239,15 @@ class TransformRequest(db.Model):
         return self.user.name
 
     @property
+    def files_remaining(self) -> int:
+        if self.files:
+            return self.files - self.files_completed - self.files_failed
+        else:
+            return None
+
+    @property
     def result_count(self) -> int:
-        return self.files_completed+self.files_failed
+        return self.files_completed + self.files_failed
 
     @property
     def results(self) -> List['TransformationResult']:

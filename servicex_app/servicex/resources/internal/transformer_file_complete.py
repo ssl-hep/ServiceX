@@ -50,6 +50,14 @@ class TransformerFileComplete(ServiceXResource):
             current_app.logger.error(msg, extra={'requestId': request_id})
             return {"message": msg}, 404
 
+        if info['status'] == 'success':
+            transform_req.files_completed += 1
+        else:
+            transform_req.files_failed += 1
+
+        transform_req.save_to_db()
+        db.session.commit()
+
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
         rec = TransformationResult(

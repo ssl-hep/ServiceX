@@ -51,6 +51,9 @@ class AddFileToDataset(ServiceXResource):
             if type(add_file_request) is dict:
                 add_file_request = [add_file_request]
 
+            submitted_request.files += len(add_file_request)
+            submitted_request.save_to_db()
+
             for afr in add_file_request:
                 db_record = DatasetFile(request_id=request_id,
                                         paths=','.join(afr['paths']),
