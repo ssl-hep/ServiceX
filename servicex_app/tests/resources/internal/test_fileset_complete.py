@@ -60,7 +60,6 @@ class TestFilesetComplete(ResourceTestBase):
         mock_processor.report_fileset_complete.assert_called_with(
             submitted_request,
             num_files=17,
-            num_failed=2,
             total_events=1024,
             total_bytes=2046,
             did_lookup_time=42
@@ -97,7 +96,6 @@ class TestFilesetComplete(ResourceTestBase):
         mock_processor.report_fileset_complete.assert_called_with(
             submitted_request,
             num_files=0,
-            num_failed=0,
             total_events=0,
             total_bytes=0,
             did_lookup_time=0

@@ -54,10 +54,9 @@ class LookupResultProcessor:
                                             body=json.dumps(transform_request))
 
     def report_fileset_complete(self, submitted_request,
-                                num_files, num_failed=0, total_events=0,
+                                num_files,  total_events=0,
                                 total_bytes=0, did_lookup_time=0):
         submitted_request.files = num_files
-        submitted_request.files_failed = num_failed
         submitted_request.total_events = total_events
         submitted_request.total_bytes = total_bytes
         submitted_request.did_lookup_time = did_lookup_time
