@@ -39,7 +39,6 @@ class AddFileToDataset(ServiceXResource):
 
     def put(self, request_id):
         try:
-            # from servicex.models import db
             # this request can be a single file dictionary
             # or a list of file dictionaries.
             add_file_request = request.get_json()

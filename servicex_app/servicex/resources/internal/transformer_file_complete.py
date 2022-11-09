@@ -31,7 +31,6 @@ from logging import Logger
 from flask import request, current_app
 
 from servicex import TransformerManager
-# from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
 from servicex.models import TransformRequest, TransformationResult, db
 from servicex.resources.servicex_resource import ServiceXResource
 
@@ -56,11 +55,8 @@ class TransformerFileComplete(ServiceXResource):
         else:
             TransformRequest.file_transformed_unsuccessfully(request_id)
 
-        # dataset_file = DatasetFile.get_by_id(info['file-id'])
-
         rec = TransformationResult(
             did=transform_req.did,
-            # file_id=dataset_file.id,
             request_id=request_id,
             file_path=info['file-path'],
             transform_status=info['status'],

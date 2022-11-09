@@ -60,8 +60,6 @@ class LookupResultProcessor:
     def report_fileset_complete(self, submitted_request,
                                 num_files,  total_events=0,
                                 total_bytes=0, did_lookup_time=0):
-        # not really needed if correctly incremented in add_file to dataset
-        # submitted_request.files = num_files
         submitted_request.total_events = total_events
         submitted_request.total_bytes = total_bytes
         submitted_request.did_lookup_time = did_lookup_time
