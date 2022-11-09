@@ -92,10 +92,9 @@ jobs:
         shell: bash
         run: echo "##[set-output name=cachetag;]$(echo sslhep/${{matrix.app.image_name}}:buildcache)"
         id: extract_cache_name
-      - name: Print Cache Status and Tag Name
+      - name: Print Cache Tag Name
         shell: bash
         run: |
-           echo "${{ (matrix.app.cache_required && 'gha') || 'registry' }}"
            echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -112,8 +111,8 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: type=${{ (matrix.app.cache_required && 'gha') || format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
-          cache-to: type=${{ (matrix.app.cache_required && 'gha') || format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
+          cache-from: type=format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag)
+          cache-to: type=format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag),mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
           
