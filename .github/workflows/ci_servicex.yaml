@@ -111,8 +111,8 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: type=format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag)
-          cache-to: type=format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag),mode=max
+          cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
+          cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
           
