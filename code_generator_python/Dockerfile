@@ -1,16 +1,18 @@
-FROM python:3.7
+FROM python:3.10
 
 RUN useradd -ms /bin/bash servicex
 
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
-COPY requirements.txt requirements.txt
+ENV  POETRY_VERSION=1.2.2
+RUN pip install poetry==$POETRY_VERSION
 
-RUN pip install safety==1.9.0
-RUN safety check -r requirements.txt
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 COPY boot.sh ./
 COPY servicex/ ./servicex

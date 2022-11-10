@@ -6,3 +6,4 @@
 coverage.xml
 generated/
 .venv/*
+.python-version

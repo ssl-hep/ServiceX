@@ -5,15 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Develop
+### 1.0.34
 
 ### Added
-
 - option to use direct to logstash logging.
 - Move to python 3.10
+- Link on the dashboard to access logs
+
+
+### Changed
+- Names of DID Finder pod contiainers simplified
+- DID Finder and X509 containers to use python 3.9
+
+### Fixed
+- Uproot example in docs
+- Ability to use standard S3 apis
 
 ### Removed
-
 - standalone chart for filebeat logging.
 
 ## Unreleased 1.0.30

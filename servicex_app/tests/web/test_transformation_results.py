@@ -1,11 +1,9 @@
 from typing import List
 
-from flask import Response, url_for
-from flask_sqlalchemy import Pagination
-
 import pytest
+from flask import Response, url_for
+from servicex.models import TransformationResult, TransformRequest
 
-from servicex.models import TransformRequest, TransformationResult
 from .web_test_base import WebTestBase
 
 statuses = ["success", "failure"]
@@ -36,9 +34,10 @@ class TestUserDashboard(WebTestBase):
 
     def test_get_empty_state(self, client, mock_tr, mock_result_cls, captured_templates):
         mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
-        pagination = Pagination(mock_result_query, page=1, per_page=100, total=0, items=[])
+        pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=[])
         mock_result_query.paginate.return_value = pagination
-        response: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        response: Response = client.get(
+            url_for(self.endpoint, id_=mock_tr.id), headers=self.fake_header())
         assert response.status_code == 200
         mock_result_cls.query.filter_by.assert_called_once_with(request_id=mock_tr.request_id)
         template, context = captured_templates[0]
@@ -51,11 +50,11 @@ class TestUserDashboard(WebTestBase):
     ):
         mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
         items = [r for r in self._fake_transformation_results() if r.transform_status == status]
-        pagination = Pagination(mock_result_query, page=1, per_page=100, total=0, items=items)
+        pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=items)
         mock_result_query.paginate.return_value = pagination
         query_params = {"status": status} if status is not None else {}
         url = url_for(self.endpoint, id_=mock_tr.id, **query_params)
-        response: Response = client.get(url)
+        response: Response = client.get(url, headers=self.fake_header())
         assert response.status_code == 200
         query_kwargs = {"transform_status": status} if status is not None else {}
         mock_result_cls.query.filter_by.assert_called_once_with(
@@ -67,5 +66,5 @@ class TestUserDashboard(WebTestBase):
 
     def test_404(self, client, mock_tr_cls):
         mock_tr_cls.lookup.return_value = None
-        resp: Response = client.get(url_for(self.endpoint, id_=1))
+        resp: Response = client.get(url_for(self.endpoint, id_=1), headers=self.fake_header())
         assert resp.status_code == 404

@@ -1,4 +1,4 @@
-name: CI/CD
+name: Test and Build Docker Images
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
   pull_request:
   workflow_call:
 
+env:
+  DOCKERHUB_ORG: sslhep
 
 jobs:
   build-matrix:
@@ -34,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7]
+        python-version: ["3.10"]
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     runs-on: ubuntu-latest
     steps:
@@ -44,30 +46,32 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: 1.2.2
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
           echo "${{ matrix.app }}"
-          python -m pip install --upgrade pip setuptools wheel
-          pip install --no-cache-dir -r requirements.txt
-          pip install --no-cache-dir -r requirements_test.txt
+          poetry install --no-root --with=test
           pip list
       - name: Lint with Flake8
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          flake8
+          poetry run flake8
       - name: Test with pytest
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          python -m coverage run -m pytest -r sx
+          poetry run python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          codecov --token=${{ secrets.CODECOV_TOKEN }}
+          poetry run codecov --token=${{ secrets.CODECOV_TOKEN }}
 
   publish:
     needs: [build-matrix, test]
@@ -83,12 +87,23 @@ jobs:
         shell: bash
         run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
         id: extract_tag_name
-      - name: Build Docker Image
-        uses: elgohr/Publish-Docker-Github-Action@master
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          context: ${{ matrix.app.dir_name }}
-          name: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ matrix.app.dir_name }}
+          push: true
+          tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           if: ${{ matrix.app.dockerfile }}
-          dockerfile: ${{ matrix.app.dockerfile }}
+          file: ${{ matrix.app.dockerfile }}
+          

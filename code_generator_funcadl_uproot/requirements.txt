@@ -1,5 +1,0 @@
-servicex-code-gen-lib
-func-adl==2.3
-func-adl.ast==2.3
-func-adl-uproot==1.8.0
-qastle==0.15.0

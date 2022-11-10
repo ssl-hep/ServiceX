@@ -29,9 +29,8 @@ from typing import Optional
 
 import pkg_resources
 from flask import current_app
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restful import Resource
-
 from servicex.models import UserModel
 
 
@@ -47,6 +46,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
 
     @staticmethod
+    @jwt_required(optional=True)
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.

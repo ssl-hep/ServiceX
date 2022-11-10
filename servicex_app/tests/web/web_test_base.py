@@ -30,10 +30,19 @@ from datetime import datetime
 from flask import template_rendered
 from flask.testing import FlaskClient
 from pytest import fixture
+from flask_jwt_extended import create_access_token
 
 
 class WebTestBase:
     module = ""
+
+    @staticmethod
+    def fake_header():
+        access_token = create_access_token('testuser')
+        headers = {
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+        return headers
 
     @staticmethod
     def _app_config():
@@ -129,23 +138,23 @@ class WebTestBase:
             "last_authentication": 1595620302,
             "identity_set": [
                 {
-                  "email": "jane@cern.ch",
-                  "identity_provider_display_name": "CERN",
-                  "identity_provider": "primary-identity-provider-id",
-                  "organization": "CERN",
-                  "username": "jane@cern.ch",
-                  "name": "Jane Doe",
-                  "last_authentication": 1595620302,
-                  "sub": "primary-oauth-id"
+                    "email": "jane@cern.ch",
+                    "identity_provider_display_name": "CERN",
+                    "identity_provider": "primary-identity-provider-id",
+                    "organization": "CERN",
+                    "username": "jane@cern.ch",
+                    "name": "Jane Doe",
+                    "last_authentication": 1595620302,
+                    "sub": "primary-oauth-id"
                 },
                 {
-                  "email": "jane@uchicago.edu",
-                  "identity_provider_display_name": "Google",
-                  "last_authentication": 1595552908,
-                  "identity_provider": "secondary-oauth-id",
-                  "username": "jane@uchicago.edu@accounts.google.com",
-                  "name": "Jane Doe",
-                  "sub": "secondary-oauth-id"
+                    "email": "jane@uchicago.edu",
+                    "identity_provider_display_name": "Google",
+                    "last_authentication": 1595552908,
+                    "identity_provider": "secondary-oauth-id",
+                    "username": "jane@uchicago.edu@accounts.google.com",
+                    "name": "Jane Doe",
+                    "sub": "secondary-oauth-id"
                 }
             ],
             "name": "Jane Doe",
@@ -208,12 +217,12 @@ class WebTestBase:
         mock_oauth_tokens.decode_id_token = \
             mocker.MagicMock(return_value=self._id_token())
         mock_oauth_tokens.by_resource_server = self._oauth_tokens()
-        client.oauth2_exchange_code_for_tokens = \
-            mocker.Mock(return_value=mock_oauth_tokens)
+
         mock_intro = mocker.Mock()
         mock_intro.data = {'identity_set': ['primary-oauth-id',
                                             'secondary-oauth-id']}
         client.oauth2_token_introspect = mocker.Mock(return_value=mock_intro)
+
         return client
 
     @fixture

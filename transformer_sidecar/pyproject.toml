@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "transformer-sidecar"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "transformer_sidecar"}]
+
+[tool.poetry.dependencies]
+python = "~3.10"
+pika = "^1.3.1"
+rabbitmq = "^0.2.0"
+pyarrow = "^10.0.0"
+psutil = "^5.9.3"
+watchdog = "^2.1.9"
+
+# servicex-transformer not installing with 3.10
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

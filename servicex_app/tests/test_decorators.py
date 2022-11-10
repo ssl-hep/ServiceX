@@ -1,5 +1,5 @@
-from flask import url_for, Response, make_response
-from flask_jwt_extended import create_access_token
+
+from flask import Response, make_response, url_for
 
 from tests.web.web_test_base import WebTestBase
 
@@ -9,10 +9,6 @@ def fake_route() -> Response:
 
 
 class TestDecorators(WebTestBase):
-    @staticmethod
-    def fake_header():
-        access_token = create_access_token(identity='abcd')
-        return {'Authorization': f'Bearer {access_token}'}
 
     def test_oauth_decorator_auth_disabled(self, client):
         from servicex.decorators import oauth_required
@@ -36,7 +32,7 @@ class TestDecorators(WebTestBase):
             sess['is_authenticated'] = True
         response: Response = client.get(url_for('profile'))
         assert response.status_code == 302
-        assert response.location == url_for('create_profile', _external=True)
+        assert response.location == url_for('create_profile', _external=False)
 
     def test_oauth_decorator_saved(self, client, user, captured_templates):
         client.application.config['ENABLE_AUTH'] = True
@@ -49,65 +45,6 @@ class TestDecorators(WebTestBase):
         template, context = captured_templates[0]
         assert template.name == "profile.html"
         assert context["user"] == user
-
-    def test_auth_decorator_auth_disabled(self, client):
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_auth_decorator_user_deleted(self, mocker, mock_jwt_extended):
-        mocker.patch('servicex.decorators.UserModel.find_by_sub',
-                     return_value=None)
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_auth_decorator_user_pending(self, mock_jwt_extended, user):
-        user.pending = True
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_auth_decorator_authorized(self, mocker, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        with client.application.app_context():
-            from servicex.decorators import auth_required
-            decorated = auth_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_admin_decorator_auth_disabled(self, client):
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
-
-    def test_admin_decorator_unauthorized(self, mocker, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        user.admin = False
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 401
-
-    def test_admin_decorator_authorized(self, mock_jwt_extended, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        user.admin = True
-        with client.application.app_context():
-            from servicex.decorators import admin_required
-            decorated = admin_required(fake_route)
-            response: Response = decorated()
-            assert response.status_code == 200
 
     def test_auth_decorator_integration_auth_disabled(self, mocker, client):
         fake_transform_id = 123

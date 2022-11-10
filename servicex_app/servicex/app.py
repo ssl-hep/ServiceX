@@ -27,11 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from flask_migrate import Migrate
-import servicex
+
 from servicex.models import db
 
+from . import create_app
 
-app = servicex.create_app()
+app = create_app()
 db.init_app(app)
 
 migrate = Migrate(app, db)
