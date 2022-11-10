@@ -34,5 +34,4 @@ class TestServicexInfo(ResourceTestBase):
         assert response.status_code == 200
         print(response.json)
         assert response.json == {'app-version': '3.14.15',
-                                 'default-transformer': 'sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3',  # noqa: E501
                                  'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}  # noqa: E501

@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
-
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.models import TransformRequest
 
@@ -39,15 +38,31 @@ class TestCodeGenAdapter:
         return transform_request
 
     def test_init(self, mocker):
-        mock_transformer_manager = mocker.Mock()
+        mock_transformer_manager = mocker.MagicMock()
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
         assert service.code_gen_url == "http://foo.com"
 
-    def test_generate_code_for_selection(self, mocker):
-        mock_response = mocker.Mock()
+    def test_generate_code_for_selection_with_params(self, mocker):
+        mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
-        mock_transformer_manager = mocker.Mock()
+        mock_transformer_manager = mocker.MagicMock()
+        mock_zip = mocker.patch("zipfile.ZipFile")
+        mocker.patch("io.BytesIO")
+        service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
+        mock_transformer_image = "testimage"
+        service.generate_code_for_selection(self._generate_test_request(), "servicex", mock_transformer_image)
+        mock_requests_post.assert_called()
+
+        mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
+                                                                              "462-33",
+                                                                              "servicex")
+
+    def test_generate_code_for_selection_without_params(self, mocker):
+        mock_response = mocker.MagicMock()
+        mock_response.status_code = 200
+        mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
+        mock_transformer_manager = mocker.MagicMock()
         mock_zip = mocker.patch("zipfile.ZipFile")
         mocker.patch("io.BytesIO")
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
@@ -59,11 +74,11 @@ class TestCodeGenAdapter:
                                                                               "servicex")
 
     def test_generate_code_bad_response(self, mocker):
-        mock_response = mocker.Mock()
+        mock_response = mocker.MagicMock()
         mock_response.status_code = 500
-        mock_response.json = mocker.Mock(return_value={"Message": "Ooops"})
+        mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
         mocker.patch('requests.post', return_value=mock_response)
-        mock_transformer_manager = mocker.Mock()
+        mock_transformer_manager = mocker.MagicMock()
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:

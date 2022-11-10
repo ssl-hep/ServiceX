@@ -32,6 +32,8 @@ codeGen:
   image: sslhep/servicex_code_gen_atlas_xaod
   pullPolicy: Always
   tag: develop
+  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultTransformerTag: develop
 didFinder:
   CERNOpenData:
     cachePrefix: null

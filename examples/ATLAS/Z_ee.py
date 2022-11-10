@@ -5,10 +5,11 @@ big_dataset = "rucio://mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTE
 dataset = "mc16_13TeV:DAOD_TOPQ1.25521529._000009.pool.root.1"
 ds = ServiceXSourceXAOD(dataset, backend="local")
 leptons_per_event_query = ds \
-        .Select(lambda e: e.Electrons("Electrons")) \
-        .Select(lambda eles: eles.Where(lambda e: e.pt()/1000.0 > 30.0)) \
-        .Select(lambda eles: eles.Where(lambda e: abs(e.eta()) < 2.5)) \
-        .Where(lambda eles: len(eles) == 2) \
-        .Select(lambda ls: (ls.Select(lambda e: e.pt()/1000.0), ls.Select(lambda e: e.eta()), ls.Select(lambda e: e.phi()), ls.Select(lambda e: e.m()/1000.0), ls.Select(lambda e: e.charge())))
+    .Select(lambda e: e.Electrons("Electrons")) \
+    .Select(lambda eles: eles.Where(lambda e: e.pt()/1000.0 > 30.0)) \
+    .Select(lambda eles: eles.Where(lambda e: abs(e.eta()) < 2.5)) \
+    .Where(lambda eles: len(eles) == 2) \
+    .Select(lambda ls: (ls.Select(lambda e: e.pt()/1000.0), ls.Select(lambda e: e.eta()), ls.Select(lambda e: e.phi()), ls.Select(lambda e: e.m()/1000.0), ls.Select(lambda e: e.charge())))
 
-print(leptons_per_event_query.AsPandasDF(('electrons_pt', 'electrons_eta', 'electrons_phi', 'electrons_mass', 'electrons_charge')).value())
+print(leptons_per_event_query.AsPandasDF(('electrons_pt', 'electrons_eta',
+      'electrons_phi', 'electrons_mass', 'electrons_charge')).value())
