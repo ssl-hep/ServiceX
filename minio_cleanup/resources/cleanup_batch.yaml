@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: minio-cleanup
+spec:
+  schedule: "* */8 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: minio-cleanup
+            image: cleanup:0.1
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: MINIO_URL
+              value: test
+            - name: ACCESS_KEY
+              value: access
+            - name: SECRET_KEY
+              value: secret
+          restartPolicy: OnFailure
