@@ -85,8 +85,17 @@ jobs:
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
-        run: echo "##[set-output name=imagetag;]$(echo ${GITHUB_REF##*/})"
+        run: echo "##[set-output name=imagetag;]$(echo sslhep/${{matrix.app.image_name}}:${GITHUB_REF##*/})"
         id: extract_tag_name
+      - name: Extract Cache Dir
+        working-directory: ${{ matrix.app.dir_name }}
+        shell: bash
+        run: echo "##[set-output name=cachetag;]$(echo sslhep/${{matrix.app.image_name}}:buildcache)"
+        id: extract_cache_name
+      - name: Print Cache Tag Name
+        shell: bash
+        run: |
+           echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -101,9 +110,9 @@ jobs:
         with:
           context: ${{ matrix.app.dir_name }}
           push: true
-          tags: sslhep/${{ matrix.app.image_name }}:${{ steps.extract_tag_name.outputs.imagetag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ steps.extract_tag_name.outputs.imagetag }}
+          cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
+          cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
           if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
           
