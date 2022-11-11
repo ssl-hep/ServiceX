@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "minio_cleanup"
+version = "0.1.0"
+description = ""
+authors = ["Suchandra Thapa <suchandra@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+minio = "^7.1.12"
+servicex_storage = {git = "https://github.com/ssl-hep/servicex_storage_lib",  rev = "d2718063cc3f7f7729e649bdb927e50816c3de61"}
+
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
