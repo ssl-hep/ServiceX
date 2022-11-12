@@ -27,13 +27,13 @@ jobs:
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
 
-#      - name: Run chart-testing (list-changed)
-#        id: list-changed
-#        run: |
-#          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} )
-#          if [[ -n "$changed" ]]; then
-#            echo "::set-output name=changed::true"
-#          fi
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} )
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
 
-#      - name: Run chart-testing (lint)
-#        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/helm/servicex --charts servicex
+      - name: Run chart-testing (lint)
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/helm/servicex --charts helm/servicex
