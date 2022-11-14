@@ -129,6 +129,7 @@ class ResourceTestBase:
         transform_request.result_format = 'arrow'
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
+        transform_request.files = 1
         transform_request.files_failed = 0
         transform_request.files_completed = 0
         transform_request.status = "Submitted"
