@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # import json
+import json
 
 from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.models import DatasetFile
@@ -47,23 +48,28 @@ class TestLookupResultProcessor(ResourceTestBase):
         request.result_destination = 'object-store'
         dataset_file.id = 42
         dataset_file.save_to_db = mocker.Mock()
-        processor.add_file_to_dataset(request, dataset_file)
+        from servicex.models import TransformRequest
+        mock_transform_request_add_a_file = mocker.patch.object(
+            TransformRequest,
+            'add_a_file')
 
-        # dataset_file.save_to_db.assert_called()
-        # mock_rabbit_adaptor.basic_publish.assert_called_with(
-        #     exchange='transformation_requests',
-        #     routing_key='BR549',
-        #     body=json.dumps(
-        #         {"request-id": 'BR549',
-        #          "file-id": 42,
-        #          "columns": 'electron.eta(), muon.pt()',
-        #          "paths": ["/foo/bar1.root", "/foo/bar2.root"],
-        #          "tree-name": "Events",
-        #          "service-endpoint":
-        #              "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-        #          "chunk-size": "1000",
-        #          'result-destination': 'object-store'
-        #          }))
+        processor.add_file_to_dataset(request, dataset_file)
+        mock_transform_request_add_a_file.assert_called_with(request.request_id)
+
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='transformation_requests',
+            routing_key='BR549',
+            body=json.dumps(
+                {"request-id": 'BR549',
+                 "file-id": 42,
+                 "columns": 'electron.eta(), muon.pt()',
+                 "paths": ["/foo/bar1.root", "/foo/bar2.root"],
+                 "tree-name": "Events",
+                 "service-endpoint":
+                     "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                 "chunk-size": "1000",
+                 'result-destination': 'object-store'
+                 }))
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor, "http://cern.analysis.ch:5000/")
