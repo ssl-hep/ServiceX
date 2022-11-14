@@ -109,7 +109,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "exceptiongroup"
-version = "1.0.0"
+version = "1.0.2"
 description = "Backport of PEP 654 (exception groups)"
 category = "dev"
 optional = false
@@ -184,7 +184,7 @@ email = ["email-validator"]
 
 [[package]]
 name = "func-adl"
-version = "3.1"
+version = "3.1.1"
 description = "Functional Analysis Description Language Base Package"
 category = "main"
 optional = false
@@ -199,7 +199,7 @@ test = ["astunparse", "black", "coverage", "flake8", "isort", "pytest", "pytest-
 
 [[package]]
 name = "func-adl-xaod"
-version = "2.0.1"
+version = "2.1b1"
 description = "Functional Analysis Description Language backend for accessing ATLAS xAOD files."
 category = "main"
 optional = false
@@ -214,7 +214,7 @@ retry = ">=0.9,<1.0"
 
 [package.extras]
 local = ["python-on-whales"]
-test = ["asyncmock", "autopep8", "awkward", "codecov", "coverage", "flake8", "pandas", "pytest (>=3.9)", "pytest-asyncio", "pytest-cov", "pytest-mock", "testfixtures", "twine", "uproot", "wheel"]
+test = ["asyncmock", "autopep8", "awkward", "black", "codecov", "coverage", "flake8", "pandas", "pytest (>=3.9)", "pytest-asyncio", "pytest-cov", "pytest-mock", "testfixtures", "twine", "uproot", "wheel"]
 
 [[package]]
 name = "idna"
@@ -553,7 +553,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "334af746973810545d13c251ff5e4c301416f26d28e1b8e55ba6ee9c54057f4e"
+content-hash = "fc685eddf105a1a03d60c6406a3a051411395349a8d9d31edee720466f62fc0d"
 
 [metadata.files]
 aniso8601 = [
@@ -645,8 +645,8 @@ decorator = [
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
 exceptiongroup = [
-    {file = "exceptiongroup-1.0.0-py3-none-any.whl", hash = "sha256:2ac84b496be68464a2da60da518af3785fff8b7ec0d090a581604bc870bdee41"},
-    {file = "exceptiongroup-1.0.0.tar.gz", hash = "sha256:affbabf13fb6e98988c38d9c5650e701569fe3c1de3233cfb61c5f33774690ad"},
+    {file = "exceptiongroup-1.0.2-py3-none-any.whl", hash = "sha256:c22f11ec6a10d2b453871c5c5fe887436c4d1961324ce9090f2ca6ddc4180c27"},
+    {file = "exceptiongroup-1.0.2.tar.gz", hash = "sha256:a31cd183c3dea02e617aab5153588d5f7258a77b51f0ef41b3815ae8a0d0f695"},
 ]
 flake8 = [
     {file = "flake8-5.0.4-py2.py3-none-any.whl", hash = "sha256:7a1cf6b73744f5806ab95e526f6f0d8c01c66d7bbe349562d22dfca20610b248"},
@@ -665,12 +665,12 @@ flask-wtf = [
     {file = "Flask_WTF-1.0.1-py3-none-any.whl", hash = "sha256:9d733658c80be551ce7d5bc13c7a7ac0d80df509be1e23827c847d9520f4359a"},
 ]
 func-adl = [
-    {file = "func_adl-3.1-py3-none-any.whl", hash = "sha256:70d183c5d584f11cdb2c443ec7530591ccd2d2d40d0c8bb283b429fb6d1645df"},
-    {file = "func_adl-3.1.tar.gz", hash = "sha256:de333a40a3289df840e3c275e28a69d8e852edc1c7a75cc174042b514978a295"},
+    {file = "func_adl-3.1.1-py3-none-any.whl", hash = "sha256:17eff30abaab19b17222843a9e1ce006679f24ae95908029f0deacb46fb97541"},
+    {file = "func_adl-3.1.1.tar.gz", hash = "sha256:2f0538eaf15645524aeaf9de5e035b0b0327bb312585029c0d40e77977a68325"},
 ]
 func-adl-xaod = [
-    {file = "func_adl_xAOD-2.0.1-py3-none-any.whl", hash = "sha256:252eda904b195691fd0770f950c5466f77ad292b75e72d1c5090365d05ca9044"},
-    {file = "func_adl_xAOD-2.0.1.tar.gz", hash = "sha256:aa5c182df41145624727ed3054d1fdcbc494f782025630e1fa1d39629c234f5d"},
+    {file = "func_adl_xAOD-2.1b1-py3-none-any.whl", hash = "sha256:0733fd92a8cdaae7a7b48df0b04ee3118a756a6ebacf679ed0a3221919370c1b"},
+    {file = "func_adl_xAOD-2.1b1.tar.gz", hash = "sha256:d5294a50ea3789a10ae4faef05a0ba0018d501cfe69937c64891dadbd5231064"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
