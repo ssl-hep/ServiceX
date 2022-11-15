@@ -108,7 +108,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = self._generate_transformation_request()
 
         response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
+                               json=request, headers=self.fake_header(), query_string={'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
@@ -118,6 +118,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
+            assert saved_obj.image == "sslhep/servicex_func_adl_xaod_transformer:develop"
             assert saved_obj.columns == "e.e, e.p"
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'object-store'
@@ -183,7 +184,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_root_file(
         self, mocker, mock_rabbit_adaptor, mock_code_gen_service, mock_app_version
     ):
-        mock_code_gen_service.generate_code_for_selection.return_value = 'my-cm'
+        mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm', 'ssl-hep/func_adl:latest')
         request = self._generate_transformation_request_xAOD_root_file()
 
         client = self._test_client(
@@ -192,6 +193,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         response = client.post('/servicex/transformation',
                                json=request, headers=self.fake_header())
+
         assert response.status_code == 200
         request_id = response.json['request_id']
 
