@@ -28,7 +28,6 @@
 import json
 from unittest.mock import call
 
-from flask import current_app
 from servicex import LookupResultProcessor
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
