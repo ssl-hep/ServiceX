@@ -114,8 +114,6 @@ transformer:
     maxReplicas: 20
     minReplicas: 1
   cpuLimit: 1
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultTransformerTag: develop
   persistence:
     existingClaim: null
     subdir: null
