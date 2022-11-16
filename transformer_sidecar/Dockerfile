@@ -1,18 +1,14 @@
-FROM ubuntu:18.04
+FROM python:3.10
 
 WORKDIR /servicex
 
-RUN apt-get update && \
-    apt-get install --reinstall -y build-essential \
-    -y python3-pip && \
-    ln -s /usr/bin/python3 /usr/bin/python
+RUN python3 -m pip install --upgrade pip
+
+ENV  POETRY_VERSION=1.2.2
+RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
-RUN python3 -m pip install --upgrade pip
-
-ENV  POETRY_VERSION=1.2.1
-RUN pip install poetry==$POETRY_VERSION
 
 RUN poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi

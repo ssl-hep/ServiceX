@@ -2,7 +2,7 @@
 set +e
 
 # If transformer has already run then we don't need to compile
-if [ ! -f /home/atlas/rel ]; then
+if [ ! -d /home/atlas/rel ]; then
   echo "Compile"
   bash /generated/runner.sh -c
   if [ $? != 0 ]; then

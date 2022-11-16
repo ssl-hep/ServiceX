@@ -104,6 +104,7 @@ class TransformerEventHandler(FileSystemEventHandler):
             return
 
         if event.src_path.endswith(".failed"):
+            self.logger.info("Found a failiure. Bombing...")
             self.watched_directory.stop(success=False)
 
             # Terminate the upload thread too

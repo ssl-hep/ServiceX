@@ -26,6 +26,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import glob
 import time
 
 import json
@@ -111,6 +112,14 @@ def hash_path(file_name):
 def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> TransformerStats:
     # Assume that the stats parser class has been imported
     return globals()[stats_parser_name](logfile_path)
+
+
+def clear_files(request_path: Path, file_id: str) -> None:
+    for f in glob.glob(f"{file_id}.json*", root_dir=request_path):
+        try:
+            os.remove(f)
+        except FileNotFoundError:
+            pass
 
 
 # noinspection PyUnusedLocal
@@ -212,6 +221,8 @@ def callback(channel, method, properties, body):
                 logger.info(f"Got some stats {transformer_stats.file_size} bytes, "
                             f"{transformer_stats.total_events} events")
                 break
+
+            clear_files(Path(request_path), _file_id)
 
         if not transform_success:
             logger.error(f"HARD FAILURE FOR {_file_id}")
