@@ -142,6 +142,7 @@ def callback(channel, method, properties, body):
     We will examine this log file to see if the transform succeeded or failed
     """
     transform_request = json.loads(body)
+    logger.info(f"-----transform request---->{str(transform_request)}")
     _request_id = transform_request['request-id']
 
     # The transform can either include a single path, or a list of replicas
@@ -158,6 +159,8 @@ def callback(channel, method, properties, body):
     # creating output dir for transform output files
     request_path = os.path.join(posix_path, _request_id)
     os.makedirs(request_path, exist_ok=True)
+    scratch_path = os.path.join(posix_path, _request_id, 'scratch')
+    os.makedirs(scratch_path, exist_ok=True)
 
     start_process_info = get_process_info()
     total_time = 0
@@ -177,11 +180,19 @@ def callback(channel, method, properties, body):
             # We want to sanitize the output file name - it should be tied to the input
             # file name, but they can be quite long, so we generate a hash for the boring
             # bits and chop them down as well as replacing shady characters.
+            result_extension = "parquet" \
+                if "parquet" in transformer_capabilities['file-formats'] \
+                else ""
+            hashed_file_name = hash_path(_file_path.replace('/', ':') + result_extension)
+
             transform_request['safeOutputFileName'] = os.path.join(
+                scratch_path,
+                hashed_file_name
+            )
+
+            transform_request['completedFileName'] = os.path.join(
                 request_path,
-                hash_path(
-                    _file_path.replace('/', ':') +
-                    ".parquet")
+                hashed_file_name
             )
 
             # creating json file for use by science transformer

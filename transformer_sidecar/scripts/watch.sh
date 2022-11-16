@@ -10,17 +10,19 @@ while true; do
         for file in `ls $path/*.json`; do
             download_path=`grep -o '"downloadPath":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             output_file=`grep -o '"safeOutputFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
+            completed_file=`grep -o '"completedFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
 
-            echo "Attempting $download_path -> $output_file"
+            echo "Attempting $download_path -> $output_file -> $completed_file"
             $lang "$cmd" "$download_path" "$output_file" 2>&1 | tee $file.log
             if [ "${PIPESTATUS[0]}" == 0 ]; then
               echo "Success. skipping rest of input_files"
-              touch $file.done
-              rm $file
+              mv "$output_file" "$completed_file"
+              touch "$file".done
+              rm "$file"
             else
               echo "Operation failed for $download_path"
-              touch $file.failed
-              rm $file
+              touch "$file".failed
+              rm "$file"
             fi
           done;
     else
