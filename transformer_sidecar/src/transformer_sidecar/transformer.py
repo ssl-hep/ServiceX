@@ -135,14 +135,13 @@ def callback(channel, method, properties, body):
     path in the output directory for the generated parquet or root file to be written.
 
     This json file is written to the shared volume and then a thread is kicked off to
-    wait for the json file to be deleted, which is the science package's way of showing
-    it is done with the request. There will either be a parquet/root file in the output
-    directory or at least a log file.
+    wait for a .done or .failure file to be created.  This is the science package's way of
+    showing it is done with the request. There will either be a parquet/root file in the
+    output directory or at least a log file.
 
     We will examine this log file to see if the transform succeeded or failed
     """
     transform_request = json.loads(body)
-    logger.info(f"-----transform request---->{str(transform_request)}")
     _request_id = transform_request['request-id']
 
     # The transform can either include a single path, or a list of replicas
@@ -159,6 +158,9 @@ def callback(channel, method, properties, body):
     # creating output dir for transform output files
     request_path = os.path.join(posix_path, _request_id)
     os.makedirs(request_path, exist_ok=True)
+
+    # scratch dir where the transformer temporarily writes the results. This
+    # directory isn't monitored, so we can't pick up partial results
     scratch_path = os.path.join(posix_path, _request_id, 'scratch')
     os.makedirs(scratch_path, exist_ok=True)
 
@@ -177,19 +179,22 @@ def callback(channel, method, properties, body):
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
 
-            # We want to sanitize the output file name - it should be tied to the input
-            # file name, but they can be quite long, so we generate a hash for the boring
-            # bits and chop them down as well as replacing shady characters.
+            # Decide an optional file extension for the results. For now we just see if
+            # the transformer is capable of writing parquet files and use that extension,
+            # otherwise, stick with the extension of the input file
             result_extension = "parquet" \
                 if "parquet" in transformer_capabilities['file-formats'] \
                 else ""
             hashed_file_name = hash_path(_file_path.replace('/', ':') + result_extension)
 
+            # The transformer will write results here as they are generated. This
+            # directory isn't monitored.
             transform_request['safeOutputFileName'] = os.path.join(
                 scratch_path,
                 hashed_file_name
             )
 
+            # Final results are written here and picked up by the watched directory thread
             transform_request['completedFileName'] = os.path.join(
                 request_path,
                 hashed_file_name
@@ -235,6 +240,8 @@ def callback(channel, method, properties, body):
 
             clear_files(Path(request_path), _file_id)
 
+        # If none of the replicas resulted in a successful transform then we have
+        # a hard failure with this file.
         if not transform_success:
             logger.error(f"HARD FAILURE FOR {_file_id}")
             logger.error(transformer_stats.error_info)

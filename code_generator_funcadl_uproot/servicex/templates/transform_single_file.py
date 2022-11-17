@@ -16,8 +16,7 @@ def transform_single_file(file_path: str, output_path: Path):
     :param output_path: path to file
     :return: Tuple with (total_events: Int, output_size: Int)
     """
-    total_events = 0
-    output_size = 0
+
     try:
         stime = time.time()
 
