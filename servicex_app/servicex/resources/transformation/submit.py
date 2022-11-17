@@ -79,7 +79,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
         cls.parser.add_argument('image',
-                                default=current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
+                                default=current_app.config['TRANSFORMER_SCIENCE_IMAGE'])
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[

@@ -34,6 +34,6 @@ class Info(ServiceXResource):
     def get(self):
         return {
             "app-version": self._get_app_version(),
-            "default-transformer": current_app.config['TRANSFORMER_DEFAULT_IMAGE'],
+            "default-transformer": current_app.config['TRANSFORMER_SCIENCE_IMAGE'],
             "code-gen-image": current_app.config['CODE_GEN_IMAGE']
         }

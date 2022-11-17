@@ -30,6 +30,11 @@
     "test_required": false
   },
   {
+    "image_name": "servicex_sidecar_transformer",
+    "dir_name": "transformer_sidecar",
+    "test_required": true
+  },
+  {
     "image_name": "servicex_func_adl_uproot_transformer",
     "dir_name": "uproot_transformer"
   },

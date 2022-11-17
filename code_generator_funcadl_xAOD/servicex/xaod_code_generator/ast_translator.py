@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import shutil
 from pathlib import Path
 from typing import Optional, Union
 
@@ -79,6 +80,16 @@ class AstAODTranslator(CodeGenerator):
 
         self._exe.write_cpp_files(
             self._exe.apply_ast_transformations(a), path)
+
+        # Transfer the templated pilot bash script
+        template_path = os.environ.get('TEMPLATE_PATH',
+                                       "/home/servicex/servicex/templates/transform_single_file.sh") # NOQA: 501
+        shutil.copyfile(template_path, os.path.join(path, "transform_single_file.sh"))
+
+        capabilities_path = os.environ.get('CAPABILITIES_PATH',
+                                           "/home/servicex/transformer_capabilities.json")
+        shutil.copyfile(capabilities_path, os.path.join(path,
+                                                        "transformer_capabilities.json"))
 
         os.system("ls -lht " + cache_path)
 
