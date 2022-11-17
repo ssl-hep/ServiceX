@@ -117,12 +117,12 @@ transformer:
   sidecarTag: develop
   sidecarPullPolicy: Always
 
-  defaultScienceContainerImage: # replace me
+  defaultScienceContainerImage:  # replace me
   defaultScienceContainerTag: develop
   scienceContainerPullPolicy: Always
 
   language: python
-  exec: # replace me
+  exec:  # replace me
   outputDir: /servicex/output
 
   persistence:
