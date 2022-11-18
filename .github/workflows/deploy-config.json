@@ -1,60 +1,68 @@
 [
   {
-    "image_name": "servicex_app",
     "dir_name": "servicex_app",
+    "image_name": "servicex_app",
     "test_required": true
   },
   {
-    "image_name": "servicex_code_gen_python",
     "dir_name": "code_generator_python",
+    "image_name": "servicex_code_gen_python",
     "test_required": true
   },
   {
-    "image_name": "servicex-did-finder-cernopendata",
     "dir_name": "did_finder_cernopendata",
+    "image_name": "servicex-did-finder-cernopendata",
     "test_required": true
   },
   {
-    "image_name": "servicex-did-finder",
     "dir_name": "did_finder_rucio",
+    "image_name": "servicex-did-finder",
     "test_required": false
   },
   {
-    "image_name": "servicex_code_gen_func_adl_uproot",
     "dir_name": "code_generator_funcadl_uproot",
+    "image_name": "servicex_code_gen_func_adl_uproot",
+    "test_required": true
+  },
+  {
+    "dir_name": "uproot_transformer",
+    "image_name": "servicex_func_adl_uproot_transformer",
     "test_required": false
+  },
+  {
+    "image_name": "servicex_sidecar_transformer",
+    "dir_name": "transformer_sidecar",
+    "test_required": true
   },
   {
     "image_name": "servicex_func_adl_uproot_transformer",
     "dir_name": "uproot_transformer"
   },
   {
-    "image_name": "x509-secrets",
     "dir_name": "x509_secrets",
+    "image_name": "x509-secrets",
     "test_required": false
-
   },
   {
-    "image_name": "servicex_func_adl_xaod_transformer",
     "dir_name": "xaod_cpp_transformer",
+    "image_name": "servicex_func_adl_xaod_transformer",
     "dockerfile": "xaod_cpp_transformer/DockerfileATLASxAOD",
     "test_required": false
-
   },
   {
-    "image_name": "servicex_func_adl_cms_aod_transformer",
     "dir_name": "xaod_cpp_transformer",
+    "image_name": "servicex_func_adl_cms_aod_transformer",
     "dockerfile": "xaod_cpp_transformer/DockerfileCMSAOD",
     "test_required": false
   },
   {
-    "image_name": "servicex_code_gen_cms_aod",
     "dir_name": "code_generator_funcadl_xAOD",
+    "image_name": "servicex_code_gen_cms_aod",
     "test_required": true
   },
   {
-  "image_name": "servicex_code_gen_atlas_xaod",
   "dir_name": "code_generator_funcadl_xAOD",
+  "image_name": "servicex_code_gen_atlas_xaod",
   "test_required": true
-}
+  }
 ]

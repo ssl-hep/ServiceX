@@ -70,8 +70,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `x509Secrets.vomsOrg`                | Which VOMS org to contact for proxy?             | `atlas`                                                 |
 | `x509Secrets.initImage`              | X509 Secret Service init container image         | `alpine:3.6`                                            |
 | `rbacEnabled`                        | Specify if rbac is enabled in your cluster       | `true`
-| `hostMount`                          | Optional path to mount in transformers as /data  | -
-| `gridAccount`                        | CERN User account name to access Rucio           | -
+| `hostMount`                          | Optional path to mount in transformers as /data  | - |
+| `gridAccount`                        | CERN User account name to access Rucio           | - |
 | `noCerts`                            | Set to true to disable x509 certs and only use open data | false                |
 | `rabbitmq.password`                  | Override the generated RabbitMQ password         | leftfoot1 |
 | `objectstore.enabled`                | Deploy a minio object store with Servicex?       | true      |
@@ -89,7 +89,8 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.pullPolicy`             | Pull policy for transformer pods (Image name specified in REST Request) | Always |
 | `transformer.priorityClassName`      | priorityClassName for transformer pods (Not setting it means getting global default) | Not Set |
 | `transformer.cpuLimit`               | Set CPU resource limit for pod in number of cores | 1 |
-| `transformer.defaultTransformerImage` | Default image for the transformers | 'sslhep/servicex_func_adl_xaod_transformer' |
-| `transformer.defaultTransformerTag` | Default image for the transformers - must match the codeGen | '1.0.0-RC.3' |
-| `transformer.persistence.existingClaim` | Existing persistent volume claim | nil |
-| `transformer.subdir` | Subdirectory of the mount to write transformer results to (should end with trailing /) | nil |
+| `transformer.sidecarImage`                 | Image name for the transformer sidecar container that hold the serviceX code                                           | 'sslhep/servicex_sidecar_transformer'          |
+| `transformer.sidecarTag`                   | Tag for the sidecar container                                                                                          | 'develop'                                      |
+| `transformer.sidecarPullPolicy`            | Pull Policy for the sidecar container                                                                                  | 'Always'                                       |
+| `transformer.persistence.existingClaim`    | Existing persistent volume claim                                                                                       | nil                                            |
+| `transformer.subdir`                       | Subdirectory of the mount to write transformer results to (should end with trailing /)                                 | nil                                            |

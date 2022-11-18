@@ -78,7 +78,7 @@ class ResourceTestBase:
             'JWT_ADMIN': 'admin@example.com',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
-            'TRANSFORMER_DEFAULT_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
+            'TRANSFORMER_SCIENCE_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
             'CODE_GEN_IMAGE': "sslhep/servicex_code_gen_func_adl_xaod:develop"
         }
 
