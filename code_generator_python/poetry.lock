@@ -101,7 +101,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "exceptiongroup"
-version = "1.0.1"
+version = "1.0.4"
 description = "Backport of PEP 654 (exception groups)"
 category = "dev"
 optional = false
@@ -382,7 +382,7 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.2a3"
+version = "1.1.2a5"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
@@ -553,8 +553,8 @@ coverage = [
     {file = "coverage-6.5.0.tar.gz", hash = "sha256:f642e90754ee3e06b0e7e51bce3379590e76b7f76b708e1a71ff043f87025c84"},
 ]
 exceptiongroup = [
-    {file = "exceptiongroup-1.0.1-py3-none-any.whl", hash = "sha256:4d6c0aa6dd825810941c792f53d7b8d71da26f5e5f84f20f9508e8f2d33b140a"},
-    {file = "exceptiongroup-1.0.1.tar.gz", hash = "sha256:73866f7f842ede6cb1daa42c4af078e2035e5f7607f0e2c762cc51bb31bbe7b2"},
+    {file = "exceptiongroup-1.0.4-py3-none-any.whl", hash = "sha256:542adf9dea4055530d6e1279602fa5cb11dab2395fa650b8674eaec35fc4a828"},
+    {file = "exceptiongroup-1.0.4.tar.gz", hash = "sha256:bd14967b79cd9bdb54d97323216f8fdf533e278df937aa2a90089e7d6e06e5ec"},
 ]
 flake8 = [
     {file = "flake8-5.0.4-py2.py3-none-any.whl", hash = "sha256:7a1cf6b73744f5806ab95e526f6f0d8c01c66d7bbe349562d22dfca20610b248"},
@@ -683,8 +683,8 @@ requests-toolbelt = [
     {file = "requests_toolbelt-0.10.1-py2.py3-none-any.whl", hash = "sha256:18565aa58116d9951ac39baa288d3adb5b3ff975c4f25eee78555d89e8f247f7"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.2a3-py3-none-any.whl", hash = "sha256:8d45bf96b66d2bc8bc4140dbfbef84e147ef44dfacb2d1f836bdc5c99072bf63"},
-    {file = "servicex_code_gen_lib-1.1.2a3.tar.gz", hash = "sha256:d1ce3a28add3bcbe42ac3799f5e65a828455186ba1426bef980451898eccf877"},
+    {file = "servicex_code_gen_lib-1.1.2a5-py3-none-any.whl", hash = "sha256:b70c7e8a4b28a6f5d46dfb5b2d129f98ea11871a8c98967ad2406a25dc066b67"},
+    {file = "servicex_code_gen_lib-1.1.2a5.tar.gz", hash = "sha256:0f149be74216a1cc241457981ec8bfe7512d6ca451a60b90f3815c3a6e921999"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

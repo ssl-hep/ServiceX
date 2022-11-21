@@ -22,8 +22,8 @@ objectStore:
 codeGen:
   image: sslhep/servicex_code_gen_func_adl_xaod
   tag: develop
-  defaultTransformerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultTransformerTag: develop
+  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultScienceContainerTag: develop
 
 rabbitmq:
   auth:
