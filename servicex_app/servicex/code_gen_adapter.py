@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
-
+from requests_toolbelt.multipart import decoder
 from servicex.models import TransformRequest
 
 
@@ -36,8 +36,7 @@ class CodeGenAdapter:
         self.transformer_manager = transformer_manager
 
     def generate_code_for_selection(
-        self, request_record: TransformRequest, namespace: str
-    ):
+            self, request_record: TransformRequest, namespace: str, transformer_image: str = None):
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
@@ -48,16 +47,44 @@ class CodeGenAdapter:
         from io import BytesIO
         from zipfile import ZipFile
 
+        postObj = {}
+        if transformer_image:
+            postObj = {
+                "code": request_record.selection,
+                "transformer_image": transformer_image,
+            }
+        else:
+            postObj = {
+                "code": request_record.selection,
+            }
+
         result = requests.post(self.code_gen_url + "/servicex/generated-code",
-                               data=request_record.selection)
+                               json=postObj)
 
         if result.status_code != 200:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
-        zipfile = ZipFile(BytesIO(result.content))
+        print(result.data)
+        boundary = result.data[2:34].decode('utf-8')
+        content_type = f"multipart/form-data; boundary={boundary}"
+        decoder_parts = decoder.MultipartDecoder(result.data, content_type)
 
         assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
-        return self.transformer_manager.create_configmap_from_zip(zipfile,
-                                                                  request_record.request_id,
-                                                                  namespace)
+
+        if len(decoder_parts.parts) > 1:
+            transformer_image = str(decoder_parts.parts[0].content, 'utf-8')
+            zipfile = decoder_parts.parts[1].content
+
+            zipfile = ZipFile(BytesIO(zipfile))
+
+            return (self.transformer_manager.create_configmap_from_zip(zipfile,
+                                                                       request_record.request_id,
+                                                                       namespace), transformer_image)
+        else:
+
+            zipfile = ZipFile(BytesIO(""))
+
+            return (self.transformer_manager.create_configmap_from_zip(zipfile,
+                                                                       request_record.request_id,
+                                                                       namespace), transformer_image)
