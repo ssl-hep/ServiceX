@@ -171,7 +171,7 @@ def callback(channel, method, properties, body):
     try:
         # Loop through the replicas
         for _file_path in _file_paths:
-            logger.info(f"trying to trasform file", extra={
+            logger.info("trying to trasform file", extra={
                         "requestId": _request_id, "file-path": _file_path})
 
             # Enrich the transform request to give more hints to the science container
@@ -219,7 +219,7 @@ def callback(channel, method, properties, body):
 
             # Wait for both threads to complete
             watcher.observer.join()
-            logger.info(f"Watched Directory Thread is done.", extra={'status': watcher.status}")
+            logger.info("Watched Directory Thread is done.", extra={'status': watcher.status})
             uploader.join()
             logger.info("Uploader is done")
 
@@ -251,7 +251,7 @@ def callback(channel, method, properties, body):
                 "error-info": transformer_stats.error_info,
                 "log-body": transformer_stats.log_body
             }
-            logger.error(f"Hard Failure", extra=hf)
+            logger.error("Hard Failure", extra=hf)
 
         shutil.rmtree(request_path)
 
@@ -302,8 +302,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = initialize_logging()
-    logger.info(f"tranformer startup", extra={"result_destination": {args.result_destination},
-                  "output dir": {args.output_dir})
+    logger.info("tranformer startup", extra={"result_destination": args.result_destination,
+                                             "output dir": args.output_dir})
 
     if args.output_dir:
         object_store = None
