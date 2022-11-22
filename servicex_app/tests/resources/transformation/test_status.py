@@ -7,8 +7,8 @@ class TestTransformStatus(ResourceTestBase):
     def test_get_status(self, mocker, client):
         import servicex
 
-        mock_files_processed = mocker.PropertyMock(return_value=15)
-        servicex.models.TransformRequest.files_processed = mock_files_processed
+        mock_files_completed = mocker.PropertyMock(return_value=15)
+        servicex.models.TransformRequest.files_completed = mock_files_completed
         mock_files_remaining = mocker.PropertyMock(return_value=12)
         servicex.models.TransformRequest.files_remaining = mock_files_remaining
         mock_files_failed = mocker.PropertyMock(return_value=2)
@@ -38,8 +38,10 @@ class TestTransformStatus(ResourceTestBase):
             'request-id': "1234",
             "submit-time": fake_transform_request.submit_time.strftime(iso_fmt),
             "finish-time": fake_transform_request.finish_time.strftime(iso_fmt),
-            'files-processed': mock_files_processed.return_value,
+            'files-completed': mock_files_completed.return_value,
+            'files-processed': mock_files_completed.return_value,
             'files-remaining': mock_files_remaining.return_value,
+            'files-failed': mock_files_failed.return_value,
             'files-skipped': mock_files_failed.return_value,
             'stats': {
                 'total-messages': 123,

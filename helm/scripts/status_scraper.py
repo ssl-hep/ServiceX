@@ -36,8 +36,9 @@ url = servicex_endpoint + "/transformation/{}/status?details=true".format(sys.ar
 response = requests.get(url)
 
 doc = response.json()
-status_list = sorted([(status['file-path'], status['transform_status']) for status in doc['details']])
-print(doc['files-processed'], len(status_list))
+status_list = sorted([(status['file-path'], status['transform_status'])
+                      for status in doc['details']])
+print(doc['files-completed'], len(status_list))
 print(doc['files-remaining'])
 
 duplicates = 0
@@ -45,7 +46,7 @@ prev = None
 prev_status = None
 for s in status_list:
     if s[0] == prev:
-        print("Duplicate ",prev, s[1], prev_status)
+        print("Duplicate ", prev, s[1], prev_status)
         duplicates = duplicates + 1
     prev = s[0]
     prev_status = s[1]

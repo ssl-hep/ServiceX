@@ -172,9 +172,6 @@ def callback(channel, method, properties, body):
         # Loop through the replicas
         for _file_path in _file_paths:
             logger.info(f"trying {_file_path}")
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="start",
-                                        info="Starting")
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -229,7 +226,7 @@ def callback(channel, method, properties, body):
             transformer_stats = fill_stats_parser(
                 transformer_capabilities['stats-parser'],
                 Path(os.path.join(request_path, jsonfile + '.log'))
-                )
+            )
 
             if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
                 transform_success = True
@@ -250,18 +247,12 @@ def callback(channel, method, properties, body):
         shutil.rmtree(request_path)
 
         if transform_success:
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="complete",
-                                        info="Total time " + str(total_time))
             servicex.put_file_complete(_file_path, _file_id, "success",
                                        num_messages=0,
                                        total_time=total_time,
                                        total_events=transformer_stats.total_events,
                                        total_bytes=transformer_stats.file_size)
         else:
-            servicex.post_status_update(file_id=_file_id,
-                                        status_code="failure",
-                                        info=transformer_stats.error_info)
 
             servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,
@@ -287,10 +278,6 @@ def callback(channel, method, properties, body):
         channel.basic_publish(exchange='transformation_failures',
                               routing_key=_request_id + '_errors',
                               body=json.dumps(transform_request))
-
-        servicex.post_status_update(file_id=_file_id,
-                                    status_code="failure",
-                                    info=f"error: {error}")
 
         servicex.put_file_complete(file_path=_file_paths[0], file_id=_file_id,
                                    status='failure', num_messages=0,

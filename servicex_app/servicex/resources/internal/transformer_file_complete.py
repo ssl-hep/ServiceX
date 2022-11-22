@@ -31,7 +31,7 @@ from logging import Logger
 from flask import request, current_app
 
 from servicex import TransformerManager
-from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
+from servicex.models import TransformRequest, TransformationResult, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -50,11 +50,13 @@ class TransformerFileComplete(ServiceXResource):
             current_app.logger.error(msg, extra={'requestId': request_id})
             return {"message": msg}, 404
 
-        dataset_file = DatasetFile.get_by_id(info['file-id'])
+        if info['status'] == 'success':
+            TransformRequest.file_transformed_successfully(request_id)
+        else:
+            TransformRequest.file_transformed_unsuccessfully(request_id)
 
         rec = TransformationResult(
             did=transform_req.did,
-            file_id=dataset_file.id,
             request_id=request_id,
             file_path=info['file-path'],
             transform_status=info['status'],
@@ -66,16 +68,11 @@ class TransformerFileComplete(ServiceXResource):
         )
         rec.save_to_db()
 
-        # Commit here to avoid race condition with other file complete messages which
-        # could result in miscounting completed files.
-        db.session.commit()
-
         current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
-            'files_processed': transform_req.files_processed,
-            'files_failed': transform_req.files_failed,
-            'files_skipped': transform_req.files_skipped
+            'files_completed': transform_req.files_completed,
+            'files_failed': transform_req.files_failed
         })
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
