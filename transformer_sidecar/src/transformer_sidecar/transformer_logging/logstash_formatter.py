@@ -44,7 +44,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             'tags': self.tags,
             'type': self.message_type,
             'instance': instance,
-            'component': 'uproot transformer',
+            'component': 'transformer sidecar',
 
             # Extra Fields
             'level': record.levelname,

@@ -153,7 +153,7 @@ def callback(channel, method, properties, body):
 
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    logger.info(transform_request)
+    logger.info("got transform request.", extra=transform_request)
     servicex = ServiceXAdapter(_server_endpoint)
 
     # creating output dir for transform output files
@@ -172,7 +172,8 @@ def callback(channel, method, properties, body):
     try:
         # Loop through the replicas
         for _file_path in _file_paths:
-            logger.info(f"trying {_file_path}")
+            logger.info(f"trying to trasform file", extra={
+                        "requestId": _request_id, "file-path": _file_path})
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -219,7 +220,7 @@ def callback(channel, method, properties, body):
 
             # Wait for both threads to complete
             watcher.observer.join()
-            logger.info(f"Watched Directory Thread is done. Status is {watcher.status}")
+            logger.info(f"Watched Directory Thread is done.", extra={'status': watcher.status}")
             uploader.join()
             logger.info("Uploader is done")
 
@@ -231,9 +232,13 @@ def callback(channel, method, properties, body):
 
             if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
                 transform_success = True
-                logger.info(transformer_stats.log_body)
-                logger.info(f"Got some stats {transformer_stats.file_size} bytes, "
-                            f"{transformer_stats.total_events} events")
+                ts = {
+                    "requestId": _request_id,
+                    "log_body": transformer_stats.log_body,
+                    "file-size": transformer_stats.file_size,
+                    "total-events": transformer_stats.total_events
+                }
+                logger.info("Transformer stats.", extra=ts)
                 break
 
             clear_files(Path(request_path), _file_id)
@@ -241,21 +246,25 @@ def callback(channel, method, properties, body):
         # If none of the replicas resulted in a successful transform then we have
         # a hard failure with this file.
         if not transform_success:
-            logger.error(f"HARD FAILURE FOR {_file_id}")
-            logger.error(transformer_stats.error_info)
-            logger.error(transformer_stats.log_body)
+            hf = {
+                "requestId": _request_id,
+                "file-id": _file_id,
+                "error-info": transformer_stats.error_info,
+                "log-body": transformer_stats.log_body
+            }
+            logger.error(f"Hard Failure", extra=hf)
 
         shutil.rmtree(request_path)
 
         if transform_success:
-            servicex.put_file_complete(_file_path, _file_id, "success",
+            servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
                                        num_messages=0,
                                        total_time=total_time,
                                        total_events=transformer_stats.total_events,
                                        total_bytes=transformer_stats.file_size)
         else:
 
-            servicex.put_file_complete(file_path=_file_path, file_id=_file_id,
+            servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
                                        status='failure', num_messages=0,
                                        total_time=0, total_events=0,
                                        total_bytes=0)
@@ -280,7 +289,7 @@ def callback(channel, method, properties, body):
                               routing_key=_request_id + '_errors',
                               body=json.dumps(transform_request))
 
-        servicex.put_file_complete(file_path=_file_paths[0], file_id=_file_id,
+        servicex.put_file_complete(_request_id, file_path=_file_paths[0], file_id=_file_id,
                                    status='failure', num_messages=0,
                                    total_time=0, total_events=0,
                                    total_bytes=0)
@@ -294,8 +303,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger = initialize_logging()
-    logger.info(f"result destination: {args.result_destination} \
-                  output dir: {args.output_dir}")
+    logger.info(f"tranformer startup", extra={"result_destination": {args.result_destination},
+                  "output dir": {args.output_dir})
 
     if args.output_dir:
         object_store = None
@@ -316,7 +325,7 @@ if __name__ == "__main__":
     shutil.copy('watch.sh', scripts_path)
     shutil.copy('proxy-exporter.sh', scripts_path)
 
-    logger.info("Waiting for capabilities file")
+    logger.debug("Waiting for capabilities file")
     capabilities_file_path = Path(os.path.join(posix_path, 'transformer_capabilities.json'))
     while not capabilities_file_path.is_file():
         time.sleep(1)
@@ -324,7 +333,7 @@ if __name__ == "__main__":
     with open(capabilities_file_path) as capabilities_file:
         transformer_capabilities = json.load(capabilities_file)
 
-    logger.info(transformer_capabilities)
+    logger.debug('transformer capabilities', extra=transformer_capabilities)
 
     startup_time = get_process_info()
     logger.info("Startup finished.",
