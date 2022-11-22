@@ -54,11 +54,12 @@ class ServiceXAdapter:
                         backoff_factor=0.1)
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
-    def put_file_complete(self, file_path, file_id, status,
+    def put_file_complete(self, request_id, file_path, file_id, status,
                           num_messages=None, total_time=None, total_events=None,
                           total_bytes=None):
         avg_rate = 0 if not total_time else int(total_events / total_time)
         doc = {
+            "requestId": request_id,
             "file-path": file_path,
             "file-id": file_id,
             "status": status,
@@ -69,8 +70,6 @@ class ServiceXAdapter:
             "avg-rate": avg_rate
         }
 
-        self.logger.info("Put file complete.", extra=doc)
-
         if self.server_endpoint:
             try:
                 retry_call(self.session.put,
@@ -78,5 +77,6 @@ class ServiceXAdapter:
                            fkwargs={"json": doc},
                            tries=MAX_RETRIES,
                            delay=RETRY_DELAY)
+                self.logger.info("Put file complete.", extra=doc)
             except requests.exceptions.ConnectionError:
-                self.logger.exception("Connection Error in put_file_complete")
+                self.logger.exception("Connection Error in put_file_complete", extra=doc)

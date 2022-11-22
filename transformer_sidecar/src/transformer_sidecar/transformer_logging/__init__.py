@@ -48,7 +48,7 @@ def initialize_logging():
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} uproot_transformer " +
+                                       f"{instance} transformer sidecar " +
                                        '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
@@ -63,6 +63,6 @@ def initialize_logging():
         logstash_handler.setLevel(log.level)
         log.addHandler(logstash_handler)
 
-    log.info("Initialized logging")
+    log.debug("Initialized logging")
 
     return log
