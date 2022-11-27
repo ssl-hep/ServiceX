@@ -43,6 +43,7 @@ class CodeGenAdapter:
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
+        :param transformer_image: Set optional transformer image name for the request
         """
         from io import BytesIO
         from zipfile import ZipFile
@@ -65,7 +66,6 @@ class CodeGenAdapter:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
-        print(result.data)
         boundary = result.data[2:34].decode('utf-8')
         content_type = f"multipart/form-data; boundary={boundary}"
         decoder_parts = decoder.MultipartDecoder(result.data, content_type)
