@@ -1,0 +1,56 @@
+{{- if .Values.minioCleanup.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-minio-cleanup
+spec:
+  schedule: {{ default "* */8 * * *" .Values.minioCleanup.Schedule }}
+  jobTemplate:
+    spec:
+      selector:
+        matchLabels:
+          app: {{ .Release.Name }}-minio-cleanup
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}-minio-cleanup
+        spec:
+          serviceAccountName: {{ template "servicex.fullname" . }}
+          containers:
+          - name: {{ .Release.Name }}-minio-cleanup
+            image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
+            imagePullPolicy: {{ .Values.minioCleanup.pullPolicy }}
+            env:
+            - name: MAX_SIZE
+              value: "{{ .Values.minioCleanup.maxSize }}"
+            - name: MIN_SIZE
+              value: "{{ .Values.minioCleanup.minSize }}"
+            - name: MAX_AGE
+              value: "{{ default 30 .Values.minioCleanup.maxAge }}"
+            {{ if not .Values.objectStore.internal }}
+            # using external minio
+            - name: MINIO_URL
+              value: {{ .Values.objectStore.publicURL }}
+            {{ else }}
+            - name: MINIO_URL
+              value: {{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}
+            {{- end }}
+            {{ if .Values.secret }}
+            - name: ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: accesskey
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: secretkey
+            {{ else }}
+            - name: ACCESS_KEY
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: SECRET_KEY
+              value: {{ .Values.minio.auth.rootPassword }}
+            {{- end }}
+          restartPolicy: OnFailure
+{{- end }}
