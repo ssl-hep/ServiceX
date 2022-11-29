@@ -45,6 +45,9 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
+import click
+from flask.cli import AppGroup
+
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
@@ -129,6 +132,14 @@ def create_app(test_config=None,
                provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+    user_cli = AppGroup('user')
+    @user_cli.command('create')
+    @click.argument('name')
+    def create_user(name):
+        print("created user ", name)
+
+    app.cli.add_command(user_cli)
+
     Bootstrap5(app)
     CORS(app)
 
