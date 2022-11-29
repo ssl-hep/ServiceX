@@ -59,6 +59,22 @@ def initialize_logging() -> logging.Logger:
   return log
 
 
+def strtobool(val):
+  """Convert a string representation of truth to true (1) or false (0).
+
+  True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+  are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+  'val' is anything else.
+  """
+  val = val.lower()
+  if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    return 1
+  elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+    return 0
+  else:
+    raise ValueError("invalid truth value %r" % (val,))
+
+
 def parse_space(size: str) -> int:
   """
   Take a string like 100M or 20G or 30T and return an integer
@@ -85,8 +101,9 @@ def parse_space(size: str) -> int:
 
 
 def run_minio_cleaner():
-  '''Run the minio cleaner
-  '''
+  """
+  Run the minio cleaner
+  """
 
   # Parse the command line arguments
   parser = argparse.ArgumentParser()
@@ -97,7 +114,8 @@ def run_minio_cleaner():
                       default='',
                       help='Size to prune storage to')
   parser.add_argument('--max-age', dest='max_age', action='store',
-                      default='30',
+                      default=30,
+                      type=int,
                       help='Max age of files in days allowed before pruning storage')
 
   args = parser.parse_args()
@@ -113,8 +131,8 @@ def run_minio_cleaner():
     sys.exit(1)
 
   logger.info("ServiceX Minio Cleaner starting up. "
-              f"Max size for storage: {args.max_size} - {raw_max}" 
-              f"Low size for storage: {args.norm_size} - {raw_norm}")
+              f"Max size for storage: {args.max_size} - {raw_max} " 
+              f"Norm size for storage: {args.norm_size} - {raw_norm} ")
 
   env_vars = ['MINIO_URL', 'ACCESS_KEY', 'SECRET_KEY']
   error = False
@@ -127,9 +145,18 @@ def run_minio_cleaner():
     sys.exit(1)
 
   try:
-    store = minio_storage_manager.MinioStore(minio_url=os.environ['MINIO_URL'],
-                                             access_key=os.environ['ACCESS_KEY'],
-                                             secret_key=os.environ['SECRET_KEY'])
+    if 'MINIO_ENCRYPT' in os.environ:
+      if isinstance(os.environ['MINIO_ENCRYPT'], bool):
+        use_https = os.environ['MINIO_ENCRYPT']
+      else:
+        use_https = strtobool(os.environ['MINIO_ENCRYPT'])
+    else:
+      use_https = False
+
+    store = s3_storage_manager.S3Store(s3_endpoint=os.environ['MINIO_URL'],
+                                       access_key=os.environ['ACCESS_KEY'],
+                                       secret_key=os.environ['SECRET_KEY'],
+                                       use_https=use_https)
     results = store.cleanup_storage(max_size=raw_max, norm_size=raw_norm, max_age=args.max_age)
     logger.info(f"Final size after cleanup: {results[0]}")
     for bucket in results[1]:

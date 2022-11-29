@@ -4,18 +4,16 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-minio-cleanup
 spec:
-  schedule: {{ default "* */8 * * *" .Values.minioCleanup.Schedule }}
+  schedule: {{ .Values.minioCleanup.schedule | default  "* */8 * * *" | quote  }}
   jobTemplate:
     spec:
-      selector:
-        matchLabels:
-          app: {{ .Release.Name }}-minio-cleanup
       template:
         metadata:
           labels:
             app: {{ .Release.Name }}-minio-cleanup
         spec:
           serviceAccountName: {{ template "servicex.fullname" . }}
+          concurrencyPolicy: "Forbid"
           containers:
           - name: {{ .Release.Name }}-minio-cleanup
             image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
@@ -23,10 +21,12 @@ spec:
             env:
             - name: MAX_SIZE
               value: "{{ .Values.minioCleanup.maxSize }}"
-            - name: MIN_SIZE
-              value: "{{ .Values.minioCleanup.minSize }}"
+            - name: NORM_SIZE
+              value: "{{ .Values.minioCleanup.normSize }}"
             - name: MAX_AGE
               value: "{{ default 30 .Values.minioCleanup.maxAge }}"
+            - name: MINIO_ENCRYPT
+              value: {{ .Values.objectStore.useTLS | ternary "true" "false"  | quote }}
             {{ if not .Values.objectStore.internal }}
             # using external minio
             - name: MINIO_URL

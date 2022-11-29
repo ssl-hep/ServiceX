@@ -7,7 +7,7 @@ authors = ["Suchandra Thapa <suchandra@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.11"
 minio = "^7.1.12"
-servicex_storage = {git = "https://github.com/ssl-hep/servicex_storage_lib",  rev = "d2718063cc3f7f7729e649bdb927e50816c3de61"}
+servicex_storage = {git = "https://github.com/ssl-hep/servicex_storage_lib",  rev = "1bfb95ed6022a27dc902615ca904480cc2be6bbe"}
 
 
 [tool.poetry.dev-dependencies]

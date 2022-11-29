@@ -126,6 +126,7 @@ x509Secrets:
   tag: develop
   vomsOrg: atlas
 minioCleanup:
+  enabled: false
   image: sslhep/minio_cleanup
   pullPolicy: Always
   tag: develop

@@ -15,9 +15,9 @@ RUN poetry install --no-interaction --no-ansi -vvv
 
 FROM builder AS runtime
 
+COPY --from=poetry /home/cleanup /home/cleanup
 WORKDIR /home/cleanup
 RUN mkdir ./cleanup
-
 COPY scripts/*.py  resources/start.sh ./
 
 RUN chmod +x start.sh
