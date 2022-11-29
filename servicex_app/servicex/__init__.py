@@ -30,12 +30,15 @@ import os
 import sys
 from distutils.util import strtobool
 
+import click
 import logstash
 from flask import Flask
+from flask.cli import AppGroup
 from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+from servicex.cli.add_user import add_user
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -43,9 +46,6 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
-
-import click
-from flask.cli import AppGroup
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
@@ -131,11 +131,13 @@ def create_app(test_config=None,
                provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+
     user_cli = AppGroup('user')
+
     @user_cli.command('create')
-    @click.argument('name')
-    def create_user(name):
-        print("created user ", name)
+    @click.argument('code')
+    def create_user(code):
+        add_user(code=code)
 
     app.cli.add_command(user_cli)
 

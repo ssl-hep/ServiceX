@@ -33,45 +33,45 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                lookup_result_processor, docker_repo_adapter):
 
     from servicex.resources.info import Info
-
-    from servicex.resources.internal.add_file_to_dataset import AddFileToDataset
+    from servicex.resources.internal.add_file_to_dataset import \
+        AddFileToDataset
     from servicex.resources.internal.fileset_complete import FilesetComplete
     from servicex.resources.internal.transform_start import TransformStart
-    from servicex.resources.internal.transform_status import TransformationStatusInternal
-    from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
-
-    from servicex.resources.transformation.submit import SubmitTransformationRequest
-    from servicex.resources.transformation.status import TransformationStatus
+    from servicex.resources.internal.transform_status import \
+        TransformationStatusInternal
+    from servicex.resources.internal.transformer_file_complete import \
+        TransformerFileComplete
     from servicex.resources.transformation.cancel import CancelTransform
-    from servicex.resources.transformation.get_all import AllTransformationRequests
-    from servicex.resources.transformation.get_one import TransformationRequest
     from servicex.resources.transformation.deployment import DeploymentStatus
-
-    from servicex.resources.users.all_users import AllUsers
-    from servicex.resources.users.token_refresh import TokenRefresh
+    from servicex.resources.transformation.get_all import \
+        AllTransformationRequests
+    from servicex.resources.transformation.get_one import TransformationRequest
+    from servicex.resources.transformation.status import TransformationStatus
+    from servicex.resources.transformation.submit import \
+        SubmitTransformationRequest
     from servicex.resources.users.accept_user import AcceptUser
+    from servicex.resources.users.all_users import AllUsers
     from servicex.resources.users.delete_user import DeleteUser
     from servicex.resources.users.pending_users import PendingUsers
     from servicex.resources.users.slack_interaction import SlackInteraction
-
-    from servicex.web.home import home
+    from servicex.resources.users.token_refresh import TokenRefresh
     from servicex.web.about import about
-    from servicex.web.monitor import monitor
-    from servicex.web.logs import logs
-    from servicex.web.sign_in import sign_in
-    from servicex.web.sign_out import sign_out
-    from servicex.web.auth_callback import auth_callback
-    from servicex.web.user_dashboard import user_dashboard
-    from servicex.web.global_dashboard import global_dashboard
-    from servicex.web.view_profile import view_profile
-    from servicex.web.edit_profile import edit_profile
     from servicex.web.api_token import api_token
-    from servicex.web.servicex_file import servicex_file
-    from servicex.web.transformation_request import transformation_request
-    from servicex.web.transformation_results import transformation_results
-
+    from servicex.web.auth_callback import auth_callback
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
+    from servicex.web.edit_profile import edit_profile
+    from servicex.web.global_dashboard import global_dashboard
+    from servicex.web.home import home
+    from servicex.web.logs import logs
+    from servicex.web.monitor import monitor
+    from servicex.web.servicex_file import servicex_file
+    from servicex.web.sign_in import sign_in
+    from servicex.web.sign_out import sign_out
+    from servicex.web.transformation_request import transformation_request
+    from servicex.web.transformation_results import transformation_results
+    from servicex.web.user_dashboard import user_dashboard
+    from servicex.web.view_profile import view_profile
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,

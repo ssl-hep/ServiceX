@@ -1,9 +1,8 @@
-from flask import flash, request, redirect, url_for, session
-
+from flask import flash, redirect, request, session, url_for
+from globus_sdk import AccessTokenAuthorizer, AuthClient
 from servicex.models import UserModel
-from .utils import load_app_client
 
-from globus_sdk import AuthClient, AccessTokenAuthorizer
+from .utils import load_app_client
 
 
 def auth_callback():
