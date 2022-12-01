@@ -48,16 +48,9 @@ class CodeGenAdapter:
         from io import BytesIO
         from zipfile import ZipFile
 
-        postObj = {}
-        if transformer_image:
-            postObj = {
-                "code": request_record.selection,
-                "transformer_image": transformer_image,
-            }
-        else:
-            postObj = {
-                "code": request_record.selection,
-            }
+        postObj = {
+            "code": request_record.selection,
+        }
 
         result = requests.post(self.code_gen_url + "/servicex/generated-code",
                                json=postObj)
@@ -66,7 +59,13 @@ class CodeGenAdapter:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
-        boundary = result.data[2:34].decode('utf-8')
+        # Multipart Mime Encoder from requests_toolbelt appends a delimited between all the fields mentioned in the data payload
+        # Here we are using two constants START_INDEX=2 and END_INDEX=34 which will extract the delimiter from the string
+        # The delimiter is used by the decoder to extract the data out the individual fields from the multipart data
+
+        START_INDEX = 2
+        END_INDEX = 34
+        boundary = result.data[START_INDEX:END_INDEX].decode('utf-8')
         content_type = f"multipart/form-data; boundary={boundary}"
         decoder_parts = decoder.MultipartDecoder(result.data, content_type)
 

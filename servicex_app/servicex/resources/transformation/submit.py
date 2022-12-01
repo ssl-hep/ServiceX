@@ -149,8 +149,11 @@ class SubmitTransformationRequest(ServiceXResource):
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
                 namespace = config['TRANSFORMER_NAMESPACE']
-                (request_rec.generated_code_cm, request_rec.image) = \
+                (request_rec.generated_code_cm, codegen_transformer_image) = \
                     self.code_gen_service.generate_code_for_selection(request_rec, namespace)
+
+                if request_rec.image is None:
+                    request_rec.image = codegen_transformer_image
 
             # Insure the required queues and exchange exist in RabbitMQ broker
             try:
