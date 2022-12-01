@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# import json
 import json
 
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -47,9 +48,14 @@ class TestLookupResultProcessor(ResourceTestBase):
         request.result_destination = 'object-store'
         dataset_file.id = 42
         dataset_file.save_to_db = mocker.Mock()
-        processor.add_file_to_dataset(request, dataset_file)
+        from servicex.models import TransformRequest
+        mock_transform_request_add_a_file = mocker.patch.object(
+            TransformRequest,
+            'add_a_file')
 
-        dataset_file.save_to_db.assert_called()
+        processor.add_file_to_dataset(request, dataset_file)
+        mock_transform_request_add_a_file.assert_called_with(request.request_id)
+
         mock_rabbit_adaptor.basic_publish.assert_called_with(
             exchange='transformation_requests',
             routing_key='BR549',
@@ -71,12 +77,11 @@ class TestLookupResultProcessor(ResourceTestBase):
         transform_request = self._generate_transform_request()
 
         processor.report_fileset_complete(transform_request,
-                                          num_files=1, num_skipped=2,
+                                          num_files=1,
                                           total_events=3, total_bytes=4,
                                           did_lookup_time=5)
 
         assert transform_request.files == 1
-        assert transform_request.files_skipped == 2
         assert transform_request.total_events == 3
         assert transform_request.total_bytes == 4
         assert transform_request.did_lookup_time == 5

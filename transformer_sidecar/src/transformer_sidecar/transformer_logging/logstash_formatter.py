@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2022, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,32 +25,37 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app
+import os
 
-from servicex.decorators import auth_required
-from servicex.models import TransformRequest, FileStatus
-from servicex.resources.servicex_resource import ServiceXResource
+import logstash
+
+instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
-class TransformErrors(ServiceXResource):
-    @auth_required
-    def get(self, request_id):
-        """
-        Fetches errors for a given transformation request.
-        :param request_id: UUID of transformation request.
-        """
-        transform = TransformRequest.lookup(request_id)
-        if not transform:
-            msg = f'Transformation request not found with id: {request_id}'
-            current_app.logger.error("When looking up errors, " + msg,
-                                     extra={'requestId': request_id})
-            return {'message': msg}, 404
-        results = [{
-            "pod-name": result[1].pod_name,
-            "file": result[0].paths
-            if isinstance(result[0].paths, str)
-            else result[0].paths[0],
-            "events": result[0].file_events,
-            "info": result[1].info
-        } for result in FileStatus.failures_for_request(request_id)]
-        return {"errors": list(results)}
+class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
+
+    def format(self, record):
+        message = {
+            '@timestamp': self.format_timestamp(record.created),
+            '@version': '1',
+            'message': record.getMessage(),
+            'host': self.host,
+            'path': record.pathname,
+            'tags': self.tags,
+            'type': self.message_type,
+            'instance': instance,
+            'component': 'uproot transformer',
+
+            # Extra Fields
+            'level': record.levelname,
+            'logger_name': record.name,
+        }
+
+        # Add extra fields
+        message.update(self.get_extra_fields(record))
+
+        # If exception, add debug info
+        if record.exc_info:
+            message.update(self.get_debug_fields(record))
+
+        return self.serialize(message)

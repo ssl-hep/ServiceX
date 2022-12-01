@@ -19,6 +19,7 @@ RUN pip install gunicorn
 RUN pip list
 
 COPY boot.sh ./
+COPY transformer_capabilities.json ./
 COPY servicex/ ./servicex
 COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh

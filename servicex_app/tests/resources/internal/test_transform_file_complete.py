@@ -55,9 +55,8 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_files_remaining = mocker.PropertyMock(return_value=1)
         TransformRequest.files_remaining = mock_files_remaining
 
-        mocker.patch.object(DatasetFile, "get_by_id")
-        mocker.patch.object(TransformationResult, "save_to_db")
-        mocker.patch.object(TransformRequest, "save_to_db")
+        transform_request_update_mock = \
+            mocker.patch.object(TransformRequest, "file_transformed_unsuccessfully")
 
         client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
@@ -65,6 +64,8 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response.status_code == 200
         assert fake_req.finish_time is None
         mock_transform_request_read.assert_called_with('1234')
+        transform_request_update_mock.assert_called_with("1234")
+        mock_files_remaining.assert_called()
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_unknown_files_remaining(self, mocker):
@@ -79,9 +80,8 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_files_remaining = mocker.PropertyMock(return_value=None)
         TransformRequest.files_remaining = mock_files_remaining
 
-        mocker.patch.object(DatasetFile, "get_by_id")
-        mocker.patch.object(TransformationResult, "save_to_db")
-        mocker.patch.object(TransformRequest, "save_to_db")
+        transform_request_update_mock = \
+            mocker.patch.object(TransformRequest, "file_transformed_unsuccessfully")
 
         client = self._test_client(transformation_manager=mock_transformer_manager)
         response = client.put('/servicex/internal/transformation/1234/file-complete',
@@ -89,6 +89,9 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response.status_code == 200
         assert fake_req.finish_time is None
         mock_transform_request_read.assert_called_with('1234')
+        transform_request_update_mock.assert_called_with("1234")
+        mock_files_remaining.assert_called()
+
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_no_files_remaining(self, mocker):
@@ -103,6 +106,9 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_files_remaining = mocker.PropertyMock(return_value=0)
         TransformRequest.files_remaining = mock_files_remaining
 
+        transform_request_update_mock = \
+            mocker.patch.object(TransformRequest, "file_transformed_unsuccessfully")
+
         mocker.patch.object(DatasetFile, "get_by_id")
         mocker.patch.object(TransformationResult, "save_to_db")
         mocker.patch.object(TransformRequest, "save_to_db")
@@ -114,6 +120,8 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response.status_code == 200
         assert fake_req.finish_time is not None
         mock_transform_request_read.assert_called_with('BR549')
+        transform_request_update_mock.assert_called_with("BR549")
+        mock_files_remaining.assert_called()
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('BR549',
                                                                              'my-ws')
 
@@ -134,62 +142,3 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with('1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
-
-    def _generate_dataset_file(self):
-        mock_dataset_file = DatasetFile()
-        mock_dataset_file.adler32 = '123-455'
-        mock_dataset_file.file_size = 0
-        mock_dataset_file.file_events = 0
-        mock_dataset_file.paths = ["/foo/bar1.root", "/foo/bar2.root"],
-        mock_dataset_file.request_id = 'BR549'
-        return mock_dataset_file
-
-    def test_file_transform_complete_files_remain(self, mocker):
-        import servicex
-
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
-        mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=self._generate_transform_request())
-
-        mock_files_remaining = mocker.PropertyMock(return_value=1)
-        TransformRequest.files_remaining = mock_files_remaining
-
-        mocker.patch.object(DatasetFile, "get_by_id",
-                            return_value=self._generate_dataset_file())
-        mocker.patch.object(TransformationResult, "save_to_db")
-
-        client = self._test_client(transformation_manager=mock_transformer_manager)
-        response = client.put('/servicex/internal/transformation/1234/file-complete',
-                              json=self._generate_file_complete_request())
-
-        assert response.status_code == 200
-
-    def test_file_transform_complete_no_files_remain(self, mocker,
-                                                     mock_rabbit_adaptor):
-        import servicex
-
-        mocker.patch.object(DatasetFile, "get_by_id",
-                            return_value=self._generate_dataset_file())
-        mocker.patch.object(TransformationResult, "save_to_db")
-        mocker.patch.object(TransformRequest, "save_to_db")
-
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-
-        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
-        mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=self._generate_transform_request())
-
-        mock_files_remaining = mocker.PropertyMock(return_value=0)
-        TransformRequest.files_remaining = mock_files_remaining
-
-        client = self._test_client(transformation_manager=mock_transformer_manager,
-                                   rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.put('/servicex/internal/transformation/1234/file-complete',
-                              json=self._generate_file_complete_request())
-
-        assert response.status_code == 200

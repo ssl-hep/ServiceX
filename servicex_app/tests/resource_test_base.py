@@ -78,7 +78,7 @@ class ResourceTestBase:
             'JWT_ADMIN': 'admin@example.com',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
-            'TRANSFORMER_DEFAULT_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
+            'TRANSFORMER_SCIENCE_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
             'CODE_GEN_IMAGE': "sslhep/servicex_code_gen_func_adl_xaod:develop"
         }
 
@@ -129,6 +129,9 @@ class ResourceTestBase:
         transform_request.result_format = 'arrow'
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
+        transform_request.files = 1
+        transform_request.files_failed = 0
+        transform_request.files_completed = 0
         transform_request.status = "Submitted"
         transform_request.app_version = '1.0.1'
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"

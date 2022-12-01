@@ -20,6 +20,4 @@ RUN echo "#!/bin/bash" > proxy-exporter.sh &&\
     echo "echo No Proxy Requred >> proxy-exporter.sh" &&\
     chmod a+x proxy-exporter.sh
 
-COPY transformer.py transformer-actual.py
-COPY transformer-shim.py transformer.py
 WORKDIR /home/atlas

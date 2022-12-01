@@ -119,24 +119,6 @@ Then use your favorite postgres sql client to connect to this
 database with the connection URL``jdbc:postgresql://localhost:5432/postgres``
 with the user postgres and the password leftfoot1.
 
-Of particular interest is the ``file_status`` table. It contains entries for
-each transformed root file when it starts and when it finishes, retries, or
-reports an error.
-
-You can find errors with
-
-.. code:: sql
-
-    select * from file_status where request_id='da3d7cc2-7f97-4c98-be77-4e9c22f67425' and status='failure';
-
-These records include the error and the first 2048 characters of the stack
-trace along with the pod name where the transformer ran (you might be able to
-catch the full log with the ``kubectl logs -p`` which can retreive logs from
-terminated pods)
-
-More information on the specific file can be found by joining with the ``files``
-table.
-
 Database Migration
 ------------------
 We use the alembic tooling under ``Flask-Migrate`` library to manage migration of

@@ -56,7 +56,7 @@ class WebTestBase:
             'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:",
             'SQLALCHEMY_TRACK_MODIFICATIONS': False,
             'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
-            'TRANSFORMER_DEFAULT_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
+            'TRANSFORMER_SCIENCE_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
             'TRANSFORMER_MANAGER_MODE': 'external',

@@ -119,7 +119,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
             assert saved_obj.columns == "e.e, e.p"
-            assert saved_obj.image == current_app.config["TRANSFORMER_DEFAULT_IMAGE"]
+            assert saved_obj.image == current_app.config["TRANSFORMER_SCIENCE_IMAGE"]
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.app_version == "3.14.15"
