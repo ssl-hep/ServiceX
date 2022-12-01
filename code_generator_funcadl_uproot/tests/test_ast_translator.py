@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 import tempfile
 from collections import namedtuple
 
@@ -49,6 +50,8 @@ class TestGenerateCode:
             return_value="import foo")
 
         with tempfile.TemporaryDirectory() as tmpdirname:
+            os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
+            os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
             query = "(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))" # NOQA E501
 
             translator = AstUprootTranslator()
