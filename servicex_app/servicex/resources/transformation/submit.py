@@ -152,7 +152,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 (request_rec.generated_code_cm, codegen_transformer_image) = \
                     self.code_gen_service.generate_code_for_selection(request_rec, namespace)
 
-                if request_rec.image is None:
+                if not request_rec.image:
                     request_rec.image = codegen_transformer_image
 
             # Insure the required queues and exchange exist in RabbitMQ broker

@@ -36,7 +36,7 @@ class CodeGenAdapter:
         self.transformer_manager = transformer_manager
 
     def generate_code_for_selection(
-            self, request_record: TransformRequest, namespace: str, transformer_image: str = None):
+            self, request_record: TransformRequest, namespace: str):
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
