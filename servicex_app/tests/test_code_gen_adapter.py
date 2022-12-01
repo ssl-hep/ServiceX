@@ -26,6 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
+from flask import Response
+from requests_toolbelt import MultipartEncoder
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.models import TransformRequest
 
@@ -42,33 +44,31 @@ class TestCodeGenAdapter:
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
         assert service.code_gen_url == "http://foo.com"
 
-    def test_generate_code_for_selection_with_params(self, mocker):
+    def test_generate_code_for_selection(self, mocker):
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
+        test_transformer_image = "foo123"
+
+        m = MultipartEncoder(
+            fields={'transformer_image': test_transformer_image,
+                    'zip_data': "1234567"}
+        )
+
+        mock_response.data = Response(
+            response=m.to_string(),
+            status=200,
+            mimetype=m.content_type
+        ).data
+
         mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
         mock_transformer_manager = mocker.MagicMock()
         mock_zip = mocker.patch("zipfile.ZipFile")
         mocker.patch("io.BytesIO")
         service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
-        mock_transformer_image = "testimage"
-        service.generate_code_for_selection(self._generate_test_request(), "servicex", mock_transformer_image)
+        (config_map, transformer_image) = service.generate_code_for_selection(self._generate_test_request(), "servicex")
+        assert transformer_image == test_transformer_image
+
         mock_requests_post.assert_called()
-
-        mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
-                                                                              "462-33",
-                                                                              "servicex")
-
-    def test_generate_code_for_selection_without_params(self, mocker):
-        mock_response = mocker.MagicMock()
-        mock_response.status_code = 200
-        mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
-        mock_transformer_manager = mocker.MagicMock()
-        mock_zip = mocker.patch("zipfile.ZipFile")
-        mocker.patch("io.BytesIO")
-        service = CodeGenAdapter("http://foo.com", mock_transformer_manager)
-        service.generate_code_for_selection(self._generate_test_request(), "servicex")
-        mock_requests_post.assert_called()
-
         mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
                                                                               "462-33",
                                                                               "servicex")

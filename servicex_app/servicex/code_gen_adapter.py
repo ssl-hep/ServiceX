@@ -81,9 +81,7 @@ class CodeGenAdapter:
                                                                        request_record.request_id,
                                                                        namespace), transformer_image)
         else:
-
             zipfile = ZipFile(BytesIO(""))
-
             return (self.transformer_manager.create_configmap_from_zip(zipfile,
                                                                        request_record.request_id,
                                                                        namespace), transformer_image)
