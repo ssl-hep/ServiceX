@@ -19,4 +19,10 @@ spec:
               value: access
             - name: SECRET_KEY
               value: secret
+            - name: MAX_AGE
+              value: 30
+            - name: MAX_SIZE
+              value: '1G'
+            - name: NORM_SIZE
+              value: '700M'
           restartPolicy: OnFailure
