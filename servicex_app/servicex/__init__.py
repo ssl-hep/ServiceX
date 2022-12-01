@@ -135,9 +135,17 @@ def create_app(test_config=None,
     user_cli = AppGroup('user')
 
     @user_cli.command('create')
-    @click.argument('code')
-    def create_user(code):
-        add_user(code=code)
+    @click.argument('sub')
+    @click.argument('email')
+    @click.argument('name')
+    @click.argument('organization')
+    @click.argument('refresh_token')
+    def create_user(sub, email, name, organization, refresh_token):
+        add_user(sub=sub,
+                 email=email,
+                 name=name,
+                 organization=organization,
+                 refresh_token=refresh_token)
 
     app.cli.add_command(user_cli)
 
