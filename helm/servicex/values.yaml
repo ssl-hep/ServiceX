@@ -133,5 +133,5 @@ minioCleanup:
   schedule: "* */8 * * *"
   maxAge: 30
   maxSize: "1G"
-  minSize: "700M"
+  normSize: "700M"
 
