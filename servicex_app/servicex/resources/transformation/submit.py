@@ -31,13 +31,12 @@ from datetime import datetime, timezone
 
 from flask import current_app
 from flask_restful import reqparse
-from werkzeug.exceptions import BadRequest
-
-from servicex.resources.internal.transform_start import TransformStart
-from servicex.did_parser import DIDParser
 from servicex.decorators import auth_required
-from servicex.models import TransformRequest, DatasetFile, db
+from servicex.did_parser import DIDParser
+from servicex.models import DatasetFile, TransformRequest, db
+from servicex.resources.internal.transform_start import TransformStart
 from servicex.resources.servicex_resource import ServiceXResource
+from werkzeug.exceptions import BadRequest
 
 
 def _workflow_name(transform_request):
@@ -78,8 +77,7 @@ class SubmitTransformationRequest(ServiceXResource):
         )
         cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
-        cls.parser.add_argument('image',
-                                default=current_app.config['TRANSFORMER_SCIENCE_IMAGE'])
+        cls.parser.add_argument('image')
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
@@ -151,8 +149,11 @@ class SubmitTransformationRequest(ServiceXResource):
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
                 namespace = config['TRANSFORMER_NAMESPACE']
-                request_rec.generated_code_cm = \
+                (request_rec.generated_code_cm, codegen_transformer_image) = \
                     self.code_gen_service.generate_code_for_selection(request_rec, namespace)
+
+                if not request_rec.image:
+                    request_rec.image = codegen_transformer_image
 
             # Insure the required queues and exchange exist in RabbitMQ broker
             try:
