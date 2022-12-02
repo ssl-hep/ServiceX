@@ -43,7 +43,6 @@ class CodeGenAdapter:
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
-        :param transformer_image: Set optional transformer image name for the request
         """
         from io import BytesIO
         from zipfile import ZipFile
@@ -71,17 +70,11 @@ class CodeGenAdapter:
 
         assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
 
-        if len(decoder_parts.parts) > 1:
-            transformer_image = str(decoder_parts.parts[0].content, 'utf-8')
-            zipfile = decoder_parts.parts[1].content
+        transformer_image = str(decoder_parts.parts[0].content, 'utf-8')
+        zipfile = decoder_parts.parts[1].content
 
-            zipfile = ZipFile(BytesIO(zipfile))
+        zipfile = ZipFile(BytesIO(zipfile))
 
-            return (self.transformer_manager.create_configmap_from_zip(zipfile,
-                                                                       request_record.request_id,
-                                                                       namespace), transformer_image)
-        else:
-            zipfile = ZipFile(BytesIO(""))
-            return (self.transformer_manager.create_configmap_from_zip(zipfile,
-                                                                       request_record.request_id,
-                                                                       namespace), transformer_image)
+        return (self.transformer_manager.create_configmap_from_zip(zipfile,
+                                                                   request_record.request_id,
+                                                                   namespace), transformer_image)
