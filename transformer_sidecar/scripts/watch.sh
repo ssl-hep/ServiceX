@@ -25,9 +25,10 @@ while true; do
             download_path=`grep -o '"downloadPath":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             output_file=`grep -o '"safeOutputFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             completed_file=`grep -o '"completedFileName":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
+            output_format=`grep -o '"outputFormat":\s.*[Aa-zZ0-9]*' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
 
-            echo "Attempting $download_path -> $output_file -> $completed_file"
-            $lang "$cmd" "$download_path" "$output_file" 2>&1 | tee $file.log
+            echo "Attempting $download_path -> $output_file -> $completed_file with $output_format format"
+            $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $file.log
 
             if [ "${PIPESTATUS[0]}" == 0 ]; then
               echo "Success. skipping rest of input_files"
