@@ -26,7 +26,7 @@ RUN chmod +x boot.sh
 
 USER servicex
 COPY ${APP_CONFIG_FILE} app.conf
-ENV APP_CONFIG_FILE /home/servicex/app.conf
+ENV CODEGEN_CONFIG_FILE /home/servicex/app.conf
 
 EXPOSE 5000
 ENTRYPOINT ["/home/servicex/boot.sh"]
