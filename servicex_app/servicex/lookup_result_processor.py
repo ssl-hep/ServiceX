@@ -50,7 +50,8 @@ class LookupResultProcessor:
             "service-endpoint": self.advertised_endpoint +
             "servicex/internal/transformation/" + request_id,
             "chunk-size": "1000",
-            "result-destination": submitted_request.result_destination
+            "result-destination": submitted_request.result_destination,
+            "result-format": submitted_request.result_format
         }
 
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
