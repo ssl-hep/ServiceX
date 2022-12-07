@@ -142,6 +142,7 @@ def callback(channel, method, properties, body):
     We will examine this log file to see if the transform succeeded or failed
     """
     transform_request = json.loads(body)
+    print("Transform Request ", transform_request)
     _request_id = transform_request['request-id']
 
     # The transform can either include a single path, or a list of replicas
@@ -176,11 +177,11 @@ def callback(channel, method, properties, body):
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
 
-            # Decide an optional file extension for the results. For now we just see if
-            # the transformer is capable of writing parquet files and use that extension,
-            # otherwise, stick with the extension of the input file
-            result_extension = "parquet" \
-                if "parquet" in transformer_capabilities['file-formats'] \
+            # Decide an optional file extension for the results. If the output format is
+            # parquet then we add that as an extension, otherwise stick with the format
+            # of the input file.
+            result_extension = ".parquet" \
+                if transform_request['result-format'] == 'parquet' \
                 else ""
             hashed_file_name = hash_path(_file_path.replace('/', ':') + result_extension)
 
