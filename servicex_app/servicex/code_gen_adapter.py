@@ -36,45 +36,40 @@ class CodeGenAdapter:
         self.transformer_manager = transformer_manager
 
     def generate_code_for_selection(
-            self, request_record: TransformRequest, namespace: str):
+            self, request_record: TransformRequest,
+            namespace: str) -> tuple[str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
+
+        :returns a tuple of (config map name, default transformer image)
         """
         from io import BytesIO
         from zipfile import ZipFile
+
+        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
 
         postObj = {
             "code": request_record.selection,
         }
 
-        result = requests.post(self.code_gen_url + "/servicex/generated-code",
-                               json=postObj)
+        result = requests.post(self.code_gen_url + "/servicex/generated-code", json=postObj)
 
         if result.status_code != 200:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
-        # Multipart Mime Encoder from requests_toolbelt appends a delimited between all the fields mentioned in the data payload
-        # Here we are using two constants START_INDEX=2 and END_INDEX=34 which will extract the delimiter from the string
-        # The delimiter is used by the decoder to extract the data out the individual fields from the multipart data
+        decoder_parts = decoder.MultipartDecoder.from_response(result)
 
-        START_INDEX = 2
-        END_INDEX = 34
-        boundary = result.data[START_INDEX:END_INDEX].decode('utf-8')
-        content_type = f"multipart/form-data; boundary={boundary}"
-        decoder_parts = decoder.MultipartDecoder(result.data, content_type)
-
-        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
-
-        transformer_image = str(decoder_parts.parts[0].content, 'utf-8')
+        transformer_image = decoder_parts.parts[0].text
         zipfile = decoder_parts.parts[1].content
 
         zipfile = ZipFile(BytesIO(zipfile))
 
         return (self.transformer_manager.create_configmap_from_zip(zipfile,
                                                                    request_record.request_id,
-                                                                   namespace), transformer_image)
+                                                                   namespace),
+                transformer_image)
