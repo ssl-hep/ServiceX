@@ -27,10 +27,9 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         if output_format == 'root-file':
             etime = time.time()
-            if output_path:
-                with uproot.recreate(output_path) as writer:
-                    writer[default_tree_name] = awkward_array
-                    wtime = time.time()
+            with uproot.recreate(output_path) as writer:
+                writer[default_tree_name] = awkward_array
+            wtime = time.time()
 
         else:
             explode_records = bool(awkward_array.fields)
@@ -45,10 +44,10 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             writer = pq.ParquetWriter(output_path, arrow.schema)
             writer.write_table(table=arrow)
             writer.close()
-            output_size = os.stat(output_path).st_size
 
             wtime = time.time()
 
+        output_size = os.stat(output_path).st_size
         print(f'Detailed transformer times. query_time:{round(ttime - stime, 3)} '
               f'serialization: {round(etime - ttime, 3)} '
               f'writing: {round(wtime - etime, 3)}')
