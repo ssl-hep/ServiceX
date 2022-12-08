@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.1.0
+December 8, 2022
+
+### Added
+- Code generator now reports its default transformer image to pave the way for multiple code generators per deployment
+
+### Changed
+- Major rewrite of transformer. No longer require ServiceX code in the science image. There is now a sidecar container that contains the serviceX code.
+- Use official Docker GitHub action to cache layers and speed up buids
+- Major database speedup by dropping unused tables and adding indexes
+
+### Fixed
+- Crashing CERN Opendata DID Finder
+
+### Removed
+
 ### 1.0.34
 
 ### Added
