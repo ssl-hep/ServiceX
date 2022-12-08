@@ -49,7 +49,7 @@ class UserModel(db.Model):
     institution = db.Column(db.String(120))
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)
-    refresh_token = db.Column(db.Text, nullable=False, unique=True)
+    refresh_token = db.Column(db.Text, nullable=True, unique=True)
     sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
     requests = db.relationship('TransformRequest', backref='user')
     updated_at = db.Column(DateTime, default=datetime.utcnow)
@@ -70,9 +70,9 @@ class UserModel(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
-    def update_refresh_token_by_email(email,refresh_token,pending) -> Optional['UserModel']:
+    def update_refresh_token_by_email(cls, email,refresh_token,pending) -> Optional['UserModel']:
         db.session.query(UserModel).\
-       filter(UserModel.username == email).\
+       filter(UserModel.email == email).\
        update({'refresh_token': refresh_token,'pending': pending})
         db.session.commit()
         return {'message': '{}\'s refresh token updated'.format(email)} 
