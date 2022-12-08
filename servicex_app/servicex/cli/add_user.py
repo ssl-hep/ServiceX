@@ -15,7 +15,10 @@ def add_user(sub, email, name, organization, refresh_token):
 
     if new_user.email == current_app.config.get('JWT_ADMIN'):
         new_user.admin = True
-    new_user.pending = False
+    if refresh_token:
+        new_user.pending = False
+    else:
+        new_user.pending = True
     try:
         new_user.save_to_db()
     except Exception as ex:
