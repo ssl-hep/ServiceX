@@ -130,6 +130,8 @@ spec:
             mountPath: /opt/servicex
           - name: sqlite
             mountPath: /sqlite
+          - name: users
+            mountPath: /users
 
         ports:
           - containerPort: 5000
@@ -140,3 +142,8 @@ spec:
             name:  {{ .Release.Name }}-flask-config
         - name: sqlite
           emptyDir: {}
+        {{- if .Values.defaultUsers }}
+        - name: users
+          secret:
+            secretName: users
+        {{ end }}

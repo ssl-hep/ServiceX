@@ -6,6 +6,7 @@ app:
   defaultDIDFinderScheme: null
   globusClientID: null
   globusClientSecret: null
+  defaultUsers: users
   image: sslhep/servicex_app
   ingress:
     class: nginx
