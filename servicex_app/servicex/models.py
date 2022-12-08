@@ -70,6 +70,14 @@ class UserModel(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
+    def update_refresh_token_by_email(email,refresh_token,pending) -> Optional['UserModel']:
+        db.session.query(UserModel).\
+       filter(UserModel.username == email).\
+       update({'refresh_token': refresh_token,'pending': pending})
+        db.session.commit()
+        return {'message': '{}\'s refresh token updated'.format(email)} 
+
+    @classmethod
     def find_by_sub(cls, sub) -> Optional['UserModel']:
         return cls.query.filter_by(sub=sub).first()
 
