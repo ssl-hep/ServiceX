@@ -119,12 +119,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
-                if not self.docker_repo_adapter.check_image_exists(image):
-                    msg = f"Requested transformer docker image doesn't exist: {image}"
-                    current_app.logger.error(msg, extra={'requestId': request_id})
-                    return {'message': msg}, 400
-
             user = self.get_requesting_user()
             request_rec = TransformRequest(
                 request_id=str(request_id),
@@ -154,6 +148,12 @@ class SubmitTransformationRequest(ServiceXResource):
 
                 if not request_rec.image:
                     request_rec.image = codegen_transformer_image
+
+            if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
+                if not self.docker_repo_adapter.check_image_exists(request_rec.image):
+                    msg = f"Requested transformer docker image doesn't exist: {request_rec.image}"
+                    current_app.logger.error(msg, extra={'requestId': request_id})
+                    return {'message': msg}, 400
 
             # Insure the required queues and exchange exist in RabbitMQ broker
             try:
