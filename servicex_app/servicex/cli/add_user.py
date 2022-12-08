@@ -5,6 +5,9 @@ from servicex.models import UserModel
 from servicex.web.utils import load_app_client
 
 
+def check_user_exists(sub):
+    return UserModel.find_by_sub(sub)
+
 def add_user(sub, email, name, organization, refresh_token):
     new_user = UserModel(
         sub=sub,
@@ -20,6 +23,7 @@ def add_user(sub, email, name, organization, refresh_token):
     else:
         new_user.pending = True
     try:
-        new_user.save_to_db()
+        if not check_user_exists(new_user.sub):
+            new_user.save_to_db()
     except Exception as ex:
         print(str(ex))
