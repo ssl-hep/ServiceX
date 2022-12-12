@@ -1,6 +1,6 @@
 [[package]]
 name = "certifi"
-version = "2022.9.24"
+version = "2022.12.7"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -19,25 +19,12 @@ certifi = "*"
 urllib3 = "*"
 
 [[package]]
-name = "servicex_storage"
-version = "0.4.1"
-description = ""
+name = "python-logstash"
+version = "0.4.8"
+description = "Python logging handler for Logstash."
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
-
-[package.dependencies]
-minio = "*"
-
-[package.extras]
-test = ["pytest (>=5.2)", "coverage (>=5.2)", "codecov (==2.1.8)", "pytest-mock (==3.2.0)", "flake8 (>=3.8)", "blinker", "pre-commit"]
-
-[package.source]
-type = "git"
-url = "https://github.com/ssl-hep/servicex_storage_lib"
-reference = "1bfb95ed6022a27dc902615ca904480cc2be6bbe"
-resolved_reference = "1bfb95ed6022a27dc902615ca904480cc2be6bbe"
 
 [[package]]
 name = "urllib3"
@@ -55,12 +42,17 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "a692c443c8d185545c9512e6d52a98220ca7745421a4da729664539bb8d3b190"
+content-hash = "f5e2996d83e1bf8ce32fffbfcf4c02ec307f0019a2b4982ea9de0b28938c5391"
 
 [metadata.files]
-certifi = []
+certifi = [
+    {file = "certifi-2022.12.7-py3-none-any.whl", hash = "sha256:4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18"},
+    {file = "certifi-2022.12.7.tar.gz", hash = "sha256:35824b4c3a97115964b408844d64aa14db1cc518f6562e8d7261699d1350a9e3"},
+]
 minio = []
-servicex_storage = []
+python-logstash = [
+    {file = "python-logstash-0.4.8.tar.gz", hash = "sha256:d04e1ce11ecc107e4a4f3b807fc57d96811e964a554081b3bbb44732f74ef5f9"},
+]
 urllib3 = [
     {file = "urllib3-1.26.13-py2.py3-none-any.whl", hash = "sha256:47cc05d99aaa09c9e72ed5809b60e7ba354e64b59c9c173ac3018642d8bb41fc"},
     {file = "urllib3-1.26.13.tar.gz", hash = "sha256:c083dd0dce68dbfbe1129d5271cb90f9447dea7d52097c6e0126120c521ddea8"},

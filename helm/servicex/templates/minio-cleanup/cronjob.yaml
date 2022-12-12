@@ -52,5 +52,11 @@ spec:
             - name: SECRET_KEY
               value: {{ .Values.minio.auth.rootPassword }}
             {{- end }}
+            {{- if .Values.logging.logstash.enabled }}
+            - name: LOGSTASH_HOST
+              value: "{{ .Values.logging.logstash.host }}"
+            - name: LOGSTASH_PORT
+              value: "{{ .Values.logging.logstash.port }}"
+            {{- end }}
           restartPolicy: OnFailure
 {{- end }}
