@@ -137,7 +137,7 @@ x509Secrets:
   vomsOrg: atlas
 minioCleanup:
   enabled: false
-  image: sslhep/minio_cleanup
+  image: sslhep/servicex_minio_cleanup
   pullPolicy: Always
   tag: develop
   schedule: "* */8 * * *"
