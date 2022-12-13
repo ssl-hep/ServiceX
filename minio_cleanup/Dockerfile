@@ -20,7 +20,7 @@ WORKDIR /home/cleanup
 RUN mkdir ./cleanup
 COPY scripts/*.py  resources/start.sh ./
 RUN mkdir servicex_storage
-COPY servicex_storage/* ./
+COPY servicex_storage/* ./servicex_storage/
 
 RUN chmod +x start.sh
 

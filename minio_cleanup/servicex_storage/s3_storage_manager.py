@@ -63,6 +63,10 @@ class S3Store(object_storage_manager.ObjectStore):
     size = 0
     last_modified = datetime.datetime.now(datetime.timezone.utc)
     for obj in objects:
+      if obj.object_name[-1] == '/':
+        # this is a bucket within a bucket, skip because this isn't generated
+        # by ServiceX
+        continue
       result = self.__s3_client.stat_object(obj.bucket_name, obj.object_name)
       size += result.size
       if result.last_modified < last_modified:
