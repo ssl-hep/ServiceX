@@ -32,6 +32,8 @@ codeGen:
   image: sslhep/servicex_code_gen_atlas_xaod
   pullPolicy: Always
   tag: develop
+  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultScienceContainerTag: develop
 didFinder:
   CERNOpenData:
     cachePrefix: null
@@ -116,9 +118,6 @@ transformer:
   sidecarImage: sslhep/servicex_sidecar_transformer
   sidecarTag: develop
   sidecarPullPolicy: Always
-
-  defaultScienceContainerImage:  # replace me
-  defaultScienceContainerTag: develop
   scienceContainerPullPolicy: Always
 
   language: python

@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 
 from servicex.xaod_code_generator.ast_translator import AstAODTranslator
 import servicex_codegen
@@ -35,7 +36,11 @@ def create_app(test_config=None, provided_translator=None):
     # We need access to the App's config to determine translater backend before we create
     # the app, so drive the flask config machinery directly
     app_config = Config(".")
+
     app_config.from_envvar("APP_CONFIG_FILE")
+
+    if 'CODEGEN_CONFIG_FILE' in os.environ:
+        app_config.from_envvar('CODEGEN_CONFIG_FILE')
 
     return servicex_codegen.create_app(test_config,
                                        provided_translator=provided_translator

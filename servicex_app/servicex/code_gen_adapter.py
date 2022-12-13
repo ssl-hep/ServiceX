@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
-
+from requests_toolbelt.multipart import decoder
 from servicex.models import TransformRequest
 
 
@@ -36,28 +36,40 @@ class CodeGenAdapter:
         self.transformer_manager = transformer_manager
 
     def generate_code_for_selection(
-        self, request_record: TransformRequest, namespace: str
-    ):
+            self, request_record: TransformRequest,
+            namespace: str) -> tuple[str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
+
+        :returns a tuple of (config map name, default transformer image)
         """
         from io import BytesIO
         from zipfile import ZipFile
 
-        result = requests.post(self.code_gen_url + "/servicex/generated-code",
-                               data=request_record.selection)
+        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
+
+        postObj = {
+            "code": request_record.selection,
+        }
+
+        result = requests.post(self.code_gen_url + "/servicex/generated-code", json=postObj)
 
         if result.status_code != 200:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')
 
-        zipfile = ZipFile(BytesIO(result.content))
+        decoder_parts = decoder.MultipartDecoder.from_response(result)
 
-        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
-        return self.transformer_manager.create_configmap_from_zip(zipfile,
-                                                                  request_record.request_id,
-                                                                  namespace)
+        transformer_image = decoder_parts.parts[0].text
+        zipfile = decoder_parts.parts[1].content
+
+        zipfile = ZipFile(BytesIO(zipfile))
+
+        return (self.transformer_manager.create_configmap_from_zip(zipfile,
+                                                                   request_record.request_id,
+                                                                   namespace),
+                transformer_image)

@@ -14,6 +14,12 @@ spec:
       labels:
         app: {{ .Release.Name }}-did-finder-cernopendata
     spec:
+      initContainers:
+        - name: check-url
+          image: {{ .Values.app.checksImage }}
+          env:
+          - name: URL
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
       containers:
       - name: {{ .Release.Name }}-did-finder-cernopendata
         image: {{ .Values.didFinder.CERNOpenData.image }}:{{ .Values.didFinder.CERNOpenData.tag }}
