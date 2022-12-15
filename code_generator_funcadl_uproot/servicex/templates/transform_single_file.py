@@ -28,7 +28,9 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         if output_format == 'root-file':
             etime = time.time()
             with uproot.recreate(output_path) as writer:
-                writer[default_tree_name] = awkward_array
+                writer[default_tree_name] = {field: awkward_array[field] for field in
+                                             awkward_array.fields} if awkward_array.fields \
+                    else awkward_array
             wtime = time.time()
 
         else:
