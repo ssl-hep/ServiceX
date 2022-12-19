@@ -1,4 +1,5 @@
 site_name: ServiceX
+site_url: https://servicex.readthedocs.io/
 nav:
     - Home: index.md
     - Introduction: introduction.md
