@@ -134,3 +134,13 @@ x509Secrets:
   pullPolicy: Always
   tag: develop
   vomsOrg: atlas
+minioCleanup:
+  enabled: false
+  image: sslhep/servicex_minio_cleanup
+  pullPolicy: Always
+  tag: develop
+  schedule: "* */8 * * *"
+  maxAge: 30
+  maxSize: "1G"
+  normSize: "700M"
+

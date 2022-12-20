@@ -1,0 +1,62 @@
+{{- if .Values.minioCleanup.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-minio-cleanup
+spec:
+  schedule: {{ .Values.minioCleanup.schedule | default  "* */8 * * *" | quote  }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}-minio-cleanup
+        spec:
+          serviceAccountName: {{ template "servicex.fullname" . }}
+          concurrencyPolicy: "Forbid"
+          containers:
+          - name: {{ .Release.Name }}-minio-cleanup
+            image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
+            imagePullPolicy: {{ .Values.minioCleanup.pullPolicy }}
+            env:
+            - name: MAX_SIZE
+              value: "{{ .Values.minioCleanup.maxSize }}"
+            - name: NORM_SIZE
+              value: "{{ .Values.minioCleanup.normSize }}"
+            - name: MAX_AGE
+              value: "{{ default 30 .Values.minioCleanup.maxAge }}"
+            - name: MINIO_ENCRYPT
+              value: {{ .Values.objectStore.useTLS | ternary "true" "false"  | quote }}
+            {{ if not .Values.objectStore.internal }}
+            # using external minio
+            - name: MINIO_URL
+              value: {{ .Values.objectStore.publicURL }}
+            {{ else }}
+            - name: MINIO_URL
+              value: {{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}
+            {{- end }}
+            {{ if .Values.secret }}
+            - name: ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: accesskey
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets }}
+                  key: secretkey
+            {{ else }}
+            - name: ACCESS_KEY
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: SECRET_KEY
+              value: {{ .Values.minio.auth.rootPassword }}
+            {{- end }}
+            {{- if .Values.logging.logstash.enabled }}
+            - name: LOGSTASH_HOST
+              value: "{{ .Values.logging.logstash.host }}"
+            - name: LOGSTASH_PORT
+              value: "{{ .Values.logging.logstash.port }}"
+            {{- end }}
+          restartPolicy: OnFailure
+{{- end }}
