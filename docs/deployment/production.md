@@ -339,7 +339,7 @@ Install sealed secrets helm chart
 You will need the `kubeseal` command on your computer. Follow instructions for
 [the various options](https://github.com/bitnami-labs/sealed-secrets#homebrew)
 
-Create a secrets file using the [example_secrets.yaml](../../example_secrets.yaml). 
+Create a secrets file using the [example_secrets.yaml](../example_secrets.yaml). 
 Encrypt it using kubeseal with 
 ```console
 cat deployed_values/dev-secrets.yaml | kubeseal --controller-namespace kube-system --controller-name sealed-secrets --format yaml > deployed_values/dev-sealed-secrets.yaml                  
