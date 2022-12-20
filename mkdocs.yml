@@ -9,7 +9,7 @@ nav:
         - Outreach: user/outreach.md
     - 'Examples':
         - ATLAS xAOD Example: user/func_adl_xaod.ipynb
-        # - TCut Intro: user/tcut_intro.ipynb
+        # - TCut Intro: user/tcut_intro.ipynb ff
         # - Advanced xAOD with Func-ADL: user/func_adl_xaod.ipynb
     - 'Deployment Guide':
         - Basic deployments: deployment/basic.md
