@@ -96,3 +96,11 @@ parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitn
 | `transformer.sidecarPullPolicy`            | Pull Policy for the sidecar container                                                                                  | 'Always'                                       |
 | `transformer.persistence.existingClaim`    | Existing persistent volume claim                                                                                       | nil                                            |
 | `transformer.subdir`                       | Subdirectory of the mount to write transformer results to (should end with trailing /)                                 | nil                                            |
+| `minioCleanup.enabled`                     | Enable deployment of minio cleanup service    | false                                          |
+| `minioCleanup.image`                       | Default image for minioCleanup cronjob | `sslhep/servicex_minio_cleanup`                |
+| `minioCleanup.tag`                         | minioCleanup image tag |                                                |
+| `minioCleanup.pullPolicy`                  | minioCleanup image pull policy     | `Always`                                       |
+| `minioCleanup.schedule`                    | Schedule for minioCleanup cronjob. See [reference](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) for details on fields | '* */8 * * *' (every 8 hours)                  |
+| `minioCleanup.maxAge`                      | Max age in days before removing results | 30                                             |
+| `minioCleanup.maxSize`                     | Start removing buckets when total space used reaches this number  (can use G,M, T suffixes)| '1G'                                           |
+| `minioCleanup.normSize`                    | Size at which to stop removing buckets | '700M'                                         |                                                |
