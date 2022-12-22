@@ -134,7 +134,7 @@ spec:
             mountPath: /sqlite
           {{- if .Values.app.defaultUsers }}
           - name: users
-            mountPath: /users
+            mountPath: /default_users
           {{ end }}
 
 
