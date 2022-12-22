@@ -130,7 +130,7 @@ spec:
             mountPath: /opt/servicex
           - name: sqlite
             mountPath: /sqlite
-          {{- if .Values.defaultUsers }}
+          {{- if .Values.app.defaultUsers }}
           - name: users
             mountPath: /users
           {{ end }}
@@ -145,7 +145,7 @@ ports:
             name:  {{ .Release.Name }}-flask-config
         - name: sqlite
           emptyDir: {}
-        {{- if .Values.defaultUsers }}
+        {{- if .Values.app.defaultUsers }}
         - name: users
           secret:
             secretName: users
