@@ -11,7 +11,7 @@ def add_user(sub, email, name, institution, refresh_token):
         sub=sub,
         email=email,
         name=name,
-        institution=organization,
+        institution=institution,
         refresh_token=refresh_token)
 
     if new_user.email == current_app.config.get('JWT_ADMIN'):
