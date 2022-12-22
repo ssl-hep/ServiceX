@@ -136,7 +136,7 @@ spec:
           {{ end }}
 
 
-ports:
+        ports:
           - containerPort: 5000
 
       volumes:
