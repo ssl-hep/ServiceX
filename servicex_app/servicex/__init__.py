@@ -111,6 +111,7 @@ def _override_config_with_environ(app):
     Use app.config as a guide to configuration settings that can be overridden from env
     vars.
     """
+
     # Env vars will be strings. Convert boolean values
     def _convert_string(value):
         return value if value not in ["true", "false"] else strtobool(value)
@@ -140,7 +141,7 @@ def create_app(test_config=None,
     @click.argument('email')
     @click.argument('name')
     @click.argument('organization')
-    @click.argument('refresh_token',required=False)
+    @click.argument('refresh_token', required=False)
     def create_user(sub, email, name, organization, refresh_token=None):
         add_user(sub=sub,
                  email=email,
