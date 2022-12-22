@@ -32,7 +32,6 @@ from types import SimpleNamespace
 
 import pytest
 from servicex.transformer_manager import TransformerManager
-
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -101,7 +100,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py'
         }
@@ -169,7 +167,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -211,7 +208,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -259,7 +255,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -307,7 +302,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -357,7 +351,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -403,7 +396,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -452,7 +444,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
@@ -508,7 +499,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_X509_SECRET': None,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_LANGUAGE': 'python',
             'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',

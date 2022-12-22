@@ -1,0 +1,58 @@
+noCerts: false
+didFinder:
+  rucio:
+    enabled: true
+    tag: sidecar-monorepo
+    pullPolicy: Always
+
+  CERNOpenData:
+    enabled: false
+
+  YT:
+    enabled: false
+app:
+  tag: sidecar-monorepo
+  pullPolicy: IfNotPresent
+  validateTransformerImage: false
+
+transformer:
+  autoscalerEnabled: false
+  sidecarTag: sidecar-monorepo
+  sidecarPullPolicy: IfNotPresent
+
+#  language: python
+#  exec: /generated/transform_single_file.py
+#  defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
+
+  language: bash
+  exec: /generated/transform_single_file.sh
+  scienceContainerPullPolicy: IfNotPresent
+
+codeGen:
+  #image: sslhep/servicex_code_gen_func_adl_uproot
+  image: sslhep/servicex_code_gen_atlas_xaod
+  tag: sidecar-monorepo
+  pullPolicy: IfNotPresent
+  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+  defaultScienceContainerTag: sidecar-monorepo
+
+objectStore:
+  enabled: true
+  publicURL: localhost:9000
+  publicClientUseTLS: false
+
+
+rabbitmq:
+  auth:
+    erlangCookie: mmmmmmmcoookie
+  persistence:
+    enabled: false
+  service:
+    type: NodePort
+    nodePort: 30672
+
+
+postgres:
+    enabled: true
+
+gridAccount: bgalewsk

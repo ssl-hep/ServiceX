@@ -132,6 +132,7 @@ def create_app(test_config=None,
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
+
     """Flask CLI Plugin to create user using CLI"""
     user_cli = AppGroup('user')
 
@@ -149,7 +150,6 @@ def create_app(test_config=None,
                  refresh_token=refresh_token)
 
     app.cli.add_command(user_cli)
-
     Bootstrap5(app)
     CORS(app)
 

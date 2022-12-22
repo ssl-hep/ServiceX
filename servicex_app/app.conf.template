@@ -78,7 +78,6 @@ TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = ""
 TRANSFORMER_PERSISTENCE_SUBDIR = "output/"
 
 TRANSFORMER_SCIENCE_IMAGE = "sslhep/servicex_func_adl_xaod_transformer:develop"
-
 OBJECT_STORE_ENABLED = False
 MINIO_URL = 'localhost:9000'
 MINIO_ACCESS_KEY = 'miniouser'

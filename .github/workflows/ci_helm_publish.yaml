@@ -52,8 +52,8 @@ jobs:
             .didFinder.rucio.tag = strenv(DOCKER_TAG) | .didFinder.rucio.tag style="double" |
             .didFinder.CERNOpenData.tag = strenv(DOCKER_TAG) | .didFinder.CERNOpenData.tag style="double" |
             .transformer.sidecarTag = strenv(DOCKER_TAG) | .transformer.sidecarTag style="double" |
-            .transformer.defaultScienceContainerTag = strenv(DOCKER_TAG) | .transformer.defaultScienceContainerTag style="double" |
             .x509Secrets.tag = strenv(DOCKER_TAG) | .x509Secrets.tag style="double" |
+            .codeGen.defaultScienceContainerTag = strenv(DOCKER_TAG) | .codeGen.defaultScienceContainerTag style="double" |
             .codeGen.tag = strenv(DOCKER_TAG) | .codeGen.tag style="double" ' helm/servicex/values.yaml
       - name: Create helm package
         working-directory: ./helm

@@ -98,7 +98,7 @@ data:
     TRANSFORMER_SIDECAR_IMAGE = "{{ .Values.transformer.sidecarImage }}:{{ .Values.transformer.sidecarTag }}"
     TRANSFORMER_SIDECAR_PULL_POLICY = '{{ .Values.transformer.sidecarPullPolicy }}'
 
-    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.transformer.defaultScienceContainerImage }}:{{ .Values.transformer.defaultScienceContainerTag }}"
+    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.codeGen.defaultScienceContainerImage }}:{{ .Values.codeGen.defaultScienceContainerTag }}"
     TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY = '{{ .Values.transformer.scienceContainerPullPolicy }}'
 
     

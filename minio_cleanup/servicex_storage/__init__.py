@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2021, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,13 +25,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from tests.resource_test_base import ResourceTestBase
-
-
-class TestServicexInfo(ResourceTestBase):
-    def test_get_info(self, client, mock_app_version):
-        response = client.get('/servicex')
-        assert response.status_code == 200
-        print(response.json)
-        assert response.json == {'app-version': '3.14.15',
-                                 'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}  # noqa: E501
