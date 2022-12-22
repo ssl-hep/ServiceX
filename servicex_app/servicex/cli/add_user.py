@@ -1,12 +1,10 @@
 from flask import current_app
-from flask_jwt_extended import create_refresh_token
-from globus_sdk import AccessTokenAuthorizer, AuthClient
 from servicex.models import UserModel
-from servicex.web.utils import load_app_client
 
 
 def check_user_exists(sub):
     return UserModel.find_by_sub(sub)
+
 
 def add_user(sub, email, name, organization, refresh_token):
     new_user = UserModel(
