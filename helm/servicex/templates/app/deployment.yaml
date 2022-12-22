@@ -130,10 +130,13 @@ spec:
             mountPath: /opt/servicex
           - name: sqlite
             mountPath: /sqlite
+          {{- if .Values.defaultUsers }}
           - name: users
             mountPath: /users
+          {{ end }}
 
-        ports:
+
+ports:
           - containerPort: 5000
 
       volumes:
