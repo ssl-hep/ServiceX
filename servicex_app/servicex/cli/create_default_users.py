@@ -1,17 +1,13 @@
-from kubernetes import client, config
-import base64
 import json
 import os
 
-config.load_incluster_config()
-v1 = client.CoreV1Api()
-secret = v1.read_namespaced_secret("users", "default")
-users_encoded = secret.data['users.json']
-users_decoded = base64.b64decode(users_encoded)
-users = json.loads(users_decoded)
+with open('/default_users/users.json', 'r') as f:
+    users = json.load(f)
+
 
 for user in users:
-    command = "poetry run flask --app servicex/app.py user create " \
+    print(f"Creating user record for {user['name']}")
+    command = "poetry run flask user create " \
               " '{}' " \
               " '{}' " \
               " '{}' " \
