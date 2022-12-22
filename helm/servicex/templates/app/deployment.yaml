@@ -38,6 +38,8 @@ spec:
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
+        - name: FLASK_APP
+          value: "/home/servicex/servicex/app.py"
         - name: INSTANCE_NAME
           value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
