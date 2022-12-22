@@ -140,13 +140,13 @@ def create_app(test_config=None,
     @click.argument('sub')
     @click.argument('email')
     @click.argument('name')
-    @click.argument('organization')
+    @click.argument('institution')
     @click.argument('refresh_token', required=False)
-    def create_user(sub, email, name, organization, refresh_token=None):
+    def create_user(sub, email, name, institution, refresh_token=None):
         add_user(sub=sub,
                  email=email,
                  name=name,
-                 organization=organization,
+                 institution=institution,
                  refresh_token=refresh_token)
 
     app.cli.add_command(user_cli)

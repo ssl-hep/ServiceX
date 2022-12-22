@@ -6,7 +6,7 @@ def check_user_exists(sub):
     return UserModel.find_by_sub(sub)
 
 
-def add_user(sub, email, name, organization, refresh_token):
+def add_user(sub, email, name, institution, refresh_token):
     new_user = UserModel(
         sub=sub,
         email=email,
