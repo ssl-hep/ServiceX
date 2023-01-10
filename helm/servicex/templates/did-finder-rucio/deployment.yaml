@@ -29,11 +29,13 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secrets }}
                 key: rabbitmq-password
+          - name: RABBIT_URI
+            value: "{{ .Values.rabbitmq.uri }}"
           - name: RMQ_URI
-            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+            value: amqp://user:$(RMQ_PASS)@$(RABBIT_URI):5672/?heartbeat=9000
           {{- else }}
           - name: RMQ_URI
-            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@$(RABBIT_URI)/?heartbeat=9000
           {{- end }}
           {{- if .Values.didFinder.rucio.cachePrefix }}
           - name: CACHE_PREFIX

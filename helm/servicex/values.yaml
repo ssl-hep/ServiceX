@@ -23,6 +23,7 @@ app:
   rabbitmq:
     retries: 12
     retry_interval: 10
+    uri: "{{ .Release.Name }}-rabbitmq:5672"
   replicas: 1
   tag: develop
   tokenExpires: false
