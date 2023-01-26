@@ -68,6 +68,23 @@ class WebTestBase:
             'MINIO_SECRET_KEY': 'leftfoot1',
             'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
             'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
+            'CODE_GEN_DICT': [
+                {
+                    'short': 'uproot',
+                    'long': '',
+                    'url': 'http://localhost:8000'
+                },
+                {
+                    'short': 'xAOD',
+                    'long': '',
+                    'url': 'http://localhost:8000'
+                },
+                {
+                    'short': 'python',
+                    'long': '',
+                    'url': 'http://localhost:8000'
+                }
+            ], 
             'ENABLE_AUTH': False,
             'GLOBUS_CLIENT_ID': 'globus-client-id',
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',

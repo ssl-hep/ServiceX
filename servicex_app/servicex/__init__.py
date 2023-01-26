@@ -229,8 +229,9 @@ def create_app(test_config=None,
             rabbit_adaptor = provided_rabbit_adaptor
 
         if not provided_code_gen_service:
+            print(app.config)
             code_gen_service = CodeGenAdapter(
-                app.config['CODE_GEN_SERVICE_URL'],
+                app.config['CODE_GEN_DICT'],
                 transformer_manager)
         else:
             code_gen_service = provided_code_gen_service

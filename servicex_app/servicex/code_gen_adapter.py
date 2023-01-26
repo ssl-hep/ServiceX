@@ -31,12 +31,13 @@ from servicex.models import TransformRequest
 
 
 class CodeGenAdapter:
-    def __init__(self, code_gen_url, transformer_manager):
-        self.code_gen_url = code_gen_url
+    def __init__(self, code_gen_dict, transformer_manager):
+        self.code_gen_dict = code_gen_dict
         self.transformer_manager = transformer_manager
 
     def generate_code_for_selection(
             self, request_record: TransformRequest,
+            user_codegen_name: str,
             namespace: str) -> tuple[str, str]:
         """
         Generates the C++ code for a request's selection string.
@@ -44,7 +45,7 @@ class CodeGenAdapter:
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
-
+        :param user_codegen_name: Name provided by user for selecting the codegen URL from config dictionary
         :returns a tuple of (config map name, default transformer image)
         """
         from io import BytesIO
@@ -52,11 +53,17 @@ class CodeGenAdapter:
 
         assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
 
+        # Finding Codegen URL from the config dictionary and user provided input
+        post_url= ''
+        for dict in self.code_gen_dict:
+            if user_codegen_name == dict['short']:
+                post_url = dict['url']
+
         postObj = {
             "code": request_record.selection,
         }
 
-        result = requests.post(self.code_gen_url + "/servicex/generated-code", json=postObj)
+        result = requests.post(post_url + "/servicex/generated-code", json=postObj)
 
         if result.status_code != 200:
             msg = result.json()['Message']

@@ -78,6 +78,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
         cls.parser.add_argument('image')
+        cls.parser.add_argument('user-codegen-name')
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
@@ -96,9 +97,10 @@ class SubmitTransformationRequest(ServiceXResource):
             args = self.parser.parse_args()
             config = current_app.config
 
-            image = args["image"]
+            image = args.get("image")
             did = args.get("did")
             file_list = args.get("file-list")
+            user_codegen_name = args.get("user-codegen-name")
 
             # did xor file_list
             if bool(did) == bool(file_list):
