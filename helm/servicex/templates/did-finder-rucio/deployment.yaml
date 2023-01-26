@@ -24,7 +24,7 @@ spec:
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
           - name: RABBIT_URI
-            value: "{{ .Values.rabbitmq.uri }}"
+            value: "{{ tpl .Values.rabbitmq.uri . }}"
           {{- if .Values.secrets }}
           - name: RMQ_PASS
             valueFrom: 

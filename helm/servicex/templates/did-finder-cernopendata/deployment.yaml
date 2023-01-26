@@ -39,7 +39,7 @@ spec:
                 key: rabbitmq-password
         {{- end }}
           - name: RABBIT_URI
-            value: "{{ .Values.rabbitmq.uri }}"
+            value: "{{ tpl .Values.rabbitmq.uri .}}"
         args:
           - --rabbit-uri
     {{- if .Values.secrets }}
