@@ -23,14 +23,14 @@ spec:
         command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
+          - name: RABBIT_URI
+            value: "{{ .Values.rabbitmq.uri }}"
           {{- if .Values.secrets }}
           - name: RMQ_PASS
             valueFrom: 
               secretKeyRef:
                 name: {{ .Values.secrets }}
                 key: rabbitmq-password
-          - name: RABBIT_URI
-            value: "{{ .Values.rabbitmq.uri }}"
           - name: RMQ_URI
             value: amqp://user:$(RMQ_PASS)@$(RABBIT_URI):5672/?heartbeat=9000
           {{- else }}
