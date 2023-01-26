@@ -48,7 +48,7 @@ class TestCodeGenAdapter:
             'url': 'http://python:8000'
         },
     ]
-    
+
     def _generate_test_request(self):
         transform_request = TransformRequest()
         transform_request.request_id = "462-33"
@@ -83,7 +83,7 @@ class TestCodeGenAdapter:
 
         code_gen = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
         (config_map, transformer_image) = \
-            code_gen.generate_code_for_selection(self._generate_test_request(),'uproot', "servicex")
+            code_gen.generate_code_for_selection(self._generate_test_request(), 'uproot', "servicex")
 
         assert transformer_image == "my-transformer:test"
 
@@ -101,10 +101,10 @@ class TestCodeGenAdapter:
         service = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
-            service.generate_code_for_selection(self._generate_test_request(),'uproot', "servicex")
+            service.generate_code_for_selection(self._generate_test_request(), 'uproot', "servicex")
         assert str(eek.value) == 'Failed to generate translation code: Ooops'
 
-    def test_wrong_user_input_codegen(self,mocker):
+    def test_wrong_user_input_codegen(self, mocker):
         mock_response = mocker.MagicMock()
         mock_response.status_code = 500
         mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
@@ -113,5 +113,5 @@ class TestCodeGenAdapter:
         service = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
-            service.generate_code_for_selection(self._generate_test_request(),'foo', "servicex")
+            service.generate_code_for_selection(self._generate_test_request(), 'foo', "servicex")
         assert str(eek.value) == 'foo, code generator unavailable for use'

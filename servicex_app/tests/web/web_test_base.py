@@ -84,7 +84,7 @@ class WebTestBase:
                     'long': '',
                     'url': 'http://localhost:8000'
                 }
-            ], 
+            ],
             'ENABLE_AUTH': False,
             'GLOBUS_CLIENT_ID': 'globus-client-id',
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',

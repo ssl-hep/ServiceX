@@ -54,7 +54,7 @@ class CodeGenAdapter:
         assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
 
         # Finding Codegen URL from the config dictionary and user provided input
-        post_url= ''
+        post_url = ''
         for dict in self.code_gen_dict:
             if user_codegen_name == dict['short']:
                 post_url = dict['url']
