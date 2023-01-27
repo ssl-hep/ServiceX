@@ -24,7 +24,6 @@ app:
     retries: 12
     normSize: "700M"
     retry_interval: 10
-    uri: "{{ .Release.Name }}-rabbitmq:5672"
   replicas: 1
   tag: develop
   tokenExpires: false
@@ -107,6 +106,7 @@ rabbitmq:
     enabled: false
   volumePermissions:
     enabled: true
+  uri: "{{.Release.Name}}-rabbitmq:5672"
 rbacEnabled: true
 secrets: null
 transformer:
