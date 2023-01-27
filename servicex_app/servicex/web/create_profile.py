@@ -31,7 +31,13 @@ def create_profile():
                 new_user.admin = True
                 new_user.pending = False
             try:
-                new_user.save_to_db()
+                check_user_email = UserModel.find_by_email(form.email.data)
+                if check_user_email and not check_user_email.refresh_token:
+                    UserModel.update_refresh_token_by_email(check_user_email.email, create_refresh_token(identity=sub),
+                                                            False)
+                    new_user.pending = False
+                else:
+                    new_user.save_to_db()
                 session['user_id'] = new_user.id
                 session['admin'] = new_user.admin
                 webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")

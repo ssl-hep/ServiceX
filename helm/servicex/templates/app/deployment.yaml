@@ -38,6 +38,8 @@ spec:
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
+        - name: FLASK_APP
+          value: "/home/servicex/servicex/app.py"
         - name: INSTANCE_NAME
           value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
@@ -132,6 +134,11 @@ spec:
             mountPath: /opt/servicex
           - name: sqlite
             mountPath: /sqlite
+          {{- if .Values.app.defaultUsers }}
+          - name: users
+            mountPath: /default_users
+          {{ end }}
+
 
         ports:
           - containerPort: 5000
@@ -142,3 +149,8 @@ spec:
             name:  {{ .Release.Name }}-flask-config
         - name: sqlite
           emptyDir: {}
+        {{- if .Values.app.defaultUsers }}
+        - name: users
+          secret:
+            secretName: users
+        {{ end }}

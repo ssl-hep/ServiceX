@@ -49,7 +49,7 @@ class UserModel(db.Model):
     institution = db.Column(db.String(120))
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)
-    refresh_token = db.Column(db.Text, nullable=False, unique=True)
+    refresh_token = db.Column(db.Text, nullable=True, unique=True)
     sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
     requests = db.relationship('TransformRequest', backref='user')
     updated_at = db.Column(DateTime, default=datetime.utcnow)
@@ -70,6 +70,14 @@ class UserModel(db.Model):
         return cls.query.filter_by(email=email).first()
 
     @classmethod
+    def update_refresh_token_by_email(cls, email, refresh_token, pending) -> Optional['UserModel']:
+        db.session.query(UserModel). \
+            filter(UserModel.email == email). \
+            update({'refresh_token': refresh_token, 'pending': pending})
+        db.session.commit()
+        return {'message': '{}\'s refresh token updated'.format(email)}
+
+    @classmethod
     def find_by_sub(cls, sub) -> Optional['UserModel']:
         return cls.query.filter_by(sub=sub).first()
 
@@ -87,6 +95,7 @@ class UserModel(db.Model):
                 'admin': x.admin,
                 'pending': x.pending
             }
+
         return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
 
     @classmethod
@@ -97,6 +106,7 @@ class UserModel(db.Model):
                 'id': x.id,
                 'admin': x.admin
             }
+
         return {'users': list(map(lambda x: to_json(x),
                                   UserModel.query.filter_by(pending=True)))}
 
@@ -367,4 +377,4 @@ class DatasetFile(db.Model):
         return cls.query.filter_by(id=dataset_file_id).one()
 
     def get_path_id(self):
-        return self.request_id+":"+str(self.id)
+        return self.request_id + ":" + str(self.id)

@@ -30,12 +30,15 @@ import os
 import sys
 from distutils.util import strtobool
 
+import click
 import logstash
 from flask import Flask
+from flask.cli import AppGroup
 from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+from servicex.cli.add_user import add_user
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -108,6 +111,7 @@ def _override_config_with_environ(app):
     Use app.config as a guide to configuration settings that can be overridden from env
     vars.
     """
+
     # Env vars will be strings. Convert boolean values
     def _convert_string(value):
         return value if value not in ["true", "false"] else strtobool(value)
@@ -128,6 +132,24 @@ def create_app(test_config=None,
                provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+
+    """Flask CLI Plugin to create user using CLI"""
+    user_cli = AppGroup('user')
+
+    @user_cli.command('create')
+    @click.argument('sub')
+    @click.argument('email')
+    @click.argument('name')
+    @click.argument('institution')
+    @click.argument('refresh_token', required=False)
+    def create_user(sub, email, name, institution, refresh_token=None):
+        add_user(sub=sub,
+                 email=email,
+                 name=name,
+                 institution=institution,
+                 refresh_token=refresh_token)
+
+    app.cli.add_command(user_cli)
 
     Bootstrap5(app)
     CORS(app)
