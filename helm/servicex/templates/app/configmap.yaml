@@ -147,10 +147,19 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
-    {{ if .Values.codeGen.enabled }}
-    CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
-    CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
-    {{ end }}
+    {{ if .Values.codeGen }}
+    {{- $code_gen_service_urls := dict }}
+    {{- $code_gen_images := dict }}
+    {{- range $codeGenName, $v := .Values.codeGen }}
+    ---
+         {{- $codeGenUrl := printf "http://%s-code-gen-%s:8000" $.Release.Name .image }}
+         {{ $code_gen_service_urls = set $code_gen_service_urls $codeGenName $codeGenUrl }}
+         {{- $codeGenImage := printf "%s:%s" .image .tag }}
+         {{ $code_gen_images = set $code_gen_images $codeGenName $codeGenImage }}
+    {{- end }} 
+    CODE_GEN_SERVICE_URLS: {{ $code_gen_service_urls }}
+    CODE_GEN_IMAGE = {{ $code_gen_images }}
+    {{- end }}
 
     {{- $didFinders := list }}
     {{- if .Values.didFinder.CERNOpenData.enabled }}

@@ -29,28 +29,28 @@ app:
   tokenExpires: false
   validateTransformerImage: true
 codeGen:
-  - name: atlasXAOD
+  atlasXAOD:
     enabled: true
     image: sslhep/servicex_code_gen_atlas_xaod
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
     defaultScienceContainerTag: develop
-  - name: uproot
+  uproot:
     enabled: true
     image: sslhep/servicex_code_gen_func_adl_uproot
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: develop
-  - name: cms
+  cms:
     enabled: true
     image: sslhep/servicex_code_gen_cms_aod
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
     defaultScienceContainerTag: develop
-  - name: python
+  python:
     enabled: true
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always

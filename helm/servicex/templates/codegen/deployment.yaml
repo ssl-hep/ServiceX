@@ -1,29 +1,29 @@
-{{- range .Values.codeGen }}
+{{- range $codeGenName, $v := .Values.codeGen }}
 ---
 {{- if .enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-code-gen-{{ .name }}
+  name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-code-gen-{{ .name }}
+      app: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-code-gen-{{ .name }}
+        app: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
     spec:
-      serviceAccountName: {{ template "servicex.fullname" . }}
+      serviceAccountName: {{ template "servicex.fullname" $ }}
       containers:
-      - name: {{ .Release.Name }}-code-gen-{{ .name }}
+      - name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
         image: {{ .image }}:{{ .tag }}
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
         - name: INSTANCE_NAME
-          value: {{ .Release.Name }}
+          value: {{ $.Release.Name }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .pullPolicy }}
@@ -36,6 +36,6 @@ spec:
       volumes:
         - name: app-cfg
           configMap:
-            name:  {{ .Release.Name }}-flask-config
+            name:  {{ $.Release.Name }}-flask-config
 {{- end }}
 {{- end }}
