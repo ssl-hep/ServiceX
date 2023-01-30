@@ -87,9 +87,22 @@ MINIO_PUBLIC_URL = 'localhost:9000'
 MINIO_ENCRYPT_PUBLIC = True
 MINIO_ENCRYPT = False
 
-CODE_GEN_SERVICE_URL = 'http://localhost:5001'
-CODE_GEN_IMAGE = "sslhep/servicex_code_gen_func_adl_xaod:develop"
-CODE_GEN_DICT = [{},{}]
+CODE_GEN_SERVICE_URLS = {
+    'uproot':'http://localhost:8000'
+    'xAOD':'http://localhost:8000',
+    'python': 'http://localhost:8000'
+}
+CODE_GEN_IMAGE = {
+    'uproot':'http://localhost:8000'
+    'xAOD':'http://localhost:8000',
+    'python': 'http://localhost:8000'
+}
+
+TRANSFORMER_SCIENCE_IMAGES = {
+    'uproot':'http://localhost:8000'
+    'xAOD':'http://localhost:8000',
+    'python': 'http://localhost:8000'
+}
 
 # If no scheme is included in a requests DID, it will be routed to the Rucio
 # DID Finder
