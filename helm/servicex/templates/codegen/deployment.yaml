@@ -27,9 +27,6 @@ spec:
         tty: true
         stdin: true
         imagePullPolicy: {{ .pullPolicy }}
-        volumeMounts:
-          - name: app-cfg
-            mountPath: /opt/servicex
         ports:
           - containerPort: 5000
 {{- end }}
