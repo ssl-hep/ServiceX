@@ -98,7 +98,6 @@ data:
     TRANSFORMER_SIDECAR_IMAGE = "{{ .Values.transformer.sidecarImage }}:{{ .Values.transformer.sidecarTag }}"
     TRANSFORMER_SIDECAR_PULL_POLICY = '{{ .Values.transformer.sidecarPullPolicy }}'
 
-    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.codeGen.defaultScienceContainerImage }}:{{ .Values.codeGen.defaultScienceContainerTag }}"
     TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY = '{{ .Values.transformer.scienceContainerPullPolicy }}'
 
     
@@ -150,15 +149,19 @@ data:
     {{ if .Values.codeGen }}
     {{- $code_gen_service_urls := dict }}
     {{- $code_gen_images := dict }}
+    {{- $transformer_images := dict }}
     {{- range $codeGenName, $v := .Values.codeGen }}
     ---
          {{- $codeGenUrl := printf "http://%s-code-gen-%s:8000" $.Release.Name .image }}
          {{ $code_gen_service_urls = set $code_gen_service_urls $codeGenName $codeGenUrl }}
          {{- $codeGenImage := printf "%s:%s" .image .tag }}
          {{ $code_gen_images = set $code_gen_images $codeGenName $codeGenImage }}
+         {{- $images := printf "%s:%s" .defaultScienceContainerImage .defaultScienceContainerTag }}
+         {{ $transformer_images = set $transformer_images $codeGenName $images }}
     {{- end }} 
     CODE_GEN_SERVICE_URLS: {{ $code_gen_service_urls }}
     CODE_GEN_IMAGE = {{ $code_gen_images }}
+    TRANSFORMER_SCIENCE_IMAGES = {{ $transformer_images }}
     {{- end }}
 
     {{- $didFinders := list }}
