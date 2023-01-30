@@ -37,8 +37,6 @@ def create_app(test_config=None, provided_translator=None):
     # the app, so drive the flask config machinery directly
     app_config = Config(".")
 
-    app_config.from_envvar("APP_CONFIG_FILE")
-
     if 'CODEGEN_CONFIG_FILE' in os.environ:
         app_config.from_envvar('CODEGEN_CONFIG_FILE')
 
