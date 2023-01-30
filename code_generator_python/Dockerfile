@@ -14,6 +14,8 @@ COPY poetry.lock poetry.lock
 RUN poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi
 
+RUN pip install gunicorn
+
 COPY boot.sh ./
 COPY servicex/ ./servicex
 COPY scripts/from_text_to_zip.py .
