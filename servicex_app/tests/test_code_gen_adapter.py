@@ -31,23 +31,11 @@ from servicex.models import TransformRequest
 
 
 class TestCodeGenAdapter:
-    code_gen_dict = [
-        {
-            'short': 'uproot',
-            'long': 'uproot',
-            'url': 'http://uproot:8000'
-        },
-        {
-            'short': 'xAOD',
-            'long': 'xAOD',
-            'url': 'http://xAOD:8000'
-        },
-        {
-            'short': 'python',
-            'long': 'python',
-            'url': 'http://python:8000'
-        },
-    ]
+    code_gen_service_urls = {
+    'uproot':'http://localhost:8000',
+    'xAOD':'http://localhost:8000',
+    'python': 'http://localhost:8000'
+    }
 
     def _generate_test_request(self):
         transform_request = TransformRequest()
@@ -57,8 +45,8 @@ class TestCodeGenAdapter:
 
     def test_init(self, mocker):
         mock_transformer_manager = mocker.MagicMock()
-        service = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
-        assert service.code_gen_dict == self.code_gen_dict
+        service = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
+        assert service.code_gen_service_urls == self.code_gen_service_urls
 
     def test_generate_code_for_selection(self, mocker):
 
@@ -81,7 +69,7 @@ class TestCodeGenAdapter:
         mock_zip = mocker.patch("zipfile.ZipFile")
         mocker.patch("io.BytesIO")
 
-        code_gen = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
+        code_gen = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
         (config_map, transformer_image) = \
             code_gen.generate_code_for_selection(self._generate_test_request(), 'uproot', "servicex")
 
@@ -98,7 +86,7 @@ class TestCodeGenAdapter:
         mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
         mocker.patch('requests.post', return_value=mock_response)
         mock_transformer_manager = mocker.MagicMock()
-        service = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
+        service = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
             service.generate_code_for_selection(self._generate_test_request(), 'uproot', "servicex")
@@ -110,7 +98,7 @@ class TestCodeGenAdapter:
         mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
         mocker.patch('requests.post', return_value=mock_response)
         mock_transformer_manager = mocker.MagicMock()
-        service = CodeGenAdapter(self.code_gen_dict, mock_transformer_manager)
+        service = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
             service.generate_code_for_selection(self._generate_test_request(), 'foo', "servicex")
