@@ -66,21 +66,20 @@ class WebTestBase:
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1',
-            'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
             'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
             'CODE_GEN_SERVICE_URLS': {
-                'uproot':'http://localhost:8000',
-                'xAOD':'http://localhost:8000',
+                'uproot': 'http://localhost:8000',
+                'xAOD': 'http://localhost:8000',
                 'python': 'http://localhost:8000'
             },
             'CODE_GEN_IMAGE': {
-                'uproot':'http://localhost:8000',
-                'xAOD':'http://localhost:8000',
+                'uproot': 'http://localhost:8000',
+                'xAOD': 'http://localhost:8000',
                 'python': 'http://localhost:8000'
             },
             'TRANSFORMER_SCIENCE_IMAGES': {
-                'uproot':'http://localhost:8000',
-                'xAOD':'http://localhost:8000',
+                'uproot': 'http://localhost:8000',
+                'xAOD': 'http://localhost:8000',
                 'python': 'http://localhost:8000'
             },
             'ENABLE_AUTH': False,

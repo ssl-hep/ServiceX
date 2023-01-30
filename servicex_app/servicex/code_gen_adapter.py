@@ -55,7 +55,7 @@ class CodeGenAdapter:
 
         # Finding Codegen URL from the config dictionary and user provided input
         post_url = ''
-        for key,value in self.code_gen_service_urls.items():
+        for key, value in self.code_gen_service_urls.items():
             if user_codegen_name == key:
                 post_url = value
 

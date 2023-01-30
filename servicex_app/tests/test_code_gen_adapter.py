@@ -32,9 +32,9 @@ from servicex.models import TransformRequest
 
 class TestCodeGenAdapter:
     code_gen_service_urls = {
-    'uproot':'http://localhost:8000',
-    'xAOD':'http://localhost:8000',
-    'python': 'http://localhost:8000'
+        'uproot': 'http://localhost:8000',
+        'xAOD': 'http://localhost:8000',
+        'python': 'http://localhost:8000'
     }
 
     def _generate_test_request(self):
