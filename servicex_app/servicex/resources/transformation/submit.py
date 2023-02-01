@@ -102,6 +102,12 @@ class SubmitTransformationRequest(ServiceXResource):
             file_list = args.get("file-list")
             user_codegen_name = args.get("user-codegen-name")
 
+            code_gen_image_name = 'sslhep/servicex_code_gen_func_adl_xaod:develop'
+            if user_codegen_name:
+                for key, val in config['CODE_GEN_IMAGE'].items():
+                    if key == user_codegen_name:
+                        code_gen_image_name = val
+
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
@@ -121,6 +127,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
+            
+
             user = self.get_requesting_user()
             request_rec = TransformRequest(
                 request_id=str(request_id),
@@ -138,7 +146,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(args),
                 status='Submitted',
                 app_version=self._get_app_version(),
-                code_gen_image=config['CODE_GEN_IMAGE']
+                code_gen_image=code_gen_image_name
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
