@@ -7,7 +7,7 @@ app:
   globusClientID: null
   globusClientSecret: null
   defaultUsers:
-  image: sslhep/servicex_app:multiple-codegen
+  image: sslhep/servicex_app
   ingress:
     class: nginx
     defaultBackend: default-http-backend
@@ -29,7 +29,7 @@ app:
   tokenExpires: false
   validateTransformerImage: true
 codeGen:
-  atlasXAOD:
+  atlasxaod:
     enabled: true
     image: sslhep/servicex_code_gen_atlas_xaod
     pullPolicy: Always
