@@ -13,7 +13,7 @@ spec:
      name: "tcp"
      protocol: TCP
   selector:
-    app: {{ $.Release.Name }}-code-gen
+    app: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
   type: ClusterIP
 {{- end }}
 {{- end }}
