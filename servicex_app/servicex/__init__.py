@@ -189,8 +189,8 @@ def create_app(test_config=None,
 
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
-        print(type(app.config["DICT"]))
-        print(app.config['DICT'])
+        print(type(app.config["MYDICT"]))
+        print(app.config['MYDICT'])
         app.config.update(_override_config_with_environ(app))
     else:
         app.config.from_mapping(test_config)

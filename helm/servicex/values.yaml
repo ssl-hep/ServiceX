@@ -7,7 +7,7 @@ app:
   globusClientID: null
   globusClientSecret: null
   defaultUsers:
-  image: sslhep/servicex_app
+  image: sslhep/servicex_app:multiple-codegen
   ingress:
     class: nginx
     defaultBackend: default-http-backend
