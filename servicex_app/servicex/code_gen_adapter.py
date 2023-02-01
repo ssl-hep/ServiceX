@@ -37,8 +37,8 @@ class CodeGenAdapter:
 
     def generate_code_for_selection(
             self, request_record: TransformRequest,
-            user_codegen_name: str,
-            namespace: str) -> tuple[str, str]:
+            namespace: str,
+            user_codegen_name: str = 'atlasxaod',) -> tuple[str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
