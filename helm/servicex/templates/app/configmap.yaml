@@ -150,16 +150,21 @@ data:
     {{- $code_gen_service_urls := dict }}
     {{- $code_gen_images := dict }}
     {{- $transformer_images := dict }}
+    {{- $sample_list := list }}
     {{- range $codeGenName, $v := .Values.codeGen }}
     ---
          {{- $codeGenUrl := printf "http://%s-code-gen-%s:8000" $.Release.Name .image }}
+         {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenUrl }}
+         {{- $sample_list = append $sample_list $dictItem }}
          {{ $code_gen_service_urls = set $code_gen_service_urls $codeGenName $codeGenUrl }}
          {{- $codeGenImage := printf "%s:%s" .image .tag }}
          {{ $code_gen_images = set $code_gen_images $codeGenName $codeGenImage }}
          {{- $images := printf "%s:%s" .defaultScienceContainerImage .defaultScienceContainerTag }}
          {{ $transformer_images = set $transformer_images $codeGenName $images }}
+         
     {{- end }} 
-    CODE_GEN_SERVICE_URLS: {{ $code_gen_service_urls }}
+    MYDICT = { {{ join "," $sample_list }} }
+    CODE_GEN_SERVICE_URLS = {{ $code_gen_service_urls }}
     CODE_GEN_IMAGE = {{ $code_gen_images }}
     TRANSFORMER_SCIENCE_IMAGES = {{ $transformer_images }}
     {{- end }}
