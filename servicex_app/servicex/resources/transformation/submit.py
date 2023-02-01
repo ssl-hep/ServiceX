@@ -127,8 +127,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            
-
             user = self.get_requesting_user()
             request_rec = TransformRequest(
                 request_id=str(request_id),
