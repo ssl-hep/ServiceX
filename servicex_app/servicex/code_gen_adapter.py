@@ -38,7 +38,7 @@ class CodeGenAdapter:
     def generate_code_for_selection(
             self, request_record: TransformRequest,
             namespace: str,
-            user_codegen_name: str = 'atlasxaod') -> tuple[str, str]:
+            user_codegen_name: str) -> tuple[str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
@@ -55,8 +55,9 @@ class CodeGenAdapter:
 
         # Finding Codegen URL from the config dictionary and user provided input
         post_url = ''
+        check_val = user_codegen_name or 'atlasxaod'
         for key, value in self.code_gen_service_urls.items():
-            if user_codegen_name == key:
+            if check_val == key:
                 post_url = value
 
         if not post_url:

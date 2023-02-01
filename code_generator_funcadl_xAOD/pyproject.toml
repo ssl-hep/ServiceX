@@ -9,7 +9,7 @@ packages = [{include = "code_generator_funcadl_xaod"}]
 [tool.poetry.dependencies]
 python = "~3.10"
 func-adl-xAOD = "2.0.1"
-servicex-code-gen-lib = {version = "^1.1.4a2"}
+servicex-code-gen-lib = {version = "^1.1.4a3"}
 
 [tool.poetry.group.test]
 optional = true
