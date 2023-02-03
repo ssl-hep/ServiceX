@@ -77,7 +77,7 @@ class CodeGenAdapter:
         decoder_parts = decoder.MultipartDecoder.from_response(result)
 
         transformer_image = (decoder_parts.parts[0].text).strip()
-        
+
         zipfile = decoder_parts.parts[1].content
 
         zipfile = ZipFile(BytesIO(zipfile))
