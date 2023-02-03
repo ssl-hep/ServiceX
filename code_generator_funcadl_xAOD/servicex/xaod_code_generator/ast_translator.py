@@ -35,7 +35,7 @@ from func_adl_xAOD.cms.aod.executor import cms_aod_executor
 from func_adl_xAOD.common.executor import executor
 from qastle import text_ast_to_python_ast
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
+from servicex.servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
     GenerateCodeException
 
 
