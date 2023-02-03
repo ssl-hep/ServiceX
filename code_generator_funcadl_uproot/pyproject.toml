@@ -12,7 +12,7 @@ func-adl = "2.3.1"
 "func-adl.ast" = "2.3.1"
 func-adl-uproot = "1.9.0"
 qastle = "0.15.0"
-servicex-code-gen-lib = {version = "^1.1.4a5"}
+servicex-code-gen-lib = {version = "^1.1.4a6"}
 
 [tool.poetry.group.test]
 optional = true
