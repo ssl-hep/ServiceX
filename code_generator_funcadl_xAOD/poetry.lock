@@ -466,7 +466,7 @@ py = ">=1.4.26,<2.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.4a6"
+version = "1.1.4a7"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
@@ -891,8 +891,8 @@ retry = [
     {file = "retry-0.9.2.tar.gz", hash = "sha256:f8bfa8b99b69c4506d6f5bd3b0aabf77f98cdb17f3c9fc3f5ca820033336fba4"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.4a6-py3-none-any.whl", hash = "sha256:b4e76c6c9a580a81ceb45b9dff201f858baf8dd5715ba2020ecb3ae597ab03ef"},
-    {file = "servicex_code_gen_lib-1.1.4a6.tar.gz", hash = "sha256:d4e989dc3de324f326bb0b47a02f52efe7b7775bd28678f3972462d7c31c7220"},
+    {file = "servicex_code_gen_lib-1.1.4a7-py3-none-any.whl", hash = "sha256:455cbe32cbadf1a96804458577a2f2b0035f045b3a93f3479f54bf57227d3a5d"},
+    {file = "servicex_code_gen_lib-1.1.4a7.tar.gz", hash = "sha256:2abe63acef2ebc55b029e8cdedc5762c45ab6c042ffa74ae793af880f67f90a1"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
