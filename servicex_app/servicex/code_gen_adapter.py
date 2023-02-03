@@ -74,8 +74,6 @@ class CodeGenAdapter:
 
         result = requests.post(post_url + "/servicex/generated-code", json=postObj)
 
-        print('Result JSON: ', result.json())
-
         if result.status_code != 200:
             msg = result.json()['Message']
             raise ValueError(f'Failed to generate translation code: {msg}')

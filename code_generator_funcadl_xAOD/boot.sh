@@ -4,7 +4,7 @@
 action=${1:-web_service}
 if [ "$action" = "web_service" ] ; then
     mkdir instance
-    exec gunicorn -b :5000 --workers=2 --threads=1 --access-logfile - --error-logfile - "servicex.xaod_code_generator:create_app()"
+    exec gunicorn -b :5000 --workers=2 --threads=1 --log-level=warning --access-logfile /tmp/access --error-logfile /tmp/error "servicex.xaod_code_generator:create_app()"
 elif [ "$action" = "translate" ]; then
     python from_ast_to_zip.py "${@:2}"
 else
