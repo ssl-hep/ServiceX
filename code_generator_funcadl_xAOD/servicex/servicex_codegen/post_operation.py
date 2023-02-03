@@ -35,7 +35,7 @@ import os
 import zipfile
 from tempfile import TemporaryDirectory
 
-from flask import Response, request
+from flask import Response, request, current_app
 from flask_restful import Resource
 from requests_toolbelt import MultipartEncoder
 
@@ -93,7 +93,7 @@ class GeneratedCode(Resource):
                 # code gen transformer returns the default transformer image mentioned in
                 # the config file
                 transformer_image = os.environ.get('TRANSFORMER_SCIENCE_IMAGE')
-                print('Transformer Image: ', transformer_image)
+                current_app.logger.info('Transformer Image: ', transformer_image)
 
                 # MultipartEncoder library takes multiple types of data fields and merge
                 # them into a multipart mime data type
