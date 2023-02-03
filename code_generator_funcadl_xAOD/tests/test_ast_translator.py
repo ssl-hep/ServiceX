@@ -6,7 +6,7 @@ import pytest
 from func_adl_xAOD.atlas.xaod.executor import atlas_xaod_executor
 from servicex.xaod_code_generator.ast_translator import AstAODTranslator
 
-from servicex.servicex_codegen.code_generator import GenerateCodeException
+from servicex_codegen.code_generator import GenerateCodeException
 
 
 def test_ctor():
