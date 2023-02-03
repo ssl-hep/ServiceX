@@ -5,6 +5,7 @@ metadata:
   name: {{ .Release.Name }}-minio-cleanup
 spec:
   schedule: {{ .Values.minioCleanup.schedule | default  "* */8 * * *" | quote  }}
+  concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
       template:
@@ -13,7 +14,6 @@ spec:
             app: {{ .Release.Name }}-minio-cleanup
         spec:
           serviceAccountName: {{ template "servicex.fullname" . }}
-          concurrencyPolicy: "Forbid"
           containers:
           - name: {{ .Release.Name }}-minio-cleanup
             image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
