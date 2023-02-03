@@ -28,7 +28,7 @@
 import os
 
 from servicex.xaod_code_generator.ast_translator import AstAODTranslator
-import servicex_codegen
+import servicex.servicex_codegen
 from flask.config import Config
 
 
@@ -40,8 +40,8 @@ def create_app(test_config=None, provided_translator=None):
     if 'CODEGEN_CONFIG_FILE' in os.environ:
         app_config.from_envvar('CODEGEN_CONFIG_FILE')
 
-    return servicex_codegen.create_app(test_config,
-                                       provided_translator=provided_translator
-                                       if provided_translator else
-                                       AstAODTranslator(app_config['TARGET_BACKEND'])
-                                       )
+    return servicex.servicex_codegen.create_app(test_config,
+                                                provided_translator=provided_translator
+                                                if provided_translator else
+                                                AstAODTranslator(app_config['TARGET_BACKEND'])
+                                                )
