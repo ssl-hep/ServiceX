@@ -23,6 +23,7 @@ app:
   pullPolicy: Always
   rabbitmq:
     retries: 12
+    normSize: "700M"
     retry_interval: 10
   replicas: 1
   tag: develop
@@ -106,6 +107,7 @@ rabbitmq:
     enabled: false
   volumePermissions:
     enabled: true
+  uri: "{{.Release.Name}}-rabbitmq:5672"
 rbacEnabled: true
 secrets: null
 transformer:
@@ -143,4 +145,3 @@ minioCleanup:
   schedule: "* */8 * * *"
   maxAge: 30
   maxSize: "1G"
-  normSize: "700M"
