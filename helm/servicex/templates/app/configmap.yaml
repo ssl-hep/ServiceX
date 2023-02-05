@@ -133,7 +133,7 @@ data:
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default .Values.minio.apiIngress.hostname }}'
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
-    {{- $internal_minio := printf "%s-minio:%v" .Release.Name .Values.minio.service.ports.api -}}
+    {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.ports.api -}}
     # No minio ingress
     MINIO_PUBLIC_URL = '{{- .Values.objectStore.publicURL | default $internal_minio }}'
         {{ end }}
