@@ -549,7 +549,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "25f9448045aa6884b2b60cf767d11b73435507d38e14955d949626f5003b266c"
+content-hash = "c732de14cb4094a8fa46f0e8e9718ccfc9c2f12149880d956fd85a933cce67b5"
 
 [metadata.files]
 aniso8601 = [
