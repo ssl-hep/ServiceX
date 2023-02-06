@@ -35,7 +35,15 @@ spec:
             - name: MINIO_URL
               value: {{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}
             {{- end }}
-            {{ if .Values.secret }}
+            {{ if .Values.minioCleanup.threads }}
+            - name: THREADS
+              value: "{{ .Values.minioCleanup.threads }}"
+            {{ end }}
+            {{ if .Values.minioCleanup.logLevel }}
+            - name: LOG_LEVEL
+              value: {{ .Values.minioCleanup.logLevel }}
+            {{ end }}
+            {{ if .Values.secrets }}
             - name: ACCESS_KEY
               valueFrom:
                 secretKeyRef:
