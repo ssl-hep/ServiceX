@@ -142,7 +142,7 @@ def parse_suffix(size: str) -> int:
   :return: integer number of bytes
   """
   if size[-1] in ['M', 'G', 'T']:  # process suffix
-    raw_max = int(size[:-1])
+    raw_max = float(size[:-1])
     mult = size[-1]
     if mult == 'M':
       raw_max *= 2 ** 20
@@ -152,7 +152,7 @@ def parse_suffix(size: str) -> int:
       raw_max *= 2 ** 40
     else:
       raise ValueError
-    return raw_max
+    return int(raw_max)
   else:
     return int(size)
 
@@ -233,10 +233,13 @@ def run_minio_cleaner():
                                        access_key=os.environ['ACCESS_KEY'],
                                        secret_key=os.environ['SECRET_KEY'],
                                        use_https=use_https)
+    logger.info("cleanup started")
     results = store.cleanup_storage(max_size=raw_max, norm_size=raw_norm, max_age=args.max_age)
+    logger.info("cleanup stopped")
     logger.info(f"Final size after cleanup: {results[0]}")
     for bucket in results[1]:
       logger.info(f"Removed folder/bucket: {bucket}")
+    logger.info(f"Deleted {len(results[1])} total buckets")
   finally:
     logger.info('Done running minio storage cleanup')
 
