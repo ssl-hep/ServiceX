@@ -7,7 +7,6 @@ import logging
 import os
 import pathlib
 import concurrent.futures
-import typing
 from typing import List
 from typing import Tuple
 from collections import namedtuple
@@ -79,15 +78,21 @@ class S3Store(object_storage_manager.ObjectStore):
     :param bucket: bucket name
     :return:  None
     """
+    self.logger.debug(f"Deleting {bucket}")
     if not self.__s3_client.bucket_exists(bucket):
+      self.logger.debug("Bucket not present, skipping")
       return True
+    self.logger.debug(f"Deleting all objects from {bucket}")
     delete_objects = map(lambda x: DeleteObject(x.object_name), self.__s3_client.list_objects(bucket))
     errors = 0
     for error in self.__s3_client.remove_objects(bucket, delete_objects):
+      self.logger.warning(f"Got {error} while deleting from {bucket}")
       errors += 1
     if errors != 0:
+      self.logger.warning(f"Couldn't delete all objects, not deleting {bucket}")
       return False
     self.__s3_client.remove_bucket(bucket)
+    self.logger.debug(f"Deleted {bucket}")
     return True
 
   def get_storage_used(self) -> int:
@@ -169,6 +174,8 @@ class S3Store(object_storage_manager.ObjectStore):
     # must use ThreadPool since minio client is thread safe with threading only
     with concurrent.futures.ThreadPoolExecutor(max_workers=self.__threads) as executor:
       bucket_list = executor.map(self.get_bucket_info, buckets)
+    self.logger.debug(f"Bucket list to examine: {bucket_list}")
+    self.logger.info(f"Got {len(bucket_list)} buckets to examine")
 
     # concurrently delete any old buckets
     with concurrent.futures.ThreadPoolExecutor(max_workers=self.__threads) as executor:
@@ -200,14 +207,16 @@ class S3Store(object_storage_manager.ObjectStore):
     kept_buckets.sort(key=lambda x: x.last_modified)
     idx = 0
     current_size = sum(map(lambda x: x.size, kept_buckets))
+    self.logger.info(f"Using {current_size} bytes, max size allowed: {max_size}")
     if current_size > max_size:
       while current_size > norm_size and idx < len(kept_buckets):
         bucket = kept_buckets[idx]
-        self.logger.info("Deleting %s due to storage limits", bucket.name)
+        self.logger.info(f"Deleting {bucket.name} due to storage limits")
         self.delete_bucket(bucket.name)
         cleaned_buckets.append(bucket.name)
         current_size -= bucket.size
         idx += 1
+    self.logger.info(f"Current size now {current_size}")
     return current_size, cleaned_buckets
 
   def get_buckets(self) -> List[str]:
