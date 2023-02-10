@@ -466,7 +466,7 @@ py = ">=1.4.26,<2.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.4a11"
+version = "1.1.4a12"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
@@ -549,7 +549,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "25f9448045aa6884b2b60cf767d11b73435507d38e14955d949626f5003b266c"
+content-hash = "b00d2b8ce880f442dba3146ded6864d98e4db5c6900048a992ac9122922e8de9"
 
 [metadata.files]
 aniso8601 = [
@@ -891,8 +891,8 @@ retry = [
     {file = "retry-0.9.2.tar.gz", hash = "sha256:f8bfa8b99b69c4506d6f5bd3b0aabf77f98cdb17f3c9fc3f5ca820033336fba4"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.4a11-py3-none-any.whl", hash = "sha256:08ff8cb057784d91dab6286d1f3af2d001c0c933b68abaf04e7121644aa0b831"},
-    {file = "servicex_code_gen_lib-1.1.4a11.tar.gz", hash = "sha256:8419c1b2bfc345be7a2b14e4fe8d692e1d8d472ab31a77048b4058a2c7c63f0e"},
+    {file = "servicex_code_gen_lib-1.1.4a12-py3-none-any.whl", hash = "sha256:ccd18717b736093b6c5d31b5a92562cdc4197c8e3bca80d823b4248e4fbfd64a"},
+    {file = "servicex_code_gen_lib-1.1.4a12.tar.gz", hash = "sha256:bc279e0a6c5f22169276772fa4066bf66ad0cbcec7eaca272e4ff684fc03ed00"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
