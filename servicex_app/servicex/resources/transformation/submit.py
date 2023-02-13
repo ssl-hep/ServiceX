@@ -102,11 +102,13 @@ class SubmitTransformationRequest(ServiceXResource):
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
 
-            code_gen_image_name = 'sslhep/servicex_code_gen_func_adl_xaod:develop'
-            if user_codegen_name:
-                for key, val in config['CODE_GEN_IMAGES'].items():
-                    if key == user_codegen_name:
-                        code_gen_image_name = val
+            code_gen_image_name = ''
+            for key, val in config['CODE_GEN_IMAGES'].items():
+                if key == user_codegen_name:
+                    code_gen_image_name = val
+
+            if not code_gen_image_name:
+                raise ValueError(f'Invalid Codegen Image Passed in Request: {user_codegen_name}')
 
             # did xor file_list
             if bool(did) == bool(file_list):

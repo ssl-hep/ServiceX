@@ -55,14 +55,12 @@ class CodeGenAdapter:
 
         # Finding Codegen URL from the config dictionary and user provided input
         post_url = ''
-        check_val = user_codegen_name or 'atlasxaod'
-
         for key, value in self.code_gen_service_urls.items():
-            if check_val == key:
+            if user_codegen_name == key:
                 post_url = value
 
         if not post_url:
-            raise ValueError(f'{user_codegen_name}, code generator unavailable for use')
+            raise ValueError(f'No URL Available for provided codegen image name: {user_codegen_name}')
 
         postObj = {
             "code": request_record.selection,
