@@ -78,7 +78,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
         cls.parser.add_argument('image')
-        cls.parser.add_argument('user-codegen-name')
+        cls.parser.add_argument('codegen')
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
