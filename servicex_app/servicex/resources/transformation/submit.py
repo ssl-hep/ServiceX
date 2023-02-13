@@ -100,7 +100,7 @@ class SubmitTransformationRequest(ServiceXResource):
             image = args.get("image")
             did = args.get("did")
             file_list = args.get("file-list")
-            user_codegen_name = args.get("user-codegen-name")
+            user_codegen_name = args.get("codegen")
 
             code_gen_image_name = 'sslhep/servicex_code_gen_func_adl_xaod:develop'
             if user_codegen_name:
