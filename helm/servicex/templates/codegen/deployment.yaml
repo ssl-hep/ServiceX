@@ -1,6 +1,6 @@
 {{- range $codeGenName, $v := .Values.codeGen }}
 ---
-{{- if .enabled -}}
+{{- if .enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

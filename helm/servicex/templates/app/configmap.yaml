@@ -151,6 +151,7 @@ data:
     {{- $code_gen_images := list }}
     {{- $transformer_images := list }}
     {{- range $codeGenName, $v := .Values.codeGen }}
+         {{- if .enabled }}
          {{- $codeGenUrl := printf "http://%s-code-gen-%s:8000" $.Release.Name $codeGenName }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenUrl }}
          {{- $code_gen_service_urls = append $code_gen_service_urls $dictItem }}
@@ -160,6 +161,7 @@ data:
          {{- $image := printf "%s:%s" .defaultScienceContainerImage .defaultScienceContainerTag }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $image }}
          {{ $transformer_images = append $transformer_images $dictItem }}
+         {{ end }}
     {{- end }} 
     CODE_GEN_SERVICE_URLS = { {{ join "," $code_gen_service_urls }} }
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
