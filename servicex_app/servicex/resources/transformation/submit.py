@@ -107,6 +107,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 if key == user_codegen_name:
                     code_gen_image_name = val
 
+            print("Before Code gen Image Name: ", code_gen_image_name)
+
             if not code_gen_image_name:
                 raise ValueError(f'Invalid Codegen Image Passed in Request: {user_codegen_name}')
 
