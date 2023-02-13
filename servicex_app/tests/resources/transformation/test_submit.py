@@ -41,7 +41,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'did': 'rucio://123-45-678',
             'columns': "e.e, e.p",
             'result-destination': 'object-store',
-            'workers': 10
+            'workers': 10,
+            'codegen': 'atlasxaod'
         }
         request.update(kwargs)
         return request
@@ -54,7 +55,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'image': 'ssl-hep/func_adl:latest',
             'result-destination': 'object-store',
             'result-format': 'root-file',
-            'workers': 10
+            'workers': 10,
+            'codegen': 'atlasxaod'
         }
 
     def test_submit_transformation_request_bad(self, client):
