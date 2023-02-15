@@ -155,11 +155,12 @@ class SubmitTransformationRequest(ServiceXResource):
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
                 namespace = config['TRANSFORMER_NAMESPACE']
-                (request_rec.generated_code_cm, codegen_transformer_image) = \
+                (request_rec.generated_code_cm,
+                 codegen_transformer_image,
+                 request_rec.transformer_language,
+                 request_rec.transformer_command) = \
                     self.code_gen_service.generate_code_for_selection(request_rec, namespace,
                                                                       user_codegen_name)
-
-                print("Returned Transformer Image: ", codegen_transformer_image)
 
                 if not request_rec.image:
                     request_rec.image = codegen_transformer_image

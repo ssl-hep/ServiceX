@@ -185,7 +185,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_root_file(
         self, mocker, mock_rabbit_adaptor, mock_code_gen_service, mock_app_version
     ):
-        mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm', 'ssl-hep/func_adl:latest')
+        mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm',
+                                                                          'scala', 'echo',
+                                                                          'ssl-hep/func_adl:latest')
+
         request = self._generate_transformation_request_xAOD_root_file()
 
         client = self._test_client(
@@ -283,6 +286,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                     namespace='my-ws',
                                     result_destination=submitted_request.result_destination,
                                     result_format=submitted_request.result_format,
+                                    transformer_command=None,
+                                    transformer_language=None,
                                     x509_secret='my-x509-secret')
 
     def test_submit_transformation_request_bad_image(

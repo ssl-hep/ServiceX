@@ -38,7 +38,7 @@ class CodeGenAdapter:
     def generate_code_for_selection(
             self, request_record: TransformRequest,
             namespace: str,
-            user_codegen_name: str) -> tuple[str, str]:
+            user_codegen_name: str) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
@@ -77,12 +77,16 @@ class CodeGenAdapter:
         decoder_parts = decoder.MultipartDecoder.from_response(result)
 
         transformer_image = (decoder_parts.parts[0].text).strip()
+        transformer_language = (decoder_parts.parts[1].text).strip()
+        transformer_command = (decoder_parts.parts[2].text).strip()
         print('Transformer Image from Codegen: ', transformer_image)
-        zipfile = decoder_parts.parts[1].content
+        zipfile = decoder_parts.parts[3].content
 
         zipfile = ZipFile(BytesIO(zipfile))
 
         return (self.transformer_manager.create_configmap_from_zip(zipfile,
                                                                    request_record.request_id,
                                                                    namespace),
-                transformer_image)
+                transformer_image,
+                transformer_language,
+                transformer_command)

@@ -50,7 +50,10 @@ class TransformStart(ServiceXResource):
             x509_secret=x509_secret,
             generated_code_cm=generated_code_cm,
             result_destination=request_rec.result_destination,
-            result_format=request_rec.result_format)
+            result_format=request_rec.result_format,
+            transformer_language=request_rec.transformer_language,
+            transformer_command=request_rec.transformer_command
+        )
 
     @classmethod
     def make_api(cls, transformer_manager: TransformerManager):

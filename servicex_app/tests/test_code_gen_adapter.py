@@ -59,9 +59,18 @@ class TestCodeGenAdapter:
         mock_transformer_image_part = mocker.MagicMock()
         mock_transformer_image_part.text = "my-transformer:test"
 
+        mock_transformer_language_part = mocker.MagicMock()
+        mock_transformer_language_part.text = "scala"
+
+        mock_transformer_command_part = mocker.MagicMock()
+        mock_transformer_command_part.text = "echo hello, world"
+
         mock_zip_part = mocker.MagicMock()
 
-        mock_parts.parts = [mock_transformer_image_part, mock_zip_part]
+        mock_parts.parts = [mock_transformer_image_part,
+                            mock_transformer_language_part,
+                            mock_transformer_command_part,
+                            mock_zip_part]
         mocker.patch('servicex.code_gen_adapter.decoder.MultipartDecoder.from_response',
                      return_value=mock_parts)
 
@@ -70,10 +79,12 @@ class TestCodeGenAdapter:
         mocker.patch("io.BytesIO")
 
         code_gen = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
-        (config_map, transformer_image) = \
+        (config_map, transformer_image, transformer_language, transformer_command) = \
             code_gen.generate_code_for_selection(self._generate_test_request(), "servicex", "uproot")
 
         assert transformer_image == "my-transformer:test"
+        assert transformer_language == "scala"
+        assert transformer_command == "echo hello, world"
 
         mock_requests_post.assert_called()
         mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
