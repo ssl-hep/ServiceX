@@ -144,6 +144,8 @@ class ResourceTestBase:
         transform_request.status = "Submitted"
         transform_request.app_version = '1.0.1'
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
+        transform_request.transformer_language = "scala"
+        transform_request.transformer_command = "echo"
         return transform_request
 
     @fixture

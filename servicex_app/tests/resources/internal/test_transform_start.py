@@ -67,6 +67,8 @@ class TestTransformationStart(ResourceTestBase):
                                 namespace='my-ws',
                                 result_destination=None,
                                 result_format='arrow',
+                                transformer_command="echo",
+                                transformer_language="scala",
                                 x509_secret='my-x509-secret')
         mock_request.save_to_db.assert_called()
 

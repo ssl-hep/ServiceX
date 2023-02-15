@@ -173,6 +173,8 @@ class TransformRequest(db.Model):
     failure_description = db.Column(db.String(max_string_size), nullable=True)
     app_version = db.Column(db.String(64), nullable=True)
     code_gen_image = db.Column(db.String(256), nullable=True)
+    transformer_language = db.Column(db.String(256), nullable=True)
+    transformer_command = db.Column(db.String(256), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
