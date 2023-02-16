@@ -54,15 +54,10 @@ class CodeGenAdapter:
         assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
 
         # Finding Codegen URL from the config dictionary and user provided input
-        post_url = ''
-        for key, value in self.code_gen_service_urls.items():
-            if user_codegen_name == key:
-                post_url = value
+        post_url = self.code_gen_service_urls.get(user_codegen_name, None)
 
         if not post_url:
             raise ValueError(f'{user_codegen_name}, code generator unavailable for use')
-
-        print("Post URL: ", post_url)
 
         postObj = {
             "code": request_record.selection,
@@ -79,7 +74,6 @@ class CodeGenAdapter:
         transformer_image = (decoder_parts.parts[0].text).strip()
         transformer_language = (decoder_parts.parts[1].text).strip()
         transformer_command = (decoder_parts.parts[2].text).strip()
-        print('Transformer Image from Codegen: ', transformer_image)
         zipfile = decoder_parts.parts[3].content
 
         zipfile = ZipFile(BytesIO(zipfile))
