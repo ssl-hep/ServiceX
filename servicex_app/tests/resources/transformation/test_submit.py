@@ -93,6 +93,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 400
         assert "DID scheme is not supported" in response.json["message"]
 
+    def test_submit_transformation_bad_code_gen_image(self, client):
+        request = self._generate_transformation_request(codegen='foo')
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
+        assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" in response.json["message"]
+
     def test_submit_transformation_request_throws_exception(
         self, mocker, mock_rabbit_adaptor
     ):
