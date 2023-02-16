@@ -158,14 +158,10 @@ data:
          {{- $codeGenImage := printf "%s:%s" .image .tag }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenImage }}
          {{- $code_gen_images = append $code_gen_images $dictItem }}
-         {{- $image := printf "%s:%s" .defaultScienceContainerImage .defaultScienceContainerTag }}
-         {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $image }}
-         {{ $transformer_images = append $transformer_images $dictItem }}
          {{ end }}
     {{- end }} 
     CODE_GEN_SERVICE_URLS = { {{ join "," $code_gen_service_urls }} }
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
-    TRANSFORMER_SCIENCE_IMAGES = { {{ join "," $transformer_images }} }
     {{- end }}
 
     {{- $didFinders := list }}
