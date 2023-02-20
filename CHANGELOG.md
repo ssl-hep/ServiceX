@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.1.3
+January 31, 2023
+
+### Added
+- Ability to add users via CLI. These users are pre-authorized and can skip the slack workflow
+- Ability to load users with pre-populated tokens from a secret. New deployments can immediately accept users
+
+### Changed
+
+### Fixed
+- Documentation build process
+- Upgraded libraries to avoid security vulnerabilities
+
+### Removed
+
+
 ### 1.1.1
 December 8, 2022
 

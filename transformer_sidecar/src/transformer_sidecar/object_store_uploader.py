@@ -53,9 +53,9 @@ class ObjectStoreUploader(threading.Thread):
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
-            self.logger.info("Got an item")
+            self.logger.debug("Got an item", extra={'requestId': self.request_id})
             if item.is_complete():
-                self.logger.info("We are done")
+                self.logger.debug("We are done", extra={'requestId': self.request_id})
                 break
             else:
                 self.object_store.upload_file(self.request_id,

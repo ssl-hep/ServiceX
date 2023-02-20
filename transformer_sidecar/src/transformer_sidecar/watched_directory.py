@@ -111,7 +111,7 @@ class TransformerEventHandler(FileSystemEventHandler):
             self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(None))
             return
 
-        self.logger.info('File {fn} created.'.format(fn=event.src_path))
+        self.logger.info('File created.', extra={'file-path': event.src_path})
 
         # check if file still being written/copied
         while True:
@@ -129,4 +129,4 @@ class TransformerEventHandler(FileSystemEventHandler):
         # add file to queue for upload
         self.result_upload_queue.put(ObjectStoreUploader.WorkQueueItem(Path(event.src_path)))
         self.logger.info(
-            'Added {fn} to queue.'.format(fn=event.src_path))
+            'Added file to upload queue.', extra={"file-path": event.src_path})

@@ -5,6 +5,7 @@ metadata:
   name: {{ .Release.Name }}-minio-cleanup
 spec:
   schedule: {{ .Values.minioCleanup.schedule | default  "* */8 * * *" | quote  }}
+  concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
       template:
@@ -13,7 +14,6 @@ spec:
             app: {{ .Release.Name }}-minio-cleanup
         spec:
           serviceAccountName: {{ template "servicex.fullname" . }}
-          concurrencyPolicy: "Forbid"
           containers:
           - name: {{ .Release.Name }}-minio-cleanup
             image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
@@ -35,7 +35,15 @@ spec:
             - name: MINIO_URL
               value: {{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}
             {{- end }}
-            {{ if .Values.secret }}
+            {{ if .Values.minioCleanup.threads }}
+            - name: THREADS
+              value: "{{ .Values.minioCleanup.threads }}"
+            {{ end }}
+            {{ if .Values.minioCleanup.logLevel }}
+            - name: LOG_LEVEL
+              value: {{ .Values.minioCleanup.logLevel }}
+            {{ end }}
+            {{ if .Values.secrets }}
             - name: ACCESS_KEY
               valueFrom:
                 secretKeyRef:

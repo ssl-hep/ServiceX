@@ -57,7 +57,7 @@ class ObjectStoreManager:
                                                    object_name=object_name,
                                                    file_path=path)
             self.logger.debug(
-                "created object", result.object_name)
+                "created object", extra={'name': result.object_name})
         except MinioException:
             self.logger.error("Minio error", exc_info=True)
         except S3Error:

@@ -51,7 +51,7 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("my-root.root", 42, "testing", 1, 2, 3, 4)
+        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3, 4)
         mock_session.put.assert_called()
         args = mock_session.put.call_args
         assert args[0][0] == 'http://foo.com/file-complete'
@@ -77,11 +77,10 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("my-root.root", 42, "testing", 1, 2, 3, 4)
+        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3, 4)
         assert mock_session.put.call_count == 2
-        print(caplog.records)
         assert len(caplog.records) == 2
-        assert caplog.records[0].levelno == logging.INFO
-        assert caplog.records[0].msg == "Put file complete."
-        assert caplog.records[1].levelno == logging.WARNING
-        assert caplog.records[1].msg == '%s, retrying in %s seconds...'
+        assert caplog.records[0].levelno == logging.WARNING
+        assert caplog.records[0].msg == '%s, retrying in %s seconds...'
+        assert caplog.records[1].levelno == logging.INFO
+        assert caplog.records[1].msg == "Put file complete."

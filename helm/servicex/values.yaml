@@ -160,6 +160,8 @@ x509Secrets:
 minioCleanup:
   enabled: false
   image: sslhep/servicex_minio_cleanup
+  threads: "6"
+  logLevel: "INFO"
   pullPolicy: Always
   tag: develop
   schedule: "* */8 * * *"
