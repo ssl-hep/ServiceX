@@ -26,6 +26,7 @@ data:
 
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
+    AUTH_TYPE={{- .Values.app.auth_type }}
 
     # Globus configuration
     GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
