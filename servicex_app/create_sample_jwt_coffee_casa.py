@@ -1,29 +1,27 @@
 import jwt
-from cryptography.hazmat.primitives import serialization
 
-private_key = open('jwt_rsa', 'r').read()
-
-key_val = serialization.load_ssh_private_key(private_key.encode(), password=b'foo')
+sha_256_secret = '1e57a452a094728c291bc42bf2bc7eb8d9fd8844d1369da2bf728588b46c4e75'
 
 payload_data = {
-    "sub": "123456789",
-    "name": "Shriram Athreya",
-    "nickname": "Shriram"
+    "sub": "janedoe",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "institution": "UChicago",
+    "admin": True,
+    "id": "janedoe",
+    "experiment": 'ATLAS'
 }
 
 new_token = jwt.encode(
     payload=payload_data,
-    key=key_val,
-    algorithm='RS256'
+    key=sha_256_secret,
+    algorithm='HS256'
 )
 
 print(new_token)
 
 jwt.get_unverified_header(new_token)
 
-public_key = open('jwt_rsa.pub', 'r').read()
-key_decode = serialization.load_ssh_public_key(public_key.encode())
-
-decoded_val = jwt.decode(jwt=new_token, key=key_decode, algorithms=['RS256', ])
+decoded_val = jwt.decode(jwt=new_token, key=sha_256_secret, algorithms=['HS256'])
 
 print(decoded_val)

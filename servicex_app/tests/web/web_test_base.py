@@ -97,7 +97,9 @@ class WebTestBase:
             sub='janedoe',
             institution='UChicago',
             experiment='ATLAS',
-            refresh_token="abcdef"
+            refresh_token="abcdef",
+            admin=False,
+            id="janedoe"
         )
 
     @staticmethod
