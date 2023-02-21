@@ -53,6 +53,7 @@ jobs:
             .didFinder.CERNOpenData.tag = strenv(DOCKER_TAG) | .didFinder.CERNOpenData.tag style="double" |
             .transformer.sidecarTag = strenv(DOCKER_TAG) | .transformer.sidecarTag style="double" |
             .x509Secrets.tag = strenv(DOCKER_TAG) | .x509Secrets.tag style="double" |
+            CODEGENS=$(yq '.codeGen | keys| .[]' values.yaml) && for i in $CODEGENS; do yq -i  '.codeGen.[$i].tag="hello"' values.yaml && yq -i '.codeGen.[$i].defaultScienceContainerTag="hello"' values.yaml; done &&
             .codeGen.defaultScienceContainerTag = strenv(DOCKER_TAG) | .codeGen.defaultScienceContainerTag style="double" |
             .codeGen.tag = strenv(DOCKER_TAG) | .codeGen.tag style="double" ' helm/servicex/values.yaml
       - name: Create helm package
