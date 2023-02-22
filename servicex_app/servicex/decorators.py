@@ -59,7 +59,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
         user = get_jwt_user()
         if not user:
             if current_app.config.get("AUTH_TYPE") == 'jwt':
-                (_,jwt_data) = jwt_res
+                (_, jwt_data) = jwt_res
                 new_user = UserModel(
                             sub=jwt_data.get('sub', None),
                             email=jwt_data.get('email', None),
