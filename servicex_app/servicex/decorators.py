@@ -67,7 +67,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                             institution=jwt_data.get('institution', None),
                             admin=jwt_data.get('admin', False),
                             id=jwt_data.get('id'),
-                            experiment=jwt_data.get('experiment'),
+                            experiment=jwt_data.get('experiment',None),
                             pending=False
                             )
 

@@ -37,7 +37,10 @@ def auth_callback():
                             name=jwt_data.get('name', None),
                             institution=jwt_data.get('institution', None),
                             admin=jwt_data.get('admin', False),
-                            id=jwt_data.get('id'))
+                            id=jwt_data.get('id'),
+                            experiment=jwt_data.get('experiment',None),
+                            pending=False
+                            )
 
                     new_user.save_to_db()
 
