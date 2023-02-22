@@ -8,7 +8,7 @@ payload_data = {
     "email": "jane@example.com",
     "institution": "UChicago",
     "admin": True,
-    "id": "janedoe",
+    "id": 1,
     "experiment": 'ATLAS'
 }
 
