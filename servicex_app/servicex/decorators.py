@@ -50,15 +50,16 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
 
-        jwt_data = None
+        jwt_res = None
         try:
-            (_, jwt_data) = verify_jwt_in_request(locations=["headers"])
+            jwt_res = verify_jwt_in_request(locations=["headers"])
         except NoAuthorizationError as exc:
             assert "NoAuthorizationError"
             return make_response({'message': str(exc)}, 401)
         user = get_jwt_user()
         if not user:
             if current_app.config.get("AUTH_TYPE") == 'jwt':
+                (_,jwt_data) = jwt_res
                 new_user = UserModel(
                             sub=jwt_data.get('sub', None),
                             email=jwt_data.get('email', None),

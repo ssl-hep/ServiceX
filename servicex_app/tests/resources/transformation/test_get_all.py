@@ -59,7 +59,7 @@ class TestAllTransformationRequest(ResourceTestBase):
         mock_return_json.assert_called()
 
     def test_get_by_user(
-        self, mock_jwt_extended, mock_requesting_user, mock_return_json
+        self, mock_jwt_extended, mock_requesting_user, mock_return_json, mocker
     ):
         user_id = mock_requesting_user.id
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
