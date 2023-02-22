@@ -38,7 +38,7 @@ def auth_callback():
                             institution=jwt_data.get('institution', None),
                             admin=jwt_data.get('admin', False),
                             id=jwt_data.get('id'),
-                            experiment=jwt_data.get('experiment',None),
+                            experiment=jwt_data.get('experiment', None),
                             pending=False
                             )
 
