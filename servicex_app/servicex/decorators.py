@@ -49,7 +49,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
-        
+
         jwt_data = None
         try:
             (_, jwt_data) = verify_jwt_in_request(locations=["headers"])
