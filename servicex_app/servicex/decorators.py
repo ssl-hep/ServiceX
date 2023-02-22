@@ -65,11 +65,10 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                             email=jwt_data.get('email', None),
                             name=jwt_data.get('name', None),
                             institution=jwt_data.get('institution', None),
-                            admin=jwt_data.get('admin', False),
+                            admin=False,
                             id=jwt_data.get('id'),
                             experiment=jwt_data.get('experiment', None),
-                            pending=False
-                            )
+                            pending=False)
 
                 new_user.save_to_db()
                 return fn(*args, **kwargs)

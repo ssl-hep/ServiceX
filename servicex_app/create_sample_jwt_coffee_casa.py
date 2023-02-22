@@ -3,12 +3,12 @@ import jwt
 sha_256_secret = '1e57a452a094728c291bc42bf2bc7eb8d9fd8844d1369da2bf728588b46c4e75'
 
 payload_data = {
-    "sub": "janedoe",
+    "sub": "prajwal",
     "name": "Jane Doe",
-    "email": "jane@example.com",
+    "email": "prajwal@example.com",
     "institution": "UChicago",
-    "admin": True,
-    "id": 1,
+    "admin": False,
+    "id": 2,
     "experiment": 'ATLAS'
 }
 
