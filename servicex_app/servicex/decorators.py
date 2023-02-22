@@ -44,21 +44,36 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
+
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
+        
+        jwt_data = None
         try:
-            verify_jwt_in_request(locations=["headers"])
+            (_, jwt_data) = verify_jwt_in_request(locations=["headers"])
         except NoAuthorizationError as exc:
             assert "NoAuthorizationError"
             return make_response({'message': str(exc)}, 401)
         user = get_jwt_user()
         if not user:
-            msg = 'Not Authorized: No user found matching this API token. ' \
-                'Your account may have been deleted. ' \
-                'Please visit the ServiceX website to obtain a new API token.'
-            return make_response({'message': msg}, 401)
+            if current_app.config.get("AUTH_TYPE") == 'jwt':
+                new_user = UserModel(
+                            sub=jwt_data.get('sub', None),
+                            email=jwt_data.get('email', None),
+                            name=jwt_data.get('name', None),
+                            institution=jwt_data.get('institution', None),
+                            admin=jwt_data.get('admin', False),
+                            id=jwt_data.get('id'))
+
+                new_user.save_to_db()
+                return fn(*args, **kwargs)
+            else:
+                msg = 'Not Authorized: No user found matching this API token. ' \
+                    'Your account may have been deleted. ' \
+                    'Please visit the ServiceX website to obtain a new API token.'
+                return make_response({'message': msg}, 401)
         elif user.pending:
             msg = 'Not Authorized: Your account is still pending. ' \
                 'An administrator should approve it shortly. If not, ' \
