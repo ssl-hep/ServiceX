@@ -8,6 +8,8 @@ from flask_jwt_extended import (get_jwt_identity, jwt_required,
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from servicex.models import UserModel
+from scitokens import Validator
+from scitokens.scitokens import ValidationFailure
 
 
 @jwt_required()
@@ -44,28 +46,47 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
+
+        print(args)
+        print(args.request)
+        print(args.headers)
+        print(args.body)
+
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
-        try:
-            verify_jwt_in_request(locations=["headers"])
-        except NoAuthorizationError as exc:
-            assert "NoAuthorizationError"
-            return make_response({'message': str(exc)}, 401)
-        user = get_jwt_user()
-        if not user:
-            msg = 'Not Authorized: No user found matching this API token. ' \
-                'Your account may have been deleted. ' \
-                'Please visit the ServiceX website to obtain a new API token.'
-            return make_response({'message': msg}, 401)
-        elif user.pending:
-            msg = 'Not Authorized: Your account is still pending. ' \
-                'An administrator should approve it shortly. If not, ' \
-                'please contact the ServiceX admins via email or Slack.'
-            return make_response({'message': msg}, 401)
+        elif current_app.config.get("AUTH_TYPE") == 'cern':
+            try:
+                validator = Validator()
+                token = args.request.headers.get('Authorization').split()[1]
+                val_op = validator.validate(token)
+            except ValidationFailure as exc:
+                assert "ValidationFailure"
+                return make_response({'message': str(exc)}, 401)
+            if val_op:
+                return fn(*args, **kwargs)
+            else:
+                return make_response({'Invalid Token Response from Scitokens'}, 401)
+        else:
+            try:
+                verify_jwt_in_request(locations=["headers"])
+            except NoAuthorizationError as exc:
+                assert "NoAuthorizationError"
+                return make_response({'message': str(exc)}, 401)
+            user = get_jwt_user()
+            if not user:
+                msg = 'Not Authorized: No user found matching this API token. ' \
+                    'Your account may have been deleted. ' \
+                    'Please visit the ServiceX website to obtain a new API token.'
+                return make_response({'message': msg}, 401)
+            elif user.pending:
+                msg = 'Not Authorized: Your account is still pending. ' \
+                    'An administrator should approve it shortly. If not, ' \
+                    'please contact the ServiceX admins via email or Slack.'
+                return make_response({'message': msg}, 401)
 
-        return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
 
     return inner
 
