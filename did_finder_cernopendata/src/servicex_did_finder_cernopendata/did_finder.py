@@ -49,7 +49,7 @@ async def find_files(did_name: str,
             assert isinstance(line, str)
             all_lines.append(line)
             uri = line.strip()
-            if not uri.startswith('root://') or (uri.startswith('http://') and cache_prefix == ''):
+            if uri.startswith('http://') and cache_prefix == '':
                 non_root_uri = True
             else:
                 yield {
@@ -67,7 +67,7 @@ async def find_files(did_name: str,
                             '\n\t' + '\n\t'.join(all_lines))
 
         if non_root_uri:
-            raise Exception('CMSOpenData: Opendata record returned a non-xrootd url'
+            raise Exception('CMSOpenData: Opendata record returned a strange url'
                             '\n\t' + '\n\t'.join(all_lines))
 
 
