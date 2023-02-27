@@ -47,11 +47,6 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
 
-        print(args)
-        print(args.request)
-        print(args.headers)
-        print(args.body)
-
         if not current_app.config.get('ENABLE_AUTH'):
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
@@ -59,7 +54,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
         elif current_app.config.get("AUTH_TYPE") == 'cern':
             try:
                 validator = Validator()
-                token = args.request.headers.get('Authorization').split()[1]
+                token = request.headers.get('Authorization').split()[1]
                 val_op = validator.validate(token)
             except ValidationFailure as exc:
                 assert "ValidationFailure"
