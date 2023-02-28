@@ -12,6 +12,8 @@ spec:
       labels:
         app: {{ .Release.Name }}-servicex-app
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/app/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ template "servicex.fullname" . }}
       {{- if .Values.postgres.enabled }}
