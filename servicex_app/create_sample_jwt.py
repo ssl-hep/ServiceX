@@ -5,21 +5,20 @@ private_key = open('jwt_rsa', 'r').read()
 
 key_val = serialization.load_ssh_private_key(private_key.encode(), password=b'foo')
 
-payload_data = {
-    "sub": "prajwal",
-    "name": "Jane Doe",
-    "email": "prajwal@example.com",
-    "institution": "UChicago",
-    "admin": False,
-    "id": 2,
-    "experiment": 'ATLAS',
-    "jti": "515c0084-cb1b-4a63-bce9-b9d6ace17ccb",
-    "iat": 1677536521,
-    "nbf": 1677536521
+payload = {
+  "sub": "bbockelm",
+  "exp": 1509991790,
+  "iat": 1509988190,
+  "jti": "515c0084-cb1b-4a63-bce9-b9d6ace17ccb",
+  "scope": "read:/store write:/store/user/bbockelm",
+  "name": "Jane Doe",
+  "email": "prajwal@example.com",
+  "nbf": 1509988190,
+  "ver": "scitoken:2.0"
 }
 
 new_token = jwt.encode(
-    payload=payload_data,
+    payload=payload,
     key=key_val,
     algorithm='RS256'
 )

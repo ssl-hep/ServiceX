@@ -55,7 +55,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             try:
                 validator = Validator()
                 token = request.headers.get('Authorization').split()[1]
-                sct = SciToken.deserialize(token)
+                sct = SciToken.deserialize(token, public_key=current_app.config.get('JWT_SECRET_KEY'))
                 val_op = validator.validate(sct)
             except ValidationFailure as exc:
                 assert "ValidationFailure"
