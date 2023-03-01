@@ -8,7 +8,7 @@ from flask_jwt_extended import (get_jwt_identity, jwt_required,
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from servicex.models import UserModel
-from scitokens import Validator
+from scitokens import Validator, SciToken
 from scitokens.scitokens import ValidationFailure
 
 
@@ -55,7 +55,8 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             try:
                 validator = Validator()
                 token = request.headers.get('Authorization').split()[1]
-                val_op = validator.validate(token)
+                sct = SciToken.deserialize(token)
+                val_op = validator.validate(sct)
             except ValidationFailure as exc:
                 assert "ValidationFailure"
                 return make_response({'message': str(exc)}, 401)

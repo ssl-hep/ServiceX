@@ -12,7 +12,10 @@ payload_data = {
     "institution": "UChicago",
     "admin": False,
     "id": 2,
-    "experiment": 'ATLAS'
+    "experiment": 'ATLAS',
+    "jti": "515c0084-cb1b-4a63-bce9-b9d6ace17ccb",
+    "iat": 1677536521,
+    "nbf": 1677536521
 }
 
 new_token = jwt.encode(
