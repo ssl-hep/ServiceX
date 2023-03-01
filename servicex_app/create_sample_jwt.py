@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives import serialization
 
 private_key = open('jwt_rsa', 'r').read()
 
-key_val = serialization.load_ssh_private_key(private_key.encode(), password=b'foo')
+#key_val = serialization.load_ssh_private_key(private_key.encode(), password=b'foo')
 
 payload = {
   "sub": "bbockelm",
@@ -20,7 +20,7 @@ payload = {
 
 new_token = jwt.encode(
     payload=payload,
-    key=key_val,
+    key=private_key,
     algorithm='RS256'
 )
 
@@ -29,8 +29,8 @@ print(new_token)
 jwt.get_unverified_header(new_token)
 
 public_key = open('jwt_rsa.pub', 'r').read()
-key_decode = serialization.load_ssh_public_key(public_key.encode())
+#key_decode = serialization.load_ssh_public_key(public_key.encode())
 
-decoded_val = jwt.decode(jwt=new_token, key=key_decode, algorithms=['RS256', ])
+decoded_val = jwt.decode(jwt=new_token, key=public_key, algorithms=['RS256', ])
 
 print(decoded_val)
