@@ -81,6 +81,7 @@ data:
 
     TRANSFORMER_MANAGER_ENABLED = True
 
+    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
     TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
     TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
     TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}

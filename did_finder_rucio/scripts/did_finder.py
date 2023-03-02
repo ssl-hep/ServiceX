@@ -48,10 +48,7 @@ def run_rucio_finder():
 
     args = parser.parse_args()
 
-    prefix = args.prefix
-
-    logger.info("ServiceX DID Finder starting up. "
-                f"Prefix: {prefix}")
+    logger.info("ServiceX DID Finder starting up. ")
 
     if args.report_logical_files:
         logger.info("---- DID Finder Only Returning Logical Names, not replicas -----")
@@ -69,7 +66,6 @@ def run_rucio_finder():
             lookup_request = LookupRequest(
                 did=did_name,
                 rucio_adapter=rucio_adapter,
-                prefix=prefix,
                 request_id=info['request-id']
             )
             for file in lookup_request.lookup_files():

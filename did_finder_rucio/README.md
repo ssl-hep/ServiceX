@@ -41,7 +41,6 @@ The server accepts the following arguments when it is launched
 |Argument       |Description                                                                |Default   |
 |---------------|---------------------------------------------------------------------------|----------|
 |`--rabbit-uri` | A valid URI to the RabbitMQ Broker                                        | None     |
-| `--prefix`    | A string to prepend on resulting file names. Useful to add xCache to URLs | ' '      |
 
 ### Rucio Config
 

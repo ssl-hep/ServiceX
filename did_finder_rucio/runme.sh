@@ -13,11 +13,10 @@ while true; do
     sleep 5
 done
 
-if [ -z $CACHE_PREFIX ]; then export PREFIX_ARG=""; else export PREFIX_ARG="--prefix $CACHE_PREFIX"; fi
 export PYTHONPATH=.
 
 # Assume $REPORT_LOGICAL_FILES is set to --report-logical-files to activate
 echo "----------->$PYTHONPATH"
 ls -lht $PYTHONPATH
-python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $PREFIX_ARG $REPORT_LOGICAL_FILES
+python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $REPORT_LOGICAL_FILES
 

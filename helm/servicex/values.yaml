@@ -37,14 +37,12 @@ codeGen:
   defaultScienceContainerTag: develop
 didFinder:
   CERNOpenData:
-    cachePrefix: null
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
     pullPolicy: Always
     tag: develop
   rucio:
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
-    cachePrefix: null
     enabled: true
     image: sslhep/servicex-did-finder
     memcache:
@@ -109,6 +107,8 @@ rabbitmq:
 rbacEnabled: true
 secrets: null
 transformer:
+  cachePrefix: null
+
   autoscaler:
     cpuScaleThreshold: 30
     enabled: true
@@ -122,7 +122,7 @@ transformer:
   scienceContainerPullPolicy: Always
 
   language: python
-  exec:  # replace me
+  exec: # replace me
   outputDir: /servicex/output
 
   persistence:
