@@ -150,8 +150,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec.image = codegen_transformer_image
 
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
-                if not self.docker_repo_adapter.check_image_exists(request_rec.image):
-                    msg = f"Requested transformer docker image doesn't exist: {request_rec.image}"
+                exists, msg = self.docker_repo_adapter.check_image_exists(request_rec.image)
+                if not exists:
                     current_app.logger.error(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
 
