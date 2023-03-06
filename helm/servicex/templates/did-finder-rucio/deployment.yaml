@@ -35,10 +35,6 @@ spec:
           - name: RMQ_URI
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
           {{- end }}
-          {{- if .Values.didFinder.rucio.cachePrefix }}
-          - name: CACHE_PREFIX
-            value: "{{ .Values.didFinder.rucio.cachePrefix }}"
-          {{- end }}
           {{- if .Values.didFinder.rucio.reportLogicalFiles }}
           - name: REPORT_LOGICAL_FILES
             value: "--report-logical-files"
