@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.1.5
+March 6, 2023
+
+### Added
+- Support for HTTP access for files. The Rucio DID Finder will attempt to find HTTP sources for the files. Transformers will only use these if the XRootD URIs fail.
+
+### Changed
+- Move xCache prefix handling from the DID Finders to the transformers. This simplifies the DID Finders
+-  Updated werkzeug library to avoid security vulnerabilities
+- Web app restarts when helm chart updates the app.config
+
+### Fixed 
+
+### Removed
+
+
+### 1.1.4
+February 7, 2023
+
+### Added
+- Cron job to clean up Minio storage from old transforms
+### Changed
+
+### Fixed 
+
+### Removed
+
+
 ### 1.1.3
 January 31, 2023
 
