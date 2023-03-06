@@ -56,6 +56,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                 validator = Validator()
                 token = request.headers.get('Authorization').split()[1]
                 sct = SciToken.deserialize(token)
+                print("Deserialize success: ", sct)
                 val_op = validator.validate(sct)
             except ValidationFailure as exc:
                 assert "ValidationFailure"
