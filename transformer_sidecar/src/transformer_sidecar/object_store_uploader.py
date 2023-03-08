@@ -30,7 +30,8 @@ import threading
 from pathlib import Path
 from queue import Queue
 from transformer_sidecar.object_store_manager import ObjectStoreManager
-
+import uproot
+import awkward as ak
 
 class ObjectStoreUploader(threading.Thread):
     class WorkQueueItem:
@@ -43,12 +44,16 @@ class ObjectStoreUploader(threading.Thread):
     def __init__(self, request_id: str,
                  input_queue: Queue,
                  object_store: ObjectStoreManager,
-                 logger: logging.Logger):
+                 logger: logging.Logger,
+                 result_format: str,
+                 transformer_format: str):
         super().__init__(target=self.service_work_queue)
         self.request_id = request_id
         self.input_queue = input_queue
         self.object_store = object_store
         self.logger = logger
+        self.result_format = result_format
+        self.transformer_format = transformer_format
 
     def service_work_queue(self):
         while True:
@@ -58,6 +63,14 @@ class ObjectStoreUploader(threading.Thread):
                 self.logger.debug("We are done", extra={'requestId': self.request_id})
                 break
             else:
-                self.object_store.upload_file(self.request_id,
-                                              item.source_path.name,
-                                              str(item.source_path))
+                if self.result_format == "parquet" and self.transformer_format == "root":
+                    with uproot.open(item.source_path.name) as data:
+                        for tree in data.keys():
+                            tree_data = data[tree].arrays(library='ak')
+                            tree_path = item.source_path.name + tree + ".parquet"
+                            ak.to_parquet(tree_data, tree_path)
+                            self.object_store.upload_file(self.request_id, tree_path, str(item.source_path))
+                else:
+                    self.object_store.upload_file(self.request_id,
+                                                  item.source_path.name,
+                                                  str(item.source_path))

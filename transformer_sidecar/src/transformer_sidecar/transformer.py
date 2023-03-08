@@ -53,7 +53,8 @@ from watched_directory import WatchedDirectory
 object_store = None
 posix_path = None
 startup_time = None
-
+result_format = None
+transformer_format = None
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
 
@@ -228,7 +229,8 @@ def callback(channel, method, properties, body):
 
             # And upload them to the object store
             uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
-                                           object_store=object_store, logger=logger)
+                                           object_store=object_store, logger=logger, result_format=result_format,
+                                           transformer_format=transformer_format)
 
             watcher.start()
             uploader.start()
@@ -347,7 +349,7 @@ if __name__ == "__main__":
 
     with open(capabilities_file_path) as capabilities_file:
         transformer_capabilities = json.load(capabilities_file)
-
+    transformer_format = transformer_capabilities["file-formats"][0]
     logger.debug('transformer capabilities', extra=transformer_capabilities)
 
     startup_time = get_process_info()
@@ -358,6 +360,8 @@ if __name__ == "__main__":
                 })
 
     if args.request_id:
+        if args.result_format:
+            result_format = args.result_format
         rabbitmq = RabbitMQManager(args.rabbit_uri,
                                    args.request_id,
                                    callback)
