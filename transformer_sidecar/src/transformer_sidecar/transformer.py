@@ -229,7 +229,8 @@ def callback(channel, method, properties, body):
 
             # And upload them to the object store
             uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
-                                           object_store=object_store, logger=logger, result_format=result_format,
+                                           object_store=object_store, logger=logger,
+                                           result_format=result_format,
                                            transformer_format=transformer_format)
 
             watcher.start()

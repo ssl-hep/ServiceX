@@ -33,6 +33,7 @@ from transformer_sidecar.object_store_manager import ObjectStoreManager
 import uproot
 import awkward as ak
 
+
 class ObjectStoreUploader(threading.Thread):
     class WorkQueueItem:
         def __init__(self, source_path: Path):
@@ -55,6 +56,16 @@ class ObjectStoreUploader(threading.Thread):
         self.result_format = result_format
         self.transformer_format = transformer_format
 
+    def parquet_to_root(self, item):
+        tree_paths = []
+        with uproot.open(item.source_path.name) as data:
+            for tree in data.keys():
+                tree_data = data[tree].arrays(library='ak')
+                tree_path = item.source_path.name + tree + ".parquet"
+                ak.to_parquet(tree_data, tree_path)
+                tree_paths.append(tree_path)
+        return tree_paths
+
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
@@ -64,12 +75,10 @@ class ObjectStoreUploader(threading.Thread):
                 break
             else:
                 if self.result_format == "parquet" and self.transformer_format == "root":
-                    with uproot.open(item.source_path.name) as data:
-                        for tree in data.keys():
-                            tree_data = data[tree].arrays(library='ak')
-                            tree_path = item.source_path.name + tree + ".parquet"
-                            ak.to_parquet(tree_data, tree_path)
-                            self.object_store.upload_file(self.request_id, tree_path, str(item.source_path))
+                    for path in self.parquet_to_root(item):
+                        self.object_store.upload_file(self.request_id,
+                                                      path,
+                                                      str(item.source_path))
                 else:
                     self.object_store.upload_file(self.request_id,
                                                   item.source_path.name,

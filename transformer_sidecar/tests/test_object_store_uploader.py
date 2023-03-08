@@ -43,11 +43,18 @@ def object_store_manager(mocker):
     return mocker.MagicMock(ObjectStoreManager)
 
 
+@pytest.fixture
+def object_store_uploader(mocker):
+    return mocker.MagicMock(ObjectStoreUploader)
+
+
 def test_shutdown(object_store_manager):
     queue = Queue()
     uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
                                    object_store=object_store_manager,
-                                   logger=logging.getLogger())
+                                   logger=logging.getLogger(),
+                                   result_format="root",
+                                   transformer_format="root")
     uploader.start()
     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar")))
     queue.put(ObjectStoreUploader.WorkQueueItem(None))
@@ -58,7 +65,9 @@ def test_upload(object_store_manager):
     queue = Queue()
     uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
                                    object_store=object_store_manager,
-                                   logger=logging.getLogger())
+                                   logger=logging.getLogger(),
+                                   result_format="root",
+                                   transformer_format="root")
     uploader.start()
     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar/test.parquet")))
     queue.put(ObjectStoreUploader.WorkQueueItem(None))
@@ -66,3 +75,31 @@ def test_upload(object_store_manager):
     object_store_manager.upload_file.assert_called_with("123-456",
                                                         "test.parquet",
                                                         "/foo/bar/test.parquet")
+
+# def test_upload_parquet(object_store_manager, object_store_uploader):
+#     queue = Queue()
+#     uploader = object_store_uploader(request_id="456-123", input_queue=queue,
+#                                      object_store=object_store_manager,
+#                                      logger=logging.getLogger(),
+#                                      result_format="parquet",
+#                                      transformer_format="root")
+#     uploader.start()
+#     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/foo/test-parquet.parquet")))
+#     queue.put(ObjectStoreUploader.WorkQueueItem(None))
+#     time.sleep(1)
+#
+#     object_store_manager.upload_file.assert_called_with("456-123",
+#                                                         "test-parquet.parquet",
+#                                                         "/foo/foo/test-parquet.parquet")
+#
+# def test_shutdown_parquet(object_store_manager):
+#     queue = Queue()
+#     uploader = ObjectStoreUploader(request_id="456-123", input_queue=queue,
+#                                    object_store=object_store_manager,
+#                                    logger=logging.getLogger(),
+#                                    result_format="parquet",
+#                                    transformer_format="root")
+#     uploader.start()
+#     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/foo")))
+#     queue.put(ObjectStoreUploader.WorkQueueItem(None))
+#     time.sleep(1)
