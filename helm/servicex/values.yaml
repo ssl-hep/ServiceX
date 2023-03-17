@@ -64,7 +64,7 @@ logging:
     port: 5959
     protocol: TCP
     monitor: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/c2cc1f30-4a5b-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-time-filter=true"
-    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!(('%24state'%3A(store%3AglobalState)%2Cmeta%3A(alias%3A!n%2Cdisabled%3A!f%2Cindex%3A'923eaa00-45b9-11ed-afcf-d91dad577662'%2Ckey%3Ainstance%2Cnegate%3A!f%2Cparams%3A(query%3Aservicex)%2Ctype%3Aphrase)%2Cquery%3A(match_phrase%3A(instance%3A{{ .Release.Name }}))))%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-query-input=true&show-time-filter=true&hide-filter-bar=true"
+    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!(('%24state'%3A(store%3AglobalState)%2Cmeta%3A(alias%3A!n%2Cdisabled%3A!f%2Cindex%3A'923eaa00-45b9-11ed-afcf-d91dad577662'%2Ckey%3Ainstance%2Cnegate%3A!f%2Cparams%3A(query%3Aservicex)%2Ctype%3Aphrase)%2Cquery%3A(term%3A(instance%3A{{ .Release.Name }}))))%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-query-input=true&show-time-filter=true&hide-filter-bar=true"
 minio:
   auth:
     rootPassword: leftfoot1
