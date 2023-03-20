@@ -2,7 +2,7 @@ noCerts: false
 didFinder:
   rucio:
     enabled: true
-    tag: sidecar-monorepo
+    tag: v1.1.5-rc.1
     pullPolicy: Always
 
   CERNOpenData:
@@ -11,13 +11,16 @@ didFinder:
   YT:
     enabled: false
 app:
-  tag: sidecar-monorepo
-  pullPolicy: IfNotPresent
+  tag: v1.1.5-rc.1
+  pullPolicy: Always
   validateTransformerImage: false
+  checksImage: shriram192/checks:latest
 
 transformer:
+  pullPolicy: Always
+  cachePrefix: ""
   autoscalerEnabled: false
-  sidecarTag: sidecar-monorepo
+  sidecarTag: develop
   sidecarPullPolicy: IfNotPresent
 
 #  language: python
@@ -31,8 +34,8 @@ transformer:
 codeGen:
   #image: sslhep/servicex_code_gen_func_adl_uproot
   image: sslhep/servicex_code_gen_atlas_xaod
-  tag: sidecar-monorepo
-  pullPolicy: IfNotPresent
+  tag: v1.1.5-rc.1
+  pullPolicy: Always
   defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
   defaultScienceContainerTag: sidecar-monorepo
 
@@ -50,7 +53,6 @@ rabbitmq:
   service:
     type: NodePort
     nodePort: 30672
-
 
 postgres:
     enabled: true
