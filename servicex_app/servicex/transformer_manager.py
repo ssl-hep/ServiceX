@@ -122,7 +122,7 @@ class TransformerManager:
 
         # provide each pod with an environment var holding cache prefix path
         if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
-            env += [client.V1EnvVar("CACHE_PREFIX", value=os.environ.get("CACHE_PREFIX"))]
+            env += [client.V1EnvVar("TRANSFORMER_CACHE_PREFIX", value=os.environ.get("TRANSFORMER_CACHE_PREFIX"))]
 
         if result_destination == 'object-store':
             env = env + [
