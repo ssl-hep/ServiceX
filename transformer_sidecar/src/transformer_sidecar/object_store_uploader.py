@@ -58,7 +58,7 @@ class ObjectStoreUploader(threading.Thread):
 
     def parquet_to_root(self, item):
         tree_paths = []
-        with uproot.open(item.source_path.name) as data:
+        with uproot.open(str(item.source_path)) as data:
             for tree in data.keys():
                 tree_data = data[tree].arrays(library='ak')
                 tree_path = item.source_path.name + tree + ".parquet"
