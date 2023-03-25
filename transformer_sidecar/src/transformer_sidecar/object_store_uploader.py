@@ -57,7 +57,9 @@ class ObjectStoreUploader(threading.Thread):
         self.transformer_format = transformer_format
 
     def parquet_to_root(self, item):
-        with uproot.open(str(item.source_path)) as data:
+        print("Path: ", str(item.source_path))
+        print("Name: ", item.source_path.name)
+        with uproot.open(Path(item.source_path)) as data:
             for tree in data.keys():
                 tree_data = data[tree].arrays(library='ak')
                 ak.to_parquet(tree_data, item.source_path)
