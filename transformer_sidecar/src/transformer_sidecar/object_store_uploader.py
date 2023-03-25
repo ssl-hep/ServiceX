@@ -57,20 +57,10 @@ class ObjectStoreUploader(threading.Thread):
         self.transformer_format = transformer_format
 
     def parquet_to_root(self, item):
-        tree_paths = []
-        print("Path; ", str(item.source_path))
-        print("Name: ", item.source_path.name)
-
         with uproot.open(str(item.source_path)) as data:
             for tree in data.keys():
                 tree_data = data[tree].arrays(library='ak')
-                tree_path = item.source_path + tree + '.parquet'
-                tree_name = item.source_path.name + tree + '.parquet'
-                ak.to_parquet(tree_data, tree_path)
-                tree_paths.append((tree_path, tree_name))
-
-        print("Paths: ", tree_paths)
-        return tree_paths
+                ak.to_parquet(tree_data, item.source_path)
 
     def service_work_queue(self):
         while True:
@@ -81,10 +71,10 @@ class ObjectStoreUploader(threading.Thread):
                 break
             else:
                 if self.result_format == "parquet" and self.transformer_format == "root":
-                    for path, name in self.parquet_to_root(item):
-                        self.object_store.upload_file(self.request_id,
-                                                      name,
-                                                      path)
+                    self.parquet_to_root(item)
+                    self.object_store.upload_file(self.request_id,
+                                                  item.source_path.name,
+                                                  str(item.source_path))
                 else:
                     self.object_store.upload_file(self.request_id,
                                                   item.source_path.name,
