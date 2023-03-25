@@ -60,7 +60,7 @@ class ObjectStoreUploader(threading.Thread):
         tree_paths = []
         print("Path; ", str(item.source_path))
         print("Name: ", item.source_path.name)
-        with uproot.open(str(item.source_path) + item.source_path.name) as data:
+        with uproot.open(str(item.source_path)) as data:
             for tree in data.keys():
                 tree_data = data[tree].arrays(library='ak')
                 tree_path = item.source_path.name + tree + ".parquet"
