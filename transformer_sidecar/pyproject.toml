@@ -18,6 +18,7 @@ minio = "^7.1.12"
 python-logstash = "^0.4.8"
 uproot = "^5.0.5"
 awkward = "^2.1.0"
+fsspec = "^2023.3.0"
 
 [tool.poetry.group.test]
 optional = true
