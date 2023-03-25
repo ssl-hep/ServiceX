@@ -21,7 +21,7 @@ transformer:
   cachePrefix: ""
   autoscalerEnabled: false
   sidecarTag: root_to_parquet
-  sidecarPullPolicy: IfNotPresent
+  sidecarPullPolicy: Always
 
 #  language: python
 #  exec: /generated/transform_single_file.py
