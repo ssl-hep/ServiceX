@@ -200,7 +200,8 @@ def callback(channel, method, properties, body):
             result_extension = ".parquet" \
                 if transform_request['result-format'] == 'parquet' \
                 else ""
-            hashed_file_name = hash_path(_file_path.replace('/', ':') + result_extension)
+            hashed_file_name = hash_path(_file_path.replace('/', ':').replace('::', '')
+                                         + result_extension)
 
             # The transformer will write results here as they are generated. This
             # directory isn't monitored.
