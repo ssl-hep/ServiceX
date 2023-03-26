@@ -62,7 +62,7 @@ class ObjectStoreUploader(threading.Thread):
         with uproot.open(Path(item.source_path)) as data:
             for tree in data.keys():
                 tree_data = data[tree].arrays(library='ak')
-                ak.to_parquet(tree_data, item.source_path)
+                ak.to_parquet(tree_data, str(item.source_path))
 
     def service_work_queue(self):
         while True:
