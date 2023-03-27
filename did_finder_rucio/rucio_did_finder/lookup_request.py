@@ -51,7 +51,6 @@ class JsonSerde(object):
 class LookupRequest:
     def __init__(self, did: str,
                  rucio_adapter: RucioAdapter,
-                 prefix: str = '',
                  request_id: str = 'bogus-id'):
         '''Create the `LookupRequest` object that is responsible for returning
         lists of files. Processes things in chunks.
@@ -59,12 +58,10 @@ class LookupRequest:
         Args:
             did (str): The DID we are going to lookup
             rucio_adapter (RucioAdapter): Rucio lookup object
-            prefix (str, optional): Prefix for xcache use. Defaults to ''.
             request_id (str, optional): ServiceX Request ID that requested this DID.
                 Defaults to 'bogus-id'.
         '''
         self.did = did
-        self.prefix = prefix
         self.rucio_adapter = rucio_adapter
         self.request_id = request_id
 
@@ -84,7 +81,7 @@ class LookupRequest:
 
     def lookup_files(self):
         """
-        lookup files, add cache prefix if needed.
+        lookup files.
         """
         n_files = 0
         ds_size = 0
@@ -110,8 +107,6 @@ class LookupRequest:
                     n_files += 1
                     ds_size += af['file_size']
                     total_paths += len(af['paths'])
-                    if self.prefix:
-                        af['paths'] = [self.prefix+fp for fp in af['paths']]
                     full_file_list.append(af)
             if self.mcclient:
                 self.setCachedResults(full_file_list)

@@ -124,7 +124,7 @@ class RucioAdapter:
         for ds in datasets:
             reps = self.replica_client.list_replicas(
                 [{'scope': ds[0], 'name': ds[1]}],
-                schemes=['root'],
+                schemes=['root', 'http', 'https'],
                 metalink=True,
                 sort='geoip'
             )

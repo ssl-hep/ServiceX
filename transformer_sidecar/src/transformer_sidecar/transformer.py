@@ -146,10 +146,25 @@ def callback(channel, method, properties, body):
     _request_id = transform_request['request-id']
 
     # The transform can either include a single path, or a list of replicas
+
     if 'file-path' in transform_request:
         _file_paths = [transform_request['file-path']]
+
+        # make sure that paths starting with http are at the end of the list
+        _https = []
+        _roots = []
+        for _fp in _file_paths:
+            if _fp.startswith('http'):
+                _https.append(_fp)
+            else:
+                _roots.append(_fp)
+        _file_paths = _roots+_https
     else:
         _file_paths = transform_request['paths'].split(',')
+
+    # adding cache prefix
+    prefix = os.environ.get('CACHE_PREFIX', '')
+    _file_paths = [prefix+fp for fp in _file_paths]
 
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']

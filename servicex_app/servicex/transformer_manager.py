@@ -113,19 +113,16 @@ class TransformerManager:
                 field_path="metadata.name"))
         env += [client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)]
 
-        # provide pods with level and logging server info
-        env += [
-            client.V1EnvVar("LOG_LEVEL", value=os.environ.get('LOG_LEVEL', 'INFO').upper()),
-            client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get('LOGSTASH_HOST')),
-            client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get('LOGSTASH_PORT'))
-        ]
-
         # Provide each pod with an environment var holding that instance name
         if "INSTANCE_NAME" in current_app.config:
             instance_name = current_app.config['INSTANCE_NAME']
             env_var_instance_name = client.V1EnvVar("INSTANCE_NAME",
                                                     value=instance_name)
             env = env + [env_var_instance_name]
+
+        # provide each pod with an environment var holding cache prefix path
+        if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
+            env += [client.V1EnvVar("CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"])]
 
         if result_destination == 'object-store':
             env = env + [
@@ -143,21 +140,18 @@ class TransformerManager:
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 
+        science_command = " "
         if x509_secret:
-            sidecar_command = " "
             science_command = "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
                               "do sleep 5;done &&" \
                               " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
-        else:
-            sidecar_command = " "
-            science_command = " "
 
-        sidecar_command += "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
-                           "python /servicex/transformer_sidecar/transformer.py " + \
-                           " --request-id " + request_id + \
-                           " --rabbit-uri " + rabbitmq_uri + \
-                           " --result-destination " + result_destination + \
-                           " --result-format " + result_format
+        sidecar_command = "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
+            "python /servicex/transformer_sidecar/transformer.py " + \
+            " --request-id " + request_id + \
+            " --rabbit-uri " + rabbitmq_uri + \
+            " --result-destination " + result_destination + \
+            " --result-format " + result_format
 
         watch_path = os.path.join(current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH'],
                                   request_id)

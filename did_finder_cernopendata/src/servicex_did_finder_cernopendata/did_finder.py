@@ -34,7 +34,7 @@ async def find_files(did_name: str,
     if not did_name.isnumeric():
         raise Exception('CERNOpenData can only work with dataset numbers as names (e.g. 1507)')
 
-    cmd = f'{command} get-file-locations --protocol xrootd --recid {did_name}'.split(' ')
+    cmd = f'{command} get-file-locations --recid {did_name}'.split(' ')
 
     with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1,
                universal_newlines=1) as p:  # type: ignore
