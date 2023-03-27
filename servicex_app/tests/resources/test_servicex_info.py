@@ -33,5 +33,12 @@ class TestServicexInfo(ResourceTestBase):
         response = client.get('/servicex')
         assert response.status_code == 200
         print(response.json)
-        assert response.json == {'app-version': '3.14.15',
-                                 'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}  # noqa: E501
+        assert response.json == {
+                                 'app-version': '3.14.15',
+                                 'code-gen-image': {
+                                    'atlasxaod': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
+                                    'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
+                                    'python': 'sslhep/servicex_code_gen_python:develop',
+                                    'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
+                                    }
+                                }  # noqa: E501

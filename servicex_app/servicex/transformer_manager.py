@@ -50,7 +50,7 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret,
-                          generated_code_cm, namespace):
+                          generated_code_cm, transformer_language, transformer_command):
         volume_mounts = []
         volumes = []
 
@@ -158,8 +158,8 @@ class TransformerManager:
         science_command += "cp /generated/transformer_capabilities.json {op} && " \
                            "PYTHONPATH=/generated:$PYTHONPATH " \
                            "bash {op}/scripts/watch.sh ".format(op=output_path) + \
-                           "{TL} ".format(TL=current_app.config['TRANSFORMER_LANGUAGE']) + \
-                           "{TC} ".format(TC=current_app.config['TRANSFORMER_EXEC']) + \
+                           "{TL} ".format(TL=transformer_language) + \
+                           "{TC} ".format(TC=transformer_command) + \
                            watch_path
 
         if result_destination == 'volume':
@@ -312,12 +312,14 @@ class TransformerManager:
 
     def launch_transformer_jobs(self, image, request_id, workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
-                                result_destination, result_format
+                                result_destination, result_format, transformer_language,
+                                transformer_command
                                 ):
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, generated_code_cm, namespace)
+                                     x509_secret, generated_code_cm,
+                                     transformer_language, transformer_command)
 
         self._create_job(api_v1, job, namespace)
 

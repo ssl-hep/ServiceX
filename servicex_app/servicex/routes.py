@@ -69,6 +69,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.web.servicex_file import servicex_file
     from servicex.web.transformation_request import transformation_request
     from servicex.web.transformation_results import transformation_results
+    from servicex.web.multiple_codegen_list import multiple_codegen_list
 
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
@@ -106,6 +107,11 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
         '/transformation-request/<id_>/results',
         'transformation_results',
         transformation_results
+    )
+    app.add_url_rule(
+        '/multiple-codegen-list',
+        'multiple_codegen_list',
+        multiple_codegen_list
     )
 
     # User management and Authentication Endpoints

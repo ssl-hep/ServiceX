@@ -29,12 +29,34 @@ app:
   tokenExpires: false
   validateTransformerImage: true
 codeGen:
-  enabled: true
-  image: sslhep/servicex_code_gen_atlas_xaod
-  pullPolicy: Always
-  tag: develop
-  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultScienceContainerTag: develop
+  atlasxaod:
+    enabled: true
+    image: sslhep/servicex_code_gen_func_adl_xaod
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+    defaultScienceContainerTag: develop
+  uproot:
+    enabled: true
+    image: sslhep/servicex_code_gen_func_adl_uproot
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
+    defaultScienceContainerTag: develop
+  cms:
+    enabled: true
+    image: sslhep/servicex_code_gen_cms_aod
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
+    defaultScienceContainerTag: develop
+  python:
+    enabled: true
+    image: sslhep/servicex_code_gen_python
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+    defaultScienceContainerTag: develop
 didFinder:
   CERNOpenData:
     enabled: true

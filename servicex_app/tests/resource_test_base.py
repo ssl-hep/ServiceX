@@ -73,12 +73,22 @@ class ResourceTestBase:
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
             'MINIO_SECRET_KEY': 'leftfoot1',
-            'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
             'ENABLE_AUTH': False,
             'JWT_ADMIN': 'admin@example.com',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
-            'CODE_GEN_IMAGE': "sslhep/servicex_code_gen_func_adl_xaod:develop"
+            'CODE_GEN_SERVICE_URLS': {
+                'atlasxaod': 'http://servicex-code-gen-atlasxaod:8000',
+                'cms': 'http://servicex-code-gen-cms:8000',
+                'python': 'http://servicex-code-gen-python:8000',
+                'uproot': 'http://servicex-code-gen-uproot:8000'
+            },
+            'CODE_GEN_IMAGES': {
+                'atlasxaod': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
+                'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
+                'python': 'sslhep/servicex_code_gen_python:develop',
+                'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
+            }
         }
 
     @staticmethod
@@ -134,6 +144,8 @@ class ResourceTestBase:
         transform_request.status = "Submitted"
         transform_request.app_version = '1.0.1'
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
+        transform_request.transformer_language = "scala"
+        transform_request.transformer_command = "echo"
         return transform_request
 
     @fixture

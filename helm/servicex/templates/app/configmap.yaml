@@ -99,7 +99,6 @@ data:
     TRANSFORMER_SIDECAR_IMAGE = "{{ .Values.transformer.sidecarImage }}:{{ .Values.transformer.sidecarTag }}"
     TRANSFORMER_SIDECAR_PULL_POLICY = '{{ .Values.transformer.sidecarPullPolicy }}'
 
-    TRANSFORMER_SCIENCE_IMAGE = "{{ .Values.codeGen.defaultScienceContainerImage }}:{{ .Values.codeGen.defaultScienceContainerTag }}"
     TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY = '{{ .Values.transformer.scienceContainerPullPolicy }}'
 
     
@@ -135,7 +134,7 @@ data:
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default .Values.minio.apiIngress.hostname }}'
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
         {{ else }}
-    {{- $internal_minio := printf "%s--minio:%v" .Release.Name .Values.minio.service.ports.api -}}
+    {{- $internal_minio := printf "%s-minio:%v" .Release.Name .Values.minio.service.ports.api -}}
     # No minio ingress
     MINIO_PUBLIC_URL = '{{- .Values.objectStore.publicURL | default $internal_minio }}'
         {{ end }}
@@ -148,10 +147,23 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
-    {{ if .Values.codeGen.enabled }}
-    CODE_GEN_SERVICE_URL = 'http://{{ .Release.Name }}-code-gen:8000'
-    CODE_GEN_IMAGE = '{{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}'
-    {{ end }}
+    {{ if .Values.codeGen }}
+    {{- $code_gen_service_urls := list }}
+    {{- $code_gen_images := list }}
+    {{- $transformer_images := list }}
+    {{- range $codeGenName, $v := .Values.codeGen }}
+         {{- if .enabled }}
+         {{- $codeGenUrl := printf "http://%s-code-gen-%s:8000" $.Release.Name $codeGenName }}
+         {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenUrl }}
+         {{- $code_gen_service_urls = append $code_gen_service_urls $dictItem }}
+         {{- $codeGenImage := printf "%s:%s" .image .tag }}
+         {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenImage }}
+         {{- $code_gen_images = append $code_gen_images $dictItem }}
+         {{ end }}
+    {{- end }} 
+    CODE_GEN_SERVICE_URLS = { {{ join "," $code_gen_service_urls }} }
+    CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
+    {{- end }}
 
     {{- $didFinders := list }}
     {{- if .Values.didFinder.CERNOpenData.enabled }}

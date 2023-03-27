@@ -41,7 +41,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'did': 'rucio://123-45-678',
             'columns': "e.e, e.p",
             'result-destination': 'object-store',
-            'workers': 10
+            'workers': 10,
+            'codegen': 'atlasxaod'
         }
         request.update(kwargs)
         return request
@@ -54,7 +55,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'image': 'ssl-hep/func_adl:latest',
             'result-destination': 'object-store',
             'result-format': 'root-file',
-            'workers': 10
+            'workers': 10,
+            'codegen': 'atlasxaod'
         }
 
     def test_submit_transformation_request_bad(self, client):
@@ -90,6 +92,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
         assert "DID scheme is not supported" in response.json["message"]
+
+    def test_submit_transformation_bad_code_gen_image(self, client):
+        request = self._generate_transformation_request(codegen='foo')
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 400
+        assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" in response.json["message"]
 
     def test_submit_transformation_request_throws_exception(
         self, mocker, mock_rabbit_adaptor
@@ -183,7 +191,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_root_file(
         self, mocker, mock_rabbit_adaptor, mock_code_gen_service, mock_app_version
     ):
-        mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm', 'ssl-hep/func_adl:latest')
+        mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm',
+                                                                          'scala', 'echo',
+                                                                          'ssl-hep/func_adl:latest')
+
         request = self._generate_transformation_request_xAOD_root_file()
 
         client = self._test_client(
@@ -281,6 +292,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                     namespace='my-ws',
                                     result_destination=submitted_request.result_destination,
                                     result_format=submitted_request.result_format,
+                                    transformer_command=None,
+                                    transformer_language=None,
                                     x509_secret='my-x509-secret')
 
     def test_submit_transformation_request_bad_image(

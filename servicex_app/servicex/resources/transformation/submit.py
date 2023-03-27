@@ -78,6 +78,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
         cls.parser.add_argument('image')
+        cls.parser.add_argument('codegen')
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
@@ -96,9 +97,15 @@ class SubmitTransformationRequest(ServiceXResource):
             args = self.parser.parse_args()
             config = current_app.config
 
-            image = args["image"]
+            image = args.get("image")
             did = args.get("did")
             file_list = args.get("file-list")
+            user_codegen_name = args.get("codegen")
+
+            code_gen_image_name = config['CODE_GEN_IMAGES'].get(user_codegen_name, None)
+
+            if not code_gen_image_name:
+                raise ValueError(f'Invalid Codegen Image Passed in Request: {user_codegen_name}')
 
             # did xor file_list
             if bool(did) == bool(file_list):
@@ -136,15 +143,19 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(args),
                 status='Submitted',
                 app_version=self._get_app_version(),
-                code_gen_image=config['CODE_GEN_IMAGE']
+                code_gen_image=code_gen_image_name
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
                 namespace = config['TRANSFORMER_NAMESPACE']
-                (request_rec.generated_code_cm, codegen_transformer_image) = \
-                    self.code_gen_service.generate_code_for_selection(request_rec, namespace)
+                (request_rec.generated_code_cm,
+                 codegen_transformer_image,
+                 request_rec.transformer_language,
+                 request_rec.transformer_command) = \
+                    self.code_gen_service.generate_code_for_selection(request_rec, namespace,
+                                                                      user_codegen_name)
 
                 if not request_rec.image:
                     request_rec.image = codegen_transformer_image

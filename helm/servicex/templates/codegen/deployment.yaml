@@ -1,38 +1,33 @@
-{{- if .Values.codeGen.enabled -}}
+{{- range $codeGenName, $v := .Values.codeGen }}
+---
+{{- if .enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-code-gen
+  name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-code-gen
+      app: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-code-gen
+        app: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
     spec:
-      serviceAccountName: {{ template "servicex.fullname" . }}
+      serviceAccountName: {{ template "servicex.fullname" $ }}
       containers:
-      - name: {{ .Release.Name }}-code-gen
-        image: {{ .Values.codeGen.image }}:{{ .Values.codeGen.tag }}
+      - name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
+        image: {{ .image }}:{{ .tag }}
         env:
-        - name: APP_CONFIG_FILE
-          value: "/opt/servicex/app.conf"
         - name: INSTANCE_NAME
-          value: {{ .Release.Name }}
+          value: {{ $.Release.Name }}
+        - name: TRANSFORMER_SCIENCE_IMAGE
+          value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
         tty: true
         stdin: true
-        imagePullPolicy: {{ .Values.codeGen.pullPolicy }}
-        volumeMounts:
-          - name: app-cfg
-            mountPath: /opt/servicex
+        imagePullPolicy: {{ .pullPolicy }}
         ports:
           - containerPort: 5000
-
-      volumes:
-        - name: app-cfg
-          configMap:
-            name:  {{ .Release.Name }}-flask-config
+{{- end }}
 {{- end }}

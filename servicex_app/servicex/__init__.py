@@ -230,7 +230,7 @@ def create_app(test_config=None,
 
         if not provided_code_gen_service:
             code_gen_service = CodeGenAdapter(
-                app.config['CODE_GEN_SERVICE_URL'],
+                app.config['CODE_GEN_SERVICE_URLS'],
                 transformer_manager)
         else:
             code_gen_service = provided_code_gen_service

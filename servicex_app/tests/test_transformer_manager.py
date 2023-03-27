@@ -100,8 +100,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py'
         }
 
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -167,8 +165,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -184,7 +180,9 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == 17
             mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_not_called()
@@ -208,8 +206,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -227,7 +223,9 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -255,8 +253,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -273,7 +269,9 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
-                generated_code_cm="my-config-map")
+                generated_code_cm="my-config-map",
+                transformer_language="scala", transformer_command="echo"
+            )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             config_map_vol_mount = container.volume_mounts[2]
@@ -302,8 +300,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -320,7 +316,9 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -351,8 +349,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -369,7 +365,9 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -396,8 +394,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -414,7 +410,9 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -444,8 +442,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -462,7 +458,9 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
             args = container.args
@@ -499,8 +497,6 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_X509_SECRET': None,
             'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
-            'TRANSFORMER_LANGUAGE': 'python',
-            'TRANSFORMER_EXEC': 'transform_data.py',
             'TRANSFORMER_SIDECAR_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
             'TRANSFORMER_SIDECAR_PULL_POLICY': 'Always',
             'TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY': 'Always'
@@ -515,7 +511,9 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret=None,
-                generated_code_cm=None)
+                generated_code_cm=None,
+                transformer_language="scala", transformer_command="echo"
+            )
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert len(called_deployment.spec.template.spec.containers) == 2
             container = called_deployment.spec.template.spec.containers[0]
