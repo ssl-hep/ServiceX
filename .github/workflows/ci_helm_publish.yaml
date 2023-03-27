@@ -47,8 +47,7 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
-            yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-uproot/values.yaml &&
-            yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int-xaod/values.yaml &&
+            yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int/values.yaml &&
             yq -i '.appVersion = strenv(RELEASE_VERSION) | .appVersion style="double" | .version = "'$RELEASE_VERSION'"| .version style="double" ' helm/servicex/Chart.yaml &&
             yq -i '.app.tag = strenv(DOCKER_TAG) | .app.tag style="double" |
             .didFinder.rucio.tag = strenv(DOCKER_TAG) | .didFinder.rucio.tag style="double" |
