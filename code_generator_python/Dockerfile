@@ -17,6 +17,7 @@ RUN poetry config virtualenvs.create false && \
 RUN pip install gunicorn
 
 COPY boot.sh ./
+COPY transformer_capabilities.json ./
 COPY servicex/ ./servicex
 COPY scripts/from_text_to_zip.py .
 RUN chmod +x boot.sh
