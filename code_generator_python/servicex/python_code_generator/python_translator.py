@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
-import hashlib
 import os
+import shutil
 
 from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult
 
@@ -37,22 +37,28 @@ class PythonTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
 
-        # Hashlib doesn't work with unicode strings
-        if type(query) == str:
-            query = base64.b64encode(query.encode("ascii"))
-
-        hash = hashlib.md5(query).hexdigest()
+        src = base64.b64decode(query).decode('ascii')
+        hash = "no-hash"
         query_file_path = os.path.join(cache_path, hash)
 
         # Create the files to run in that location.
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
 
-        message_bytes = base64.b64decode(query)
-        src = message_bytes.decode('ascii')
-
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(src)
 
+        # Transfer the templated main python script
+        template_path = os.environ.get('TEMPLATE_PATH',
+                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
+        shutil.copyfile(template_path,
+                        os.path.join(query_file_path, "transform_single_file.py"))
+
+        capabilities_path = os.environ.get('CAPABILITIES_PATH',
+                                           "/home/servicex/transformer_capabilities.json")
+        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
+                                                        "transformer_capabilities.json"))
+
         os.system("ls -lht " + query_file_path)
+        os.system(f"cat {query_file_path}/generated_transformer.py")
         return GeneratedFileResult(hash, query_file_path)
