@@ -48,11 +48,14 @@ class PythonTranslator(CodeGenerator):
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
 
-        message_bytes = base64.b64decode(query)
-        src = message_bytes.decode('ascii')
+        # message_bytes = base64.b64decode(query)
+        # src = message_bytes.decode('ascii')
+        src_code = ""
+        with open('unzip_translator.py', 'r') as unzip_file:
+            src_code = unzip_file.read()
 
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
-            python_file.write(src)
+            python_file.write(src_code)
 
         os.system("ls -lht " + query_file_path)
         return GeneratedFileResult(hash, query_file_path)
