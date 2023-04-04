@@ -54,7 +54,7 @@ jobs:
             .didFinder.CERNOpenData.tag = strenv(DOCKER_TAG) | .didFinder.CERNOpenData.tag style="double" |
             .transformer.sidecarTag = strenv(DOCKER_TAG) | .transformer.sidecarTag style="double" |
             .x509Secrets.tag = strenv(DOCKER_TAG) | .x509Secrets.tag style="double" ' helm/servicex/Chart.yaml &&
-            CODEGENS=$(yq '.codeGen | keys | .[]' helm/servicex/Chart.yaml) && for i in $CODEGENS; do yq -i  '.codeGen.[$i].tag=strenv(DOCKER_TAG) | .codeGen.[$i].tag style="double"' helm/servicex/Chart.yaml && yq -i '.codeGen.[$i].defaultScienceContainerTag=strenv(DOCKER_TAG) | .codeGen.[$i].tag style="double"' flux_river_configs/servicex-int/values.yaml; done
+            CODEGENS=$(yq '.codeGen | keys | .[]' flux_river_configs/servicex-int/values.yaml) && for i in $CODEGENS; do yq -i  '.codeGen.[$i].tag=strenv(DOCKER_TAG) | .codeGen.[$i].tag style="double"' flux_river_configs/servicex-int/values.yaml && yq -i '.codeGen.[$i].defaultScienceContainerTag=strenv(DOCKER_TAG) | .codeGen.[$i].tag style="double"' flux_river_configs/servicex-int/values.yaml; done
       - name: Create helm package
         working-directory: ./helm
         run: |
