@@ -1,9 +1,6 @@
 name: Create and Publish Helm Packages
 on:
   push:
-    # Sequence of patterns matched against refs/tags
-    branches:
-      - '*'
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10, will be triggered when a new tag is pushed
 
