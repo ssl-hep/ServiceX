@@ -47,7 +47,7 @@ class PythonTranslator(CodeGenerator):
         # Create the files to run in that location.
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
-
+        print(query)
         # message_bytes = base64.b64decode(query)
         # src = message_bytes.decode('ascii')
         src_code = ""
