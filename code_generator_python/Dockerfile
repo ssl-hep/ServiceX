@@ -19,6 +19,7 @@ RUN pip install gunicorn
 COPY boot.sh ./
 COPY servicex/ ./servicex
 COPY scripts/from_text_to_zip.py .
+COPY transformer_capabilities.json ./
 RUN chmod +x boot.sh
 
 USER servicex
