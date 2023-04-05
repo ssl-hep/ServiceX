@@ -60,14 +60,33 @@ class PythonTranslator(CodeGenerator):
         shutil.copyfile(capabilities_path, os.path.join(query_file_path,
                                                         "transformer_capabilities.json"))
 
-        src_code = ""
-        with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r') \
-                as unzip_file:
-            src_code = unzip_file.read()
+        # src_code = ""
+        # with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r') \
+        #         as unzip_file:
+        #     src_code = unzip_file.read()
 
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
-            python_file.write(src_code)
+            python_file.write(src)
 
+<<<<<<< Updated upstream
+=======
+        # Transfer the templated main python script
+        template_path = os.environ.get('TEMPLATE_PATH',
+                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
+        shutil.copyfile(template_path,
+                        os.path.join(query_file_path, "transform_single_file.py"))
+
+        capabilities_path = os.environ.get('CAPABILITIES_PATH',
+                                           "/home/servicex/transformer_capabilities.json")
+        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
+                                                        "transformer_capabilities.json"))
+
+        unzip_path = os.environ.get('UNZIP_PATH',
+                                    "/home/servicex/servicex/"
+                                    "python_code_generator/unzip_translator.py")
+        shutil.copyfile(unzip_path, os.path.join(query_file_path, "unzip_translator.py"))
+
+>>>>>>> Stashed changes
         os.system("ls -lht " + query_file_path)
         os.system(f"cat {query_file_path}/generated_transformer.py")
 
