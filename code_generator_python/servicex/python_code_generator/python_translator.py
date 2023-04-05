@@ -68,17 +68,6 @@ class PythonTranslator(CodeGenerator):
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(src_code)
 
-        # Transfer the templated main python script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
-        shutil.copyfile(template_path,
-                        os.path.join(query_file_path, "transform_single_file.py"))
-
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
-                                                        "transformer_capabilities.json"))
-
         os.system("ls -lht " + query_file_path)
         os.system(f"cat {query_file_path}/generated_transformer.py")
         return GeneratedFileResult(hash, query_file_path)
