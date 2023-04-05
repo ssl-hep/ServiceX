@@ -52,6 +52,7 @@ class PythonTranslator(CodeGenerator):
         message_bytes = base64.b64decode(query)
         src = message_bytes.decode('ascii')
         print(src)
+        print(message_bytes)
 
         with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r')\
                 as unzip_file:
