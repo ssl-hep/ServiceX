@@ -68,8 +68,6 @@ class PythonTranslator(CodeGenerator):
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(src)
 
-<<<<<<< Updated upstream
-=======
         # Transfer the templated main python script
         template_path = os.environ.get('TEMPLATE_PATH',
                                        "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
@@ -86,7 +84,6 @@ class PythonTranslator(CodeGenerator):
                                     "python_code_generator/unzip_translator.py")
         shutil.copyfile(unzip_path, os.path.join(query_file_path, "unzip_translator.py"))
 
->>>>>>> Stashed changes
         os.system("ls -lht " + query_file_path)
         os.system(f"cat {query_file_path}/generated_transformer.py")
 
