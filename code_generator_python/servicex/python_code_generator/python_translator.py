@@ -51,7 +51,8 @@ class PythonTranslator(CodeGenerator):
         # message_bytes = base64.b64decode(query)
         # src = message_bytes.decode('ascii')
         src_code = ""
-        with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r') as unzip_file:
+        with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r')\
+                as unzip_file:
             src_code = unzip_file.read()
 
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
