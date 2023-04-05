@@ -3,7 +3,6 @@ import sys
 from stream_unzip import stream_unzip
 import httpx
 import os
-import time
 
 
 def zipped_chunks(input_path):
@@ -24,4 +23,3 @@ if __name__ == '__main__':
         with open(file_output_path, 'wb') as f:
             for chunk in unzipped_chunks:
                 f.write(chunk)
-

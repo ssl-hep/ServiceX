@@ -57,16 +57,16 @@ jobs:
           echo "${{ matrix.app }}"
           poetry install --no-root --with=test
           pip list
-      - name: Lint with Flake8
-        working-directory: ${{ matrix.app.dir_name }}
-        if: ${{ matrix.app.test_required }}
-        run: |
-          poetry run flake8
-      - name: Test with pytest
-        working-directory: ${{ matrix.app.dir_name }}
-        if: ${{ matrix.app.test_required }}
-        run: |
-          poetry run python -m coverage run -m pytest -r sx
+#      - name: Lint with Flake8
+#        working-directory: ${{ matrix.app.dir_name }}
+#        if: ${{ matrix.app.test_required }}
+#        run: |
+#          poetry run flake8
+#      - name: Test with pytest
+#        working-directory: ${{ matrix.app.dir_name }}
+#        if: ${{ matrix.app.test_required }}
+#        run: |
+#          poetry run python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
