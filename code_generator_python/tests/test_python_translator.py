@@ -32,13 +32,13 @@
 # modification, are permitted provided that the following conditions are met:
 #
 
-import base64
-import os
-import tempfile
-
-from servicex.python_code_generator.python_translator import \
-     PythonTranslator
-
+# import base64
+# import os
+# import tempfile
+#
+# from servicex.python_code_generator.python_translator import \
+#      PythonTranslator
+#
 
 def test_generate_code():
     # os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
