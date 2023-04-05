@@ -49,9 +49,10 @@ class PythonTranslator(CodeGenerator):
             os.makedirs(query_file_path)
         print(query)
 
-        # message_bytes = base64.b64decode(query)
-        # src = message_bytes.decode('ascii')
-        src_code = ""
+        message_bytes = base64.b64decode(query)
+        src = message_bytes.decode('ascii')
+        print(src)
+
         with open('/home/servicex/servicex/python_code_generator/unzip_translator.py', 'r')\
                 as unzip_file:
             src_code = unzip_file.read()
