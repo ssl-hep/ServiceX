@@ -9,9 +9,9 @@ RUN yum install -y https://repo.opensciencegrid.org/osg/3.5/osg-3.5-el7-release-
 RUN curl -s -o /etc/pki/rpm-gpg/RPM-GPG-KEY-wlcg http://linuxsoft.cern.ch/wlcg/RPM-GPG-KEY-wlcg
 RUN curl -s -o /etc/yum.repos.d/wlcg-centos7.repo http://linuxsoft.cern.ch/wlcg/wlcg-centos7.repo;
 RUN yum install -y xrootd-client xrootd \
-    xrootd-voms voms-clients wlcg-voms-atlas osg-ca-certs \
-RUN yum –y install python3
-RUN yum -y install python3-pip
+    xrootd-voms voms-clients wlcg-voms-atlas osg-ca-certs
+RUN yum install -y python3
+RUN yum install -y gcc
 
 # Install everything needed to host/run the analysis jobs
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
@@ -19,8 +19,8 @@ WORKDIR /servicex
 COPY bashrc /servicex/.bashrc
 COPY bashrc /servicex/.bash_profile
 COPY requirements.txt .
+RUN python3 -m pip install --user -r requirements.txt
 
-RUN pip3 install --no-cache-dir -r requirements.txt
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
 ENV PYTHONUNBUFFERED=1
