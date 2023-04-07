@@ -8,3 +8,4 @@ pika==1.1.0
 psutil==5.8.0
 python-logstash == 0.4.8
 stream-unzip == 0.0.83
+httpx
