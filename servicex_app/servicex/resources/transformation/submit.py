@@ -101,6 +101,7 @@ class SubmitTransformationRequest(ServiceXResource):
             did = args.get("did")
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
+            codegen_type = config["CODE_GEN_TYPES"].get(user_codegen_name)
 
             code_gen_image_name = config['CODE_GEN_IMAGES'].get(user_codegen_name, None)
 
@@ -143,7 +144,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(args),
                 status='Submitted',
                 app_version=self._get_app_version(),
-                code_gen_image=code_gen_image_name
+                code_gen_image=code_gen_image_name,
+                codegen_type=codegen_type
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
