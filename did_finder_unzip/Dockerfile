@@ -7,9 +7,6 @@ WORKDIR /usr/src/app
 USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
-RUN yum clean all
-RUN yum -y update
-
 ENV POETRY_VERSION=1.2.2
 RUN python3 -m pip install --upgrade pip
 
