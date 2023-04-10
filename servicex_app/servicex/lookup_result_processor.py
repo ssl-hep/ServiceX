@@ -40,7 +40,6 @@ class LookupResultProcessor:
         # dataset_file.save_to_db()
 
         TransformRequest.add_a_file(request_id)
-        print(json.dumps(submitted_request))
         transform_request = {
             'request-id': request_id,
             'file-id': dataset_file.id,
