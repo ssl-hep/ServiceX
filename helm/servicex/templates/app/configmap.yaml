@@ -160,7 +160,7 @@ data:
          {{- $codeGenImage := printf "%s:%s" .image .tag }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenImage }}
          {{- $code_gen_images = append $code_gen_images $dictItem }}
-         {{- $type = .type }}
+         {{- $type := .type }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $type }}
          {{- $code_gen_types = append $code_gen_types $dictItem }}
          {{ end }}
