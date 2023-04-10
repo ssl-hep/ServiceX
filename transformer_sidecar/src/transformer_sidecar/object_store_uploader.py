@@ -73,7 +73,7 @@ class ObjectStoreUploader(threading.Thread):
                 break
             else:
                 if self.result_format == "parquet" and self.transformer_format == "root":
-                    self.parquet_to_root(item)
+                    # self.parquet_to_root(item)
                     self.object_store.upload_file(self.request_id,
                                                   item.source_path.name,
                                                   str(item.source_path))
