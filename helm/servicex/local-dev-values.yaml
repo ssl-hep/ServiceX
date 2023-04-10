@@ -1,23 +1,25 @@
 noCerts: false
 didFinder:
-  rucio:
+  unzip:
     enabled: true
-    tag: sidecar-monorepo
+    tag: pandas-tf
     pullPolicy: Always
-
+    image: sslhep/servicex-did-finder-unzip
+  rucio:
+    enabled: false
   CERNOpenData:
     enabled: false
 
   YT:
     enabled: false
 app:
-  tag: sidecar-monorepo
+  tag: pandas-tf
   pullPolicy: IfNotPresent
   validateTransformerImage: false
 
 transformer:
   autoscalerEnabled: false
-  sidecarTag: sidecar-monorepo
+  sidecarTag: pandas-tf
   sidecarPullPolicy: IfNotPresent
 
 #  language: python
@@ -29,12 +31,18 @@ transformer:
   scienceContainerPullPolicy: IfNotPresent
 
 codeGen:
-  #image: sslhep/servicex_code_gen_func_adl_uproot
-  image: sslhep/servicex_code_gen_atlas_xaod
-  tag: sidecar-monorepo
-  pullPolicy: IfNotPresent
-  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultScienceContainerTag: sidecar-monorepo
+  python:
+    enabled: true
+    image: sslhep/servicex_code_gen_python
+    pullPolicy: Always
+    tag: pandas-tf
+    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
+    defaultScienceContainerTag: pandas-tf
+    type: unzip
+  uproot:
+    enabled: false
+  cms:
+    enabled: false
 
 objectStore:
   enabled: true
