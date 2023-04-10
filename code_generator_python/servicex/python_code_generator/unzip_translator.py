@@ -13,7 +13,7 @@ def zipped_chunks(input_path):
 
 if __name__ == '__main__':
     input_path = sys.argv[1]
-    output_path = sys.argv[2]
+    output_path = sys.argv[2][:-2]
     print("Im running!")
     print("I/P", input_path)
     print("O/P", output_path)
