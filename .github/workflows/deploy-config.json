@@ -20,6 +20,11 @@
     "test_required": false
   },
   {
+    "dir_name": "did_finder_unzip",
+    "image_name": "servicex-did-finder-unzip",
+    "test_required": false
+  },
+  {
     "dir_name": "code_generator_funcadl_uproot",
     "image_name": "servicex_code_gen_func_adl_uproot",
     "test_required": true
