@@ -51,7 +51,8 @@ class LookupResultProcessor:
             "servicex/internal/transformation/" + request_id,
             "chunk-size": "1000",
             "result-destination": submitted_request.result_destination,
-            "result-format": submitted_request.result_format
+            "result-format": submitted_request.result_format,
+            "codegen-type": dataset_file.codegen_type
         }
 
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',

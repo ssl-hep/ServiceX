@@ -182,7 +182,7 @@ def callback(channel, method, properties, body):
 
     start_process_info = get_process_info()
     total_time = 0
-    codegen_type = transform_request['codegen_type']
+    codegen_type = transform_request['codegen-type']
     transform_success = False
     try:
         # Loop through the replicas
