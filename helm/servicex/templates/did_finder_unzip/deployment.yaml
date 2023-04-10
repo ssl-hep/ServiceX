@@ -45,20 +45,23 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}-unzip-config
-                key: minio.cfgx
-
+                key: minio.cfg
         volumeMounts:
           - name: x509-secret
             mountPath: /etc/grid-security-ro
             readOnly: true
+          - name: unzip-cfg
+            mountPath: /opt/unzip/etc/
       {{- if ((.Values.didFinder.unzip.memcache).enabled) }}
       - name: memcache
         image: {{ .Values.didFinder.rucio.memcache.image }}:{{ .Values.didFinder.rucio.memcache.tag }}
       {{- end }}
-      MINIO_SECRET_KEY = '{{ .Values.minio.auth.rootPassword }}'
       volumes:
         - name: x509-secret
           secret:
             defaultMode: 292
             secretName: {{ .Release.Name }}-x509-proxy
+        - name: unzip-cfg
+          configMap:
+            name: {{ .Release.Name }}-unzip-config
 {{- end }}
