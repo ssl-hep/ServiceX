@@ -1,8 +1,8 @@
-"""Support for multiple code generators.
+"""SUpport unzip transformer.
 
-Revision ID: v1_1_4
-Revises: v1_1_3
-Create Date: 2023-02-15
+Revision ID: v1_1_5
+Revises: v1_1_4
+Create Date: 2023-04-10
 
 """
 from alembic import op
@@ -17,9 +17,9 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('requests', sa.Column("codegen-type", sa.String(256), nullable=True))
+    op.add_column('requests', sa.Column("codegen_type", sa.String(256), nullable=True))
 
 
 def downgrade():
-    op.drop_column('requests', 'codegen-type')
+    op.drop_column('requests', 'codegen_type')
 
