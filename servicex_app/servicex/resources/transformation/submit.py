@@ -219,6 +219,7 @@ class SubmitTransformationRequest(ServiceXResource):
                         request_rec,
                         file_record
                     )
+                    print("Added file to dataset")
 
                 self.lookup_result_processor.report_fileset_complete(
                     request_rec,

@@ -40,7 +40,7 @@ class LookupResultProcessor:
         # dataset_file.save_to_db()
 
         TransformRequest.add_a_file(request_id)
-
+        print(json.dumps(submitted_request))
         transform_request = {
             'request-id': request_id,
             'file-id': dataset_file.id,
@@ -54,7 +54,7 @@ class LookupResultProcessor:
             "result-format": submitted_request.result_format,
             "codegen-type": submitted_request.codegen_type
         }
-
+        print(json.dumps(transform_request))
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                             routing_key=request_id,
                                             body=json.dumps(transform_request))
