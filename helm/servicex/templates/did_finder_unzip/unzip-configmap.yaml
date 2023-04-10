@@ -1,0 +1,61 @@
+{{ if .Values.didFinder.unzip.enabled}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-unzip-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  unzip.cfg: |
+    [client]
+    auth_type = x509_proxy
+    ca_cert = /etc/pki/tls/certs/ca-bundle.crt
+    account = {{ .Values.gridAccount }}
+    client_x509_proxy = $X509_USER_PROXY
+    request_retries = 3
+
+    [policy]
+    permission = {{ .Values.x509Secrets.vomsOrg }}
+    schema = {{ .Values.x509Secrets.vomsOrg }}
+    lfn2pfn_algorithm_default = hash
+
+  minio.cfg: |  
+    {{ if .Values.objectStore.enabled }}
+    OBJECT_STORE_ENABLED = True
+    # default to using a https connection to the client unless explicitly
+    # turned off
+    {{ if .Values.objectStore.publicClientUseTLS  }}
+    MINIO_ENCRYPT_PUBLIC = True
+    {{ else }}
+    MINIO_ENCRYPT_PUBLIC = False
+    {{ end }}
+    {{ if not .Values.objectStore.internal }}
+    # using external minio 
+    MINIO_URL = '{{ .Values.objectStore.publicURL }}'
+    MINIO_URL_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
+    MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL }}'
+    MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
+    {{ else }}
+    # using internal minio 
+    MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
+    MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
+    {{ if .Values.minio.apiIngress.enabled }}
+    # Using minio ingress
+    MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL | default .Values.minio.apiIngress.hostname }}'
+    MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
+    {{ else }}
+    {{- $internal_minio := printf "%s-minio:%v" .Release.Name .Values.minio.service.ports.api -}}
+    # No minio ingress
+    MINIO_PUBLIC_URL = '{{- .Values.objectStore.publicURL | default $internal_minio }}'
+    {{ end }}
+    {{ end }}
+    MINIO_ACCESS_KEY = '{{ .Values.minio.auth.rootUser }}'
+    MINIO_SECRET_KEY = '{{ .Values.minio.auth.rootPassword }}'
+    {{ else }}
+    # no object store
+    OBJECT_STORE_ENABLED = False
+    {{ end }}
+{{ end }}
