@@ -198,7 +198,7 @@ def callback(channel, method, properties, body):
             # parquet then we add that as an extension, otherwise stick with the format
             # of the input file.
             result_extension = ".parquet" \
-                if transform_request['result-format'] == 'parquet' \
+                if transform_request['result-format'] == 'root' \
                 else ""
             hashed_file_name = hash_path(_file_path.replace('/', ':')
                                          + result_extension)
