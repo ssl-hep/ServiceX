@@ -8,9 +8,10 @@ packages = [{include = "did_finder_unzip"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pika = "^1.3.1"
+pika = "1.1.0"
 pymemcache = "^4.0.0"
 minio = "^7.1.14"
+servicex-did-finder-lib = "^1.3.1"
 
 [build-system]
 requires = ["poetry-core"]
