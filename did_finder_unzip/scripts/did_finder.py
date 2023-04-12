@@ -47,7 +47,7 @@ def run_rucio_finder():
     args = parser.parse_args()
 
     logger.info("ServiceX DID Finder starting up. ")
-
+    print(args)
     if args.report_logical_files:
         logger.info("---- DID Finder Only Returning Logical Names, not replicas -----")
 
@@ -66,7 +66,7 @@ def run_rucio_finder():
             for file in minio_client.list_objects(did_name+"://"+info['request-id']):
                 yield file
 
-        start_did_finder('unzip',
+        start_did_finder('servicex',
                          callback,
                          parsed_args=args)
 
