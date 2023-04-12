@@ -41,11 +41,21 @@ spec:
           - name: MEMCACHE_TTL
             value: "{{ .Values.didFinder.unzip.memcache.ttl }}"
           {{- end }}
-          - name: MINIO_CFG
+          - name: MINIO_URL
             valueFrom:
               configMapKeyRef:
                 name: {{ .Release.Name }}-unzip-config
-                key: minio.cfg
+                key: minio_url
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-unzip-config
+                key: minio_access_key
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-unzip-config
+                key: minio_secret_key
         volumeMounts:
           - name: x509-secret
             mountPath: /etc/grid-security-ro
