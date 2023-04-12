@@ -6,7 +6,10 @@ didFinder:
     pullPolicy: Always
     image: sslhep/servicex-did-finder-unzip
   rucio:
-    enabled: false
+    enabled: true
+    tag: pandas-tf
+    pullPolicy: Always
+    image: sslhep/servicex-did-finder
   CERNOpenData:
     enabled: false
 
@@ -16,6 +19,7 @@ app:
   tag: pandas-tf
   pullPolicy: IfNotPresent
   validateTransformerImage: false
+  checksImage: shriram192/checks
 
 transformer:
   autoscalerEnabled: false
