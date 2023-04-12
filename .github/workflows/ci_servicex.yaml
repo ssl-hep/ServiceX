@@ -27,7 +27,7 @@ jobs:
           content="${content//$'\n'/'%0A'}"
           content="${content//$'\r'/'%0D'}"
           # end of optional handling for multi line json
-          echo "::set-output name=matrix::$content"
+          echo "matrix=$content" >> $GITHUB_OUTPUT
       - run: |
           echo "${{ steps.set-matrix.outputs.matrix }}"
 
@@ -85,12 +85,12 @@ jobs:
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
-        run: echo "##[set-output name=imagetag;]$(echo sslhep/${{matrix.app.image_name}}:${GITHUB_REF##*/})"
+        run: echo "imagetag=$(echo sslhep/${{ matrix.app.image_name }}:${GITHUB_REF##*/})" >> $GITHUB_OUTPUT
         id: extract_tag_name
       - name: Extract Cache Dir
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
-        run: echo "##[set-output name=cachetag;]$(echo sslhep/${{matrix.app.image_name}}:buildcache)"
+        run: echo "cachetag=$(echo sslhep/${{ matrix.app.image_name }}:buildcache)" >> $GITHUB_OUTPUT
         id: extract_cache_name
       - name: Print Cache Tag Name
         shell: bash
