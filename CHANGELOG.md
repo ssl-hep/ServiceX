@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### 1.1.5
-March 6, 2023
+April 12, 2023
 
 ### Added
+- Support for multiple code generators
 - Support for HTTP access for files. The Rucio DID Finder will attempt to find HTTP sources for the files. Transformers will only use these if the XRootD URIs fail.
 
 ### Changed
@@ -17,6 +18,7 @@ March 6, 2023
 - Web app restarts when helm chart updates the app.config
 
 ### Fixed 
+- The python code generator didn't get properly ported to the transformer sidecar architecture. This is now fixed
 
 ### Removed
 
