@@ -28,12 +28,10 @@
 
 import argparse
 import logging
+import os
 
-from rucio.client.didclient import DIDClient
-from rucio.client.replicaclient import ReplicaClient
-from rucio_did_finder.rucio_adapter import RucioAdapter
+from minio import Minio
 from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
-from rucio_did_finder.lookup_request import LookupRequest
 
 
 def run_rucio_finder():
@@ -53,25 +51,22 @@ def run_rucio_finder():
     if args.report_logical_files:
         logger.info("---- DID Finder Only Returning Logical Names, not replicas -----")
 
-    # Initialize the finder
-    did_client = DIDClient()
-    replica_client = ReplicaClient()
-    rucio_adapter = RucioAdapter(did_client, replica_client, args.report_logical_files)
-
     # Run the DID Finder
     try:
         logger.info('Starting rucio DID finder')
-
+        minio_url = os.environ.get("MINIO_URL")
+        minio_secret_key = os.environ.get("MINIO_SECRET_KEY")
+        minio_access_key = os.environ.get("MINIO_ACCESS_KEY")
+        use_https = False
         async def callback(did_name, info):
-            lookup_request = LookupRequest(
-                did=did_name,
-                rucio_adapter=rucio_adapter,
-                request_id=info['request-id']
-            )
-            for file in lookup_request.lookup_files():
+            minio_client = Minio(endpoint=minio_url, access_key=minio_access_key,
+                                      secret_key=minio_secret_key, secure=use_https)
+            print("DID NAME", did_name)
+            print("REQ ID", info['request-id'])
+            for file in minio_client.list_objects(did_name+"://"+info['request-id']):
                 yield file
 
-        start_did_finder('rucio',
+        start_did_finder('unzip',
                          callback,
                          parsed_args=args)
 
