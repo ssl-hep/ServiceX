@@ -36,8 +36,9 @@ jobs:
           python -m pytest -r sx
       - name: Report coverage with Codecov
         if: github.event_name == 'push'
-        run: |
-          codecov --token=${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
   publish:
     runs-on: ubuntu-latest
     needs: test

@@ -37,7 +37,7 @@ jobs:
           pytest --cov=./src --cov-report=xml
       - name: Report coverage using codecov
         if: github.event_name == 'push' && matrix.python-version == 3.8
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml # optional
           flags: unittests # optional

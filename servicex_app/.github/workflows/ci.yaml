@@ -33,8 +33,9 @@ jobs:
         run: |
           python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
-        run: |
-          codecov --token=${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
   publish:
     runs-on: ubuntu-latest
     needs: test
