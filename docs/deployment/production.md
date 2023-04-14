@@ -364,29 +364,3 @@ NAME                                     CPU(cores)   MEMORY(bytes)
 servicex-code-gen-844f449cc5-d7q7b       1m           140Mi
 servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
 ```
-
-## Logging
-
-To collect logging information from ServiceX components one can install a logging helm chart from __logging__ directory. This will deploy a Filebeats DaemonSet that collects all the logs from ServiceX components, parses them and indexes them in an Elasticsearch.
-To configure it, simply edit the given values.yaml file:
-
-- servicex.namespace: namespace where you have servicex deployed
-- elasticsearch section contain information on your elasticsearch node and a user to be used for indexing. In Elasticsearch this user needs roles that give:
-
-  - __monitor__, __read_ilm__, __manange_ilm__, __manage_logstash_pipelines__, __manage_index_templates__, __manage_ingest_pipelines__, cluster privileges.
-  - all privileges on __filebeat-*__ indices.
-  - __logstash_admin__ role
-
-- kibana section is used by the filebeats to automatically create some of the dashboards (Postgresql and RabbitMQ). Host is the full URL of the kibana instance and index is the name of index where kibana stores its system documents.
-
-To install the logging chart do:
-
-```bash
-helm install -f my_values.yaml my_logging ssl-hep/logging 
-```
-
-You may check if pods are running correctly by listing pods in the kube-system namespace.
-
-To use UChicago infrastructure set elasticsearch host to 'atlas-kibana.mwt2.org', 
-kibana host to https://atlas-kibana.mwt2.org:5601 and kibana.dashboards.index to '.kibana-dev' and contact a ServiceX
-team member at UChicago to get login credentials.
