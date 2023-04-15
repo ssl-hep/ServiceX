@@ -148,6 +148,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 codegen_type=codegen_type
             )
 
+            print("Request Rec", request_rec)
+
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
@@ -205,7 +207,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 }
 
-                print(json.dumps(did_request))
+                print("DID_REQUEST", json.dumps(did_request))
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
