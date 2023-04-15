@@ -179,13 +179,19 @@ data:
     DID_RUCIO_FINDER_TAG = '{{ .Values.didFinder.rucio.tag }}'
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
-
+    {{- if .Values.didFinder.unzip.enabled }}
+    DID_UNZIP_FINDER_TAG = '{{ .Values.didFinder.unzip.tag }}'
+      {{- $didFinders = append $didFinders "unzip" }}
+    {{- end }}
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
     {{- $defaultScheme = "rucio" }}
     {{- end }}
     {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
     {{- $defaultScheme = "cernopendata" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.unzip.enabled }}
+    {{- $defaultScheme = "unzip" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]

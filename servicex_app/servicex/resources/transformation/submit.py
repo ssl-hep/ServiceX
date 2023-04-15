@@ -205,6 +205,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 }
 
+                print(json.dumps(did_request))
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
