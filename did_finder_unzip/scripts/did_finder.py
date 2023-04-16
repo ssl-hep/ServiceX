@@ -66,7 +66,7 @@ def run_rucio_finder():
             for file in minio_client.list_objects(did_name+"://"+info['request-id']):
                 yield file
 
-        start_did_finder('servicex',
+        start_did_finder('unzip',
                          callback,
                          parsed_args=args)
 
