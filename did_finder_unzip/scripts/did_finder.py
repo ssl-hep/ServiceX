@@ -63,7 +63,7 @@ def run_rucio_finder():
                                       secret_key=minio_secret_key, secure=use_https)
             print("DID NAME", did_name)
             print("REQ ID", info['request-id'])
-            for file in minio_client.list_objects(did_name+"://"+info['request-id']):
+            for file in minio_client.list_objects(info['request-id']):
                 yield file
 
         start_did_finder('unzip',
