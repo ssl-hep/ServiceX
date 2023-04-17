@@ -65,6 +65,7 @@ def run_rucio_finder():
             logger.info("DID NAME", did_name)
             logger.info("REQ ID", info['request-id'])
             for file in minio_client.list_objects(info['request-id']):
+                logger.info("File: ", file)
                 yield file
 
         start_did_finder('unzip',
