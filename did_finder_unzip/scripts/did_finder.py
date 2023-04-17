@@ -58,11 +58,12 @@ def run_rucio_finder():
         minio_secret_key = os.environ.get("MINIO_SECRET_KEY")
         minio_access_key = os.environ.get("MINIO_ACCESS_KEY")
         use_https = False
+
         async def callback(did_name, info):
             minio_client = Minio(endpoint=minio_url, access_key=minio_access_key,
                                       secret_key=minio_secret_key, secure=use_https)
-            print("DID NAME", did_name)
-            print("REQ ID", info['request-id'])
+            logger.info("DID NAME", did_name)
+            logger.info("REQ ID", info['request-id'])
             for file in minio_client.list_objects(info['request-id']):
                 yield file
 
