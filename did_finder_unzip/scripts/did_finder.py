@@ -64,12 +64,12 @@ def run_rucio_finder():
                                       secret_key=minio_secret_key, secure=use_https)
             logger.info(f"DID NAME: {did_name}")
             for file in minio_client.list_objects(did_name):
-                logger.info(f"File: {file}")
+                logger.info(f"File: {file.object_name()}")
                 return_obj = {
                     'adler32': 'test',
                     'file_size': 0,
                     'file_events': 0,
-                    'paths': [file]
+                    'paths': [file.bucket_name() + "/" + file.object_name()]
                 }
                 yield return_obj
 
