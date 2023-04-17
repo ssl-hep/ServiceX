@@ -65,7 +65,13 @@ def run_rucio_finder():
             logger.info(f"DID NAME: {did_name}")
             for file in minio_client.list_objects(did_name):
                 logger.info(f"File: {file}")
-                yield file
+                return_obj = {
+                    'adler32': 'test',
+                    'file_size': 0,
+                    'file_events': 0,
+                    'paths': [file]
+                }
+                yield return_obj
 
         start_did_finder('unzip',
                          callback,
