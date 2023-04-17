@@ -29,6 +29,7 @@
 import argparse
 import logging
 import os
+import json
 
 from minio import Minio
 from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
@@ -64,12 +65,13 @@ def run_rucio_finder():
                                       secret_key=minio_secret_key, secure=use_https)
             logger.info(f"DID NAME: {did_name}")
             for file in minio_client.list_objects(did_name):
-                logger.info(f"File: {file.object_name()}")
+                logger.info(f"File Str: {str(file)}")
+                logger.info(f"File JSON: {json.loads(file)}")
                 return_obj = {
                     'adler32': 'test',
                     'file_size': 0,
                     'file_events': 0,
-                    'paths': [file.bucket_name() + "/" + file.object_name()]
+                    'paths': [str(file)]
                 }
                 yield return_obj
 
