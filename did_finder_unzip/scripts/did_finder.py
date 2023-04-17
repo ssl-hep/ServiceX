@@ -62,10 +62,9 @@ def run_rucio_finder():
         async def callback(did_name, info):
             minio_client = Minio(endpoint=minio_url, access_key=minio_access_key,
                                       secret_key=minio_secret_key, secure=use_https)
-            logger.info("DID NAME", did_name)
-            logger.info("REQ ID", info['request-id'])
-            for file in minio_client.list_objects(info['request-id']):
-                logger.info("File: ", file)
+            logger.info("DID NAME: {did_name}")
+            for file in minio_client.list_objects(did_name):
+                logger.info("File: {file}")
                 yield file
 
         start_did_finder('unzip',
