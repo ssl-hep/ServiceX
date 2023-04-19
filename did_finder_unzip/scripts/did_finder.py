@@ -68,10 +68,10 @@ def run_rucio_finder():
                 logger.info(f"File Str: {str(file)}")
                 logger.info(f"File JSON: {json.loads(file)}")
                 return_obj = {
-                    'adler32': 'test',
+                    'adler32': 0,
                     'file_size': 0,
                     'file_events': 0,
-                    'paths': [str(file)]
+                    'paths': [str(file.object_name)]
                 }
                 yield return_obj
 
