@@ -63,10 +63,7 @@ def run_rucio_finder():
         async def callback(did_name, info):
             minio_client = Minio(endpoint=minio_url, access_key=minio_access_key,
                                       secret_key=minio_secret_key, secure=use_https)
-            logger.info(f"DID NAME: {did_name}")
             for file in minio_client.list_objects(did_name):
-                logger.info(f"File Str: {str(file)}")
-                logger.info(f"File JSON: {json.loads(file)}")
                 return_obj = {
                     'adler32': 0,
                     'file_size': 0,
