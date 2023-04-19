@@ -64,11 +64,16 @@ def run_rucio_finder():
             minio_client = Minio(endpoint=minio_url, access_key=minio_access_key,
                                       secret_key=minio_secret_key, secure=use_https)
             for file in minio_client.list_objects(did_name):
+                url = minio_client.get_presigned_url(
+                    "GET",
+                    file.bucket_name,
+                    file.object_name
+                )
                 return_obj = {
                     'adler32': 0,
                     'file_size': 0,
                     'file_events': 0,
-                    'paths': [str(file.object_name)]
+                    'paths': [url]
                 }
                 yield return_obj
 
