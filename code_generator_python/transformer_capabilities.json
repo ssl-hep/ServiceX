@@ -5,5 +5,5 @@
   "file-formats": ["parquet", "root"],
   "stats-parser": "UprootStats",
   "language": "python3",
-  "command": "/generated/unzip_translator.py"
+  "command": "/generated/transform_single_file.py"
 }
