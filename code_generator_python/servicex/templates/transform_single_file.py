@@ -48,7 +48,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                     writer[key] = o_dict
 
             wtime = time.time()
-        elif output_format == 'file':
+        elif output_format == 'raw-file':
             etime = time.time()
             total_events = 0
             output_path = output
