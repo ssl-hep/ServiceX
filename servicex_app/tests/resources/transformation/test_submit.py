@@ -380,7 +380,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_auth_enabled(
         self, mock_jwt_extended, mock_requesting_user
     ):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         response = client.post('/servicex/transformation',
                                json=self._generate_transformation_request(), headers=self.fake_header())
         assert response.status_code == 200

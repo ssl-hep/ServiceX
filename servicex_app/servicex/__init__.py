@@ -38,6 +38,7 @@ from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+from scitokens.utils.keycache import KeyCache
 from servicex.cli.add_user import add_user
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
@@ -257,6 +258,9 @@ def create_app(test_config=None,
                     app.config['TRANSFORMER_NAMESPACE']):
             app.logger.error("Supplied Transformer Persistent Volume Claim Doesn't exist")
             sys.exit(-1)
+
+        if app.config["ENABLE_AUTH"] and app.config["JWT_ISSUER"] != "globus":
+            app.extensions['KEY_CACHE'] = KeyCache()
 
         api = Api(app)
 

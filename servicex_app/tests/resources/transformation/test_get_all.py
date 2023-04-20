@@ -52,7 +52,9 @@ class TestAllTransformationRequest(ResourceTestBase):
     def test_get_all_auth_enabled(
         self, mock_jwt_extended, mock_return_json, mock_requesting_user
     ):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         response: Response = client.get('/servicex/transformation', headers=self.fake_header())
         assert response.status_code == 200
         assert response.json == self.example_json()
@@ -62,7 +64,9 @@ class TestAllTransformationRequest(ResourceTestBase):
         self, mock_jwt_extended, mock_requesting_user, mock_return_json
     ):
         user_id = mock_requesting_user.id
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         response = client.get(
             f'/servicex/transformation?submitted_by={user_id}', headers=self.fake_header())
         assert response.status_code == 200

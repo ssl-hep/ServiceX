@@ -26,14 +26,17 @@ data:
 
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
+    
+    JWT_ISSUER="{{- .Values.app.jwtIssuer }}"
 
+    {{ if eq .Values.app.jwtIssuer "globus" }}
     # Globus configuration
     GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
     GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
 
     # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
-
+    
     # Number of seconds the JWT is valid for
     JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
@@ -49,7 +52,9 @@ data:
     # Mailgun configuration
     MAILGUN_API_KEY = '{{ .Values.app.mailgunApiKey }}'
     MAILGUN_DOMAIN = '{{ .Values.app.mailgunDomain }}'
-
+    {{- else }}
+    JWT_ALGORITHM="RS256"
+    {{- end }}
     {{ if .Values.postgres.enabled }}
     SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}'
     {{ else }}

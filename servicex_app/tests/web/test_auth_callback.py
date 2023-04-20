@@ -6,14 +6,22 @@ from .web_test_base import WebTestBase
 class TestAuthCallback(WebTestBase):
     module = "servicex.web.auth_callback"
 
-    def test_auth_callback_outgoing(self, client, globus_client):
+    def test_auth_callback_outgoing(self, globus_client):
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
+
         response: Response = client.get(url_for('auth_callback'))
         assert response.status_code == 302
         assert globus_client.oauth2_start_flow.called_once()
         assert globus_client.oauth2_get_authorize_url.called_once()
         assert response.location == self._auth_url()
 
-    def test_auth_callback_incoming_new(self, client, globus_client, mock_session, mocker):
+    def test_auth_callback_incoming_new(self, globus_client, mock_session, mocker):
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
+
         mocker.patch('servicex.web.auth_callback.AccessTokenAuthorizer')
         auth_client_cls = mocker.patch('servicex.web.auth_callback.AuthClient')
         auth_client = auth_client_cls.return_value
@@ -33,8 +41,12 @@ class TestAuthCallback(WebTestBase):
         assert response.location == url_for('create_profile')
 
     def test_auth_callback_incoming_existing(
-        self, client, globus_client, user, mock_session, mocker
+            self, globus_client, user, mock_session, mocker
     ):
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
+
         mocker.patch('servicex.web.auth_callback.AccessTokenAuthorizer')
 
         auth_client_cls = mocker.patch('servicex.web.auth_callback.AuthClient')

@@ -37,6 +37,7 @@ python-logstash = "^0.4.8"
 humanize = "^4.4.0"
 gunicorn = "^20.1.0"
 requests-toolbelt = "^0.10.1"
+scitokens = "^1.7.4"
 
 [tool.poetry.group.test]
 optional = true

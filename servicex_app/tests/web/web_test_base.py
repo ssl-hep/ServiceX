@@ -80,6 +80,7 @@ class WebTestBase:
                 'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
             },
             'ENABLE_AUTH': False,
+            'JWT_ISSUER': "globus",
             'GLOBUS_CLIENT_ID': 'globus-client-id',
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',
             'DID_FINDER_DEFAULT_SCHEME': 'rucio',

@@ -1,13 +1,17 @@
 from functools import wraps
 from typing import Callable
 
-from flask import (Response, current_app, make_response, redirect, request,
+from flask import (Response, make_response, redirect, request,
                    session, url_for)
 from flask_jwt_extended import (get_jwt_identity, jwt_required,
                                 verify_jwt_in_request)
 from flask_jwt_extended.exceptions import NoAuthorizationError
+from jwt import ExpiredSignatureError
 
 from servicex.models import UserModel
+from flask import current_app
+
+from servicex.web.utils import refresh_cern_public_key
 
 
 @jwt_required()
@@ -48,25 +52,36 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
-        try:
-            verify_jwt_in_request(locations=["headers"])
-        except NoAuthorizationError as exc:
-            assert "NoAuthorizationError"
-            return make_response({'message': str(exc)}, 401)
-        user = get_jwt_user()
-        if not user:
-            msg = 'Not Authorized: No user found matching this API token. ' \
-                'Your account may have been deleted. ' \
-                'Please visit the ServiceX website to obtain a new API token.'
-            return make_response({'message': msg}, 401)
-        elif user.pending:
-            msg = 'Not Authorized: Your account is still pending. ' \
-                'An administrator should approve it shortly. If not, ' \
-                'please contact the ServiceX admins via email or Slack.'
-            return make_response({'message': msg}, 401)
+        elif current_app.config.get("JWT_ISSUER") == "globus":
+            try:
+                verify_jwt_in_request(locations=["headers"])
+            except NoAuthorizationError as exc:
+                assert "NoAuthorizationError"
+                return make_response({'message': str(exc)}, 401)
+            user = get_jwt_user()
+            if not user:
+                msg = 'Not Authorized: No user found matching this API token. ' \
+                    'Your account may have been deleted. ' \
+                    'Please visit the ServiceX website to obtain a new API token.'
+                return make_response({'message': msg}, 401)
+            elif user.pending:
+                msg = 'Not Authorized: Your account is still pending. ' \
+                    'An administrator should approve it shortly. If not, ' \
+                    'please contact the ServiceX admins via email or Slack.'
+                return make_response({'message': msg}, 401)
 
-        return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
+        else:
+            refresh_cern_public_key()
 
+            try:
+                verify_jwt_in_request(locations=["headers"])
+            except NoAuthorizationError as exc:
+                assert "NoAuthorizationError"
+                return make_response({'message': str(exc)}, 401)
+            except ExpiredSignatureError as exc:
+                return make_response({'message': str(exc)}, 401)
+            return fn(*args, **kwargs)
     return inner
 
 

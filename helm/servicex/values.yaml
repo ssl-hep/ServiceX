@@ -1,6 +1,7 @@
 app:
   adminEmail: admin@example.com
   auth: false
+  jwtIssuer: globus
   authExpires: 21600
   checksImage: ncsa/checks:latest
   defaultDIDFinderScheme: null

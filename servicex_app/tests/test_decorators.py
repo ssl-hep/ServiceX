@@ -59,7 +59,9 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_auth_decorator_integration_no_header(self):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('servicex/transformation/123')
             print(response.data)
@@ -67,7 +69,9 @@ class TestDecorators(WebTestBase):
             assert response.json['message'] == 'Missing Authorization Header'
 
     def test_auth_decorator_integration_user_deleted(self):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('servicex/transformation/123',
                                             headers=self.fake_header())
@@ -76,7 +80,9 @@ class TestDecorators(WebTestBase):
 
     def test_auth_decorator_integration_user_pending(self, mocker, user):
         user.pending = True
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('servicex/transformation/123',
                                             headers=self.fake_header())
@@ -84,7 +90,9 @@ class TestDecorators(WebTestBase):
             assert 'pending' in response.json['message']
 
     def test_auth_decorator_integration_authorized(self, mocker, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         fake_transform_id = 123
         data = {'id': fake_transform_id}
         mock = mocker.patch('servicex.resources.transformation.get_one'
@@ -99,7 +107,9 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_auth_decorator_integration_oauth(self, mocker, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         fake_transform_id = 123
         data = {'id': fake_transform_id}
         mock = mocker.patch('servicex.resources.transformation.get_one'
@@ -123,7 +133,9 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_admin_decorator_integration_no_header(self):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('users')
             assert response.status_code == 401
@@ -131,7 +143,9 @@ class TestDecorators(WebTestBase):
 
     def test_admin_decorator_integration_not_authorized(self, user):
         user.admin = False
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('users', headers=self.fake_header())
             assert response.status_code == 401
@@ -141,14 +155,18 @@ class TestDecorators(WebTestBase):
         user.admin = True
         data = {'users': [{'id': 1234}]}
         mocker.patch('servicex.models.UserModel.return_all', return_value=data)
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.application.app_context():
             response: Response = client.get('users', headers=self.fake_header())
             assert response.status_code == 200
             assert response.json == data
 
     def test_admin_decorator_integration_oauth_authorized(self, mocker, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         data = {'users': [{'id': 1234}]}
         mocker.patch('servicex.models.UserModel.return_all', return_value=data)
         with client.session_transaction() as sess:
@@ -160,7 +178,9 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_admin_decorator_integration_oauth_not_authorized(self, user):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={
+            'ENABLE_AUTH': True,
+            'JWT_ISSUER': "globus"})
         with client.session_transaction() as sess:
             sess['is_authenticated'] = True
             sess['admin'] = False
