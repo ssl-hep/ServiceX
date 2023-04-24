@@ -52,7 +52,8 @@ class TransformStart(ServiceXResource):
             result_destination=request_rec.result_destination,
             result_format=request_rec.result_format,
             transformer_language=request_rec.transformer_language,
-            transformer_command=request_rec.transformer_command
+            transformer_command=request_rec.transformer_command,
+            codegen_type=request_rec.codegen_type
         )
 
     @classmethod

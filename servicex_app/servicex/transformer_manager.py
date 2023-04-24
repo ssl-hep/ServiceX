@@ -50,7 +50,8 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret,
-                          generated_code_cm, transformer_language, transformer_command):
+                          generated_code_cm, transformer_language, transformer_command,
+                          codegen_type="default"):
         volume_mounts = []
         volumes = []
 
@@ -99,6 +100,7 @@ class TransformerManager:
 
         # Compute Environment Vars
         env = [client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc")]
+        env = [client.V1EnvVar(name="CODEGEN_TYPE", value=codegen_type)]
 
         # provide pods with level and logging server info
         env += [
@@ -313,13 +315,14 @@ class TransformerManager:
     def launch_transformer_jobs(self, image, request_id, workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
                                 result_destination, result_format, transformer_language,
-                                transformer_command
+                                transformer_command, codegen_type
                                 ):
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, rabbitmq_uri, workers,
                                      result_destination, result_format,
                                      x509_secret, generated_code_cm,
-                                     transformer_language, transformer_command)
+                                     transformer_language, transformer_command,
+                                     codegen_type)
 
         self._create_job(api_v1, job, namespace)
 
