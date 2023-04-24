@@ -64,7 +64,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 with open(file_output_path, 'wb') as f:
                     f.write(bytes)
             total_events = 0
-            output_size = os.stat(output_path).st_size
+            output_size = os.stat(folder_output_path).st_size
         elif codegen_type == 'pandas':
             pd_data = generated_transformer.run_query(file_path)
             pd_data.to_parquet(output_path)
