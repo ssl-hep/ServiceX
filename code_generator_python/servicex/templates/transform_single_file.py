@@ -59,7 +59,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
         elif codegen_type == 'unzip':
             folder_output_path = os.path.dirname(output_path)
-            for bytes, file_name in generated_transformer.run_query(folder_output_path):
+            for bytes, file_name in generated_transformer.run_query(file_path):
                 file_output_path = os.path.join(folder_output_path, file_name.decode('utf-8'))
                 with open(file_output_path, 'wb') as f:
                     f.write(bytes)
