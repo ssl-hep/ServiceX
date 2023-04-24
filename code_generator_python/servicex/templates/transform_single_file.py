@@ -66,10 +66,11 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             total_events = 0
             output_size = os.stat(folder_output_path).st_size
         elif codegen_type == 'pandas':
+            folder_output_path = os.path.dirname(output_path)
             pd_data = generated_transformer.run_query(file_path)
             pd_data.to_parquet(output_path)
             total_events = 0
-            output_size = os.stat(output_path).st_size
+            output_size = os.stat(folder_output_path).st_size
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)
