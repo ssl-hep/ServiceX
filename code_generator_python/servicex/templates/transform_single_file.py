@@ -58,14 +58,18 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
             print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
         elif codegen_type == 'unzip':
-            output_path = os.path.dirname(output_path)
-            for bytes, file_name in generated_transformer.run_query(file_path):
-                file_output_path = os.path.join(output_path, file_name.decode('utf-8'))
+            folder_output_path = os.path.dirname(output_path)
+            for bytes, file_name in generated_transformer.run_query(folder_output_path):
+                file_output_path = os.path.join(folder_output_path, file_name.decode('utf-8'))
                 with open(file_output_path, 'wb') as f:
                     f.write(bytes)
+            total_events = 0
+            output_size = os.stat(output_path).st_size
         elif codegen_type == 'pandas':
             pd_data = generated_transformer.run_query(file_path)
             pd_data.to_parquet(output_path)
+            total_events = 0
+            output_size = os.stat(output_path).st_size
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)
