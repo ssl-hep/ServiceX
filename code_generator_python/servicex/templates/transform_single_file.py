@@ -61,7 +61,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             folder_output_path = os.path.dirname(output_path)
             for bytes, file_name in generated_transformer.run_query(file_path):
                 file_output_path = os.path.join(folder_output_path, file_name.decode('utf-8'))
-                with open(file_output_path, 'wb') as f:
+                print('File: ', file_output_path)
+                with open(file_output_path, 'ab') as f:
                     f.write(bytes)
             total_events = 0
             output_size = os.stat(folder_output_path).st_size
