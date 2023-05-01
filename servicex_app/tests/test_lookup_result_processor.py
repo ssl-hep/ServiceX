@@ -69,7 +69,8 @@ class TestLookupResultProcessor(ResourceTestBase):
                      "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
                  "chunk-size": "1000",
                  'result-destination': 'object-store',
-                 "result-format": "arrow"
+                 "result-format": "arrow",
+                 "codegen-type": None
                  }))
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
