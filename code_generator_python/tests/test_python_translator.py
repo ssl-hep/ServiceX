@@ -32,23 +32,22 @@
 # modification, are permitted provided that the following conditions are met:
 #
 
-# import base64
-# import os
-# import tempfile
-#
-# from servicex.python_code_generator.python_translator import \
-#      PythonTranslator
-#
+import base64
+import os
+import tempfile
+
+from servicex.python_code_generator.python_translator import \
+     PythonTranslator
+
 
 def test_generate_code():
-    # os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
-    # os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
-    #
-    # with tempfile.TemporaryDirectory() as tmpdirname:
-    #     translator = PythonTranslator()
-    #     code = base64.b64encode(b"import os")
-    #     expected_hash = "no-hash"
-    #     result = translator.generate_code(code, tmpdirname)
-    #     assert result.hash == expected_hash
-    #     assert result.output_dir == os.path.join(tmpdirname, expected_hash)
-    pass
+    os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
+    os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
+    
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = base64.b64encode(b"import os")
+        expected_hash = "no-hash"
+        result = translator.generate_code(code, tmpdirname)
+        assert result.hash == expected_hash
+        assert result.output_dir == os.path.join(tmpdirname, expected_hash)

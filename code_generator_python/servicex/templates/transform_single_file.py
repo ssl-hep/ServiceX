@@ -31,7 +31,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 etime = time.time()
                 with uproot.recreate(output_path) as writer:
                     writer[default_tree_name] = {field: awkward_array[field] for field in
-                                                awkward_array.fields} if awkward_array.fields \
+                                                 awkward_array.fields} if awkward_array.fields \
                         else awkward_array
                 wtime = time.time()
 
@@ -41,7 +41,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                     arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
                 except TypeError:
                     arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
-                                            explode_records=explode_records)
+                                              explode_records=explode_records)
 
                 etime = time.time()
 
@@ -53,10 +53,11 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
             output_size = os.stat(output_path).st_size
             print(f'Detailed transformer times. query_time:{round(ttime - stime, 3)} '
-                f'serialization: {round(etime - ttime, 3)} '
-                f'writing: {round(wtime - etime, 3)}')
+                  f'serialization: {round(etime - ttime, 3)} '
+                  f'writing: {round(wtime - etime, 3)}')
 
-            print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
+            print(f"Transform stats: Total Events: {total_events}, \
+                   resulting file size {output_size}")
         elif codegen_type == 'unzip':
             folder_output_path = os.path.dirname(output_path)
             for bytes, file_name in generated_transformer.run_query(file_path):
