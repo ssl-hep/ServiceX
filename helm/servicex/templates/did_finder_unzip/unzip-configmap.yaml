@@ -1,0 +1,31 @@
+{{ if .Values.didFinder.unzip.enabled}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-unzip-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  unzip.cfg: |
+    [client]
+    auth_type = x509_proxy
+    ca_cert = /etc/pki/tls/certs/ca-bundle.crt
+    account = {{ .Values.gridAccount }}
+    client_x509_proxy = $X509_USER_PROXY
+    request_retries = 3
+
+    [policy]
+    permission = {{ .Values.x509Secrets.vomsOrg }}
+    schema = {{ .Values.x509Secrets.vomsOrg }}
+    lfn2pfn_algorithm_default = hash
+    {{ if not .Values.objectStore.internal }}
+  minio_url: "{{ .Values.objectStore.publicURL }}"
+    {{ else }}
+  minio_url: "{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}"
+    {{ end }}
+  minio_access_key: "{{ .Values.minio.auth.rootUser }}"
+  minio_secret_key: "{{ .Values.minio.auth.rootPassword }}"
+{{ end }}

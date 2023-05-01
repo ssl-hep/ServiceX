@@ -20,6 +20,7 @@ COPY boot.sh ./
 COPY transformer_capabilities.json ./
 COPY servicex/ ./servicex
 COPY scripts/from_text_to_zip.py .
+COPY transformer_capabilities.json ./
 RUN chmod +x boot.sh
 
 USER servicex

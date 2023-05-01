@@ -69,7 +69,8 @@ class TestTransformationStart(ResourceTestBase):
                                 result_format='arrow',
                                 transformer_command="echo",
                                 transformer_language="scala",
-                                x509_secret='my-x509-secret')
+                                x509_secret='my-x509-secret',
+                                codegen_type=None)
         mock_request.save_to_db.assert_called()
 
     def test_transform_start_no_kubernetes(self, mocker, mock_rabbit_adaptor):

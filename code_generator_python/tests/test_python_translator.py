@@ -31,12 +31,13 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
+
 import base64
 import os
 import tempfile
 
 from servicex.python_code_generator.python_translator import \
-    PythonTranslator
+     PythonTranslator
 
 
 def test_generate_code():

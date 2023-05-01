@@ -111,7 +111,7 @@ class TestTransformerManager(ResourceTestBase):
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
-                generated_code_cm=None)
+                generated_code_cm=None, codegen_type="default")
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == cfg['TRANSFORMER_MIN_REPLICAS']
             assert len(called_deployment.spec.template.spec.containers) == 2
@@ -181,7 +181,8 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == 17
@@ -224,7 +225,8 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
@@ -270,7 +272,8 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm="my-config-map",
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -317,7 +320,8 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -366,7 +370,8 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -411,7 +416,8 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -459,7 +465,8 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
@@ -512,7 +519,8 @@ class TestTransformerManager(ResourceTestBase):
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret=None,
                 generated_code_cm=None,
-                transformer_language="scala", transformer_command="echo"
+                transformer_language="scala", transformer_command="echo",
+                codegen_type=None
             )
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert len(called_deployment.spec.template.spec.containers) == 2

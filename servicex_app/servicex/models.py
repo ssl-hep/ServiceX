@@ -175,6 +175,7 @@ class TransformRequest(db.Model):
     code_gen_image = db.Column(db.String(256), nullable=True)
     transformer_language = db.Column(db.String(256), nullable=True)
     transformer_command = db.Column(db.String(256), nullable=True)
+    codegen_type = db.Column(db.String(256), nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
@@ -203,7 +204,8 @@ class TransformRequest(db.Model):
             'files-failed': self.files_failed,
             'files-remaining': self.files_remaining,
             'submit-time': str(self.submit_time.strftime(iso_fmt)),
-            'finish-time': str(self.finish_time)
+            'finish-time': str(self.finish_time),
+            'codegen-type': str(self.codegen_type)
         }
         if self.finish_time is not None:
             result_obj['finish-time'] = str(self.finish_time.strftime(iso_fmt))

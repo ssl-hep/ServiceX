@@ -101,6 +101,7 @@ class SubmitTransformationRequest(ServiceXResource):
             did = args.get("did")
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
+            codegen_type = config["CODE_GEN_TYPES"].get(user_codegen_name)
 
             code_gen_image_name = config['CODE_GEN_IMAGES'].get(user_codegen_name, None)
 
@@ -143,7 +144,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(args),
                 status='Submitted',
                 app_version=self._get_app_version(),
-                code_gen_image=code_gen_image_name
+                code_gen_image=code_gen_image_name,
+                codegen_type=codegen_type
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
@@ -203,6 +205,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 }
 
+                print("DID_REQUEST", json.dumps(did_request))
+                print("parsed DID", parsed_did.microservice_queue)
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,
                                                     body=json.dumps(did_request))
@@ -217,6 +221,7 @@ class SubmitTransformationRequest(ServiceXResource):
                         request_rec,
                         file_record
                     )
+                    print("Added file to dataset")
 
                 self.lookup_result_processor.report_fileset_complete(
                     request_rec,

@@ -81,7 +81,7 @@ data:
 
     TRANSFORMER_MANAGER_ENABLED = True
 
-    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
+    TRANSFORMER_CACHE_PREFIX = "{{ .Values.transformer.cachePrefix }}"
     TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
     TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
     TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}
@@ -149,7 +149,8 @@ data:
 
     {{ if .Values.codeGen }}
     {{- $code_gen_service_urls := list }}
-    {{- $code_gen_images := list }}
+    {{- $code_gen_images := list }}    
+    {{- $code_gen_types := list }}
     {{- $transformer_images := list }}
     {{- range $codeGenName, $v := .Values.codeGen }}
          {{- if .enabled }}
@@ -159,10 +160,14 @@ data:
          {{- $codeGenImage := printf "%s:%s" .image .tag }}
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenImage }}
          {{- $code_gen_images = append $code_gen_images $dictItem }}
+         {{- $type := .type }}
+         {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $type }}
+         {{- $code_gen_types = append $code_gen_types $dictItem }}
          {{ end }}
     {{- end }} 
     CODE_GEN_SERVICE_URLS = { {{ join "," $code_gen_service_urls }} }
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
+    CODE_GEN_TYPES = { {{ join "," $code_gen_types }} }
     {{- end }}
 
     {{- $didFinders := list }}
@@ -174,13 +179,19 @@ data:
     DID_RUCIO_FINDER_TAG = '{{ .Values.didFinder.rucio.tag }}'
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
-
+    {{- if .Values.didFinder.unzip.enabled }}
+    DID_UNZIP_FINDER_TAG = '{{ .Values.didFinder.unzip.tag }}'
+      {{- $didFinders = append $didFinders "unzip" }}
+    {{- end }}
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
     {{- $defaultScheme = "rucio" }}
     {{- end }}
     {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
     {{- $defaultScheme = "cernopendata" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.unzip.enabled }}
+    {{- $defaultScheme = "unzip" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]

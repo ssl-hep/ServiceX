@@ -294,7 +294,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                     result_format=submitted_request.result_format,
                                     transformer_command=None,
                                     transformer_language=None,
-                                    x509_secret='my-x509-secret')
+                                    x509_secret='my-x509-secret',
+                                    codegen_type="default")
 
     def test_submit_transformation_request_bad_image(
         self, mocker, mock_docker_repo_adapter

@@ -32,7 +32,7 @@ while true; do
 
             if [ "${PIPESTATUS[0]}" == 0 ]; then
               echo "Success. skipping rest of input_files"
-              mv "$output_file" "$completed_file"
+              mv $output_file $completed_file
               touch "$file".done
               rm "$file"
             else

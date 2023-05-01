@@ -1,0 +1,77 @@
+---
+{{ if .Values.didFinder.unzip.enabled}}
+  {{- if .Values.noCerts }}
+    {{- fail "Unzip DID Finder requires x509 Certs to be installed" }}
+  {{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-unzip
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-unzip
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-unzip
+    spec:
+      containers:
+      - name: did-finder
+        image: {{ .Values.didFinder.unzip.image }}:{{ .Values.didFinder.unzip.tag }}
+        command: ["/usr/src/app/runme.sh"]
+        imagePullPolicy: {{ .Values.didFinder.unzip.pullPolicy }}
+        env:
+          {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom: 
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: RMQ_URI
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- else }}
+          - name: RMQ_URI
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- end }}
+          {{- if ((.Values.didFinder.unzip.memcache).enabled) }}
+          - name: MEMCACHE
+            value: "True" 
+          - name: MEMCACHE_TTL
+            value: "{{ .Values.didFinder.unzip.memcache.ttl }}"
+          {{- end }}
+          - name: MINIO_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-unzip-config
+                key: minio_url
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-unzip-config
+                key: minio_access_key
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-unzip-config
+                key: minio_secret_key
+        volumeMounts:
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+          - name: unzip-cfg
+            mountPath: /opt/unzip/etc/
+      {{- if ((.Values.didFinder.unzip.memcache).enabled) }}
+      - name: memcache
+        image: {{ .Values.didFinder.rucio.memcache.image }}:{{ .Values.didFinder.rucio.memcache.tag }}
+      {{- end }}
+      volumes:
+        - name: x509-secret
+          secret:
+            defaultMode: 292
+            secretName: {{ .Release.Name }}-x509-proxy
+        - name: unzip-cfg
+          configMap:
+            name: {{ .Release.Name }}-unzip-config
+{{- end }}

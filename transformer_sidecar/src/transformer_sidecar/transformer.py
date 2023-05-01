@@ -182,7 +182,7 @@ def callback(channel, method, properties, body):
 
     start_process_info = get_process_info()
     total_time = 0
-
+    codegen_type = transform_request['codegen-type']
     transform_success = False
     try:
         # Loop through the replicas
@@ -203,16 +203,25 @@ def callback(channel, method, properties, body):
 
             # The transformer will write results here as they are generated. This
             # directory isn't monitored.
-            transform_request['safeOutputFileName'] = os.path.join(
-                scratch_path,
-                hashed_file_name
-            )
+            if codegen_type == "unzip":
+                transform_request['safeOutputFileName'] = os.path.join(
+                    scratch_path,
+                    "*"
+                )
+            else:
+                transform_request['safeOutputFileName'] = os.path.join(
+                    scratch_path,
+                    hashed_file_name
+                )
 
-            # Final results are written here and picked up by the watched directory thread
-            transform_request['completedFileName'] = os.path.join(
-                request_path,
-                hashed_file_name
-            )
+            if codegen_type == "unzip":
+                transform_request['completedFileName'] = os.path.join(request_path)
+            else:
+                # Final results are written here and picked up by the watched directory thread
+                transform_request['completedFileName'] = os.path.join(
+                    request_path,
+                    hashed_file_name
+                )
 
             # creating json file for use by science transformer
             jsonfile = str(_file_id) + '.json'

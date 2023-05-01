@@ -38,6 +38,7 @@ class PythonTranslator(CodeGenerator):
     def generate_code(self, query, cache_path: str):
 
         src = base64.b64decode(query).decode('ascii')
+        print("SRC", src)
         hash = "no-hash"
         query_file_path = os.path.join(cache_path, hash)
 
@@ -59,6 +60,10 @@ class PythonTranslator(CodeGenerator):
         shutil.copyfile(capabilities_path, os.path.join(query_file_path,
                                                         "transformer_capabilities.json"))
 
+        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+            python_file.write(src)
+
         os.system("ls -lht " + query_file_path)
         os.system(f"cat {query_file_path}/generated_transformer.py")
+
         return GeneratedFileResult(hash, query_file_path)
