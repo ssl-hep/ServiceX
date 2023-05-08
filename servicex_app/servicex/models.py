@@ -151,6 +151,7 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
+    did_id = db.Column(db.Integer, unique=True, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
@@ -185,6 +186,7 @@ class TransformRequest(db.Model):
         result_obj = {
             'request_id': self.request_id,
             'did': self.did,
+            'did_id': self.did_id,
             'columns': self.columns,
             'selection': self.selection,
             'tree-name': self.tree_name,
@@ -216,7 +218,7 @@ class TransformRequest(db.Model):
     @classmethod
     def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
         """
-        Looks up a TransformRequest by its result_id (UUID) or integer ID.
+        Looks up a TransformRequest by its request_id (UUID) or integer ID.
         :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
         If key is a numeric string, e.g. '17', it will be treated as an integer ID.
         All other strings are assumed to be UUIDs (request_id).
@@ -328,7 +330,6 @@ class TransformationResult(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
-    messages = db.Column(db.Integer, nullable=True)
 
     @classmethod
     def to_json_list(cls, a_list):
@@ -346,8 +347,7 @@ class TransformationResult(db.Model):
             'transform_time': x.transform_time,
             'total-events': x.total_events,
             'total-bytes': x.total_bytes,
-            'avg-rate': x.avg_rate,
-            'messages': x.messages
+            'avg-rate': x.avg_rate
         }
 
     def save_to_db(self):
@@ -355,20 +355,53 @@ class TransformationResult(db.Model):
         db.session.commit()
 
 
+class Dataset(db.Model):
+    __tablename__ = 'datasets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(1024), unique=True, nullable=False, index=True)
+    last_used = db.Column(db.DateTime, nullable=False)
+    last_updated = db.Column(db.DateTime, nullable=True)
+    did_finder = db.Column(db.String(64), nullable=False)
+    n_files = db.Column(db.Integer, nullable=True)
+    size = db.Column(db.BigInteger, nullable=True)
+    events = db.Column(db.BigInteger, nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def to_json(self):
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        result_obj = {
+            'id': self.id,
+            'name': self.name,
+            'did_finder': self.did_finder,
+            'n_files': self.n_files,
+            'size': self.size,
+            'events': self.events,
+            'last_used': str(self.last_used.strftime(iso_fmt)),
+            'last_updated': str(self.last_updated.strftime(iso_fmt))
+        }
+        return result_obj
+
+    @classmethod
+    def find_by_name(cls, name) -> Optional['Dataset']:
+        return cls.query.filter_by(name=name).first()
+
+
 class DatasetFile(db.Model):
     __tablename__ = 'files'
 
     id = db.Column(db.Integer, primary_key=True)
-    request_id = db.Column(db.String(48),
-                           ForeignKey('requests.request_id'),
+    dataset_id = db.Column(db.Integer,
+                           ForeignKey('datasets.id'),
                            unique=False,
                            nullable=False)
-
-    paths = db.Column(db.Text(), unique=False, nullable=False)
-
     adler32 = db.Column(db.String(48), nullable=True)
     file_size = db.Column(db.BigInteger, nullable=True)
     file_events = db.Column(db.BigInteger, nullable=True)
+    paths = db.Column(db.Text(), unique=False, nullable=False)
 
     def save_to_db(self):
         db.session.add(self)
@@ -377,6 +410,3 @@ class DatasetFile(db.Model):
     @classmethod
     def get_by_id(cls, dataset_file_id):
         return cls.query.filter_by(id=dataset_file_id).one()
-
-    def get_path_id(self):
-        return self.request_id + ":" + str(self.id)
