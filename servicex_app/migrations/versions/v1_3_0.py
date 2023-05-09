@@ -18,9 +18,9 @@ depends_on = None
 def upgrade():
 
     # clean records from tables
-    sa.delete('files')
-    sa.delete('requests')
-    sa.delete('transform_result')
+    op.execute("DELETE from files;")
+    op.execute("DELETE from requests;")
+    op.execute("DELETE from transform_result;")
 
     # Drop Files table
     op.drop_constraint('files_request_id_fkey', 'files')
@@ -70,9 +70,9 @@ def upgrade():
 
 def downgrade():
 
-    sa.delete('files')
-    sa.delete('requests')
-    sa.delete('transform_result')
+    op.execute("DELETE from files;")
+    op.execute("DELETE from requests;")
+    op.execute("DELETE from transform_result;")
 
     op.drop_table('datasets')
     op.drop_index(op.f('ix_datasets_name'), table_name='datasets')
