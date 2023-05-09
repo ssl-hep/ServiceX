@@ -42,6 +42,7 @@ class AddFileToDataset(ServiceXResource):
             # this request can be a single file dictionary
             # or a list of file dictionaries.
             add_file_request = request.get_json()
+            print(dataset_id, add_file_request)
             # submitted_request = TransformRequest.lookup(request_id)
             # current_app.logger.debug(f"Adding files to request: {submitted_request}",
             #                          extra={'requestId': request_id})

@@ -57,8 +57,8 @@ class TestServiceXAdapter:
         assert args[0][0] == 'http://foo.com/file-complete'
         doc = args[1]['json']
         assert doc['status'] == 'testing'
-        assert doc['total-events'] == 3
-        assert doc['total-time'] == 2
+        assert doc['total-time'] == 1
+        assert doc['total-events'] == 2
         assert doc['file-path'] == 'my-root.root'
         assert doc['file-id'] == 42
         assert doc['avg-rate'] == 1

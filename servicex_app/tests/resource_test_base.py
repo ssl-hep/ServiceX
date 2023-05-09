@@ -35,7 +35,7 @@ from servicex import create_app
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, Dataset
 from servicex.rabbit_adaptor import RabbitAdaptor
 
 
@@ -147,6 +147,18 @@ class ResourceTestBase:
         transform_request.transformer_language = "scala"
         transform_request.transformer_command = "echo"
         return transform_request
+
+    @staticmethod
+    def _generate_dataset():
+        dataset = Dataset()
+        dataset.name = '123-456-789'
+        dataset.last_used = datetime.min
+        dataset.last_updated = datetime.min
+        dataset.did_finder = 'rucio'
+        dataset.n_files = 1
+        dataset.size = 1203
+        dataset.events = 10000
+        return dataset
 
     @fixture
     def mock_rabbit_adaptor(self, mocker):
