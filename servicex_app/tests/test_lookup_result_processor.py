@@ -38,7 +38,7 @@ class TestLookupResultProcessor(ResourceTestBase):
     def test_add_file_to_dataset(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
-        dataset_file = DatasetFile(request_id="BR549",
+        dataset_file = DatasetFile(dataset_id="123",
                                    paths=["/foo/bar1.root", "/foo/bar2.root"],
                                    adler32='12345',
                                    file_size=1024,
