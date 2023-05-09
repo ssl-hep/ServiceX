@@ -61,7 +61,7 @@ class AddFileToDataset(ServiceXResource):
                                         file_size=afr['file_size'])
                 db_record.save_to_db()
 
-                # this was sending files to RMQ to starting processing. 
+                # this was sending files to RMQ to starting processing.
                 # Needs to be done in a different way.
                 # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 

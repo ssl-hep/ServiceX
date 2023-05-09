@@ -25,8 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 # import json
-import json
 
 from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.models import DatasetFile
@@ -36,8 +36,8 @@ from tests.resource_test_base import ResourceTestBase
 class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_file_to_dataset(self, mocker, mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          "http://cern.analysis.ch:5000/")
+        # processor = LookupResultProcessor(mock_rabbit_adaptor,
+        #                                   "http://cern.analysis.ch:5000/")
         dataset_file = DatasetFile(dataset_id="123",
                                    paths=["/foo/bar1.root", "/foo/bar2.root"],
                                    adler32='12345',
@@ -48,10 +48,10 @@ class TestLookupResultProcessor(ResourceTestBase):
         request.result_destination = 'object-store'
         dataset_file.id = 42
         dataset_file.save_to_db = mocker.Mock()
-        from servicex.models import TransformRequest
-        mock_transform_request_add_a_file = mocker.patch.object(
-            TransformRequest,
-            'add_a_file')
+        # from servicex.models import TransformRequest
+        # mock_transform_request_add_a_file = mocker.patch.object(
+        #     TransformRequest,
+        #     'add_a_file')
 
 # won't work for now.
         # processor.add_file_to_dataset(request, dataset_file)
