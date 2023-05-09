@@ -61,7 +61,7 @@ class TestServiceXAdapter:
         assert doc['total-events'] == 2
         assert doc['file-path'] == 'my-root.root'
         assert doc['file-id'] == 42
-        assert doc['avg-rate'] == 1
+        assert doc['avg-rate'] == 2
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.INFO
