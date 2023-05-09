@@ -25,11 +25,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
-from unittest.mock import call
+# import json
+# from unittest.mock import call
 
-from servicex import LookupResultProcessor
-from servicex.models import TransformRequest
+# from servicex import LookupResultProcessor
+# from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -97,8 +97,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = self._generate_transformation_request(codegen='foo')
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
-        assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" in response.json[
-            "message"]
+        assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" \
+            in response.json["message"]
 
     # def test_submit_transformation_request_throws_exception(
     #     self, mocker, mock_rabbit_adaptor
@@ -107,7 +107,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     #     client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
     #     response = client.post('/servicex/transformation',
-    #                            json=self._generate_transformation_request(), headers=self.fake_header())
+    #                            json=self._generate_transformation_request(),
+    #                            headers=self.fake_header())
     #     assert response.status_code == 503
     #     assert response.json == {"message": "Error setting up transformer queues"}
 
@@ -116,7 +117,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     #     request = self._generate_transformation_request()
 
     #     response = client.post('/servicex/transformation',
-    #                            json=request, headers=self.fake_header(), query_string={'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
+    #                            json=request, headers=self.fake_header(),
+    #                            query_string={
+    #                               'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
     #     assert response.status_code == 200
     #     request_id = response.json['request_id']
     #     with client.application.app_context():
@@ -145,7 +148,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     #         call(exchange="transformation_failures", queue=request_id+"_errors"),
     #     ]
 
-    #     assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
+    #     assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list \
+    #       == bind_to_exchange_calls
 
     #     service_endpoint = \
     #         "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
@@ -231,7 +235,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     #         call(exchange="transformation_failures", queue=request_id+"_errors"),
     #     ]
 
-    #     assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
+    #     assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == \
+    #       bind_to_exchange_calls
 
     #     service_endpoint = \
     #         "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
@@ -383,7 +388,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     # ):
     #     client = self._test_client(extra_config={'ENABLE_AUTH': True})
     #     response = client.post('/servicex/transformation',
-    #                            json=self._generate_transformation_request(), headers=self.fake_header())
+    #                            json=self._generate_transformation_request(),
+    #                            headers=self.fake_header())
     #     assert response.status_code == 200
     #     request_id = response.json['request_id']
 
