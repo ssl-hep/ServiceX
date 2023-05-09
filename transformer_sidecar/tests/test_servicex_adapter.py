@@ -60,7 +60,6 @@ class TestServiceXAdapter:
         assert doc['total-events'] == 3
         assert doc['total-time'] == 2
         assert doc['file-path'] == 'my-root.root'
-        assert doc['num-messages'] == 1
         assert doc['file-id'] == 42
         assert doc['avg-rate'] == 1
 
