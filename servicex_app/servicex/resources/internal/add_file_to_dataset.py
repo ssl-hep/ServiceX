@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import TransformRequest, DatasetFile
+from servicex.models import DatasetFile, Dataset
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -37,39 +37,43 @@ class AddFileToDataset(ServiceXResource):
         cls.lookup_result_processor = lookup_result_processor
         return cls
 
-    def put(self, request_id):
+    def put(self, dataset_id):
         try:
             # this request can be a single file dictionary
             # or a list of file dictionaries.
             add_file_request = request.get_json()
-            submitted_request = TransformRequest.lookup(request_id)
-            current_app.logger.debug(f"Adding files to request: {submitted_request}",
-                                     extra={'requestId': request_id})
+            # submitted_request = TransformRequest.lookup(request_id)
+            # current_app.logger.debug(f"Adding files to request: {submitted_request}",
+            #                          extra={'requestId': request_id})
+            dataset = Dataset.find_by_id(dataset_id)
+            current_app.logger.debug(f"Adding files to dataset: {dataset.name}",
+                                     extra={'dataset_id': dataset_id})
 
             # check if the request is bulk or single file
             if type(add_file_request) is dict:
                 add_file_request = [add_file_request]
 
             for afr in add_file_request:
-                db_record = DatasetFile(request_id=request_id,
+                db_record = DatasetFile(dataset_id=dataset_id,
                                         paths=','.join(afr['paths']),
                                         adler32=afr['adler32'],
                                         file_events=afr['file_events'],
                                         file_size=afr['file_size'])
+                db_record.save_to_db()
 
-                self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
+                # this was sending files to RMQ to starting processing. 
+                # Needs to be done in a different way.
+                # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
-            current_app.logger.info("Adding files.",
-                                    extra={
-                                        'requestId': request_id,
-                                        'nfiles': len(add_file_request)
-                                    })
-
+            # current_app.logger.info("Adding files.",
+            #                         extra={
+            #                             'requestId': request_id,
+            #                             'nfiles': len(add_file_request)
+            #                         })
             return {
-                "request-id": str(request_id)
+                "dataset_id": str(dataset_id)
             }
-
         except Exception as e:
             current_app.logger.exception("Exception occurred when adding file to dataset",
-                                         extra={'requestId': request_id})
+                                         extra={'dataset_id': dataset_id})
             return {'message': f"Something went wrong: {e}"}, 500

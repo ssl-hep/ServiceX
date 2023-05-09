@@ -289,7 +289,6 @@ class TransformRequest(db.Model):
     def statistics(self) -> Optional[dict]:
         rslt_list = db.session.query(
             TransformationResult.request_id,
-            func.sum(TransformationResult.messages).label('total_msgs'),
             func.min(TransformationResult.transform_time).label('min_time'),
             func.max(TransformationResult.transform_time).label('max_time'),
             func.avg(TransformationResult.transform_time).label('avg_time'),
@@ -306,7 +305,6 @@ class TransformRequest(db.Model):
         rslt = rslt_list[0]
 
         return {
-            "total-messages": int(rslt.total_msgs),
             "min-time": int(rslt.min_time),
             "max-time": int(rslt.max_time),
             "avg-time": float(rslt.avg_time),
@@ -388,6 +386,10 @@ class Dataset(db.Model):
     @classmethod
     def find_by_name(cls, name) -> Optional['Dataset']:
         return cls.query.filter_by(name=name).first()
+
+    @classmethod
+    def find_by_id(cls, id) -> Optional['Dataset']:
+        return cls.query.get(id)
 
 
 class DatasetFile(db.Model):

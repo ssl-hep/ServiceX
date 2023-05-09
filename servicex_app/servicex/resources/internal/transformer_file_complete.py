@@ -63,8 +63,7 @@ class TransformerFileComplete(ServiceXResource):
             transform_time=info['total-time'],
             total_bytes=info['total-bytes'],
             total_events=info['total-events'],
-            avg_rate=info['avg-rate'],
-            messages=info['num-messages']
+            avg_rate=info['avg-rate']
         )
         rec.save_to_db()
 

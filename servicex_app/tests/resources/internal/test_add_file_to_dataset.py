@@ -52,7 +52,7 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
         mock_processor.add_file_to_dataset.assert_called()
         assert response.json == {
-            "request-id": '1234'
+            "dataset_id": '1234'
         }
 
     def test_put_new_file_bulk(self, mocker):
@@ -85,7 +85,7 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
         mock_processor.add_file_to_dataset.assert_called()
         assert response.json == {
-            "request-id": '1234'
+            "dataset_id": '1234'
         }
 
     def test_put_new_file_root_dest(self, mocker):
@@ -114,7 +114,7 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_processor.add_file_to_dataset.assert_called()
 
         assert response.json == {
-            "request-id": '1234'
+            "dataset_id": '1234'
         }
 
     def test_put_new_file_with_exception(self, mocker):

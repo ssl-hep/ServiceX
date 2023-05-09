@@ -37,7 +37,6 @@ class TestTransformFileComplete(ResourceTestBase):
             'file-id': 42,
             'status': 'OK',
             'total-time': 100,
-            'num-messages': 1024,
             'total-events': 10000,
             'total-bytes': 325683,
             'avg-rate': 30.2
