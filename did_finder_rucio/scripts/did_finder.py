@@ -66,7 +66,7 @@ def run_rucio_finder():
             lookup_request = LookupRequest(
                 did=did_name,
                 rucio_adapter=rucio_adapter,
-                request_id=info['request-id']
+                dataset_id=info['dataset_id']
             )
             for file in lookup_request.lookup_files():
                 yield file
