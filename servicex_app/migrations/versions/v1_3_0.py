@@ -68,12 +68,20 @@ def upgrade():
                     'files', ['dataset_id'], unique=False)
 
     #   Change requests table
-    op.add_column('requests', 'did_id', sa.Integer(), nullable=False)
+    op.add_column('requests', sa.Column('did_id', sa.Integer(), nullable=False))
     op.create_foreign_key(
-        'datasets_requests_fkey', 'datasets', 'requests', ['id'], ['did_id']
+        'datasets_requests_fkey',
+        source_table='requests',
+        referent_table='datasets',
+        local_cols=['did_id'],
+        remote_cols=['id']
     )
     op.create_foreign_key(
-        'transform_result_file_id_fkey', 'transform_result', 'files', ['id'], ['file_id']
+        'transform_result_file_id_fkey',
+        source_table='transform_result',
+        referent_table='files',
+        local_cols=['file_id'],
+        remote_cols=['id']
     )
 
 
@@ -113,4 +121,4 @@ def downgrade():
         'transform_result_file_id_fkey', 'transform_result', 'files', ['id'], ['file_id']
     )
 
-    op.add_column('transform_result', 'messages', sa.Integer(), nullable=True)
+    op.add_column('transform_result', sa.Column('messages', sa.Integer(), nullable=True))
