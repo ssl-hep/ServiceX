@@ -219,6 +219,9 @@ class SubmitTransformationRequest(ServiceXResource):
             if dataset.complete:
                 current_app.logger.info("dataset was complete", extra={
                                         'requestId': str(request_id)})
+                # TODO
+                # needs to read all the files and add to the processing queue.
+
                 # TODO remove as not needed
                 # self.lookup_result_processor.report_fileset_complete(
                 #     request_rec,
@@ -254,21 +257,17 @@ class SubmitTransformationRequest(ServiceXResource):
                             file_size=0
                         )
                         file_record.save_to_db()
-                        # TODO check if this needs request or dataset?
+                        # add to processing queue
                         self.lookup_result_processor.add_file_to_dataset(
                             request_rec,
                             file_record
                         )
-                    # TODO remove as it is not needed any more
-                    # self.lookup_result_processor.report_fileset_complete(
-                    #     request_rec,
-                    #     num_files=len(file_list)
-                    # )
 
                     db.session.commit()
 
+            # starts transformers
             current_app.logger.info("Transformation request TO BE submitted",
-                                    extra={'request': request_rec})
+                                    extra={'request': request_rec.request_id})
 
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                 TransformStart.start_transformers(
@@ -277,7 +276,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec
                 )
 
-            current_app.logger.info("Transformation request submitted",
+            current_app.logger.info("Transformation request submitted!",
                                     extra={'requestId': request_id})
             return {
                 "request_id": str(request_id)

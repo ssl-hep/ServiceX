@@ -28,6 +28,10 @@
 import json
 from servicex.models import TransformRequest
 
+# TODO rename to something more descriptive
+# adding a file to processing queue? Does it need its own class if it is
+# single function?
+
 
 class LookupResultProcessor:
     def __init__(self, rabbitmq_adaptor, advertised_endpoint):
@@ -37,9 +41,7 @@ class LookupResultProcessor:
     def add_file_to_dataset(self, submitted_request, dataset_file):
         request_id = submitted_request.request_id
 
-        # dataset_file.save_to_db()
-        # db.session.commit()
-
+        # increment number of files in DS
         TransformRequest.add_a_file(request_id)
 
         transform_request = {
@@ -54,7 +56,7 @@ class LookupResultProcessor:
             "result-destination": submitted_request.result_destination,
             "result-format": submitted_request.result_format
         }
-
+        print("ADDING a FILE to PROCESSING QUEUE...")
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                             routing_key=request_id,
                                             body=json.dumps(transform_request))
