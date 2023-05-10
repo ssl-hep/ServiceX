@@ -125,9 +125,8 @@ class SubmitTransformationRequest(ServiceXResource):
 
             # Check if this dataset is already in the DB.
             dataset = Dataset.find_by_name(did_name)
-            datasetExists = True
             if not dataset:
-                datasetExists = False
+                current_app.logger.info('dataset not in the db', extra={'requestId': request_id})
                 dataset = Dataset(
                     name=did_name,
                     last_used=datetime.now(tz=timezone.utc),
@@ -138,6 +137,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 db.session.commit()
                 msg = f'new dataset created: {dataset.to_json()}'
                 current_app.logger.info(msg, extra={'requestId': str(request_id)})
+            else:
+                current_app.logger.info('dataset found in the db', extra={'requestId': request_id})
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -151,7 +152,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_id=str(request_id),
                 title=args.get("title"),
                 did=did_name,
-                did_id=Dataset.find_by_name(did_name).id,
+                did_id=dataset.id,
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -214,7 +215,9 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec.save_to_db()
             db.session.commit()
 
-            if datasetExists and dataset.complete:
+            if dataset.complete:
+                current_app.logger.info("dataset was complete", extra={
+                                        'requestId': str(request_id)})
                 self.lookup_result_processor.report_fileset_complete(
                     request_rec,
                     num_files=dataset.n_files
@@ -226,13 +229,17 @@ class SubmitTransformationRequest(ServiceXResource):
                         request_rec
                     )
             else:
+                current_app.logger.info("dataset NOT complete", extra={
+                                        'requestId': str(request_id)})
                 if did:
+                    current_app.logger.info("adding dataset lookup to RMQ", extra={
+                        'requestId': str(request_id)})
                     did_request = {
-                        "request_id": request_rec.request_id,
+                        "dataset_id": dataset.id,
                         "did": parsed_did.did,
                         "service-endpoint": self._generate_advertised_endpoint(
                             "servicex/internal/transformation/" +
-                            request_rec.request_id
+                            dataset.id
                         )
                     }
 
@@ -240,6 +247,8 @@ class SubmitTransformationRequest(ServiceXResource):
                                                         routing_key=parsed_did.microservice_queue,
                                                         body=json.dumps(did_request))
                 else:
+                    current_app.logger.info("adding individual paths to RMQ", extra={
+                        'requestId': str(request_id)})
                     for paths in file_list:
                         file_record = DatasetFile(
                             dataset_id=dataset.id,
@@ -260,6 +269,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
                     db.session.commit()
 
+                    # why is this not done in any case?
                     if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                         TransformStart.start_transformers(
                             self.transformer_manager,
