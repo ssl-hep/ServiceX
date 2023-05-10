@@ -131,6 +131,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     name=did_name,
                     last_used=datetime.now(tz=timezone.utc),
                     last_updated=datetime.fromtimestamp(0),
+                    complete=False,
                     did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
                 )
                 dataset.save_to_db()
@@ -218,10 +219,11 @@ class SubmitTransformationRequest(ServiceXResource):
             if dataset.complete:
                 current_app.logger.info("dataset was complete", extra={
                                         'requestId': str(request_id)})
-                self.lookup_result_processor.report_fileset_complete(
-                    request_rec,
-                    num_files=dataset.n_files
-                )
+                # TODO remove as not needed
+                # self.lookup_result_processor.report_fileset_complete(
+                #     request_rec,
+                #     num_files=dataset.n_files
+                # )
             else:
                 current_app.logger.info("dataset NOT complete", extra={
                                         'requestId': str(request_id)})
@@ -252,16 +254,21 @@ class SubmitTransformationRequest(ServiceXResource):
                             file_size=0
                         )
                         file_record.save_to_db()
+                        # TODO check if this needs request or dataset?
                         self.lookup_result_processor.add_file_to_dataset(
                             request_rec,
                             file_record
                         )
-                    self.lookup_result_processor.report_fileset_complete(
-                        request_rec,
-                        num_files=len(file_list)
-                    )
+                    # TODO remove as it is not needed any more
+                    # self.lookup_result_processor.report_fileset_complete(
+                    #     request_rec,
+                    #     num_files=len(file_list)
+                    # )
 
                     db.session.commit()
+
+            current_app.logger.info("Transformation request TO BE submitted",
+                                    extra={'request': request_rec})
 
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                 TransformStart.start_transformers(

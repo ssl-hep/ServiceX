@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import DatasetFile, Dataset
+from servicex.models import DatasetFile, Dataset, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -62,11 +62,12 @@ class AddFileToDataset(ServiceXResource):
                                         file_size=afr['file_size'])
                 db_record.save_to_db()
 
-                # TODO this was sending files to RMQ to starting processing.
-                # Needs to be done in a different way.
-                # something periodically loops over requests waiting for the complete ds,
-                # once complete, sends things to rmq.
-                # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
+            db.session.commit()
+            # TODO this was sending files to RMQ to starting processing.
+            # Needs to be done in a different way.
+            # something periodically loops over requests waiting for the complete ds,
+            # once complete, sends things to rmq.
+            # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             # current_app.logger.info("Adding files.",
             #                         extra={
