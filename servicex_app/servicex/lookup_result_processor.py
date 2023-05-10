@@ -38,6 +38,7 @@ class LookupResultProcessor:
         request_id = submitted_request.request_id
 
         # dataset_file.save_to_db()
+        # db.session.commit()
 
         TransformRequest.add_a_file(request_id)
 
@@ -57,10 +58,3 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                             routing_key=request_id,
                                             body=json.dumps(transform_request))
-
-    def report_fileset_complete(self, submitted_request,
-                                num_files,  total_events=0,
-                                total_bytes=0, did_lookup_time=0):
-        submitted_request.total_events = total_events
-        submitted_request.total_bytes = total_bytes
-        submitted_request.did_lookup_time = did_lookup_time

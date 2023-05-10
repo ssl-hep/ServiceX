@@ -27,9 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import TransformRequest, db
+from servicex.models import Dataset, db
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
+# from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
 
 
 class FilesetComplete(ServiceXResource):
@@ -39,21 +39,21 @@ class FilesetComplete(ServiceXResource):
         cls.transformer_manager = transformer_manager
         return cls
 
-    def put(self, request_id):
+    def put(self, dataset_id):
         summary = request.get_json()
-        rec = TransformRequest.lookup(request_id)
-        current_app.logger.info("Completed fileset for request",
-                                extra={'requestId': request_id})
-        self.lookup_result_processor.report_fileset_complete(
-            rec,
-            num_files=summary['files'],
-            total_events=summary['total-events'],
-            total_bytes=summary['total-bytes'],
-            did_lookup_time=summary['elapsed-time']
-        )
+        dset = Dataset.find_by_id(dataset_id)
+        current_app.logger.info("Completed fileset for datasetID",
+                                extra={'dataset_id': dataset_id,
+                                       'elapsed-time': summary['elapsed-time']})
+        dset.n_files = summary['files']
+        dset.events = summary['total-events']
+        dset.size = summary['total-bytes']
+        dset.complete = True
+        dset.save_to_db()
         db.session.commit()
 
-        if summary['files'] == 0:
-            TransformerFileComplete.transform_complete(current_app.logger,
-                                                       rec,
-                                                       self.transformer_manager)
+# TODO need a request id for this to work. Not sure if needed here.
+        # if summary['files'] == 0:
+        #     TransformerFileComplete.transform_complete(current_app.logger,
+        #                                                dset,
+        #                                                self.transformer_manager)

@@ -47,8 +47,8 @@ class AddFileToDataset(ServiceXResource):
             # current_app.logger.debug(f"Adding files to request: {submitted_request}",
             #                          extra={'requestId': request_id})
             dataset = Dataset.find_by_id(dataset_id)
-            current_app.logger.debug(f"Adding files to dataset: {dataset.name}",
-                                     extra={'dataset_id': dataset_id})
+            current_app.logger.info(f"Adding files to dataset: {dataset.name}",
+                                    extra={'dataset_id': dataset_id})
 
             # check if the request is bulk or single file
             if type(add_file_request) is dict:
@@ -62,8 +62,10 @@ class AddFileToDataset(ServiceXResource):
                                         file_size=afr['file_size'])
                 db_record.save_to_db()
 
-                # this was sending files to RMQ to starting processing.
+                # TODO this was sending files to RMQ to starting processing.
                 # Needs to be done in a different way.
+                # something periodically loops over requests waiting for the complete ds,
+                # once complete, sends things to rmq.
                 # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             # current_app.logger.info("Adding files.",
