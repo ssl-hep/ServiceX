@@ -131,6 +131,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 dataset = Dataset(
                     name=did_name,
                     last_used=datetime.now(tz=timezone.utc),
+                    last_updated=datetime.fromtimestamp(0),
                     did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
                 )
                 dataset.save_to_db()
