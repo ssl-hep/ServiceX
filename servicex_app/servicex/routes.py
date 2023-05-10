@@ -139,12 +139,13 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     AddFileToDataset.make_api(lookup_result_processor)
     api.add_resource(AddFileToDataset,
-                     '/servicex/internal/transformation/<string:request_id>/files')
+                     '/servicex/internal/transformation/<string:dataset_id>/files')
 
     FilesetComplete.make_api(lookup_result_processor, transformer_manager)
     api.add_resource(FilesetComplete,
-                     '/servicex/internal/transformation/<string:request_id>/complete')
+                     '/servicex/internal/transformation/<string:dataset_id>/complete')
 
+    # this endpoint is not needed.
     TransformStart.make_api(transformer_manager)
     api.add_resource(TransformStart,
                      '/servicex/internal/transformation/<string:request_id>/start')

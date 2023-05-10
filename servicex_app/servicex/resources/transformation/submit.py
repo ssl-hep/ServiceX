@@ -222,12 +222,6 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec,
                     num_files=dataset.n_files
                 )
-                if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                    TransformStart.start_transformers(
-                        self.transformer_manager,
-                        current_app.config,
-                        request_rec
-                    )
             else:
                 current_app.logger.info("dataset NOT complete", extra={
                                         'requestId': str(request_id)})
@@ -269,13 +263,12 @@ class SubmitTransformationRequest(ServiceXResource):
 
                     db.session.commit()
 
-                    # why is this not done in any case?
-                    if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                        TransformStart.start_transformers(
-                            self.transformer_manager,
-                            current_app.config,
-                            request_rec
-                        )
+            if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                TransformStart.start_transformers(
+                    self.transformer_manager,
+                    current_app.config,
+                    request_rec
+                )
 
             current_app.logger.info("Transformation request submitted",
                                     extra={'requestId': request_id})
