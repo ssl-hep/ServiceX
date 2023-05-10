@@ -239,7 +239,7 @@ class SubmitTransformationRequest(ServiceXResource):
                         "did": parsed_did.did,
                         "service-endpoint": self._generate_advertised_endpoint(
                             "servicex/internal/transformation/" +
-                            dataset.id
+                            str(dataset.id)
                         )
                     }
 
