@@ -51,15 +51,19 @@ def upgrade():
     #   Create files table
     op.create_table('files',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('dataset_id', sa.Integer(), key=sa.ForeignKey(
-                        "datasets.id", ondelete='cascade'), nullable=False),
+                    sa.Column('dataset_id', sa.Integer(), nullable=False),
                     sa.Column('adler32', sa.String(length=48), nullable=True),
                     sa.Column('file_size', sa.BigInteger(), nullable=True),
                     sa.Column('file_events', sa.BigInteger(), nullable=True),
                     sa.Column('paths', sa.Text(), nullable=False),
-                    # sa.ForeignKeyConstraint(['id'], ['datasets.id'], ondelete='cascade'),
+                    sa.ForeignKeyConstraint(['dataset_id'], ['datasets.id'], ondelete='cascade'),
                     sa.PrimaryKeyConstraint('id')
                     )
+
+    # this should have worked...
+    # sa.Column('dataset_id', sa.Integer(), key=sa.ForeignKey(
+    # "datasets.id", ondelete='cascade'), nullable=False),
+
     op.create_index(op.f('ix_datasets_id'),
                     'files', ['dataset_id'], unique=False)
 
