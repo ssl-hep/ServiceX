@@ -23,6 +23,7 @@ def upgrade():
     op.execute("DELETE from transform_result;")
 
     # Drop Files table
+    op.drop_constraint('transform_result_file_id_fkey', 'transform_result')
     op.drop_constraint('files_request_id_fkey', 'files')
     op.drop_table('files')
 
@@ -66,6 +67,9 @@ def upgrade():
     op.create_foreign_key(
         'datasets_requests_fkey', 'datasets', 'requests', ['id'], ['did_id']
     )
+    op.create_foreign_key(
+        'transform_result_file_id_fkey', 'transform_result', 'files', ['id'], ['file_id']
+    )
 
 
 def downgrade():
@@ -80,6 +84,11 @@ def downgrade():
 
     op.drop_column('requests', 'did_id')
 
+    # Drop modern files table
+    op.drop_constraint('transform_result_file_id_fkey', 'transform_result')
+    op.drop_constraint('files_request_id_fkey', 'files')
+    op.drop_table('files')
+
     op.create_table('files',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('request_id', sa.String(length=48), nullable=False),
@@ -93,6 +102,10 @@ def downgrade():
 
     op.create_foreign_key(
         'files_request_id_fkey', 'files', 'requests', ['request_id'], ['request_id']
+    )
+
+    op.create_foreign_key(
+        'transform_result_file_id_fkey', 'transform_result', 'files', ['id'], ['file_id']
     )
 
     op.add_column('transform_result', 'messages', sa.Integer(), nullable=True)
