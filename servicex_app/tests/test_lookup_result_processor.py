@@ -28,7 +28,7 @@
 
 # import json
 
-from servicex.lookup_result_processor import LookupResultProcessor
+# from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.models import DatasetFile
 from tests.resource_test_base import ResourceTestBase
 
