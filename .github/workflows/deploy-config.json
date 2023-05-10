@@ -12,12 +12,12 @@
   {
     "dir_name": "did_finder_cernopendata",
     "image_name": "servicex-did-finder-cernopendata",
-    "test_required": false
+    "test_required": true
   },
   {
     "dir_name": "did_finder_rucio",
     "image_name": "servicex-did-finder",
-    "test_required": false
+    "test_required": true
   },
   {
     "dir_name": "code_generator_funcadl_uproot",
@@ -37,12 +37,12 @@
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_cms_aod",
-    "test_required": false
+    "test_required": true
   },
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_atlas_xaod",
-    "test_required": false
+    "test_required": true
   },
   {
     "dir_name": "minio_cleanup",
