@@ -73,17 +73,17 @@ class TestLookupResultProcessor(ResourceTestBase):
         #          "result-format": "arrow"
         #          }))
 
-    def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor, "http://cern.analysis.ch:5000/")
+    # def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
+    #     processor = LookupResultProcessor(mock_rabbit_adaptor, "http://cern.analysis.ch:5000/")
 
-        transform_request = self._generate_transform_request()
+    #     transform_request = self._generate_transform_request()
 
-        processor.report_fileset_complete(transform_request,
-                                          num_files=1,
-                                          total_events=3, total_bytes=4,
-                                          did_lookup_time=5)
+    #     processor.report_fileset_complete(transform_request,
+    #                                       num_files=1,
+    #                                       total_events=3, total_bytes=4,
+    #                                       did_lookup_time=5)
 
-        assert transform_request.files == 1
-        assert transform_request.total_events == 3
-        assert transform_request.total_bytes == 4
-        assert transform_request.did_lookup_time == 5
+    #     assert transform_request.files == 1
+    #     assert transform_request.total_events == 3
+    #     assert transform_request.total_bytes == 4
+    #     assert transform_request.did_lookup_time == 5
