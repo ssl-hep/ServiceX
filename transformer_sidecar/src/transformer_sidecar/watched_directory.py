@@ -113,16 +113,18 @@ class TransformerEventHandler(FileSystemEventHandler):
 
         self.logger.info('File created.', extra={'file-path': event.src_path})
 
-        # check if file still being written/copied
+        # check if file still being written/copied - Garbage?
         while True:
             file_start = os.stat(event.src_path).st_size
-            time.sleep(1)
+            time.sleep(0.1)
+            print('sleeping inside')
             file_later = os.stat(event.src_path).st_size
             comp = file_later - file_start
             if comp == 0 and file_later != 0:
                 break
             else:
-                time.sleep(1)
+                time.sleep(0.1)
+                print('sleeping outside')
 
         self.watched_directory.total_size = os.stat(event.src_path).st_size
 

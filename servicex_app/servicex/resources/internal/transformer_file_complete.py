@@ -33,6 +33,7 @@ from flask import request, current_app
 from servicex import TransformerManager
 from servicex.models import TransformRequest, TransformationResult, db
 from servicex.resources.servicex_resource import ServiceXResource
+import time
 
 
 class TransformerFileComplete(ServiceXResource):
@@ -42,6 +43,7 @@ class TransformerFileComplete(ServiceXResource):
         return cls
 
     def put(self, request_id):
+        start_time = time.time()
         info = request.get_json()
         current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
@@ -67,6 +69,8 @@ class TransformerFileComplete(ServiceXResource):
         )
         rec.save_to_db()
 
+        db.session.commit()
+
         current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
@@ -76,6 +80,8 @@ class TransformerFileComplete(ServiceXResource):
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
+
+        print(f"--- {(time.time() - start_time)} seconds ---")
         return "Ok"
 
     @staticmethod

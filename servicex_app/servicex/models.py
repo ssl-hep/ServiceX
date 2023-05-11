@@ -354,7 +354,7 @@ class TransformationResult(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.commit()
+        db.session.flush()
 
 
 class Dataset(db.Model):

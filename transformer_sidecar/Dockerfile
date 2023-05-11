@@ -2,6 +2,8 @@ FROM python:3.10
 
 WORKDIR /servicex
 
+RUN apt-get update && apt-get install -y jq
+
 RUN python3 -m pip install --upgrade pip
 
 ENV  POETRY_VERSION=1.2.2

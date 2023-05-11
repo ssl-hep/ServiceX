@@ -17,10 +17,14 @@ lang=$1
 cmd=$2
 path=$3
 
+# TODO rewrite with jq
 while true; do
-    echo "Greetings from watch script"
-    ls $path
+    # echo "Greetings from watch script"
+    # ls $path
     if [ -f $path/*.json ]; then
+    
+        start=$(date +%s)
+
         for file in `ls $path/*.json`; do
             download_path=`grep -o '"downloadPath": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             output_file=`grep -o '"safeOutputFileName": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
@@ -41,7 +45,9 @@ while true; do
               rm "$file"
             fi
           done;
+          end=$(date +%s)
+          echo "Elapsed Time: $(($end-$start)) seconds"
     else
-        sleep 1
+        sleep 0.1
     fi
 done

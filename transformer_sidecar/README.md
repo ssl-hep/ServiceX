@@ -2,26 +2,26 @@
 
 ## Motivation
 
-The ServiceX sidecar transformer is designed to separate the python dependency of the ServiceX code from the transformer code. 
+The ServiceX sidecar transformer is designed to separate the python dependency of the ServiceX code from the transformer code.
 
 ## Overview
 
 The transformer now runs as two containers:
+
 - the ServiceX container
 - the transformer container
 
 The containers share a common volume with which they interact (by default: /servicex/output).
 
 ### ServiceX Container
- 
+
 The ServiceX container utilizes the python module, [watchdog](https://pypi.org/project/watchdog/), and the ServiceX python library.
 
-When the pod starts up, the ServiceX container creates a request directory in the shared volume at `/servicex/output/{request_id}`. It then copies two scripts to `/servicex/output/scripts` directory for access by the Transformer container: proxy_exporter.sh in the event the transformer needs a proxy, and watch.sh which is the main bash script run by the transformer container. These scripts can be found in the scripts directory within this repository. 
+When the pod starts up, the ServiceX container creates a request directory in the shared volume at `/servicex/output/{request_id}`. It then copies two scripts to `/servicex/output/scripts` directory for access by the Transformer container: proxy_exporter.sh in the event the transformer needs a proxy, and watch.sh which is the main bash script run by the transformer container. These scripts can be found in the scripts directory within this repository.
 
 The ServiceX container receives the request from the DID Finder, and then writes a JSON in the request directory with the transformation request information. The code then watches the request directory for the creation of any files within the request directory. When a file gets created in the shared directory, it is added to a python FIFO queue for uploading to ServiceX.
 
 The ServiceX container also looks for a *.log file in the request directory. Currently, it uses the on_modified event to look for errors and for event counting.
-
 
 ### Transformer Container
 
@@ -39,7 +39,6 @@ Within the Servicex_App, changes were made within transform_mngr.py to the [crea
 
 This branch commits additional variables in templates/app/configmap.yaml to be used. Here is an example of the values.yaml for a deployment of the [yt/girder transformer](https://github.com/pondd-project/ServiceX_yt_Transformer/tree/sidecar):
 
-
 ```
 transformer:
 ...
@@ -50,7 +49,3 @@ transformer:
   exec: transform_data.py
   outputDir: /servicex/output
 ```
-
-
-
-
