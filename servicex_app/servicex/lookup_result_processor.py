@@ -27,10 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 from servicex.models import TransformRequest
+from flask import current_app
 
 # TODO rename to something more descriptive
-# adding a file to processing queue? Does it need its own class if it is
-# single function?
 
 
 class LookupResultProcessor:
@@ -60,4 +59,5 @@ class LookupResultProcessor:
                                                 routing_key=request.request_id,
                                                 body=json.dumps(transform_request))
 
-        print("Added all files to PROCESSING QUEUE...")
+        current_app.logger.info("Added all files to processing queue", extra={
+            'requestId': request.request_id})

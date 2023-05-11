@@ -63,24 +63,5 @@ class TransformStart(ServiceXResource):
         return cls
 
     def post(self, request_id):
-        """
-        Starts a transformation request, deploys transformers, and updates record.
-        :param request_id: UUID of transformation request.
-        """
-
-        print('NO idea what is doing this post.')
-
-        # submitted_request = TransformRequest.lookup(request_id)
-
-        # if submitted_request.status == "Canceled":
-        #     return {"message": "Transform request canceled by user."}, 409
-
-        # submitted_request.status = 'Running'
-        # submitted_request.save_to_db()
-        # db.session.commit()
-
-        # if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-        #     TransformStart.start_transformers(
-        #         self.transformer_manager,
-        #         current_app.config,
-        #         submitted_request)
+        # TODO remove whatever is calling this. then remove the method.
+        print('NO idea what and why is doing this post.')

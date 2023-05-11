@@ -254,7 +254,6 @@ class SubmitTransformationRequest(ServiceXResource):
 
             while True:
                 db.session.refresh(dataset)
-                print(dataset.to_json())
                 if dataset.lookup_status == 'complete':
                     break
                 print('waiting for the lookup... now:', dataset.lookup_status)
