@@ -40,8 +40,7 @@ def upgrade():
                     sa.Column('n_files', sa.Integer(), nullable=True),
                     sa.Column('size', sa.BigInteger(), nullable=True),
                     sa.Column('events', sa.BigInteger(), nullable=True),
-                    sa.Column('complete', sa.Boolean(), nullable=False,
-                              server_default=sa.sql.false()),
+                    sa.Column('lookup_status', sa.String(16), nullable=False),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('name')
                     )

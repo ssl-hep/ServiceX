@@ -38,25 +38,25 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor = rabbitmq_adaptor
         self.advertised_endpoint = advertised_endpoint
 
-    def add_file_to_dataset(self, submitted_request, dataset_file):
-        request_id = submitted_request.request_id
+    def increment_files_in_request(self, submitted_request):
+        TransformRequest.add_a_file(submitted_request.request_id)
 
-        # increment number of files in DS
-        TransformRequest.add_a_file(request_id)
+    def add_files_to_processing_queue(self, request):
 
-        transform_request = {
-            'request-id': request_id,
-            'file-id': dataset_file.id,
-            'columns': submitted_request.columns,
-            'paths': dataset_file.paths,
-            'tree-name': submitted_request.tree_name,
-            "service-endpoint": self.advertised_endpoint +
-            "servicex/internal/transformation/" + request_id,
-            "chunk-size": "1000",
-            "result-destination": submitted_request.result_destination,
-            "result-format": submitted_request.result_format
-        }
-        print("ADDING a FILE to PROCESSING QUEUE...")
-        self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
-                                            routing_key=request_id,
-                                            body=json.dumps(transform_request))
+        for file_record in request.all_files:
+            transform_request = {
+                'request-id': request.request_id,
+                'file-id': file_record.id,
+                'columns': request.columns,
+                'paths': file_record.paths,
+                'tree-name': request.tree_name,
+                "service-endpoint": self.advertised_endpoint +
+                "servicex/internal/transformation/" + request.request_id,
+                "chunk-size": "1000",
+                "result-destination": request.result_destination,
+                "result-format": request.result_format
+            }
+            print("ADDING a FILE to PROCESSING QUEUE...")
+            self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
+                                                routing_key=request.request_id,
+                                                body=json.dumps(transform_request))

@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import uuid
+import time
 from datetime import datetime, timezone
 
 from flask import current_app
@@ -131,15 +132,30 @@ class SubmitTransformationRequest(ServiceXResource):
                     name=did_name,
                     last_used=datetime.now(tz=timezone.utc),
                     last_updated=datetime.fromtimestamp(0),
-                    complete=False,
+                    lookup_status='',
                     did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
                 )
                 dataset.save_to_db()
-                db.session.commit()
                 msg = f'new dataset created: {dataset.to_json()}'
                 current_app.logger.info(msg, extra={'requestId': str(request_id)})
             else:
                 current_app.logger.info('dataset found in the db', extra={'requestId': request_id})
+
+            if dataset.lookup_status == '' and not did:
+                current_app.logger.info("individual paths given", extra={
+                    'requestId': str(request_id)})
+                for paths in file_list:
+                    file_record = DatasetFile(
+                        dataset_id=dataset.id,
+                        paths=paths,
+                        adler32="xxx",
+                        file_events=0,
+                        file_size=0
+                    )
+                    file_record.save_to_db()
+                dataset.n_files = len(file_list)
+                dataset.lookup_status = 'complete'
+                db.session.commit()
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -214,26 +230,10 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {'message': "Error setting up transformer queues"}, 503
 
             request_rec.save_to_db()
-            db.session.commit()
 
-            if dataset.complete:
-                current_app.logger.info("dataset was complete", extra={
-                                        'requestId': str(request_id)})
-                # TODO
-                # needs to read all the files and add to the processing queue.
-                for file_record in request_rec.all_files:
-                    print("Files FOUND:", file_record)
-                    self.lookup_result_processor.add_file_to_dataset(
-                        request_rec,
-                        file_record
-                    )
-                # TODO remove as not needed
-                # self.lookup_result_processor.report_fileset_complete(
-                #     request_rec,
-                #     num_files=dataset.n_files
-                # )
-            else:
-                current_app.logger.info("dataset NOT complete", extra={
+            dataset = Dataset.find_by_id(dataset.id)
+            if dataset.lookup_status == '':
+                current_app.logger.info("new dataset", extra={
                                         'requestId': str(request_id)})
                 if did:
                     current_app.logger.info("adding dataset lookup to RMQ", extra={
@@ -246,37 +246,27 @@ class SubmitTransformationRequest(ServiceXResource):
                             str(dataset.id)
                         )
                     }
-
                     self.rabbitmq_adaptor.basic_publish(exchange='',
                                                         routing_key=parsed_did.microservice_queue,
                                                         body=json.dumps(did_request))
-                else:
-                    current_app.logger.info("adding individual paths to RMQ", extra={
-                        'requestId': str(request_id)})
-                    for paths in file_list:
-                        file_record = DatasetFile(
-                            dataset_id=dataset.id,
-                            paths=paths,
-                            adler32="xxx",
-                            file_events=0,
-                            file_size=0
-                        )
-                        file_record.save_to_db()
-                        # add to processing queue
-                        self.lookup_result_processor.add_file_to_dataset(
-                            request_rec,
-                            file_record
-                        )
-
+                    dataset.lookup_status = 'looking'
                     db.session.commit()
 
-            # starts transformers
-            current_app.logger.info("Transformation request TO BE submitted",
-                                    extra={'request': request_rec.request_id})
+            while True:
+                fds = Dataset.find_by_id(dataset.id)
+                if fds.lookup_status == 'complete':
+                    break
+                print('waiting for the lookup... now:', fds.lookup_status)
+                time.sleep(1)
 
+            current_app.logger.info("dataset complete", extra={'requestId': str(request_id)})
+            request_rec.files = dataset.n_files
             request_rec.status = 'Running'
-            request_rec.save_to_db()
             db.session.commit()
+
+            self.lookup_result_processor.add_files_to_processing_queue(request_rec)
+
+            # starts transformers
 
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                 TransformStart.start_transformers(

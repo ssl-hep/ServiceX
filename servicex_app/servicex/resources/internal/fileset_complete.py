@@ -29,7 +29,6 @@ from flask import request, current_app
 
 from servicex.models import Dataset, db
 from servicex.resources.servicex_resource import ServiceXResource
-# from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
 
 
 class FilesetComplete(ServiceXResource):
@@ -48,12 +47,5 @@ class FilesetComplete(ServiceXResource):
         dset.n_files = summary['files']
         dset.events = summary['total-events']
         dset.size = summary['total-bytes']
-        dset.complete = True
-        dset.save_to_db()
+        dset.lookup_status = 'complete'
         db.session.commit()
-
-# TODO need a request id for this to work. Not sure if needed here.
-        # if summary['files'] == 0:
-        #     TransformerFileComplete.transform_complete(current_app.logger,
-        #                                                dset,
-        #                                                self.transformer_manager)

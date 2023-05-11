@@ -368,7 +368,7 @@ class Dataset(db.Model):
     n_files = db.Column(db.Integer, nullable=True)
     size = db.Column(db.BigInteger, nullable=True)
     events = db.Column(db.BigInteger, nullable=True)
-    complete = db.Column(db.Boolean, nullable=False)
+    lookup_status = db.Column(db.String(16), nullable=False)
 
     def save_to_db(self):
         db.session.add(self)
@@ -385,7 +385,7 @@ class Dataset(db.Model):
             'events': self.events,
             'last_used': str(self.last_used.strftime(iso_fmt)),
             'last_updated': str(self.last_updated.strftime(iso_fmt)),
-            'complete': self.complete
+            'lookup_status': self.lookup_status
         }
         return result_obj
 
