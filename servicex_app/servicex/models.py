@@ -286,6 +286,10 @@ class TransformRequest(db.Model):
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
 
     @property
+    def all_files(self) -> List['DatasetFile']:
+        return DatasetFile.query.filter_by(dataset_id=self.did_id).all()
+
+    @property
     def statistics(self) -> Optional[dict]:
         rslt_list = db.session.query(
             TransformationResult.request_id,

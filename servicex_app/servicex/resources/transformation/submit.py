@@ -221,7 +221,12 @@ class SubmitTransformationRequest(ServiceXResource):
                                         'requestId': str(request_id)})
                 # TODO
                 # needs to read all the files and add to the processing queue.
-
+                for file_record in request_rec.all_files:
+                    print("Files FOUND:", file_record)
+                    self.lookup_result_processor.add_file_to_dataset(
+                        request_rec,
+                        file_record
+                    )
                 # TODO remove as not needed
                 # self.lookup_result_processor.report_fileset_complete(
                 #     request_rec,
