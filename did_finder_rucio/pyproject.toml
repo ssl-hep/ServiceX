@@ -11,7 +11,6 @@ python = "^3.9"
 rucio-clients = "^1.29.7.post1"
 pika = "1.1.0"
 xmltodict = "^0.13.0"
-pymemcache = "^4.0.0"
 servicex-did-finder-lib = {version = "^1.4", allow-prereleases = true}
 
 [tool.poetry.group.test]
