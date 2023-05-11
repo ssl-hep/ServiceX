@@ -269,6 +269,10 @@ class SubmitTransformationRequest(ServiceXResource):
             current_app.logger.info("Transformation request TO BE submitted",
                                     extra={'request': request_rec.request_id})
 
+            request_rec.status = 'Running'
+            request_rec.save_to_db()
+            db.session.commit()
+
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                 TransformStart.start_transformers(
                     self.transformer_manager,
