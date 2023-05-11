@@ -231,7 +231,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
             request_rec.save_to_db()
 
-            dataset = Dataset.find_by_id(dataset.id)
+            db.session.refresh(dataset)
             if dataset.lookup_status == '':
                 current_app.logger.info("new dataset", extra={
                                         'requestId': str(request_id)})
@@ -253,10 +253,11 @@ class SubmitTransformationRequest(ServiceXResource):
                     db.session.commit()
 
             while True:
-                fds = Dataset.find_by_id(dataset.id)
-                if fds.lookup_status == 'complete':
+                db.session.refresh(dataset)
+                print(dataset.to_json())
+                if dataset.lookup_status == 'complete':
                     break
-                print('waiting for the lookup... now:', fds.lookup_status)
+                print('waiting for the lookup... now:', dataset.lookup_status)
                 time.sleep(1)
 
             current_app.logger.info("dataset complete", extra={'requestId': str(request_id)})

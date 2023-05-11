@@ -42,17 +42,14 @@ class AddFileToDataset(ServiceXResource):
             # this request can be a single file dictionary
             # or a list of file dictionaries.
             add_file_request = request.get_json()
-            print(">>>>", dataset_id, add_file_request)
-            # submitted_request = TransformRequest.lookup(request_id)
-            # current_app.logger.debug(f"Adding files to request: {submitted_request}",
-            #                          extra={'requestId': request_id})
             dataset = Dataset.find_by_id(dataset_id)
-            current_app.logger.info(f"Adding files to dataset: {dataset.name}",
-                                    extra={'dataset_id': dataset_id})
 
             # check if the request is bulk or single file
             if type(add_file_request) is dict:
                 add_file_request = [add_file_request]
+
+            current_app.logger.info(f"Adding {len(add_file_request)} files to dataset: {dataset.name}",
+                                    extra={'dataset_id': dataset_id})
 
             for afr in add_file_request:
                 db_record = DatasetFile(dataset_id=dataset_id,
@@ -63,17 +60,7 @@ class AddFileToDataset(ServiceXResource):
                 db_record.save_to_db()
 
             db.session.commit()
-            # TODO this was sending files to RMQ to starting processing.
-            # Needs to be done in a different way.
-            # something periodically loops over requests waiting for the complete ds,
-            # once complete, sends things to rmq.
-            # self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
-            # current_app.logger.info("Adding files.",
-            #                         extra={
-            #                             'requestId': request_id,
-            #                             'nfiles': len(add_file_request)
-            #                         })
             return {
                 "dataset_id": str(dataset_id)
             }

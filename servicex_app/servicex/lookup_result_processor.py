@@ -56,7 +56,8 @@ class LookupResultProcessor:
                 "result-destination": request.result_destination,
                 "result-format": request.result_format
             }
-            print("ADDING a FILE to PROCESSING QUEUE...")
             self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
                                                 routing_key=request.request_id,
                                                 body=json.dumps(transform_request))
+
+        print("Added all files to PROCESSING QUEUE...")
