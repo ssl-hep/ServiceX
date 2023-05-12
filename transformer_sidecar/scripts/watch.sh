@@ -26,27 +26,24 @@ while true; do
         start=$(date +%s)
 
         for file in `ls $path/*.json`; do
-            download_path=`grep -o '"downloadPath": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
-            output_file=`grep -o '"safeOutputFileName": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
-            completed_file=`grep -o 'completedFileName": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
-            output_format=`grep -o '"result-format": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
+          read -rd '' download_path output_file completed_file output_format < <(jq -r '.downloadPath,.safeOutputFileName,.completedFileName,."result-fo
+rmat"' $file)
+          echo "Attempting $download_path -> $output_file -> $completed_file with $output_format format"
+          $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $file.log
 
-            echo "Attempting $download_path -> $output_file -> $completed_file with $output_format format"
-            $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $file.log
-
-            if [ "${PIPESTATUS[0]}" == 0 ]; then
-              echo "Success. skipping rest of input_files"
-              mv "$output_file" "$completed_file"
-              touch "$file".done
-              rm "$file"
-            else
-              echo "Operation failed for $download_path"
-              touch "$file".failed
-              rm "$file"
-            fi
-          done;
-          end=$(date +%s)
-          echo "Elapsed Time: $(($end-$start)) seconds"
+          if [ "${PIPESTATUS[0]}" == 0 ]; then
+            echo "Success. skipping rest of input_files"
+            mv "$output_file" "$completed_file"
+            touch "$file".done
+            rm "$file"
+          else
+            echo "Operation failed for $download_path"
+            touch "$file".failed
+            rm "$file"
+          fi
+        done;
+        end=$(date +%s)
+        echo "Elapsed Time: $(($end-$start)) seconds"
     else
         sleep 0.1
     fi
