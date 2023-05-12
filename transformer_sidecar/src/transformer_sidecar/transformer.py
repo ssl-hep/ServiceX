@@ -235,9 +235,9 @@ def callback(channel, method, properties, body):
 
             # Wait for both threads to complete
             watcher.observer.join()
-            logger.info("Watched Directory Thread is done.", extra={'status': watcher.status})
+            print(f"Watched Directory Thread is done. Status:{watcher.status}")
             uploader.join()
-            logger.info("Uploader is done")
+            print("Uploader is done")
 
             # Grab the logs
             transformer_stats = fill_stats_parser(

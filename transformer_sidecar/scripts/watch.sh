@@ -18,9 +18,10 @@ cmd=$2
 path=$3
 
 while true; do
-    echo "Greetings from watch script"
-    ls $path
     if [ -f $path/*.json ]; then
+    
+        start=$(date +%s%N | cut -b1-13)
+
         for file in `ls $path/*.json`; do
             download_path=`grep -o '"downloadPath": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             output_file=`grep -o '"safeOutputFileName": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
@@ -41,7 +42,11 @@ while true; do
               rm "$file"
             fi
           done;
+              
+          end=$(date +%s%N | cut -b1-13)
+          echo "Elapsed Time: $(($end-$start)) ms"
     else
-        sleep 1
+        echo 'SLEEPING in watch'
+        sleep 0.1
     fi
 done
