@@ -3,7 +3,7 @@ from textwrap import dedent
 from urllib.parse import urlparse
 
 import flask
-from flask import (request, send_file, session)
+from flask import (current_app, request, send_file, session)
 from servicex.decorators import oauth_required
 from servicex.models import UserModel
 
@@ -12,7 +12,7 @@ from servicex.models import UserModel
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
     # code_gen_image = current_app.config.get('CODE_GEN_IMAGE', "")
-
+    instance = current_app.config.get('INSTANCE_NAME', "")
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
     endpoint_url = get_correct_url(request)
@@ -21,7 +21,7 @@ def servicex_file():
 
     body = "api_endpoints:\n"
     for backend_type in sx_types:
-        body += f"  - name: {backend_type}\n"
+        body += f"  - name: {instance}_{backend_type}\n"
         body += f"    endpoint: {endpoint_url}\n"
         body += f"    token: {user.refresh_token}\n"
         body += f"    type: {backend_type}\n"
