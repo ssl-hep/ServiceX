@@ -11,34 +11,22 @@ class TestServiceXFile(WebTestBase):
     module = "servicex.web.servicex_file"
 
     def test_servicex_file(self, client, user):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}
+        cfg = {'INSTANCE_NAME': 'abcdfg'}
         client.application.config.update(cfg)
         response: Response = client.get(url_for('servicex-file'))
         expected = """\
         api_endpoints:
-          - name: xaod
+          - name: abcdfg_xaod
             endpoint: http://localhost/
             token: abcdef
             type: xaod
+          - name: abcdfg_uproot
+            endpoint: http://localhost/
+            token: abcdef
+            type: uproot
         """
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
-
-    def test_servicex_file_no_match(self, mock_flash, client):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl:develop'}
-        client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
-        assert response.status_code == 302
-        mock_flash.assert_called_once()
-        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
-
-    def test_servicex_file_ambiguous_match(self, client, mock_flash):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod_uproot:develop'}
-        client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
-        assert response.status_code == 302
-        mock_flash.assert_called_once()
-        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
 
     def test_correct_url(self, client):
         """
