@@ -102,7 +102,7 @@ only computed for electrons in the list of filtered events.
 There are currently three choices for formatting the output of a ServiceX request: ``AsPandasDF``
 returns the output as a Pandas
 [dataframe](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html),
-``AsROOTTree`` returns the output as a flat
+``AsROOTTTree`` returns the output as a flat
 [TTree](https://root.cern.ch/doc/master/classTTree.html), and ``AsAwkwardArray`` returns the output
 as an [Awkward array](https://github.com/scikit-hep/awkward-array) suitable for use with
 [uproot](https://github.com/scikit-hep/uproot).
