@@ -11,17 +11,14 @@ from servicex.models import UserModel
 @oauth_required
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
-    # code_gen_image = current_app.config.get('CODE_GEN_IMAGE', "")
-    instance = current_app.config.get('INSTANCE_NAME', "")
+    code_gen_types = current_app.config.get('CODE_GEN_IMAGES', '').keys()
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
     endpoint_url = get_correct_url(request)
 
-    sx_types = ["xaod", "uproot"]
-
     body = "api_endpoints:\n"
-    for backend_type in sx_types:
-        body += f"  - name: {instance}_{backend_type}\n"
+    for backend_type in code_gen_types:
+        body += f"  - name: {backend_type}\n"
         body += f"    endpoint: {endpoint_url}\n"
         body += f"    token: {user.refresh_token}\n"
         body += f"    type: {backend_type}\n"

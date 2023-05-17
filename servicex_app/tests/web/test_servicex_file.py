@@ -11,16 +11,16 @@ class TestServiceXFile(WebTestBase):
     module = "servicex.web.servicex_file"
 
     def test_servicex_file(self, client, user):
-        cfg = {'INSTANCE_NAME': 'abcdfg'}
+        cfg = {'CODE_GEN_IMAGES': {'xaod': 'asdf', 'uproot': 'asdfasdf'}}
         client.application.config.update(cfg)
         response: Response = client.get(url_for('servicex-file'))
         expected = """\
         api_endpoints:
-          - name: abcdfg_xaod
+          - name: xaod
             endpoint: http://localhost/
             token: abcdef
             type: xaod
-          - name: abcdfg_uproot
+          - name: uproot
             endpoint: http://localhost/
             token: abcdef
             type: uproot
