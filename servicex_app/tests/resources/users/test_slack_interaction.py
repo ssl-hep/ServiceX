@@ -144,7 +144,7 @@ class TestSlackInteraction(ResourceTestBase):
         secret = 'my-slack-secret'
         client = self._test_client(extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         timestamp = time.time()
-        body = f"payload={quote_plus(json.dumps(payload), safe=',')}"
+        body = f"payload={quote_plus(json.dumps(payload), safe=',:@/')}"
         sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')
         signature = hmac.new(secret.encode('utf-8'), sig_basestring,
                              digestmod=hashlib.sha256).hexdigest()

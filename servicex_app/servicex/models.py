@@ -84,7 +84,8 @@ class UserModel(db.Model):
     # Defined for convenience in testing, since query is difficult to mock.
     @classmethod
     def find_by_id(cls, user_id) -> Optional['UserModel']:
-        return cls.query.get(user_id)
+        return db.session.get(cls, user_id)
+        # return cls.query.get(user_id)
 
     @classmethod
     def return_all(cls):
@@ -224,7 +225,7 @@ class TransformRequest(db.Model):
         """
         try:
             if isinstance(key, int) or key.isnumeric():
-                return cls.query.get(key)
+                return db.session.get(cls, key)
             else:
                 return cls.query.filter_by(request_id=key).one()
         except NoResultFound:
