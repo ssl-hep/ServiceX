@@ -113,7 +113,7 @@ class TransformerEventHandler(FileSystemEventHandler):
 
         self.logger.info('File created.', extra={'file-path': event.src_path})
 
-        # check if file still being written/copied - Garbage?
+        # check if file still being written/copied
         while True:
             file_start = os.stat(event.src_path).st_size
             print('SLEEPING to check if file stopped increasing.')
