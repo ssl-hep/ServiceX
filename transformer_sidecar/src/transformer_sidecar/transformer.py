@@ -235,7 +235,7 @@ def callback(channel, method, properties, body):
 
             # Wait for both threads to complete
             watcher.observer.join()
-            print(f"Watched Directory Thread is done. status:{watcher.status}")
+            print(f"Watched Directory Thread is done. Status:{watcher.status}")
             uploader.join()
             print("Uploader is done")
 

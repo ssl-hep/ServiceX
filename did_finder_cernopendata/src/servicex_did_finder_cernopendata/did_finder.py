@@ -1,3 +1,4 @@
+import os
 import logging
 from subprocess import PIPE, Popen, STDOUT
 from typing import Any, AsyncGenerator, Dict
@@ -5,6 +6,8 @@ from typing import Any, AsyncGenerator, Dict
 from servicex_did_finder_lib import start_did_finder
 
 __log = logging.getLogger(__name__)
+
+cache_prefix = os.environ.get('CACHE_PREFIX', '')
 
 
 async def find_files(did_name: str,
@@ -16,7 +19,7 @@ async def find_files(did_name: str,
 
     Notes:
 
-        - Using command recommenced (here)
+        - Using command recommended (here)
           [https://opendata-forum.cern.ch/t/accessing-the-contents-of-a-record-via-a-web-api/58]
           to get files.
 
@@ -46,11 +49,11 @@ async def find_files(did_name: str,
             assert isinstance(line, str)
             all_lines.append(line)
             uri = line.strip()
-            if not uri.startswith('root://'):
+            if uri.startswith('http://') and cache_prefix == '':
                 non_root_uri = True
             else:
                 yield {
-                    'paths': [uri],
+                    'paths': [cache_prefix + uri],
                     'adler32': 0,  # No clue
                     'file_size': 0,  # Size in bytes if known
                     'file_events': 0,  # Number of events if known
@@ -64,7 +67,7 @@ async def find_files(did_name: str,
                             '\n\t' + '\n\t'.join(all_lines))
 
         if non_root_uri:
-            raise Exception('CMSOpenData: Opendata record returned a non-xrootd url'
+            raise Exception('CMSOpenData: Opendata record returned a strange url'
                             '\n\t' + '\n\t'.join(all_lines))
 
 
