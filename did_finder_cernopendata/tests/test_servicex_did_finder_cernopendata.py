@@ -81,7 +81,7 @@ async def test_exit_with_crash():
         with pytest.raises(Exception) as e:
             [f async for f in iter]
 
-        assert "non-xrootd" not in str(e)
+        assert "strange" not in str(e)
 
 
 @pytest.mark.asyncio
@@ -94,7 +94,7 @@ async def test_non_root_return():
         with pytest.raises(Exception) as e:
             [f async for f in iter]
 
-        assert 'non-xrootd' in str(e)
+        assert 'strange' in str(e)
 
 
 @pytest.mark.asyncio
