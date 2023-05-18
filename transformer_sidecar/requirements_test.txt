@@ -1,4 +1,0 @@
-flake8
-pytest
-pytest-mock
-coverage>=5.2
