@@ -47,6 +47,8 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
+from servicex.models import db
+
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
@@ -195,6 +197,8 @@ def create_app(test_config=None,
         app.logger.info(f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}")
 
     with app.app_context():
+        db.init_app(app)
+        db.create_all()
         # Validate did-finder scheme
         schemes = app.config['VALID_DID_SCHEMES']
         if app.config['DID_FINDER_DEFAULT_SCHEME'] not in schemes:
@@ -266,7 +270,6 @@ def create_app(test_config=None,
         except OSError:
             pass
 
-        @app.before_first_request
         def create_tables():
             from servicex.models import db
             db.init_app(app)
