@@ -28,7 +28,8 @@ while true; do
             completed_file=`grep -o 'completedFileName": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
             output_format=`grep -o '"result-format": "[^\"]*"' $file |tr -d '"' |tr -d ',' | awk '{print $2}' `
 
-    for file in `ls $path/*.json`; do
+            echo "Attempting $download_path -> $output_file -> $completed_file with $output_format format"
+            $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $file.log
 
             if [ "${PIPESTATUS[0]}" == 0 ]; then
               echo "Success. skipping rest of input_files"
