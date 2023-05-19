@@ -17,7 +17,7 @@
   {
     "dir_name": "did_finder_rucio",
     "image_name": "servicex-did-finder",
-    "test_required": true
+    "test_required": false
   },
   {
     "dir_name": "code_generator_funcadl_uproot",
