@@ -19,11 +19,13 @@ class TestServiceXFile(WebTestBase):
           - name: xaod
             endpoint: http://localhost/
             token: abcdef
-            type: xaod
+            codegen: xaod
+            return_data: root-file
           - name: uproot
             endpoint: http://localhost/
             token: abcdef
-            type: uproot
+            codegen: uproot
+            return_data: root-file
         """
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
