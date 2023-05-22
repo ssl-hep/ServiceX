@@ -21,7 +21,8 @@ def servicex_file():
         body += f"  - name: {backend_type}\n"
         body += f"    endpoint: {endpoint_url}\n"
         body += f"    token: {user.refresh_token}\n"
-        body += f"    type: {backend_type}\n"
+        body += f"    codegen: {backend_type}\n"
+        body += "    return_data: root-file\n"
     return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
                      as_attachment=True, download_name="servicex.yaml")
 
