@@ -11,7 +11,7 @@ class TestServiceXFile(WebTestBase):
     module = "servicex.web.servicex_file"
 
     def test_servicex_file(self, client, user):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod:develop'}
+        cfg = {'CODE_GEN_IMAGES': {'xaod': 'asdf', 'uproot': 'asdfasdf'}}
         client.application.config.update(cfg)
         response: Response = client.get(url_for('servicex-file'))
         expected = """\
@@ -19,26 +19,16 @@ class TestServiceXFile(WebTestBase):
           - name: xaod
             endpoint: http://localhost/
             token: abcdef
-            type: xaod
+            codegen: xaod
+            return_data: root-file
+          - name: uproot
+            endpoint: http://localhost/
+            token: abcdef
+            codegen: uproot
+            return_data: root-file
         """
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
-
-    def test_servicex_file_no_match(self, mock_flash, client):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl:develop'}
-        client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
-        assert response.status_code == 302
-        mock_flash.assert_called_once()
-        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
-
-    def test_servicex_file_ambiguous_match(self, client, mock_flash):
-        cfg = {'CODE_GEN_IMAGE': 'sslhep/servicex_code_gen_func_adl_xaod_uproot:develop'}
-        client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
-        assert response.status_code == 302
-        mock_flash.assert_called_once()
-        assert "Unable to infer filetype" in mock_flash.call_args[0][0]
 
     def test_correct_url(self, client):
         """

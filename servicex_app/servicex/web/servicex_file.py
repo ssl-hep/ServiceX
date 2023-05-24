@@ -3,8 +3,7 @@ from textwrap import dedent
 from urllib.parse import urlparse
 
 import flask
-from flask import (current_app, flash, redirect, request, send_file, session,
-                   url_for)
+from flask import (current_app, request, send_file, session)
 from servicex.decorators import oauth_required
 from servicex.models import UserModel
 
@@ -12,27 +11,18 @@ from servicex.models import UserModel
 @oauth_required
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
-    code_gen_image = current_app.config.get('CODE_GEN_IMAGE', "")
-    candidates = ["xaod", "uproot", "miniaod", "nanoaod"]
-    matches = [t for t in candidates if t in code_gen_image]
-    if not matches or len(matches) > 1:
-        msg = "Could not generate a servicex.yaml config file. " \
-              "Unable to infer filetype supported by this ServiceX instance."
-        current_app.logger.error(msg)
-        flash(msg, category='error')
-        return redirect(url_for('profile'))
-    backend_type = matches[0]
+    code_gen_types = current_app.config.get('CODE_GEN_IMAGES', '').keys()
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
-
     endpoint_url = get_correct_url(request)
-    body = f"""\
-    api_endpoints:
-      - name: {backend_type}
-        endpoint: {endpoint_url}
-        token: {user.refresh_token}
-        type: {backend_type}
-    """
+
+    body = "api_endpoints:\n"
+    for backend_type in code_gen_types:
+        body += f"  - name: {backend_type}\n"
+        body += f"    endpoint: {endpoint_url}\n"
+        body += f"    token: {user.refresh_token}\n"
+        body += f"    codegen: {backend_type}\n"
+        body += "    return_data: root-file\n"
     return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
                      as_attachment=True, download_name="servicex.yaml")
 
