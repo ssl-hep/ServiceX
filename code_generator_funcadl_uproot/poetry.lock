@@ -23,7 +23,7 @@ toml = "*"
 
 [[package]]
 name = "awkward"
-version = "2.2.0"
+version = "2.2.1"
 description = "Manipulate JSON-like data with NumPy-like idioms."
 category = "main"
 optional = false
@@ -148,7 +148,7 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "flask-restful"
-version = "0.3.9"
+version = "0.3.10"
 description = "Simple framework for creating REST APIs"
 category = "main"
 optional = false
@@ -438,7 +438,7 @@ test = ["flake8", "pytest", "pytest-cov"]
 
 [[package]]
 name = "requests"
-version = "2.30.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 category = "main"
 optional = false
@@ -509,7 +509,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "typing-extensions"
-version = "4.5.0"
+version = "4.6.1"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
@@ -607,8 +607,8 @@ autopep8 = [
     {file = "autopep8-1.7.0.tar.gz", hash = "sha256:ca9b1a83e53a7fad65d731dc7a2a2d50aa48f43850407c59f6a1a306c4201142"},
 ]
 awkward = [
-    {file = "awkward-2.2.0-py3-none-any.whl", hash = "sha256:b85ac98821af515510f2da1b832ab58f0344474c829c0a6cc15117bd3725a31f"},
-    {file = "awkward-2.2.0.tar.gz", hash = "sha256:17a853b74b3925f1116d87a2d049d230f7d179177fb36f81941318e7c545a93d"},
+    {file = "awkward-2.2.1-py3-none-any.whl", hash = "sha256:7a4d35c19eef88bd9cd18edb15fbde06e54e59f5006b9316221c61eb4e6af718"},
+    {file = "awkward-2.2.1.tar.gz", hash = "sha256:653e5b69f1c8e32d1d59445a8414d03f850d327eb933f45aad163f0778861dc2"},
 ]
 awkward-cpp = [
     {file = "awkward-cpp-15.tar.gz", hash = "sha256:f6c825db2db981f852903d9574a07015c5d53ef8e4630772f18c7f167045aa0d"},
@@ -814,8 +814,8 @@ flask = [
     {file = "Flask-2.3.2.tar.gz", hash = "sha256:8c2f9abd47a9e8df7f0c3f091ce9497d011dc3b31effcf4c85a6e2b50f4114ef"},
 ]
 flask-restful = [
-    {file = "Flask-RESTful-0.3.9.tar.gz", hash = "sha256:ccec650b835d48192138c85329ae03735e6ced58e9b2d9c2146d6c84c06fa53e"},
-    {file = "Flask_RESTful-0.3.9-py2.py3-none-any.whl", hash = "sha256:4970c49b6488e46c520b325f54833374dc2b98e211f1b272bd4b0c516232afe2"},
+    {file = "Flask-RESTful-0.3.10.tar.gz", hash = "sha256:fe4af2ef0027df8f9b4f797aba20c5566801b6ade995ac63b588abf1a59cec37"},
+    {file = "Flask_RESTful-0.3.10-py2.py3-none-any.whl", hash = "sha256:1cf93c535172f112e080b0d4503a8d15f93a48c88bdd36dd87269bdaf405051b"},
 ]
 flask-wtf = [
     {file = "Flask-WTF-1.1.1.tar.gz", hash = "sha256:41c4244e9ae626d63bed42ae4785b90667b885b1535d5a4095e1f63060d12aa9"},
@@ -984,8 +984,8 @@ qastle = [
     {file = "qastle-0.15.0.tar.gz", hash = "sha256:ebdae0e32af9ea9ca5a58d51ca9680295023a36766bb1c8b507e4bd30585fad4"},
 ]
 requests = [
-    {file = "requests-2.30.0-py3-none-any.whl", hash = "sha256:10e94cc4f3121ee6da529d358cdaeaff2f1c409cd377dbc72b825852f2f7e294"},
-    {file = "requests-2.30.0.tar.gz", hash = "sha256:239d7d4458afcb28a692cdd298d87542235f4ca8d36d03a15bfc128a6559a2f4"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 requests-toolbelt = [
     {file = "requests-toolbelt-0.10.1.tar.gz", hash = "sha256:62e09f7ff5ccbda92772a29f394a49c3ad6cb181d568b1337626b2abb628a63d"},
@@ -1008,8 +1008,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.5.0-py3-none-any.whl", hash = "sha256:fb33085c39dd998ac16d1431ebc293a8b3eedd00fd4a32de0ff79002c19511b4"},
-    {file = "typing_extensions-4.5.0.tar.gz", hash = "sha256:5cb5f4a79139d699607b3ef622a1dedafa84e115ab0024e0d9c044a9479ca7cb"},
+    {file = "typing_extensions-4.6.1-py3-none-any.whl", hash = "sha256:6bac751f4789b135c43228e72de18637e9a6c29d12777023a703fd1a6858469f"},
+    {file = "typing_extensions-4.6.1.tar.gz", hash = "sha256:558bc0c4145f01e6405f4a5fdbd82050bd221b119f4bf72a961a1cfd471349d6"},
 ]
 uproot = [
     {file = "uproot-5.0.7-py3-none-any.whl", hash = "sha256:d270bc43e9424b6c3c64189625753bea6e0e9f1b9a4a61c799b2b9e79f32ced7"},
