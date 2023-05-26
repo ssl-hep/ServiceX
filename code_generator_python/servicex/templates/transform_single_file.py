@@ -63,6 +63,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             else:
                 awkward_array = output
             explode_records = bool(awkward_array.fields)
+            total_events = ak.num(awkward_array, axis=0)
             try:
                 arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
             except TypeError:
