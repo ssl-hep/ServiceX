@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 1.2.1
+May 26, 2023
+### Added
+- Python code generator allows for functions that return a dict of awkward arrays. Each entry goes into its own tree in the root file
+- xCache support for CERN Opendata files
+
+### Changed
+- Flask version to avoid vulnerability
+- Requests library version to avoid vulnerability
+- Upgraded alembic library
+- .servicex file reports each of the code generators
+- Reduced sleep time when sidecar polling for updates. Results in speedup for large datasets
+
+### Fixed
+- Typos in documention
+- .servicex file not be downloaded from dashboard
+- Update usage of codecov to avoid deprecated usage
+
+### Removed
+- Science docker images moved to their own repo
 
 ### 1.2.0
 April 12, 2023
