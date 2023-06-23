@@ -53,12 +53,19 @@ class ObjectStoreManager:
 
     def upload_file(self, bucket, object_name, path):
         try:
+            # print('OSM > uploading file to Object Store... ')
             result = self.minio_client.fput_object(bucket_name=bucket,
                                                    object_name=object_name,
                                                    file_path=path)
-            self.logger.debug(
-                "created object", extra={'name': result.object_name})
-        except MinioException:
-            self.logger.error("Minio error", exc_info=True)
+            self.logger.info(
+                f"OSM > created object {result.object_name} object, etag: {result.etag}")
         except S3Error:
             self.logger.error("S3Error", exc_info=True)
+        except MinioException:
+            self.logger.error("Minio error", exc_info=True)
+
+        # print(f"REMOVING FILE {path}")
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
