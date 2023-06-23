@@ -134,7 +134,7 @@ def callback(channel, method, properties, body):
 
     This control document is sent via a socket to the science image.
     Once science image has done its job, it sends back a message over the socket.
-    The sidecar will then add the parquet/root file in the output directory to the 
+    The sidecar will then add the parquet/root file in the output directory to the
     S3 upload queue.
 
     We will examine this log file to see if the transform succeeded or failed
