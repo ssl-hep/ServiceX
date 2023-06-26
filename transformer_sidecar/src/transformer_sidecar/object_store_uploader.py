@@ -55,7 +55,8 @@ class ObjectStoreUploader(threading.Thread):
             item = self.input_queue.get()
             # print("OSU Got an item")
             if item.is_complete():
-                self.logger.info("OSU We are done!")
+                self.logger.info("OSU We are done!",
+                                 extra={'requestId': self.request_id})
                 break
             else:
                 self.object_store.upload_file(self.request_id,

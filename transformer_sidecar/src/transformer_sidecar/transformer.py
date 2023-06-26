@@ -362,4 +362,4 @@ if __name__ == "__main__":
                                    callback)
 
     uploader.join()
-    print("Uploader is done")
+    logger.info("Uploader is done", extra={'requestId': args.request_id})
