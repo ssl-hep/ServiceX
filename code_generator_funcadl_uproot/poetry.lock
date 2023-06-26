@@ -371,11 +371,11 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "pytest-cov"
-version = "4.0.0"
+version = "4.1.0"
 description = "Pytest plugin for measuring coverage."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 coverage = {version = ">=5.2.1", extras = ["toml"]}
@@ -467,7 +467,7 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.5"
+version = "1.1.6"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
@@ -509,7 +509,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "typing-extensions"
-version = "4.6.1"
+version = "4.6.2"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
@@ -595,7 +595,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "068a147047b79ad34637806c27f0d9ee793d5a0a9e0f67264ad030172a50fe5f"
+content-hash = "298b0cfd209b49d7a6cf93f0a6323cb37ed7973fd3c5d7c4e519c87d81a18093"
 
 [metadata.files]
 aniso8601 = [
@@ -964,8 +964,8 @@ pytest = [
     {file = "pytest-7.3.1.tar.gz", hash = "sha256:434afafd78b1d78ed0addf160ad2b77a30d35d4bdf8af234fe621919d9ed15e3"},
 ]
 pytest-cov = [
-    {file = "pytest-cov-4.0.0.tar.gz", hash = "sha256:996b79efde6433cdbd0088872dbc5fb3ed7fe1578b68cdbba634f14bb8dd0470"},
-    {file = "pytest_cov-4.0.0-py3-none-any.whl", hash = "sha256:2feb1b751d66a8bd934e5edfa2e961d11309dc37b73b0eabe73b5945fee20f6b"},
+    {file = "pytest-cov-4.1.0.tar.gz", hash = "sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6"},
+    {file = "pytest_cov-4.1.0-py3-none-any.whl", hash = "sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a"},
 ]
 pytest-flask = [
     {file = "pytest-flask-1.2.0.tar.gz", hash = "sha256:46fde652f77777bf02dc91205aec4ce20cdf2acbbbd66a918ab91f5c14693d3d"},
@@ -992,8 +992,8 @@ requests-toolbelt = [
     {file = "requests_toolbelt-0.10.1-py2.py3-none-any.whl", hash = "sha256:18565aa58116d9951ac39baa288d3adb5b3ff975c4f25eee78555d89e8f247f7"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.5-py3-none-any.whl", hash = "sha256:4f5917c8ebed99d1b05d42bd8c46cf54375c4a640f7f1fe800365442e73dc39e"},
-    {file = "servicex_code_gen_lib-1.1.5.tar.gz", hash = "sha256:1eb843d256ad37db17a4b3fdb35b8a6bf2427d2ec098d2f693e5edfb4dbcd142"},
+    {file = "servicex_code_gen_lib-1.1.6-py3-none-any.whl", hash = "sha256:81e93658d6803bdde02990c76bff5118855ec5532434e28d3349e26998bbaf99"},
+    {file = "servicex_code_gen_lib-1.1.6.tar.gz", hash = "sha256:31d7ee87fad55c2699f38493d2bb0a8eca0a7eadfc2437a8b89585bc257ace62"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -1008,8 +1008,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.6.1-py3-none-any.whl", hash = "sha256:6bac751f4789b135c43228e72de18637e9a6c29d12777023a703fd1a6858469f"},
-    {file = "typing_extensions-4.6.1.tar.gz", hash = "sha256:558bc0c4145f01e6405f4a5fdbd82050bd221b119f4bf72a961a1cfd471349d6"},
+    {file = "typing_extensions-4.6.2-py3-none-any.whl", hash = "sha256:3a8b36f13dd5fdc5d1b16fe317f5668545de77fa0b8e02006381fd49d731ab98"},
+    {file = "typing_extensions-4.6.2.tar.gz", hash = "sha256:06006244c70ac8ee83fa8282cb188f697b8db25bc8b4df07be1873c43897060c"},
 ]
 uproot = [
     {file = "uproot-5.0.7-py3-none-any.whl", hash = "sha256:d270bc43e9424b6c3c64189625753bea6e0e9f1b9a4a61c799b2b9e79f32ced7"},
