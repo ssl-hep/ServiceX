@@ -35,7 +35,7 @@ import pytest
 
 
 class TestRabbitMQManager:
-    @pytest.skip("TODO this test does not work.")
+    @pytest.mark.skip("TODO this test does not work.")
     def test_init(self, mocker, caplog):
         def callback():
             return "hi"
