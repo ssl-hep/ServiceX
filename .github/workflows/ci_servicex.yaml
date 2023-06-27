@@ -16,21 +16,24 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3.5.3
+      - name: Checkout to repository
+        uses: actions/checkout@v3.5.3
+
       - name: Read file contents
         working-directory: ./.github/workflows
         id: set-matrix
         run: |
-          content=`cat deploy-config.json`
-          # the following lines are only required for multi line json
-          content="${content//'%'/'%25'}"
-          content="${content//$'\n'/'%0A'}"
-          content="${content//$'\r'/'%0D'}"
-          # end of optional handling for multi line json
-      - name: Save state
-        run: echo "{matrix}={$content}" >> "$GITHUB_ENV"
-      - name: Just Output
-        run: echo "${{ env.matrix }}"
+          echo "matrix<<EOF" >> $GITHUB_OUTPUT
+          cat ./deploy-config.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # content=`cat deploy-config.json`
+          # # the following lines are only required for multi line json
+          # content="${content//'%'/'%25'}"
+          # content="${content//$'\n'/'%0A'}"
+          # content="${content//$'\r'/'%0D'}"
+          # # end of optional handling for multi line json
+          # echo "{matrix}={$content}" >> $GITHUB_OUTPUT
 
   test:
     needs: build-matrix
@@ -38,19 +41,23 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10"]
-        app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+        app: "${{fromJson(needs.build-matrix.outputs.matrix)}}"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.5.3
+      - name: Checkout to repository
+        uses: actions/checkout@v3.5.3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4.6.1
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
+
       - name: Install poetry
         uses: abatilo/actions-poetry@v2.3.0
         with:
           poetry-version: 1.2.2
+          
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
