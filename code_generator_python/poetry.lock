@@ -123,7 +123,7 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "flask-restful"
-version = "0.3.9"
+version = "0.3.10"
 description = "Simple framework for creating REST APIs"
 category = "main"
 optional = false
@@ -265,11 +265,11 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "pytest-cov"
-version = "4.0.0"
+version = "4.1.0"
 description = "Pytest plugin for measuring coverage."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 coverage = {version = ">=5.2.1", extras = ["toml"]}
@@ -318,7 +318,7 @@ python-versions = "*"
 
 [[package]]
 name = "requests"
-version = "2.30.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 category = "main"
 optional = false
@@ -347,7 +347,7 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.1.5"
+version = "1.1.6"
 description = "Library for creating ServiceX Code Generators"
 category = "main"
 optional = false
@@ -431,7 +431,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "8884fef95c528ae8eb70c3033caccc6403a3e83a8cbe45f29c3147a9ce9ebec1"
+content-hash = "31f592c91dc6c0f5f667cb376e2ed7a50b788def6a2a084fd4461d01bc007f9d"
 
 [metadata.files]
 aniso8601 = [
@@ -600,8 +600,8 @@ flask = [
     {file = "Flask-2.3.2.tar.gz", hash = "sha256:8c2f9abd47a9e8df7f0c3f091ce9497d011dc3b31effcf4c85a6e2b50f4114ef"},
 ]
 flask-restful = [
-    {file = "Flask-RESTful-0.3.9.tar.gz", hash = "sha256:ccec650b835d48192138c85329ae03735e6ced58e9b2d9c2146d6c84c06fa53e"},
-    {file = "Flask_RESTful-0.3.9-py2.py3-none-any.whl", hash = "sha256:4970c49b6488e46c520b325f54833374dc2b98e211f1b272bd4b0c516232afe2"},
+    {file = "Flask-RESTful-0.3.10.tar.gz", hash = "sha256:fe4af2ef0027df8f9b4f797aba20c5566801b6ade995ac63b588abf1a59cec37"},
+    {file = "Flask_RESTful-0.3.10-py2.py3-none-any.whl", hash = "sha256:1cf93c535172f112e080b0d4503a8d15f93a48c88bdd36dd87269bdaf405051b"},
 ]
 flask-wtf = [
     {file = "Flask-WTF-1.1.1.tar.gz", hash = "sha256:41c4244e9ae626d63bed42ae4785b90667b885b1535d5a4095e1f63060d12aa9"},
@@ -700,8 +700,8 @@ pytest = [
     {file = "pytest-7.3.1.tar.gz", hash = "sha256:434afafd78b1d78ed0addf160ad2b77a30d35d4bdf8af234fe621919d9ed15e3"},
 ]
 pytest-cov = [
-    {file = "pytest-cov-4.0.0.tar.gz", hash = "sha256:996b79efde6433cdbd0088872dbc5fb3ed7fe1578b68cdbba634f14bb8dd0470"},
-    {file = "pytest_cov-4.0.0-py3-none-any.whl", hash = "sha256:2feb1b751d66a8bd934e5edfa2e961d11309dc37b73b0eabe73b5945fee20f6b"},
+    {file = "pytest-cov-4.1.0.tar.gz", hash = "sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6"},
+    {file = "pytest_cov-4.1.0-py3-none-any.whl", hash = "sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a"},
 ]
 pytest-flask = [
     {file = "pytest-flask-1.2.0.tar.gz", hash = "sha256:46fde652f77777bf02dc91205aec4ce20cdf2acbbbd66a918ab91f5c14693d3d"},
@@ -716,16 +716,16 @@ pytz = [
     {file = "pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
 ]
 requests = [
-    {file = "requests-2.30.0-py3-none-any.whl", hash = "sha256:10e94cc4f3121ee6da529d358cdaeaff2f1c409cd377dbc72b825852f2f7e294"},
-    {file = "requests-2.30.0.tar.gz", hash = "sha256:239d7d4458afcb28a692cdd298d87542235f4ca8d36d03a15bfc128a6559a2f4"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 requests-toolbelt = [
     {file = "requests-toolbelt-0.10.1.tar.gz", hash = "sha256:62e09f7ff5ccbda92772a29f394a49c3ad6cb181d568b1337626b2abb628a63d"},
     {file = "requests_toolbelt-0.10.1-py2.py3-none-any.whl", hash = "sha256:18565aa58116d9951ac39baa288d3adb5b3ff975c4f25eee78555d89e8f247f7"},
 ]
 servicex-code-gen-lib = [
-    {file = "servicex_code_gen_lib-1.1.5-py3-none-any.whl", hash = "sha256:4f5917c8ebed99d1b05d42bd8c46cf54375c4a640f7f1fe800365442e73dc39e"},
-    {file = "servicex_code_gen_lib-1.1.5.tar.gz", hash = "sha256:1eb843d256ad37db17a4b3fdb35b8a6bf2427d2ec098d2f693e5edfb4dbcd142"},
+    {file = "servicex_code_gen_lib-1.1.6-py3-none-any.whl", hash = "sha256:81e93658d6803bdde02990c76bff5118855ec5532434e28d3349e26998bbaf99"},
+    {file = "servicex_code_gen_lib-1.1.6.tar.gz", hash = "sha256:31d7ee87fad55c2699f38493d2bb0a8eca0a7eadfc2437a8b89585bc257ace62"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
