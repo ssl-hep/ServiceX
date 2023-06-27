@@ -68,6 +68,7 @@ jobs:
           destination-github-username: 'ssl-hep'
           destination-repository-name: 'ssl-helm-charts'
           target-branch: 'gh-pages'
+          user-email: 'bengal1@illinois.edu'
       - name: Pushes to flux-river-configs repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
@@ -77,6 +78,7 @@ jobs:
           destination-github-username: 'ssl-hep'
           destination-repository-name: 'flux_river_configs'
           target-branch: 'main'
+          user-email: 'bengal1@illinois.edu'
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
