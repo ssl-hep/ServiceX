@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import time
+import os
 from pathlib import Path
 from queue import Queue
 import pytest
@@ -60,9 +61,10 @@ def test_upload(object_store_manager):
                                    object_store=object_store_manager,
                                    logger=logging.getLogger())
     uploader.start()
-    queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar/test.parquet")))
+    pth = os.path.join("foo", "bar", "test.parquet")
+    queue.put(ObjectStoreUploader.WorkQueueItem(Path(pth)))
     queue.put(ObjectStoreUploader.WorkQueueItem(None))
     time.sleep(1)
     object_store_manager.upload_file.assert_called_with("123-456",
                                                         "test.parquet",
-                                                        "/foo/bar/test.parquet")
+                                                        pth)
