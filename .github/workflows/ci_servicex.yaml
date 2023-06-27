@@ -27,7 +27,8 @@ jobs:
           content="${content//$'\n'/'%0A'}"
           content="${content//$'\r'/'%0D'}"
           # end of optional handling for multi line json
-          echo "{matrix}={$content}" >> $GITHUB_OUTPUT
+      - name: Save state
+        run: echo "{matrix}={$content}" >> $GITHUB_OUTPUT
       - run: |
           echo "${{ steps.set-matrix.outputs.matrix }}"
 
