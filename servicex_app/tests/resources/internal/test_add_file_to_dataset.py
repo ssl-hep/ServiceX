@@ -44,6 +44,9 @@ class TestAddFileToDataset(ResourceTestBase):
 
         client = self._test_client(lookup_result_processor=mock_processor)
 
+        # this endpoint doesn't exist any more
+        # now '/servicex/internal/transformation/<string:dataset_id>/files'
+
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
                                   'paths': ["/foo/bar1.root", "/foo/bar2.root"],
@@ -70,6 +73,8 @@ class TestAddFileToDataset(ResourceTestBase):
 
         client = self._test_client(lookup_result_processor=mock_processor)
 
+        # this endpoint doesn't exist any more
+        # now '/servicex/internal/transformation/<string:dataset_id>/files'
         response = client.put('/servicex/internal/transformation/1234/files',
                               json=[
                                   {
@@ -106,6 +111,9 @@ class TestAddFileToDataset(ResourceTestBase):
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
+        # this endpoint doesn't exist any more
+        # now '/servicex/internal/transformation/<string:dataset_id>/files'
+
         client = self._test_client(lookup_result_processor=mock_processor)
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
@@ -134,6 +142,9 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_processor.add_file_to_dataset.side_effect = Exception('Test')
 
         client = self._test_client(lookup_result_processor=mock_processor)
+
+        # this endpoint doesn't exist any more
+        # now '/servicex/internal/transformation/<string:dataset_id>/files'
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
