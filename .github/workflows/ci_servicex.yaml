@@ -24,16 +24,8 @@ jobs:
         id: set-matrix
         run: |
           echo "matrix<<EOF" >> $GITHUB_OUTPUT
-          cat ./deploy-config.json >> $GITHUB_OUTPUT
+          cat deploy-config.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-          # content=`cat deploy-config.json`
-          # # the following lines are only required for multi line json
-          # content="${content//'%'/'%25'}"
-          # content="${content//$'\n'/'%0A'}"
-          # content="${content//$'\r'/'%0D'}"
-          # # end of optional handling for multi line json
-          # echo "{matrix}={$content}" >> $GITHUB_OUTPUT
 
   test:
     needs: build-matrix
@@ -57,7 +49,7 @@ jobs:
         uses: abatilo/actions-poetry@v2.3.0
         with:
           poetry-version: 1.2.2
-          
+
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
