@@ -16,20 +16,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout to repository
+        uses: actions/checkout@v3.5.3
+
       - name: Read file contents
         working-directory: ./.github/workflows
         id: set-matrix
         run: |
-          content=`cat deploy-config.json`
-          # the following lines are only required for multi line json
-          content="${content//'%'/'%25'}"
-          content="${content//$'\n'/'%0A'}"
-          content="${content//$'\r'/'%0D'}"
-          # end of optional handling for multi line json
-          echo "::set-output name=matrix::$content"
-      - run: |
-          echo "${{ steps.set-matrix.outputs.matrix }}"
+          echo "matrix<<EOF" >> $GITHUB_OUTPUT
+          cat deploy-config.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   test:
     needs: build-matrix
@@ -37,19 +33,23 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10"]
-        app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+        app: "${{fromJson(needs.build-matrix.outputs.matrix)}}"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout to repository
+        uses: actions/checkout@v3.5.3
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.6.1
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
+
       - name: Install poetry
-        uses: abatilo/actions-poetry@v2
+        uses: abatilo/actions-poetry@v2.3.0
         with:
           poetry-version: 1.2.2
+
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
@@ -81,7 +81,7 @@ jobs:
       matrix:
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3.5.3
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
@@ -95,24 +95,22 @@ jobs:
       - name: Print Cache Tag Name
         shell: bash
         run: |
-           echo "${{ steps.extract_cache_name.outputs.cachetag }}"
+          echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v2.2.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v2.7.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v2.2.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4.1.1
         with:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
-          if: ${{ matrix.app.dockerfile }}
           file: ${{ matrix.app.dockerfile }}
-

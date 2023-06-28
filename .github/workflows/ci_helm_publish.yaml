@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.5.3
       - name: Pull flux_river_configs
-        uses: actions/checkout@master
+        uses: actions/checkout@v3.5.3
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@master
+        uses: actions/checkout@v3.5.3
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
@@ -41,7 +41,7 @@ jobs:
           echo "$DOCKER_TAG"
 
       - name: Set version in flux_river_configs
-        uses: mikefarah/yq@master
+        uses: mikefarah/yq@v4.34.1
         with:
           cmd: |
             yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int/values.yaml &&
@@ -60,7 +60,7 @@ jobs:
           mv servicex-$RELEASE_VERSION.tgz ../ssl-helm-charts
           helm repo index ../ssl-helm-charts --url https://ssl-hep.github.io/ssl-helm-charts/
       - name: Pushes to ssl-helm-packages repository
-        uses: cpina/github-action-push-to-another-repository@main
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
@@ -68,8 +68,9 @@ jobs:
           destination-github-username: 'ssl-hep'
           destination-repository-name: 'ssl-helm-charts'
           target-branch: 'gh-pages'
+          user-email: 'bengal1@illinois.edu'
       - name: Pushes to flux-river-configs repository
-        uses: cpina/github-action-push-to-another-repository@main
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
@@ -77,13 +78,13 @@ jobs:
           destination-github-username: 'ssl-hep'
           destination-repository-name: 'flux_river_configs'
           target-branch: 'main'
+          user-email: 'bengal1@illinois.edu'
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        uses: softprops/action-gh-release@v0.1.15
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release ${{ github.ref }}
           draft: false
           prerelease: false
