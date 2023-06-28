@@ -85,7 +85,7 @@ jobs:
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
-        run: echo "imagetag=sslhep/${{matrix.app.image_name}}:$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
+        run: echo "imagetag=sslhep/${{matrix.app.image_name}}:$(echo ${GITHUB_REF##*/})" >> $GITHUB_OUTPUT
         id: extract_tag_name
       - name: Extract Cache Dir
         working-directory: ${{ matrix.app.dir_name }}
