@@ -53,7 +53,6 @@ class ObjectStoreUploader(threading.Thread):
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
-            # print("OSU Got an item")
             if item.is_complete():
                 self.logger.info("OSU We are done!",
                                  extra={'requestId': self.request_id})

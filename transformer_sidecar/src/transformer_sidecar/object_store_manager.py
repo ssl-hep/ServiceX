@@ -53,7 +53,6 @@ class ObjectStoreManager:
 
     def upload_file(self, bucket, object_name, path):
         try:
-            # print('OSM > uploading file to Object Store... ')
             result = self.minio_client.fput_object(bucket_name=bucket,
                                                    object_name=object_name,
                                                    file_path=path)
@@ -64,7 +63,6 @@ class ObjectStoreManager:
         except MinioException:
             self.logger.error("Minio error", exc_info=True)
 
-        # print(f"REMOVING FILE {path}")
         try:
             os.remove(path)
         except FileNotFoundError:

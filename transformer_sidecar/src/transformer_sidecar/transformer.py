@@ -27,7 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# import glob
 import time
 
 import json
@@ -209,7 +208,7 @@ def callback(channel, method, properties, body):
                 print('waiting for the GeT')
                 req = conn.recv(4096)
                 if not req:
-                    print('problem in getting GeT !!!!!!!!!!')
+                    print('problem in getting GeT')
                     break
                 req1 = req.decode('utf8')
                 print("REQ >>>>>>>>>>>>>>>", req1)
@@ -227,7 +226,6 @@ def callback(channel, method, properties, body):
             req2 = req.decode('utf8').strip()
             print('STATUS RECEIVED :', req2)
             if req2 == 'success.':
-                # print("uploading result...")
                 upload_queue.put(ObjectStoreUploader.WorkQueueItem(
                     Path(transform_request['safeOutputFileName'])))
             conn.send("confirmed.\n".encode())
