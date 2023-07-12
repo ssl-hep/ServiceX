@@ -47,7 +47,8 @@ def test_shutdown(object_store_manager):
     queue = Queue()
     uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
                                    object_store=object_store_manager,
-                                   logger=logging.getLogger())
+                                   logger=logging.getLogger(),
+                                   convert_root_to_parquet=False)
     uploader.start()
     queue.put(ObjectStoreUploader.WorkQueueItem(Path("/foo/bar")))
     queue.put(ObjectStoreUploader.WorkQueueItem(None))
@@ -58,7 +59,8 @@ def test_upload(object_store_manager):
     queue = Queue()
     uploader = ObjectStoreUploader(request_id="123-456", input_queue=queue,
                                    object_store=object_store_manager,
-                                   logger=logging.getLogger())
+                                   logger=logging.getLogger(),
+                                   convert_root_to_parquet=False)
     uploader.start()
     p = Path("/foo/bar/test.parquet")
     queue.put(ObjectStoreUploader.WorkQueueItem(p))

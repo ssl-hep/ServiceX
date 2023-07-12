@@ -1,4 +1,29 @@
 [[package]]
+name = "awkward"
+version = "2.3.3"
+description = "Manipulate JSON-like data with NumPy-like idioms."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+awkward-cpp = "22"
+numpy = ">=1.18.0"
+packaging = "*"
+typing-extensions = {version = ">=4.1.0", markers = "python_version < \"3.11\""}
+
+[[package]]
+name = "awkward-cpp"
+version = "22"
+description = "CPU kernels and compiled extensions for Awkward Array"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+numpy = ">=1.18.0"
+
+[[package]]
 name = "certifi"
 version = "2023.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -77,6 +102,38 @@ pycodestyle = ">=2.9.0,<2.10.0"
 pyflakes = ">=2.5.0,<2.6.0"
 
 [[package]]
+name = "fsspec"
+version = "2023.6.0"
+description = "File-system specification"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+abfs = ["adlfs"]
+adl = ["adlfs"]
+arrow = ["pyarrow (>=1)"]
+dask = ["dask", "distributed"]
+devel = ["pytest", "pytest-cov"]
+dropbox = ["dropbox", "dropboxdrivefs", "requests"]
+full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "dask", "distributed", "dropbox", "dropboxdrivefs", "fusepy", "gcsfs", "libarchive-c", "ocifs", "panel", "paramiko", "pyarrow (>=1)", "pygit2", "requests", "s3fs", "smbprotocol", "tqdm"]
+fuse = ["fusepy"]
+gcs = ["gcsfs"]
+git = ["pygit2"]
+github = ["requests"]
+gs = ["gcsfs"]
+gui = ["panel"]
+hdfs = ["pyarrow (>=1)"]
+http = ["aiohttp (!=4.0.0a0,!=4.0.0a1)", "requests"]
+libarchive = ["libarchive-c"]
+oci = ["ocifs"]
+s3 = ["s3fs"]
+sftp = ["paramiko"]
+smb = ["smbprotocol"]
+ssh = ["paramiko"]
+tqdm = ["tqdm"]
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -102,7 +159,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "minio"
-version = "7.1.15"
+version = "7.1.16"
 description = "MinIO Python SDK for Amazon S3 Compatible Cloud Storage"
 category = "main"
 optional = false
@@ -124,7 +181,7 @@ python-versions = ">=3.9"
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -298,6 +355,31 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "typing-extensions"
+version = "4.7.1"
+description = "Backported and Experimental Type Hints for Python 3.7+"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
+name = "uproot"
+version = "5.0.11"
+description = "ROOT I/O in pure Python and NumPy."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+awkward = ">=2.0.0"
+numpy = "*"
+packaging = "*"
+
+[package.extras]
+dev = ["awkward-pandas", "boost-histogram (>=0.13)", "dask-awkward (>=2022.12a3)", "dask[array]", "hist (>=1.2)", "pandas"]
+test = ["lz4", "minio", "pytest (>=6)", "pytest-rerunfailures", "pytest-timeout", "requests", "scikit-hep-testdata", "xxhash"]
+
+[[package]]
 name = "urllib3"
 version = "2.0.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -325,9 +407,52 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "cba461177b074a37682a7e75a6f4f578ae5fd02e848f6c3a895c76f88765400f"
+content-hash = "c8ffe09a050623e0643dc91916dc378408b5f59531c793cbc0ce585c400b2acd"
 
 [metadata.files]
+awkward = [
+    {file = "awkward-2.3.3-py3-none-any.whl", hash = "sha256:e84693fe1774dbbaf1fef42b48bb3fc23ad3d20cc0f4077d5e41580401e03308"},
+    {file = "awkward-2.3.3.tar.gz", hash = "sha256:66a454184c91efba071f4a0574bfe57f4e50a0d5d9bd4931edfd429139242bb8"},
+]
+awkward-cpp = [
+    {file = "awkward-cpp-22.tar.gz", hash = "sha256:21679636fb21cfe3715f88a32326a579199384db2da4a62995c310502d7fe85f"},
+    {file = "awkward_cpp-22-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3e2a5c4814d0e46c7c1f8e272794ff2e2671647c94d8cc4ffc853b96d0be6d4b"},
+    {file = "awkward_cpp-22-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:f0f061bbf8a89a55b48bd092fd20057a6ae302ba82841856a79abeb94efe1449"},
+    {file = "awkward_cpp-22-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b54924105908320282392c09b3d728f35422295826b7193374f438cbf17a4e16"},
+    {file = "awkward_cpp-22-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:deba501aae4e84e09fc740f280e18d4b7704ebe4ded8b82511b3dd2060e5ef11"},
+    {file = "awkward_cpp-22-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:2f7cefdea42ec8a2258c16404b9795f920cdb2b0266a7b3fddc6eed9b24f6f36"},
+    {file = "awkward_cpp-22-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:231d4b2e9be041e0580e86775035fbc8c60c3414eaa2313d8d362a924118cd03"},
+    {file = "awkward_cpp-22-cp310-cp310-win_amd64.whl", hash = "sha256:648f6dbe684863b113a604b15b74b081b607575205151b5fa175a1a4e7bcd810"},
+    {file = "awkward_cpp-22-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:1aa3ae3ec08a6af88b12f5c5329a4e18a219043d519104c8398d42b3eb0d5b26"},
+    {file = "awkward_cpp-22-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:32e69cd33b8f3d1eb3f71235132c54bc3b5525a99b8e8ee45371e939655b50a7"},
+    {file = "awkward_cpp-22-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6fd437c8dc64b79cc98a2acbd599f7c5335441bfee840349ac9d7444d3bb996f"},
+    {file = "awkward_cpp-22-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:20bda63ea25c0029f87778920761af9d995ada96d79b1e8d06df1364ad0e0636"},
+    {file = "awkward_cpp-22-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:3be077992b254f6ff88b26d0299b84994fa067c0d5c9d5b3d2e67b591279cc37"},
+    {file = "awkward_cpp-22-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:83d839525abdc23ef3fe12db7f6d222b4940c66fee401afa8d9e7940ff5e9f58"},
+    {file = "awkward_cpp-22-cp311-cp311-win_amd64.whl", hash = "sha256:83fe3cdfe3a56ef219f993a94455a775b4fcdea629a4285a0a46238bbec17b12"},
+    {file = "awkward_cpp-22-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:b7197a9ac43e4b6305aae3b82316c32a1d8c6e74479080cc3f551cce005831fa"},
+    {file = "awkward_cpp-22-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:675ab7de550e59bac6261c1cd1a38f7864bdfa60139a2c0dde8ad813f3d1b4e9"},
+    {file = "awkward_cpp-22-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:964031d6f4741d7c03adee552ad3df35e117a063079d7632e0a4242111fdd93e"},
+    {file = "awkward_cpp-22-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e02e2b77fec33a9e74379b95fc8aeabed45b236337182830114f78a5bbe51366"},
+    {file = "awkward_cpp-22-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:4b6b163049aaecfe016a64b6d337c6628cbc511840aad616bf37b59d0e89b7b5"},
+    {file = "awkward_cpp-22-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:9db1bca69471848a6fdec9b2084ca72c188808e530dbd8240263b76a2fce792f"},
+    {file = "awkward_cpp-22-cp38-cp38-win32.whl", hash = "sha256:02f3cbf6480e7e5eec5b457a60de7a79992bd27633ba3672c959638eeac0cc3c"},
+    {file = "awkward_cpp-22-cp38-cp38-win_amd64.whl", hash = "sha256:abbefce65b532eaf14a43e56e08040a17256ff1e103b18acd1d4fe739e7a0f60"},
+    {file = "awkward_cpp-22-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:5447b9ba8e4daa4dc26ce1fef61dfc2d6371bc589966e8eed566c9710c94b177"},
+    {file = "awkward_cpp-22-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:8438b40896aac5ff9b69a51287fafaafc4f2528cc872576bb6694652b1c4afdf"},
+    {file = "awkward_cpp-22-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a31c907448399735625d1079ab977d228d2e0b16b007194db0815f1614f54bc6"},
+    {file = "awkward_cpp-22-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d6a535212894399199f0e1e8cfc41dc48435021cc12b3699d9cffff5b6ca95d2"},
+    {file = "awkward_cpp-22-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:9272c13807da023e0704587b911227b1cffb1f899ce6e07d6b9f7e34e5e1531c"},
+    {file = "awkward_cpp-22-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:205542428957f5f66708b7cabc47c90d2955fb33850b75bb8070fddf2b08b4c2"},
+    {file = "awkward_cpp-22-cp39-cp39-win32.whl", hash = "sha256:833f62d44768a05c772c09b5f6690bda1d5d2087aa802f1da88382e4cca48e1e"},
+    {file = "awkward_cpp-22-cp39-cp39-win_amd64.whl", hash = "sha256:d78c58835fb7ed1a0e7f0bfe98c9c9822beeff6d0f83ede5da6443c4e27558c1"},
+    {file = "awkward_cpp-22-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:77534297104b9b59bbe07dbc3cf5e0320fd627f5c83b594a3ea4ee5457dd1b98"},
+    {file = "awkward_cpp-22-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b83eb1cffbabc9bd361f05dde7e5d2c0b2110e9e154c310ba710b08d63c648d2"},
+    {file = "awkward_cpp-22-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:561057f5263980a406321fc1e1595f4abd9276756420d547e468d5fac2e70cec"},
+    {file = "awkward_cpp-22-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f63e23598a1138a4ef6aadd04fed610100557e77f38461bf2cd37ce4c53d93a4"},
+    {file = "awkward_cpp-22-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:40f81d14fa5dd53081482cf7b27c10d604233744a9518acbdceecaf08e5a99ae"},
+    {file = "awkward_cpp-22-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:753f127277e04cfb161048d2b246d40250b506ac413b048adcac314af166c8f3"},
+]
 certifi = [
     {file = "certifi-2023.7.22-py3-none-any.whl", hash = "sha256:92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9"},
     {file = "certifi-2023.7.22.tar.gz", hash = "sha256:539cc1d13202e33ca466e88b2807e29f4c13049d6d87031a3c110744495cb082"},
@@ -543,6 +668,10 @@ flake8 = [
     {file = "flake8-5.0.4-py2.py3-none-any.whl", hash = "sha256:7a1cf6b73744f5806ab95e526f6f0d8c01c66d7bbe349562d22dfca20610b248"},
     {file = "flake8-5.0.4.tar.gz", hash = "sha256:6fbe320aad8d6b95cec8b8e47bc933004678dc63095be98528b7bdd2a9f510db"},
 ]
+fsspec = [
+    {file = "fsspec-2023.6.0-py3-none-any.whl", hash = "sha256:1cbad1faef3e391fba6dc005ae9b5bdcbf43005c9167ce78c915549c352c869a"},
+    {file = "fsspec-2023.6.0.tar.gz", hash = "sha256:d0b2f935446169753e7a5c5c55681c54ea91996cc67be93c39a154fb3a2742af"},
+]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
@@ -556,8 +685,8 @@ mccabe = [
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
 minio = [
-    {file = "minio-7.1.15-py3-none-any.whl", hash = "sha256:1afdf01c1bc8b57ddd12d438e3e168d625465b56f4d1c2af7576744c688e84c6"},
-    {file = "minio-7.1.15.tar.gz", hash = "sha256:fcf8ac2cef310d5ddff2bef2c42f4e5a8bb546b87bca5bf8832135db054ca4e1"},
+    {file = "minio-7.1.16-py3-none-any.whl", hash = "sha256:8073bed2b4b1853f3d69ab2f01a0de86264071083032985921201cfbb0950b15"},
+    {file = "minio-7.1.16.tar.gz", hash = "sha256:56ecb1e7e0103d2dc212fb460fdb70ab2abb7fa5685db378429325d96d95587a"},
 ]
 numpy = [
     {file = "numpy-1.25.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:db3ccc4e37a6873045580d413fe79b68e47a681af8db2e046f1dacfa11f86eb3"},
@@ -682,6 +811,14 @@ retry = [
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
+]
+typing-extensions = [
+    {file = "typing_extensions-4.7.1-py3-none-any.whl", hash = "sha256:440d5dd3af93b060174bf433bccd69b0babc3b15b1a8dca43789fd7f61514b36"},
+    {file = "typing_extensions-4.7.1.tar.gz", hash = "sha256:b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2"},
+]
+uproot = [
+    {file = "uproot-5.0.11-py3-none-any.whl", hash = "sha256:72de5a9325609c984268a837db73146ee931544886681053a8d4174939f887d9"},
+    {file = "uproot-5.0.11.tar.gz", hash = "sha256:54f3d9c133978c8e5ccbbcb8eb720c8f0eeebab0e4805567827e6a5888279902"},
 ]
 urllib3 = [
     {file = "urllib3-2.0.4-py3-none-any.whl", hash = "sha256:de7df1803967d2c2a98e4b11bb7d6bd9210474c46e8a0401514e3a42a75ebde4"},
