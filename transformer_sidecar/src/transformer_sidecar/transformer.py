@@ -54,6 +54,7 @@ from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NO
 object_store = None
 posix_path = None
 startup_time = None
+convert_root_to_parquet = False
 
 serv = None
 conn = None
@@ -139,11 +140,14 @@ def callback(channel, method, properties, body):
     We will examine this log file to see if the transform succeeded or failed
     """
     transform_request = json.loads(body)
-    print("Transform Request ", transform_request)
     _request_id = transform_request['request-id']
 
-    # The transform can either include a single path, or a list of replicas
+    # If we are converting root to parquet here, then the transformer
+    # doesn't need to know about. Tell it to write root, and we'll take it from here
+    if convert_root_to_parquet:
+        transform_request['result-format'] = 'root'
 
+    # The transform can either include a single path, or a list of replicas
     if 'file-path' in transform_request:
         _file_paths = [transform_request['file-path']]
 
@@ -337,6 +341,11 @@ if __name__ == "__main__":
 
     logger.debug('transformer capabilities', extra=transformer_capabilities)
 
+    # If the user requested Parquet, but the transformer isn't capable of producing it,
+    # then we will convert here....
+    convert_root_to_parquet = args.result_format == 'parquet' and \
+        'parquet' not in transformer_capabilities['file-formats']
+
     startup_time = get_process_info()
     logger.info("Startup finished.",
                 extra={
@@ -350,8 +359,10 @@ if __name__ == "__main__":
     conn, addr = serv.accept()
 
     upload_queue = Queue()
+
     uploader = ObjectStoreUploader(request_id=args.request_id, input_queue=upload_queue,
-                                   object_store=object_store, logger=logger)
+                                   object_store=object_store, logger=logger,
+                                   convert_root_to_parquet=convert_root_to_parquet)
     uploader.start()
 
     if args.request_id:

@@ -29,6 +29,8 @@ import logging
 import threading
 from pathlib import Path
 from queue import Queue
+from typing import Optional
+
 from transformer_sidecar.object_store_manager import ObjectStoreManager
 
 
@@ -40,15 +42,15 @@ class ObjectStoreUploader(threading.Thread):
         def is_complete(self):
             return not self.source_path
 
-    def __init__(self, request_id: str,
-                 input_queue: Queue,
-                 object_store: ObjectStoreManager,
-                 logger: logging.Logger):
+    def __init__(self, request_id: str, input_queue: Queue,
+                 object_store: ObjectStoreManager, logger: logging.Logger,
+                 convert_root_to_parquet: bool):
         super().__init__(target=self.service_work_queue)
         self.request_id = request_id
         self.input_queue = input_queue
         self.object_store = object_store
         self.logger = logger
+        self.convert_root_to_parquet = convert_root_to_parquet
 
     def service_work_queue(self):
         while True:
@@ -58,6 +60,45 @@ class ObjectStoreUploader(threading.Thread):
                                  extra={'requestId': self.request_id})
                 break
             else:
+                # Now is the time to convert the file to parquet if that's what the user
+                # requested, but our particular transformer doesn't support it.
+                if self.convert_root_to_parquet:
+                    file_to_upload = self.convert_to_parquet(item.source_path)
+                    object_name = item.source_path.with_suffix(".parquet").name
+                else:
+                    file_to_upload = item.source_path
+                    object_name = item.source_path.name
+
                 self.object_store.upload_file(self.request_id,
-                                              item.source_path.name,
-                                              str(item.source_path))
+                                              object_name,
+                                              file_to_upload.as_posix())
+
+    def convert_to_parquet(self, source_path: Path) -> Optional[Path]:
+        """
+        Convert a ROOT file to Parquet.  Returns the path to the Parquet file if successful,
+        """
+        import uproot
+        import awkward as ak
+
+        with uproot.open(source_path) as data:
+            if len(data.keys()) != 1:
+                self.logger.error(f"Expected one tree found {data.keys()}")
+                return None
+
+            try:
+                tree_name = data.keys()[0]
+                all_data = data[tree_name].arrays(library='ak')
+
+                parquet_file = source_path.with_suffix(".parquet")
+
+                # Save to temp file in same directory as parquet_file. The to_parquet
+                # method doesn't plqy well with long paths.
+                temp_file = Path(parquet_file.parent, "temp.parquet")
+                ak.to_parquet(all_data, temp_file.as_posix())
+                temp_file.rename(parquet_file)
+
+            except Exception as e:
+                self.logger.error(f"Failed to convert ROOT to Parquet: {e}")
+                return None
+
+            return parquet_file
