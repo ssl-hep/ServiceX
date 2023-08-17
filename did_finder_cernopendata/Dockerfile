@@ -37,4 +37,7 @@ RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 # Make sure python isn't buffered
 ENV PYTHONUNBUFFERED=1
 
+# Needed for running as non-root
+ENV POETRY_CACHE_DIR=/root/.cache/pypoetry
+
 ENTRYPOINT [ "poetry", "run", "python", "/usr/src/app/did_finder.py" ]
