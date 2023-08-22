@@ -2,6 +2,7 @@
 secrets
 site
 servicex/charts
+servicex/local-dev-values.yaml
 
 __pycache__/
 *.py[cod]
