@@ -35,7 +35,7 @@ class DockerRepoAdapter:
     def __init__(self, registry_endpoint="https://hub.docker.com"):
         self.registry_endpoint = registry_endpoint
 
-    def check_image_exists(self, tagged_image: str) -> bool:
+    def check_image_exists(self, tagged_image: str) -> (bool, str):
         """
         Checks that the given Docker image
         :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".
@@ -43,15 +43,21 @@ class DockerRepoAdapter:
         """
         search_result = re.search("(.+)/(.+):(.+)", tagged_image)
         if not search_result or len(search_result.groups()) != 3:
-            return False
+            return False, f"Requested transformer docker image is not in the right format: {tagged_image}"
 
         (repo, image, tag) = search_result.groups()
 
         query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
         r = requests.get(query)
-        if r.status_code == 404:
-            return False
 
-        current_app.logger.info(f"Requested Image: {tagged_image} exists, "
-                                f"last updated {r.json()['last_updated']}")
-        return True
+        if r.status_code >= 200 and r.status_code < 300:
+            current_app.logger.info(f"Requested Image: {tagged_image} exists, "
+                                    f"last updated {r.json()['last_updated']}")
+            return True, ""
+
+        if r.status_code == 404:
+            return False, f"Requested transformer docker image doesn't exist: {tagged_image}"
+
+        msg = f"Unexpected error in validating transformer docker image ({tagged_image}), status_code: {r.status_code}, msg ({r.content})"
+        return False, msg
+
