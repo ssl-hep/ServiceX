@@ -26,13 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from flask_migrate import Migrate
-
-from servicex.models import db
 
 from . import create_app
 
 app = create_app()
-db.init_app(app)
-
-migrate = Migrate(app, db)
