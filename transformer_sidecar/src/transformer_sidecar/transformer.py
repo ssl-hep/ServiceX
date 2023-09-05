@@ -183,7 +183,7 @@ def callback(channel, method, properties, body):
     try:
         # Loop through the replicas
         for _file_path in _file_paths:
-            logger.info("trying to trasform file", extra={
+            logger.info("trying to transform file", extra={
                         "requestId": _request_id, "file-path": _file_path})
 
             # Enrich the transform request to give more hints to the science container
