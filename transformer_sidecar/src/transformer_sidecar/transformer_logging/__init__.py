@@ -55,8 +55,9 @@ def initialize_logging():
     log.addHandler(stream_handler)
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
-    logstash_port = int(os.environ.get('LOGSTASH_PORT', 5959))
+
     if logstash_host:
+        logstash_port = int(os.environ.get('LOGSTASH_PORT', 5959))
         logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
         logstash_formatter = LogstashFormatter('logstash', None, None)
         logstash_handler.setFormatter(logstash_formatter)

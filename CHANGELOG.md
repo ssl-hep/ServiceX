@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### 1.2.2
+September 4, 2023
+### Added
+- Better replica filtering in Rucio DID Finder
+- Sidecar can convert files from root to parquet for cases where the transformer can't
+- Network configuration in docker images to support IPv6 
+### Changed
+- Transformer Sidecar and science images communicate over a unix socket instead of the shared volume
+### Fixed
+- Warnings from GitHub actions
+- Bugs when the LogStash host and port are not provided
+- Explicitly set POETRY_CACHE_DIR to avoid permission errors
+- DB init code that was initializing the database twice
+### Removed
+
 ### 1.2.1
 May 26, 2023
 ### Added

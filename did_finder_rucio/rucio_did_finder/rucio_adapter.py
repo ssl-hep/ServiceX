@@ -26,7 +26,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 import logging
+import requests
 import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
 from rucio.client.scopeclient import ScopeClient
@@ -41,6 +43,28 @@ class RucioAdapter:
         # set logging to a null handler
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
+
+    def client_location(self):
+        client_location = {}
+        latitude = os.environ.get('RUCIO_LATITUDE')
+        longitude = os.environ.get('RUCIO_LONGITUDE')
+        if latitude and longitude:
+            try:
+                client_location['latitude'] = float(latitude)
+                client_location['longitude'] = float(longitude)
+            except ValueError:
+                self.logger.error('Client set latitude and longitude are not valid.')
+        else:
+            try:
+                response = requests.post('https://location.cern.workers.dev',
+                                         json={"site": 'servicex'},
+                                         timeout=1)
+                if response.status_code == 200 \
+                        and 'application/json' in response.headers.get('Content-Type', ''):
+                    client_location = response.json()
+            except Exception as ex:
+                self.logger.exception(ex)
+        return client_location
 
     def parse_did(self, did):
         """
@@ -126,7 +150,10 @@ class RucioAdapter:
                 [{'scope': ds[0], 'name': ds[1]}],
                 schemes=['root', 'http', 'https'],
                 metalink=True,
-                sort='geoip'
+                sort='geoip',
+                rse_expression='istape=False\\type=SPECIAL',
+                ignore_availability=False,
+                client_location=self.client_location()
             )
             d = xmltodict.parse(reps)
 

@@ -26,7 +26,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import glob
+
 import time
 
 import json
@@ -39,6 +39,8 @@ from pathlib import Path
 from queue import Queue
 from typing import NamedTuple
 
+import socket
+
 from object_store_manager import ObjectStoreManager
 from object_store_uploader import ObjectStoreUploader
 from rabbit_mq_manager import RabbitMQManager
@@ -48,11 +50,15 @@ from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
-from watched_directory import WatchedDirectory
 
 object_store = None
 posix_path = None
 startup_time = None
+convert_root_to_parquet = False
+
+serv = None
+conn = None
+upload_queue = None
 
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
@@ -114,14 +120,6 @@ def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> Transformer
     return globals()[stats_parser_name](logfile_path)
 
 
-def clear_files(request_path: Path, file_id: str) -> None:
-    for f in glob.glob(f"{file_id}.json*", root_dir=request_path):
-        try:
-            os.remove(f)
-        except FileNotFoundError:
-            pass
-
-
 # noinspection PyUnusedLocal
 def callback(channel, method, properties, body):
     """
@@ -130,23 +128,26 @@ def callback(channel, method, properties, body):
     transformed.
 
     Each request may include a list of replicas to try. This service will loop through
-    the replicas and produce a json file for the science package to actually work from.
-    This control file will have the replica for it to try to transform along with a
+    the replicas and produce a json document for the science package to actually work from.
+    This control document will have the replica for it to try to transform along with a
     path in the output directory for the generated parquet or root file to be written.
 
-    This json file is written to the shared volume and then a thread is kicked off to
-    wait for a .done or .failure file to be created.  This is the science package's way of
-    showing it is done with the request. There will either be a parquet/root file in the
-    output directory or at least a log file.
+    This control document is sent via a socket to the science image.
+    Once science image has done its job, it sends back a message over the socket.
+    The sidecar will then add the parquet/root file in the output directory to the
+    S3 upload queue.
 
     We will examine this log file to see if the transform succeeded or failed
     """
     transform_request = json.loads(body)
-    print("Transform Request ", transform_request)
     _request_id = transform_request['request-id']
 
-    # The transform can either include a single path, or a list of replicas
+    # If we are converting root to parquet here, then the transformer
+    # doesn't need to know about. Tell it to write root, and we'll take it from here
+    if convert_root_to_parquet:
+        transform_request['result-format'] = 'root'
 
+    # The transform can either include a single path, or a list of replicas
     if 'file-path' in transform_request:
         _file_paths = [transform_request['file-path']]
 
@@ -175,8 +176,7 @@ def callback(channel, method, properties, body):
     request_path = os.path.join(posix_path, _request_id)
     os.makedirs(request_path, exist_ok=True)
 
-    # scratch dir where the transformer temporarily writes the results. This
-    # directory isn't monitored, so we can't pick up partial results
+    # scratch dir where the transformer temporarily writes the results.
     scratch_path = os.path.join(posix_path, _request_id, 'scratch')
     os.makedirs(scratch_path, exist_ok=True)
 
@@ -187,7 +187,7 @@ def callback(channel, method, properties, body):
     try:
         # Loop through the replicas
         for _file_path in _file_paths:
-            logger.info("trying to trasform file", extra={
+            logger.info("trying to transform file", extra={
                         "requestId": _request_id, "file-path": _file_path})
 
             # Enrich the transform request to give more hints to the science container
@@ -208,44 +208,39 @@ def callback(channel, method, properties, body):
                 hashed_file_name
             )
 
-            # Final results are written here and picked up by the watched directory thread
-            transform_request['completedFileName'] = os.path.join(
-                request_path,
-                hashed_file_name
-            )
+            while True:
+                print('waiting for the GeT')
+                req = conn.recv(4096)
+                if not req:
+                    print('problem in getting GeT')
+                    break
+                req1 = req.decode('utf8')
+                print("REQ >>>>>>>>>>>>>>>", req1)
+                if req1.startswith('GeT'):
+                    break
 
-            # creating json file for use by science transformer
-            jsonfile = str(_file_id) + '.json'
-            with open(os.path.join(request_path, jsonfile), 'w') as outfile:
-                json.dump(transform_request, outfile)
+            res = json.dumps(transform_request)+"\n"
+            print("sending:", res)
+            conn.send(res.encode())
 
-            # Queue to communicate between WatchedDirectory and object file uploader
-            upload_queue = Queue()
-
-            # Watch for new files appearing in the shared directory
-            watcher = WatchedDirectory(Path(request_path), upload_queue,
-                                       logger=logger, servicex=servicex)
-
-            # And upload them to the object store
-            uploader = ObjectStoreUploader(request_id=_request_id, input_queue=upload_queue,
-                                           object_store=object_store, logger=logger)
-
-            watcher.start()
-            uploader.start()
-
-            # Wait for both threads to complete
-            watcher.observer.join()
-            print(f"Watched Directory Thread is done. Status:{watcher.status}")
-            uploader.join()
-            print("Uploader is done")
+            print('WAITING FOR STATUS...')
+            req = conn.recv(4096)
+            if not req:
+                break
+            req2 = req.decode('utf8').strip()
+            print('STATUS RECEIVED :', req2)
+            if req2 == 'success.':
+                upload_queue.put(ObjectStoreUploader.WorkQueueItem(
+                    Path(transform_request['safeOutputFileName'])))
+            conn.send("confirmed.\n".encode())
 
             # Grab the logs
             transformer_stats = fill_stats_parser(
                 transformer_capabilities['stats-parser'],
-                Path(os.path.join(request_path, jsonfile + '.log'))
+                Path(os.path.join(request_path, 'abc.log'))
             )
 
-            if watcher.status == WatchedDirectory.TransformStatus.SUCCESS:
+            if req2 == 'success.':
                 transform_success = True
                 ts = {
                     "requestId": _request_id,
@@ -255,8 +250,6 @@ def callback(channel, method, properties, body):
                 }
                 logger.info("Transformer stats.", extra=ts)
                 break
-
-            clear_files(Path(request_path), _file_id)
 
         # If none of the replicas resulted in a successful transform then we have
         # a hard failure with this file.
@@ -269,15 +262,13 @@ def callback(channel, method, properties, body):
             }
             logger.error("Hard Failure", extra=hf)
 
-        shutil.rmtree(request_path)
-
         if transform_success:
             servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
                                        total_time=total_time,
                                        total_events=transformer_stats.total_events,
-                                       total_bytes=transformer_stats.file_size)
+                                       total_bytes=transformer_stats.file_size
+                                       )
         else:
-
             servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
                                        status='failure',
                                        total_time=0, total_events=0,
@@ -349,6 +340,11 @@ if __name__ == "__main__":
 
     logger.debug('transformer capabilities', extra=transformer_capabilities)
 
+    # If the user requested Parquet, but the transformer isn't capable of producing it,
+    # then we will convert here....
+    convert_root_to_parquet = args.result_format == 'parquet' and \
+        'parquet' not in transformer_capabilities['file-formats']
+
     startup_time = get_process_info()
     logger.info("Startup finished.",
                 extra={
@@ -356,7 +352,22 @@ if __name__ == "__main__":
                     'iowait': startup_time.iowait
                 })
 
+    serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serv.bind(('localhost', 8081))
+    serv.listen()
+    conn, addr = serv.accept()
+
+    upload_queue = Queue()
+
+    uploader = ObjectStoreUploader(request_id=args.request_id, input_queue=upload_queue,
+                                   object_store=object_store, logger=logger,
+                                   convert_root_to_parquet=convert_root_to_parquet)
+    uploader.start()
+
     if args.request_id:
         rabbitmq = RabbitMQManager(args.rabbit_uri,
                                    args.request_id,
                                    callback)
+
+    uploader.join()
+    logger.info("Uploader is done", extra={'requestId': args.request_id})

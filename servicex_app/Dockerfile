@@ -17,6 +17,7 @@ RUN poetry config virtualenvs.create false && \
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex
 COPY migrations migrations
+ADD gai.conf /etc/gai.conf
 
 RUN chmod +x boot.sh
 

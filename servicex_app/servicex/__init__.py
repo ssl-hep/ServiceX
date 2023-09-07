@@ -46,10 +46,11 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
-
+from flask_migrate import Migrate
 from servicex.models import db
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+migrate = Migrate()
 
 
 class StreamFormatter(logging.Formatter):
@@ -198,7 +199,12 @@ def create_app(test_config=None,
 
     with app.app_context():
         db.init_app(app)
-        db.create_all()
+
+        if test_config:
+            db.create_all()
+
+        migrate.init_app(app, db)
+
         # Validate did-finder scheme
         schemes = app.config['VALID_DID_SCHEMES']
         if app.config['DID_FINDER_DEFAULT_SCHEME'] not in schemes:

@@ -2,7 +2,7 @@
 name = "did-finder-rucio"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Ilija Vukotic <ivukotic@uchicago.edu>"]
 readme = "README.md"
 packages = [{include = "did_finder_rucio"}]
 
@@ -12,6 +12,7 @@ rucio-clients = "^1.29.7.post1"
 pika = "1.1.0"
 xmltodict = "^0.13.0"
 servicex-did-finder-lib = {version = "^1.4", allow-prereleases = true}
+requests = ">=2.25.0,<3.0.0"
 
 [tool.poetry.group.test]
 optional = true
