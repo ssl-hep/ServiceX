@@ -19,6 +19,8 @@ spec:
             image: {{ .Values.minioCleanup.image }}:{{ .Values.minioCleanup.tag }}
             imagePullPolicy: {{ .Values.minioCleanup.pullPolicy }}
             env:
+            - name: INSTANCE_NAME
+              value: "{{ .Release.Name }}"
             - name: MAX_SIZE
               value: "{{ .Values.minioCleanup.maxSize }}"
             - name: NORM_SIZE
