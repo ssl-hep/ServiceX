@@ -28,6 +28,7 @@
 import base64
 import os
 from typing import Optional
+import time
 
 import kubernetes
 from flask import current_app
@@ -111,7 +112,13 @@ class TransformerManager:
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(
                 field_path="metadata.name"))
-        env += [client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)]
+        host_name_value_from = client.V1EnvVarSource(
+            field_ref=client.V1ObjectFieldSelector(
+                field_path="spec.nodeName"))
+        env += [
+            client.V1EnvVar("POD_NAME", value_from=pod_name_value_from),
+            client.V1EnvVar("HOST_NAME", value_from=host_name_value_from)
+        ]
 
         # Provide each pod with an environment var holding that instance name
         if "INSTANCE_NAME" in current_app.config:
@@ -122,7 +129,8 @@ class TransformerManager:
 
         # provide each pod with an environment var holding cache prefix path
         if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
-            env += [client.V1EnvVar("CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"])]
+            env += [client.V1EnvVar("CACHE_PREFIX",
+                                    value=current_app.config["TRANSFORMER_CACHE_PREFIX"])]
 
         if result_destination == 'object-store':
             env = env + [
@@ -342,6 +350,18 @@ class TransformerManager:
                                          "requestId": request_id})
 
         try:
+            api_core = client.CoreV1Api()
+            configmap_name = "{}-generated-source".format(request_id)
+            api_core.delete_namespaced_config_map(name=configmap_name,
+                                                  namespace=namespace)
+        except ApiException:
+            current_app.logger.exception("Exception during Job ConfigMap cleanup", extra={
+                                         "requestId": request_id})
+
+        # grace period for transformers to finish uploading objects.
+        time.sleep(10)
+
+        try:
             api_v1 = client.AppsV1Api()
             api_v1.delete_namespaced_deployment(
                 name="transformer-" + request_id,
@@ -349,15 +369,6 @@ class TransformerManager:
             )
         except ApiException:
             current_app.logger.exception("Exception during Job Deployment Shut Down", extra={
-                                         "requestId": request_id})
-
-        try:
-            api_core = client.CoreV1Api()
-            configmap_name = "{}-generated-source".format(request_id)
-            api_core.delete_namespaced_config_map(name=configmap_name,
-                                                  namespace=namespace)
-        except ApiException:
-            current_app.logger.exception("Exception during Job ConfigMap cleanup", extra={
                                          "requestId": request_id})
 
     @staticmethod
