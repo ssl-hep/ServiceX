@@ -38,81 +38,82 @@ from typing import Tuple
 
 
 class ObjectStore(abc.ABC):
-  """
-  Abstract class for object storage managers to use
-  """
-  @abc.abstractmethod
-  def get_storage_used(self) -> int:
     """
-    Get storage used by object store
-    :return: total storage used in bytes
+    Abstract class for object storage managers to use
     """
+    @abc.abstractmethod
+    def get_storage_used(self) -> int:
+        """
+        Get storage used by object store
+        :return: total storage used in bytes
+        """
 
-  @abc.abstractmethod
-  def upload_file(self, bucket: str, object_name: str, path: pathlib.Path) -> None:
-    """
-    Save file to object store
-    :param bucket: name of bucket
-    :param object_name: name of object
-    :param path: path to source file
-    :return: None
-    """
+    @abc.abstractmethod
+    def upload_file(self, bucket: str, object_name: str, path: pathlib.Path) -> None:
+        """
+        Save file to object store
+        :param bucket: name of bucket
+        :param object_name: name of object
+        :param path: path to source file
+        :return: None
+        """
 
-  @abc.abstractmethod
-  def cleanup_storage(self, max_size: int, norm_size: int, max_age: int) -> Tuple[int, List[str]]:
-    """
-    Reduce storage used until it's less than max_size
-    :param max_size: Maximum amount of storage to use before trying to clean up
-    :param norm_size: when this size is achieved, stop removing files
-    :param max_age: Maximum number of days a bucket can be before it is cleaned up
-    :return: Tuple with final storage used and list of buckets removed
-    """
+    @abc.abstractmethod
+    def cleanup_storage(self,
+                        max_size: int, norm_size: int, max_age: int) -> Tuple[int, List[str]]:
+        """
+        Reduce storage used until it's less than max_size
+        :param max_size: Maximum amount of storage to use before trying to clean up
+        :param norm_size: when this size is achieved, stop removing files
+        :param max_age: Maximum number of days a bucket can be before it is cleaned up
+        :return: Tuple with final storage used and list of buckets removed
+        """
 
-  @abc.abstractmethod
-  def delete_object(self, bucket: str, object_name: str) -> None:
-    """
-    Delete object from store
-    :param bucket: name of bucket
-    :param object_name: name of object
-    :return: None
-    """
+    @abc.abstractmethod
+    def delete_object(self, bucket: str, object_name: str) -> None:
+        """
+        Delete object from store
+        :param bucket: name of bucket
+        :param object_name: name of object
+        :return: None
+        """
 
-  @abc.abstractmethod
-  def delete_objects(self, bucket: str, object_names: List[str]) -> List[Tuple[str, str]]:
-    """
-    Delete object from store
-    :param bucket: name of bucket
-    :param object_names: name of object
-    :return: List of booleans indicating whether each corresponding object was deleted
-    """
+    @abc.abstractmethod
+    def delete_objects(self, bucket: str, object_names: List[str]) -> List[Tuple[str, str]]:
+        """
+        Delete object from store
+        :param bucket: name of bucket
+        :param object_names: name of object
+        :return: List of booleans indicating whether each corresponding object was deleted
+        """
 
-  @abc.abstractmethod
-  def get_file(self, bucket: str, object_name: str, path: pathlib.Path) -> None:
-    """
-    Get an object from store
-    :param bucket: name of bucket
-    :param object_name: name of object
-    :param path: path to destination file (must not be present)
-    :return: None
-    """
+    @abc.abstractmethod
+    def get_file(self, bucket: str, object_name: str, path: pathlib.Path) -> None:
+        """
+        Get an object from store
+        :param bucket: name of bucket
+        :param object_name: name of object
+        :param path: path to destination file (must not be present)
+        :return: None
+        """
 
-  @abc.abstractmethod
-  def get_buckets(self) -> List[str]:
-    """
-    Get an list of buckets from store
-    :return: List of buckets
-    """
+    @abc.abstractmethod
+    def get_buckets(self) -> List[str]:
+        """
+        Get an list of buckets from store
+        :return: List of buckets
+        """
 
-  @abc.abstractmethod
-  def create_bucket(self, bucket: str) -> bool:
-    """
-    Create a bucket with given id
-    :return: True on success, False otherwise
-    """
+    @abc.abstractmethod
+    def create_bucket(self, bucket: str) -> bool:
+        """
+        Create a bucket with given id
+        :return: True on success, False otherwise
+        """
 
-  @abc.abstractmethod
-  def delete_bucket(self, bucket: str) -> bool:
-    """
-    Get delete bucket from store
-    :return: True on success, False otherwise
-    """
+    @abc.abstractmethod
+    def delete_bucket(self, bucket: str) -> bool:
+        """
+        Get delete bucket from store
+        :return: True on success, False otherwise
+        """

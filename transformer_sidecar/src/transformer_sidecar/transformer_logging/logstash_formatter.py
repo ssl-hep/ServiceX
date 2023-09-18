@@ -39,7 +39,6 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             '@timestamp': self.format_timestamp(record.created),
             '@version': '1',
             'message': record.getMessage(),
-            'host': self.host,
             'path': record.pathname,
             'tags': self.tags,
             'type': self.message_type,
@@ -47,8 +46,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             'component': 'transformer sidecar',
 
             # Extra Fields
-            'level': record.levelname,
-            'logger_name': record.name,
+            'level': record.levelname
         }
 
         # Add extra fields

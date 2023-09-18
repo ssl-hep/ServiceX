@@ -55,8 +55,9 @@ class ObjectStoreUploader(threading.Thread):
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
+            self.logger.info("OSU Item received!", extra={'requestId': self.request_id})
             if item.is_complete():
-                self.logger.info("OSU We are done!",
+                self.logger.info("OSU Queue done!",
                                  extra={'requestId': self.request_id})
                 break
             else:
@@ -80,6 +81,7 @@ class ObjectStoreUploader(threading.Thread):
         import uproot
         import awkward as ak
 
+        self.logger.info("Converting ROOT to Parquet.")
         with uproot.open(source_path) as data:
             if len(data.keys()) != 1:
                 self.logger.error(f"Expected one tree found {data.keys()}")

@@ -32,8 +32,8 @@ async def find_files(did_name: str,
     Returns:
         AsyncGenerator[Dict[str, any], None]: yield each file
     '''
-    __log.info(f'DID Lookup request for dataset {did_name}',
-               extra={'requestId': info['request-id']})
+    __log.info('DID Lookup request received.', extra={
+               'requestId': info['request-id'], 'dataset': did_name})
     if not did_name.isnumeric():
         raise Exception('CERNOpenData can only work with dataset numbers as names (e.g. 1507)')
 

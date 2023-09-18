@@ -229,7 +229,12 @@ def callback(channel, method, properties, body):
                 break
             req2 = req.decode('utf8').strip()
             print('STATUS RECEIVED :', req2)
+            logger.info(f"received result: {req2}", extra={
+                        "requestId": _request_id, "file-path": _file_path})
+
             if req2 == 'success.':
+                logger.info("adding item to OSU queue", extra={
+                            "requestId": _request_id, "file-path": _file_path})
                 upload_queue.put(ObjectStoreUploader.WorkQueueItem(
                     Path(transform_request['safeOutputFileName'])))
             conn.send("confirmed.\n".encode())
@@ -258,7 +263,7 @@ def callback(channel, method, properties, body):
                 "requestId": _request_id,
                 "file-id": _file_id,
                 "error-info": transformer_stats.error_info,
-                "log-body": transformer_stats.log_body
+                "log_body": transformer_stats.log_body
             }
             logger.error("Hard Failure", extra=hf)
 
@@ -309,7 +314,7 @@ if __name__ == "__main__":
 
     logger = initialize_logging()
     logger.info("tranformer startup", extra={"result_destination": args.result_destination,
-                                             "output dir": args.output_dir})
+                "output dir": args.output_dir, "host_name": os.getenv("HOST_NAME", "unknown")})
 
     if args.output_dir:
         object_store = None
