@@ -38,7 +38,7 @@ from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
-from servicex.cli.add_user import add_user
+from servicex.cli.user_commands import add_user, list_users, approve_user
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -136,7 +136,7 @@ def create_app(test_config=None,
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
-    """Flask CLI Plugin to create user using CLI"""
+    """Flask CLI Plugin to manage users"""
     user_cli = AppGroup('user')
 
     @user_cli.command('create')
@@ -151,6 +151,15 @@ def create_app(test_config=None,
                  name=name,
                  institution=institution,
                  refresh_token=refresh_token)
+
+    @user_cli.command('list')
+    def list_users_command():
+        list_users()
+
+    @user_cli.command('approve')
+    @click.argument('sub')
+    def approve_user_command(sub):
+        approve_user(sub)
 
     app.cli.add_command(user_cli)
 
