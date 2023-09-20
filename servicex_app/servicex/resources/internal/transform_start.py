@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# from flask import current_app
-from servicex.models import TransformRequest
+from flask import current_app
+from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.transformer_manager import TransformerManager
 
@@ -42,7 +42,12 @@ class TransformStart(ServiceXResource):
         x509_secret = config['TRANSFORMER_X509_SECRET']
         generated_code_cm = request_rec.generated_code_cm
 
-        print(" ACTUALY LUNCHING transformers <<<<<<<<<<<<<<<<<<<<")
+        request_rec.workers = min(request_rec.files, request_rec.workers)
+
+        current_app.logger.info(
+            f"Lunching {request_rec.workers} transformers.",
+            extra={'requestId': request_rec.request_id})
+
         transformer_manager.launch_transformer_jobs(
             image=request_rec.image, request_id=request_rec.request_id,
             workers=request_rec.workers,
@@ -57,11 +62,29 @@ class TransformStart(ServiceXResource):
         )
 
     @classmethod
-    def make_api(cls, transformer_manager: TransformerManager):
+    def make_api(cls, transformer_manager: TransformerManager, lookup_result_processor):
         """Initializes the transformer manage for this resource."""
         cls.transformer_manager = transformer_manager
+        cls.lookup_result_processor = lookup_result_processor
         return cls
 
     def post(self, request_id):
-        # TODO remove whatever is calling this. then remove the method.
-        print('NO idea what and why is doing this post.')
+
+        submitted_request = TransformRequest.lookup(request_id)
+
+        if submitted_request.status == "Canceled":
+            return {"message": "Transform request canceled by user."}, 409
+        elif submitted_request.status == "Running":
+            return {"message": "Transform already running."}, 408
+
+        self.lookup_result_processor.add_files_to_processing_queue(submitted_request)
+
+        submitted_request.status = 'Running'
+        submitted_request.save_to_db()
+        db.session.commit()
+
+        if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+            TransformStart.start_transformers(
+                self.transformer_manager,
+                current_app.config,
+                submitted_request)

@@ -71,17 +71,17 @@ class TransformerFileComplete(ServiceXResource):
 
         db.session.commit()
 
-        current_app.logger.info("FileComplete", extra={
-            'requestId': request_id,
-            'files_remaining': transform_req.files_remaining,
-            'files_completed': transform_req.files_completed,
-            'files_failed': transform_req.files_failed
-        })
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
 
-        print(f"--- {(time.time() - start_time)} seconds ---")
+        current_app.logger.info("FileComplete", extra={
+            'requestId': request_id,
+            'files_remaining': transform_req.files_remaining,
+            'files_completed': transform_req.files_completed,
+            'files_failed': transform_req.files_failed,
+            'report_processed_time': (time.time() - start_time)
+        })
         return "Ok"
 
     @staticmethod

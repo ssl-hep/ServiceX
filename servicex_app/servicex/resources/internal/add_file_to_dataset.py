@@ -48,9 +48,9 @@ class AddFileToDataset(ServiceXResource):
             if type(add_file_request) is dict:
                 add_file_request = [add_file_request]
 
-            current_app.logger.info(f"Adding {len(add_file_request)} \
-                                    files to dataset: {dataset.name}",
-                                    extra={'dataset_id': dataset_id})
+            current_app.logger.info(
+                f"Adding {len(add_file_request)} files to dataset: {dataset.name}",
+                extra={'dataset_id': dataset_id})
 
             for afr in add_file_request:
                 db_record = DatasetFile(dataset_id=dataset_id,

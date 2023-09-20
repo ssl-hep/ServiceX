@@ -27,25 +27,27 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
-import pytest
 
 
 class TestAddFileToDataset(ResourceTestBase):
 
-    @pytest.mark.skip(reason="Needs to be updated to work with the new DB")
     def test_put_new_file(self, mocker):
         import servicex
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=self._generate_transform_request())
+
+        mock_dataset_find_by_id = mocker.patch.object(
+            servicex.models.Dataset,
+            'find_by_id',
+            return_value=self._generate_dataset())
+
+        mock_dataset_file_save_to_db = mocker.patch.object(
+            servicex.models.DatasetFile,
+            'save_to_db',
+            return_value=None
+        )
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(lookup_result_processor=mock_processor)
-
-        # this endpoint doesn't exist any more
-        # now '/servicex/internal/transformation/<string:dataset_id>/files'
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
@@ -55,26 +57,30 @@ class TestAddFileToDataset(ResourceTestBase):
                                   'file_events': 500
                               })
         assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-        mock_processor.add_file_to_dataset.assert_called()
+        mock_dataset_find_by_id.assert_called_with('1234')
+        mock_dataset_file_save_to_db.assert_called_once()
         assert response.json == {
-            "request-id": '1234'
+            "dataset_id": '1234'
         }
 
-    @pytest.mark.skip(reason="Needs to be updated to work with the new DB")
     def test_put_new_file_bulk(self, mocker):
         import servicex
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=self._generate_transform_request())
+
+        mock_dataset_find_by_id = mocker.patch.object(
+            servicex.models.Dataset,
+            'find_by_id',
+            return_value=self._generate_dataset())
+
+        mock_dataset_file_save_to_db = mocker.patch.object(
+            servicex.models.DatasetFile,
+            'save_to_db',
+            return_value=None
+        )
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(lookup_result_processor=mock_processor)
 
-        # this endpoint doesn't exist any more
-        # now '/servicex/internal/transformation/<string:dataset_id>/files'
         response = client.put('/servicex/internal/transformation/1234/files',
                               json=[
                                   {
@@ -91,60 +97,23 @@ class TestAddFileToDataset(ResourceTestBase):
                                   }
                               ])
         assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-        mock_processor.add_file_to_dataset.assert_called()
+        mock_dataset_find_by_id.assert_called_with('1234')
+        mock_dataset_file_save_to_db.assert_has_calls([(), ()])
         assert response.json == {
-            "request-id": '1234'
+            "dataset_id": '1234'
         }
 
-    @pytest.mark.skip(reason="Needs to be updated to work with the new DB")
-    def test_put_new_file_root_dest(self, mocker):
-        import servicex
-
-        root_file_transform_request = self._generate_transform_request()
-        root_file_transform_request.result_destination = 'root'
-
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=root_file_transform_request)
-
-        mock_processor = mocker.MagicMock(LookupResultProcessor)
-
-        # this endpoint doesn't exist any more
-        # now '/servicex/internal/transformation/<string:dataset_id>/files'
-
-        client = self._test_client(lookup_result_processor=mock_processor)
-        response = client.put('/servicex/internal/transformation/1234/files',
-                              json={
-                                  'paths': ["/foo/bar1.root", "/foo/bar2.root"],
-                                  'adler32': '12345',
-                                  'file_size': 1024,
-                                  'file_events': 500
-                              })
-        assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-        mock_processor.add_file_to_dataset.assert_called()
-
-        assert response.json == {
-            "request-id": '1234'
-        }
-
-    @pytest.mark.skip(reason="Needs to be updated to work with the new DB")
     def test_put_new_file_with_exception(self, mocker):
         import servicex
-        mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=self._generate_transform_request())
+
+        mocker.patch.object(servicex.models.Dataset, 'find_by_id',
+                            return_value=self._generate_dataset())
+        mocker.patch.object(servicex.models.DatasetFile, 'save_to_db', return_value=None)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_file_to_dataset.side_effect = Exception('Test')
+        mock_processor.add_files_to_processing_queue.side_effect = Exception('Test')
 
         client = self._test_client(lookup_result_processor=mock_processor)
-
-        # this endpoint doesn't exist any more
-        # now '/servicex/internal/transformation/<string:dataset_id>/files'
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={

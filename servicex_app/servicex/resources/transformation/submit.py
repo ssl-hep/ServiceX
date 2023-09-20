@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import uuid
-import time
 from datetime import datetime, timezone
 
 from flask import current_app
@@ -252,28 +251,23 @@ class SubmitTransformationRequest(ServiceXResource):
                     dataset.lookup_status = 'looking'
                     db.session.commit()
 
-            while True:
-                db.session.refresh(dataset)
-                if dataset.lookup_status == 'complete':
-                    break
-                print('waiting for the lookup... now:', dataset.lookup_status)
-                time.sleep(1)
+            elif dataset.lookup_status == 'complete':
+                current_app.logger.info("dataset already complete", extra={
+                                        'requestId': str(request_id)})
+                request_rec.files = dataset.n_files
+                request_rec.status = 'Running'
+                db.session.commit()
 
-            current_app.logger.info("dataset complete", extra={'requestId': str(request_id)})
-            request_rec.files = dataset.n_files
-            request_rec.status = 'Running'
-            db.session.commit()
+                self.lookup_result_processor.add_files_to_processing_queue(request_rec)
 
-            self.lookup_result_processor.add_files_to_processing_queue(request_rec)
+                # starts transformers
 
-            # starts transformers
-
-            if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                TransformStart.start_transformers(
-                    self.transformer_manager,
-                    current_app.config,
-                    request_rec
-                )
+                if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                    TransformStart.start_transformers(
+                        self.transformer_manager,
+                        current_app.config,
+                        request_rec
+                    )
 
             current_app.logger.info("Transformation request submitted!",
                                     extra={'requestId': request_id})
