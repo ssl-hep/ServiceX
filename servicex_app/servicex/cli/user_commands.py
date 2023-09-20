@@ -25,3 +25,23 @@ def add_user(sub, email, name, institution, refresh_token):
             new_user.save_to_db()
     except Exception as ex:
         print(str(ex))
+
+
+def list_users() -> None:
+    users = UserModel.query.all()
+    print("Sub, Email, Name, Institution, Pending?")
+    for user in users:
+        print(", ".join([user.sub, user.email, user.name, user.institution,
+                         "Pending" if user.pending else "Approved"]))
+
+
+def approve_user(sub: str) -> None:
+    user = UserModel.find_by_sub(sub)
+    if user and user.pending:
+        user.pending = False
+        user.save_to_db()
+        print(f"User {sub} approved")
+    elif user and not user.pending:
+        print(f"User {sub} already approved")
+    else:
+        print(f"User {sub} not found")
