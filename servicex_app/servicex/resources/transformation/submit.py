@@ -242,8 +242,7 @@ class SubmitTransformationRequest(ServiceXResource):
                         "dataset_id": dataset.id,
                         "did": parsed_did.did,
                         "service-endpoint": self._generate_advertised_endpoint(
-                            "servicex/internal/transformation/" +
-                            str(dataset.id)
+                            "servicex/internal/transformation/"
                         )
                     }
                     self.rabbitmq_adaptor.basic_publish(exchange='',
