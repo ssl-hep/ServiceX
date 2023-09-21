@@ -238,6 +238,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     current_app.logger.info("adding dataset lookup to RMQ", extra={
                         'requestId': str(request_id)})
                     did_request = {
+                        "request_id": request_id,
                         "dataset_id": dataset.id,
                         "did": parsed_did.did,
                         "service-endpoint": self._generate_advertised_endpoint(

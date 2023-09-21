@@ -72,6 +72,11 @@ class TransformStart(ServiceXResource):
 
         submitted_request = TransformRequest.lookup(request_id)
 
+        if submitted_request is None:
+            current_app.logger.error("Can't find request to start.",
+                                     extra={'requestId': request_id})
+            return 'Request not found', 400
+
         if submitted_request.status == "Canceled":
             return {"message": "Transform request canceled by user."}, 409
         elif submitted_request.status == "Running":
