@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from flask import current_app
+from flask import request, current_app
 from flask_restful import reqparse
 
 from servicex.models import TransformRequest, db
@@ -19,7 +19,8 @@ status_parser.add_argument('source', required=False)
 
 class TransformationStatusInternal(ServiceXResource):
     def post(self, request_id):
-        current_app.logger.info("--- Transformation Status Update Received ---")
+        info = request.get_json()
+        current_app.logger.info("--- Transformation Status Update Received ---", info)
         status = status_parser.parse_args()
         status.request_id = request_id
         if status.severity == "fatal":
