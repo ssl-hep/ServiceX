@@ -1,5 +1,5 @@
 rucio-clients>=1.26.1
 pika==1.1.0
-servicex-did-finder-lib>=1.4.1
+servicex-did-finder-lib>=1.4.2
 xmltodict
 wheel

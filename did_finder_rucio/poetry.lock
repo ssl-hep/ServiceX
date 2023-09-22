@@ -12,6 +12,17 @@ files = [
 ]
 
 [[package]]
+name = "chardet"
+version = "5.2.0"
+description = "Universal encoding detector for Python 3"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
+    {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.2.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -380,16 +391,17 @@ files = [
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "1.4.1"
+version = "1.4.2"
 description = "ServiceX DID Library Routines"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "servicex_did_finder_lib-1.4.1-py3-none-any.whl", hash = "sha256:2e0823e30f2f8df5a9b3645372ff4435e38ef1817274eb124fd022a7aaee0c29"},
-    {file = "servicex_did_finder_lib-1.4.1.tar.gz", hash = "sha256:41277f6122a32da880eed76e61f308a133fb073b35cdd17d3ab41deaaf654ddd"},
+    {file = "servicex_did_finder_lib-1.4.2-py3-none-any.whl", hash = "sha256:1bd22fc9d3f959fa69145b3b08fb37e1c9fc5f4ee274375bf703e392995e0ffb"},
+    {file = "servicex_did_finder_lib-1.4.2.tar.gz", hash = "sha256:d42c39deb1fd709ff133b7c35e54d89ee4f669e177dacb9be72846b8271e3d72"},
 ]
 
 [package.dependencies]
+chardet = ">=5.2.0,<6.0.0"
 make-it-sync = ">=1.0.0,<2.0.0"
 pika = "1.1.0"
 requests = ">=2.25.0,<3.0.0"
@@ -435,5 +447,5 @@ files = [
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.9"
-content-hash = "a850ac60157642844dd78469aadaa634f54f8ec2fb2e856f378b492b32d936c4"
+python-versions = "^3.10"
+content-hash = "b5bbad124b835ac4068cb4d0768ef4cf4b41069b86c98181b17a4b2e377131e2"
