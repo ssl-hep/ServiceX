@@ -16,7 +16,7 @@ RUN yum -y update
 # (default was SHELL [ "/bin/sh", "-c" ])
 # https://docs.docker.com/engine/reference/builder/#shell
 
-ENV POETRY_VERSION=1.6.1
+ENV POETRY_VERSION=1.2.2
 RUN python3 -m pip install --upgrade pip
 
 RUN pip install poetry==$POETRY_VERSION

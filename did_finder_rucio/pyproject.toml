@@ -8,10 +8,10 @@ packages = [{include = "did_finder_rucio"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-rucio-clients = "^32.3.0"
+rucio-clients = "^1.29.7.post1"
 pika = "1.1.0"
 xmltodict = "^0.13.0"
-servicex-did-finder-lib = {version = "1.4.3", allow-prereleases = true}
+servicex-did-finder-lib = {version = "^1.4.4", allow-prereleases = true}
 requests = ">=2.25.0,<3.0.0"
 
 [tool.poetry.group.test]
