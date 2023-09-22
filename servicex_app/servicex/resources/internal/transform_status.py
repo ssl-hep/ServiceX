@@ -19,8 +19,9 @@ status_parser.add_argument('source', required=False)
 
 class TransformationStatusInternal(ServiceXResource):
     def post(self, request_id):
-        info = request.get_json()
-        current_app.logger.info("--- Transformation Status Update Received ---", info)
+        current_app.logger.info("--- Transformation Status Update Received ---")
+        current_app.logger.info(request.json)
+        current_app.logger.info(request.values)
         status = status_parser.parse_args()
         status.request_id = request_id
         if status.severity == "fatal":
