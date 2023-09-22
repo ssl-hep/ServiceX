@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import json
 from servicex.lookup_result_processor import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
@@ -47,18 +47,18 @@ class TestLookupResultProcessor(ResourceTestBase):
 
         processor.add_files_to_processing_queue(request)
 
-        # mock_rabbit_adaptor.basic_publish.assert_called_with(
-        #     exchange='transformation_requests',
-        #     routing_key='BR549',
-        #     body=json.dumps(
-        #         {"request-id": 'BR549',
-        #          "file-id": 42,
-        #          "columns": 'electron.eta(), muon.pt()',
-        #          "paths": ["/foo/bar1.root", "/foo/bar2.root"],
-        #          "tree-name": "Events",
-        #          "service-endpoint":
-        #              "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-        #          "chunk-size": "1000",
-        #          'result-destination': 'object-store',
-        #          "result-format": "arrow"
-        #          }))
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='transformation_requests',
+            routing_key='BR549',
+            body=json.dumps(
+                {"request-id": 'BR549',
+                 "file-id": 42,
+                 "columns": 'electron.eta(), muon.pt()',
+                 "paths": ["/foo/bar1.root", "/foo/bar2.root"],
+                 "tree-name": "Events",
+                 "service-endpoint":
+                     "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                 "chunk-size": "1000",
+                 'result-destination': 'object-store',
+                 "result-format": "arrow"
+                 }))
