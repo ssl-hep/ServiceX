@@ -1,28 +1,26 @@
 from datetime import datetime, timezone
 
-from flask import current_app
-from flask_restful import reqparse
-
+from flask import current_app, request
 from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
 
 
-# Status Updates POST
-status_parser = reqparse.RequestParser()
-status_parser.add_argument('timestamp', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('severity', help='Should be debug, info, warn, or fatal',
-                           required=False)
-status_parser.add_argument('info', required=False)
-status_parser.add_argument('source', required=False)
+# # Status Updates POST
+# status_parser = reqparse.RequestParser()
+# status_parser.add_argument('timestamp', help='This field cannot be blank',
+#                            required=True)
+# status_parser.add_argument('severity', help='Should be debug, info, warn, or fatal',
+#                            required=False)
+# status_parser.add_argument('info', required=False)
+# status_parser.add_argument('source', required=False)
 
 
 class TransformationStatusInternal(ServiceXResource):
     def post(self, request_id):
         current_app.logger.info("--- Transformation Status Update Received ---")
-        status = status_parser.parse_args()
+        status = request.get_json()
+        print(status)
         current_app.logger.info(f"--{status.info}--")
-        status.request_id = request_id
         if status.severity == "fatal":
             current_app.logger.error(f"Fatal error reported from "
                                      f"{status.source}: {status.info}",

@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from flask import current_app
-from servicex.models import TransformRequest, db
+from servicex.models import TransformRequest, Dataset, db
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.transformer_manager import TransformerManager
 
@@ -82,10 +82,13 @@ class TransformStart(ServiceXResource):
         elif submitted_request.status == "Running":
             return {"message": "Transform already running."}, 408
 
-        self.lookup_result_processor.add_files_to_processing_queue(submitted_request)
-
+        dataset = Dataset.find_by_id(submitted_request.did_id)
+        submitted_request.files = dataset.n_files
         submitted_request.status = 'Running'
         submitted_request.save_to_db()
+
+        self.lookup_result_processor.add_files_to_processing_queue(submitted_request)
+
         db.session.commit()
 
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
