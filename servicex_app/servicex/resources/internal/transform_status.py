@@ -20,7 +20,7 @@ class TransformationStatusInternal(ServiceXResource):
         current_app.logger.info("--- Transformation Status Update Received ---")
         status = request.get_json()
         print(status)
-        current_app.logger.info(f"--{status.info}--")
+        current_app.logger.info(f"--{status}--")
         if status.severity == "fatal":
             current_app.logger.error(f"Fatal error reported from "
                                      f"{status.source}: {status.info}",
