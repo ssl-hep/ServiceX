@@ -42,7 +42,8 @@ class TestTransformStatusInternal(ResourceTestBase):
                                json={
                                    'timestamp': '2019-09-18T16:15:09.457481',
                                    'severity': "info",
-                                   'info': 'Just testing'
+                                   'info': 'Just testing',
+                                   'source': 'TESTER'
                                })
 
         assert response.status_code == 200
@@ -59,9 +60,9 @@ class TestTransformStatusInternal(ResourceTestBase):
 
         response = client.post('/servicex/internal/transformation/1234/status',
                                json={
-                                   'timestamp': '2019-09-18T16:15:09.457481',
                                    'severity': "fatal",
-                                   'info': 'Just testing'
+                                   'info': 'Just testing',
+                                   'source': 'test source'
                                })
 
         assert response.status_code == 200

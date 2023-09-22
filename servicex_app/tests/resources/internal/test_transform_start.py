@@ -37,10 +37,16 @@ class TestTransformationStart(ResourceTestBase):
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
+
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
             'lookup',
             return_value=mock_request)
+
+        mocker.patch.object(
+            servicex.models.Dataset,
+            'find_by_id',
+            return_value=self._generate_dataset())
 
         cfg = {
             'TRANSFORMER_MANAGER_ENABLED': True,
@@ -85,6 +91,11 @@ class TestTransformationStart(ResourceTestBase):
             servicex.models.TransformRequest,
             'lookup',
             return_value=mock_request)
+
+        mocker.patch.object(
+            servicex.models.Dataset,
+            'find_by_id',
+            return_value=self._generate_dataset())
 
         client = self._test_client(
             {
