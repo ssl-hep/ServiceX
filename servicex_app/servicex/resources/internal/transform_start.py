@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import datetime, timezone
 from flask import current_app
 from servicex.models import TransformRequest, Dataset, db
 from servicex.resources.servicex_resource import ServiceXResource
@@ -84,6 +85,14 @@ class TransformStart(ServiceXResource):
 
         dataset = Dataset.find_by_id(submitted_request.did_id)
         submitted_request.files = dataset.n_files
+        if not submitted_request.files:
+            submitted_request.status = 'Fatal'
+            submitted_request.finish_time = datetime.now(tz=timezone.utc)
+            submitted_request.failure_description = "No files in the dataset."
+            submitted_request.save_to_db()
+            db.session.commit()
+            return {"message": "Dataset does not exist or has no files."}, 407
+
         submitted_request.status = 'Running'
         submitted_request.save_to_db()
 

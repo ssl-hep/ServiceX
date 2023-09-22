@@ -15,7 +15,7 @@ class TransformationStatusInternal(ServiceXResource):
         if 'source' not in status or 'info' not in status:
             return 'bad status', 400
 
-        current_app.logger.info(f"--{status}--")
+        current_app.logger.info(f"--{status['info']}--")
         if status['severity'] == "fatal":
             current_app.logger.error(f"Fatal error reported from "
                                      f"{status['source']}: {status['info']}",
