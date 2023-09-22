@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "did_finder_rucio"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 rucio-clients = "^32.3.0"
 pika = "1.1.0"
 xmltodict = "^0.13.0"
