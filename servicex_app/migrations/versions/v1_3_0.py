@@ -63,7 +63,7 @@ def upgrade():
     # sa.Column('dataset_id', sa.Integer(), key=sa.ForeignKey(
     # "datasets.id", ondelete='cascade'), nullable=False),
 
-    op.create_index(op.f('ix_datasets_id'),
+    op.create_index(op.f('ix_dataset_id'),
                     'files', ['dataset_id'], unique=False)
 
     #   Change requests table
