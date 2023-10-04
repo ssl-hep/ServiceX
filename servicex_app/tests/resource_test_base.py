@@ -35,7 +35,7 @@ from servicex import create_app
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, Dataset, DatasetFile
 from servicex.rabbit_adaptor import RabbitAdaptor
 
 
@@ -125,6 +125,17 @@ class ResourceTestBase:
         return self._test_client()
 
     @staticmethod
+    def _generate_datafile():
+        df = DatasetFile()
+        df.id = 123456789
+        df.adler32 = '1DA4'
+        df.dataset_id = 1234
+        df.file_size = 100000
+        df.file_events = 5000
+        df.paths = '/path1,/path2'
+        return df
+
+    @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
         transform_request.submit_time = datetime.min
@@ -147,6 +158,19 @@ class ResourceTestBase:
         transform_request.transformer_language = "scala"
         transform_request.transformer_command = "echo"
         return transform_request
+
+    @staticmethod
+    def _generate_dataset():
+        dataset = Dataset()
+        dataset.id = 1234
+        dataset.name = '123-456-789'
+        dataset.last_used = datetime.min
+        dataset.last_updated = datetime.min
+        dataset.did_finder = 'rucio'
+        dataset.n_files = 1
+        dataset.size = 1203
+        dataset.events = 10000
+        return dataset
 
     @fixture
     def mock_rabbit_adaptor(self, mocker):

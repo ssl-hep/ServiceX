@@ -55,7 +55,7 @@ class ServiceXAdapter:
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
 
     def put_file_complete(self, request_id, file_path, file_id, status,
-                          num_messages=None, total_time=None, total_events=None,
+                          total_time=None, total_events=None,
                           total_bytes=None):
         avg_rate = 0 if not total_time else int(total_events / total_time)
         doc = {
@@ -63,7 +63,6 @@ class ServiceXAdapter:
             "file-path": file_path,
             "file-id": file_id,
             "status": status,
-            "num-messages": num_messages,
             "total-time": total_time,
             "total-events": total_events,
             "total-bytes": total_bytes,

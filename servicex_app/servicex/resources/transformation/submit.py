@@ -33,7 +33,7 @@ from flask import current_app
 from flask_restful import reqparse
 from servicex.decorators import auth_required
 from servicex.did_parser import DIDParser
-from servicex.models import DatasetFile, TransformRequest, db
+from servicex.models import DatasetFile, Dataset, TransformRequest, db
 from servicex.resources.internal.transform_start import TransformStart
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
@@ -110,7 +110,8 @@ class SubmitTransformationRequest(ServiceXResource):
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
-            if did:
+            did_name = ''
+            if did:  # dataset given.
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
                 )
@@ -118,6 +119,43 @@ class SubmitTransformationRequest(ServiceXResource):
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
                     current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
+                did_name = parsed_did.full_did
+            else:  # no dataset, only a list of files given
+                did_name = str(hash(str(file_list)))
+
+            # Check if this dataset is already in the DB.
+            dataset = Dataset.find_by_name(did_name)
+            if not dataset:
+                current_app.logger.info('dataset not in the db', extra={'requestId': request_id})
+                dataset = Dataset(
+                    name=did_name,
+                    last_used=datetime.now(tz=timezone.utc),
+                    last_updated=datetime.fromtimestamp(0),
+                    lookup_status='created',
+                    did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
+                )
+                dataset.save_to_db()
+                msg = f'new dataset created: {dataset.to_json()}'
+                current_app.logger.info(msg, extra={'requestId': str(request_id)})
+            else:
+                current_app.logger.info('dataset found in the db', extra={'requestId': request_id})
+
+            if dataset.lookup_status == 'created' and not did:
+                # adding files to the alreday created dataset
+                current_app.logger.info("individual paths given", extra={
+                    'requestId': str(request_id)})
+                for paths in file_list:
+                    file_record = DatasetFile(
+                        dataset_id=dataset.id,
+                        paths=paths,
+                        adler32="xxx",
+                        file_events=0,
+                        file_size=0
+                    )
+                    file_record.save_to_db()
+                dataset.n_files = len(file_list)
+                dataset.lookup_status = 'complete'
+                db.session.commit()
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -130,7 +168,8 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
-                did=parsed_did.full_did if did else "File List Provided in Request",
+                did=did_name,
+                did_id=dataset.id,
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -143,7 +182,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 workflow_name=_workflow_name(args),
                 status='Submitted',
                 app_version=self._get_app_version(),
-                code_gen_image=code_gen_image_name
+                code_gen_image=code_gen_image_name,
+                files=0
             )
 
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
@@ -191,48 +231,45 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {'message': "Error setting up transformer queues"}, 503
 
             request_rec.save_to_db()
+
+            db.session.refresh(dataset)
+            if dataset.lookup_status == 'created':
+                current_app.logger.info("new dataset", extra={
+                                        'requestId': str(request_id)})
+                if did:
+                    current_app.logger.info("adding dataset lookup to RMQ", extra={
+                        'requestId': str(request_id)})
+                    did_request = {
+                        "dataset_id": dataset.id,
+                        "did": parsed_did.did,
+                        "endpoint": self._generate_advertised_endpoint(
+                            "servicex/internal/transformation/"
+                        )
+                    }
+                    self.rabbitmq_adaptor.basic_publish(exchange='',
+                                                        routing_key=parsed_did.microservice_queue,
+                                                        body=json.dumps(did_request))
+                    dataset.lookup_status = 'looking'
+                    db.session.commit()
+
+            elif dataset.lookup_status == 'complete':
+                current_app.logger.info("dataset already complete", extra={
+                                        'requestId': str(request_id)})
+                request_rec.files = dataset.n_files
+                self.lookup_result_processor.add_files_to_processing_queue(request_rec)
+
+            # starts transformers independently of the state of dataset.
+
+            request_rec.status = 'Running'
             db.session.commit()
-
-            if did:
-                did_request = {
-                    "request_id": request_rec.request_id,
-                    "did": parsed_did.did,
-                    "service-endpoint": self._generate_advertised_endpoint(
-                        "servicex/internal/transformation/" +
-                        request_rec.request_id
-                    )
-                }
-
-                self.rabbitmq_adaptor.basic_publish(exchange='',
-                                                    routing_key=parsed_did.microservice_queue,
-                                                    body=json.dumps(did_request))
-            else:
-                for paths in file_list:
-                    file_record = DatasetFile(request_id=request_id,
-                                              paths=paths,
-                                              adler32="xxx",
-                                              file_events=0,
-                                              file_size=0)
-                    self.lookup_result_processor.add_file_to_dataset(
-                        request_rec,
-                        file_record
-                    )
-
-                self.lookup_result_processor.report_fileset_complete(
-                    request_rec,
-                    num_files=len(file_list)
+            if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                TransformStart.start_transformers(
+                    self.transformer_manager,
+                    current_app.config,
+                    request_rec
                 )
 
-                db.session.commit()
-
-                if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                    TransformStart.start_transformers(
-                        self.transformer_manager,
-                        current_app.config,
-                        request_rec
-                    )
-
-            current_app.logger.info("Transformation request submitted",
+            current_app.logger.info("Transformation request submitted!",
                                     extra={'requestId': request_id})
             return {
                 "request_id": str(request_id)

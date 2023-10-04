@@ -25,9 +25,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app
 
-from servicex.models import TransformRequest, db
+from flask import current_app
+from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.transformer_manager import TransformerManager
 
@@ -41,6 +41,12 @@ class TransformStart(ServiceXResource):
         namespace = config['TRANSFORMER_NAMESPACE']
         x509_secret = config['TRANSFORMER_X509_SECRET']
         generated_code_cm = request_rec.generated_code_cm
+
+        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
+
+        current_app.logger.info(
+            f"Lunching {request_rec.workers} transformers.",
+            extra={'requestId': request_rec.request_id})
 
         transformer_manager.launch_transformer_jobs(
             image=request_rec.image, request_id=request_rec.request_id,
@@ -56,27 +62,8 @@ class TransformStart(ServiceXResource):
         )
 
     @classmethod
-    def make_api(cls, transformer_manager: TransformerManager):
+    def make_api(cls, transformer_manager: TransformerManager, lookup_result_processor):
         """Initializes the transformer manage for this resource."""
         cls.transformer_manager = transformer_manager
+        cls.lookup_result_processor = lookup_result_processor
         return cls
-
-    def post(self, request_id):
-        """
-        Starts a transformation request, deploys transformers, and updates record.
-        :param request_id: UUID of transformation request.
-        """
-        submitted_request = TransformRequest.lookup(request_id)
-
-        if submitted_request.status == "Canceled":
-            return {"message": "Transform request canceled by user."}, 409
-
-        submitted_request.status = 'Running'
-        submitted_request.save_to_db()
-        db.session.commit()
-
-        if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-            TransformStart.start_transformers(
-                self.transformer_manager,
-                current_app.config,
-                submitted_request)

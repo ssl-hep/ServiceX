@@ -51,18 +51,17 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3, 4)
+        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3)
         mock_session.put.assert_called()
         args = mock_session.put.call_args
         assert args[0][0] == 'http://foo.com/file-complete'
         doc = args[1]['json']
         assert doc['status'] == 'testing'
-        assert doc['total-events'] == 3
-        assert doc['total-time'] == 2
+        assert doc['total-time'] == 1
+        assert doc['total-events'] == 2
         assert doc['file-path'] == 'my-root.root'
-        assert doc['num-messages'] == 1
         assert doc['file-id'] == 42
-        assert doc['avg-rate'] == 1
+        assert doc['avg-rate'] == 2
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.INFO
@@ -77,7 +76,7 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3, 4)
+        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3)
         assert mock_session.put.call_count == 2
         assert len(caplog.records) == 2
         assert caplog.records[0].levelno == logging.WARNING
