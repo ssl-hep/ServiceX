@@ -238,10 +238,8 @@ class TransformRequest(db.Model):
         """
         Looks up TransformRequests in "Running" state state that needs a dataset
         given by its dataset_id.
-        :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
-        If key is a numeric string, e.g. '17', it will be treated as an integer ID.
-        All other strings are assumed to be UUIDs (request_id).
-        :return result: TransformRequests, or None if not found.
+        :param key: dataset id. Must be an integer.
+        :return result: list of TransformRequests, or None if not found.
         """
         try:
             return cls.query.filter_by(did_id=key, status="Running").all()

@@ -84,7 +84,4 @@ class LookupRequest:
             'avg_replicas': avg_replicas,
             'lookup_duration': (lookup_finish-lookup_start).total_seconds()
         }
-        self.logger.info(
-            "Lookup finished. " +
-            f"Metric: {json.dumps(metric)}"
-        )
+        self.logger.info("Lookup finished. ", extra=metric)
