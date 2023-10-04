@@ -33,7 +33,7 @@ from tests.resource_test_base import ResourceTestBase
 class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_files_to_processing_queue(self, mocker, mock_rabbit_adaptor):
-        import servicex
+        # import servicex
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
         # mocker.patch.object(
