@@ -244,7 +244,7 @@ class TransformRequest(db.Model):
         :return result: TransformRequests, or None if not found.
         """
         try:
-            return cls.query.filter_by(did_id=key)
+            return cls.query.filter_by(did_id=key, status="Running")
         except NoResultFound:
             return None
 
