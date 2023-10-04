@@ -234,7 +234,7 @@ class TransformRequest(db.Model):
             return None
 
     @classmethod
-    def lookup_running(cls,  key: Union[str, int]) -> Optional['TransformRequest']:
+    def lookup_running(cls,  key: int):
         """
         Looks up TransformRequests in "Running" state state that needs a dataset
         given by its dataset_id.
@@ -244,7 +244,7 @@ class TransformRequest(db.Model):
         :return result: TransformRequests, or None if not found.
         """
         try:
-            return cls.query.filter_by(did_id=key, status="Running")
+            return cls.query.filter_by(did_id=key, status="Running").all()
         except NoResultFound:
             return None
 

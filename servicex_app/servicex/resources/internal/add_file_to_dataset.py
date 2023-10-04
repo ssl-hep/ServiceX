@@ -44,7 +44,7 @@ class AddFileToDataset(ServiceXResource):
             add_file_request = request.get_json()
             dataset = Dataset.find_by_id(dataset_id)
             # find running requests that need this ds.
-            running_requests = TransformRequest.lookup_running(dataset_id)
+            running_requests = TransformRequest.lookup_running(dataset.id)
             print('running requests:', running_requests)
             # check if the request is bulk or single file
             if type(add_file_request) is dict:
