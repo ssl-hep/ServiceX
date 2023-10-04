@@ -300,21 +300,19 @@ class TransformerManager:
 
     @staticmethod
     def _create_job(api_instance, job, namespace):
-        # Create job
-
-        api_response = api_instance.create_namespaced_deployment(
-            body=job,
-            namespace=namespace)
-        current_app.logger.info("Job created.", extra={'status': api_response.status})
+        try:
+            api_instance.create_namespaced_deployment(body=job, namespace=namespace)
+            current_app.logger.info("Request deployment created.")
+        except ApiException as e:
+            current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
-        # Create job
         try:
-            api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
+            api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa,
                 namespace=namespace)
-            current_app.logger.info("Job created.", extra={'status': api_response.status})
+            current_app.logger.info("HPA created.")
         except ApiException as e:
             current_app.logger.exception(f"Exception during HPA Creation: {e}")
 

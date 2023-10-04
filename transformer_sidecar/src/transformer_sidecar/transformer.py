@@ -269,14 +269,13 @@ def callback(channel, method, properties, body):
 
         if transform_success:
             servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
-                                       num_messages=0,
                                        total_time=total_time,
                                        total_events=transformer_stats.total_events,
                                        total_bytes=transformer_stats.file_size
                                        )
         else:
             servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
-                                       status='failure', num_messages=0,
+                                       status='failure',
                                        total_time=0, total_events=0,
                                        total_bytes=0)
 
@@ -301,7 +300,7 @@ def callback(channel, method, properties, body):
                               body=json.dumps(transform_request))
 
         servicex.put_file_complete(_request_id, file_path=_file_paths[0], file_id=_file_id,
-                                   status='failure', num_messages=0,
+                                   status='failure',
                                    total_time=0, total_events=0,
                                    total_bytes=0)
     finally:

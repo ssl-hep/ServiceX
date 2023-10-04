@@ -14,7 +14,6 @@ class TestTransformStatus(ResourceTestBase):
         mock_files_failed = mocker.PropertyMock(return_value=2)
         servicex.models.TransformRequest.files_failed = mock_files_failed
         mock_statistics = mocker.PropertyMock(return_value={
-            "total-messages": 123,
             "min-time": 1,
             "max-time": 30,
             "avg-time": 15.55,
@@ -44,7 +43,6 @@ class TestTransformStatus(ResourceTestBase):
             'files-failed': mock_files_failed.return_value,
             'files-skipped': mock_files_failed.return_value,
             'stats': {
-                'total-messages': 123,
                 'min-time': 1,
                 'max-time': 30,
                 'avg-time': 15.55,

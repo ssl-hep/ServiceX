@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
 import re
+import os
 import zipfile
 from types import SimpleNamespace
 
@@ -417,7 +418,7 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, '--result-destination') == 'volume'
-            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--output-dir') == '/posix_volume' + os.sep + 'output-data'
             assert _arg_value(args, '--result-format') == 'parquet'
 
             posix_vol = next(filter(lambda v: v.name == 'posix-volume',
@@ -465,7 +466,7 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, '--result-destination') == 'volume'
-            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--output-dir') == '/posix_volume' + os.sep + 'output-data'
             assert _arg_value(args, '--result-format') == 'parquet'
 
             posix_vol = next(filter(lambda v: v.name == 'posix-volume',
