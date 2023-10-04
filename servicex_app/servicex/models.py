@@ -234,6 +234,21 @@ class TransformRequest(db.Model):
             return None
 
     @classmethod
+    def lookup_running(cls,  key: Union[str, int]) -> Optional['TransformRequest']:
+        """
+        Looks up TransformRequests in "Running" state state that needs a dataset
+        given by its dataset_id.
+        :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
+        If key is a numeric string, e.g. '17', it will be treated as an integer ID.
+        All other strings are assumed to be UUIDs (request_id).
+        :return result: TransformRequests, or None if not found.
+        """
+        try:
+            return cls.query.filter_by(did_id=key)
+        except NoResultFound:
+            return None
+
+    @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:
         req = cls.query.filter_by(request_id=key).one()
         req.files_completed = cls.files_completed + 1

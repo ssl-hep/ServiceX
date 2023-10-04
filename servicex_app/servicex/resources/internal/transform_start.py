@@ -26,9 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from datetime import datetime, timezone
 from flask import current_app
-from servicex.models import TransformRequest, Dataset, db
+from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
 from servicex.transformer_manager import TransformerManager
 
@@ -43,7 +42,7 @@ class TransformStart(ServiceXResource):
         x509_secret = config['TRANSFORMER_X509_SECRET']
         generated_code_cm = request_rec.generated_code_cm
 
-        request_rec.workers = min(request_rec.files, request_rec.workers)
+        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
 
         current_app.logger.info(
             f"Lunching {request_rec.workers} transformers.",
@@ -71,37 +70,41 @@ class TransformStart(ServiceXResource):
 
     def post(self, request_id):
 
-        submitted_request = TransformRequest.lookup(request_id)
+        # TO DO - remove it completely. transformers are started imediately.
+        # files are added to RMQ queues as they come.
+        pass
 
-        if submitted_request is None:
-            current_app.logger.error("Can't find request to start.",
-                                     extra={'requestId': request_id})
-            return 'Request not found', 400
+        # submitted_request = TransformRequest.lookup(request_id)
 
-        if submitted_request.status == "Canceled":
-            return {"message": "Transform request canceled by user."}, 409
-        elif submitted_request.status == "Running":
-            return {"message": "Transform already running."}, 408
+        # if submitted_request is None:
+        #     current_app.logger.error("Can't find request to start.",
+        #                              extra={'requestId': request_id})
+        #     return 'Request not found', 400
 
-        dataset = Dataset.find_by_id(submitted_request.did_id)
-        submitted_request.files = dataset.n_files
-        if not submitted_request.files:
-            submitted_request.status = 'Fatal'
-            submitted_request.finish_time = datetime.now(tz=timezone.utc)
-            submitted_request.failure_description = "No files in the dataset."
-            submitted_request.save_to_db()
-            db.session.commit()
-            return {"message": "Dataset does not exist or has no files."}, 407
+        # if submitted_request.status == "Canceled":
+        #     return {"message": "Transform request canceled by user."}, 409
+        # elif submitted_request.status == "Running":
+        #     return {"message": "Transform already running."}, 408
 
-        submitted_request.status = 'Running'
-        submitted_request.save_to_db()
+        # dataset = Dataset.find_by_id(submitted_request.did_id)
+        # submitted_request.files = dataset.n_files
+        # if not submitted_request.files:
+        #     submitted_request.status = 'Fatal'
+        #     submitted_request.finish_time = datetime.now(tz=timezone.utc)
+        #     submitted_request.failure_description = "No files in the dataset."
+        #     submitted_request.save_to_db()
+        #     db.session.commit()
+        #     return {"message": "Dataset does not exist or has no files."}, 407
 
-        self.lookup_result_processor.add_files_to_processing_queue(submitted_request)
+        # submitted_request.status = 'Running'
+        # submitted_request.save_to_db()
 
-        db.session.commit()
+        # self.lookup_result_processor.add_files_to_processing_queue(submitted_request)
 
-        if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-            TransformStart.start_transformers(
-                self.transformer_manager,
-                current_app.config,
-                submitted_request)
+        # db.session.commit()
+
+        # if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+        #     TransformStart.start_transformers(
+        #         self.transformer_manager,
+        #         current_app.config,
+        #         submitted_request)

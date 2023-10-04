@@ -284,8 +284,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
 
-        mock_processor.add_files_to_processing_queue.assert_called()
-        assert mock_processor.add_files_to_processing_queue.call_count == 1
+        mock_processor.add_all_files_to_processing_queue.assert_called()
+        assert mock_processor.add_all_files_to_processing_queue.call_count == 1
 
         with client.application.app_context():
             submitted_request = TransformRequest.lookup(request_id)

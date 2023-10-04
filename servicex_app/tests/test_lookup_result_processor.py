@@ -36,17 +36,17 @@ class TestLookupResultProcessor(ResourceTestBase):
         import servicex
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
-        mocker.patch.object(
-            servicex.models.TransformRequest,
-            'all_files',
-            [self._generate_datafile()])
+        # mocker.patch.object(
+        #     servicex.models.TransformRequest,
+        #     'all_files',
+        #     [self._generate_datafile()])
 
         request = self._generate_transform_request()
         request.result_destination = 'object-store'
 
         client = self._test_client()
         with client.application.app_context():
-            processor.add_files_to_processing_queue(request)
+            processor.add_files_to_processing_queue(request, [self._generate_datafile()])
 
             mock_rabbit_adaptor.basic_publish.assert_called_once()
 

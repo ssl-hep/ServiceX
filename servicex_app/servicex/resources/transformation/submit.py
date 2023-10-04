@@ -111,7 +111,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
             did_name = ''
-            if did:
+            if did:  # dataset given.
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
                 )
@@ -120,7 +120,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
                 did_name = parsed_did.full_did
-            else:
+            else:  # no dataset, only a list of files given
                 did_name = str(hash(str(file_list)))
 
             # Check if this dataset is already in the DB.
@@ -131,7 +131,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     name=did_name,
                     last_used=datetime.now(tz=timezone.utc),
                     last_updated=datetime.fromtimestamp(0),
-                    lookup_status='',
+                    lookup_status='created',
                     did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
                 )
                 dataset.save_to_db()
@@ -140,7 +140,8 @@ class SubmitTransformationRequest(ServiceXResource):
             else:
                 current_app.logger.info('dataset found in the db', extra={'requestId': request_id})
 
-            if dataset.lookup_status == '' and not did:
+            if dataset.lookup_status == 'created' and not did:
+                # adding files to the alreday created dataset
                 current_app.logger.info("individual paths given", extra={
                     'requestId': str(request_id)})
                 for paths in file_list:
@@ -231,7 +232,7 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec.save_to_db()
 
             db.session.refresh(dataset)
-            if dataset.lookup_status == '':
+            if dataset.lookup_status == 'created':
                 current_app.logger.info("new dataset", extra={
                                         'requestId': str(request_id)})
                 if did:
@@ -255,19 +256,18 @@ class SubmitTransformationRequest(ServiceXResource):
                 current_app.logger.info("dataset already complete", extra={
                                         'requestId': str(request_id)})
                 request_rec.files = dataset.n_files
-                request_rec.status = 'Running'
-                db.session.commit()
+                self.lookup_result_processor.add_all_files_to_processing_queue(request_rec)
 
-                self.lookup_result_processor.add_files_to_processing_queue(request_rec)
+            # starts transformers independently of the state of dataset.
 
-                # starts transformers
-
-                if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                    TransformStart.start_transformers(
-                        self.transformer_manager,
-                        current_app.config,
-                        request_rec
-                    )
+            request_rec.status = 'Running'
+            db.session.commit()
+            if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                TransformStart.start_transformers(
+                    self.transformer_manager,
+                    current_app.config,
+                    request_rec
+                )
 
             current_app.logger.info("Transformation request submitted!",
                                     extra={'requestId': request_id})

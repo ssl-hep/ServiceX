@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-from servicex.models import TransformRequest
+# from servicex.models import TransformRequest
 from flask import current_app
 
 # TODO rename to something more descriptive
@@ -37,11 +37,12 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor = rabbitmq_adaptor
         self.advertised_endpoint = advertised_endpoint
 
-    def increment_files_in_request(self, submitted_request):
-        TransformRequest.add_a_file(submitted_request.request_id)
+    # TODO remove as it is never used.
+    # def increment_files_in_request(self, submitted_request):
+    #     TransformRequest.add_a_file(submitted_request.request_id)
 
-    def add_files_to_processing_queue(self, request):
-        for file_record in request.all_files:
+    def add_files_to_processing_queue(self, request, files):
+        for file_record in files:
             transform_request = {
                 'request-id': request.request_id,
                 'file-id': file_record.id,
@@ -58,5 +59,5 @@ class LookupResultProcessor:
                                                 routing_key=request.request_id,
                                                 body=json.dumps(transform_request))
 
-        current_app.logger.info("Added all files to processing queue", extra={
+        current_app.logger.info("Added files to processing queue", extra={
             'requestId': request.request_id})
