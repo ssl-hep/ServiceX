@@ -41,7 +41,9 @@ class LookupResultProcessor:
     # def increment_files_in_request(self, submitted_request):
     #     TransformRequest.add_a_file(submitted_request.request_id)
 
-    def add_files_to_processing_queue(self, request, files):
+    def add_files_to_processing_queue(self, request, files=None):
+        if files is None:
+            files = request.all_files
         for file_record in files:
             transform_request = {
                 'request-id': request.request_id,
