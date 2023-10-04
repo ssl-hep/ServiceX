@@ -257,7 +257,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 current_app.logger.info("dataset already complete", extra={
                                         'requestId': str(request_id)})
                 request_rec.files = dataset.n_files
-                self.lookup_result_processor.add_all_files_to_processing_queue(request_rec)
+                self.lookup_result_processor.add_files_to_processing_queue(request_rec)
 
             # starts transformers independently of the state of dataset.
 
