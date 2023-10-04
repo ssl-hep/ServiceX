@@ -381,9 +381,9 @@ class Dataset(db.Model):
     last_used = db.Column(db.DateTime, nullable=False)
     last_updated = db.Column(db.DateTime, nullable=True)
     did_finder = db.Column(db.String(64), nullable=False)
-    n_files = db.Column(db.Integer, nullable=True)
-    size = db.Column(db.BigInteger, nullable=True)
-    events = db.Column(db.BigInteger, nullable=True)
+    n_files = db.Column(db.Integer, default=0, nullable=True)
+    size = db.Column(db.BigInteger, default=0, nullable=True)
+    events = db.Column(db.BigInteger, default=0, nullable=True)
     lookup_status = db.Column(db.String(16), nullable=False)
 
     def save_to_db(self):
