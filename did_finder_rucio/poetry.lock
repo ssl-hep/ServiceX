@@ -395,13 +395,13 @@ files = [
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "1.4.5"
+version = "1.4.6"
 description = "ServiceX DID Library Routines"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "servicex_did_finder_lib-1.4.5-py3-none-any.whl", hash = "sha256:b7cdd50265e73813ce7f7c4330628917482f782d2b52e9c0660a8d57fd7a1682"},
-    {file = "servicex_did_finder_lib-1.4.5.tar.gz", hash = "sha256:5eca16425dc9271e821ab6e904071511c0578b7dc1be8d593533198e18ba3f46"},
+    {file = "servicex_did_finder_lib-1.4.6-py3-none-any.whl", hash = "sha256:8c667a1643d3b33d6ba55f2e3402033cbdba54e6cef35fdbd8931422c45bf5f6"},
+    {file = "servicex_did_finder_lib-1.4.6.tar.gz", hash = "sha256:707f31cfe683f17e85e7ce566005de349d526b96504432c9c46e8c43abea8be1"},
 ]
 
 [package.dependencies]
@@ -451,4 +451,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "64c8a3364cee4bfc8bd049ee4e2608e0a8107a36553c819d54d4f277113d00f1"
+content-hash = "280c7e1d364db746bc2d5051cf29630c8e118eecc963771c203e22be2627a8e7"
