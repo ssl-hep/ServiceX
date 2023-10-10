@@ -194,6 +194,35 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
                 mock_rabbit_adaptor)
 
+    def test_submit_transformation_existing_dataset(self, mocker, mock_rabbit_adaptor,
+                                                    mock_dataset_manager, mock_app_version):
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor)
+
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            request['did'] = '123-45-678'  # No scheme
+            mock_dataset_manager.return_value.is_lookup_required= False
+            mock_dataset_manager.return_value.is_complete= True
+            mock_dataset_manager.return_value.dataset.id = 256
+
+            response = client.post('/servicex/transformation',
+                                   json=request,
+                                   headers=self.fake_header()
+                                   )
+            assert response.status_code == 200
+            request_id = response.json['request_id']
+            saved_obj = TransformRequest.lookup(request_id)
+            assert saved_obj
+            assert saved_obj.did == 'rucio://123-45-678'
+            assert saved_obj.did_id == 256
+
+            mock_dataset_manager.assert_called_with(did='rucio://123-45-678')
+            mock_dataset_manager.return_value.submit_lookup_request.assert_not_called()
+            mock_dataset_manager.return_value.publish_files.assert_called_with(ANY, mock_processor)
+
     def test_submit_transformation_with_root_file(self, mock_rabbit_adaptor,
                                                   mock_code_gen_service,
                                                   mock_dataset_manager,
