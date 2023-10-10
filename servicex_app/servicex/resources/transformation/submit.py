@@ -25,15 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
 import uuid
 from datetime import datetime, timezone
 
 from flask import current_app
 from flask_restful import reqparse
+from servicex.dataset_manager import DatasetManager
 from servicex.decorators import auth_required
 from servicex.did_parser import DIDParser
-from servicex.models import DatasetFile, Dataset, TransformRequest, db
+from servicex.models import TransformRequest, db
 from servicex.resources.internal.transform_start import TransformStart
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
@@ -110,7 +110,8 @@ class SubmitTransformationRequest(ServiceXResource):
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
-            did_name = ''
+
+            dataset_manager = None
             if did:  # dataset given.
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
@@ -119,43 +120,9 @@ class SubmitTransformationRequest(ServiceXResource):
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
                     current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
-                did_name = parsed_did.full_did
+                dataset_manager = DatasetManager(did_name=parsed_did.full_did)
             else:  # no dataset, only a list of files given
-                did_name = str(hash(str(file_list)))
-
-            # Check if this dataset is already in the DB.
-            dataset = Dataset.find_by_name(did_name)
-            if not dataset:
-                current_app.logger.info('dataset not in the db', extra={'requestId': request_id})
-                dataset = Dataset(
-                    name=did_name,
-                    last_used=datetime.now(tz=timezone.utc),
-                    last_updated=datetime.fromtimestamp(0),
-                    lookup_status='created',
-                    did_finder=config['DID_FINDER_DEFAULT_SCHEME'] if did else 'user'
-                )
-                dataset.save_to_db()
-                msg = f'new dataset created: {dataset.to_json()}'
-                current_app.logger.info(msg, extra={'requestId': str(request_id)})
-            else:
-                current_app.logger.info('dataset found in the db', extra={'requestId': request_id})
-
-            if dataset.lookup_status == 'created' and not did:
-                # adding files to the alreday created dataset
-                current_app.logger.info("individual paths given", extra={
-                    'requestId': str(request_id)})
-                for paths in file_list:
-                    file_record = DatasetFile(
-                        dataset_id=dataset.id,
-                        paths=paths,
-                        adler32="xxx",
-                        file_events=0,
-                        file_size=0
-                    )
-                    file_record.save_to_db()
-                dataset.n_files = len(file_list)
-                dataset.lookup_status = 'complete'
-                db.session.commit()
+                dataset_manager = DatasetManager(file_list=file_list)
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -168,8 +135,8 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
-                did=did_name,
-                did_id=dataset.id,
+                did=dataset_manager.name,
+                did_id=dataset_manager.dataset.id,
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -232,34 +199,18 @@ class SubmitTransformationRequest(ServiceXResource):
 
             request_rec.save_to_db()
 
-            db.session.refresh(dataset)
-            if dataset.lookup_status == 'created':
-                current_app.logger.info("new dataset", extra={
-                                        'requestId': str(request_id)})
-                if did:
-                    current_app.logger.info("adding dataset lookup to RMQ", extra={
-                        'requestId': str(request_id)})
-                    did_request = {
-                        "dataset_id": dataset.id,
-                        "did": parsed_did.did,
-                        "endpoint": self._generate_advertised_endpoint(
+            # db.session.refresh(dataset)
+            if dataset_manager.is_lookup_required:
+                dataset_manager.submit_lookup_request(self._generate_advertised_endpoint(
                             "servicex/internal/transformation/"
-                        )
-                    }
-                    self.rabbitmq_adaptor.basic_publish(exchange='',
-                                                        routing_key=parsed_did.microservice_queue,
-                                                        body=json.dumps(did_request))
-                    dataset.lookup_status = 'looking'
-                    db.session.commit()
+                        ), self.rabbitmq_adaptor)
 
-            elif dataset.lookup_status == 'complete':
+            elif dataset_manager.is_complete:
                 current_app.logger.info("dataset already complete", extra={
                                         'requestId': str(request_id)})
-                request_rec.files = dataset.n_files
-                self.lookup_result_processor.add_files_to_processing_queue(request_rec)
+                dataset_manager.publish_files(request_rec, self.lookup_result_processor)
 
             # starts transformers independently of the state of dataset.
-
             request_rec.status = 'Running'
             db.session.commit()
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
