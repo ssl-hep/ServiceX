@@ -25,13 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
+from unittest.mock import ANY
 from unittest.mock import call
 
-from servicex import LookupResultProcessor
+import pytest
+from pytest import fixture
 from servicex.models import TransformRequest
 from tests.resource_test_base import ResourceTestBase
-import pytest
+
+from servicex import LookupResultProcessor
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):
@@ -59,6 +61,15 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'workers': 10,
             'codegen': 'atlasxaod'
         }
+
+    @fixture
+    def mock_dataset_manager(self, mocker):
+        dm = mocker.Mock()
+        dm.dataset = mocker.Mock()
+        dm.dataset.id = 123
+        dm.name = "rucio://123-45-678"
+        mock_datamanager_cls = mocker.patch("servicex.resources.transformation.submit.DatasetManager", return_value=dm)
+        return mock_datamanager_cls
 
     def test_submit_transformation_request_bad(self, client):
         resp = client.post('/servicex/transformation', json={'timestamp': '20190101'})
@@ -102,35 +113,35 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" in response.json[
             "message"]
 
-    @pytest.mark.skip(reason="Needs fix of fake_header")
     def test_submit_transformation_request_throws_exception(
-        self, mocker, mock_rabbit_adaptor
+        self, mocker, mock_rabbit_adaptor, mock_dataset_manager
     ):
-        mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
+        with self._test_client().application.app_context():
+            mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
+            client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+
+            response = client.post('/servicex/transformation',
+                                   json=self._generate_transformation_request(),
+                                   headers=self.fake_header()
+                                   )
+            assert response.status_code == 503
+            assert response.json == {"message": "Error setting up transformer queues"}
+
+    def test_submit_transformation(self, mock_rabbit_adaptor, mock_dataset_manager, mock_app_version):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-
-        response = client.post('/servicex/transformation',
-                               json=self._generate_transformation_request(),
-                               headers=self.fake_header()
-                               )
-        assert response.status_code == 503
-        assert response.json == {"message": "Error setting up transformer queues"}
-
-    @pytest.mark.skip(reason="Needs fix for fake header and new DB (waiting for the lookup.)")
-    def test_submit_transformation(self, mock_rabbit_adaptor, mock_app_version):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        request = self._generate_transformation_request()
-
-        response = client.post('/servicex/transformation',
-                               json=request,
-                               headers=self.fake_header(),
-                               query_string={'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
-        assert response.status_code == 200
-        request_id = response.json['request_id']
         with client.application.app_context():
+            request = self._generate_transformation_request()
+
+            response = client.post('/servicex/transformation',
+                                   json=request,
+                                   headers=self.fake_header(),
+                                   query_string={'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
+            assert response.status_code == 200
+            request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.did == 'rucio://123-45-678'
+            assert saved_obj.did_id == 123
             assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
@@ -141,133 +152,72 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.app_version == "3.14.15"
             assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
 
-        setup_queue_calls = [call(request_id), call(request_id+"_errors")]
-        mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
-        mock_rabbit_adaptor.setup_exchange.assert_has_calls([
-            call('transformation_requests'),
-            call('transformation_failures')
-        ])
+            setup_queue_calls = [call(request_id), call(request_id+"_errors")]
+            mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+            mock_rabbit_adaptor.setup_exchange.assert_has_calls([
+                call('transformation_requests'),
+                call('transformation_failures')
+            ])
 
-        bind_to_exchange_calls = [
-            call(exchange="transformation_requests", queue=request_id),
-            call(exchange="transformation_failures", queue=request_id+"_errors"),
-        ]
+            bind_to_exchange_calls = [
+                call(exchange="transformation_requests", queue=request_id),
+                call(exchange="transformation_failures", queue=request_id+"_errors"),
+            ]
 
-        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
+            assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
-        service_endpoint = \
-            "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
-            request_id
-        publish_body = {
-            "request_id": request_id,
-            "did": "123-45-678",
-            "service-endpoint": service_endpoint
-        }
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='',
-            routing_key='rucio_did_requests',
-            body=json.dumps(publish_body)
-        )
+            mock_dataset_manager.assert_called_with(did='rucio://123-45-678')
+            mock_dataset_manager.return_value.submit_lookup_request.assert_called_with(
+                'http://cern.analysis.ch:5000/servicex/internal/transformation/',
+                mock_rabbit_adaptor)
 
-    @pytest.mark.skip(reason="Needs fix of fake_header and new DB (waiting for the lookup.)")
-    def test_submit_transformation_default_scheme(self, mock_rabbit_adaptor, mock_app_version):
+    def test_submit_transformation_default_scheme(self, mock_rabbit_adaptor,
+                                                  mock_dataset_manager, mock_app_version):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        request = self._generate_transformation_request()
-        request['did'] = '123-45-678'  # No scheme
-
-        response = client.post('/servicex/transformation',
-                               json=request,
-                               headers=self.fake_header()
-                               )
-        assert response.status_code == 200
-        request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.lookup(request_id)
-            assert saved_obj
-            assert saved_obj.did == 'rucio://123-45-678'
+            request = self._generate_transformation_request()
+            request['did'] = '123-45-678'  # No scheme
 
-        service_endpoint = \
-            "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
-            request_id
-        publish_body = {
-            "request_id": request_id,
-            "did": "123-45-678",
-            "service-endpoint": service_endpoint
-        }
-        mock_rabbit_adaptor.basic_publish.assert_called_with(
-            exchange='',
-            routing_key='rucio_did_requests',
-            body=json.dumps(publish_body)
-        )
+            response = client.post('/servicex/transformation',
+                                   json=request,
+                                   headers=self.fake_header()
+                                   )
+            assert response.status_code == 200
+            request_id = response.json['request_id']
+            with client.application.app_context():
+                saved_obj = TransformRequest.lookup(request_id)
+                assert saved_obj
+                assert saved_obj.did == 'rucio://123-45-678'
 
-    @pytest.mark.skip(reason="Needs fix of fake_header and new DB (waiting for the lookup.)")
-    def test_submit_transformation_with_root_file(
-        self, mocker, mock_rabbit_adaptor, mock_code_gen_service, mock_app_version
-    ):
+            mock_dataset_manager.assert_called_with(did='rucio://123-45-678')
+            mock_dataset_manager.return_value.submit_lookup_request.assert_called_with(
+                'http://cern.analysis.ch:5000/servicex/internal/transformation/',
+                mock_rabbit_adaptor)
+
+    def test_submit_transformation_with_root_file(self, mock_rabbit_adaptor,
+                                                  mock_code_gen_service,
+                                                  mock_dataset_manager,
+                                                  mock_app_version):
         mock_code_gen_service.generate_code_for_selection.return_value = ('my-cm',
                                                                           'scala', 'echo',
                                                                           'ssl-hep/func_adl:latest')
 
-        request = self._generate_transformation_request_xAOD_root_file()
-
         client = self._test_client(
             rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_code_gen_service
         )
-
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-
-        assert response.status_code == 200
-        request_id = response.json['request_id']
-
         with client.application.app_context():
-            saved_obj = TransformRequest.lookup(request_id)
-            assert saved_obj
-            assert saved_obj.did == 'rucio://123-45-678'
-            assert saved_obj.request_id == request_id
-            assert saved_obj.columns is None
-            assert saved_obj.selection == 'test-string'
-            assert saved_obj.image == 'ssl-hep/func_adl:latest'
-            assert saved_obj.workers == 10
-            assert saved_obj.result_destination == 'object-store'
-            assert saved_obj.result_format == 'root-file'
-            assert saved_obj.generated_code_cm == 'my-cm'
-            assert saved_obj.app_version == "3.14.15"
-            assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
+            request = self._generate_transformation_request_xAOD_root_file()
 
-        setup_queue_calls = [call(request_id), call(request_id+"_errors")]
-        mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
 
-        bind_to_exchange_calls = [
-            call(exchange="transformation_requests", queue=request_id),
-            call(exchange="transformation_failures", queue=request_id+"_errors"),
-        ]
+            assert response.status_code == 200
+            mock_dataset_manager.assert_called_with(did='rucio://123-45-678')
 
-        assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
-
-        service_endpoint = \
-            "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
-            request_id
-
-        mock_rabbit_adaptor. \
-            basic_publish.assert_called_with(exchange='',
-                                             routing_key='rucio_did_requests',
-                                             body=json.dumps(
-                                                 {
-                                                     "request_id": request_id,
-                                                     "did": "123-45-678",
-                                                     "service-endpoint": service_endpoint}
-                                             ))
-
-    @pytest.mark.skip(reason="Needs fix of fake_header")
-    def test_submit_transformation_file_list(self, mocker):
+    def test_submit_transformation_file_list(self, mocker, mock_rabbit_adaptor, mock_dataset_manager, mock_app_version):
         from servicex.transformer_manager import TransformerManager
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-
-        request = self._generate_transformation_request()
-        request['did'] = None
-        request['file-list'] = ["file1", "file2"]
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         cfg = {
@@ -279,15 +229,21 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    lookup_result_processor=mock_processor,
                                    transformation_manager=mock_transformer_manager)
 
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-        assert response.status_code == 200
-        request_id = response.json['request_id']
-
-        mock_processor.add_all_files_to_processing_queue.assert_called()
-        assert mock_processor.add_all_files_to_processing_queue.call_count == 1
-
         with client.application.app_context():
+            request = self._generate_transformation_request()
+            request['did'] = None
+            request['file-list'] = ["file1", "file2"]
+
+            mock_dataset_manager.return_value.is_lookup_required = False
+
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
+            assert response.status_code == 200
+            mock_dataset_manager.return_value.submit_lookup_request.assert_not_called()
+            mock_dataset_manager.assert_called_with(file_list=["file1", "file2"])
+            mock_dataset_manager.return_value.publish_files.assert_called_with(ANY, mock_processor)
+
+            request_id = response.json['request_id']
             submitted_request = TransformRequest.lookup(request_id)
 
             mock_transformer_manager. \
@@ -305,7 +261,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                     x509_secret='my-x509-secret')
 
     def test_submit_transformation_request_bad_image(
-        self, mocker, mock_docker_repo_adapter
+        self, mocker, mock_docker_repo_adapter, mock_dataset_manager
     ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
         client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter)
@@ -315,32 +271,33 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 400
         assert response.json == {"message": "Requested transformer docker image doesn't exist: " + request["image"]}  # noqa: E501
 
-    @pytest.mark.skip(reason="Needs fix of fake_header and new DB (waiting for the lookup.)")
     def test_submit_transformation_request_no_docker_check(
-        self, mocker, mock_docker_repo_adapter
+        self, mocker, mock_docker_repo_adapter, mock_dataset_manager
     ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
         client = self._test_client(
             extra_config={'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False},
             docker_repo_adapter=mock_docker_repo_adapter,
         )
-        request = self._generate_transformation_request()
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-        assert response.status_code == 200
-        mock_docker_repo_adapter.check_image_exists.assert_not_called()
+        with client.application.app_context():
 
-    @pytest.mark.skip(reason="Needs fix of fake_header")
+            request = self._generate_transformation_request()
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
+            assert response.status_code == 200
+            mock_docker_repo_adapter.check_image_exists.assert_not_called()
+
     def test_submit_transformation_with_root_file_selection_error(
-        self, mocker, mock_code_gen_service
+        self, mocker, mock_code_gen_service, mock_dataset_manager
     ):
         mock_code_gen_service.generate_code_for_selection = \
             mocker.Mock(side_effect=ValueError('This is the error message'))
-        request = self._generate_transformation_request_xAOD_root_file()
         client = self._test_client(code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-        assert response.status_code == 400
+        with client.application.app_context():
+            request = self._generate_transformation_request_xAOD_root_file()
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
+            assert response.status_code == 400
 
     def test_submit_transformation_missing_dataset_source(self, client):
         request = self._generate_transformation_request()
@@ -356,8 +313,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    @pytest.mark.skip(reason="Needs fix of fake_header and new DB (waiting for the lookup.)")
-    def test_submit_transformation_with_object_store(self, mocker):
+    def test_submit_transformation_with_object_store(self, mocker, mock_dataset_manager):
         from servicex import ObjectStoreManager
 
         local_config = {
@@ -371,48 +327,48 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             extra_config=local_config,
             object_store=mock_object_store
         )
-        request = self._generate_transformation_request(**{
-            "result-destination": "object-store",
-            "result-format": "parquet"
-        })
-
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-        assert response.status_code == 200
-        request_id = response.json['request_id']
-
-        mock_object_store.create_bucket.assert_called_with(request_id)
         with client.application.app_context():
-            saved_obj = TransformRequest.lookup(request_id)
-            assert saved_obj
-            assert saved_obj.result_destination == 'object-store'
-            assert saved_obj.result_format == 'parquet'
+            request = self._generate_transformation_request(**{
+                "result-destination": "object-store",
+                "result-format": "parquet"
+            })
 
-    @pytest.mark.skip(reason="Needs fix of fake_header")
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
+            assert response.status_code == 200
+            request_id = response.json['request_id']
+
+            mock_object_store.create_bucket.assert_called_with(request_id)
+            with client.application.app_context():
+                saved_obj = TransformRequest.lookup(request_id)
+                assert saved_obj
+                assert saved_obj.result_destination == 'object-store'
+                assert saved_obj.result_format == 'parquet'
+
     def test_submit_transformation_auth_enabled(
-        self, mock_jwt_extended, mock_requesting_user
+        self, mock_jwt_extended, mock_requesting_user, mock_dataset_manager
     ):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
-        response = client.post('/servicex/transformation',
-                               json=self._generate_transformation_request(),
-                               headers=self.fake_header())
-        assert response.status_code == 200
-        request_id = response.json['request_id']
-
         with client.application.app_context():
+
+            response = client.post('/servicex/transformation',
+                                   json=self._generate_transformation_request(),
+                                   headers=self.fake_header())
+            assert response.status_code == 200
+            request_id = response.json['request_id']
+
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.submitted_by == mock_requesting_user.id
 
-    @pytest.mark.skip(reason="Needs fix of fake_header and new DB (waiting for the lookup.)")
-    def test_submit_transformation_with_title(self, client):
-        title = "Things Fall Apart"
-        request = self._generate_transformation_request(title=title)
-        response = client.post('/servicex/transformation',
-                               json=request, headers=self.fake_header())
-        assert response.status_code == 200
-        request_id = response.json['request_id']
+    def test_submit_transformation_with_title(self, client, mock_dataset_manager):
         with client.application.app_context():
+            title = "Things Fall Apart"
+            request = self._generate_transformation_request(title=title)
+            response = client.post('/servicex/transformation',
+                                   json=request, headers=self.fake_header())
+            assert response.status_code == 200
+            request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.title == title

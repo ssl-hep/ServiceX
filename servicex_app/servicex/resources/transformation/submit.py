@@ -120,7 +120,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
                     current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
-                dataset_manager = DatasetManager(did_name=parsed_did.full_did)
+                dataset_manager = DatasetManager(did=parsed_did.full_did)
             else:  # no dataset, only a list of files given
                 dataset_manager = DatasetManager(file_list=file_list)
 
