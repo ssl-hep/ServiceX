@@ -30,8 +30,10 @@ import pytest
 from pytest import fixture
 from servicex.dataset_manager import DatasetManager
 from servicex.did_parser import DIDParser
-from servicex.models import Dataset, DatasetFile
+from servicex.models import Dataset, DatasetFile, TransformRequest
 from tests.resource_test_base import ResourceTestBase
+
+from servicex.lookup_result_processor import LookupResultProcessor
 
 
 def mock_dataset(status: str, mocker) -> Dataset:
@@ -103,6 +105,15 @@ class TestDatasetManager(ResourceTestBase):
         call1 = mock_dataset_file_cls.call_args_list[1]
         assert call1.kwargs['paths'] == file_list[1]
 
+    def test_existing_dataset(self, mocker, mock_dataset_cls):
+        ds = mock_dataset("complete", mocker)
+        mock_dataset_cls.find_by_name.return_value = ds
+        d = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
+        mock_dataset_cls.assert_not_called()
+        assert d.dataset is not None
+        assert d.name == "rucio://my-did?files=1"
+
+
     def test_lookup_not_required_filelist(self, mock_dataset_cls, mock_dataset_file_cls):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
         d = DatasetManager(file_list=file_list)
@@ -124,3 +135,27 @@ class TestDatasetManager(ResourceTestBase):
 
         d.dataset = mock_dataset("complete", mocker)
         assert d.is_complete
+
+    def test_submit_lookup_request(self, mocker, mock_dataset_cls, mock_dataset_file_cls):
+        mock_rabbit = mocker.Mock()
+        d = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
+        d.submit_lookup_request("http://hit-me/here", mock_rabbit)
+
+        mock_rabbit.basic_publish.assert_called_with(exchange="",
+                                                     routing_key='rucio_did_requests',
+                                                     body='{"dataset_id": "da-tas-et-id", '
+                                                          '"did": "my-did?files=1", '
+                                                           '"endpoint": "http://hit-me/here"}')
+
+    def test_publish_files(self, mocker, mock_dataset_cls, mock_dataset_file_cls):
+        mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
+        file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+        transform_request = TransformRequest()
+        transform_request.request_id = "462-33"
+        transform_request.selection = "test-string"
+
+        d = DatasetManager(file_list=file_list)
+        d.dataset.n_files=2
+        d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
+        assert transform_request.files == 2
+        mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=file_list)
