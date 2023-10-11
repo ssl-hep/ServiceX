@@ -36,7 +36,7 @@ from servicex.models import Dataset, DatasetFile, TransformRequest
 
 
 class DatasetManager:
-    def __init__(self, did: DIDParser = None, file_list: List[str] = None):
+    def __init__(self, did: DIDParser = None, file_list: List[str] = None, dataset_id: int = None):
         """
         Create a dataset manager for a given dataset. The dataset can be specified either
         by a DID or a list of files. If a list of files is specified, the dataset name
@@ -45,29 +45,37 @@ class DatasetManager:
         Raises:
             ValueError: If neither did nor file_list is specified or if both are specified
         """
-        if not (bool(did) ^ bool(file_list)):
-            raise ValueError("Must specify either did or file_list")
+        # Are we creating a new dataset or looking up an existing one?
+        if dataset_id:
+            self.dataset = Dataset.find_by_id(dataset_id)
+            if not self.dataset:
+                raise ValueError(f"Dataset with id {dataset_id} not found")
+            self.did = DIDParser(self.dataset.name)
 
-        self.did = did
-        self.file_list = file_list
+        else:
+            if not (bool(did) ^ bool(file_list)):
+                raise ValueError("Must specify either did or file_list")
 
-        self.dataset = Dataset.find_by_name(self.name)
+            self.did = did
+            self.file_list = file_list
 
-        if not self.dataset:
-            self.dataset = Dataset(
-                name=self.name,
-                last_used=datetime.now(tz=timezone.utc),
-                last_updated=datetime.fromtimestamp(0),
-                lookup_status='created',
-                did_finder=self.did.scheme if self.did else 'user'
-            )
-            self.dataset.save_to_db()
+            self.dataset = Dataset.find_by_name(self.name)
 
-            # If this is a new filelist we can go ahead and add the files to the dataset
-            if self.file_list and self.dataset.lookup_status == 'created':
-                for file in file_list:
-                    self.add_file(file)
-                    self.dataset.lookup_status = "complete"
+            if not self.dataset:
+                self.dataset = Dataset(
+                    name=self.name,
+                    last_used=datetime.now(tz=timezone.utc),
+                    last_updated=datetime.fromtimestamp(0),
+                    lookup_status='created',
+                    did_finder=self.did.scheme if self.did else 'user'
+                )
+                self.dataset.save_to_db()
+
+                # If this is a new filelist we can go ahead and add the files to the dataset
+                if self.file_list and self.dataset.lookup_status == 'created':
+                    for file in file_list:
+                        self.add_file(file)
+                        self.dataset.lookup_status = "complete"
 
     def add_file(self, paths: str) -> None:
         file_record = DatasetFile(
