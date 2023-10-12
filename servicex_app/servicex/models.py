@@ -27,10 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.mailgun_adaptor import MailgunAdaptor
@@ -371,6 +373,12 @@ class TransformationResult(db.Model):
         db.session.flush()
 
 
+class DatasetStatus(Enum):
+    created = "created"
+    looking = "looking"
+    complete = "complete"
+
+
 class Dataset(db.Model):
     __tablename__ = 'datasets'
 
@@ -382,7 +390,8 @@ class Dataset(db.Model):
     n_files = db.Column(db.Integer, default=0, nullable=True)
     size = db.Column(db.BigInteger, default=0, nullable=True)
     events = db.Column(db.BigInteger, default=0, nullable=True)
-    lookup_status = db.Column(db.String(16), nullable=False)
+    lookup_status = db.Column(db.Enum(DatasetStatus), nullable=False)
+    files = relationship("DatasetFile", back_populates="dataset")
 
     def save_to_db(self):
         db.session.add(self)
@@ -424,6 +433,7 @@ class DatasetFile(db.Model):
     file_size = db.Column(db.BigInteger, nullable=True)
     file_events = db.Column(db.BigInteger, nullable=True)
     paths = db.Column(db.Text(), unique=False, nullable=False)
+    dataset = relationship("Dataset", back_populates="files")
 
     def save_to_db(self):
         db.session.add(self)

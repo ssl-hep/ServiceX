@@ -25,15 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime, timezone
 
-import pytest
 from pytest import fixture
 from servicex.dataset_manager import DatasetManager
 from servicex.did_parser import DIDParser
-from servicex.models import Dataset, DatasetFile, TransformRequest
-from tests.resource_test_base import ResourceTestBase
-
 from servicex.lookup_result_processor import LookupResultProcessor
+from servicex.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
+from servicex.models import db
+from tests.resource_test_base import ResourceTestBase
 
 
 def mock_dataset(status: str, mocker) -> Dataset:
@@ -44,6 +44,10 @@ def mock_dataset(status: str, mocker) -> Dataset:
 
 
 class TestDatasetManager(ResourceTestBase):
+
+    @fixture
+    def client(self):
+        return self._test_client()
 
     @fixture
     def mock_dataset_cls(self, mocker):
@@ -68,94 +72,176 @@ class TestDatasetManager(ResourceTestBase):
         mock_dataset_cls = mocker.patch("servicex.dataset_manager.DatasetFile", return_value=mock_dataset_file)
         return mock_dataset_cls
 
-    def test_invalid_constructor(self, mock_dataset_cls, mock_dataset_file_cls):
-        with pytest.raises(ValueError):
-            DatasetManager()
+    def test_constructor(self, client):
+        with client.application.app_context():
+            d = Dataset()
+            d.name = "rucio://my-did?files=1"
+            dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
+            assert dm.dataset == d
 
-        with pytest.raises(ValueError):
-            DatasetManager(did="did", file_list=["file1", "file2"])
+    def test_from_new_did(self, client):
+        did = "rucio://my-did?files=1"
+        with client.application.app_context():
+            dm = DatasetManager.from_did(DIDParser(did), "123-456", logger=client.application.logger, db=db)
+            assert dm.dataset.name == did
+            assert dm.dataset.did_finder == "rucio"
+            assert dm.dataset.lookup_status == DatasetStatus.created
 
-        DatasetManager(did=DIDParser("did"))
-        DatasetManager(file_list=["file1", "file2"])
+            # See that the dataset is saved to the database
+            assert dm.dataset.id is not None
+            d_copy = Dataset.find_by_id(dm.dataset.id)
+            assert d_copy
+            assert d_copy.name == did
 
-    def test_dataset_from_did(self, mock_dataset_cls):
-        d = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
-        mock_dataset_cls.assert_called()
-        assert mock_dataset_cls.call_args.kwargs['name'] == "rucio://my-did?files=1"
-        assert mock_dataset_cls.call_args.kwargs['did_finder'] == "rucio"
-        assert mock_dataset_cls.call_args.kwargs['lookup_status'] == "created"
+    def test_from_existing_did(self, client):
+        did = "rucio://my-did?files=1"
+        with client.application.app_context():
+            d = Dataset(name=did, did_finder="rucio", lookup_status=DatasetStatus.looking,
+                        last_used=datetime.now(tz=timezone.utc),
+                        last_updated=datetime.fromtimestamp(0))
+            d.save_to_db()
+            dm = DatasetManager.from_did(DIDParser(did), "123-456", logger=client.application.logger, db=db)
+            assert dm.dataset.name == did
+            assert dm.dataset.did_finder == "rucio"
+            assert dm.dataset.lookup_status == DatasetStatus.looking
+            assert dm.dataset.id == d.id
 
-        assert d.name == "rucio://my-did?files=1"
-
-    def test_dataset_from_filelist(self, mock_dataset_cls, mock_dataset_file_cls):
+    def test_from_new_file_list(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
-        file_list_hash = "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
-        d = DatasetManager(file_list=file_list)
-        assert (d.name == file_list_hash)
+        with client.application.app_context():
+            dm = DatasetManager.from_file_list(file_list, "123-456", logger=client.application.logger, db=db)
+            assert dm.dataset.name == "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
+            assert dm.dataset.did_finder == "user"
+            assert dm.dataset.lookup_status == DatasetStatus.complete
 
-        mock_dataset_cls.assert_called()
-        assert mock_dataset_cls.call_args.kwargs['name'] == file_list_hash
-        assert mock_dataset_cls.call_args.kwargs['did_finder'] == "user"
-        assert mock_dataset_cls.call_args.kwargs['lookup_status'] == "created"
+            # See that the dataset is saved to the database
+            assert dm.dataset.id is not None
+            d_copy = Dataset.find_by_id(dm.dataset.id)
+            assert d_copy
+            assert d_copy.name == "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
 
-        mock_dataset_file_cls.assert_called()
-        call0 = mock_dataset_file_cls.call_args_list[0]
-        assert call0.kwargs['paths'] == file_list[0]
-        assert call0.kwargs['dataset_id'] == "da-tas-et-id"
-        call1 = mock_dataset_file_cls.call_args_list[1]
-        assert call1.kwargs['paths'] == file_list[1]
-
-    def test_existing_dataset(self, mocker, mock_dataset_cls):
-        ds = mock_dataset("complete", mocker)
-        mock_dataset_cls.find_by_name.return_value = ds
-        d = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
-        mock_dataset_cls.assert_not_called()
-        assert d.dataset is not None
-        assert d.name == "rucio://my-did?files=1"
-
-
-    def test_lookup_not_required_filelist(self, mock_dataset_cls, mock_dataset_file_cls):
+    def test_from_existing_file_list(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
-        d = DatasetManager(file_list=file_list)
-        d.dataset.lookupstatus = 'created'
-        assert not d.is_lookup_required
+        with client.application.app_context():
+            d = Dataset(name=DatasetManager.file_list_hash(file_list),
+                        did_finder="user", lookup_status=DatasetStatus.created,
+                        last_used=datetime.now(tz=timezone.utc),
+                        last_updated=datetime.fromtimestamp(0),
+                        files=[
+                            DatasetFile(
+                                paths=file,
+                                adler32="xxx",
+                                file_events=0,
+                                file_size=0
+                            ) for file in file_list
+                        ])
+            d.save_to_db()
+            dm = DatasetManager.from_file_list(file_list, "123-456", logger=client.application.logger, db=db)
+            assert dm.dataset.name == DatasetManager.file_list_hash(file_list)
+            assert dm.dataset.did_finder == "user"
+            assert dm.dataset.lookup_status == DatasetStatus.created
+            assert dm.dataset.id == d.id
 
-    def test_lookup_required_did(self, mock_dataset_cls, mock_dataset_file_cls):
-        d1 = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
-        assert d1.is_lookup_required
+    def test_lookup_required(self, client):
+        with client.application.app_context():
+            d = Dataset()
+            d.name = "rucio://my-did?files=1"
+            d.lookup_status = DatasetStatus.created
+            dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
 
-        d1.dataset.lookup_status = "complete"
-        assert not d1.is_lookup_required
+            assert dm.is_lookup_required
 
-    def test_is_complete(self, mock_dataset_cls, mock_dataset_file_cls, mocker):
-        file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
-        d = DatasetManager(file_list=file_list)
-        d.dataset = mock_dataset("created", mocker)
-        assert not d.is_complete
+            dm.dataset.lookup_status = DatasetStatus.complete
+            assert not dm.is_lookup_required
 
-        d.dataset = mock_dataset("complete", mocker)
-        assert d.is_complete
+            dm.dataset.lookup_status = DatasetStatus.looking
+            assert not dm.is_lookup_required
 
-    def test_submit_lookup_request(self, mocker, mock_dataset_cls, mock_dataset_file_cls):
+    def test_properties(self, client):
+        with client.application.app_context():
+            d = Dataset()
+            d.name = "rucio://my-did?files=1"
+            d.id = 42
+            d.lookup_status = DatasetStatus.created
+            dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
+
+            assert dm.name == "rucio://my-did?files=1"
+            assert dm.id == 42
+
+    def test_file_list(self, client):
+        with client.application.app_context():
+            file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+
+            d = DatasetManager.from_file_list(file_list, "123-456",
+                                              logger=client.application.logger, db=db)
+            assert d.file_paths == file_list
+
+    def test_dataset_name_file_list(self, client):
+        with client.application.app_context():
+            file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+
+            dm = DatasetManager.from_file_list(file_list, "123-456",
+                                               logger=client.application.logger, db=db)
+            assert dm.name == "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
+
+    def test_dataset_name_did(self, client):
+        with client.application.app_context():
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"), "123-456",
+                                         logger=client.application.logger, db=db)
+            assert dm.name == "rucio://my-did?files=1"
+
+    def test_refresh(self, client):
+        with client.application.app_context():
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"), "123-456",
+                                         logger=client.application.logger, db=db)
+
+            # To be fair, this test isn't really  verifying the refresh method, since
+            # SQLAlchemy is serving the dataset instance out of a shared cache
+            d2 = Dataset.find_by_id(dm.dataset.id)
+            d2.lookup_status = DatasetStatus.complete
+            d2.save_to_db()
+            dm.refresh()
+            assert dm.dataset.lookup_status == DatasetStatus.complete
+
+    def test_is_complete(self, client):
+        with client.application.app_context():
+            d = Dataset()
+            d.name = "rucio://my-did?files=1"
+            d.id = 42
+            d.lookup_status = DatasetStatus.created
+            dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
+
+            assert not dm.is_complete
+            d.lookup_status = DatasetStatus.looking
+            assert not dm.is_complete
+            d.lookup_status = DatasetStatus.complete
+            assert dm.is_complete
+
+    def test_submit_lookup_request(self, mocker, client):
         mock_rabbit = mocker.Mock()
-        d = DatasetManager(did=DIDParser("rucio://my-did?files=1"))
-        d.submit_lookup_request("http://hit-me/here", mock_rabbit)
+        with client.application.app_context():
+            d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"), request_id="123-456",
+                                        logger=client.application.logger, db=db)
+            d.submit_lookup_request("http://hit-me/here", mock_rabbit)
+
+            assert d.dataset.lookup_status == DatasetStatus.looking
 
         mock_rabbit.basic_publish.assert_called_with(exchange="",
                                                      routing_key='rucio_did_requests',
-                                                     body='{"dataset_id": "da-tas-et-id", '
+                                                     body='{"dataset_id": 1, '
                                                           '"did": "my-did?files=1", '
-                                                           '"endpoint": "http://hit-me/here"}')
+                                                          '"endpoint": "http://hit-me/here"}')
 
-    def test_publish_files(self, mocker, mock_dataset_cls, mock_dataset_file_cls):
-        mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
-        file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
-        transform_request = TransformRequest()
-        transform_request.request_id = "462-33"
-        transform_request.selection = "test-string"
+    def test_publish_files(self, mocker, client):
+        with client.application.app_context():
+            mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
+            file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+            transform_request = TransformRequest()
+            transform_request.request_id = "462-33"
+            transform_request.selection = "test-string"
 
-        d = DatasetManager(file_list=file_list)
-        d.dataset.n_files=2
-        d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
-        assert transform_request.files == 2
-        mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=file_list)
+            d = DatasetManager.from_file_list(file_list, transform_request.request_id,
+                                              logger=client.application.logger, db=db)
+            d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
+            assert transform_request.files == 2
+            mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=file_list)

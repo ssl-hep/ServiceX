@@ -111,8 +111,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
 
-            dataset_manager = None
-            if did:  # dataset given.
+            if did:
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
                 )
@@ -120,9 +119,15 @@ class SubmitTransformationRequest(ServiceXResource):
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
                     current_app.logger.warning(msg, extra={'requestId': request_id})
                     return {'message': msg}, 400
-                dataset_manager = DatasetManager(did=parsed_did.full_did)
+
+                dataset_manager = DatasetManager.from_did(parsed_did.full_did,
+                                                          request_id,
+                                                          logger=current_app.logger,
+                                                          db=db)
             else:  # no dataset, only a list of files given
-                dataset_manager = DatasetManager(file_list=file_list)
+                dataset_manager = DatasetManager.from_file_list(file_list, request_id,
+                                                                logger=current_app.logger,
+                                                                db=db)
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -136,7 +141,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_id=str(request_id),
                 title=args.get("title"),
                 did=dataset_manager.name,
-                did_id=dataset_manager.dataset.id,
+                did_id=dataset_manager.id,
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -198,13 +203,13 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {'message': "Error setting up transformer queues"}, 503
 
             request_rec.save_to_db()
+            dataset_manager.refresh()
 
-            # db.session.refresh(dataset)
+            # If this request has a fresh DID then submit the lookup request to the DID Finder
             if dataset_manager.is_lookup_required:
-                dataset_manager.submit_lookup_request(self._generate_advertised_endpoint(
-                            "servicex/internal/transformation/"
-                        ), self.rabbitmq_adaptor)
-
+                dataset_manager.submit_lookup_request(
+                    self._generate_advertised_endpoint("servicex/internal/transformation/"),
+                    self.rabbitmq_adaptor)
             elif dataset_manager.is_complete:
                 current_app.logger.info("dataset already complete", extra={
                                         'requestId': str(request_id)})
