@@ -28,86 +28,108 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from logging import Logger
 from typing import List
 
+from flask_sqlalchemy import SQLAlchemy
 from servicex.did_parser import DIDParser
 from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import Dataset, DatasetFile, TransformRequest
+from servicex.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
 
 
 class DatasetManager:
-    def __init__(self, did: DIDParser = None, file_list: List[str] = None, dataset_id: int = None):
-        """
-        Create a dataset manager for a given dataset. The dataset can be specified either
-        by a DID or a list of files. If a list of files is specified, the dataset name
-        will be the SHA256 hash of the list of files.
+    def __init__(self, dataset: Dataset, logger: Logger, db: SQLAlchemy):
+        self.dataset = dataset
+        self.did = None if dataset.did_finder == 'user' else DIDParser(dataset.name)
+        self.logger = logger
+        self.db = db
 
-        Raises:
-            ValueError: If neither did nor file_list is specified or if both are specified
-        """
-        # Are we creating a new dataset or looking up an existing one?
-        if dataset_id:
-            self.dataset = Dataset.find_by_id(dataset_id)
-            if not self.dataset:
-                raise ValueError(f"Dataset with id {dataset_id} not found")
-            self.did = DIDParser(self.dataset.name)
+        self.logger.debug(f"DatasetManager: {self.dataset.name}")
 
+    @classmethod
+    def from_did(cls, did: DIDParser, request_id: str, logger: Logger, db: SQLAlchemy):
+        dataset = Dataset.find_by_name(did.full_did)
+        if not dataset:
+            dataset = Dataset(
+                name=did.full_did,
+                last_used=datetime.now(tz=timezone.utc),
+                last_updated=datetime.fromtimestamp(0),
+                lookup_status=DatasetStatus.created,
+                did_finder=did.scheme
+            )
+            dataset.save_to_db()
+            logger.info(f"Created new dataset: {dataset.name}, id is {dataset.id}",
+                        extra={'request_id': request_id})
         else:
-            if not (bool(did) ^ bool(file_list)):
-                raise ValueError("Must specify either did or file_list")
+            logger.info(f"Found existing dataset: {dataset.name}, id is {dataset.id}",
+                        extra={'request_id': request_id})
 
-            self.did = did
-            self.file_list = file_list
+        return cls(dataset, logger, db)
 
-            self.dataset = Dataset.find_by_name(self.name)
+    @classmethod
+    def file_list_hash(cls, file_list: List[str]):
+        return hashlib.sha256(" ".join(file_list).encode()).hexdigest()
 
-            if not self.dataset:
-                self.dataset = Dataset(
-                    name=self.name,
-                    last_used=datetime.now(tz=timezone.utc),
-                    last_updated=datetime.fromtimestamp(0),
-                    lookup_status='created',
-                    did_finder=self.did.scheme if self.did else 'user'
-                )
-                self.dataset.save_to_db()
+    @classmethod
+    def from_file_list(cls, file_list: List[str], request_id: str, logger: Logger, db: SQLAlchemy):
+        name = cls.file_list_hash(file_list)
+        dataset = Dataset.find_by_name(name)
 
-                # If this is a new filelist we can go ahead and add the files to the dataset
-                if self.file_list and self.dataset.lookup_status == 'created':
-                    for file in file_list:
-                        self.add_file(file)
-                        self.dataset.lookup_status = "complete"
+        if not dataset:
+            dataset = Dataset(
+                name=name,
+                last_used=datetime.now(tz=timezone.utc),
+                last_updated=datetime.fromtimestamp(0),
+                lookup_status=DatasetStatus.complete,
+                did_finder='user',
+                files=[
+                    DatasetFile(
+                        paths=file,
+                        adler32="xxx",
+                        file_events=0,
+                        file_size=0
+                    ) for file in file_list
+                ]
+            )
 
-    def add_file(self, paths: str) -> None:
-        file_record = DatasetFile(
-            dataset_id=self.dataset.id,
-            paths=paths,
-            adler32="xxx",
-            file_events=0,
-            file_size=0
-        )
-        file_record.save_to_db()
-        self.dataset.n_files = len(paths)
-        self.dataset.lookup_status = 'complete'
+            dataset.save_to_db()
+            logger.info(f"Created new dataset for file list. Dataset Id is {dataset.id}",
+                        extra={'request_id': request_id})
+        else:
+            logger.info(f"Found existing dataset for file list. Dataset Id is {dataset.id}",
+                        extra={'request_id': request_id})
+
+        return cls(dataset, logger, db)
 
     @property
     def name(self):
         if self.did:
             return self.did.full_did
         else:
-            return hashlib.sha256(" ".join(self.file_list).encode()).hexdigest()
+            return self.file_list_hash(self.file_paths)
+
+    @property
+    def id(self):
+        return self.dataset.id
 
     @property
     def is_lookup_required(self) -> bool:
         """
-        Report whether a submission to a DID finder is called for. This is true if the
-        dataset is still in the 'created' state and a DID is specified (i.e. not a file
-        list)
+        Report whether a submission to a DID finder is called for. Thid is true if the
+        dataset is not complete and the lookup status is not 'looking'
         """
-        return self.dataset.lookup_status == "created" and self.did
+        return self.dataset.lookup_status not in [DatasetStatus.looking, DatasetStatus.complete]
 
     @property
     def is_complete(self) -> bool:
-        return self.dataset.lookup_status == "complete"
+        return self.dataset.lookup_status == DatasetStatus.complete
+
+    @property
+    def file_paths(self) -> List[str]:
+        return [file.paths for file in self.dataset.files]
+
+    def refresh(self):
+        self.db.session.refresh(self.dataset)
 
     def submit_lookup_request(self, advertised_endpoint, rabbitmq_adaptor):
         did_request = {
@@ -119,9 +141,11 @@ class DatasetManager:
                                        routing_key=self.did.microservice_queue,
                                        body=json.dumps(did_request))
 
-        self.dataset.lookup_status = 'looking'
+        self.dataset.lookup_status = DatasetStatus.looking
 
     def publish_files(self, request: TransformRequest,
                       lookup_result_processor: LookupResultProcessor) -> None:
-        request.files = self.dataset.n_files
-        lookup_result_processor.add_files_to_processing_queue(request, files=self.file_list)
+        request.files = len(self.dataset.files)
+        lookup_result_processor.add_files_to_processing_queue(request, files=[
+            file.paths for file in self.dataset.files
+        ])
