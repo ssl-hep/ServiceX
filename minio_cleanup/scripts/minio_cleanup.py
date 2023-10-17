@@ -101,8 +101,7 @@ def initialize_logging() -> logging.Logger:
 
     log = logging.getLogger()
     formatter = logging.Formatter('%(levelname)s ' +
-                                  f"{instance} minio cleaner " +
-                                  + '%(message)s')
+                                  f"{instance} minio cleaner " + '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
