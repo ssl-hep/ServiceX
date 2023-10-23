@@ -179,22 +179,22 @@ test = ["astunparse", "black", "coverage", "flake8", "isort", "numpy", "pytest",
 
 [[package]]
 name = "func-adl-xaod"
-version = "2.0.1"
+version = "2.1.3"
 description = "Functional Analysis Description Language backend for accessing ATLAS xAOD files."
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-func-adl = ">=3.0"
+func-adl = ">=3.2"
 jinja2 = "*"
 qastle = "*"
-requests = ">=2.0,<3.0"
-retry = ">=0.9,<1.0"
+requests = "*"
+retry = "*"
 
 [package.extras]
 local = ["python-on-whales"]
-test = ["asyncmock", "autopep8", "awkward", "codecov", "coverage", "flake8", "pandas", "pytest (>=3.9)", "pytest-asyncio", "pytest-cov", "pytest-mock", "testfixtures", "twine", "uproot", "wheel"]
+test = ["asyncmock", "autopep8", "awkward", "black", "coverage", "flake8", "pandas", "pytest (>=3.9)", "pytest-asyncio", "pytest-cov", "pytest-mock", "testfixtures", "twine", "uproot", "wheel"]
 
 [[package]]
 name = "idna"
@@ -532,7 +532,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "a7feeb5e39a120d93c0e74ca2b9f345dab2989627984185538765e33f0526e3e"
+content-hash = "73137f6a283fb296f2bf5b0c401ecfe1d4198ff65eb3d2e603e894a232691333"
 
 [metadata.files]
 aniso8601 = [
@@ -732,8 +732,8 @@ func-adl = [
     {file = "func_adl-3.2.7.tar.gz", hash = "sha256:f77313a9aba9816a2e28d438c1f6760de193d84a0b08a1ca6742eff514e6ccfe"},
 ]
 func-adl-xaod = [
-    {file = "func_adl_xAOD-2.0.1-py3-none-any.whl", hash = "sha256:252eda904b195691fd0770f950c5466f77ad292b75e72d1c5090365d05ca9044"},
-    {file = "func_adl_xAOD-2.0.1.tar.gz", hash = "sha256:aa5c182df41145624727ed3054d1fdcbc494f782025630e1fa1d39629c234f5d"},
+    {file = "func_adl_xAOD-2.1.3-py3-none-any.whl", hash = "sha256:20dbaf7195c2e154d66bd9795314cb12fa8abd72c8a3be5826fb4edabb917408"},
+    {file = "func_adl_xAOD-2.1.3.tar.gz", hash = "sha256:5b9d141def191761d86b15dd576d1c88d536098b3844ff9fd9cfee9117e915fd"},
 ]
 idna = [
     {file = "idna-3.6-py3-none-any.whl", hash = "sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f"},
