@@ -6,109 +6,111 @@ The following table lists the configurable parameters of the ServiceX chart and
 their default values. Note that you may also wish to change some of the default
 parameters for the [rabbitMQ](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq) or [minio](https://github.com/minio/charts) subcharts.
 
-| Parameter                                  | Description                                                                                                                                                         | Default                                        |
+| Parameter             | Description            | Default                   |
 |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
-| `secrets`                                  | Name of a secret deployed into the cluster. Must follow example_secrets.yaml                                                                                        | -                                              |
-| `logging.logstash.enabled`                 | Enable remote logging                                                                                                                                               | true                                           |
-| `logging.logstash.host`                    | Host running logstash listening for log data                                                                                                                        | `servicex.atlas-ml.org`                        |
-| `logging.logstash.port`                    | Port to send logging to                                                                                                                                             | 5959                                           |
-| `logging.logstash.protocol`                | Protocol to be used (options are TCP and UDP)                                                                                                                       | TCP                                            |
-| `logging.logstash.monitor`                 | Link to be shown inside Monitor web page iframe                                                                                                                     | UC Kibana dashboard                            |
-| `logging.logstash.logs`                    | Link to be shown inside Logs web page iframe                                                                                                                        | UC Kibana dashboard                            |
-| `app.image`                                | ServiceX_App image name                                                                                                                                             | `sslhep/servicex_app`                          |
-| `app.tag`                                  | ServiceX image tag                                                                                                                                                  | `latest`                                       |
-| `app.logLevel`                             | Logging level for ServiceX web app (uses standard unix levels)                                                                                                      | `WARNING`                                      |
-| `app.pullPolicy`                           | ServiceX image pull policy                                                                                                                                          | `Always`                                       |
-| `app.checksImage`                          | ServiceX init container image for checks                                                                                                                            | `ncsa/checks:latest`                           |
-| `app.rabbitmq.retries`                     | Number of times to retry connecting to RabbitMQ on startup                                                                                                          | 12                                             |
-| `app.rabbitmq.retry_interval`              | Number of seconds to wait between RabbitMQ retries on startup                                                                                                       | 10                                             |
-| `app.replicas`                             | Number of App pods to start. Experimental!                                                                                                                          | 1                                              |
-| `app.auth`                                 | Enable authentication or allow unfettered access (Python boolean string)                                                                                            | `false`                                        |
-| `app.globusClientID`                       | Globus application Client ID                                                                                                                                        | -                                              |
-| `app.globusClientSecret`                   | Globus application Client Secret                                                                                                                                    | -                                              |
-| `app.adminEmail`                           | Email address for initial admin user                                                                                                                                | admin@example.com                              |
-| `app.tokenExpires`                         | Seconds until the ServiceX API tokens (JWT refresh tokens) expire                                                                                                   | False (never)                                  |
-| `app.authExpires`                          | Seconds until the JWT access tokens expire                                                                                                                          | 21600 (six hours)                              |
-| `app.ingress.enabled`                      | Enable install of ingress                                                                                                                                           | false                                          |
-| `app.ingress.class`                        | Class to be set in `kubernetes.io/ingress.class` annotation                                                                                                         | nginx                                          |
-| `app.ingress.host`                         | Hostname to associate ingress with                                                                                                                                  | servicex.ssl-hep.org                           |
-| `app.ingress.defaultBackend`               | Name of a service to send requests to internal endpoints to                                                                                                         | default-http-backend                           |
-| `app.ingress.tls.enabled`                  | Enable TLS for ServiceX API Ingress resource                                                                                                                        | false                                          |
-| `app.ingress.tls.secretName`               | Name of TLS Secret used for ServiceX API server                                                                                                                     | `{{.Release.Name}}-app-tls`                    |
-| `app.ingress.tls.clusterIssuer`            | Specify a ClusterIssuer if using cert-manager                                                                                                                       | -                                              |
-| `app.resources`                            | Pass in Kubernetes pod resource spec to deployment to change CPU and memory                                                                                         | { }                                            |
-| `app.slackSigningSecret`                   | Signing secret for Slack application                                                                                                                                | -                                              |
-| `app.newSignupWebhook`                     | Slack webhook URL for new signups                                                                                                                                   | -                                              |
-| `app.mailgunApiKey`                        | API key to send Mailgun emails to newly approved users                                                                                                              | -                                              |
-| `app.mailgunDomain`                        | Sender domain for emails (should be verified through Mailgun)                                                                                                       | -                                              |
-| `app.defaultDIDFinderScheme`               | DID Finder scheme if none provided in request. If left blank, template will attempt to guess.                                                                       | -                                              |
-| `app.validateTransformerImage`             | Should docker image name be validated at DockerHub?                                                                                                                 | `true`                                         |
- | `app.defaultUsers`                         | Name of secret holding json file with default users to create on deployment                                                                                         | -                                              |
-| `didFinder.rucio.enabled`                  | Should we deploy the Rucio DID Finder?                                                                                                                              | `true`                                         |
-| `didFinder.rucio.image`                    | Rucio DID Finder image name                                                                                                                                         | `sslhep/servicex-did-finder`                   |
-| `didFinder.rucio.tag`                      | Rucio DID Finder image tag                                                                                                                                          | `latest`                                       |
-| `didFinder.rucio.pullPolicy`               | Rucio DID Finder image pull policy                                                                                                                                  | `Always`                                       |
-| `didFinder.rucio.servicex_latitude`        | Latitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.                                               | 41.78                                          |
-| `didFinder.rucio.servicex_longitude`       | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.                                              | -87.7                                          |
-| `didFinder.rucio.reportLogicalFiles`       | For CMS xCache sites, we don't want the replicas, only logical names. Set to true to get this behavior                                                              | false                                          |
-| `didFinder.rucio.rucio_host`               | URL for Rucio service to use                                                                                                                                        | `https://voatlasrucio-server-prod.cern.ch:443` |
-| `didFinder.rucio.auth _host`               | URL to obtain Rucio authentication                                                                                                                                  | `https://voatlasrucio-auth-prod.cern.ch:443`   |
-| `didFinder.rucio.memcache.enabled`         | Should use memcache to store results returned by the DID lookup?                                                                                                    | true                                           |
-| `didFinder.rucio.memcache.image`           | Docker image for memcache                                                                                                                                           | memcached                                      |
-| `didFinder.rucio.memcache.tag`             | Tag of the memcache image                                                                                                                                           | alpine                                         |
-| `didFinder.rucio.memcache.ttl`             | How long should memcache results be considered valid (in seconds)                                                                                                   | 86400                                          |
-| `didFinder.CERNOpenData.enabled`           | Should we deploy the CERN OpenData DID Finder? `true`                                                                                                               |
-| `didFinder.CERNOpenData.image`             | CERN OpenData DID Finder image name                                                                                                                                 | `sslhep/servicex-did-finder`                   |
-| `didFinder.CERNOpenData.tag`               | CERN OpenData DID Finder image tag                                                                                                                                  | `latest`                                       |
-| `didFinder.CERNOpenData.pullPolicy`        | CERN OpenData DID Finder image pull policy                                                                                                                          | `Always`                                       |
-| `codegen.atlasxaod.enabled`          | Deploy the ATLAS xAOD Code generator?                                                                                                                               | true                                           |
-| `codegen.atlasxaod.image`            | Code generator image                                                                                                                                                | `sslhep/servicex_code_gen_func_adl_xaod`       |
-| `codegen.atlasxaod.pullPolicy`       |                                                                                                                                                                     | true                                           |
-| `codegen.atlasxaod.tag`              | Code generator image tag                                                                                                                                            | develop                                        |
-| `codegen.atlasxaod.defaultScienceContainerImage`   | The transformer image that should be run against this generated code                                                                                                | `sslhep/servicex_func_adl_xaod_transformer`      |
-| `codegen.atlasxaod.defaultScienceContainerTag`     | Tag for the transformer image that should be run against this generated code                                                                                        | develop                                        |
-|`codegen.uproot.enabled`              | Deploy the uproot code generator? - also all of the code gen settings, above are available                                                                          | true                                                   |
-|`codegen.cms.enabled`                 | Deploy the CMS AOD code generator? - also all of the code gen settings, above are available                                                                         | true                                                   |
-|`codegen.python.enabled`              | Deploy the python uproot code generator? - also all of the code gen settings, above are available                                                                   | true                                                   |
-| `x509Secrets.image`                        | X509 Secret Service image name                                                                                                                                      | `sslhep/x509-secrets`                          |
-| `x509Secrets.tag`                          | X509 Secret Service image tag                                                                                                                                       | `latest`                                       |
-| `x509Secrets.pullPolicy`                   | X509 Secret Service image pull policy                                                                                                                               | `Always`                                       |
-| `x509Secrets.vomsOrg`                      | Which VOMS org to contact for proxy?                                                                                                                                | `atlas`                                        |
-| `x509Secrets.initImage`                    | X509 Secret Service init container image                                                                                                                            | `alpine:3.6`                                   |
-| `rbacEnabled`                              | Specify if rbac is enabled in your cluster                                                                                                                          | `true`                                         |
-| `hostMount`                                | Optional path to mount in transformers as /data                                                                                                                     | -                                              |
-| `gridAccount`                              | CERN User account name to access Rucio                                                                                                                              | -                                              |
-| `noCerts`                                  | Set to true to disable x509 certs and only use open data                                                                                                            | false                                          |
-| `rabbitmq.password`                        | Override the generated RabbitMQ password                                                                                                                            | leftfoot1                                      |
-| `objectstore.enabled`                      | Deploy a minio object store with Servicex?                                                                                                                          | true                                           |
-| `objectstore.internal`                     | Deploy a captive minio instance with this chart?                                                                                                                    | true                                           |
-| `objectstore.publicURL`                    | What URL should the client use to download files? If set, this is given whether ingress is enabled or not                                                           | nil                                            |
-| `postgres.enabled`                         | Deploy a postgres database into cluster? If not, we use a sqllite db                                                                                                | false                                          |
-| `minio.auth.rootUser`                      | Username to log into minio                                                                                                                                          | miniouser                                      |
-| `minio.auth.rootPassword`                  | Password key to log into minio                                                                                                                                      | leftfoot1                                      |
-| `minio.apiIngress.enabled`                 | Should minio chart deploy an ingress to the service?                                                                                                                | false                                          |
-| `minio.apiIngress.hostname`                | Hostname associate with ingress controller                                                                                                                          | nil                                            |
-| `transformer.cachePrefix`              | Prefix string to stick in front of file paths. Useful for XCache                                                                                                    |                                                |
-| `transformer.autoscaler.enabled`           | Enable/disable horizontal pod autoscaler for transformers                                                                                                           | True                                           |
-| `transformer.autoscaler.cpuScaleThreshold` | CPU percentage threshold for pod scaling                                                                                                                            | 30                                             |
-| `transformer.autoscaler.minReplicas`       | Minimum number of transformer pods per request                                                                                                                      | 1                                              |
-| `transformer.autoscaler.maxReplicas`       | Maximum number of transformer pods per request                                                                                                                      | 20                                             |
-| `transformer.pullPolicy`                   | Pull policy for transformer pods (Image name specified in REST Request)                                                                                             | Always                                         |
-| `transformer.priorityClassName`            | priorityClassName for transformer pods (Not setting it means getting global default)                                                                                | Not Set                                        |
-| `transformer.cpuLimit`                     | Set CPU resource limit for pod in number of cores                                                                                                                   | 1                                              |
-| `transformer.sidecarImage`                 | Image name for the transformer sidecar container that hold the serviceX code                                                                                        | 'sslhep/servicex_sidecar_transformer'          |
-| `transformer.sidecarTag`                   | Tag for the sidecar container                                                                                                                                       | 'develop'                                      |
-| `transformer.sidecarPullPolicy`            | Pull Policy for the sidecar container                                                                                                                               | 'Always'                                       |
-| `transformer.persistence.existingClaim`    | Existing persistent volume claim                                                                                                                                    | nil                                            |
-| `transformer.subdir`                       | Subdirectory of the mount to write transformer results to (should end with trailing /)                                                                              | nil                                            |
-| `minioCleanup.enabled`                     | Enable deployment of minio cleanup service                                                                                                                          | false                                          |
-| `minioCleanup.image`                       | Default image for minioCleanup cronjob                                                                                                                              | `sslhep/servicex_minio_cleanup`                |
-| `minioCleanup.tag`                         | minioCleanup image tag                                                                                                                                              |                                                |
-| `minioCleanup.pullPolicy`                  | minioCleanup image pull policy                                                                                                                                      | `Always`                                       |
-| `minioCleanup.threads`                     | Number of threads to use when processing S3 Storage                                                                                                                 | 6                                              |
-| `minioCleanup.logLevel`                    | Log level to use for logging (e.g. DEBUG, INFO, WARN, ERROR,  FATAL)                                                                                                | INFO                                           |
+| `secrets`             | Name of a secret deployed into the cluster. Must follow example_secrets.yaml    | -    |
+| `logging.logstash.enabled`                 | Enable remote logging  | true |
+| `logging.logstash.host`                    | Host running logstash listening for log data| `servicex.atlas-ml.org`   |
+| `logging.logstash.port`                    | Port to send logging to| 5959 |
+| `logging.logstash.protocol`                | Protocol to be used (options are TCP and UDP)                    | TCP  |
+| `logging.logstash.monitor`                 | Link to be shown inside Monitor web page iframe                  | UC Kibana dashboard       |
+| `logging.logstash.logs`                    | Link to be shown inside Logs web page iframe| UC Kibana dashboard       |
+| `app.image`           | ServiceX_App image name| `sslhep/servicex_app`     |
+| `app.tag`             | ServiceX image tag     | `latest`                  |
+| `app.logLevel`        | Logging level for ServiceX web app (uses standard unix levels)   | `WARNING`                 |
+| `app.pullPolicy`      | ServiceX image pull policy                  | `Always`                  |
+| `app.checksImage`     | ServiceX init container image for checks    | `ncsa/checks:latest`      |
+| `app.rabbitmq.retries`| Number of times to retry connecting to RabbitMQ on startup       | 12   |
+| `app.rabbitmq.retry_interval`              | Number of seconds to wait between RabbitMQ retries on startup    | 10   |
+| `app.replicas`        | Number of App pods to start. Experimental!  | 1    |
+| `app.auth`            | Enable authentication or allow unfettered access (Python boolean string)        | `false`                   |
+| `app.globusClientID`  | Globus application Client ID                | -    |
+| `app.globusClientSecret`                   | Globus application Client Secret            | -    |
+| `app.adminEmail`      | Email address for initial admin user        | <admin@example.com>         |
+| `app.tokenExpires`    | Seconds until the ServiceX API tokens (JWT refresh tokens) expire| False (never)             |
+| `app.authExpires`     | Seconds until the JWT access tokens expire  | 21600 (six hours)         |
+| `app.ingress.enabled` | Enable install of ingress                   | false|
+| `app.ingress.class`   | Class to be set in `kubernetes.io/ingress.class` annotation      | nginx|
+| `app.ingress.host`    | Hostname to associate ingress with          | servicex.ssl-hep.org      |
+| `app.ingress.defaultBackend`               | Name of a service to send requests to internal endpoints to      | default-http-backend      |
+| `app.ingress.tls.enabled`                  | Enable TLS for ServiceX API Ingress resource| false|
+| `app.ingress.tls.secretName`               | Name of TLS Secret used for ServiceX API server                  | `{{.Release.Name}}-app-tls`                    |
+| `app.ingress.tls.clusterIssuer`            | Specify a ClusterIssuer if using cert-manager                    | -    |
+| `app.resources`       | Pass in Kubernetes pod resource spec to deployment to change CPU and memory     | { }  |
+| `app.slackSigningSecret`                   | Signing secret for Slack application        | -    |
+| `app.newSignupWebhook`| Slack webhook URL for new signups           | -    |
+| `app.mailgunApiKey`   | API key to send Mailgun emails to newly approved users           | -    |
+| `app.mailgunDomain`   | Sender domain for emails (should be verified through Mailgun)    | -    |
+| `app.defaultDIDFinderScheme`               | DID Finder scheme if none provided in request. If left blank, template will attempt to guess.        | -    |
+| `app.validateTransformerImage`             | Should docker image name be validated at DockerHub?              | `true`                    |
+ | `app.defaultUsers`    | Name of secret holding json file with default users to create on deployment     | -    |
+| `didFinder.rucio.enabled`                  | Should we deploy the Rucio DID Finder?      | `true`                    |
+| `didFinder.rucio.image`                    | Rucio DID Finder image name                 | `sslhep/servicex-did-finder`                   |
+| `didFinder.rucio.tag` | Rucio DID Finder image tag                  | `latest`                  |
+| `didFinder.rucio.pullPolicy`               | Rucio DID Finder image pull policy          | `Always`                  |
+| `didFinder.rucio.servicex_latitude`        | Latitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.     | 41.78|
+| `didFinder.rucio.servicex_longitude`       | Longitude of the computing center where ServiceX runs. Will be used by Rucio to return the closest input data replica.    | -87.7|
+| `didFinder.rucio.reportLogicalFiles`       | For CMS xCache sites, we don't want the replicas, only logical names. Set to true to get this behavior                    | false|
+| `didFinder.rucio.rucio_host`               | URL for Rucio service to use                | `https://voatlasrucio-server-prod.cern.ch:443` |
+| `didFinder.rucio.auth _host`               | URL to obtain Rucio authentication          | `https://voatlasrucio-auth-prod.cern.ch:443`   |
+| `didFinder.rucio.memcache.enabled`         | Should use memcache to store results returned by the DID lookup? | true |
+| `didFinder.rucio.memcache.image`           | Docker image for memcache                   | memcached                 |
+| `didFinder.rucio.memcache.tag`             | Tag of the memcache image                   | alpine                    |
+| `didFinder.rucio.memcache.ttl`             | How long should memcache results be considered valid (in seconds)| 86400|
+| `didFinder.CERNOpenData.enabled`           | Should we deploy the CERN OpenData DID Finder? | `true`            |
+| `didFinder.CERNOpenData.image`             | CERN OpenData DID Finder image name      | `sslhep/servicex-did-finder` |
+| `didFinder.CERNOpenData.tag`               | CERN OpenData DID Finder image tag          | `latest`                  |
+| `didFinder.CERNOpenData.pullPolicy`        | CERN OpenData DID Finder image pull policy  | `Always`                  |
+| `codegen.atlasxaod.enabled`          | Deploy the ATLAS xAOD Code generator?       | true |
+| `codegen.atlasxaod.image`            | Code generator image   | `sslhep/servicex_code_gen_func_adl_xaod`       |
+| `codegen.atlasxaod.pullPolicy`       |   | true |
+| `codegen.atlasxaod.tag`              | Code generator image tag                    | develop                   |
+| `codegen.atlasxaod.defaultScienceContainerImage`   | The transformer image that should be run against this generated code  | `sslhep/servicex_func_adl_xaod_transformer`      |
+| `codegen.atlasxaod.defaultScienceContainerTag`     | Tag for the transformer image that should be run against this generated code    | develop                   |
+|`codegen.uproot.enabled`              | Deploy the uproot code generator? - also all of the code gen settings, above are available           | true         |
+|`codegen.cms.enabled`                 | Deploy the CMS AOD code generator? - also all of the code gen settings, above are available          | true         |
+|`codegen.python.enabled`              | Deploy the python uproot code generator? - also all of the code gen settings, above are available    | true         |
+| `x509Secrets.image`   | X509 Secret Service image name              | `sslhep/x509-secrets`     |
+| `x509Secrets.tag`     | X509 Secret Service image tag               | `latest`                  |
+| `x509Secrets.pullPolicy`                   | X509 Secret Service image pull policy       | `Always`                  |
+| `x509Secrets.vomsOrg` | Which VOMS org to contact for proxy?        | `atlas`                   |
+| `x509Secrets.initImage`                    | X509 Secret Service init container image    | `alpine:3.6`              |
+| `rbacEnabled`         | Specify if rbac is enabled in your cluster  | `true`                    |
+| `hostMount`           | Optional path to mount in transformers as /data                  | -    |
+| `gridAccount`         | CERN User account name to access Rucio      | -    |
+| `noCerts`             | Set to true to disable x509 certs and only use open data         | false|
+| `rabbitmq.auth.password`   | Override the generated RabbitMQ password   | leftfoot1 |
+| `rabbitmq.apiIngress.enabled`    | Should RMQ chart deploy an ingress to the service? | false |
+| `rabbitmq.apiIngress.host`   | RMQ ingress hostname  | servicex-rmq.ssl-hep.org |
+| `rabbitmq.apiIngress.class`   | RMQ ingress class  | nginx |
+| `objectstore.enabled` | Deploy a minio object store with Servicex? | true  |
+| `objectstore.internal`| Deploy a captive minio instance with this chart?                 | true |
+| `objectstore.publicURL` | What URL should the client use to download files? If set, this is given whether ingress is enabled or not | nil  |
+| `postgres.enabled`    | Deploy a postgres database into cluster? If not, we use a sqllite db  | false|
+| `minio.auth.rootUser` | Username to log into minio                  | miniouser                 |
+| `minio.auth.rootPassword`                  | Password key to log into minio              | leftfoot1                 |
+| `minio.apiIngress.enabled`                 | Should minio chart deploy an ingress to the service?             | false|
+| `minio.apiIngress.hostname`                | Hostname associate with ingress controller  | nil  |
+| `transformer.cachePrefix`              | Prefix string to stick in front of file paths. Useful for XCache |      |
+| `transformer.autoscaler.enabled`           | Enable/disable horizontal pod autoscaler for transformers        | True |
+| `transformer.autoscaler.cpuScaleThreshold` | CPU percentage threshold for pod scaling    | 30   |
+| `transformer.autoscaler.minReplicas`       | Minimum number of transformer pods per request                   | 1    |
+| `transformer.autoscaler.maxReplicas`       | Maximum number of transformer pods per request                   | 20   |
+| `transformer.pullPolicy`                   | Pull policy for transformer pods (Image name specified in REST Request)         | Always                    |
+| `transformer.priorityClassName`            | priorityClassName for transformer pods (Not setting it means getting global default)                 | Not Set                   |
+| `transformer.cpuLimit`| Set CPU resource limit for pod in number of cores                | 1    |
+| `transformer.sidecarImage`                 | Image name for the transformer sidecar container that hold the serviceX code    | 'sslhep/servicex_sidecar_transformer'          |
+| `transformer.sidecarTag`                   | Tag for the sidecar container               | 'develop'                 |
+| `transformer.sidecarPullPolicy`            | Pull Policy for the sidecar container       | 'Always'                  |
+| `transformer.persistence.existingClaim`    | Existing persistent volume claim            | nil  |
+| `transformer.subdir`  | Subdirectory of the mount to write transformer results to (should end with trailing /)               | nil  |
+| `minioCleanup.enabled`| Enable deployment of minio cleanup service  | false|
+| `minioCleanup.image`  | Default image for minioCleanup cronjob      | `sslhep/servicex_minio_cleanup`                |
+| `minioCleanup.tag`    | minioCleanup image tag |      |
+| `minioCleanup.pullPolicy`                  | minioCleanup image pull policy              | `Always`                  |
+| `minioCleanup.threads`| Number of threads to use when processing S3 Storage              | 6    |
+| `minioCleanup.logLevel`                    | Log level to use for logging (e.g. DEBUG, INFO, WARN, ERROR,  FATAL)  | INFO |
 | `minioCleanup.schedule`                    | Schedule for minioCleanup cronjob. See [reference](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) for details on fields | `* */8 * * *` (every 8 hours)                  |
-| `minioCleanup.maxAge`                      | Max age in days before removing results                                                                                                                             | 30                                             |
-| `minioCleanup.maxSize`                     | Start removing buckets when total space used reaches this number  (can use G,M, T suffixes)                                                                         | '1G'                                           |
-| `minioCleanup.normSize`                    | Size at which to stop removing buckets                                                                                                                              | '700M'                                         |                                                |
->>>>>>> origin
+| `minioCleanup.maxAge` | Max age in days before removing results     | 30   |
+| `minioCleanup.maxSize`| Start removing buckets when total space used reaches this number  (can use G,M, T suffixes)          | '1G' |
+| `minioCleanup.normSize`                    | Size at which to stop removing buckets      | '700M'                    |      |

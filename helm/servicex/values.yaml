@@ -120,6 +120,14 @@ postgresql:
     persistence:
       enabled: false
 rabbitmq:
+  apiIngress:
+    enabled: false
+    class: nginx
+    host: rmq.ssl-hep.org
+    tls:
+      enabled: false
+      clusterIssuer: null
+      secretName: "{{.Release.Name}}-rmq-tls"
   auth:
     password: leftfoot1
   persistence:
@@ -144,7 +152,7 @@ transformer:
   scienceContainerPullPolicy: Always
 
   language: python
-  exec:          # replace me
+  exec: # replace me
   outputDir: /servicex/output
 
   persistence:

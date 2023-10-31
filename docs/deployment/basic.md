@@ -57,8 +57,8 @@ servicex --namespace <default> init --cert-dir ~/.globus
 ```
 
 By default, this will look for the certificates in your `~/.globus` directory.
-You can pass another directory with the `--cert-dir` argument. It is assumed 
-that they are named `usercert.pem` and `userkey.pem`.  You will be prompted for 
+You can pass another directory with the `--cert-dir` argument. It is assumed
+that they are named `usercert.pem` and `userkey.pem`.  You will be prompted for
 the passphrase that secures your X509 private key.
 
 The installed secrets can be used by any ServiceX instance deployed into the
@@ -141,7 +141,7 @@ helm install -f values.yaml --version v1.0.0-rc.3 servicex ssl-hep/servicex
 
 Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to
 complete its initialization. The `servicex` argument is used by helm as the release
-name.  It is used to refer to the chart when deploying, insptacting, or deleting
+name.  It is used to refer to the chart when deploying, inspecting, or deleting
 the chart. After this all the pods of the new deployment
 should be ready. You can check the status of the pods via
 

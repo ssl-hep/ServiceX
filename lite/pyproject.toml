@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "serivcex_light"
+version = "0.1.0"
+description = ""
+authors = ["Ilija Vukotic <ivukotic@uchicago.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+kubernetes = "^25.3.0"
+python-logstash = "^0.4.8"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
