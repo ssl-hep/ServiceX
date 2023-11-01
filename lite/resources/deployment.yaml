@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicex-lite
+  namespace: servicex-lite
+  labels:
+    k8s-app: servicex-lite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: servicex-lite
+  template:
+    metadata:
+      labels:
+        k8s-app: servicex-lite
+    spec:
+      containers:
+        - name: servicex-lite
+          image: sslhep/servicex_lite:sXlite
+          imagePullPolicy: Always
+          command: ["sleep"]
+          args: ["infinity"]
+          volumeMounts:
+            - name: kubeconfig
+              mountPath: /home/sxlite/.kube/
+          #   - name: grid-secret
+          #     mountPath: /etc/grid-certs-ro/
+          #   - name: rucio-cfg
+          #     mountPath: /opt/rucio/etc/
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: kubeconfig-secret
+      #   - name: grid-certs-rw-copy
+      #     emptyDir: {}
+      #   - name: rucio-cfg
+      #     configMap:
+      #       name: rucio-config
