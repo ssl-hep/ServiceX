@@ -1,2 +1,2 @@
-minio
-servicex_storage
+kubernetes
+python-logstash

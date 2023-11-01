@@ -6,7 +6,7 @@ authors = ["Ilija Vukotic <ivukotic@uchicago.edu>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-kubernetes = "^25.3.0"
+kubernetes = "^28.1.0"
 python-logstash = "^0.4.8"
 
 [tool.poetry.dev-dependencies]
