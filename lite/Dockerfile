@@ -24,4 +24,4 @@ RUN chmod +x start.sh
 
 USER sxlite
 
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["/home/sxlite/start.sh"]
