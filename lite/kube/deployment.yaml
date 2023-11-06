@@ -19,8 +19,15 @@ spec:
         - name: servicex-lite
           image: sslhep/servicex-lite:latest
           imagePullPolicy: Always
-          command: ["sleep"]
-          args: ["infinity"]
+          # command: ["sleep"]
+          # args: ["infinity"]
+          env:
+            - name: RMQ_USER
+              value: "user"
+            - name: RMQ_HOST
+              value: "192.170.241.253"
+            - name: INITIAL_PODS
+              value: "15"
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/

@@ -1,9 +1,16 @@
+import os
 import time
+import base64
 from kubernetes import config, dynamic
 from kubernetes.client import api_client
 from kubernetes.dynamic import exceptions
 
-requests = {}
+requests = {'active': [], 'new': [], 'unknown': []}
+
+rmq_pass = ''
+rmq_user = os.getenv("RMQ_USER", 'user')
+rmq_host = os.getenv("RMQ_HOST", '192.170.241.253')
+initial_pods = int(os.getenv("INITIAL_PODS", '15'))
 
 
 class cluster:
@@ -48,16 +55,23 @@ class sXorigin(cluster):
         self.clean_metadata(cm)
         return cm
 
-    def read_deployment(self):
+    def update_requests(self):
+        # reset all known to unknown
+        requests['unknown'] = requests['active']
+        requests['active'] = []
+        requests['new'] = []
+
         for dep in self.deployment_api.get(namespace=self.ns).items:
             if dep.metadata.name.startswith('transformer'):
                 req_id = dep.metadata.name[12:]
-                if req_id not in requests:
-                    print(f'found deployment for request:{req_id}')
-                    requests[req_id] = 'active'
-                    return self.deployment_body(dep)
+                if req_id in requests['unknown']:
+                    requests['active'].append(req_id)
+                    requests['unknown'].remove(req_id)
+                else:
+                    requests['new'].append(req_id)
 
-    def deployment_body(self, o):
+    def get_deployment(self, req_id):
+        o = self.deployment_api.get(namespace=self.ns, name=f'transformer-{req_id}')
         req_id = o.metadata.name[12:]
         c1 = o.spec.template.spec.containers[0]
         c2 = o.spec.template.spec.containers[1]
@@ -67,7 +81,7 @@ class sXorigin(cluster):
             "kind": "Deployment",
             "metadata": {"name": o.metadata.name},
             "spec": {
-                "replicas": 10,
+                "replicas": initial_pods,
                 "selector": {"matchLabels": {'app': o.spec.selector.matchLabels.app}},
                 "template": {
                     "metadata": {"labels": {"app": o.spec.template.metadata.labels.app}},
@@ -124,7 +138,7 @@ class sXorigin(cluster):
             dep['spec']['template']['spec']['volumes'].append(vo)
 
         sidecar_args = [
-            f'PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH python /servicex/transformer_sidecar/transformer.py --request-id {req_id} --rabbit-uri amqp://{user}:{password}@192.170.241.253:5672/%2F?heartbeat=9000 --result-destination object-store --result-format root-file'
+            f'PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH python /servicex/transformer_sidecar/transformer.py --request-id {req_id} --rabbit-uri amqp://{rmq_user}:{rmq_pass}@{rmq_host}:5672/%2F?heartbeat=9000 --result-destination object-store --result-format root-file'
         ]
         transformer_args = [
             f'until [ -f /servicex/output/scripts/proxy-exporter.sh ];do sleep 5;done && /servicex/output/scripts/proxy-exporter.sh & sleep 5 && cp /generated/transformer_capabilities.json /servicex/output && PYTHONPATH=/generated:$PYTHONPATH bash /servicex/output/scripts/watch.sh python /generated/transform_single_file.py /servicex/output/{req_id}'
@@ -168,7 +182,11 @@ class sXlite(cluster):
             print(f'conflict creating configmap: {cm.metadata.name}')
 
     def delete_configmap(self, name):
-        self.cm_api.delete(body={}, name=name, namespace=self.ns)
+        try:
+            self.cm_api.delete(body={}, name=name, namespace=self.ns)
+            print(f'deleted configmap: {name}')
+        except Exception as e:
+            print(f'could not delete configmap:{name}', e)
 
     def create_deployment(self, dep):
         try:
@@ -178,7 +196,11 @@ class sXlite(cluster):
             print('conflict creating deployment:', e.summary())
 
     def delete_deployment(self, name):
-        pass
+        try:
+            self.deployment_api.delete(body={}, name=name, namespace=self.ns)
+            print(f'deleted deployment: {name}')
+        except Exception as e:
+            print(f'could not delete deployment:{name}', e)
 
 
 if __name__ == '__main__':
@@ -187,7 +209,6 @@ if __name__ == '__main__':
         sxl.delete_secret('grid-certs-secret')
         sxl.delete_secret('servicex-secrets')
         sxl.delete_secret('servicex-x509-proxy')
-        time.sleep(10)
 
     def start():
         sec = sxo.read_secret('grid-certs-secret')
@@ -195,6 +216,8 @@ if __name__ == '__main__':
 
         sec = sxo.read_secret('servicex-secrets')
         sxl.create_secret(sec)
+        global rmq_pass
+        rmq_pass = base64.b64decode(sec.data['rabbitmq-password'])
 
         sec = sxo.read_secret('servicex-x509-proxy')
         sxl.create_secret(sec)
@@ -206,14 +229,26 @@ if __name__ == '__main__':
     # cleanup()
     start()
 
-    # watch for new CMs and requests
+    count = 0
     while True:
-        d = sxo.read_deployment()
-        if d:
-            req_id = d['metadata']['name'][12:]
-            print(f'req_id: {req_id}')
+        sxo.update_requests()
+        for req_id in requests['new']:
+            d = sxo.get_deployment(req_id)
             sxl.create_deployment(d)
             cm = sxo.read_configmap(f'{req_id}-generated-source')
             sxl.create_configmap(cm)
-        else:
-            time.sleep(5)
+            requests['active'].append(req_id)
+
+        for req_id in requests['unknown']:
+            sxl.delete_configmap(f'{req_id}-generated-source')
+            sxl.delete_deployment(f'transformer-{req_id}')
+
+        for req_id in requests['active']:
+            print(f'req_id: {req_id} still active.')
+
+        count += 1
+        if not count % 720 and len(requests['active']) == 0:  # replace secrets
+            cleanup()
+            start()
+
+        time.sleep(5)

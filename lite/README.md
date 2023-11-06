@@ -11,7 +11,6 @@ Prerequisits:
 
 ## TODO
 
-* cleanup of canceled/finished transforms.
-* fix sidecar args (now hardcoded).
 * limited scope kube config
+* add options to configure number of initial pods, resource request, etc.
 * if needed - an automatic patching of master's configmap and ingress routes.
