@@ -31,7 +31,7 @@ jobs:
       - name: Build Docker Image
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: sslhep/servicex_lite:${{ steps.extract_tag_name.outputs.imagetag }}
+          name: sslhep/servicex-lite:${{ steps.extract_tag_name.outputs.imagetag }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         #   tag: "${GITHUB_REF##*/}"
