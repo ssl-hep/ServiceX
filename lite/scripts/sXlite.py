@@ -124,7 +124,7 @@ class sXorigin(cluster):
             dep['spec']['template']['spec']['volumes'].append(vo)
 
         sidecar_args = [
-            f'PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH python /servicex/transformer_sidecar/transformer.py --request-id {req_id} --rabbit-uri amqp://user:993ecf4239a783c521e6077d91@192.170.241.253:5672/%2F?heartbeat=9000 --result-destination object-store --result-format root-file'
+            f'PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH python /servicex/transformer_sidecar/transformer.py --request-id {req_id} --rabbit-uri amqp://{user}:{password}@192.170.241.253:5672/%2F?heartbeat=9000 --result-destination object-store --result-format root-file'
         ]
         transformer_args = [
             f'until [ -f /servicex/output/scripts/proxy-exporter.sh ];do sleep 5;done && /servicex/output/scripts/proxy-exporter.sh & sleep 5 && cp /generated/transformer_capabilities.json /servicex/output && PYTHONPATH=/generated:$PYTHONPATH bash /servicex/output/scripts/watch.sh python /generated/transform_single_file.py /servicex/output/{req_id}'
@@ -133,8 +133,12 @@ class sXorigin(cluster):
         dep['spec']['template']['spec']['containers'][1]['args'] = transformer_args
 
         print('=========================')
-        print(dep)
+        # print(dep)
         return dep
+
+    def patch_master(self):
+        print('patch ingress if needed.')
+        print('patch configmap so it ADVERTIZES external URL.')
 
 
 class sXlite(cluster):
@@ -198,6 +202,7 @@ if __name__ == '__main__':
     sxo = sXorigin()
     sxl = sXlite()
 
+    sxo.patch_master()
     # cleanup()
     start()
 

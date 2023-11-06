@@ -12,5 +12,6 @@ Prerequisits:
 ## TODO
 
 * cleanup of canceled/finished transforms.
+* fix sidecar args (now hardcoded).
 * limited scope kube config
 * if needed - an automatic patching of master's configmap and ingress routes.
