@@ -11,6 +11,6 @@ Prerequisits:
 
 ## TODO
 
-* limited scope kube config
-* add options to configure number of initial pods, resource request, etc.
+* add options to configure xcache, resource request, etc.
+* add creation of a HPA
 * if needed - an automatic patching of master's configmap and ingress routes.
