@@ -1,2 +1,3 @@
 .venv
-kubeconfig-secret.yaml
+kubeconfig-secret*
+test*

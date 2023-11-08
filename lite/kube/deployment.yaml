@@ -28,6 +28,8 @@ spec:
               value: "192.170.241.253"
             - name: INITIAL_PODS
               value: "15"
+            - name: PYTHONUNBUFFERED
+              value: "true"
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/
