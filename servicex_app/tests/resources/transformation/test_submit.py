@@ -39,6 +39,8 @@ from servicex.dataset_manager import DatasetManager
 
 from servicex.code_gen_adapter import CodeGenAdapter
 
+from servicex.transformer_manager import TransformerManager
+
 
 class TestSubmitTransformationRequest(ResourceTestBase):
 
@@ -107,6 +109,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                                   'ssl-hep/func_adl:latest')
         return mock_code_gen
 
+    @fixture
+    def mock_transform_manager(self, mocker):
+        mock = mocker.MagicMock(TransformerManager)
+        mock.start_transformers = mocker.Mock()
+        return mock
+
     def test_submit_transformation_request_bad(self, client):
         resp = client.post('/servicex/transformation', json={'timestamp': '20190101'})
         assert resp.status_code == 400
@@ -150,9 +158,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             "message"]
 
     def test_submit_transformation_request_throws_exception(
-            self, mocker, mock_rabbit_adaptor, mock_dataset_manager_from_did):
+            self, mocker, mock_rabbit_adaptor, mock_dataset_manager_from_did,
+            mock_app_version, mock_transform_manager):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor, transformation_manager=mock_transform_manager)
         with client.application.app_context():
             response = client.post('/servicex/transformation',
                                    json=self._generate_transformation_request(),
@@ -202,7 +211,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678', saved_obj.request_id, db=ANY, logger=ANY)
+            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+                                                             db=ANY,
+                                                             extras={'request_id': request_id},
+                                                             logger=ANY)
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
                 mock_rabbit_adaptor)
@@ -227,8 +239,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 assert saved_obj
 
             mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
-                                                             saved_obj.request_id,
-                                                             db=ANY, logger=ANY)
+                                                             db=ANY,
+                                                             extras={'request_id': request_id},
+                                                             logger=ANY)
 
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
@@ -260,8 +273,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.did_id == 42
 
             mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
-                                                             saved_obj.request_id,
-                                                             db=ANY, logger=ANY)
+                                                             db=ANY,
+                                                             extras={'request_id': request_id},
+                                                             logger=ANY)
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_not_called()
             mock_dataset_manager_from_did.return_value.publish_files.assert_called_with(ANY, mock_processor)
 
@@ -293,8 +307,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.did_id == 42
 
             mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
-                                                             saved_obj.request_id,
-                                                             db=ANY, logger=ANY)
+                                                             db=ANY,
+                                                             extras={'request_id': request_id},
+                                                             logger=ANY)
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_not_called()
             mock_dataset_manager_from_did.return_value.publish_files.assert_not_called()
 
@@ -316,17 +331,18 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    json=request, headers=self.fake_header())
 
             assert response.status_code == 200
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678', ANY,
-                                                             db=ANY, logger=ANY)
+            request_id = response.json['request_id']
 
-    def test_submit_transformation_file_list(self, mocker, mock_rabbit_adaptor,
+            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+                                                             db=ANY,
+                                                             extras={'request_id': request_id},
+                                                             logger=ANY)
+
+    def test_submit_transformation_file_list(self, mocker,
                                              mock_dataset_manager_from_files,
+                                             mock_transform_manager,
                                              file_list,
                                              mock_app_version):
-        from servicex.transformer_manager import TransformerManager
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.launch_transformer_jobs = mocker.Mock()
-
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         cfg = {
             'TRANSFORMER_MANAGER_ENABLED': True,
@@ -335,7 +351,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         client = self._test_client(extra_config=cfg,
                                    lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transformer_manager)
+                                   transformation_manager=mock_transform_manager)
 
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -352,21 +368,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             request_id = response.json['request_id']
             submitted_request = TransformRequest.lookup(request_id)
-            mock_dataset_manager_from_files.assert_called_with(file_list, request_id, db=ANY, logger=ANY)
+            mock_dataset_manager_from_files.assert_called_with(file_list,
+                                                               db=ANY,
+                                                               extras={'request_id': request_id},
+                                                               logger=ANY)
 
-            mock_transformer_manager. \
-                launch_transformer_jobs \
-                .assert_called_with(image=submitted_request.image,
-                                    request_id=submitted_request.request_id,
-                                    workers=submitted_request.workers,
-                                    generated_code_cm=submitted_request.generated_code_cm,
-                                    rabbitmq_uri='amqp://trans.rabbit',
-                                    namespace='my-ws',
-                                    result_destination=submitted_request.result_destination,
-                                    result_format=submitted_request.result_format,
-                                    transformer_command=None,
-                                    transformer_language=None,
-                                    x509_secret='my-x509-secret')
+            mock_transform_manager. \
+                start_transformers \
+                .assert_called_with(ANY, submitted_request)
 
     def test_submit_transformation_request_bad_image(
         self, mocker, mock_docker_repo_adapter, mock_dataset_manager_from_did

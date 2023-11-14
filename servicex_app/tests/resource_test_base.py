@@ -144,9 +144,11 @@ class ResourceTestBase:
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.tree_name = 'Events'
         transform_request.workers = 42
+        transform_request.workflow_name = "func_adl"
         transform_request.did = '123-456-789'
         transform_request.image = 'ssl-hep/foo:latest'
         transform_request.result_format = 'arrow'
+        transform_request.result_destination = "object-store"
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
         transform_request.files = 1
@@ -157,6 +159,7 @@ class ResourceTestBase:
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
         transform_request.transformer_language = "scala"
         transform_request.transformer_command = "echo"
+        transform_request.selection = "(cool (is LISP))"
         return transform_request
 
     @staticmethod

@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
 
+import pytest
 from pytest import fixture
 from servicex.dataset_manager import DatasetManager
 from servicex.did_parser import DIDParser
@@ -82,7 +83,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_from_new_did(self, client):
         did = "rucio://my-did?files=1"
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser(did), "123-456", logger=client.application.logger, db=db)
+            dm = DatasetManager.from_did(DIDParser(did), logger=client.application.logger,  db=db)
             assert dm.dataset.name == did
             assert dm.dataset.did_finder == "rucio"
             assert dm.dataset.lookup_status == DatasetStatus.created
@@ -100,7 +101,7 @@ class TestDatasetManager(ResourceTestBase):
                         last_used=datetime.now(tz=timezone.utc),
                         last_updated=datetime.fromtimestamp(0))
             d.save_to_db()
-            dm = DatasetManager.from_did(DIDParser(did), "123-456", logger=client.application.logger, db=db)
+            dm = DatasetManager.from_did(DIDParser(did), logger=client.application.logger, db=db)
             assert dm.dataset.name == did
             assert dm.dataset.did_finder == "rucio"
             assert dm.dataset.lookup_status == DatasetStatus.looking
@@ -109,7 +110,8 @@ class TestDatasetManager(ResourceTestBase):
     def test_from_new_file_list(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
         with client.application.app_context():
-            dm = DatasetManager.from_file_list(file_list, "123-456", logger=client.application.logger, db=db)
+            dm = DatasetManager.from_file_list(file_list,
+                                               logger=client.application.logger, db=db)
             assert dm.dataset.name == "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
             assert dm.dataset.did_finder == "user"
             assert dm.dataset.lookup_status == DatasetStatus.complete
@@ -136,11 +138,37 @@ class TestDatasetManager(ResourceTestBase):
                             ) for file in file_list
                         ])
             d.save_to_db()
-            dm = DatasetManager.from_file_list(file_list, "123-456", logger=client.application.logger, db=db)
+            dm = DatasetManager.from_file_list(file_list,
+                                               logger=client.application.logger, db=db)
             assert dm.dataset.name == DatasetManager.file_list_hash(file_list)
             assert dm.dataset.did_finder == "user"
             assert dm.dataset.lookup_status == DatasetStatus.created
             assert dm.dataset.id == d.id
+
+    def test_from_dataset_id(self, client):
+        file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+        with client.application.app_context():
+            d = Dataset(name=DatasetManager.file_list_hash(file_list),
+                        did_finder="user", lookup_status=DatasetStatus.created,
+                        last_used=datetime.now(tz=timezone.utc),
+                        last_updated=datetime.fromtimestamp(0),
+                        files=[
+                            DatasetFile(
+                                paths=file,
+                                adler32="xxx",
+                                file_events=0,
+                                file_size=0
+                            ) for file in file_list
+                        ])
+            d.save_to_db()
+            dm = DatasetManager.from_dataset_id(d.id, logger=client.application.logger, db=db)
+            assert dm.dataset.name == DatasetManager.file_list_hash(file_list)
+
+    def test_from_dataset_id_not_found(self, client):
+        with client.application.app_context():
+            with pytest.raises(RuntimeError) as excinfo:
+                _ = DatasetManager.from_dataset_id(42, logger=client.application.logger, db=db)
+            assert str(excinfo.value) == "Could not find dataset with id 42"
 
     def test_lookup_required(self, client):
         with client.application.app_context():
@@ -172,27 +200,26 @@ class TestDatasetManager(ResourceTestBase):
         with client.application.app_context():
             file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
 
-            d = DatasetManager.from_file_list(file_list, "123-456",
-                                              logger=client.application.logger, db=db)
+            d = DatasetManager.from_file_list(file_list, logger=client.application.logger, db=db)
             assert d.file_paths == file_list
 
     def test_dataset_name_file_list(self, client):
         with client.application.app_context():
             file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
 
-            dm = DatasetManager.from_file_list(file_list, "123-456",
+            dm = DatasetManager.from_file_list(file_list,
                                                logger=client.application.logger, db=db)
             assert dm.name == "985d119e9da637c5b7f89c133f60689259f0fe5db0ee4b3d993270aafdc5b82a"
 
     def test_dataset_name_did(self, client):
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"), "123-456",
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"),
                                          logger=client.application.logger, db=db)
             assert dm.name == "rucio://my-did?files=1"
 
     def test_refresh(self, client):
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"), "123-456",
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"),
                                          logger=client.application.logger, db=db)
 
             # To be fair, this test isn't really  verifying the refresh method, since
@@ -220,7 +247,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_submit_lookup_request(self, mocker, client):
         mock_rabbit = mocker.Mock()
         with client.application.app_context():
-            d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"), request_id="123-456",
+            d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"),
                                         logger=client.application.logger, db=db)
             d.submit_lookup_request("http://hit-me/here", mock_rabbit)
 
@@ -240,8 +267,37 @@ class TestDatasetManager(ResourceTestBase):
             transform_request.request_id = "462-33"
             transform_request.selection = "test-string"
 
-            d = DatasetManager.from_file_list(file_list, transform_request.request_id,
-                                              logger=client.application.logger, db=db)
+            d = DatasetManager.from_file_list(file_list, logger=client.application.logger, db=db)
             d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
             assert transform_request.files == 2
             mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=file_list)
+
+    def test_add_files(self, mocker, client):
+        with client.application.app_context():
+            mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
+            file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
+            first_request = self._generate_transform_request()
+            first_request.request_id = "first_request"
+            first_request.files = 2
+
+            second_request = self._generate_transform_request()
+            second_request.request_id = "second_request"
+            second_request.files = 2
+
+            d = DatasetManager.from_file_list(file_list, logger=client.application.logger,
+                                              extras={"request_id": first_request.request_id},
+                                              db=db)
+            first_request.did_id = d.id
+            second_request.did_id = d.id
+
+            d.add_files(files=[
+                DatasetFile(
+                    paths="root://eospublic.cern.ch/3.root",
+                    adler32="xxx",
+                    file_events=0,
+                    file_size=0
+                )
+            ], requests=[first_request, second_request], lookup_result_processor=mock_processor)
+
+            assert first_request.files == 3
+            assert second_request.files == 3
