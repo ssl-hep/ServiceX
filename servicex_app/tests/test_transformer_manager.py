@@ -61,6 +61,22 @@ class TestTransformerManager(ResourceTestBase):
 
         return mock_kubernetes
 
+        """
+            mock_transform_manager. \
+                start_transformers \
+                .assert_called_with(image=submitted_request.image,
+                                    request_id=submitted_request.request_id,
+                                    workers=submitted_request.workers,
+                                    generated_code_cm=submitted_request.generated_code_cm,
+                                    rabbitmq_uri='amqp://trans.rabbit',
+                                    namespace='my-ws',
+                                    result_destination=submitted_request.result_destination,
+                                    result_format=submitted_request.result_format,
+                                    transformer_command=None,
+                                    transformer_language=None,
+                                    x509_secret='my-x509-secret')
+
+    """
     def test_init_external_kubernetes(self, mock_kubernetes):
         TransformerManager('external-kubernetes')
         mock_kubernetes.config.load_kube_config.assert_called()

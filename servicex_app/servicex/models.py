@@ -31,7 +31,7 @@ from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy import DateTime, ForeignKey, func, or_, and_
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -154,7 +154,7 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
-    did_id = db.Column(db.Integer, unique=True, nullable=False)
+    did_id = db.Column(db.Integer, unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
@@ -236,15 +236,16 @@ class TransformRequest(db.Model):
             return None
 
     @classmethod
-    def lookup_running(cls,  key: int):
+    def lookup_running_by_dataset_id(cls, dataset_id: int):
         """
         Looks up TransformRequests in "Running" state state that needs a dataset
         given by its dataset_id.
-        :param key: dataset id. Must be an integer.
+        :param dataset_id: dataset id. Must be an integer.
         :return result: list of TransformRequests, or None if not found.
         """
         try:
-            return cls.query.filter_by(did_id=key, status="Running").all()
+            return cls.query.filter_by(and_(or_(cls.status == "Running", cls.status == "Submitted"),
+                                            cls.did_id == dataset_id)).all()
         except NoResultFound:
             return None
 

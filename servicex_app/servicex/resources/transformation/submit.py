@@ -34,7 +34,6 @@ from servicex.dataset_manager import DatasetManager
 from servicex.decorators import auth_required
 from servicex.did_parser import DIDParser
 from servicex.models import TransformRequest, db
-from servicex.resources.internal.transform_start import TransformStart
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -121,13 +120,16 @@ class SubmitTransformationRequest(ServiceXResource):
                     return {'message': msg}, 400
 
                 dataset_manager = DatasetManager.from_did(parsed_did.full_did,
-                                                          request_id,
                                                           logger=current_app.logger,
-                                                          db=db)
+                                                          extras={
+                                                                    'request_id': request_id
+                                                                }, db=db)
             else:  # no dataset, only a list of files given
-                dataset_manager = DatasetManager.from_file_list(file_list, request_id,
+                dataset_manager = DatasetManager.from_file_list(file_list,
                                                                 logger=current_app.logger,
-                                                                db=db)
+                                                                extras={
+                                                                    'request_id': request_id
+                                                                }, db=db)
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -219,8 +221,7 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec.status = 'Running'
             db.session.commit()
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-                TransformStart.start_transformers(
-                    self.transformer_manager,
+                self.transformer_manager.start_transformers(
                     current_app.config,
                     request_rec
                 )

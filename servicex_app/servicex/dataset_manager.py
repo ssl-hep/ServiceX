@@ -47,7 +47,8 @@ class DatasetManager:
         self.logger.debug(f"DatasetManager: {self.dataset.name}")
 
     @classmethod
-    def from_did(cls, did: DIDParser, request_id: str, logger: Logger, db: SQLAlchemy):
+    def from_did(cls, did: DIDParser, logger: Logger, extras: dict[str, str] = None,
+                 db: SQLAlchemy = None):
         dataset = Dataset.find_by_name(did.full_did)
         if not dataset:
             dataset = Dataset(
@@ -59,10 +60,10 @@ class DatasetManager:
             )
             dataset.save_to_db()
             logger.info(f"Created new dataset: {dataset.name}, id is {dataset.id}",
-                        extra={'request_id': request_id})
+                        extra=extras)
         else:
             logger.info(f"Found existing dataset: {dataset.name}, id is {dataset.id}",
-                        extra={'request_id': request_id})
+                        extra=extras)
 
         return cls(dataset, logger, db)
 
@@ -71,7 +72,9 @@ class DatasetManager:
         return hashlib.sha256(" ".join(file_list).encode()).hexdigest()
 
     @classmethod
-    def from_file_list(cls, file_list: List[str], request_id: str, logger: Logger, db: SQLAlchemy):
+    def from_file_list(cls, file_list: List[str], logger: Logger,
+                       extras: dict[str, str] = None,
+                       db: SQLAlchemy = None):
         name = cls.file_list_hash(file_list)
         dataset = Dataset.find_by_name(name)
 
@@ -94,11 +97,18 @@ class DatasetManager:
 
             dataset.save_to_db()
             logger.info(f"Created new dataset for file list. Dataset Id is {dataset.id}",
-                        extra={'request_id': request_id})
+                        extra=extras)
         else:
             logger.info(f"Found existing dataset for file list. Dataset Id is {dataset.id}",
-                        extra={'request_id': request_id})
+                        extra=extras)
 
+        return cls(dataset, logger, db)
+
+    @classmethod
+    def from_dataset_id(cls, dataset_id: int, logger: Logger, db: SQLAlchemy):
+        dataset = Dataset.find_by_id(dataset_id)
+        if not dataset:
+            raise RuntimeError(f"Could not find dataset with id {dataset_id}")
         return cls(dataset, logger, db)
 
     @property
@@ -149,3 +159,15 @@ class DatasetManager:
         lookup_result_processor.add_files_to_processing_queue(request, files=[
             file.paths for file in self.dataset.files
         ])
+
+    def add_files(self, files: List[DatasetFile], requests: List[TransformRequest],
+                  lookup_result_processor: LookupResultProcessor) -> None:
+        self.dataset.files.extend(files)
+        self.dataset.save_to_db()
+
+        for request in requests:
+            request.files += len(files)
+            lookup_result_processor.add_files_to_processing_queue(request, files=[
+                file.paths for file in files
+            ])
+            request.save_to_db()
