@@ -75,6 +75,11 @@ def upgrade():
         local_cols=['did_id'],
         remote_cols=['id']
     )
+
+    op.alter_column('requests', 'status',
+               existing_type=sa.VARCHAR(length=128),
+               type_=sa.Enum('submitted', 'lookup', 'running', 'complete', 'fatal', 'canceled', name='transformstatus'),
+               nullable=False)
     op.create_foreign_key(
         'transform_result_file_id_fkey',
         source_table='transform_result',

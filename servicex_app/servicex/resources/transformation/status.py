@@ -53,7 +53,7 @@ class TransformationStatus(ServiceXResource):
         # See https://stackoverflow.com/a/42777551/8534196
         iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         result_dict = {
-            "status": transform.status,
+            "status": transform.status.string_name,
             "request-id": request_id,
             "submit-time": transform.submit_time.strftime(iso_fmt),
             "finish-time": transform.finish_time,
