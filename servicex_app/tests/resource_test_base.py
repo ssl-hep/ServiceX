@@ -35,7 +35,7 @@ from servicex import create_app
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import TransformRequest, Dataset, DatasetFile
+from servicex.models import TransformRequest, Dataset, DatasetFile, TransformStatus
 from servicex.rabbit_adaptor import RabbitAdaptor
 
 
@@ -154,7 +154,7 @@ class ResourceTestBase:
         transform_request.files = 1
         transform_request.files_failed = 0
         transform_request.files_completed = 0
-        transform_request.status = "Submitted"
+        transform_request.status = TransformStatus.submitted
         transform_request.app_version = '1.0.1'
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
         transform_request.transformer_language = "scala"

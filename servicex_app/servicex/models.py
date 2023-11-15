@@ -143,6 +143,19 @@ class UserModel(db.Model):
         return UserModel.generate_hash(provided_password) == key
 
 
+class TransformStatus(Enum):
+    submitted = ("Submitted", False)
+    lookup = ("Lookup", False)
+    running = ("Running", False)
+    complete = ("Complete", True)
+    fatal = ("Fatal", True)
+    canceled = ("Canceled", True)
+
+    def __init__(self, string_name, is_complete):
+        self.string_name = string_name
+        self.is_complete = is_complete
+
+
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
     OBJECT_STORE_DEST = 'object-store'
@@ -173,7 +186,7 @@ class TransformRequest(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
     generated_code_cm = db.Column(db.String(128), nullable=True)
-    status = db.Column(db.String(128), nullable=True)
+    status = db.Column(db.Enum(TransformStatus), nullable=False)
     failure_description = db.Column(db.String(max_string_size), nullable=True)
     app_version = db.Column(db.String(64), nullable=True)
     code_gen_image = db.Column(db.String(256), nullable=True)
@@ -199,7 +212,7 @@ class TransformRequest(db.Model):
             'result-format': self.result_format,
             'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
-            'status': self.status,
+            'status': self.status.string_name,
             'failure-info': self.failure_description,
             'app-version': self.app_version,
             'code-gen-image': self.code_gen_image,
@@ -270,14 +283,6 @@ class TransformRequest(db.Model):
     @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
-
-    @property
-    def complete(self) -> bool:
-        return self.status in {"Complete", "Fatal", "Canceled"}
-
-    @property
-    def incomplete(self) -> bool:
-        return self.status in {"Submitted", "Running"}
 
     @property
     def submitter_name(self):

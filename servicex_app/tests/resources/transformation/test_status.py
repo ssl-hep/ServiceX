@@ -33,7 +33,7 @@ class TestTransformStatus(ResourceTestBase):
         assert response.status_code == 200
         iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         assert response.json == {
-            "status": fake_transform_request.status,
+            "status": fake_transform_request.status.string_name,
             'request-id': "1234",
             "submit-time": fake_transform_request.submit_time.strftime(iso_fmt),
             "finish-time": fake_transform_request.finish_time.strftime(iso_fmt),

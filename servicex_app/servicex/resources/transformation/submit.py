@@ -33,7 +33,7 @@ from flask_restful import reqparse
 from servicex.dataset_manager import DatasetManager
 from servicex.decorators import auth_required
 from servicex.did_parser import DIDParser
-from servicex.models import TransformRequest, db
+from servicex.models import TransformRequest, db, TransformStatus
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -154,7 +154,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 result_format=args['result-format'],
                 workers=args['workers'],
                 workflow_name=_workflow_name(args),
-                status='Submitted',
+                status=TransformStatus.submitted,
                 app_version=self._get_app_version(),
                 code_gen_image=code_gen_image_name,
                 files=0
@@ -218,7 +218,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 dataset_manager.publish_files(request_rec, self.lookup_result_processor)
 
             # starts transformers independently of the state of dataset.
-            request_rec.status = 'Running'
+            request_rec.status = TransformStatus.running
             db.session.commit()
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
                 self.transformer_manager.start_transformers(
