@@ -30,6 +30,7 @@ def upgrade():
     # drop messages (just a cleanup)
     op.drop_column('transform_result', 'messages')
 
+
     # add datasets table
     op.create_table('datasets',
                     sa.Column('id', sa.Integer(), nullable=False),
@@ -88,6 +89,10 @@ def upgrade():
         remote_cols=['id']
     )
 
+    # Remove the unused workflow_name
+    op.drop_column('requests', 'workflow_name')
+
+
 
 def downgrade():
 
@@ -126,3 +131,4 @@ def downgrade():
     )
 
     op.add_column('transform_result', sa.Column('messages', sa.Integer(), nullable=True))
+    op.add_column('requests', sa.Column('workflow_name', sa.String(length=40), nullable=False))

@@ -47,18 +47,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     @staticmethod
     def _generate_transformation_request(**kwargs):
         request = {
-            'did': 'rucio://123-45-678',
-            'columns': "e.e, e.p",
-            'result-destination': 'object-store',
-            'workers': 10,
-            'codegen': 'atlasxaod'
-        }
-        request.update(kwargs)
-        return request
-
-    @staticmethod
-    def _generate_transformation_request_xAOD_root_file():
-        return {
             'did': '123-45-678',
             'selection': "test-string",
             'image': 'ssl-hep/func_adl:latest',
@@ -67,6 +55,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             'workers': 10,
             'codegen': 'atlasxaod'
         }
+        request.update(kwargs)
+        return request
 
     @fixture
     def mock_dataset_manager_from_did(self, mocker):
@@ -159,9 +149,11 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_request_throws_exception(
             self, mocker, mock_rabbit_adaptor, mock_dataset_manager_from_did,
-            mock_app_version, mock_transform_manager):
+            mock_codegen, mock_app_version, mock_transform_manager):
         mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor, transformation_manager=mock_transform_manager)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   transformation_manager=mock_transform_manager,
+                                   code_gen_service=mock_codegen)
         with client.application.app_context():
             response = client.post('/servicex/transformation',
                                    json=self._generate_transformation_request(),
@@ -172,15 +164,16 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation(self, mock_rabbit_adaptor,
                                    mock_dataset_manager_from_did,
+                                   mock_codegen,
                                    mock_app_version):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_codegen)
         with client.application.app_context():
-            request = self._generate_transformation_request()
+            request = self._generate_transformation_request(image="sslhep/servicex_func_adl_xaod_transformer:develop")
 
             response = client.post('/servicex/transformation',
                                    json=request,
-                                   headers=self.fake_header(),
-                                   query_string={'image': 'sslhep/servicex_func_adl_xaod_transformer:develop'})
+                                   headers=self.fake_header())
             assert response.status_code == 200
             request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
@@ -191,7 +184,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
             assert saved_obj.image == "sslhep/servicex_func_adl_xaod_transformer:develop"
-            assert saved_obj.columns == "e.e, e.p"
+            assert saved_obj.selection == 'test-string'
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.app_version == "3.14.15"
@@ -221,8 +214,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_default_scheme(self, mock_rabbit_adaptor,
                                                   mock_dataset_manager_from_did,
+                                                  mock_codegen,
                                                   mock_app_version):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_codegen)
         mock_dataset_manager_from_did.name = ""
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -248,11 +242,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 mock_rabbit_adaptor)
 
     def test_submit_transformation_existing_dataset(self, mocker, mock_rabbit_adaptor,
-                                                    mock_dataset_manager_from_did, mock_app_version):
+                                                    mock_dataset_manager_from_did,
+                                                    mock_codegen,
+                                                    mock_app_version):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+                                   lookup_result_processor=mock_processor,
+                                   code_gen_service=mock_codegen)
 
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -282,11 +279,13 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_incomplete_existing_dataset(self, mocker,
                                                                mock_rabbit_adaptor,
                                                                mock_dataset_manager_from_did,
+                                                               mock_codegen,
                                                                mock_app_version):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   lookup_result_processor=mock_processor)
+                                   lookup_result_processor=mock_processor,
+                                   code_gen_service=mock_codegen)
 
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -325,7 +324,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_code_gen_service
         )
         with client.application.app_context():
-            request = self._generate_transformation_request_xAOD_root_file()
+            request = self._generate_transformation_request()
 
             response = client.post('/servicex/transformation',
                                    json=request, headers=self.fake_header())
@@ -341,6 +340,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_file_list(self, mocker,
                                              mock_dataset_manager_from_files,
                                              mock_transform_manager,
+                                             mock_codegen,
                                              file_list,
                                              mock_app_version):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
@@ -351,7 +351,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         client = self._test_client(extra_config=cfg,
                                    lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transform_manager)
+                                   transformation_manager=mock_transform_manager,
+                                   code_gen_service=mock_codegen)
 
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -378,10 +379,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 .assert_called_with(ANY, submitted_request)
 
     def test_submit_transformation_request_bad_image(
-        self, mocker, mock_docker_repo_adapter, mock_dataset_manager_from_did
+        self, mocker, mock_docker_repo_adapter,
+            mock_dataset_manager_from_did, mock_codegen
     ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
-        client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter)
+        client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter,
+                                   code_gen_service=mock_codegen)
         request = self._generate_transformation_request()
         request["image"] = "ssl-hep/foo:latest"
         response = client.post('/servicex/transformation', json=request)
@@ -389,12 +392,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.json == {"message": "Requested transformer docker image doesn't exist: " + request["image"]}  # noqa: E501
 
     def test_submit_transformation_request_no_docker_check(
-        self, mocker, mock_docker_repo_adapter, mock_dataset_manager_from_did
+        self, mocker, mock_docker_repo_adapter, mock_dataset_manager_from_did,
+            mock_codegen
     ):
         mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
         client = self._test_client(
             extra_config={'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False},
             docker_repo_adapter=mock_docker_repo_adapter,
+            code_gen_service=mock_codegen
         )
         with client.application.app_context():
 
@@ -411,7 +416,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             mocker.Mock(side_effect=ValueError('This is the error message'))
         client = self._test_client(code_gen_service=mock_code_gen_service)
         with client.application.app_context():
-            request = self._generate_transformation_request_xAOD_root_file()
+            request = self._generate_transformation_request()
             response = client.post('/servicex/transformation',
                                    json=request, headers=self.fake_header())
             assert response.status_code == 400
@@ -430,7 +435,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_with_object_store(self, mocker, mock_dataset_manager_from_did):
+    def test_submit_transformation_with_object_store(self, mocker,
+                                                     mock_dataset_manager_from_did,
+                                                     mock_codegen):
         from servicex import ObjectStoreManager
 
         local_config = {
@@ -442,7 +449,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_object_store = mocker.MagicMock(ObjectStoreManager)
         client = self._test_client(
             extra_config=local_config,
-            object_store=mock_object_store
+            object_store=mock_object_store,
+            code_gen_service=mock_codegen
         )
         with client.application.app_context():
             request = self._generate_transformation_request(**{
@@ -479,7 +487,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.image == 'test-image:latest'
+            assert saved_obj.image == 'ssl-hep/func_adl:latest'
 
     def test_submit_transformation_provided_image(self, mocker, mock_codegen,
                                                   mock_dataset_manager_from_did):
@@ -503,9 +511,11 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.image == 'my-image:latest'
 
     def test_submit_transformation_auth_enabled(
-        self, mock_jwt_extended, mock_requesting_user, mock_dataset_manager_from_did
+        self, mock_jwt_extended, mock_requesting_user,
+            mock_dataset_manager_from_did, mock_codegen
     ):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={'ENABLE_AUTH': True},
+                                   code_gen_service=mock_codegen)
         with client.application.app_context():
 
             response = client.post('/servicex/transformation',
@@ -518,7 +528,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.submitted_by == mock_requesting_user.id
 
-    def test_submit_transformation_with_title(self, client, mock_dataset_manager_from_did):
+    def test_submit_transformation_with_title(self, mock_dataset_manager_from_did,
+                                              mock_codegen):
+        client = self._test_client(code_gen_service=mock_codegen)
         with client.application.app_context():
             title = "Things Fall Apart"
             request = self._generate_transformation_request(title=title)
