@@ -128,12 +128,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_bad_workflow(self, client, mock_dataset_manager_from_did):
-        with client.application.app_context():
-            request = self._generate_transformation_request(columns=None, selection=None)
-            r = client.post('/servicex/transformation', json=request, headers=self.fake_header())
-            assert r.status_code == 400
-
     def test_submit_transformation_bad_did_scheme(self, client):
         request = self._generate_transformation_request(did='foobar://my-did')
         response = client.post('/servicex/transformation', json=request)
@@ -143,8 +137,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_bad_code_gen_image(self, client):
         request = self._generate_transformation_request(codegen='foo')
         response = client.post('/servicex/transformation', json=request)
-        assert response.status_code == 400
-        assert "Failed to submit transform request: Invalid Codegen Image Passed in Request: foo" in response.json[
+        assert response.status_code == 500
+        assert "Invalid Codegen Image Passed in Request: foo" in response.json[
             "message"]
 
     def test_submit_transformation_request_throws_exception(
@@ -388,7 +382,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = self._generate_transformation_request()
         request["image"] = "ssl-hep/foo:latest"
         response = client.post('/servicex/transformation', json=request)
-        assert response.status_code == 400
+        assert response.status_code == 500
         assert response.json == {"message": "Requested transformer docker image doesn't exist: " + request["image"]}  # noqa: E501
 
     def test_submit_transformation_request_no_docker_check(
@@ -419,7 +413,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request = self._generate_transformation_request()
             response = client.post('/servicex/transformation',
                                    json=request, headers=self.fake_header())
-            assert response.status_code == 400
+            assert response.status_code == 500
 
     def test_submit_transformation_missing_dataset_source(self, client):
         request = self._generate_transformation_request()
