@@ -175,7 +175,6 @@ class TransformRequest(db.Model):
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
-    workflow_name = db.Column(db.String(40), nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
@@ -210,7 +209,6 @@ class TransformRequest(db.Model):
             'workers': self.workers,
             'result-destination': self.result_destination,
             'result-format': self.result_format,
-            'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status.string_name,
             'failure-info': self.failure_description,

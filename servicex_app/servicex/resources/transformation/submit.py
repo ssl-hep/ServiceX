@@ -38,18 +38,6 @@ from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
 
-def _workflow_name(transform_request):
-    'Look at the keys and determine what sort of a workflow we want to run'
-    has_columns = ('columns' in transform_request) and transform_request['columns']
-    has_selection = ('selection' in transform_request) and transform_request['selection']
-    if has_columns and not has_selection:
-        return 'straight_transform'
-    if not has_columns and has_selection:
-        return 'selection_codegen'
-    raise ValueError('Cannot determine workflow from argument - '
-                     'selection or columns must be given, and not both')
-
-
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
@@ -153,26 +141,23 @@ class SubmitTransformationRequest(ServiceXResource):
                 result_destination=args['result-destination'],
                 result_format=args['result-format'],
                 workers=args['workers'],
-                workflow_name=_workflow_name(args),
                 status=TransformStatus.submitted,
                 app_version=self._get_app_version(),
                 code_gen_image=code_gen_image_name,
                 files=0
             )
 
-            # If we are doing the xaod_cpp workflow, then the first thing to do is make
-            # sure the requested selection is correct, and generate the C++ files
-            if request_rec.workflow_name == 'selection_codegen':
-                namespace = config['TRANSFORMER_NAMESPACE']
-                (request_rec.generated_code_cm,
-                 codegen_transformer_image,
-                 request_rec.transformer_language,
-                 request_rec.transformer_command) = \
-                    self.code_gen_service.generate_code_for_selection(request_rec, namespace,
-                                                                      user_codegen_name)
+            # The first thing to do is make sure the requested selection is correct, and generate the C++ files
+            namespace = config['TRANSFORMER_NAMESPACE']
+            (request_rec.generated_code_cm,
+             codegen_transformer_image,
+             request_rec.transformer_language,
+             request_rec.transformer_command) = \
+                self.code_gen_service.generate_code_for_selection(request_rec, namespace,
+                                                                  user_codegen_name)
 
-                if not request_rec.image:
-                    request_rec.image = codegen_transformer_image
+            if not request_rec.image:
+                request_rec.image = codegen_transformer_image
 
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
                 if not self.docker_repo_adapter.check_image_exists(request_rec.image):
