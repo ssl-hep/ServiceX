@@ -168,7 +168,6 @@ class TransformRequest(db.Model):
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
     did_id = db.Column(db.Integer, unique=False, nullable=False)
-    columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     image = db.Column(db.String(128), nullable=True)
@@ -202,7 +201,6 @@ class TransformRequest(db.Model):
             'request_id': self.request_id,
             'did': self.did,
             'did_id': self.did_id,
-            'columns': self.columns,
             'selection': self.selection,
             'tree-name': self.tree_name,
             'image': self.image,

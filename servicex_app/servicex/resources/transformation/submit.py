@@ -63,7 +63,6 @@ class SubmitTransformationRequest(ServiceXResource):
             location='json',
             help='Static list of Root Files. Provide this or Dataset Identifier.'
         )
-        cls.parser.add_argument('columns', help='This field cannot be blank')
         cls.parser.add_argument('selection', help='Query string')
         cls.parser.add_argument('image')
         cls.parser.add_argument('codegen')
@@ -176,7 +175,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 did_id=dataset_manager.id,
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
-                columns=args['columns'],
                 selection=args['selection'],
                 tree_name=args['tree-name'],
                 image=image,
