@@ -92,6 +92,9 @@ def upgrade():
     # Remove the unused workflow_name
     op.drop_column('requests', 'workflow_name')
 
+    # Remove unused columns column
+    op.drop_column('requests', 'columns')
+
 
 
 def downgrade():
@@ -132,3 +135,4 @@ def downgrade():
 
     op.add_column('transform_result', sa.Column('messages', sa.Integer(), nullable=True))
     op.add_column('requests', sa.Column('workflow_name', sa.String(length=40), nullable=False))
+    op.add_column('requests', sa.Column('columns', sa.String(length=1024), nullable=True))
