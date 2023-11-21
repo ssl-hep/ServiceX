@@ -83,6 +83,53 @@ We manage project priorities with a [ZenHub board](https://app.zenhub.com/worksp
 We coordinate our efforts on the [IRIS-HEP Slack](http://iris-hep.slack.com).
 Come join this intellectual hub!
 
+## Running the Full ServiceX Chart Locally
+
+You can run ServiceX on your laptop using `docker` or another similar tool that supports kubernetes.
+
+### Prerequisites
+
+1. `docker` is installed and `kubernetes` is running (see configuration options).
+1. Make sure `kubectl` and `helm` are both installed in the shell you'll be doing your development work.
+1. Follow instructions in the deployment guide to install your x509 certificate if you are going to be using any `rucio` or GRID services for your testing.
+
+### Running the chart
+
+1. In the `Servicex/helm` directory run `helm dependency update servicex/`
+1. And install the chart with `helm install -f values.yaml servicex-testing .\servicex\`
+1. As in the deployment guide, you can now port-forward your servicex `app` and `minio`.
+
+How you write your `values.yaml` will depend a lot on what you are testing. Here is an example of a minimal one that will load up the `develop` tag for all the container images, and expects an ATLAS GRID cert:
+
+```yaml
+postgres:
+  enabled: true
+objectStore:
+  publicURL: localhost:9000
+
+gridAccount: <your-user>
+
+x509Secrets:
+  # For ATLAS
+  vomsOrg: atlas
+
+app:
+  ingress:
+    host: localhost:5000
+
+transformer:
+  cachePrefix: '""'
+```
+
+### Making Changes
+
+The best way to work on ServiceX is using the unit tests. That isn't always possible, of course. When it isn't your development cycle will require you to build any changed containers. A possible workflow is:
+
+1. Redeploy the `helm` chart (or perhaps use `upgrade` rather than `install` in the `helm` command) and add `pullPolicy: Never` to the appropriate app section. For example, add it under `app:` in the example file above if you are working on `servicex_app`.
+1. Change your code (say, in `servicex_app`).
+1. In the directory for the app should be a `Dockerfile`. Do the build, and pay attention to the tag. For example, `docker build -t sslhep/servicex_app:develop .`.
+1. Finally restart the pod, which should cause it to pick up the new build. This might kill a port-forward you have in place, so don't forget to restart that!
+
 ## Debugging Tips
 Microservice architectures can be difficult to test and debug. Here are some 
 helpful hints to make this easier.
