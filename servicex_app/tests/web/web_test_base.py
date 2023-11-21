@@ -87,6 +87,9 @@ class WebTestBase:
             'JWT_ADMIN': 'admin',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
+            'DID_RUCIO_FINDER_TAG': 'develop',
+            'DID_CERNOPENDATA_FINDER_TAG': 'develop',
+            'APP_IMAGE_TAG': 'develop',
         }
 
     @staticmethod
