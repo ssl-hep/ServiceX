@@ -36,7 +36,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     from servicex.resources.internal.add_file_to_dataset import AddFileToDataset
     from servicex.resources.internal.fileset_complete import FilesetComplete
-    from servicex.resources.internal.transform_start import TransformStart
     from servicex.resources.internal.transform_status import TransformationStatusInternal
     from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
 
@@ -130,7 +129,11 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationStatus, prefix + "/status")
+
+    DeploymentStatus.make_api(transformer_manager)
     api.add_resource(DeploymentStatus, prefix + "/deployment-status")
+
+    CancelTransform.make_api(transformer_manager)
     api.add_resource(CancelTransform, prefix + "/cancel")
 
     # Internal service endpoints
@@ -144,8 +147,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     FilesetComplete.make_api(lookup_result_processor, transformer_manager)
     api.add_resource(FilesetComplete,
                      '/servicex/internal/transformation/<string:dataset_id>/complete')
-
-    TransformStart.make_api(transformer_manager, lookup_result_processor)
 
     TransformerFileComplete.make_api(transformer_manager)
     api.add_resource(TransformerFileComplete,
