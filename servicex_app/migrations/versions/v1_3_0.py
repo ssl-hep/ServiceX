@@ -79,7 +79,8 @@ def upgrade():
 
     op.alter_column('requests', 'status',
                existing_type=sa.VARCHAR(length=128),
-               type_=sa.Enum('submitted', 'lookup', 'running', 'complete', 'fatal', 'canceled', name='transformstatus'),
+               type_=sa.Enum('submitted', 'pending_lookup', 'lookup', 'running',
+                             'complete', 'fatal', 'canceled', name='transformstatus'),
                nullable=False)
     op.create_foreign_key(
         'transform_result_file_id_fkey',

@@ -229,6 +229,10 @@ class SubmitTransformationRequest(ServiceXResource):
                                         'requestId': str(request_id)})
                 dataset_manager.publish_files(request_rec, self.lookup_result_processor)
                 request_rec.status = TransformStatus.running
+            else:
+                current_app.logger.info("another request received for dataset that is still being looked up ",
+                                        extra={'requestId': str(request_id)})
+                request_rec.status = TransformStatus.pending_lookup
 
             db.session.commit()
 
