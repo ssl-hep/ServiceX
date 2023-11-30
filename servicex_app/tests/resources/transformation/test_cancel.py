@@ -11,9 +11,10 @@ class TestTransformCancel(ResourceTestBase):
     module = "servicex.resources.transformation.cancel"
 
     @pytest.fixture
-    def mock_manager(self, mocker) -> MagicMock:
-        mock_transform_start_resource = mocker.patch(f"{self.module}.TransformStart")
-        return mock_transform_start_resource.transformer_manager
+    def mock_transform_manager(self, mocker) -> MagicMock:
+        mock_transform_manager = mocker.MagicMock()
+        mock_transform_manager.get_deployment_status.return_value = None
+        return mock_transform_manager
 
     @pytest.fixture
     def fake_transform(self, mocker) -> TransformRequest:
@@ -23,42 +24,48 @@ class TestTransformCancel(ResourceTestBase):
         mock_transform_request_cls.lookup.return_value = fake_transform
         return fake_transform
 
-    def test_submitted(self, client, mock_manager, fake_transform):
+    def test_submitted(self, fake_transform, mock_transform_manager):
         fake_transform.status = TransformStatus.submitted
+        client = self._test_client(transformation_manager=mock_transform_manager)
+
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
-        mock_manager.shutdown_transformer_job.assert_not_called()
+        mock_transform_manager.shutdown_transformer_job.assert_not_called()
 
-    def test_running(self, client, mock_manager, fake_transform):
+    def test_running(self, mock_transform_manager, fake_transform):
         fake_transform.status = TransformStatus.running
+        client = self._test_client(transformation_manager=mock_transform_manager)
+
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
-    def test_running_deployment_not_found(self, client, mock_manager, fake_transform):
+    def test_running_deployment_not_found(self, mock_transform_manager, fake_transform):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=404)
-        mock_manager.shutdown_transformer_job.side_effect = exc
+        mock_transform_manager.shutdown_transformer_job.side_effect = exc
+        client = self._test_client(transformation_manager=mock_transform_manager)
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
-    def test_running_k8s_exception(self, client, mock_manager, fake_transform):
+    def test_running_k8s_exception(self, mock_transform_manager, fake_transform):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        mock_manager.shutdown_transformer_job.side_effect = exc
+        mock_transform_manager.shutdown_transformer_job.side_effect = exc
+        client = self._test_client(transformation_manager=mock_transform_manager)
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 403
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
         assert fake_transform.status == TransformStatus.running
         assert fake_transform.finish_time is None
 

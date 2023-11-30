@@ -9,6 +9,12 @@ class TestDeploymentStatus(ResourceTestBase):
     module = "servicex.resources.transformation.deployment"
 
     @fixture
+    def mock_transform_manager(self, mocker) -> MagicMock:
+        mock_transform_manager = mocker.MagicMock()
+        mock_transform_manager.get_deployment_status.return_value = None
+        return mock_transform_manager
+
+    @fixture
     def mock_deployment_status(self) -> MagicMock:
         mock_deployment_status = MagicMock()
         mock_deployment_status.to_dict.return_value = {
@@ -23,20 +29,16 @@ class TestDeploymentStatus(ResourceTestBase):
         return mock_deployment_status
 
     def test_deployment_status(
-            self, mocker, client, mock_deployment_status
+            self, mock_transform_manager, mock_deployment_status
     ):
-        mock_transform_start = mocker.MagicMock()
-        mock_transformer_mgr = mock_transform_start.transformer_manager
-        mock_transformer_mgr.get_deployment_status.return_value = mock_deployment_status
-        mocker.patch(f'{self.module}.TransformStart', mock_transform_start)
+        mock_transform_manager.get_deployment_status.return_value = mock_deployment_status
+
+        client = self._test_client(transformation_manager=mock_transform_manager)
         response = client.get("/servicex/transformation/1234/deployment-status")
         assert response.status_code == 200
         assert response.json == mock_deployment_status.to_dict.return_value
 
-    def test_deployment_status_404(self, mocker, client):
-        mock_transform_start = mocker.MagicMock()
-        mock_transformer_mgr = mock_transform_start.transformer_manager
-        mock_transformer_mgr.get_deployment_status.return_value = None
-        mocker.patch(f'{self.module}.TransformStart', mock_transform_start)
+    def test_deployment_status_404(self, mock_transform_manager):
+        client = self._test_client(transformation_manager=mock_transform_manager)
         response = client.get("/servicex/transformation/1234/deployment-status")
         assert response.status_code == 404
