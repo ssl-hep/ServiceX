@@ -25,24 +25,38 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import timezone, datetime
+
 from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
+from servicex.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
+from pytest import fixture
+
 
 class TestFilesetComplete(ResourceTestBase):
+    @fixture
+    def mock_find_dataset_by_id(self, mocker):
+        dm = mocker.Mock()
+        dm.dataset = Dataset(name="rucio://my-did?files=1",
+                             did_finder="rucio", lookup_status=DatasetStatus.looking,
+                             last_used=datetime.now(tz=timezone.utc),
+                             last_updated=datetime.fromtimestamp(0))
 
-    def test_put_fileset_complete(self, mocker):
-        import servicex
+        dm.name = "rucio://my-did?files=1"
+        dm.id = 42
 
-        mocker.patch.object(servicex.models.Dataset, 'find_by_id',
-                            return_value=self._generate_dataset())
+        mock_find_by_id = mocker.patch.object(Dataset, "find_by_id", return_value=dm)
+        return mock_find_by_id
 
-        mock_dataset_complete_to_db = mocker.patch.object(
-            servicex.models.db.session,
-            'commit',
-            return_value=None
-        )
+    def test_put_fileset_complete(self, mocker, mock_find_dataset_by_id):
+        dm = mock_find_dataset_by_id.return_value
 
+        pending_request = TransformRequest()
+        pending_request.status = TransformStatus.pending_lookup
+        mock_lookup_pending = mocker.patch.object(TransformRequest,
+                                                  "lookup_pending_on_dataset",
+                                                  return_value=[pending_request])
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(lookup_result_processor=mock_processor)
@@ -55,25 +69,28 @@ class TestFilesetComplete(ResourceTestBase):
                                   'elapsed-time': 42
                               })
         assert response.status_code == 200
-        mock_dataset_complete_to_db.assert_called_once()
+        mock_find_dataset_by_id.assert_called_once_with(1234)
+        assert dm.dataset.lookup_status == DatasetStatus.complete
+        assert dm.dataset.n_files == 17
+        assert dm.dataset.events == 1024
+        assert dm.dataset.size == 2046
 
-    def test_put_fileset_complete_empty_dataset(self, mocker):
-        import servicex
+        mock_lookup_pending.assert_called_once_with(1234)
+        dm.publish_files.assert_called_once_with(pending_request, mock_processor)
+        assert pending_request.status == TransformStatus.running
 
-        mocker.patch.object(servicex.models.Dataset, 'find_by_id',
-                            return_value=self._generate_dataset())
-
-        mock_dataset_complete_to_db = mocker.patch.object(
-            servicex.models.db.session,
-            'commit',
-            return_value=None
-        )
+    def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
+        pending_request = TransformRequest()
+        pending_request.status = TransformStatus.pending_lookup
+        mock_lookup_pending = mocker.patch.object(TransformRequest,
+                                                  "lookup_pending_on_dataset",
+                                                  return_value=[pending_request])
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(lookup_result_processor=mock_processor)
 
-        response = client.put('/servicex/internal/transformation/BR549/complete',
+        response = client.put('/servicex/internal/transformation/12345/complete',
                               json={
                                   'files': 0,
                                   'total-events': 0,
@@ -82,4 +99,5 @@ class TestFilesetComplete(ResourceTestBase):
                               })
 
         assert response.status_code == 200
-        mock_dataset_complete_to_db.assert_called_once()
+        mock_find_dataset_by_id.assert_called_once_with(12345)
+        mock_lookup_pending.assert_called_once_with(12345)

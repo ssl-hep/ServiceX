@@ -30,7 +30,7 @@ from unittest.mock import ANY
 from unittest.mock import call
 
 from pytest import fixture
-from servicex.models import TransformRequest, DatasetStatus
+from servicex.models import TransformRequest, DatasetStatus, TransformStatus
 from tests.resource_test_base import ResourceTestBase
 
 from servicex import LookupResultProcessor
@@ -49,7 +49,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = {
             'did': '123-45-678',
             'selection': "test-string",
-            'image': 'ssl-hep/func_adl:latest',
             'result-destination': 'object-store',
             'result-format': 'root-file',
             'workers': 10,
@@ -95,8 +94,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def mock_codegen(self, mocker):
         mock_code_gen = mocker.MagicMock(CodeGenAdapter)
         mock_code_gen.generate_code_for_selection.return_value = ('my-cm',
-                                                                  'test-image:latest', 'echo',
-                                                                  'ssl-hep/func_adl:latest')
+                                                                  'ssl-hep/func_adl:latest',
+                                                                  'bash', 'echo')
         return mock_code_gen
 
     @fixture
@@ -298,6 +297,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.did == 'rucio://my-did?files=1'
             assert saved_obj.did_id == 42
+            assert saved_obj.status == TransformStatus.pending_lookup
 
             mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
                                                              db=ANY,
@@ -470,8 +470,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request = self._generate_transformation_request(**{
                 "result-destination": "object-store",
                 "result-format": "parquet",
-                "selection": "(great (LISP is))",
-                "columns": None
+                "selection": "(great (LISP is))"
             })
 
             response = client.post('/servicex/transformation',
@@ -491,7 +490,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 "result-destination": "object-store",
                 "result-format": "parquet",
                 "selection": "(great (LISP is))",
-                "columns": None,
                 "image": "my-image:latest"
             })
 

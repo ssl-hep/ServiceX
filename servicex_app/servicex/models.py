@@ -25,13 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from __future__ import annotations
+
 import hashlib
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, ForeignKey, func, or_, and_
+from sqlalchemy import DateTime, ForeignKey, func, and_
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -145,6 +147,7 @@ class UserModel(db.Model):
 
 class TransformStatus(Enum):
     submitted = ("Submitted", False)
+    pending_lookup = ("Pending Lookup", False)
     lookup = ("Lookup", False)
     running = ("Running", False)
     complete = ("Complete", True)
@@ -245,18 +248,32 @@ class TransformRequest(db.Model):
             return None
 
     @classmethod
-    def lookup_running_by_dataset_id(cls, dataset_id: int):
+    def lookup_running_by_dataset_id(cls, dataset_id: int) -> list[TransformRequest]:
         """
-        Looks up TransformRequests in "Running" state state that needs a dataset
+        Looks up TransformRequests in "Lookup" state that needs the dataset
         given by its dataset_id.
         :param dataset_id: dataset id. Must be an integer.
-        :return result: list of TransformRequests, or None if not found.
+        :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter_by(and_(or_(cls.status == "Running", cls.status == "Submitted"),
+            return cls.query.filter_by(and_(cls.status == TransformStatus.lookup,
                                             cls.did_id == dataset_id)).all()
         except NoResultFound:
-            return None
+            return []
+
+    @classmethod
+    def lookup_pending_on_dataset(cls, dataset_id: int) -> list[TransformRequest]:
+        """
+        Looks up TransformRequests that have been pending resolving of the given
+        dataset ID.
+        :param dataset_id: dataset id. Must be an integer.
+        :return result: list of TransformRequests, or empty list if not found.
+        """
+        try:
+            return cls.query.filter_by(and_(cls.status == TransformStatus.pending_lookup,
+                                            cls.did_id == dataset_id)).all()
+        except NoResultFound:
+            return []
 
     @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:

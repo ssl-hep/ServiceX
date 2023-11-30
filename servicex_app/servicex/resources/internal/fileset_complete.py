@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import Dataset, db
+from servicex.models import Dataset, db, TransformRequest, TransformStatus, DatasetStatus
 from servicex.resources.servicex_resource import ServiceXResource
 
 
@@ -40,12 +40,22 @@ class FilesetComplete(ServiceXResource):
 
     def put(self, dataset_id):
         summary = request.get_json()
-        dset = Dataset.find_by_id(dataset_id)
+        dm = Dataset.find_by_id(int(dataset_id))
+        dataset = dm.dataset
         current_app.logger.info("Completed fileset for datasetID",
                                 extra={'dataset_id': dataset_id,
                                        'elapsed-time': summary['elapsed-time']})
-        dset.n_files = summary['files']
-        dset.events = summary['total-events']
-        dset.size = summary['total-bytes']
-        dset.lookup_status = 'complete'
+        dataset.n_files = summary['files']
+        dataset.events = summary['total-events']
+        dataset.size = summary['total-bytes']
+        dataset.lookup_status = DatasetStatus.complete
+        db.session.commit()
+
+        # Now time to pick up any transform requests for this dataset that came in
+        # while we were still looking up files and send the dataset to them
+        pending_transforms = TransformRequest.lookup_pending_on_dataset(int(dataset_id))
+        for transform_request in pending_transforms:
+            dm.publish_files(transform_request, self.lookup_result_processor)
+            transform_request.status = TransformStatus.running
+
         db.session.commit()
