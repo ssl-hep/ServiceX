@@ -157,7 +157,7 @@ class DatasetManager:
                       lookup_result_processor: LookupResultProcessor) -> None:
         request.files = len(self.dataset.files)
         lookup_result_processor.add_files_to_processing_queue(request, files=[
-            file.paths for file in self.dataset.files
+            file for file in self.dataset.files
         ])
 
     def add_files(self, files: List[DatasetFile], requests: List[TransformRequest],
@@ -168,6 +168,6 @@ class DatasetManager:
         for request in requests:
             request.files += len(files)
             lookup_result_processor.add_files_to_processing_queue(request, files=[
-                file.paths for file in files
+                file for file in files
             ])
             request.save_to_db()

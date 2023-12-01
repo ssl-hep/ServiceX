@@ -60,12 +60,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     @fixture
     def mock_dataset_manager_from_did(self, mocker):
         dm = mocker.Mock()
-        dm.dataset = Dataset(name="rucio://my-did?files=1",
+        dm.dataset = Dataset(name="rucio://123-45-678",
                              did_finder="rucio", lookup_status=DatasetStatus.looking,
                              last_used=datetime.now(tz=timezone.utc),
                              last_updated=datetime.fromtimestamp(0))
 
-        dm.name = "rucio://my-did?files=1"
+        dm.name = "rucio://123-45-678"
         dm.id = 42
 
         mock_from_did = mocker.patch.object(DatasetManager, "from_did", return_value=dm)
@@ -171,7 +171,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.did == 'rucio://my-did?files=1'
+            assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.did_id == 42
             assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
@@ -197,10 +197,11 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+            mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,
                                                              extras={'request_id': request_id},
                                                              logger=ANY)
+            assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
                 mock_rabbit_adaptor)
@@ -225,10 +226,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 saved_obj = TransformRequest.lookup(request_id)
                 assert saved_obj
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+            mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,
                                                              extras={'request_id': request_id},
                                                              logger=ANY)
+
+            assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
 
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
@@ -259,13 +262,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.did == 'rucio://my-did?files=1'
+            assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.did_id == 42
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+            mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,
                                                              extras={'request_id': request_id},
                                                              logger=ANY)
+            assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_not_called()
             mock_dataset_manager_from_did.return_value.publish_files.assert_called_with(ANY, mock_processor)
 
@@ -295,14 +299,16 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json['request_id']
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.did == 'rucio://my-did?files=1'
+            assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.did_id == 42
             assert saved_obj.status == TransformStatus.pending_lookup
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+            mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,
                                                              extras={'request_id': request_id},
                                                              logger=ANY)
+            assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
+
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_not_called()
             mock_dataset_manager_from_did.return_value.publish_files.assert_not_called()
 
@@ -326,10 +332,11 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert response.status_code == 200
             request_id = response.json['request_id']
 
-            mock_dataset_manager_from_did.assert_called_with('rucio://123-45-678',
+            mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,
                                                              extras={'request_id': request_id},
                                                              logger=ANY)
+            assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
 
     def test_submit_transformation_file_list(self, mocker,
                                              mock_dataset_manager_from_files,

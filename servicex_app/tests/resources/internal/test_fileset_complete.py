@@ -50,7 +50,7 @@ class TestFilesetComplete(ResourceTestBase):
         return mock_find_by_id
 
     def test_put_fileset_complete(self, mocker, mock_find_dataset_by_id):
-        dm = mock_find_dataset_by_id.return_value
+        dataset = mock_find_dataset_by_id.return_value
 
         pending_request = TransformRequest()
         pending_request.status = TransformStatus.pending_lookup
@@ -70,13 +70,13 @@ class TestFilesetComplete(ResourceTestBase):
                               })
         assert response.status_code == 200
         mock_find_dataset_by_id.assert_called_once_with(1234)
-        assert dm.dataset.lookup_status == DatasetStatus.complete
-        assert dm.dataset.n_files == 17
-        assert dm.dataset.events == 1024
-        assert dm.dataset.size == 2046
+        assert dataset.lookup_status == DatasetStatus.complete
+        assert dataset.n_files == 17
+        assert dataset.events == 1024
+        assert dataset.size == 2046
 
         mock_lookup_pending.assert_called_once_with(1234)
-        dm.publish_files.assert_called_once_with(pending_request, mock_processor)
+        dataset.publish_files.assert_called_once_with(pending_request, mock_processor)
         assert pending_request.status == TransformStatus.running
 
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):

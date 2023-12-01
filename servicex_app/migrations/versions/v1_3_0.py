@@ -7,6 +7,7 @@ Create Date: 2023-05-08 10:22:44.126667
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'v1_3_0'
@@ -77,11 +78,12 @@ def upgrade():
         remote_cols=['id']
     )
 
-    op.alter_column('requests', 'status',
-               existing_type=sa.VARCHAR(length=128),
-               type_=sa.Enum('submitted', 'pending_lookup', 'lookup', 'running',
-                             'complete', 'fatal', 'canceled', name='transformstatus'),
-               nullable=False)
+    status_enum_postgres = postgresql.ENUM('submitted', 'pending_lookup', 'lookup', 'running',
+                            'complete', 'fatal', 'canceled', name='transformstatus', create_type=False)
+    status_enum_postgres.create(op.get_bind(), checkfirst=False)
+
+    op.execute('alter table requests ALTER COLUMN status TYPE transformstatus using status::transformstatus')  # noqa;
+
     op.create_foreign_key(
         'transform_result_file_id_fkey',
         source_table='transform_result',
@@ -109,6 +111,8 @@ def downgrade():
     op.drop_constraint('datasets_requests_fkey', 'datasets')
 
     op.drop_column('requests', 'did_id')
+
+    op.execute('alter table requests ALTER COLUMN status TYPE VARCHAR(128) using transformstatus::VARCHAR')  # noqa;
 
     # Drop modern files table
     op.drop_constraint('transform_result_file_id_fkey', 'transform_result')

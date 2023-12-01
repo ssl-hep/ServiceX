@@ -40,8 +40,8 @@ class FilesetComplete(ServiceXResource):
 
     def put(self, dataset_id):
         summary = request.get_json()
-        dm = Dataset.find_by_id(int(dataset_id))
-        dataset = dm.dataset
+        dataset = Dataset.find_by_id(int(dataset_id))
+
         current_app.logger.info("Completed fileset for datasetID",
                                 extra={'dataset_id': dataset_id,
                                        'elapsed-time': summary['elapsed-time']})
@@ -55,7 +55,7 @@ class FilesetComplete(ServiceXResource):
         # while we were still looking up files and send the dataset to them
         pending_transforms = TransformRequest.lookup_pending_on_dataset(int(dataset_id))
         for transform_request in pending_transforms:
-            dm.publish_files(transform_request, self.lookup_result_processor)
+            dataset.publish_files(transform_request, self.lookup_result_processor)
             transform_request.status = TransformStatus.running
 
         db.session.commit()
