@@ -48,7 +48,6 @@ class LookupResultProcessor:
             transform_request = {
                 'request-id': request.request_id,
                 'file-id': file_record.id,
-                'columns': request.columns,
                 'paths': file_record.paths,
                 'tree-name': request.tree_name,
                 "service-endpoint": self.advertised_endpoint +

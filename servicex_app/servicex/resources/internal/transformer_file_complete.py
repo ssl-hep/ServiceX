@@ -31,7 +31,7 @@ from logging import Logger
 from flask import request, current_app
 
 from servicex import TransformerManager
-from servicex.models import TransformRequest, TransformationResult, db
+from servicex.models import TransformRequest, TransformationResult, db, TransformStatus
 from servicex.resources.servicex_resource import ServiceXResource
 import time
 
@@ -87,7 +87,7 @@ class TransformerFileComplete(ServiceXResource):
     @staticmethod
     def transform_complete(logger: Logger, transform_req: TransformRequest,
                            transformer_manager: TransformerManager):
-        transform_req.status = "Complete"
+        transform_req.status = TransformStatus.complete
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
         db.session.commit()

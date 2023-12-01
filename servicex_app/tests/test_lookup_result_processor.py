@@ -33,13 +33,8 @@ from tests.resource_test_base import ResourceTestBase
 class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_files_to_processing_queue(self, mocker, mock_rabbit_adaptor):
-        # import servicex
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
-        # mocker.patch.object(
-        #     servicex.models.TransformRequest,
-        #     'all_files',
-        #     [self._generate_datafile()])
 
         request = self._generate_transform_request()
         request.result_destination = 'object-store'
@@ -56,7 +51,6 @@ class TestLookupResultProcessor(ResourceTestBase):
                 body=json.dumps(
                     {"request-id": 'BR549',
                      "file-id": 123456789,
-                     "columns": 'electron.eta(), muon.pt()',
                      "paths": "/path1,/path2",
                      "tree-name": "Events",
                      "service-endpoint":

@@ -67,7 +67,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('image')
         cls.parser.add_argument('codegen')
         cls.parser.add_argument('tree-name')
-        cls.parser.add_argument('workers', type=int)
+        cls.parser.add_argument('workers', type=int, default=1)
         cls.parser.add_argument('result-destination', required=True, choices=[
             TransformRequest.OBJECT_STORE_DEST,
             TransformRequest.VOLUME_DEST
@@ -94,7 +94,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 msg = f"DID scheme is not supported: {parsed_did.scheme}"
                 raise BadRequest(msg)
 
-            return DatasetManager.from_did(parsed_did.full_did,
+            return DatasetManager.from_did(parsed_did,
                                            logger=current_app.logger,
                                            extras={
                                                'request_id': request_id
@@ -238,6 +238,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
             # start transformers independently of the state of dataset.
             if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
+                print(f"-----------> files: {request_rec.files}")
                 self.transformer_manager.start_transformers(
                     current_app.config,
                     request_rec

@@ -270,7 +270,7 @@ class TestDatasetManager(ResourceTestBase):
             d = DatasetManager.from_file_list(file_list, logger=client.application.logger, db=db)
             d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
             assert transform_request.files == 2
-            mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=file_list)
+            mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=d.dataset.files)
 
     def test_add_files(self, mocker, client):
         with client.application.app_context():

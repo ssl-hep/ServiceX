@@ -33,7 +33,7 @@ from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, ForeignKey, func, and_
+from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -256,8 +256,8 @@ class TransformRequest(db.Model):
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter_by(and_(cls.status == TransformStatus.lookup,
-                                            cls.did_id == dataset_id)).all()
+            return cls.query.filter((cls.status == TransformStatus.lookup) &
+                                    (cls.did_id == dataset_id)).all()
         except NoResultFound:
             return []
 
@@ -270,8 +270,8 @@ class TransformRequest(db.Model):
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter_by(and_(cls.status == TransformStatus.pending_lookup,
-                                            cls.did_id == dataset_id)).all()
+            return cls.query.filter((cls.status == TransformStatus.pending_lookup) &
+                                    (cls.did_id == dataset_id)).all()
         except NoResultFound:
             return []
 
