@@ -33,7 +33,7 @@
 
       <td>
         <div id="status-{{ req.request_id }}">
-          {{ req.status }}
+          {{ req.status.string_name }}
         </div>
         {% if req.incomplete %}
         <div class="progress" id="progress-{{ req.request_id }}">

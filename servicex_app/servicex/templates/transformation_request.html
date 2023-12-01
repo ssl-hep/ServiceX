@@ -15,7 +15,7 @@
     <dd class="col-sm-9">{{ req.request_id }}</dd>
 
     <dt class="col-sm-3">Status</dt>
-    <dd class="col-sm-9">{{ req.status }}</dd>
+    <dd class="col-sm-9">{{ req.status.string_name }}</dd>
 
     {% if config['ENABLE_AUTH'] %}
     <dt class="col-sm-3">Submitted by</dt>
