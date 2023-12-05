@@ -34,12 +34,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
 
         else:
-            explode_records = bool(awkward_array.fields)
-            try:
-                arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
-            except TypeError:
-                arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
-                                          explode_records=explode_records)
+            arrow = ak.to_arrow_table(awkward_array)
 
             etime = time.time()
 
