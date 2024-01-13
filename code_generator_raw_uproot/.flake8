@@ -1,0 +1,13 @@
+[flake8]
+max-line-length = 99
+exclude =
+    .tox,
+    __pycache__
+    validate_requests.py
+    find_m.py
+    messaging.py
+    .local
+    build
+    migrations
+
+
