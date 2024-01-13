@@ -47,8 +47,8 @@ class RawUprootTranslator(CodeGenerator):
 
         for subquery in jquery:
             if 'treename' not in subquery or not subquery['treename']:
-                raise GenerateCodeException(f"At least one tree must be "
-                                             "specified for query {subquery}")
+                raise GenerateCodeException("At least one tree must be "
+                                            f"specified for query {subquery}")
 
         generated_code = f'''
 def run_query(file_path):
