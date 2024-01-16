@@ -35,7 +35,7 @@
         <div id="status-{{ req.request_id }}">
           {{ req.status.string_name }}
         </div>
-        {% if req.status.string_name == 'running' %}
+        {% if req.status.string_name == 'Running' %}
         <div class="progress" id="progress-{{ req.request_id }}">
           <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
           </div>
@@ -63,7 +63,7 @@
       </td>
       <td id="replicas-{{ req.request_id }}">-</td>
       <td>
-        {% if req.status.string_name == 'running' %}
+        {% if req.status.string_name == 'Running' %}
         <button id="cancel-{{ req.request_id }}"
           onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
           type="button" class="btn btn-danger btn-sm">
@@ -87,7 +87,6 @@
   let watched = new Set(
     {{ pagination.items | map(attribute = "request_id") | list | tojson | safe }}
     );
-  console.log('ps', pagination.items);
   console.log(watched);
 
   function update_progress() {
