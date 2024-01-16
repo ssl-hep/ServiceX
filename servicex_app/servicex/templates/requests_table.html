@@ -87,12 +87,14 @@
   let watched = new Set(
     {{ pagination.items | selectattr("status", "equalto", "Running") | map(attribute = "request_id") | list | tojson | safe }}
     );
-  // watched.add(
-  //   {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }}
-  // );
-  // watched.add(
-  //   {{ pagination.items | selectattr("status", "equalto", "Lookup") | map(attribute = "request_id") | list | tojson | safe }}
-  // );
+  let sub = {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }};
+  let lup = {{ pagination.items | selectattr("status", "equalto", "Lookup") | map(attribute = "request_id") | list | tojson | safe }};
+  for (i in sub) {
+    watched.add(sub[i]);
+  }
+  for (i in lup) {
+    watched.add(lup[i]);
+  }
   console.log(watched);
 
   function update_progress() {
