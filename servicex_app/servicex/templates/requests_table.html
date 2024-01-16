@@ -85,7 +85,7 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
   let pr = new Set(
-    {{ pagination.items | list }}
+    {{ pagination.items.status | list }}
     );
   console.log(pr);
 
@@ -93,7 +93,7 @@
     {{ pagination.items | selectattr("status", "equalto", "Running") | map(attribute = "request_id") | list | tojson | safe }}
     );
   let sub = {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }};
-  let lup = {{ pagination.items | selectattr("status", "equalto", "Lookup") | map(attribute = "request_id") | list | tojson | safe }};
+  let lup = {{ pagination.items | selectattr("status", "in", ["Lookup", "Submitted", "Running"]) | map(attribute = "request_id") | list | tojson | safe }};
   for (i in sub) {
     watched.add(sub[i]);
   }
