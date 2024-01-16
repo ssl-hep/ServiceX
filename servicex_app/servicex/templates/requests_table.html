@@ -85,19 +85,20 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
 
-  console.log({{ pagination.items | map(attribute = "status") | list }});
+  let rs = Set();
+  {% for req in pagination.items %}
+  {% if req.status.string_name == 'Running' or req.status.string_name == 'Submitted' or req.status.string_name == 'Lookup' %}
+  rs.add({{ req.request_id }});
+  {% endif %}
+  {% endfor %}
+  console.log('rs', rs);
+
+  // console.log({{ pagination.items | map(attribute = "status") | list }});
 
   let watched = new Set(
     {{ pagination.items | map(attribute = "request_id") | list | tojson | safe }}
     );
-  let sub = {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }};
-  let lup = {{ pagination.items | selectattr("status", "in", ["Lookup", "Submitted", "Running"]) | map(attribute = "request_id") | list | tojson | safe }};
-  for (i in sub) {
-    watched.add(sub[i]);
-  }
-  for (i in lup) {
-    watched.add(lup[i]);
-  }
+
   console.log(watched);
 
   function update_progress() {
