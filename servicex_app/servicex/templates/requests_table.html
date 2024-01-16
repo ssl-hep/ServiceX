@@ -85,14 +85,14 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
   let watched = new Set(
-    {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }}
-    );
-  watched.add(
     {{ pagination.items | selectattr("status", "equalto", "Running") | map(attribute = "request_id") | list | tojson | safe }}
-  );
-  watched.add(
-    {{ pagination.items | selectattr("status", "equalto", "Lookup") | map(attribute = "request_id") | list | tojson | safe }}
-  );
+    );
+  // watched.add(
+  //   {{ pagination.items | selectattr("status", "equalto", "Submitted") | map(attribute = "request_id") | list | tojson | safe }}
+  // );
+  // watched.add(
+  //   {{ pagination.items | selectattr("status", "equalto", "Lookup") | map(attribute = "request_id") | list | tojson | safe }}
+  // );
   console.log(watched);
 
   function update_progress() {
