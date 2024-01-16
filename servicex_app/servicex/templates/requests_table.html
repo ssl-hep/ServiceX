@@ -85,7 +85,7 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
 
-  let rs = Set();
+  let rs = new Set();
   {% for req in pagination.items %}
   {% if req.status.string_name == 'Running' or req.status.string_name == 'Submitted' or req.status.string_name == 'Lookup' %}
   rs.add({{ req.request_id }});
