@@ -84,6 +84,11 @@
 
 {% macro requests_table_update_script(pagination) %}
 <script>
+  let pr = new Set(
+    {{ pagination.items | list | tojson | safe }}
+    );
+  console.log(pr);
+
   let watched = new Set(
     {{ pagination.items | selectattr("status", "equalto", "Running") | map(attribute = "request_id") | list | tojson | safe }}
     );
