@@ -85,19 +85,12 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
 
-  let rs = new Set();
+  let watched = new Set();
   {% for req in pagination.items %}
   {% if req.status.string_name == 'Running' or req.status.string_name == 'Submitted' or req.status.string_name == 'Lookup' %}
-  rs.add({{ req.request_id }});
+  watched.add("{{ req.request_id }}");
   {% endif %}
   {% endfor %}
-  console.log('rs', rs);
-
-  // console.log({{ pagination.items | map(attribute = "status") | list }});
-
-  let watched = new Set(
-    {{ pagination.items | map(attribute = "request_id") | list | tojson | safe }}
-    );
 
   console.log(watched);
 
