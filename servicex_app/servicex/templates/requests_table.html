@@ -87,6 +87,7 @@
   let watched = new Set(
     {{ pagination.items | map(attribute = "request_id") | list | tojson | safe }}
     );
+  console.log('ps', pagination.items);
   console.log(watched);
 
   function update_progress() {
