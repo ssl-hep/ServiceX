@@ -85,7 +85,7 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
   let pr = new Set(
-    {{ pagination.items | list | tojson | safe }}
+    {{ pagination.items | list }}
     );
   console.log(pr);
 
