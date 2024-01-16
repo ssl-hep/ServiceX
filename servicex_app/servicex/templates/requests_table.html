@@ -85,7 +85,7 @@
 {% macro requests_table_update_script(pagination) %}
 <script>
   let watched = new Set(
-    {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
+    {{ pagination.items | map(attribute = "request_id") | list | tojson | safe }}
     );
   console.log(watched);
 
