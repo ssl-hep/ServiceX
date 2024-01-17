@@ -20,6 +20,7 @@ January 11, 2023
 ### Fixed
 - Bug where db was initialized twice
 - Typo in transformer logging
+- Dashboard refresh has been restored
 
 ### Removed
 
