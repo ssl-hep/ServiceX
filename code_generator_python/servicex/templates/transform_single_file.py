@@ -5,6 +5,7 @@ from pathlib import Path
 import generated_transformer
 import awkward as ak
 import uproot
+import pyarrow.parquet as pq
 import numpy as np
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 default_tree_name = "servicex"
@@ -63,10 +64,13 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 awkward_array = output
 
             total_events = ak.num(awkward_array, axis=0)
+            arrow = ak.to_arrow_table(awkward_array)
 
             etime = time.time()
 
-            ak.to_parquet(awkward_array, output_path)
+            writer = pq.ParquetWriter(output_path, arrow.schema)
+            writer.write_table(table=arrow)
+            writer.close()
 
             wtime = time.time()
 
