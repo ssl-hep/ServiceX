@@ -28,7 +28,7 @@
 
 
 import servicex_codegen
-from servicex.python_code_generator.python_translator import PythonTranslator
+from python_code_generator.python_translator import PythonTranslator
 
 
 def create_app(test_config=None, provided_translator=None):

@@ -35,12 +35,12 @@ import base64
 import os
 import tempfile
 
-from servicex.python_code_generator.python_translator import \
+from python_code_generator.python_translator import \
     PythonTranslator
 
 
 def test_generate_code():
-    os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
+    os.environ['TEMPLATE_PATH'] = "python_code_generator/templates/transform_single_file.py"
     os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
 
     with tempfile.TemporaryDirectory() as tmpdirname:
