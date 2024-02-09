@@ -8,7 +8,7 @@ RUN pip install poetry==$POETRY_VERSION
 RUN useradd -ms /bin/bash servicex
 
 WORKDIR /home/servicex
-RUN mkdir ./servicex
+RUN mkdir ./xaod_code_generator
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
@@ -20,7 +20,7 @@ RUN pip list
 
 COPY boot.sh ./
 COPY transformer_capabilities.json ./
-COPY servicex/ ./servicex
+COPY xaod_code_generator/ ./xaod_code_generator
 COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
