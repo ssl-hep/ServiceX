@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 
-from servicex.xaod_code_generator.ast_translator import AstAODTranslator
+from xaod_code_generator.ast_translator import AstAODTranslator
 import servicex_codegen
 from flask.config import Config
 

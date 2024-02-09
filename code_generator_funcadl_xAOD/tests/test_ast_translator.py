@@ -4,7 +4,7 @@ from pathlib import PosixPath
 
 import pytest
 from func_adl_xAOD.atlas.xaod.executor import atlas_xaod_executor
-from servicex.xaod_code_generator.ast_translator import AstAODTranslator
+from xaod_code_generator.ast_translator import AstAODTranslator
 
 from servicex_codegen.code_generator import GenerateCodeException
 
@@ -19,7 +19,7 @@ def test_translate_good(mocker):
     with tempfile.TemporaryDirectory() as tmpdirname:
         exe = mocker.MagicMock()
 
-        os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.sh"
+        os.environ['TEMPLATE_PATH'] = "xaod_code_generator/templates/transform_single_file.sh"
         os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
         query = "(call ResultTTree (call Select (call SelectMany (call EventDataset (list 'localds://did_01')))))"  # NOQA E501
         translator = AstAODTranslator(exe=exe)
