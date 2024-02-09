@@ -30,7 +30,7 @@ import tempfile
 from collections import namedtuple
 
 import pytest
-from servicex.uproot_code_generator.ast_translator import GenerateCodeException, \
+from uproot_code_generator.ast_translator import GenerateCodeException, \
     AstUprootTranslator
 
 
@@ -40,17 +40,17 @@ class TestGenerateCode:
             namedtuple('GeneratedFileBody', 'value')(value="hi")
         ])
         mock_translator = mocker.patch(
-            "servicex.uproot_code_generator.ast_translator.text_ast_to_python_ast",
+            "uproot_code_generator.ast_translator.text_ast_to_python_ast",
             return_value=mock_transform)
         mock_hash = mocker.patch(
-            "servicex.uproot_code_generator.ast_translator.ast_hash.calc_ast_hash",
+            "uproot_code_generator.ast_translator.ast_hash.calc_ast_hash",
             return_value="123-456")
         gen_python_source = mocker.patch(
-            "servicex.uproot_code_generator.ast_translator.generate_python_source",
+            "uproot_code_generator.ast_translator.generate_python_source",
             return_value="import foo")
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
+            os.environ['TEMPLATE_PATH'] = "uproot_code_generator/templates/transform_single_file.py" # NOQA E501
             os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
             query = "(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))" # NOQA E501
 
