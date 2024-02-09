@@ -28,7 +28,7 @@
 
 
 import servicex_codegen
-from servicex.uproot_code_generator.ast_translator import AstUprootTranslator
+from uproot_code_generator.ast_translator import AstUprootTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
