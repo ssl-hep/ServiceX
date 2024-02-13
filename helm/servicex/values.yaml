@@ -67,11 +67,6 @@ didFinder:
     auth_host: https://voatlasrucio-auth-prod.cern.ch:443
     enabled: true
     image: sslhep/servicex-did-finder
-    memcache:
-      enabled: true
-      image: memcached
-      tag: alpine
-      ttl: 86400
     pullPolicy: Always
     reportLogicalFiles: false
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443

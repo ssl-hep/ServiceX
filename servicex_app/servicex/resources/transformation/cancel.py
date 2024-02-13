@@ -31,13 +31,15 @@ import kubernetes
 from flask import current_app
 
 from servicex.decorators import auth_required
-from servicex.models import TransformRequest, db
+from servicex.models import TransformRequest, db, TransformStatus
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.resources.internal.transform_start import TransformStart
 from servicex.transformer_manager import TransformerManager
 
 
 class CancelTransform(ServiceXResource):
+    @classmethod
+    def make_api(cls, transformer_manager: TransformerManager):
+        cls.transformer_manager = transformer_manager
 
     @auth_required
     def get(self, request_id: str):
@@ -46,17 +48,16 @@ class CancelTransform(ServiceXResource):
             msg = f'Transformation request not found with id: {request_id}'
             current_app.logger.warning(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
-        elif transform_req.complete:
+        elif transform_req.status.is_complete:
             msg = f"Transform request with id {request_id} is not in progress."
             current_app.logger.warning(msg, extra={'requestId': request_id})
             return {"message": msg}, 400
 
-        manager: TransformerManager = TransformStart.transformer_manager
         namespace = current_app.config['TRANSFORMER_NAMESPACE']
 
-        if transform_req.status == "Running":
+        if transform_req.status == TransformStatus.running:
             try:
-                manager.shutdown_transformer_job(request_id, namespace)
+                self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
                 if exc.status == 404:
                     pass
@@ -65,7 +66,7 @@ class CancelTransform(ServiceXResource):
                                              extra={'requestId': request_id})
                     return {'message': exc.reason}, exc.status
 
-        transform_req.status = "Canceled"
+        transform_req.status = TransformStatus.canceled
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
         db.session.commit()

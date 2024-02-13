@@ -30,6 +30,7 @@ import os
 import sys
 from distutils.util import strtobool
 
+import base64
 import click
 import logstash
 from flask import Flask
@@ -205,6 +206,10 @@ def create_app(test_config=None,
     else:
         app.config.from_mapping(test_config)
         app.logger.info(f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}")
+
+    def b64decode(text):  # needed for python selection decoding to web page.
+        return base64.b64decode(text).decode()
+    app.add_template_filter(b64decode)
 
     with app.app_context():
         db.init_app(app)

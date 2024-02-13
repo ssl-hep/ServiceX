@@ -31,8 +31,9 @@ from logging import Logger
 from flask import request, current_app
 
 from servicex import TransformerManager
-from servicex.models import TransformRequest, TransformationResult, db
+from servicex.models import TransformRequest, TransformationResult, db, TransformStatus
 from servicex.resources.servicex_resource import ServiceXResource
+import time
 
 
 class TransformerFileComplete(ServiceXResource):
@@ -42,6 +43,7 @@ class TransformerFileComplete(ServiceXResource):
         return cls
 
     def put(self, request_id):
+        start_time = time.time()
         info = request.get_json()
         current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
         transform_req = TransformRequest.lookup(request_id)
@@ -63,26 +65,29 @@ class TransformerFileComplete(ServiceXResource):
             transform_time=info['total-time'],
             total_bytes=info['total-bytes'],
             total_events=info['total-events'],
-            avg_rate=info['avg-rate'],
-            messages=info['num-messages']
+            avg_rate=info['avg-rate']
         )
         rec.save_to_db()
+
+        db.session.commit()
+
+        files_remaining = transform_req.files_remaining
+        if files_remaining is not None and files_remaining == 0:
+            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
 
         current_app.logger.info("FileComplete", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
             'files_completed': transform_req.files_completed,
-            'files_failed': transform_req.files_failed
+            'files_failed': transform_req.files_failed,
+            'report_processed_time': (time.time() - start_time)
         })
-        files_remaining = transform_req.files_remaining
-        if files_remaining is not None and files_remaining == 0:
-            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
         return "Ok"
 
     @staticmethod
     def transform_complete(logger: Logger, transform_req: TransformRequest,
                            transformer_manager: TransformerManager):
-        transform_req.status = "Complete"
+        transform_req.status = TransformStatus.complete
         transform_req.finish_time = datetime.now(tz=timezone.utc)
         transform_req.save_to_db()
         db.session.commit()

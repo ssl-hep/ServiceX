@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.3.0
+January 11, 2023
+### Added
+- User commands to list and approve users
+- Added dataset manager to cache previously found datasets
+
+### Changed
+- Updated funcADL code generator for xAOD
+- Updated funcADL code generator for uproot
+- Updated uproot science image to uproot5
+- Updated several libraries to avoid security vulnerabilities
+
+### Fixed
+- Bug where db was initialized twice
+- Typo in transformer logging
+- Dashboard refresh has been restored
+
+### Removed
+
+
 ### 1.2.2
 September 4, 2023
 ### Added

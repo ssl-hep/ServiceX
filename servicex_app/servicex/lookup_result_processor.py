@@ -26,7 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-from servicex.models import TransformRequest
+# from servicex.models import TransformRequest
+from flask import current_app
+
+# TODO rename to something more descriptive
 
 
 class LookupResultProcessor:
@@ -34,33 +37,28 @@ class LookupResultProcessor:
         self.rabbitmq_adaptor = rabbitmq_adaptor
         self.advertised_endpoint = advertised_endpoint
 
-    def add_file_to_dataset(self, submitted_request, dataset_file):
-        request_id = submitted_request.request_id
+    # TODO remove as it is never used.
+    # def increment_files_in_request(self, submitted_request):
+    #     TransformRequest.add_a_file(submitted_request.request_id)
 
-        # dataset_file.save_to_db()
+    def add_files_to_processing_queue(self, request, files=None):
+        if files is None:
+            files = request.all_files
+        for file_record in files:
+            transform_request = {
+                'request-id': request.request_id,
+                'file-id': file_record.id,
+                'paths': file_record.paths,
+                'tree-name': request.tree_name,
+                "service-endpoint": self.advertised_endpoint +
+                "servicex/internal/transformation/" + request.request_id,
+                "chunk-size": "1000",
+                "result-destination": request.result_destination,
+                "result-format": request.result_format
+            }
+            self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
+                                                routing_key=request.request_id,
+                                                body=json.dumps(transform_request))
 
-        TransformRequest.add_a_file(request_id)
-
-        transform_request = {
-            'request-id': request_id,
-            'file-id': dataset_file.id,
-            'columns': submitted_request.columns,
-            'paths': dataset_file.paths,
-            'tree-name': submitted_request.tree_name,
-            "service-endpoint": self.advertised_endpoint +
-            "servicex/internal/transformation/" + request_id,
-            "chunk-size": "1000",
-            "result-destination": submitted_request.result_destination,
-            "result-format": submitted_request.result_format
-        }
-
-        self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
-                                            routing_key=request_id,
-                                            body=json.dumps(transform_request))
-
-    def report_fileset_complete(self, submitted_request,
-                                num_files,  total_events=0,
-                                total_bytes=0, did_lookup_time=0):
-        submitted_request.total_events = total_events
-        submitted_request.total_bytes = total_bytes
-        submitted_request.did_lookup_time = did_lookup_time
+        current_app.logger.info("Added files to processing queue", extra={
+            'requestId': request.request_id})

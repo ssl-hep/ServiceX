@@ -33,9 +33,9 @@
 
       <td>
         <div id="status-{{ req.request_id }}">
-          {{ req.status }}
+          {{ req.status.string_name }}
         </div>
-        {% if req.incomplete %}
+        {% if req.status.string_name == 'Running' %}
         <div class="progress" id="progress-{{ req.request_id }}">
           <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
           </div>
@@ -63,7 +63,7 @@
       </td>
       <td id="replicas-{{ req.request_id }}">-</td>
       <td>
-        {% if req.incomplete %}
+        {% if req.status.string_name == 'Running' %}
         <button id="cancel-{{ req.request_id }}"
           onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
           type="button" class="btn btn-danger btn-sm">
@@ -84,9 +84,14 @@
 
 {% macro requests_table_update_script(pagination) %}
 <script>
-  let watched = new Set(
-    {{ pagination.items | selectattr("incomplete") | map(attribute = "request_id") | list | tojson | safe }}
-    );
+
+  let watched = new Set();
+  {% for req in pagination.items %}
+  {% if req.status.string_name == 'Running' or req.status.string_name == 'Submitted' or req.status.string_name == 'Lookup' %}
+  watched.add("{{ req.request_id }}");
+  {% endif %}
+  {% endfor %}
+
   // console.log(watched);
 
   function update_progress() {

@@ -27,9 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex.models import TransformRequest, db
+from servicex.models import Dataset, db, TransformRequest, TransformStatus, DatasetStatus
 from servicex.resources.servicex_resource import ServiceXResource
-from servicex.resources.internal.transformer_file_complete import TransformerFileComplete
 
 
 class FilesetComplete(ServiceXResource):
@@ -39,21 +38,24 @@ class FilesetComplete(ServiceXResource):
         cls.transformer_manager = transformer_manager
         return cls
 
-    def put(self, request_id):
+    def put(self, dataset_id):
         summary = request.get_json()
-        rec = TransformRequest.lookup(request_id)
-        current_app.logger.info("Completed fileset for request",
-                                extra={'requestId': request_id})
-        self.lookup_result_processor.report_fileset_complete(
-            rec,
-            num_files=summary['files'],
-            total_events=summary['total-events'],
-            total_bytes=summary['total-bytes'],
-            did_lookup_time=summary['elapsed-time']
-        )
+        dataset = Dataset.find_by_id(int(dataset_id))
+
+        current_app.logger.info("Completed fileset for datasetID",
+                                extra={'dataset_id': dataset_id,
+                                       'elapsed-time': summary['elapsed-time']})
+        dataset.n_files = summary['files']
+        dataset.events = summary['total-events']
+        dataset.size = summary['total-bytes']
+        dataset.lookup_status = DatasetStatus.complete
         db.session.commit()
 
-        if summary['files'] == 0:
-            TransformerFileComplete.transform_complete(current_app.logger,
-                                                       rec,
-                                                       self.transformer_manager)
+        # Now time to pick up any transform requests for this dataset that came in
+        # while we were still looking up files and send the dataset to them
+        pending_transforms = TransformRequest.lookup_pending_on_dataset(int(dataset_id))
+        for transform_request in pending_transforms:
+            dataset.publish_files(transform_request, self.lookup_result_processor)
+            transform_request.status = TransformStatus.running
+
+        db.session.commit()

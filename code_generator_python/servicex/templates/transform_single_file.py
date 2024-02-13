@@ -4,8 +4,8 @@ import time
 from pathlib import Path
 import generated_transformer
 import awkward as ak
-import pyarrow.parquet as pq
 import uproot
+import pyarrow.parquet as pq
 import numpy as np
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 default_tree_name = "servicex"
@@ -55,20 +55,16 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
         else:
             if isinstance(output, dict):
-                tree_name = list(output.keys()[0])
+                tree_name = list(output.keys())[0]
                 awkward_array = output[tree_name]
                 print(f'Returned type from your Python function is a dictionary - '
                       f'Only the first key {tree_name} will be written as parquet files. '
                       f'Please use root-file output to write all trees.')
             else:
                 awkward_array = output
-            explode_records = bool(awkward_array.fields)
+
             total_events = ak.num(awkward_array, axis=0)
-            try:
-                arrow = ak.to_arrow_table(awkward_array, explode_records=explode_records)
-            except TypeError:
-                arrow = ak.to_arrow_table(ak.repartition(awkward_array, None),
-                                          explode_records=explode_records)
+            arrow = ak.to_arrow_table(awkward_array)
 
             etime = time.time()
 

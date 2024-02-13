@@ -25,6 +25,12 @@
         <td>DID Finder CERN Open Data</td>
         <td>{{ config['DID_CERNOPENDATA_FINDER_TAG']}}</td>
       </tr>
+      {% for key, value in config['CODE_GEN_IMAGES'].items() %}
+      <tr>
+        <td>{{ key }}</td>
+        <td>{{ value }}</td>
+      </tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>

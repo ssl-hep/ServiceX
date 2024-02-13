@@ -15,7 +15,7 @@
     <dd class="col-sm-9">{{ req.request_id }}</dd>
 
     <dt class="col-sm-3">Status</dt>
-    <dd class="col-sm-9">{{ req.status }}</dd>
+    <dd class="col-sm-9">{{ req.status.string_name }}</dd>
 
     {% if config['ENABLE_AUTH'] %}
     <dt class="col-sm-3">Submitted by</dt>
@@ -29,7 +29,11 @@
     <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
 
     <dt class="col-sm-3">Selection</dt>
+    {% if req.transformer_language == 'python' %}
+    <dd class="col-sm-9" style="white-space: pre">{{ req.selection | b64decode }}</dd>
+    {% else %}
     <dd class="col-sm-9">{{ req.selection }}</dd>
+    {% endif %}
 
     <dt class="col-sm-3">Result Format</dt>
     <dd class="col-sm-9">{{ req.result_format }}</dd>

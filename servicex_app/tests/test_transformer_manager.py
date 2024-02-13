@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
 import re
+import os
 import zipfile
 from types import SimpleNamespace
 
@@ -60,6 +61,22 @@ class TestTransformerManager(ResourceTestBase):
 
         return mock_kubernetes
 
+        """
+            mock_transform_manager. \
+                start_transformers \
+                .assert_called_with(image=submitted_request.image,
+                                    request_id=submitted_request.request_id,
+                                    workers=submitted_request.workers,
+                                    generated_code_cm=submitted_request.generated_code_cm,
+                                    rabbitmq_uri='amqp://trans.rabbit',
+                                    namespace='my-ws',
+                                    result_destination=submitted_request.result_destination,
+                                    result_format=submitted_request.result_format,
+                                    transformer_command=None,
+                                    transformer_language=None,
+                                    x509_secret='my-x509-secret')
+
+    """
     def test_init_external_kubernetes(self, mock_kubernetes):
         TransformerManager('external-kubernetes')
         mock_kubernetes.config.load_kube_config.assert_called()
@@ -417,7 +434,7 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, '--result-destination') == 'volume'
-            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--output-dir') == '/posix_volume' + os.sep + 'output-data'
             assert _arg_value(args, '--result-format') == 'parquet'
 
             posix_vol = next(filter(lambda v: v.name == 'posix-volume',
@@ -465,7 +482,7 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, '--result-destination') == 'volume'
-            assert _arg_value(args, '--output-dir') == '/posix_volume/output-data'
+            assert _arg_value(args, '--output-dir') == '/posix_volume' + os.sep + 'output-data'
             assert _arg_value(args, '--result-format') == 'parquet'
 
             posix_vol = next(filter(lambda v: v.name == 'posix-volume',

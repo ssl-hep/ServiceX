@@ -25,28 +25,41 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from servicex.models import TransformRequest
-from servicex import LookupResultProcessor, TransformerManager
+from datetime import timezone, datetime
+
+from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
+
+from servicex.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
+from pytest import fixture
 
 
 class TestFilesetComplete(ResourceTestBase):
-    def test_put_fileset_complete(self, mocker):
-        import servicex
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+    @fixture
+    def mock_find_dataset_by_id(self, mocker):
+        dm = mocker.Mock()
+        dm.dataset = Dataset(name="rucio://my-did?files=1",
+                             did_finder="rucio", lookup_status=DatasetStatus.looking,
+                             last_used=datetime.now(tz=timezone.utc),
+                             last_updated=datetime.fromtimestamp(0))
 
-        submitted_request = self._generate_transform_request()
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=submitted_request)
+        dm.name = "rucio://my-did?files=1"
+        dm.id = 42
 
+        mock_find_by_id = mocker.patch.object(Dataset, "find_by_id", return_value=dm)
+        return mock_find_by_id
+
+    def test_put_fileset_complete(self, mocker, mock_find_dataset_by_id):
+        dataset = mock_find_dataset_by_id.return_value
+
+        pending_request = TransformRequest()
+        pending_request.status = TransformStatus.pending_lookup
+        mock_lookup_pending = mocker.patch.object(TransformRequest,
+                                                  "lookup_pending_on_dataset",
+                                                  return_value=[pending_request])
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mocker.patch.object(TransformRequest, "save_to_db")
 
-        client = self._test_client(lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transformer_manager)
+        client = self._test_client(lookup_result_processor=mock_processor)
 
         response = client.put('/servicex/internal/transformation/1234/complete',
                               json={
@@ -56,50 +69,35 @@ class TestFilesetComplete(ResourceTestBase):
                                   'elapsed-time': 42
                               })
         assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-        mock_processor.report_fileset_complete.assert_called_with(
-            submitted_request,
-            num_files=17,
-            total_events=1024,
-            total_bytes=2046,
-            did_lookup_time=42
-        )
-        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+        mock_find_dataset_by_id.assert_called_once_with(1234)
+        assert dataset.lookup_status == DatasetStatus.complete
+        assert dataset.n_files == 17
+        assert dataset.events == 1024
+        assert dataset.size == 2046
 
-    def test_put_fileset_complete_empty_dataset(self, mocker):
-        import servicex
-        mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
+        mock_lookup_pending.assert_called_once_with(1234)
+        dataset.publish_files.assert_called_once_with(pending_request, mock_processor)
+        assert pending_request.status == TransformStatus.running
 
-        submitted_request = self._generate_transform_request()
-        mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
-            'lookup',
-            return_value=submitted_request)
+    def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
+        pending_request = TransformRequest()
+        pending_request.status = TransformStatus.pending_lookup
+        mock_lookup_pending = mocker.patch.object(TransformRequest,
+                                                  "lookup_pending_on_dataset",
+                                                  return_value=[pending_request])
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mocker.patch.object(TransformRequest, "save_to_db")
-        submitted_request.save_to_db = mocker.Mock()
 
-        client = self._test_client(lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transformer_manager)
+        client = self._test_client(lookup_result_processor=mock_processor)
 
-        response = client.put('/servicex/internal/transformation/BR549/complete',
+        response = client.put('/servicex/internal/transformation/12345/complete',
                               json={
                                   'files': 0,
                                   'total-events': 0,
                                   'total-bytes': 0,
                                   'elapsed-time': 0
                               })
-        assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('BR549')
-        mock_processor.report_fileset_complete.assert_called_with(
-            submitted_request,
-            num_files=0,
-            total_events=0,
-            total_bytes=0,
-            did_lookup_time=0
-        )
 
-        assert submitted_request.status == 'Complete'
-        mock_transformer_manager.shutdown_transformer_job.assert_called_with("BR549", "my-ws")
+        assert response.status_code == 200
+        mock_find_dataset_by_id.assert_called_once_with(12345)
+        mock_lookup_pending.assert_called_once_with(12345)

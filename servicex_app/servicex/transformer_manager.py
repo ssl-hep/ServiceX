@@ -35,6 +35,8 @@ from flask import current_app
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
+from servicex.models import TransformRequest
+
 
 class TransformerManager:
     POSIX_VOLUME_MOUNT = "/posix_volume"
@@ -47,6 +49,34 @@ class TransformerManager:
         else:
             current_app.logger.error(f"Manager mode {manager_mode} not valid")
             raise ValueError('Manager mode '+manager_mode+' not valid')
+
+    def start_transformers(self, config: dict, request_rec: TransformRequest):
+        """
+        Start the transformers for a given request
+        """
+        rabbitmq_uri = config['TRANSFORMER_RABBIT_MQ_URL']
+        namespace = config['TRANSFORMER_NAMESPACE']
+        x509_secret = config['TRANSFORMER_X509_SECRET']
+        generated_code_cm = request_rec.generated_code_cm
+
+        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
+
+        current_app.logger.info(
+            f"Lunching {request_rec.workers} transformers.",
+            extra={'requestId': request_rec.request_id})
+
+        self.launch_transformer_jobs(
+            image=request_rec.image, request_id=request_rec.request_id,
+            workers=request_rec.workers,
+            rabbitmq_uri=rabbitmq_uri,
+            namespace=namespace,
+            x509_secret=x509_secret,
+            generated_code_cm=generated_code_cm,
+            result_destination=request_rec.result_destination,
+            result_format=request_rec.result_format,
+            transformer_language=request_rec.transformer_language,
+            transformer_command=request_rec.transformer_command
+        )
 
     @staticmethod
     def create_job_object(request_id, image, rabbitmq_uri, workers,
@@ -300,21 +330,19 @@ class TransformerManager:
 
     @staticmethod
     def _create_job(api_instance, job, namespace):
-        # Create job
-
-        api_response = api_instance.create_namespaced_deployment(
-            body=job,
-            namespace=namespace)
-        current_app.logger.info("Job created.", extra={'status': api_response.status})
+        try:
+            api_instance.create_namespaced_deployment(body=job, namespace=namespace)
+            current_app.logger.info("Request deployment created.")
+        except ApiException as e:
+            current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
-        # Create job
         try:
-            api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
+            api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa,
                 namespace=namespace)
-            current_app.logger.info("Job created.", extra={'status': api_response.status})
+            current_app.logger.info("HPA created.")
         except ApiException as e:
             current_app.logger.exception(f"Exception during HPA Creation: {e}")
 

@@ -35,7 +35,7 @@ from servicex import create_app
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import TransformRequest
+from servicex.models import TransformRequest, Dataset, DatasetFile, TransformStatus
 from servicex.rabbit_adaptor import RabbitAdaptor
 
 
@@ -125,6 +125,17 @@ class ResourceTestBase:
         return self._test_client()
 
     @staticmethod
+    def _generate_datafile():
+        df = DatasetFile()
+        df.id = 123456789
+        df.adler32 = '1DA4'
+        df.dataset_id = 1234
+        df.file_size = 100000
+        df.file_events = 5000
+        df.paths = '/path1,/path2'
+        return df
+
+    @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
         transform_request.submit_time = datetime.min
@@ -133,20 +144,36 @@ class ResourceTestBase:
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.tree_name = 'Events'
         transform_request.workers = 42
+        transform_request.workflow_name = "func_adl"
         transform_request.did = '123-456-789'
         transform_request.image = 'ssl-hep/foo:latest'
         transform_request.result_format = 'arrow'
+        transform_request.result_destination = "object-store"
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
         transform_request.files = 1
         transform_request.files_failed = 0
         transform_request.files_completed = 0
-        transform_request.status = "Submitted"
+        transform_request.status = TransformStatus.submitted
         transform_request.app_version = '1.0.1'
         transform_request.code_gen_image = "sslhep/servicex_code_gen_func_adl_xaod:develop"
         transform_request.transformer_language = "scala"
         transform_request.transformer_command = "echo"
+        transform_request.selection = "(cool (is LISP))"
         return transform_request
+
+    @staticmethod
+    def _generate_dataset():
+        dataset = Dataset()
+        dataset.id = 1234
+        dataset.name = '123-456-789'
+        dataset.last_used = datetime.min
+        dataset.last_updated = datetime.min
+        dataset.did_finder = 'rucio'
+        dataset.n_files = 1
+        dataset.size = 1203
+        dataset.events = 10000
+        return dataset
 
     @fixture
     def mock_rabbit_adaptor(self, mocker):

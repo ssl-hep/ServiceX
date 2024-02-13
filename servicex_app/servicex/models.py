@@ -25,12 +25,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from __future__ import annotations
+
 import hashlib
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.mailgun_adaptor import MailgunAdaptor
@@ -141,6 +145,20 @@ class UserModel(db.Model):
         return UserModel.generate_hash(provided_password) == key
 
 
+class TransformStatus(Enum):
+    submitted = ("Submitted", False)
+    pending_lookup = ("Pending Lookup", False)
+    lookup = ("Lookup", False)
+    running = ("Running", False)
+    complete = ("Complete", True)
+    fatal = ("Fatal", True)
+    canceled = ("Canceled", True)
+
+    def __init__(self, string_name, is_complete):
+        self.string_name = string_name
+        self.is_complete = is_complete
+
+
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
     OBJECT_STORE_DEST = 'object-store'
@@ -152,14 +170,13 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
-    columns = db.Column(db.String(1024), unique=False, nullable=True)
+    did_id = db.Column(db.Integer, unique=False, nullable=False)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     image = db.Column(db.String(128), nullable=True)
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
-    workflow_name = db.Column(db.String(40), nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
@@ -170,7 +187,7 @@ class TransformRequest(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
     generated_code_cm = db.Column(db.String(128), nullable=True)
-    status = db.Column(db.String(128), nullable=True)
+    status = db.Column(db.Enum(TransformStatus), nullable=False)
     failure_description = db.Column(db.String(max_string_size), nullable=True)
     app_version = db.Column(db.String(64), nullable=True)
     code_gen_image = db.Column(db.String(256), nullable=True)
@@ -186,16 +203,15 @@ class TransformRequest(db.Model):
         result_obj = {
             'request_id': self.request_id,
             'did': self.did,
-            'columns': self.columns,
+            'did_id': self.did_id,
             'selection': self.selection,
             'tree-name': self.tree_name,
             'image': self.image,
             'workers': self.workers,
             'result-destination': self.result_destination,
             'result-format': self.result_format,
-            'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
-            'status': self.status,
+            'status': self.status.string_name,
             'failure-info': self.failure_description,
             'app-version': self.app_version,
             'code-gen-image': self.code_gen_image,
@@ -217,7 +233,7 @@ class TransformRequest(db.Model):
     @classmethod
     def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
         """
-        Looks up a TransformRequest by its result_id (UUID) or integer ID.
+        Looks up a TransformRequest by its request_id (UUID) or integer ID.
         :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
         If key is a numeric string, e.g. '17', it will be treated as an integer ID.
         All other strings are assumed to be UUIDs (request_id).
@@ -230,6 +246,34 @@ class TransformRequest(db.Model):
                 return cls.query.filter_by(request_id=key).one()
         except NoResultFound:
             return None
+
+    @classmethod
+    def lookup_running_by_dataset_id(cls, dataset_id: int) -> list[TransformRequest]:
+        """
+        Looks up TransformRequests in "Lookup" state that needs the dataset
+        given by its dataset_id.
+        :param dataset_id: dataset id. Must be an integer.
+        :return result: list of TransformRequests, or empty list if not found.
+        """
+        try:
+            return cls.query.filter((cls.status == TransformStatus.lookup) &
+                                    (cls.did_id == dataset_id)).all()
+        except NoResultFound:
+            return []
+
+    @classmethod
+    def lookup_pending_on_dataset(cls, dataset_id: int) -> list[TransformRequest]:
+        """
+        Looks up TransformRequests that have been pending resolving of the given
+        dataset ID.
+        :param dataset_id: dataset id. Must be an integer.
+        :return result: list of TransformRequests, or empty list if not found.
+        """
+        try:
+            return cls.query.filter((cls.status == TransformStatus.pending_lookup) &
+                                    (cls.did_id == dataset_id)).all()
+        except NoResultFound:
+            return []
 
     @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:
@@ -252,14 +296,6 @@ class TransformRequest(db.Model):
     @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
-
-    @property
-    def complete(self) -> bool:
-        return self.status in {"Complete", "Fatal", "Canceled"}
-
-    @property
-    def incomplete(self) -> bool:
-        return self.status in {"Submitted", "Running"}
 
     @property
     def submitter_name(self):
@@ -285,10 +321,13 @@ class TransformRequest(db.Model):
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
 
     @property
+    def all_files(self) -> List['DatasetFile']:
+        return DatasetFile.query.filter_by(dataset_id=self.did_id).all()
+
+    @property
     def statistics(self) -> Optional[dict]:
         rslt_list = db.session.query(
             TransformationResult.request_id,
-            func.sum(TransformationResult.messages).label('total_msgs'),
             func.min(TransformationResult.transform_time).label('min_time'),
             func.max(TransformationResult.transform_time).label('max_time'),
             func.avg(TransformationResult.transform_time).label('avg_time'),
@@ -305,7 +344,6 @@ class TransformRequest(db.Model):
         rslt = rslt_list[0]
 
         return {
-            "total-messages": int(rslt.total_msgs),
             "min-time": int(rslt.min_time),
             "max-time": int(rslt.max_time),
             "avg-time": float(rslt.avg_time),
@@ -329,7 +367,6 @@ class TransformationResult(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
-    messages = db.Column(db.Integer, nullable=True)
 
     @classmethod
     def to_json_list(cls, a_list):
@@ -347,29 +384,75 @@ class TransformationResult(db.Model):
             'transform_time': x.transform_time,
             'total-events': x.total_events,
             'total-bytes': x.total_bytes,
-            'avg-rate': x.avg_rate,
-            'messages': x.messages
+            'avg-rate': x.avg_rate
         }
 
     def save_to_db(self):
         db.session.add(self)
+        db.session.flush()
+
+
+class DatasetStatus(Enum):
+    created = "created"
+    looking = "looking"
+    complete = "complete"
+
+
+class Dataset(db.Model):
+    __tablename__ = 'datasets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(1024), unique=True, nullable=False, index=True)
+    last_used = db.Column(db.DateTime, nullable=False)
+    last_updated = db.Column(db.DateTime, nullable=True)
+    did_finder = db.Column(db.String(64), nullable=False)
+    n_files = db.Column(db.Integer, default=0, nullable=True)
+    size = db.Column(db.BigInteger, default=0, nullable=True)
+    events = db.Column(db.BigInteger, default=0, nullable=True)
+    lookup_status = db.Column(db.Enum(DatasetStatus), nullable=False)
+    files = relationship("DatasetFile", back_populates="dataset")
+
+    def save_to_db(self):
+        db.session.add(self)
         db.session.commit()
+
+    def to_json(self):
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        result_obj = {
+            'id': self.id,
+            'name': self.name,
+            'did_finder': self.did_finder,
+            'n_files': self.n_files,
+            'size': self.size,
+            'events': self.events,
+            'last_used': str(self.last_used.strftime(iso_fmt)),
+            'last_updated': str(self.last_updated.strftime(iso_fmt)),
+            'lookup_status': self.lookup_status
+        }
+        return result_obj
+
+    @classmethod
+    def find_by_name(cls, name) -> Optional['Dataset']:
+        return cls.query.filter_by(name=name).first()
+
+    @classmethod
+    def find_by_id(cls, id) -> Optional['Dataset']:
+        return cls.query.get(id)
 
 
 class DatasetFile(db.Model):
     __tablename__ = 'files'
 
     id = db.Column(db.Integer, primary_key=True)
-    request_id = db.Column(db.String(48),
-                           ForeignKey('requests.request_id'),
+    dataset_id = db.Column(db.Integer,
+                           ForeignKey('datasets.id'),
                            unique=False,
                            nullable=False)
-
-    paths = db.Column(db.Text(), unique=False, nullable=False)
-
     adler32 = db.Column(db.String(48), nullable=True)
     file_size = db.Column(db.BigInteger, nullable=True)
     file_events = db.Column(db.BigInteger, nullable=True)
+    paths = db.Column(db.Text(), unique=False, nullable=False)
+    dataset = relationship("Dataset", back_populates="files")
 
     def save_to_db(self):
         db.session.add(self)
@@ -378,6 +461,3 @@ class DatasetFile(db.Model):
     @classmethod
     def get_by_id(cls, dataset_file_id):
         return cls.query.filter_by(id=dataset_file_id).one()
-
-    def get_path_id(self):
-        return self.request_id + ":" + str(self.id)

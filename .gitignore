@@ -1,2 +1,5 @@
 .servicex
 .idea/
+.vscode/
+poetry.toml
+.pyc
