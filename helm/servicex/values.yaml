@@ -147,7 +147,7 @@ transformer:
   scienceContainerPullPolicy: Always
 
   language: python
-  exec: # replace me
+  exec:       # replace me
   outputDir: /servicex/output
 
   persistence:
