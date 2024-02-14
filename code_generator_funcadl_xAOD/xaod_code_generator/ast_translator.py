@@ -83,7 +83,7 @@ class AstAODTranslator(CodeGenerator):
 
         # Transfer the templated pilot bash script
         template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transform_single_file.sh") # NOQA: 501
+                                       "/home/servicex/xaod_code_generator/templates/transform_single_file.sh") # NOQA: 501
         shutil.copyfile(template_path, os.path.join(path, "transform_single_file.sh"))
 
         capabilities_path = os.environ.get('CAPABILITIES_PATH',
