@@ -50,7 +50,7 @@ class PythonTranslator(CodeGenerator):
 
         # Transfer the templated main python script
         template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
+                                       "/home/servicex/python_code_generator/templates/transform_single_file.py")  # NOQA: 501
         shutil.copyfile(template_path,
                         os.path.join(query_file_path, "transform_single_file.py"))
 
