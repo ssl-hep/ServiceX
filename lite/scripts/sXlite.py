@@ -51,11 +51,13 @@ class sXorigin(cluster):
         self.ns = namespace
 
     def read_secret(self, name):
+        print(f'reading secret: {name}')
         sec = self.secret_api.get(name=name, namespace=self.ns)
         self.clean_metadata(sec)
         return sec
 
     def read_configmap(self, name):
+        print(f'reading configmap: {name}')
         cm = self.cm_api.get(name=name, namespace=self.ns)
         self.clean_metadata(cm)
         return cm
@@ -170,6 +172,7 @@ class sXlite(cluster):
         self.ns = namespace
 
     def create_secret(self, secret):
+        print(f'creating secret: {secret.metadata.name}')
         try:
             secret = self.secret_api.create(body=secret, namespace=self.ns)
             print(f'created secret: {secret.metadata.name}')
@@ -177,6 +180,7 @@ class sXlite(cluster):
             print(f'conflict creating secret: {secret.metadata.name}')
 
     def delete_secret(self, name):
+        print(f'deleting secret: {name}')
         try:
             self.secret_api.delete(body={}, name=name, namespace=self.ns)
             print(f'deleted secret: {name}')
@@ -184,6 +188,7 @@ class sXlite(cluster):
             print('could not delete resource:', e.summary())
 
     def create_configmap(self, cm):
+        print(f'creating configmap: {cm.metadata.name}')
         try:
             cm = self.cm_api.create(body=cm, namespace=self.ns)
             print(f'created configmap: {cm.metadata.name}')
@@ -191,6 +196,7 @@ class sXlite(cluster):
             print(f'conflict creating configmap: {cm.metadata.name}')
 
     def delete_configmap(self, name):
+        print(f'deleting configmap: {name}')
         try:
             self.cm_api.delete(body={}, name=name, namespace=self.ns)
             print(f'deleted configmap: {name}')
@@ -198,6 +204,7 @@ class sXlite(cluster):
             print(f'could not delete configmap:{name}', e)
 
     def create_deployment(self, dep):
+        print(f'creating deployment: {dep.metadata.name}')
         try:
             dep = self.deployment_api.create(body=dep, namespace=self.ns)
             print(f'created deployment: {dep.metadata.name}')
@@ -205,6 +212,7 @@ class sXlite(cluster):
             print('conflict creating deployment:', e.summary())
 
     def delete_deployment(self, name):
+        print(f'deleting deployment: {name}')
         try:
             self.deployment_api.delete(body={}, name=name, namespace=self.ns)
             print(f'deleted deployment: {name}')
