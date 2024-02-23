@@ -22,6 +22,14 @@ spec:
           # command: ["sleep"]
           # args: ["infinity"]
           env:
+            - name: ORIGIN_CONTEXT
+              value: af-admin@af
+            - name: ORIGIN_NAMESPACE
+              value: servicex
+            - name: SXLITE_CONTEXT
+              value: kubernetes-admin@cluster.local
+            - name: SXLITE_NAMESPACE
+              value: servicex-lite
             - name: RMQ_USER
               value: "user"
             - name: RMQ_HOST

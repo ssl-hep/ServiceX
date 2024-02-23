@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import base64
 from kubernetes import config, dynamic
@@ -41,7 +42,11 @@ class cluster:
 
 
 class sXorigin(cluster):
-    def __init__(self, context='af-admin@af', namespace='servicex') -> None:
+    def __init__(self) -> None:
+        context = os.environ.get('ORIGIN_CONTEXT')
+        namespace = os.environ.get('ORIGIN_NAMESPACE')
+        if not context or not namespace:
+            sys.exit(1)
         super().__init__(context)
         self.ns = namespace
 
@@ -156,7 +161,11 @@ class sXorigin(cluster):
 
 
 class sXlite(cluster):
-    def __init__(self, context='admin@river', namespace='servicex-lite') -> None:
+    def __init__(self) -> None:
+        context = os.environ.get('SXLITE_CONTEXT')
+        namespace = os.environ.get('SXLITE_NAMESPACE')
+        if not context or not namespace:
+            sys.exit(1)
         super().__init__(context)
         self.ns = namespace
 
