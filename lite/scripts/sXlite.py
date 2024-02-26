@@ -204,7 +204,7 @@ class sXlite(cluster):
             print(f'could not delete configmap:{name}', e)
 
     def create_deployment(self, dep):
-        print(f'creating deployment: {dep.metadata.name}')
+        print(f'creating deployment: {dep}')
         try:
             dep = self.deployment_api.create(body=dep, namespace=self.ns)
             print(f'created deployment: {dep.metadata.name}')
