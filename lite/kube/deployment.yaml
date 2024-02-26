@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: servicex-lite
-          image: sslhep/servicex-lite:latest
+          image: sslhep/servicex_lite:latest
           imagePullPolicy: Always
           # command: ["sleep"]
           # args: ["infinity"]
