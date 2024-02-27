@@ -41,7 +41,7 @@ jobs:
           echo "$DOCKER_TAG"
 
       - name: Set version in flux_river_configs
-        uses: mikefarah/yq@v4.40.7
+        uses: mikefarah/yq@v4.42.1
         with:
           cmd: |
             yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int/values.yaml &&
