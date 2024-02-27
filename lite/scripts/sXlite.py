@@ -100,7 +100,16 @@ class sXorigin(cluster):
                                 "command": ["bash", "-c"],
                                 "env": [],
                                 "volumeMounts": [],
-                                "resources": {"limits": {"cpu": "1"}},
+                                "resources": {
+                                    "requests": {
+                                        "memory": "2Gi",
+                                        "cpu": "250m"
+                                    },
+                                    "limits": {
+                                        "memory": "4Gi",
+                                        "cpu": "1"
+                                    }
+                                },
                                 "args": []
                             },
                             {
@@ -109,7 +118,16 @@ class sXorigin(cluster):
                                 "command": ["bash", "-c"],
                                 "env": [],
                                 "volumeMounts": [],
-                                "resources": {"limits": {"cpu": "1"}},
+                                "resources": {
+                                    "requests": {
+                                        "memory": "2Gi",
+                                        "cpu": "250m"
+                                    },
+                                    "limits": {
+                                        "memory": "4Gi",
+                                        "cpu": "1"
+                                    }
+                                },
                                 "args": ['-c'],
                             }
                         ],
