@@ -16,6 +16,7 @@ initial_pods = int(os.getenv("INITIAL_PODS", '15'))
 
 class cluster:
     def __init__(self, context) -> None:
+        print(f'initializing context:{context}')
         client = dynamic.DynamicClient(
             api_client.ApiClient(configuration=config.load_kube_config(context=context))
         )
