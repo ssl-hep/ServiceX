@@ -253,7 +253,7 @@ if __name__ == '__main__':
         sec = sxo.read_secret('servicex-secrets')
         sxl.create_secret(sec)
         global rmq_pass
-        rmq_pass = base64.b64decode(sec.data['rabbitmq-password'])
+        rmq_pass = base64.b64decode(sec.data['rabbitmq-password']).decode()
 
         sec = sxo.read_secret('servicex-x509-proxy')
         sxl.create_secret(sec)
