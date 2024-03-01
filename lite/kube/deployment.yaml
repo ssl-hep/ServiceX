@@ -19,8 +19,6 @@ spec:
         - name: servicex-lite
           image: sslhep/servicex_lite:latest
           imagePullPolicy: Always
-          # command: ["sleep"]
-          # args: ["infinity"]
           env:
             - name: ORIGIN_CONTEXT
               value: af-admin@af
@@ -38,6 +36,8 @@ spec:
               value: "15"
             - name: PYTHONUNBUFFERED
               value: "true"
+            # - name: XCACHE   only if you want to overwrite xcache
+            #   value: ""
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/

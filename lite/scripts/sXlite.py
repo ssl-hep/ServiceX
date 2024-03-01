@@ -139,9 +139,13 @@ class sXorigin(cluster):
         }
         for e in c1.env:
             ta = {'name': e.name, 'value': e.value}
+            if "XCACHE" in os.environ and e.name == 'CACHE_PREFIX':
+                e.value = os.getenv('XCACHE')
             dep['spec']['template']['spec']['containers'][0]['env'].append(ta)
         for e in c2.env:
             ta = {'name': e.name, 'value': e.value}
+            if "XCACHE" in os.environ and e.name == 'CACHE_PREFIX':
+                e.value = os.getenv('XCACHE')
             dep['spec']['template']['spec']['containers'][1]['env'].append(ta)
 
         for e in c1.volumeMounts:
