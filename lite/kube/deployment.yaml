@@ -38,6 +38,8 @@ spec:
               value: "true"
             # - name: XCACHE   only if you want to overwrite xcache
             #   value: ""
+            - name: EXTRA_ANNOTATIONS
+              value: ""
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/

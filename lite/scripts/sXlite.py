@@ -89,10 +89,13 @@ class sXorigin(cluster):
             "kind": "Deployment",
             "metadata": {"name": o.metadata.name},
             "spec": {
-                "replicas": initial_pods,
+                "replicas": 0,
                 "selector": {"matchLabels": {'app': o.spec.selector.matchLabels.app}},
                 "template": {
-                    "metadata": {"labels": {"app": o.spec.template.metadata.labels.app}},
+                    "metadata": {
+                        "labels": {"app": o.spec.template.metadata.labels.app},
+                        "annotations": {}
+                    },
                     "spec": {
                         "containers": [
                             {
@@ -227,7 +230,21 @@ class sXlite(cluster):
             print(f'could not delete configmap:{name}', e)
 
     def create_deployment(self, dep):
+        dep['spec']['replicas'] = initial_pods
+
+        ea = os.getenv("EXTRA_ANNOTATIONS", "")
+        if ea:
+            ea_key = ea.split(":")[0].strip()
+            ea_val = ea.split(":")[1].strip()
+            dep['spec']['template']['metadata']['annotations'][ea_key] = ea_val
+
+        dep['spec']['template']['spec']['containers'][0]['env']['site'] = os.environ.get(
+            'SXLITE_CONTEXT')
+        dep['spec']['template']['spec']['containers'][1]['env']['site'] = os.environ.get(
+            'SXLITE_CONTEXT')
+
         print(f'creating deployment: {dep}')
+
         try:
             dep = self.deployment_api.create(body=dep, namespace=self.ns)
             print(f'created deployment: {dep.metadata.name}')
