@@ -238,10 +238,9 @@ class sXlite(cluster):
             ea_val = ea.split(":")[1].strip()
             dep['spec']['template']['metadata']['annotations'][ea_key] = ea_val
 
-        dep['spec']['template']['spec']['containers'][0]['env']['site'] = os.environ.get(
-            'SXLITE_CONTEXT')
-        dep['spec']['template']['spec']['containers'][1]['env']['site'] = os.environ.get(
-            'SXLITE_CONTEXT')
+        site = {'site': os.environ.get('SXLITE_CONTEXT')}
+        dep['spec']['template']['spec']['containers'][0]['env'].append(site)
+        dep['spec']['template']['spec']['containers'][1]['env'].append(site)
 
         print(f'creating deployment: {dep}')
 
