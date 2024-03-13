@@ -42,6 +42,8 @@ spec:
             #   value: ""
             - name: EXTRA_ANNOTATIONS
               value: ""
+            - name: HPA_VERSION
+              value: "v2"
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/

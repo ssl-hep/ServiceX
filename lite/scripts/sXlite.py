@@ -14,6 +14,8 @@ rmq_host = os.getenv("RMQ_HOST", '192.170.241.253')
 initial_pods = int(os.getenv("INITIAL_PODS", '15'))
 max_pods = int(os.getenv("MAX_PODS", '1000'))
 
+hpa_version = os.getenv("HPA_VERSION", 'v2')
+
 
 class cluster:
     def __init__(self, context) -> None:
@@ -264,7 +266,7 @@ class sXlite(cluster):
     def create_hpa(self, name):
         print(f'creating hpa: {name}')
         hpa = {
-            "apiVersion": "autoscaling/v2",
+            "apiVersion": f"autoscaling/{hpa_version}",
             "kind": "HorizontalPodAutoscaler",
             "metadata": {
                 "name": name,
@@ -294,10 +296,10 @@ class sXlite(cluster):
             }
         }
         try:
-            secret = self.hpa_api.create(body=hpa, namespace=self.ns)
-            print(f'created secret: {name}')
+            self.hpa_api.create(body=hpa, namespace=self.ns)
+            print(f'created hpa: {name}')
         except exceptions.ConflictError:
-            print(f'conflict creating secret: {name}')
+            print(f'conflict creating hpa: {name}')
 
     def delete_hpa(self, name):
         print(f'deleting HPA: {name}')
