@@ -345,7 +345,7 @@ if __name__ == '__main__':
             requests['active'].append(req_id)
 
         for req_id in requests['unknown']:
-            sxl.delete_deployment(req_id)
+            sxl.delete_hpa(req_id)
             sxl.delete_configmap(f'{req_id}-generated-source')
             sxl.delete_deployment(f'transformer-{req_id}')
 
