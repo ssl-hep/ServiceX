@@ -20,16 +20,14 @@ hpa_version = os.getenv("HPA_VERSION", 'v2')
 class cluster:
     def __init__(self, context) -> None:
         print(f'initializing context:{context}')
-        client = dynamic.DynamicClient(
+        self.client = dynamic.DynamicClient(
             api_client.ApiClient(configuration=config.load_kube_config(context=context))
         )
-        # self.service_api = client.resources.get(api_version="v1", kind="Service")
-        self.node_api = client.resources.get(api_version="v1", kind="Node")
-        self.secret_api = client.resources.get(api_version="v1", kind="Secret")
-        self.deployment_api = client.resources.get(api_version="apps/v1", kind="Deployment")
-        self.cm_api = client.resources.get(api_version="v1", kind="ConfigMap")
-        self.hpa_api = client.resources.get(
-            api_version="autoscaling/v2", kind="HorizontalPodAutoscaler")
+        # self.service_api = self.client.resources.get(api_version="v1", kind="Service")
+        self.node_api = self.client.resources.get(api_version="v1", kind="Node")
+        self.secret_api = self.client.resources.get(api_version="v1", kind="Secret")
+        self.deployment_api = self.client.resources.get(api_version="apps/v1", kind="Deployment")
+        self.cm_api = self.client.resources.get(api_version="v1", kind="ConfigMap")
 
     def getNodes(self):
         for item in self.node_api.get().items:
@@ -201,6 +199,8 @@ class sXlite(cluster):
             sys.exit(1)
         super().__init__(context)
         self.ns = namespace
+        self.hpa_api = self.client.resources.get(
+            api_version=f"autoscaling/{hpa_version}", kind="HorizontalPodAutoscaler")
 
     def create_secret(self, secret):
         print(f'creating secret: {secret.metadata.name}')
