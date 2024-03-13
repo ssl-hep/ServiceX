@@ -271,10 +271,9 @@ class sXlite(cluster):
                 "namespace": self.ns,
             },
             "spec": {
-                "scaleTargeRef": {
+                "scaleTargetRef": {
                     "kind": "Deployment",
-                    "name": f"transformer-{name}",
-                    "apiVersion": "apps/v1"
+                    "name": f"transformer-{name}"
                 },
                 "minReplicas": initial_pods,
                 "maxReplicas": max_pods,
