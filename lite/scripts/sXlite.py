@@ -15,6 +15,7 @@ initial_pods = int(os.getenv("INITIAL_PODS", '15'))
 max_pods = int(os.getenv("MAX_PODS", '1000'))
 
 hpa_version = os.getenv("HPA_VERSION", 'v2')
+hpa_cpu_utilization = int(os.getenv("HPA_CPU_UTILIZATION", '10'))
 
 
 class cluster:
@@ -287,7 +288,7 @@ class sXlite(cluster):
                             "name": "cpu",
                             "target": {
                                 "type": "Utilization",
-                                "averageUtilization": 30
+                                "averageUtilization": hpa_cpu_utilization
                             }
                         }
                     }

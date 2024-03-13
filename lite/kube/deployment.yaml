@@ -44,6 +44,8 @@ spec:
               value: ""
             - name: HPA_VERSION
               value: "v2"
+            - name: HPA_CPU_UTILIZATION
+              value: "10"
           volumeMounts:
             - name: kubeconfig
               mountPath: /home/sxlite/.kube/
