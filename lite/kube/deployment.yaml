@@ -34,6 +34,8 @@ spec:
               value: "192.170.241.253"
             - name: INITIAL_PODS
               value: "15"
+            - name: MAX_PODS
+              value: "1000"
             - name: PYTHONUNBUFFERED
               value: "true"
             # - name: XCACHE   only if you want to overwrite xcache

@@ -12,6 +12,7 @@ rmq_pass = ''
 rmq_user = os.getenv("RMQ_USER", 'user')
 rmq_host = os.getenv("RMQ_HOST", '192.170.241.253')
 initial_pods = int(os.getenv("INITIAL_PODS", '15'))
+max_pods = int(os.getenv("MAX_PODS", '1000'))
 
 
 class cluster:
@@ -25,6 +26,8 @@ class cluster:
         self.secret_api = client.resources.get(api_version="v1", kind="Secret")
         self.deployment_api = client.resources.get(api_version="apps/v1", kind="Deployment")
         self.cm_api = client.resources.get(api_version="v1", kind="ConfigMap")
+        self.hpa_api = client.resources.get(
+            api_version="autoscaling/v2", kind="HorizontalPodAutoscaler")
 
     def getNodes(self):
         for item in self.node_api.get().items:
@@ -258,6 +261,52 @@ class sXlite(cluster):
         except Exception as e:
             print(f'could not delete deployment:{name}', e)
 
+    def create_hpa(self, name):
+        print(f'creating hpa: {name}')
+        hpa = {
+            "apiVersion": "autoscaling/v2",
+            "kind": "HorizontalPodAutoscaler",
+            "metadata": {
+                "name": name,
+                "namespace": self.ns,
+            },
+            "spec": {
+                "scaleTargeRef": {
+                    "kind": "Deployment",
+                    "name": f"transformer-{name}",
+                    "apiVersion": "apps/v1"
+                },
+                "minReplicas": initial_pods,
+                "maxReplicas": max_pods,
+                "metrics": [
+                    {
+                        "type": "Resource",
+                        "resource": {
+                            "name": "cpu",
+                            "target": {
+                                "type": "Utilization",
+                                "averageUtilization": 30
+                            }
+                        }
+                    }
+
+                ]
+            }
+        }
+        try:
+            secret = self.hpa_api.create(body=hpa, namespace=self.ns)
+            print(f'created secret: {name}')
+        except exceptions.ConflictError:
+            print(f'conflict creating secret: {name}')
+
+    def delete_hpa(self, name):
+        print(f'deleting HPA: {name}')
+        try:
+            self.hpa_api.delete(body={}, name=name, namespace=self.ns)
+            print(f'deleted hpa: {name}')
+        except Exception as e:
+            print(f'could not delete hpa:{name}', e)
+
 
 if __name__ == '__main__':
 
@@ -282,7 +331,7 @@ if __name__ == '__main__':
     sxl = sXlite()
 
     sxo.patch_master()
-    # cleanup()
+    cleanup()
     start()
 
     count = 0
@@ -293,9 +342,11 @@ if __name__ == '__main__':
             sxl.create_deployment(d)
             cm = sxo.read_configmap(f'{req_id}-generated-source')
             sxl.create_configmap(cm)
+            sxl.create_hpa(req_id)
             requests['active'].append(req_id)
 
         for req_id in requests['unknown']:
+            sxl.delete_deployment(req_id)
             sxl.delete_configmap(f'{req_id}-generated-source')
             sxl.delete_deployment(f'transformer-{req_id}')
 
