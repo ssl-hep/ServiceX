@@ -181,7 +181,7 @@ def callback(channel, method, properties, body):
     os.makedirs(scratch_path, exist_ok=True)
 
     start_process_info = get_process_info()
-    total_time = 0
+    total_time = time.time()
 
     transform_success = False
     try:
@@ -269,14 +269,14 @@ def callback(channel, method, properties, body):
 
         if transform_success:
             servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
-                                       total_time=total_time,
+                                       total_time=time.time()-total_time,
                                        total_events=transformer_stats.total_events,
                                        total_bytes=transformer_stats.file_size
                                        )
         else:
             servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
                                        status='failure',
-                                       total_time=0, total_events=0,
+                                       total_time=time.time()-total_time, total_events=0,
                                        total_bytes=0)
 
         stop_process_info = get_process_info()
@@ -301,7 +301,7 @@ def callback(channel, method, properties, body):
 
         servicex.put_file_complete(_request_id, file_path=_file_paths[0], file_id=_file_id,
                                    status='failure',
-                                   total_time=0, total_events=0,
+                                   total_time=time.time()-total_time, total_events=0,
                                    total_bytes=0)
     finally:
         channel.basic_ack(delivery_tag=method.delivery_tag)
