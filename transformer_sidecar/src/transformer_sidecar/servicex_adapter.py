@@ -29,7 +29,7 @@ import logging
 
 import requests
 
-from retry.api import retry_call
+# from retry.api import retry_call
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
@@ -49,10 +49,10 @@ class ServiceXAdapter:
         self.server_endpoint = servicex_endpoint
         self.session = requests.session()
 
-        retries = Retry(total=5,
+        retries = Retry(total=MAX_RETRIES,
                         connect=3,
                         backoff_factor=0.1)
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('http', HTTPAdapter(max_retries=retries))
 
     def put_file_complete(self, request_id, file_path, file_id, status,
                           total_time=None, total_events=None,
@@ -71,11 +71,12 @@ class ServiceXAdapter:
 
         if self.server_endpoint:
             try:
-                retry_call(self.session.put,
-                           fargs=[self.server_endpoint + "/file-complete"],
-                           fkwargs={"json": doc},
-                           tries=MAX_RETRIES,
-                           delay=RETRY_DELAY)
+                # retry_call(self.session.put,
+                #            fargs=[self.server_endpoint + "/file-complete"],
+                #            fkwargs={"json": doc},
+                #            tries=MAX_RETRIES,
+                #            delay=RETRY_DELAY)
+                self.session.put(self.server_endpoint + "/file-complete", json=doc)
                 self.logger.info("Put file complete.", extra=doc)
             except requests.exceptions.ConnectionError:
                 self.logger.exception("Connection Error in put_file_complete", extra=doc)
