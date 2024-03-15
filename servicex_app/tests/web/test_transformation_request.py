@@ -29,7 +29,6 @@ class TestTransformationRequest(WebTestBase):
         assert context["req"] == mock_tr
 
     def test_get_by_uuid(self, client, mock_tr: TransformRequest, captured_templates):
-        print("code gen im:", mock_tr.code_gen_image)
         resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.request_id))
         assert resp.status_code == 200
         template, context = captured_templates[0]
