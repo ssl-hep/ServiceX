@@ -87,7 +87,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         dm.name = hash
         dm.id = 43
 
-        mock_from_file_list = mocker.patch.object(DatasetManager, "from_file_list", return_value=dm)
+        mock_from_file_list = mocker.patch.object(
+            DatasetManager, "from_file_list", return_value=dm)
         return mock_from_file_list
 
     @fixture
@@ -162,7 +163,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    code_gen_service=mock_codegen)
         with client.application.app_context():
-            request = self._generate_transformation_request(image="sslhep/servicex_func_adl_xaod_transformer:develop")
+            request = self._generate_transformation_request(
+                image="sslhep/servicex_func_adl_xaod_transformer:develop")
 
             response = client.post('/servicex/transformation',
                                    json=request,
@@ -187,12 +189,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
             mock_rabbit_adaptor.setup_exchange.assert_has_calls([
                 call('transformation_requests'),
-                call('transformation_failures')
+                call('transformation_failures'),
+                call('transformation_results')
             ])
 
             bind_to_exchange_calls = [
                 call(exchange="transformation_requests", queue=request_id),
                 call(exchange="transformation_failures", queue=request_id+"_errors"),
+                call(exchange="transformation_results", queue=request_id+"_errors"),
             ]
 
             assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
@@ -210,7 +214,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                   mock_dataset_manager_from_did,
                                                   mock_codegen,
                                                   mock_app_version):
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_codegen)
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   code_gen_service=mock_codegen)
         mock_dataset_manager_from_did.name = ""
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -271,7 +276,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                                              logger=ANY)
             assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_not_called()
-            mock_dataset_manager_from_did.return_value.publish_files.assert_called_with(ANY, mock_processor)
+            mock_dataset_manager_from_did.return_value.publish_files.assert_called_with(
+                ANY, mock_processor)
 
     def test_submit_transformation_incomplete_existing_dataset(self, mocker,
                                                                mock_rabbit_adaptor,
@@ -366,7 +372,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    json=request, headers=self.fake_header())
             assert response.status_code == 200
             mock_dataset_manager_from_files.return_value.submit_lookup_request.assert_not_called()
-            mock_dataset_manager_from_files.return_value.publish_files.assert_called_with(ANY, mock_processor)
+            mock_dataset_manager_from_files.return_value.publish_files.assert_called_with(
+                ANY, mock_processor)
 
             request_id = response.json['request_id']
             submitted_request = TransformRequest.lookup(request_id)
