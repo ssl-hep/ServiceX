@@ -267,33 +267,17 @@ def callback(channel, method, properties, body):
             }
             logger.error("Hard Failure", extra=hf)
 
-        doc = {
-            "requestId": _request_id,
-            "file-path": _file_path,
-            "file-id": _file_id,
-            "total-time": time.time()-total_time,
-            "total-events": transformer_stats.total_events,
-            "total-bytes": transformer_stats.file_size
-        }
         if transform_success:
             servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
                                        total_time=time.time()-total_time,
                                        total_events=transformer_stats.total_events,
                                        total_bytes=transformer_stats.file_size
                                        )
-            doc = {"status": "success"}
         else:
             servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
                                        status='failure',
                                        total_time=time.time()-total_time, total_events=0,
                                        total_bytes=0)
-            doc = {"status": "failure"}
-
-        doc["avg_rate"] = 0 if not total_time else int(transformer_stats.total_events / total_time)
-
-        channel.basic_publish(exchange='transformation_results',
-                              routing_key=_request_id,
-                              body=json.dumps(doc))
 
         stop_process_info = get_process_info()
         elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
@@ -314,19 +298,6 @@ def callback(channel, method, properties, body):
         channel.basic_publish(exchange='transformation_failures',
                               routing_key=_request_id + '_errors',
                               body=json.dumps(transform_request))
-
-        doc = {
-            "requestId": _request_id,
-            "file-path": _file_paths[0],
-            "file-id": _file_id,
-            "status": "failure",
-            "total-time": time.time()-total_time,
-            "total-events": transformer_stats.total_events,
-            "total-bytes": transformer_stats.file_size
-        }
-        channel.basic_publish(exchange='transformation_results',
-                              routing_key=_request_id,
-                              body=json.dumps(doc))
 
         servicex.put_file_complete(_request_id, file_path=_file_paths[0], file_id=_file_id,
                                    status='failure',
