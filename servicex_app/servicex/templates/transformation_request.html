@@ -29,7 +29,7 @@
     <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
 
     <dt class="col-sm-3">Selection</dt>
-    {% if req.transformer_language == 'python' %}
+    {% if 'python' in req.code_gen_image %}
     <dd class="col-sm-9" style="white-space: pre">{{ req.selection | b64decode }}</dd>
     {% else %}
     <dd class="col-sm-9">{{ req.selection }}</dd>

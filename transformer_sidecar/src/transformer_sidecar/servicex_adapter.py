@@ -52,7 +52,7 @@ class ServiceXAdapter:
         retries = Retry(total=5,
                         connect=3,
                         backoff_factor=0.1)
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('http', HTTPAdapter(max_retries=retries))
 
     def put_file_complete(self, request_id, file_path, file_id, status,
                           total_time=None, total_events=None,

@@ -183,7 +183,8 @@ class WebTestBase:
             "id": 1234,
             "did": "foo",
             "request_id": "b5901cca-9858-42e7-a093-0929cf391f0e",
-            "submit_time": datetime.utcnow()
+            "submit_time": datetime.utcnow(),
+            "code_gen_image": "someimage:dev"
         }
         defaults.update(kwargs)
         return TransformRequest(**defaults)

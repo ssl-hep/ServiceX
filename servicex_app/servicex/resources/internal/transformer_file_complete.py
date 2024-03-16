@@ -59,6 +59,7 @@ class TransformerFileComplete(ServiceXResource):
 
         rec = TransformationResult(
             did=transform_req.did,
+            file_id=info['file-id'],
             request_id=request_id,
             file_path=info['file-path'],
             transform_status=info['status'],
@@ -75,7 +76,7 @@ class TransformerFileComplete(ServiceXResource):
         if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
 
-        current_app.logger.info("FileComplete", extra={
+        current_app.logger.info("FileComplete. Request state.", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
             'files_completed': transform_req.files_completed,
