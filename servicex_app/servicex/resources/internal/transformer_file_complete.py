@@ -51,12 +51,12 @@ class TransformerFileComplete(ServiceXResource):
             msg = f"Request not found with id: '{request_id}'"
             current_app.logger.error(msg, extra={'requestId': request_id})
             return {"message": msg}, 404
-
+        time1 = time.time()
         if info['status'] == 'success':
             TransformRequest.file_transformed_successfully(request_id)
         else:
             TransformRequest.file_transformed_unsuccessfully(request_id)
-
+        time2 = time.time()
         rec = TransformationResult(
             did=transform_req.did,
             file_id=info['file-id'],
@@ -72,16 +72,22 @@ class TransformerFileComplete(ServiceXResource):
 
         db.session.commit()
 
+        time3 = time.time()
+
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
             self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
 
+        time4 = time.time()
         current_app.logger.info("FileComplete. Request state.", extra={
             'requestId': request_id,
             'files_remaining': transform_req.files_remaining,
             'files_completed': transform_req.files_completed,
             'files_failed': transform_req.files_failed,
-            'report_processed_time': (time.time() - start_time)
+            'report_processed_time1': (time1 - start_time),
+            'report_processed_time2': (time2 - start_time),
+            'report_processed_time3': (time3 - start_time),
+            'report_processed_time4': (time4 - start_time)
         })
         return "Ok"
 
