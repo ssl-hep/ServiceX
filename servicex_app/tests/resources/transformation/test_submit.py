@@ -196,7 +196,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             bind_to_exchange_calls = [
                 call(exchange="transformation_requests", queue=request_id),
                 call(exchange="transformation_failures", queue=request_id+"_errors"),
-                call(exchange="transformation_results", queue=request_id+"_errors"),
+                call(exchange="transformation_results", queue=request_id+"results"),
             ]
 
             assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
