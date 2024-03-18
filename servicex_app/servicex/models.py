@@ -275,6 +275,14 @@ class TransformRequest(db.Model):
         except NoResultFound:
             return []
 
+    def increment_transformed_successfully(self) -> None:
+        self.files_completed = TransformRequest.files_completed + 1
+        db.session.commit()
+
+    def increment_transformed_unsuccessfully(self) -> None:
+        self.files_failed = TransformRequest.files_failed + 1
+        db.session.commit()
+
     @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:
         req = cls.query.filter_by(request_id=key).one()
