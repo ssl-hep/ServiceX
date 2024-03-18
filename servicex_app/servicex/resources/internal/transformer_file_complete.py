@@ -53,11 +53,11 @@ class TransformerFileComplete(ServiceXResource):
             return {"message": msg}, 404
         time1 = time.time()
         if info['status'] == 'success':
-            # TransformRequest.file_transformed_successfully(request_id)
-            transform_req.increment_transformed_successfully()
+            TransformRequest.file_transformed_successfully(request_id)
+            # transform_req.increment_transformed_successfully()
         else:
-            # TransformRequest.file_transformed_unsuccessfully(request_id)
-            transform_req.increment_transformed_unsuccessfully()
+            TransformRequest.file_transformed_unsuccessfully(request_id)
+            # transform_req.increment_transformed_unsuccessfully()
         time2 = time.time()
         rec = TransformationResult(
             did=transform_req.did,
