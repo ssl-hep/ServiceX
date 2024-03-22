@@ -35,6 +35,7 @@ from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, 
 class RawUprootTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
+        import hashlib
 
         if len(query) == 0:
             raise GenerateCodeException("Requested codegen for an empty string.")
@@ -53,7 +54,6 @@ class RawUprootTranslator(CodeGenerator):
         generated_code = f'''
 def run_query(file_path):
     jquery = {jquery}
-    print("now doing global query! argument:", jquery)
 
     rv_arrays = {{}}
     for subquery in jquery:
@@ -82,15 +82,13 @@ def run_single_query(file_path, query):
     return rv_arrays
 '''
 
-        print(generated_code)
-        _hash = f'{hash(generated_code):x}'
+        _hash = hashlib.md5(generated_code.encode(), usedforsecurity=False).hexdigest()
         query_file_path = os.path.join(cache_path, _hash)
 
         # Create the files to run in that location.
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
 
-        print(query_file_path)
         with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
             python_file.write(generated_code)
 
@@ -104,6 +102,4 @@ def run_single_query(file_path, query):
         shutil.copyfile(capabilities_path, os.path.join(query_file_path,
                                                         "transformer_capabilities.json"))
 
-        # os.system("ls -lht " + query_file_path)
-
-        return GeneratedFileResult(hash, query_file_path)
+        return GeneratedFileResult(_hash, query_file_path)
