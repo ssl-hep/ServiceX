@@ -43,7 +43,7 @@ def test_generate_code():
         # proper query
         translator = RawUprootTranslator()
         query = json.dumps([{'treename': 'sumWeights', 'filter_name': ['/totalE.*/']},
-                            {'treename': ['nominal','JET_JER_EffectiveNP_1__1down'],
+                            {'treename': ['nominal', 'JET_JER_EffectiveNP_1__1down'],
                              'filter_name': ['/mu_.*/', 'runNumber', 'lbn'],
                              'cut': 'met_met>150e3'},
                             {'treename': {'nominal': 'modified'},
@@ -51,7 +51,7 @@ def test_generate_code():
                             ])
         expected_hash = "d831b800243e724e98c3c54116611b2c"
         result = translator.generate_code(query, tmpdirname)
-        
+
         # is the generated code at least syntactically valid Python?
         try:
             exec(open(os.path.join(result.output_dir, 'generated_transformer.py')).read())
