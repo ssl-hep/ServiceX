@@ -25,6 +25,11 @@
     "test_required": true
   },
   {
+    "dir_name": "code_generator_raw_uproot",
+    "image_name": "servicex_code_gen_raw_uproot",
+    "test_required": true
+  },
+  {
     "image_name": "servicex_sidecar_transformer",
     "dir_name": "transformer_sidecar",
     "test_required": true
