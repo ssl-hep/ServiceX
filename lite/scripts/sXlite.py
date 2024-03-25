@@ -107,7 +107,7 @@ class sXorigin(cluster):
                                 "image": c1.image,
                                 "command": ["bash", "-c"],
                                 "env": [
-                                    {"name": "K8S_NODE",
+                                    {"name": "HOST_NAME",
                                      "valueFrom": {
                                          "fieldRef": {"fieldPath": "spec.nodeName"}
                                      }
