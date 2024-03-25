@@ -131,7 +131,7 @@ class sXorigin(cluster):
                                 "image": c2.image,
                                 "command": ["bash", "-c"],
                                 "env": [
-                                    {"name": "K8S_NODE",
+                                    {"name": "HOST_NAME",
                                      "valueFrom": {
                                          "fieldRef": {"fieldPath": "spec.nodeName"}
                                      }
@@ -157,11 +157,15 @@ class sXorigin(cluster):
             }
         }
         for e in c1.env:
+            if e.name == 'HOST_NAME':
+                continue
             ta = {'name': e.name, 'value': e.value}
             if "XCACHE" in os.environ and e.name == 'CACHE_PREFIX':
                 ta['value'] = os.getenv('XCACHE')
             dep['spec']['template']['spec']['containers'][0]['env'].append(ta)
         for e in c2.env:
+            if e.name == 'HOST_NAME':
+                continue
             ta = {'name': e.name, 'value': e.value}
             if "XCACHE" in os.environ and e.name == 'CACHE_PREFIX':
                 ta['value'] = os.getenv('XCACHE')
