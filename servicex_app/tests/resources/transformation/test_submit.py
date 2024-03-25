@@ -185,7 +185,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.app_version == "3.14.15"
             assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
 
-            setup_queue_calls = [call(request_id), call(request_id+"_errors", 86400000)]
+            setup_queue_calls = [call(request_id, 86400000), call(request_id+"_errors", 86400000)]
             mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
             mock_rabbit_adaptor.setup_exchange.assert_has_calls([
                 call('transformation_requests'),
