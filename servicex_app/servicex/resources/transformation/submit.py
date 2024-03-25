@@ -97,13 +97,13 @@ class SubmitTransformationRequest(ServiceXResource):
             return DatasetManager.from_did(parsed_did,
                                            logger=current_app.logger,
                                            extras={
-                                               'request_id': request_id
+                                               'requestId': request_id
                                            }, db=db)
         else:  # no dataset, only a list of files given
             return DatasetManager.from_file_list(file_list,
                                                  logger=current_app.logger,
                                                  extras={
-                                                     'request_id': request_id
+                                                     'requestId': request_id
                                                  }, db=db)
 
     def _setup_rabbit_queues(self, request_id: str):
@@ -154,7 +154,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {'message': msg}, 500
 
             try:
-                dataset_manager = self._initialize_dataset_manager(did, file_list, request_id, config)
+                dataset_manager = self._initialize_dataset_manager(
+                    did, file_list, request_id, config)
             except BadRequest as bad_request:
                 current_app.logger.error(str(bad_request), extra={'requestId': request_id})
                 return {'message': str(bad_request)}, 400
