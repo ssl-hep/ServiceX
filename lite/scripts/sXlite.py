@@ -106,7 +106,13 @@ class sXorigin(cluster):
                                 "name": c1.name,
                                 "image": c1.image,
                                 "command": ["bash", "-c"],
-                                "env": [],
+                                "env": [
+                                    {"name": "K8S_NODE",
+                                     "valueFrom": {
+                                         "fieldRef": {"fieldPath": "spec.nodeName"}
+                                     }
+                                     }
+                                ],
                                 "volumeMounts": [],
                                 "resources": {
                                     "requests": {
@@ -124,7 +130,13 @@ class sXorigin(cluster):
                                 "name": c2.name,
                                 "image": c2.image,
                                 "command": ["bash", "-c"],
-                                "env": [],
+                                "env": [
+                                    {"name": "K8S_NODE",
+                                     "valueFrom": {
+                                         "fieldRef": {"fieldPath": "spec.nodeName"}
+                                     }
+                                     }
+                                ],
                                 "volumeMounts": [],
                                 "resources": {
                                     "requests": {
