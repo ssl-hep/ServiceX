@@ -116,7 +116,7 @@ class RabbitAdaptor(object):
                 self.reset_closed()
                 continue
 
-    def setup_queue(self, queue_name):
+    def setup_queue(self, queue_name, ttl=None):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
         command.
 
@@ -128,7 +128,10 @@ class RabbitAdaptor(object):
         while True:
             try:
                 channel = self.channel
-                channel.queue_declare(queue=queue_name)
+                if ttl:
+                    channel.queue_declare(queue=queue_name, arguments={'x-expires': ttl})
+                else:
+                    channel.queue_declare(queue=queue_name)
                 return
             except pika.exceptions.ConnectionClosedByBroker:
                 current_app.logger.warning("Connection was closed by broker, stopping...")
@@ -203,6 +206,28 @@ class RabbitAdaptor(object):
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
                 current_app.logger.info("Connection was closed, retrying...")
+                self.reset_closed()
+                continue
+
+    def delete_queue(self, queue_name):
+        current_app.logger.info('Deleting queue %s', queue_name)
+
+        while True:
+            try:
+                channel = self.channel
+                channel.queue_delete(queue=queue_name)
+                return
+            except pika.exceptions.ConnectionClosedByBroker:
+                current_app.logger.warning("Connection was closed by broker, stopping...")
+                break
+            # Attempt to reconnect if the channel closed due to timeout
+            except pika.exceptions.ChannelWrongStateError:
+                current_app.logger.warning("Connection was closed, retrying...")
+                self.reset_closed()
+                continue
+            # Recover on all other connection errors
+            except pika.exceptions.AMQPConnectionError:
+                current_app.logger.warning("Connection was closed, retrying...")
                 self.reset_closed()
                 continue
 
