@@ -1,0 +1,32 @@
+{{- if .Values.rabbitmq.apiIngress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.rabbitmq.apiIngress.class }}
+    {{- if .Values.rabbitmq.apiIngress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.rabbitmq.apiIngress.tls.clusterIssuer }}
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    {{- end }}
+  labels:
+    app: {{ .Release.Name }}-rmq-servicex
+  name: {{ .Release.Name }}-rmq-servicex
+spec:
+  {{- if .Values.rabbitmq.apiIngress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Release.Name }}.{{ .Values.rabbitmq.apiIngress.host }}
+    secretName: {{ tpl .Values.rabbitmq.apiIngress.tls.secretName . }}
+  {{- end }}
+  rules:
+  - host: {{ .Release.Name }}.{{ .Values.rabbitmq.apiIngress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-rabbitmq
+            port: 
+              number: 5672
+{{- end }}

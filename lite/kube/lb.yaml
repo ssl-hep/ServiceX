@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmq-lb-service
+spec:
+  selector:
+    app.kubernetes.io/name: rabbitmq
+  ports:
+    - port: 5672
+      targetPort: 5672
+  type: LoadBalancer

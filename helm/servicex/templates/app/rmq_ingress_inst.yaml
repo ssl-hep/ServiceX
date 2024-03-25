@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  labels:
+    app: servicex-rmq-servicex
+  name: servicex-rmq-servicex
+spec:
+  rules:
+  # - host: servicex.rmq.ssl-hep.org
+  - host: servicex.rmq.af.uchicago.edu
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: servicex-rabbitmq
+            port: 
+              number: 5672
