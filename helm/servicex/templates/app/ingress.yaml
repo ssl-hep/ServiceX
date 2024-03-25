@@ -22,13 +22,6 @@ spec:
   - host: {{ .Release.Name }}.{{ .Values.app.ingress.host }}
     http:
       paths:
-      - path: /servicex/internal
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Values.app.ingress.defaultBackend }}
-            port: 
-              number: 80
       - path: /
         pathType: Prefix
         backend:

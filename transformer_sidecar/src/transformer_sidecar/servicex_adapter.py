@@ -28,6 +28,7 @@
 import logging
 
 import requests
+import os
 
 from retry.api import retry_call
 from urllib3.util.retry import Retry
@@ -35,6 +36,11 @@ from requests.adapters import HTTPAdapter
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2
+
+PLACE = {
+    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "site": os.getenv("site", "unknown")
+}
 
 
 class ServiceXAdapter:
@@ -66,7 +72,8 @@ class ServiceXAdapter:
             "total-time": total_time,
             "total-events": total_events,
             "total-bytes": total_bytes,
-            "avg-rate": avg_rate
+            "avg-rate": avg_rate,
+            "place": PLACE
         }
 
         if self.server_endpoint:
