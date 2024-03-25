@@ -174,7 +174,14 @@ def callback(channel, method, properties, body):
 
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    logger.info("got transform request.", extra=transform_request)
+    logger.info("got transform request.", extra={
+        "requestId": _request_id,
+        "paths": _file_paths,
+        "result-destination": transform_request['result-destination'],
+        "result-format": transform_request['result-format'],
+        "service-endpoint": transform_request['service-endpoint'],
+        "place": PLACE
+    })
     servicex = ServiceXAdapter(_server_endpoint)
 
     # creating output dir for transform output files
