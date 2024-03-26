@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 import logging
 import threading
 from pathlib import Path
@@ -32,6 +33,11 @@ from queue import Queue
 from typing import Optional
 
 from transformer_sidecar.object_store_manager import ObjectStoreManager
+
+PLACE = {
+    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "site": os.getenv("site", "unknown")
+}
 
 
 class ObjectStoreUploader(threading.Thread):
@@ -55,10 +61,11 @@ class ObjectStoreUploader(threading.Thread):
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
-            self.logger.info("OSU Item received!", extra={'requestId': self.request_id})
+            self.logger.info("OSU Item received!", extra={
+                             'requestId': self.request_id, "place": PLACE})
             if item.is_complete():
                 self.logger.info("OSU Queue done!",
-                                 extra={'requestId': self.request_id})
+                                 extra={'requestId': self.request_id, "place": PLACE})
                 break
             else:
                 # Now is the time to convert the file to parquet if that's what the user
