@@ -64,7 +64,7 @@ didFinder:
     pullPolicy: Always
     tag: develop
   rucio:
-    auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+    auth_host: https://atlas-rucio-auth.cern.ch:443
     enabled: true
     image: sslhep/servicex-did-finder
     pullPolicy: Always
@@ -139,7 +139,7 @@ transformer:
   scienceContainerPullPolicy: Always
 
   language: python
-  exec:           # replace me
+  exec: # replace me
   outputDir: /servicex/output
 
   persistence:

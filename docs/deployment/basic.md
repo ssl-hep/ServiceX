@@ -57,8 +57,8 @@ servicex --namespace <default> init --cert-dir ~/.globus
 ```
 
 By default, this will look for the certificates in your `~/.globus` directory.
-You can pass another directory with the `--cert-dir` argument. It is assumed 
-that they are named `usercert.pem` and `userkey.pem`.  You will be prompted for 
+You can pass another directory with the `--cert-dir` argument. It is assumed
+that they are named `usercert.pem` and `userkey.pem`.  You will be prompted for
 the passphrase that secures your X509 private key.
 
 The installed secrets can be used by any ServiceX instance deployed into the
@@ -117,7 +117,7 @@ codeGen:
 didFinder:
   # For ATLAS:
   rucio_host: https://voatlasrucio-server-prod.cern.ch:443
-  auth_host: https://voatlasrucio-auth-prod.cern.ch:443
+  auth_host: https://atlas-rucio-auth.cern.ch:443
 
   # For CMS:
   rucio_host: http://cmsrucio-int.cern.ch
