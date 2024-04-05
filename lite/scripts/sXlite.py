@@ -105,7 +105,7 @@ class sXorigin(cluster):
                             {
                                 "name": c1.name,
                                 "image": c1.image,
-                                "command": ["bash", "-c"],
+                                "command": o.spec.template.spec.containers[0].command,
                                 "env": [
                                     {"name": "HOST_NAME",
                                      "valueFrom": {
@@ -124,12 +124,11 @@ class sXorigin(cluster):
                                         "cpu": "1"
                                     }
                                 },
-                                "args": []
                             },
                             {
                                 "name": c2.name,
                                 "image": c2.image,
-                                "command": ["bash", "-c"],
+                                "command": o.spec.template.spec.containers[1].command,
                                 "env": [
                                     {"name": "HOST_NAME",
                                      "valueFrom": {
@@ -148,7 +147,7 @@ class sXorigin(cluster):
                                         "cpu": "1"
                                     }
                                 },
-                                "args": ['-c'],
+                                "args": o.spec.template.spec.containers[1].args
                             }
                         ],
                         "volumes": []
@@ -190,14 +189,12 @@ class sXorigin(cluster):
                 vo['configMap'] = {'name': cm.name, 'defaultMode': cm.defaultMode}
             dep['spec']['template']['spec']['volumes'].append(vo)
 
-        sidecar_args = [
-            f'PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH python /servicex/transformer_sidecar/transformer.py --request-id {req_id} --rabbit-uri amqp://{rmq_user}:{rmq_pass}@{rmq_host}:5672/%2F?heartbeat=9000 --result-destination object-store --result-format root-file'
-        ]
-        transformer_args = [
-            f'until [ -f /servicex/output/scripts/proxy-exporter.sh ];do sleep 5;done && /servicex/output/scripts/proxy-exporter.sh & sleep 5 && cp /generated/transformer_capabilities.json /servicex/output && PYTHONPATH=/generated:$PYTHONPATH bash /servicex/output/scripts/watch.sh python /generated/transform_single_file.py /servicex/output/{req_id}'
-        ]
-        dep['spec']['template']['spec']['containers'][0]['args'] = sidecar_args
-        dep['spec']['template']['spec']['containers'][1]['args'] = transformer_args
+        sidecar_arg = o['spec']['template']['spec']['containers'][0]['args'][0]
+
+        # replace RMQ address in sidecar_args
+        to_replace = sidecar_arg[s.index('amqp://')+7: s.index(':5672')]
+        sidecar_arg = sidecar_arg.replace(to_replace, f'{rmq_user}:{rmq_pass}@{rmq_host}')
+        dep['spec']['template']['spec']['containers'][0]['args'] = [sidecar_arg]
 
         print('=========================')
         # print(dep)
