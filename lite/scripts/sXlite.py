@@ -192,7 +192,7 @@ class sXorigin(cluster):
         sidecar_arg = o['spec']['template']['spec']['containers'][0]['args'][0]
 
         # replace RMQ address in sidecar_args
-        to_replace = sidecar_arg[s.index('amqp://')+7: s.index(':5672')]
+        to_replace = sidecar_arg[sidecar_arg.index('amqp://')+7: sidecar_arg.index(':5672')]
         sidecar_arg = sidecar_arg.replace(to_replace, f'{rmq_user}:{rmq_pass}@{rmq_host}')
         dep['spec']['template']['spec']['containers'][0]['args'] = [sidecar_arg]
 
