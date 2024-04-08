@@ -126,32 +126,31 @@ def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> Transformer
 
 
 def prepend_xcache(file_paths):
-    # if CACHE_PREFIX is not given, returns file paths unchanged.
-
+    """
+    If a CACHE_PREFIX is given, prepend the file paths with the xcache. If there
+    are multiple xcaches, the same file will always be prepended with the same
+    xcache. We do this by hashing the file path and then calculating modulo of the
+    value.
+    """
     prefix = os.environ.get('CACHE_PREFIX', '')
+
     if not prefix:
         return file_paths
 
-    # One could have a single or multiple nodes in CACHE_PREFIX
-    # If multiple are given, they must be comma separated.
-    # In case of multiple xcaches, we want a given file to always be prepended
-    # with the same xcache.
-
-    # split the string into a list of xcaches. strip in case someone adds spaces
-    xcs = [p.strip() for p in prefix.split(',')]
+    prefix_list = [p.strip() for p in prefix.split(',')]
 
     prefixed_paths = []
     for f in file_paths:
 
-        # for each path we get an integer hash
+        # for each path we get unique hash value
         hex_digest = sha256(f.encode()).hexdigest()
 
-        # we turn file hex_digest into an integer then calculate module of the
+        # we turn file hex_digest into an integer then calculate modulo of the
         # value.
-        c = int(hex_digest, 16) % len(xcs)
+        pinned_xcache_index = int(hex_digest, 16) % len(prefix_list)
 
-        # we should have xcaches listed without "root:// //" and
-        prefixed_paths.append(f'root://{xcs[c]}//{f}')
+        # Construct the path
+        prefixed_paths.append(f'root://{prefix_list[pinned_xcache_index]}//{f}')
     return prefixed_paths
 
 # noinspection PyUnusedLocal
