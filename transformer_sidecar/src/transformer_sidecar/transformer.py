@@ -126,11 +126,15 @@ def prepend_xcache(file_paths):
     prefix = os.environ.get('CACHE_PREFIX', '')
     if not prefix:
         return file_paths
+    # split the string into a list of xcaches. strip in case someone adds spaces
     xcs = [p.strip() for p in prefix.split(',')]
     prefixed_paths = []
     for f in file_paths:
+        # for each path we get an integer hash, determine xcache to use
+        # as a module of that integer
         hex_digest = sha256(f.encode()).hexdigest()
         c = int(hex_digest, 16) % len(xcs)
+        # we should have xcaches listed without "root:// //" and
         prefixed_paths.append(f'root://{xcs[c]}//{f}')
     return prefixed_paths
 
