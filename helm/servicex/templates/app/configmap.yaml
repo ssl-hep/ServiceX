@@ -66,8 +66,12 @@ data:
     RABBIT_RETRIES = {{ .Values.app.rabbitmq.retries }}
     RABBIT_RETRY_INTERVAL = {{ .Values.app.rabbitmq.retry_interval }}
 
+    {{- if .Values.app.ingress.enabled -}}
+    ADVERTISED_HOSTNAME= '{{ .Release.Name }}.{{ .Values.app.ingress.host }}'
+    {{ else }}
     ADVERTISED_HOSTNAME= '{{ .Release.Name }}-servicex-app:8000'
-
+    {{ end }}
+    
     {{ if .Values.hostMount }}
     # This will be mounted into the transformer pod's /data directory
     TRANSFORMER_LOCAL_PATH="{{ .Values.hostMount }}"
@@ -89,7 +93,7 @@ data:
     TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
     {{- if not .Values.noCerts }}
-    TRANSFORMER_X509_SECRET="{{ .Release.Name }}-x509-proxy"
+    TRANSFORMER_X509_SECRET="x509-proxy"
     {{- else }}
     TRANSFORMER_X509_SECRET=None
     {{- end }}

@@ -40,7 +40,7 @@ TRANSFORMER_PRIORITY_CLASS = None
 # This will be mounted into the transformer pod's /data directory
 TRANSFORMER_LOCAL_PATH="/Users/bengal1/dev/IRIS-HEP/data"
 TRANSFORMER_NAMESPACE="default"
-TRANSFORMER_X509_SECRET="aspiring-mole-x509-proxy"
+TRANSFORMER_X509_SECRET="x509-proxy"
 
 ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 

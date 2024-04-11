@@ -63,6 +63,11 @@ upload_queue = None
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
 
+PLACE = {
+    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "site": os.getenv("site", "unknown")
+}
+
 
 class TimeTuple(NamedTuple):
     """
@@ -199,7 +204,14 @@ def callback(channel, method, properties, body):
 
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
-    logger.info("got transform request.", extra=transform_request)
+    logger.info("got transform request.", extra={
+        "requestId": _request_id,
+        "paths": _file_paths,
+        "result-destination": transform_request['result-destination'],
+        "result-format": transform_request['result-format'],
+        "service-endpoint": transform_request['service-endpoint'],
+        "place": PLACE
+    })
     servicex = ServiceXAdapter(_server_endpoint)
 
     # creating output dir for transform output files
@@ -218,7 +230,7 @@ def callback(channel, method, properties, body):
         # Loop through the replicas
         for _file_path in _file_paths:
             logger.info("trying to transform file", extra={
-                        "requestId": _request_id, "file-path": _file_path})
+                        "requestId": _request_id, "file-path": _file_path, "place": PLACE})
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -260,11 +272,12 @@ def callback(channel, method, properties, body):
             req2 = req.decode('utf8').strip()
             print('STATUS RECEIVED :', req2)
             logger.info(f"received result: {req2}", extra={
-                        "requestId": _request_id, "file-path": _file_path})
+                        "requestId": _request_id, "file-path": _file_path, "place": PLACE})
 
             if req2 == 'success.':
                 logger.info("adding item to OSU queue", extra={
-                            "requestId": _request_id, "file-path": _file_path})
+                            "requestId": _request_id, "file-path": _file_path,
+                            "place": PLACE})
                 upload_queue.put(ObjectStoreUploader.WorkQueueItem(
                     Path(transform_request['safeOutputFileName'])))
             conn.send("confirmed.\n".encode())
@@ -281,7 +294,8 @@ def callback(channel, method, properties, body):
                     "requestId": _request_id,
                     "log_body": transformer_stats.log_body,
                     "file-size": transformer_stats.file_size,
-                    "total-events": transformer_stats.total_events
+                    "total-events": transformer_stats.total_events,
+                    "place": PLACE
                 }
                 logger.info("Transformer stats.", extra=ts)
                 break
@@ -293,7 +307,8 @@ def callback(channel, method, properties, body):
                 "requestId": _request_id,
                 "file-id": _file_id,
                 "error-info": transformer_stats.error_info,
-                "log_body": transformer_stats.log_body
+                "log_body": transformer_stats.log_body,
+                "place": PLACE
             }
             logger.error("Hard Failure", extra=hf)
 
@@ -318,7 +333,8 @@ def callback(channel, method, properties, body):
             'requestId': _request_id, 'fileId': _file_id,
             'user': elapsed_times.user,
             'sys': elapsed_times.system,
-            'iowait': elapsed_times.iowait
+            'iowait': elapsed_times.iowait,
+            "place": PLACE
         })
 
     except Exception as error:
@@ -344,7 +360,7 @@ if __name__ == "__main__":
 
     logger = initialize_logging()
     logger.info("tranformer startup", extra={"result_destination": args.result_destination,
-                "output dir": args.output_dir, "host_name": os.getenv("HOST_NAME", "unknown")})
+                "output dir": args.output_dir, "place": PLACE})
 
     if args.output_dir:
         object_store = None
@@ -384,7 +400,7 @@ if __name__ == "__main__":
     logger.info("Startup finished.",
                 extra={
                     'user': startup_time.user, 'sys': startup_time.system,
-                    'iowait': startup_time.iowait
+                    'iowait': startup_time.iowait, "place": PLACE
                 })
 
     serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -405,4 +421,4 @@ if __name__ == "__main__":
                                    callback)
 
     uploader.join()
-    logger.info("Uploader is done", extra={'requestId': args.request_id})
+    logger.info("Uploader is done", extra={'requestId': args.request_id, "place": PLACE})
