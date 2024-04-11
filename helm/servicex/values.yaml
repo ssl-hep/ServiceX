@@ -124,6 +124,10 @@ rabbitmq:
 rbacEnabled: true
 secrets: null
 transformer:
+  # The transformers will prepend an xCache URL with this prefix to each of
+  # the files that are being accessed. This can be a single value or a
+  # comma-separated list of values.
+  # Do not put root:// in these values.
   cachePrefix: null
 
   autoscaler:
@@ -139,7 +143,7 @@ transformer:
   scienceContainerPullPolicy: Always
 
   language: python
-  exec:                # replace me
+  exec:           # replace me
   outputDir: /servicex/output
 
   persistence:
