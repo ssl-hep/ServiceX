@@ -34,7 +34,7 @@ import os
 import psutil as psutil
 import shutil
 import timeit
-from hashlib import sha1
+from hashlib import sha1, sha256
 from pathlib import Path
 from queue import Queue
 from typing import NamedTuple
@@ -125,7 +125,38 @@ def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> Transformer
     return globals()[stats_parser_name](logfile_path)
 
 
+def prepend_xcache(file_paths):
+    # if CACHE_PREFIX is not given, returns file paths unchanged.
+
+    prefix = os.environ.get('CACHE_PREFIX', '')
+    if not prefix:
+        return file_paths
+
+    # One could have a single or multiple nodes in CACHE_PREFIX
+    # If multiple are given, they must be comma separated.
+    # In case of multiple xcaches, we want a given file to always be prepended
+    # with the same xcache.
+
+    # split the string into a list of xcaches. strip in case someone adds spaces
+    xcs = [p.strip() for p in prefix.split(',')]
+
+    prefixed_paths = []
+    for f in file_paths:
+
+        # for each path we get an integer hash
+        hex_digest = sha256(f.encode()).hexdigest()
+
+        # we turn file hex_digest into an integer then calculate module of the
+        # value.
+        c = int(hex_digest, 16) % len(xcs)
+
+        # we should have xcaches listed without "root:// //" and
+        prefixed_paths.append(f'root://{xcs[c]}//{f}')
+    return prefixed_paths
+
 # noinspection PyUnusedLocal
+
+
 def callback(channel, method, properties, body):
     """
     This is the main function for the transformer. It is called whenever a new message
@@ -169,8 +200,7 @@ def callback(channel, method, properties, body):
         _file_paths = transform_request['paths'].split(',')
 
     # adding cache prefix
-    prefix = os.environ.get('CACHE_PREFIX', '')
-    _file_paths = [prefix+fp for fp in _file_paths]
+    _file_paths = prepend_xcache(_file_paths)
 
     _file_id = transform_request['file-id']
     _server_endpoint = transform_request['service-endpoint']
