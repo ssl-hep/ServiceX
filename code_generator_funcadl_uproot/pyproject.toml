@@ -9,7 +9,7 @@ packages = [{include = "code_generator_funcadl_uproot"}]
 [tool.poetry.dependencies]
 python = "~3.10"
 func-adl = "3.2.7"
-func-adl-uproot = "2.1.0"
+func-adl-uproot = "2.1.1"
 qastle = "0.17.0"
 servicex-code-gen-lib = "^1.1.7"
 
