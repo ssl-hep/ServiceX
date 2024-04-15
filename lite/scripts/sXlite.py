@@ -113,6 +113,7 @@ class sXorigin(cluster):
                                      }
                                      }
                                 ],
+                                "imagePullPolicy": "Always",
                                 "volumeMounts": [],
                                 "resources": {
                                     "requests": {
@@ -136,6 +137,7 @@ class sXorigin(cluster):
                                      }
                                      }
                                 ],
+                                "imagePullPolicy": "Always",
                                 "volumeMounts": [],
                                 "resources": {
                                     "requests": {
