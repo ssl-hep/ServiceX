@@ -139,6 +139,7 @@ class ResourceTestBase:
     def _generate_transform_request():
         transform_request = TransformRequest()
         transform_request.submit_time = datetime.min
+        transform_request.title = 'Test Transformation'
         transform_request.finish_time = None
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'

@@ -202,6 +202,7 @@ class TransformRequest(db.Model):
         iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         result_obj = {
             'request_id': self.request_id,
+            'title': self.title,
             'did': self.did,
             'did_id': self.did_id,
             'selection': self.selection,

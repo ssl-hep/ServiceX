@@ -51,4 +51,7 @@ class TransformationRequest(ServiceXResource):
             transform_json['minio-secured'] = current_app.config.get('MINIO_ENCRYPT_PUBLIC', True)
             transform_json['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
             transform_json['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
+
+        if 'LOGS_URL' in current_app.config:
+            transform_json['log-url'] = current_app.config['LOGS_URL']
         return transform_json
