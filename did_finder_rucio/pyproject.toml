@@ -8,7 +8,7 @@ packages = [{include = "did_finder_rucio"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-rucio-clients = "^1.29.7.post1"
+rucio-clients = "^34.2.0"
 pika = "1.1.0"
 xmltodict = "^0.13.0"
 servicex-did-finder-lib = "^2.0.2"
