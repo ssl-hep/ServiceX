@@ -121,6 +121,9 @@ rabbitmq:
     enabled: false
   volumePermissions:
     enabled: true
+  extraConfiguration: |-
+    consumer_timeout = 3600000
+
 rbacEnabled: true
 secrets: null
 transformer:
