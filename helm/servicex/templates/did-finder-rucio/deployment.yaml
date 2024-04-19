@@ -58,5 +58,5 @@ spec:
         - name: x509-secret
           secret:
             defaultMode: 292
-            secretName: {{ .Release.Name }}-x509-proxy
+            secretName: x509-proxy
 {{- end }}
