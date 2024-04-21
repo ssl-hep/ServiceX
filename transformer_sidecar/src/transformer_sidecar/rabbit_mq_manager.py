@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import threading
+
 from time import sleep
 import logging
 
@@ -32,28 +34,38 @@ import pika
 import socket
 
 
-class RabbitMQManager:
+class RabbitMQManager(threading.Thread):
+    """
+    Class to manage the connection to RabbitMQ and to service the queue.
+    Instances of this class run in their own thread
+    """
 
     def __init__(self, rabbit_uri, queue_name, callback):
 
         handler = logging.NullHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
+        self.queue_name = queue_name
+        self.callback = callback
 
+        self.rabbitmq = pika.BlockingConnection(
+            pika.URLParameters(rabbit_uri)
+        )
+
+        super().__init__(target=self.connect_and_service, daemon=True)
+
+    def connect_and_service(self):
         while True:
             try:
-                self.rabbitmq = pika.BlockingConnection(
-                    pika.URLParameters(rabbit_uri)
-                )
                 _channel = self.rabbitmq.channel()
 
                 # Set to one since our ops take a long time.
                 # Give another client a chance
                 _channel.basic_qos(prefetch_count=1)
 
-                _channel.basic_consume(queue=queue_name,
+                _channel.basic_consume(queue=self.queue_name,
                                        auto_ack=False,
-                                       on_message_callback=callback)
+                                       on_message_callback=self.callback)
                 _channel.start_consuming()
             except socket.gaierror:
                 self.logger.error("Failed to connect to RabbitMQ Broker.... retrying")

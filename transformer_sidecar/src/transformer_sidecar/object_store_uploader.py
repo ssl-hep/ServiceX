@@ -25,8 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
 import logging
+import os
 import threading
 from pathlib import Path
 from queue import Queue
@@ -61,10 +61,10 @@ class ObjectStoreUploader(threading.Thread):
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()
-            self.logger.info("OSU Item received!", extra={
-                             'requestId': self.request_id, "place": PLACE})
+
+            # When we receive the poison pill, we're done.
             if item.is_complete():
-                self.logger.info("OSU Queue done!",
+                self.logger.info("Object store uploader done!",
                                  extra={'requestId': self.request_id, "place": PLACE})
                 break
             else:
@@ -77,9 +77,15 @@ class ObjectStoreUploader(threading.Thread):
                     file_to_upload = item.source_path
                     object_name = item.source_path.name
 
+                self.logger.info("Uploading file to object store.",
+                                 extra={'requestId': self.request_id, "place": PLACE,
+                                        "objectName": object_name})
                 self.object_store.upload_file(self.request_id,
                                               object_name,
                                               file_to_upload.as_posix())
+                self.logger.info("File uploaded to object store.",
+                                 extra={'requestId': self.request_id, "place": PLACE,
+                                        "objectName": object_name})
 
     def convert_to_parquet(self, source_path: Path) -> Optional[Path]:
         """
