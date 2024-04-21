@@ -26,20 +26,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
-import os
-from typing import Optional
-import time
-
 import kubernetes
+import os
 from flask import current_app
 from kubernetes import client
 from kubernetes.client.rest import ApiException
+from typing import Optional
 
 from servicex.models import TransformRequest
 
 
 class TransformerManager:
     POSIX_VOLUME_MOUNT = "/posix_volume"
+
+    # This is the number of seconds tha thte transformer has to finish uploading
+    # objects to the object store before it is terminated.
+    POD_TERMINATION_GRACE_PERIOD = 5*60
 
     def __init__(self, manager_mode):
         if manager_mode == 'internal-kubernetes':
@@ -238,6 +240,7 @@ class TransformerManager:
             metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
                 restart_policy="Always",
+                termination_grace_period_seconds=TransformerManager.POD_TERMINATION_GRACE_PERIOD,
                 priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
                 containers=[sidecar, science_container],  # Containers are started in this order
                 volumes=volumes))
@@ -385,9 +388,6 @@ class TransformerManager:
         except ApiException:
             current_app.logger.exception("Exception during Job ConfigMap cleanup", extra={
                                          "requestId": request_id})
-
-        # grace period for transformers to finish uploading objects.
-        time.sleep(10)
 
         try:
             api_v1 = client.AppsV1Api()
