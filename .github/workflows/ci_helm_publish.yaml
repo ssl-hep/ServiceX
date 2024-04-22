@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.1.3
       - name: Pull flux_river_configs
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.1.3
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.1.3
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
@@ -41,7 +41,7 @@ jobs:
           echo "$DOCKER_TAG"
 
       - name: Set version in flux_river_configs
-        uses: mikefarah/yq@v4.40.7
+        uses: mikefarah/yq@v4.43.1
         with:
           cmd: |
             yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-int/values.yaml &&
@@ -81,7 +81,7 @@ jobs:
           user-email: 'bengal1@illinois.edu'
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v2.0.4
         with:
           tag_name: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
