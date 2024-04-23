@@ -40,6 +40,7 @@ from queue import Queue
 from typing import NamedTuple
 
 import socket
+import signal
 
 from object_store_manager import ObjectStoreManager
 from object_store_uploader import ObjectStoreUploader
@@ -402,22 +403,37 @@ if __name__ == "__main__":
                     'iowait': startup_time.iowait, "place": PLACE
                 })
 
+    # Open a socket to the science containe
     serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serv.bind(('localhost', 8081))
     serv.listen()
     conn, addr = serv.accept()
 
+    # Create a queue to communicate with the ObjestStore uploader
     upload_queue = Queue()
 
     uploader = ObjectStoreUploader(request_id=args.request_id, input_queue=upload_queue,
                                    object_store=object_store, logger=logger,
                                    convert_root_to_parquet=convert_root_to_parquet)
+
     uploader.start()
 
     if args.request_id:
         rabbitmq = RabbitMQManager(args.rabbit_uri,
                                    args.request_id,
                                    callback)
+        rabbitmq.start()
+
+    # This is the signal handler that will shut the transformer down gracefully
+    def signal_handler(sig, frame):
+        logger.info("Shutting down transformer", extra={'requestId': args.request_id,
+                                                        "place": PLACE})
+        conn.close()
+        serv.close()
+        uploader.input_queue.put(ObjectStoreUploader.WorkQueueItem(None))
+
+    # Register the signal handler to shut the transformer down gracefully
+    signal.signal(signal.SIGTERM, signal_handler)
 
     uploader.join()
     logger.info("Uploader is done", extra={'requestId': args.request_id, "place": PLACE})
