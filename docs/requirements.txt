@@ -1,2 +1,2 @@
-mkdocs==1.4.2
-mkdocs-jupyter==0.22.0
+mkdocs==1.6.0
+mkdocs-jupyter==0.24.7
