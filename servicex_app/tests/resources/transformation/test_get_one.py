@@ -9,9 +9,14 @@ class TestTransformationRequest(ResourceTestBase):
             servicex.models.TransformRequest,
             'lookup',
             return_value=self._generate_transform_request())
-        client = self._test_client(extra_config={'OBJECT_STORE_ENABLED': False})
+        client = self._test_client(extra_config={
+            'OBJECT_STORE_ENABLED': False,
+            'LOGS_URL': 'https://log.servicex.com'
+        })
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 200
+        assert response.json['log-url'] == 'https://log.servicex.com'
+        assert response.json['title'] == 'Test Transformation'
         transform = response.json
 
         assert transform['request_id'] == 'BR549'
