@@ -23,6 +23,11 @@ path=$3
 
 echo "connecting..."
 
+while ! nc -z localhost 8081 ;do
+    echo "waiting for sidecar to connect..."
+    sleep 0.1
+done
+
 coproc nc { nc localhost 8081; }
 
 while [[ $nc_PID ]] ; do
