@@ -21,6 +21,7 @@ lang=$1
 cmd=$2
 path=$3
 
+sleep 1
 echo "connecting..."
 
 coproc nc { nc localhost 8081; }
