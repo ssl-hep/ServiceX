@@ -63,6 +63,7 @@ def run_rucio_finder():
         logger.info('Starting rucio DID finder')
 
         async def callback(did_name, info):
+            did_name = did_name.split('?')[0]
             lookup_request = LookupRequest(
                 did=did_name,
                 rucio_adapter=rucio_adapter,
