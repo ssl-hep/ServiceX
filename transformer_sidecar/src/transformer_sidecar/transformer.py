@@ -154,6 +154,25 @@ def prepend_xcache(file_paths):
         prefixed_paths.append(f'root://{prefix_list[pinned_xcache_index]}//{f}')
     return prefixed_paths
 
+
+def custom_path_sorting(file_paths):
+
+    preferred = os.environ.get('PREFERRED_ENDPOINTS', '')
+    avoided = os.environ.get('AVOIDED_ENDPOINTS', '')
+
+    if not preferred and not avoided:
+        return file_paths
+
+    sorted_paths = []
+
+    if preferred:
+        preferred_list = [p.strip() for p in preferred.split(',')]
+
+    if avoided:
+        avoided_list = [p.strip() for p in avoided.split(',')]
+
+    return sorted_paths
+
 # noinspection PyUnusedLocal
 
 
@@ -199,6 +218,8 @@ def callback(channel, method, properties, body):
     else:
         _file_paths = transform_request['paths'].split(',')
 
+    # custom path sorting
+    _file_paths = custom_path_sorting(_file_paths)
     # adding cache prefix
     _file_paths = prepend_xcache(_file_paths)
 

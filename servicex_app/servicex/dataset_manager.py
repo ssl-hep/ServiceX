@@ -49,11 +49,11 @@ class DatasetManager:
     @classmethod
     def from_did(cls, did: DIDParser, logger: Logger, extras: dict[str, str] = None,
                  db: SQLAlchemy = None):
-        did.full_did = did.full_did.split('?')[0]
-        dataset = Dataset.find_by_name(did.full_did)
+        clean_did = did.full_did.split('?')[0]
+        dataset = Dataset.find_by_name(clean_did)
         if not dataset:
             dataset = Dataset(
-                name=did.full_did,
+                name=clean_did,
                 last_used=datetime.now(tz=timezone.utc),
                 last_updated=datetime.fromtimestamp(0),
                 lookup_status=DatasetStatus.created,
