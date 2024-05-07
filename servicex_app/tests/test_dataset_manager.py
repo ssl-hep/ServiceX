@@ -54,7 +54,8 @@ class TestDatasetManager(ResourceTestBase):
     def mock_dataset_cls(self, mocker):
 
         mock_dataset.save_to_db = mocker.Mock()
-        mock_dataset_cls = mocker.patch("servicex.dataset_manager.Dataset", return_value=mock_dataset("created", mocker))
+        mock_dataset_cls = mocker.patch(
+            "servicex.dataset_manager.Dataset", return_value=mock_dataset("created", mocker))
         mock_query = mocker.Mock(return_value=None)
         mock_dataset_cls.query.find_by_name = mock_query
         mock_dataset_cls.find_by_name.return_value = None
@@ -70,7 +71,8 @@ class TestDatasetManager(ResourceTestBase):
             file_events="file_events"
         )
         mock_dataset_file.save_to_db = mocker.Mock()
-        mock_dataset_cls = mocker.patch("servicex.dataset_manager.DatasetFile", return_value=mock_dataset_file)
+        mock_dataset_cls = mocker.patch(
+            "servicex.dataset_manager.DatasetFile", return_value=mock_dataset_file)
         return mock_dataset_cls
 
     def test_constructor(self, client):
@@ -81,7 +83,7 @@ class TestDatasetManager(ResourceTestBase):
             assert dm.dataset == d
 
     def test_from_new_did(self, client):
-        did = "rucio://my-did?files=1"
+        did = "rucio://my-did"
         with client.application.app_context():
             dm = DatasetManager.from_did(DIDParser(did), logger=client.application.logger,  db=db)
             assert dm.dataset.name == did
@@ -95,7 +97,7 @@ class TestDatasetManager(ResourceTestBase):
             assert d_copy.name == did
 
     def test_from_existing_did(self, client):
-        did = "rucio://my-did?files=1"
+        did = "rucio://my-did"
         with client.application.app_context():
             d = Dataset(name=did, did_finder="rucio", lookup_status=DatasetStatus.looking,
                         last_used=datetime.now(tz=timezone.utc),
@@ -136,7 +138,7 @@ class TestDatasetManager(ResourceTestBase):
                                 file_events=0,
                                 file_size=0
                             ) for file in file_list
-                        ])
+            ])
             d.save_to_db()
             dm = DatasetManager.from_file_list(file_list,
                                                logger=client.application.logger, db=db)
@@ -159,7 +161,7 @@ class TestDatasetManager(ResourceTestBase):
                                 file_events=0,
                                 file_size=0
                             ) for file in file_list
-                        ])
+            ])
             d.save_to_db()
             dm = DatasetManager.from_dataset_id(d.id, logger=client.application.logger, db=db)
             assert dm.dataset.name == DatasetManager.file_list_hash(file_list)
@@ -213,9 +215,9 @@ class TestDatasetManager(ResourceTestBase):
 
     def test_dataset_name_did(self, client):
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"),
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did"),
                                          logger=client.application.logger, db=db)
-            assert dm.name == "rucio://my-did?files=1"
+            assert dm.name == "rucio://my-did"
 
     def test_refresh(self, client):
         with client.application.app_context():
@@ -247,7 +249,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_submit_lookup_request(self, mocker, client):
         mock_rabbit = mocker.Mock()
         with client.application.app_context():
-            d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"),
+            d = DatasetManager.from_did(did=DIDParser("rucio://my-did"),
                                         logger=client.application.logger, db=db)
             d.submit_lookup_request("http://hit-me/here", mock_rabbit)
 
@@ -256,7 +258,7 @@ class TestDatasetManager(ResourceTestBase):
         mock_rabbit.basic_publish.assert_called_with(exchange="",
                                                      routing_key='rucio_did_requests',
                                                      body='{"dataset_id": 1, '
-                                                          '"did": "my-did?files=1", '
+                                                          '"did": "my-did", '
                                                           '"endpoint": "http://hit-me/here"}')
 
     def test_publish_files(self, mocker, client):
@@ -270,7 +272,8 @@ class TestDatasetManager(ResourceTestBase):
             d = DatasetManager.from_file_list(file_list, logger=client.application.logger, db=db)
             d.publish_files(request=transform_request, lookup_result_processor=mock_processor)
             assert transform_request.files == 2
-            mock_processor.add_files_to_processing_queue.assert_called_with(transform_request, files=d.dataset.files)
+            mock_processor.add_files_to_processing_queue.assert_called_with(
+                transform_request, files=d.dataset.files)
 
     def test_add_files(self, mocker, client):
         with client.application.app_context():
