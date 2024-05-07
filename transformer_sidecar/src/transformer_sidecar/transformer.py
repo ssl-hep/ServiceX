@@ -165,6 +165,9 @@ def custom_path_sorting(file_paths):
 
     sorted_paths = []
     unsorted_paths = []
+    preferred_list = []
+    avoided_list = []
+
     if preferred:
         preferred_list = [p.strip() for p in preferred.split(',')]
 
