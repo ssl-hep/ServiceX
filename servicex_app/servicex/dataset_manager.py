@@ -49,6 +49,7 @@ class DatasetManager:
     @classmethod
     def from_did(cls, did: DIDParser, logger: Logger, extras: dict[str, str] = None,
                  db: SQLAlchemy = None):
+        did.full_did = did.full_did.split('?')[0]
         dataset = Dataset.find_by_name(did.full_did)
         if not dataset:
             dataset = Dataset(
