@@ -164,14 +164,29 @@ def custom_path_sorting(file_paths):
         return file_paths
 
     sorted_paths = []
-
+    unsorted_paths = []
     if preferred:
         preferred_list = [p.strip() for p in preferred.split(',')]
 
     if avoided:
         avoided_list = [p.strip() for p in avoided.split(',')]
 
-    return sorted_paths
+    for f in file_paths:
+        skip = False
+        for av in avoided_list:
+            if av in f:
+                skip = True
+        if skip:
+            continue
+        pref = False
+        for pr in preferred_list:
+            if pr in f:
+                sorted_paths.append(f)
+                pref = True
+        if not pref:
+            unsorted_paths.append(f)
+
+    return sorted_paths + unsorted_paths
 
 # noinspection PyUnusedLocal
 
