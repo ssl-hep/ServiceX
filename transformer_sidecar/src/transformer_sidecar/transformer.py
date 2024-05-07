@@ -331,7 +331,7 @@ def callback(channel, method, properties, body):
                 transform_success = True
                 ts = {
                     "requestId": _request_id,
-                    "log_body": transformer_stats.log_body,
+                    # "log_body": transformer_stats.log_body,
                     "file-size": transformer_stats.file_size,
                     "total-events": transformer_stats.total_events,
                     "place": PLACE
