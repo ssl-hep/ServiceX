@@ -65,7 +65,8 @@ class DatasetManager:
         else:
             logger.info(f"Found existing dataset: {dataset.name}, id is {dataset.id}",
                         extra=extras)
-
+        # putting back full name until this is solved in a correct way.
+        dataset.name = did.full_did
         return cls(dataset, logger, db)
 
     @classmethod
