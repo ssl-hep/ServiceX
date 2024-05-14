@@ -48,6 +48,7 @@ def test_generate_code():
                              'cut': 'met_met>150e3'},
                             {'treename': {'nominal': 'modified'},
                              'filter_name': ['lbn']},
+                            {'copy_histograms': 'CutBookkeeper*'}
                             ])
         expected_hash = "d831b800243e724e98c3c54116611b2c"
         result = translator.generate_code(query, tmpdirname)
