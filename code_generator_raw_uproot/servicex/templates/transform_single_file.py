@@ -19,9 +19,10 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     try:
         stime = time.time()
 
-        awkward_array_dict = generated_transformer.run_query(file_path)
-        total_events = sum(ak.num(awkward_array, axis=0)
-                           for awkward_array in awkward_array_dict.values())
+        awkward_array_dict, histograms = generated_transformer.run_query(file_path)
+        total_events = sum((ak.num(awkward_array[0], axis=0)
+                            for awkward_array in awkward_array_dict.values()
+                            if awkward_array[0] is not None), 0)
 
         ttime = time.time()
 
@@ -30,12 +31,19 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             etime = time.time()
             with uproot.recreate(output_path) as writer:
                 for k, v in awkward_array_dict.items():
-                    writer[k] = {field: v[field] for field in
-                                 v.fields} if v.fields \
-                        else v
+                    if v[0] is not None:
+                        writer[k] = {field: v[0][field] for field in
+                                     v[0].fields} if v[0].fields \
+                            else v[0]
+                    else:
+                        writer.mktree(k, v[1])
+                for k, v in histograms.items():
+                    writer[k] = v
             wtime = time.time()
 
         else:
+            if histograms:
+                raise RuntimeError("Cannot store histograms in a non-ROOT return file format")
             for treename, subarray in awkward_array_dict.items():
                 subarray['treename'] = treename
             awkward_array = awkward_array_dict.popitem()[1]
