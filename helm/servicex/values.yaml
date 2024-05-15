@@ -43,6 +43,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: develop
+  uproot-raw:
+    enabled: true
+    image: sslhep/servicex_code_gen_raw_uproot
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
+    defaultScienceContainerTag: develop
   cms:
     enabled: true
     image: sslhep/servicex_code_gen_cms_aod
