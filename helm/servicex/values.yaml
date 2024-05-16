@@ -62,7 +62,7 @@ codeGen:
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: develop
 didFinder:
   CERNOpenData:
