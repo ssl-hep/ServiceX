@@ -78,7 +78,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_constructor(self, client):
         with client.application.app_context():
             d = Dataset()
-            d.name = "rucio://my-did?files=1"
+            d.name = "rucio://my-did"
             dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
             assert dm.dataset == d
 
@@ -175,7 +175,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_lookup_required(self, client):
         with client.application.app_context():
             d = Dataset()
-            d.name = "rucio://my-did?files=1"
+            d.name = "rucio://my-did"
             d.lookup_status = DatasetStatus.created
             dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
 
@@ -190,12 +190,12 @@ class TestDatasetManager(ResourceTestBase):
     def test_properties(self, client):
         with client.application.app_context():
             d = Dataset()
-            d.name = "rucio://my-did?files=1"
+            d.name = "rucio://my-did"
             d.id = 42
             d.lookup_status = DatasetStatus.created
             dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
 
-            assert dm.name == "rucio://my-did?files=1"
+            assert dm.name == "rucio://my-did"
             assert dm.id == 42
 
     def test_file_list(self, client):
@@ -221,7 +221,7 @@ class TestDatasetManager(ResourceTestBase):
 
     def test_refresh(self, client):
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"),
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did"),
                                          logger=client.application.logger, db=db)
 
             # To be fair, this test isn't really  verifying the refresh method, since
@@ -235,7 +235,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_is_complete(self, client):
         with client.application.app_context():
             d = Dataset()
-            d.name = "rucio://my-did?files=1"
+            d.name = "rucio://my-did"
             d.id = 42
             d.lookup_status = DatasetStatus.created
             dm = DatasetManager(dataset=d, logger=client.application.logger, db=db)
