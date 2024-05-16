@@ -83,7 +83,7 @@ class TestDatasetManager(ResourceTestBase):
             assert dm.dataset == d
 
     def test_from_new_did(self, client):
-        did = "rucio://my-did?files=1"
+        did = "rucio://my-did"
         with client.application.app_context():
             dm = DatasetManager.from_did(DIDParser(did), logger=client.application.logger,  db=db)
             assert dm.dataset.name == did
@@ -96,9 +96,8 @@ class TestDatasetManager(ResourceTestBase):
             assert d_copy
             assert d_copy.name == did
 
-    @pytest.mark.xfail
     def test_from_existing_did(self, client):
-        did = "rucio://my-did?files=1"
+        did = "rucio://my-did"
         with client.application.app_context():
             d = Dataset(name=did, did_finder="rucio", lookup_status=DatasetStatus.looking,
                         last_used=datetime.now(tz=timezone.utc),
@@ -216,9 +215,9 @@ class TestDatasetManager(ResourceTestBase):
 
     def test_dataset_name_did(self, client):
         with client.application.app_context():
-            dm = DatasetManager.from_did(DIDParser("rucio://my-did?files=1"),
+            dm = DatasetManager.from_did(DIDParser("rucio://my-did"),
                                          logger=client.application.logger, db=db)
-            assert dm.name == "rucio://my-did?files=1"
+            assert dm.name == "rucio://my-did"
 
     def test_refresh(self, client):
         with client.application.app_context():
@@ -250,7 +249,7 @@ class TestDatasetManager(ResourceTestBase):
     def test_submit_lookup_request(self, mocker, client):
         mock_rabbit = mocker.Mock()
         with client.application.app_context():
-            d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"),
+            d = DatasetManager.from_did(did=DIDParser("rucio://my-did"),
                                         logger=client.application.logger, db=db)
             d.submit_lookup_request("http://hit-me/here", mock_rabbit)
 
@@ -259,7 +258,7 @@ class TestDatasetManager(ResourceTestBase):
         mock_rabbit.basic_publish.assert_called_with(exchange="",
                                                      routing_key='rucio_did_requests',
                                                      body='{"dataset_id": 1, '
-                                                          '"did": "my-did?files=1", '
+                                                          '"did": "my-did", '
                                                           '"endpoint": "http://hit-me/here"}')
 
     def test_publish_files(self, mocker, client):
