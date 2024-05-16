@@ -49,7 +49,7 @@ class DatasetManager:
     @classmethod
     def from_did(cls, did: DIDParser, logger: Logger, extras: dict[str, str] = None,
                  db: SQLAlchemy = None):
-        logger.info(f"FROM DID full_di: {did.full_did},")
+        # This removes wrongly implemented subset of file selection
         clean_did = did.full_did.split('?')[0]
         dataset = Dataset.find_by_name(clean_did)
         if not dataset:
@@ -66,8 +66,6 @@ class DatasetManager:
         else:
             logger.info(f"Found existing dataset: {dataset.name}, id is {dataset.id}",
                         extra=extras)
-        # putting back full name until this is solved in a correct way.
-        dataset.name = did.full_did
         return cls(dataset, logger, db)
 
     @classmethod

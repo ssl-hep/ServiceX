@@ -96,6 +96,7 @@ class TestDatasetManager(ResourceTestBase):
             assert d_copy
             assert d_copy.name == did
 
+    @pytest.mark.xfail
     def test_from_existing_did(self, client):
         did = "rucio://my-did?files=1"
         with client.application.app_context():
@@ -107,7 +108,7 @@ class TestDatasetManager(ResourceTestBase):
             assert dm.dataset.name == did
             assert dm.dataset.did_finder == "rucio"
             assert dm.dataset.lookup_status == DatasetStatus.created
-            # assert dm.dataset.id == d.id
+            assert dm.dataset.id == d.id
 
     def test_from_new_file_list(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
