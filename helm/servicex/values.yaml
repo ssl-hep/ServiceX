@@ -139,7 +139,16 @@ transformer:
   # comma-separated list of values.
   # Do not put root:// in these values.
   cachePrefix: null
+  # a comma separated list of endpoints in order of preference.
+  # endpoint can be a hostname or IP, prepended by a protocol or not
+  # eg. fax.mwt2.org, root://fax.mwt2.org, root://192.168.1.0
+  preferredEndpoints: null
 
+  # a comma separated list of endpoints to avoid.
+  # endpoint can be a hostname or IP, prepended by a protocol or not
+  # eg. fax.mwt2.org, root://fax.mwt2.org, root://192.168.1.0
+  avoidedEndpoints: null
+  
   autoscaler:
     cpuScaleThreshold: 30
     enabled: true

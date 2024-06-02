@@ -164,6 +164,16 @@ class TransformerManager:
             env += [client.V1EnvVar("CACHE_PREFIX",
                                     value=current_app.config["TRANSFORMER_CACHE_PREFIX"])]
 
+        # provide each pod with an environment var holding list of prefered endpoints
+        if "TRANSFORMER_PREFERRED_ENDPOINTS" in current_app.config:
+            env += [client.V1EnvVar("PREFERRED_ENDPOINTS",
+                                    value=current_app.config["TRANSFORMER_PREFERRED_ENDPOINTS"])]
+
+        # provide each pod with an environment var holding list of endpoints to avoid
+        if "TRANSFORMER_AVOIDED_ENDPOINTS" in current_app.config:
+            env += [client.V1EnvVar("AVOIDED_ENDPOINTS",
+                                    value=current_app.config["TRANSFORMER_AVOIDED_ENDPOINTS"])]
+
         if result_destination == 'object-store':
             env = env + [
                 client.V1EnvVar(name='MINIO_URL',
