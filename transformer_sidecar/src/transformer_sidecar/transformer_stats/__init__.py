@@ -32,9 +32,11 @@ from abc import ABC
 
 class TransformerStats(ABC):
     def __init__(self, log_path: Path):
-        with open(log_path) as log:
-            self.log_body = log.read()
-
+        if log_path.exists():
+            with open(log_path, encoding="utf8", errors='ignore') as log:
+                self.log_body = log.read()
+        else:
+            print("File does not exist:", log_path)
         self.total_events = 0
         self.file_size = 0
         self.error_info = "Unable to determine error cause. Please consult log files"
