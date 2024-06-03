@@ -48,8 +48,9 @@ def test_generate_code():
                              'cut': 'met_met>150e3'},
                             {'treename': {'nominal': 'modified'},
                              'filter_name': ['lbn']},
+                            {'copy_histograms': 'CutBookkeeper*'}
                             ])
-        expected_hash = "d831b800243e724e98c3c54116611b2c"
+        expected_hash = "0fa47fd44a792a80fe70ec023a99a41d"
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?
