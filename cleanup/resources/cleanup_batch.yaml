@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup
+  namespace: servicex
+spec:
+  schedule: "5 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: ivukotic/servicex_cleanup:develop
+              imagePullPolicy: Always
+              env:
+                - name: S3_URL
+                  value: "http://s3v2.af.uchicago.edu:32095"
+                - name: PG_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: servicex-secrets
+                      key: postgresql-password
+                - name: ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: servicex-secrets
+                      key: accesskey
+                - name: SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: servicex-secrets
+                      key: secretkey
+                - name: DATABASE_URI
+                  value: >-
+                    postgresql://postgres:$(PG_PASS)@servicex-postgresql:5432/servicex
+                - name: MAX_S3_AGE
+                  value: "6"
+                - name: MAX_REQUEST_AGE
+                  value: "30"
+                - name: MAX_DID_LOOKUP_AGE
+                  value: "30"
+                - name: HWM
+                  value: "35T"
+                - name: LWM
+                  value: "30T"
+                - name: LOGSTASH_HOST
+                  value: servicex.atlas-ml.org
+                - name: LOGSTASH_PORT
+                  value: "5959"
+                - name: LOGSTASH_PROTOCOL
+                  value: TCP
+                - name: LOG_LEVEL
+                  value: INFO
+                - name: INSTANCE_NAME
+                  value: servicex
+                - name: PYTHONUNBUFFERED
+                  value: "TRUE"
+          restartPolicy: Never #OnFailure

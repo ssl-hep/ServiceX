@@ -1,0 +1,3 @@
+boto3
+psycopg2
+python-logstash==0.4.8

@@ -1,38 +1,11 @@
 #!/usr/bin/python3.11
-# Copyright (c) 2019, IRIS-HEP
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright notice,
-#   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.
-#
-# * Neither the name of the copyright holder nor the names of its
-#   contributors may be used to endorse or promote products derived from
-#   this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import argparse
 import logstash
 import logging
 import os
 import sys
 
+from servicex_storage import db_manager
 from servicex_storage import s3_storage_manager
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
@@ -74,7 +47,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             'tags': self.tags,
             'type': self.message_type,
             'instance': instance,
-            'component': 'minio cleaner',
+            'component': 's3 cleaner',
 
             # Extra Fields
             'level': record.levelname,
@@ -101,7 +74,7 @@ def initialize_logging() -> logging.Logger:
 
     log = logging.getLogger()
     formatter = logging.Formatter('%(levelname)s ' +
-                                  f"{instance} minio cleaner " + '%(message)s')
+                                  f"{instance} s3 cleaner " + '%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
@@ -151,23 +124,21 @@ def parse_suffix(size: str) -> int:
         return int(size)
 
 
-def run_minio_cleaner():
-    """
-    Run the minio cleaner
-    """
+def run_cleaner():
 
-    # Parse the command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--max-size', dest='max_size', action='store',
-                        default='',
-                        help='Max size allowed before pruning storage')
-    parser.add_argument('--norm-size', dest='norm_size', action='store',
-                        default='',
-                        help='Size to prune storage to')
-    parser.add_argument('--max-age', dest='max_age', action='store',
-                        default=30,
-                        type=int,
-                        help='Max age of files in days allowed before pruning storage')
+    hwm = os.environ.get('HWM', '10T')
+    lwm = os.environ.get('LWM', '9T')
+
+    try:
+        raw_hwm = parse_suffix(hwm)
+    except ValueError:
+        logger.error(f"Can't parse hwm size, got: {hwm}")
+        sys.exit(1)
+    try:
+        raw_lwm = parse_suffix(lwm)
+    except ValueError:
+        logger.error(f"Can't parse lwm size, got: {lwm}")
+        sys.exit(1)
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
@@ -175,7 +146,7 @@ def run_minio_cleaner():
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} minio_cleanup " +
+                                       f"{instance} cleanup " +
                                        '%(message)s')
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(level)
@@ -188,21 +159,9 @@ def run_minio_cleaner():
         logstash_handler.setLevel(level)
         logger.addHandler(logstash_handler)
 
-    args = parser.parse_args()
-    try:
-        raw_max = parse_suffix(args.max_size)
-    except ValueError:
-        logger.error(f"Can't parse max size, got: {args.max_size}")
-        sys.exit(1)
-    try:
-        raw_norm = parse_suffix(args.norm_size)
-    except ValueError:
-        logger.error(f"Can't parse norm size, got: {args.norm_size}")
-        sys.exit(1)
+    logger.info("ServiceX S3 Cleaner starting up.")
 
-    logger.info("ServiceX Minio Cleaner starting up.")
-
-    env_vars = ['MINIO_URL', 'ACCESS_KEY', 'SECRET_KEY']
+    env_vars = ['S3_URL', 'ACCESS_KEY', 'SECRET_KEY', 'DATABASE_URI']
     error = False
     for var in env_vars:
         if var not in os.environ:
@@ -212,32 +171,25 @@ def run_minio_cleaner():
         logger.error("Exiting due to missing environment variables")
         sys.exit(1)
 
-    try:
-        if 'MINIO_ENCRYPT' in os.environ:
-            if isinstance(os.environ['MINIO_ENCRYPT'], bool):
-                use_https = os.environ['MINIO_ENCRYPT']
-            else:
-                use_https = strtobool(os.environ['MINIO_ENCRYPT'])
+    if 'S3_ENCRYPT' in os.environ:
+        if isinstance(os.environ['S3_ENCRYPT'], bool):
+            use_https = os.environ['S3_ENCRYPT']
         else:
-            use_https = False
+            use_https = strtobool(os.environ['S3_ENCRYPT'])
+    else:
+        use_https = False
 
-        store = s3_storage_manager.S3Store(s3_endpoint=os.environ['MINIO_URL'],
-                                           access_key=os.environ['ACCESS_KEY'],
-                                           secret_key=os.environ['SECRET_KEY'],
-                                           use_https=use_https)
-        logger.info("cleanup started")
-        results = store.cleanup_storage(max_size=raw_max, norm_size=raw_norm, max_age=args.max_age)
-        logger.info("cleanup stopped finished.", extra={
-                    "storage used": results[0],
-                    "storage available": raw_max,
-                    "storage HWM": raw_norm})
-        for bucket in results[1]:
-            logger.info(f"Removed folder/bucket: {bucket}")
-        logger.info("Deleted buckets", extra={'nbuckets': len(results[1])})
-    finally:
-        logger.info('Done running minio storage cleanup')
+    store = s3_storage_manager.S3Store(s3_endpoint=os.environ['S3_URL'],
+                                       access_key=os.environ['ACCESS_KEY'],
+                                       secret_key=os.environ['SECRET_KEY'],
+                                       use_https=use_https)
+    store.cleanup_storage(hwm=raw_hwm, lwm=raw_lwm)
+
+    dbm = db_manager.DBmanager()
+    dbm.cleanup_db()
 
 
 if __name__ == "__main__":
     logger = initialize_logging()
-    run_minio_cleaner()
+    run_cleaner()
+    print('All Done.')

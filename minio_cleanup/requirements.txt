@@ -1,2 +1,0 @@
-minio
-servicex_storage

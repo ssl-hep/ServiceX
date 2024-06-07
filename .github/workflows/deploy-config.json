@@ -50,8 +50,8 @@
     "test_required": true
   },
   {
-    "dir_name": "minio_cleanup",
-    "image_name": "servicex_minio_cleanup",
+    "dir_name": "cleanup",
+    "image_name": "servicex_cleanup",
     "test_required": false
   }
 ]
