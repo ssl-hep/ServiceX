@@ -1,5 +1,5 @@
 import pytest
-from servicex_did_finder_xrootd.did_finder import find_files
+from src.servicex_did_finder_xrootd.did_finder import find_files
 
 
 @pytest.mark.asyncio
