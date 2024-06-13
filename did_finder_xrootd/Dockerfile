@@ -20,6 +20,9 @@ ENV  POETRY_VERSION=1.5.1
 # See: https://github.com/python-poetry/poetry/issues/5977
 #RUN pip uninstall -y certifi
 
+RUN apt-get update && \
+    apt-get install cmake --no-install-recommends --assume-yes
+
 RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
