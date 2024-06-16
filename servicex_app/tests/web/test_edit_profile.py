@@ -4,7 +4,7 @@ from .web_test_base import WebTestBase
 
 
 class TestEditProfile(WebTestBase):
-    module = "servicex.web.edit_profile"
+    module = "servicex_app.web.edit_profile"
 
     def test_get_edit_profile(self, client, user, captured_templates):
         with client.session_transaction() as sess:

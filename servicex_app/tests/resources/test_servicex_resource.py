@@ -31,10 +31,10 @@ import pkg_resources
 class TestServiceXResource:
     def test_get_app_version_no_servicex_app(self, mocker):
         mock_get_distribution = mocker.patch(
-            "servicex.resources.servicex_resource.pkg_resources.get_distribution",
+            "servicex_app.resources.servicex_resource.pkg_resources.get_distribution",
             side_effect=pkg_resources.DistributionNotFound(None, None))
 
-        from servicex.resources.servicex_resource import ServiceXResource
+        from servicex_app.resources.servicex_resource import ServiceXResource
         version = ServiceXResource._get_app_version()
 
         mock_get_distribution.assert_called_with("servicex_app")

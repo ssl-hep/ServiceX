@@ -31,12 +31,12 @@ from unittest.mock import MagicMock
 from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
 from pytest import fixture
-from servicex import create_app
-from servicex.code_gen_adapter import CodeGenAdapter
-from servicex.docker_repo_adapter import DockerRepoAdapter
-from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import TransformRequest, Dataset, DatasetFile, TransformStatus
-from servicex.rabbit_adaptor import RabbitAdaptor
+from servicex_app import create_app
+from servicex_app.code_gen_adapter import CodeGenAdapter
+from servicex_app.docker_repo_adapter import DockerRepoAdapter
+from servicex_app.lookup_result_processor import LookupResultProcessor
+from servicex_app.models import TransformRequest, Dataset, DatasetFile, TransformStatus
+from servicex_app.rabbit_adaptor import RabbitAdaptor
 
 
 class ResourceTestBase:
@@ -198,13 +198,13 @@ class ResourceTestBase:
         mock_user.admin = False
         mock_user.pending = False
         mocker.patch(
-            'servicex.resources.servicex_resource.UserModel.find_by_sub',
+            'servicex_app.resources.servicex_resource.UserModel.find_by_sub',
             return_value=mock_user)
         return mock_user
 
     @fixture
     def mock_app_version(self, mocker):
-        from servicex.resources.servicex_resource import ServiceXResource
+        from servicex_app.resources.servicex_resource import ServiceXResource
         mocker.patch.object(ServiceXResource,
                             "_get_app_version",
                             return_value='3.14.15')

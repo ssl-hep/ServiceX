@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 from flask import Response, url_for
-from servicex.models import TransformationResult, TransformRequest
+from servicex_app.models import TransformationResult, TransformRequest
 
 from .web_test_base import WebTestBase
 
@@ -11,7 +11,7 @@ statuses = ["success", "failure"]
 
 class TestUserDashboard(WebTestBase):
     endpoint = "transformation_results"
-    module = "servicex.web.transformation_results"
+    module = "servicex_app.web.transformation_results"
     template_name = 'transformation_results.html'
 
     @pytest.fixture

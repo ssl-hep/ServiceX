@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
-from servicex.code_gen_adapter import CodeGenAdapter
-from servicex.models import TransformRequest
+from servicex_app.code_gen_adapter import CodeGenAdapter
+from servicex_app.models import TransformRequest
 
 
 class TestCodeGenAdapter:
@@ -71,7 +71,7 @@ class TestCodeGenAdapter:
                             mock_transformer_language_part,
                             mock_transformer_command_part,
                             mock_zip_part]
-        mocker.patch('servicex.code_gen_adapter.decoder.MultipartDecoder.from_response',
+        mocker.patch('servicex_app.code_gen_adapter.decoder.MultipartDecoder.from_response',
                      return_value=mock_parts)
 
         mock_transformer_manager = mocker.MagicMock()

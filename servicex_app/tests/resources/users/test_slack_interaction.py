@@ -105,7 +105,7 @@ class TestSlackInteraction(ResourceTestBase):
                                          data={'payload': json.dumps(payload)})
         assert response.status_code == 403
         with client.application.app_context():
-            from servicex.web.slack_msg_builder import missing_slack_app
+            from servicex_app.web.slack_msg_builder import missing_slack_app
             assert mock_post.called_once_with(payload['response_url'],
                                               missing_slack_app())
 
@@ -118,7 +118,7 @@ class TestSlackInteraction(ResourceTestBase):
                                          headers=headers)
         assert response.status_code == 403
         with client.application.app_context():
-            from servicex.web.slack_msg_builder import request_expired
+            from servicex_app.web.slack_msg_builder import request_expired
             assert mock_post.called_once_with(payload['response_url'],
                                               request_expired())
 
@@ -134,13 +134,13 @@ class TestSlackInteraction(ResourceTestBase):
                                          headers=headers)
         assert response.status_code == 401
         with client.application.app_context():
-            from servicex.web.slack_msg_builder import verification_failed
+            from servicex_app.web.slack_msg_builder import verification_failed
             assert mock_post.called_once_with(payload['response_url'],
                                               verification_failed())
 
     def test_slack_interaction_accept_user(self, mocker):
         mock_post = mocker.patch('requests.post')
-        mock_user_model = mocker.patch('servicex.models.UserModel')
+        mock_user_model = mocker.patch('servicex_app.models.UserModel')
         secret = 'my-slack-secret'
         client = self._test_client(extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         timestamp = time.time()
@@ -159,6 +159,6 @@ class TestSlackInteraction(ResourceTestBase):
         email = payload['actions'][0]['value']
         assert mock_user_model.accept.called_once_with(email)
         with client.application.app_context():
-            from servicex.web.slack_msg_builder import signup_ia
+            from servicex_app.web.slack_msg_builder import signup_ia
             resp = signup_ia(payload['message'], payload['user'], 'accept_user')
             assert mock_post.called_once_with(payload['response_url'], resp)

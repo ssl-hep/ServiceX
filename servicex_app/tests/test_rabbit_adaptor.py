@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pika
 
-from servicex.rabbit_adaptor import RabbitAdaptor
+from servicex_app.rabbit_adaptor import RabbitAdaptor
 from tests.resource_test_base import ResourceTestBase
 
 

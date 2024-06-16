@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 
 from pytest import fixture
-from servicex.models import TransformationResult, TransformRequest, UserModel
+from servicex_app.models import TransformationResult, TransformRequest, UserModel
 
 
 class TestTransformRequest:
     @fixture
     def mock_result_cls(self, mocker):
-        mock_result_cls = mocker.patch("servicex.models.TransformationResult")
+        mock_result_cls = mocker.patch("servicex_app.models.TransformationResult")
         mock_query = mocker.MagicMock()
         mock_result_cls.query.filter_by.return_value = mock_query
         return mock_result_cls
@@ -21,7 +21,7 @@ class TestTransformRequest:
         t = datetime(2021, 1, 1)
         delta = timedelta(days=1, hours=3, minutes=5)
         request.submit_time = t
-        mock_dt = mocker.patch("servicex.models.datetime")
+        mock_dt = mocker.patch("servicex_app.models.datetime")
         mock_dt.utcnow.return_value = t+delta
         assert request.age == delta
         assert mock_dt.utcnow.called_once()

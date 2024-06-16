@@ -94,7 +94,7 @@ class WebTestBase:
 
     @staticmethod
     def _test_client(extra_config=None) -> FlaskClient:
-        from servicex import create_app
+        from servicex_app import create_app
         config = WebTestBase._app_config()
         if extra_config:
             config.update(extra_config)
@@ -104,7 +104,7 @@ class WebTestBase:
 
     @staticmethod
     def _test_user():
-        from servicex.models import UserModel
+        from servicex_app.models import UserModel
         return UserModel(
             name='Jane Doe',
             email='jane@example.com',
@@ -178,7 +178,7 @@ class WebTestBase:
 
     @staticmethod
     def _test_transformation_req(**kwargs):
-        from servicex.models import TransformRequest
+        from servicex_app.models import TransformRequest
         defaults = {
             "id": 1234,
             "did": "foo",
@@ -212,9 +212,9 @@ class WebTestBase:
         user = self._test_user()
         user.save_to_db = mocker.Mock()
         user.delete_from_db = mocker.Mock()
-        mocker.patch('servicex.models.UserModel.find_by_sub', return_value=user)
-        mocker.patch('servicex.models.UserModel.find_by_email', return_value=user)
-        mocker.patch('servicex.models.UserModel.find_by_id', return_value=user)
+        mocker.patch('servicex_app.models.UserModel.find_by_sub', return_value=user)
+        mocker.patch('servicex_app.models.UserModel.find_by_email', return_value=user)
+        mocker.patch('servicex_app.models.UserModel.find_by_id', return_value=user)
         return user
 
     @fixture

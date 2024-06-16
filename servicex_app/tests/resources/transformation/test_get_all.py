@@ -37,9 +37,9 @@ class TestAllTransformationRequest(ResourceTestBase):
 
     @fixture()
     def mock_return_json(self, mocker):
-        import servicex
+        import servicex_app
         mock_return_json = mocker.patch.object(
-            servicex.models.TransformRequest, 'return_json',
+            servicex_app.models.TransformRequest, 'return_json',
             return_value=self.example_json())
         return mock_return_json
 

@@ -28,12 +28,12 @@
 from unittest.mock import ANY
 
 from pytest import fixture
-from servicex import LookupResultProcessor
+from servicex_app import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
-from servicex.dataset_manager import DatasetManager
+from servicex_app.dataset_manager import DatasetManager
 
-from servicex.models import TransformRequest
+from servicex_app.models import TransformRequest
 
 
 class TestAddFileToDataset(ResourceTestBase):

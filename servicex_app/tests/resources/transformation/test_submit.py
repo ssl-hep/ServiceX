@@ -30,16 +30,16 @@ from unittest.mock import ANY
 from unittest.mock import call
 
 from pytest import fixture
-from servicex.models import TransformRequest, DatasetStatus, TransformStatus
+from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
 from tests.resource_test_base import ResourceTestBase
 
-from servicex import LookupResultProcessor
-from servicex.models import Dataset
-from servicex.dataset_manager import DatasetManager
+from servicex_app import LookupResultProcessor
+from servicex_app.models import Dataset
+from servicex_app.dataset_manager import DatasetManager
 
-from servicex.code_gen_adapter import CodeGenAdapter
+from servicex_app.code_gen_adapter import CodeGenAdapter
 
-from servicex.transformer_manager import TransformerManager
+from servicex_app.transformer_manager import TransformerManager
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):
@@ -444,7 +444,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_with_object_store(self, mocker,
                                                      mock_dataset_manager_from_did,
                                                      mock_codegen):
-        from servicex import ObjectStoreManager
+        from servicex_app import ObjectStoreManager
 
         local_config = {
             'OBJECT_STORE_ENABLED': True,

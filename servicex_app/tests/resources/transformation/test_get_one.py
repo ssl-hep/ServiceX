@@ -4,9 +4,9 @@ from tests.resource_test_base import ResourceTestBase
 class TestTransformationRequest(ResourceTestBase):
 
     def test_get_single_request_no_object_store(self, mocker):
-        import servicex
+        import servicex_app
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
+            servicex_app.models.TransformRequest,
             'lookup',
             return_value=self._generate_transform_request())
         client = self._test_client(extra_config={
@@ -23,11 +23,11 @@ class TestTransformationRequest(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
 
     def test_get_single_request_with_object_store(self, mocker):
-        import servicex
+        import servicex_app
         object_store_transform_request = self._generate_transform_request()
         object_store_transform_request.result_destination = 'object-store'
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
+            servicex_app.models.TransformRequest,
             'lookup',
             return_value=object_store_transform_request)
 
@@ -47,9 +47,9 @@ class TestTransformationRequest(ResourceTestBase):
         mock_transform_request_read.assert_called_with('1234')
 
     def test_get_single_request_404(self, mocker, client):
-        import servicex
+        import servicex_app
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'lookup',
+            servicex_app.models.TransformRequest, 'lookup',
             return_value=None)
         response = client.get('/servicex/transformation/1234')
         assert response.status_code == 404

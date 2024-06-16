@@ -30,7 +30,7 @@ from tests.resource_test_base import ResourceTestBase
 
 class TestTransformStatusInternal(ResourceTestBase):
     def test_post_status(self, mocker, client):
-        from servicex.models import TransformRequest
+        from servicex_app.models import TransformRequest
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
@@ -50,7 +50,7 @@ class TestTransformStatusInternal(ResourceTestBase):
         mock_request.save_to_db.assert_not_called()
 
     def test_post_status_fatal(self, mocker, client):
-        from servicex.models import TransformRequest
+        from servicex_app.models import TransformRequest
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(

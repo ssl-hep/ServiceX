@@ -10,6 +10,6 @@ class TestAcceptUser(WebTestBase):
         assert user.save_to_db.called_once()
 
     def test_accept_user_missing(self, client, mocker):
-        mocker.patch('servicex.models.UserModel.find_by_email', return_value=None)
+        mocker.patch('servicex_app.models.UserModel.find_by_email', return_value=None)
         response = client.post('/accept', json={"email": 'janedoe@example.com'})
         assert response.status_code == 404

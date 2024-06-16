@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 import kubernetes as k8s
 import pytest
 
-from servicex.models import TransformRequest, TransformStatus
+from servicex_app.models import TransformRequest, TransformStatus
 from tests.resource_test_base import ResourceTestBase
 
 
 class TestTransformCancel(ResourceTestBase):
-    module = "servicex.resources.transformation.cancel"
+    module = "servicex_app.resources.transformation.cancel"
 
     @pytest.fixture
     def mock_transform_manager(self, mocker) -> MagicMock:
