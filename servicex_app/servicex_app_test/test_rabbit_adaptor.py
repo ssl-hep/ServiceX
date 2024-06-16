@@ -28,7 +28,7 @@
 import pika
 
 from servicex_app.rabbit_adaptor import RabbitAdaptor
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestRabbitAdaptor(ResourceTestBase):

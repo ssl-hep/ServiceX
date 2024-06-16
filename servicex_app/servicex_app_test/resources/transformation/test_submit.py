@@ -31,7 +31,6 @@ from unittest.mock import call
 
 from pytest import fixture
 from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
-from tests.resource_test_base import ResourceTestBase
 
 from servicex_app import LookupResultProcessor
 from servicex_app.models import Dataset
@@ -40,6 +39,7 @@ from servicex_app.dataset_manager import DatasetManager
 from servicex_app.code_gen_adapter import CodeGenAdapter
 
 from servicex_app.transformer_manager import TransformerManager
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):

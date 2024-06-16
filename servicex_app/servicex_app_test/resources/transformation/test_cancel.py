@@ -4,7 +4,7 @@ import kubernetes as k8s
 import pytest
 
 from servicex_app.models import TransformRequest, TransformStatus
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestTransformCancel(ResourceTestBase):

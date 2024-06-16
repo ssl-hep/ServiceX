@@ -25,20 +25,39 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from tests.resource_test_base import ResourceTestBase
+import json
+from servicex_app.lookup_result_processor import LookupResultProcessor
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
-class TestServicexInfo(ResourceTestBase):
-    def test_get_info(self, client, mock_app_version):
-        response = client.get('/servicex')
-        assert response.status_code == 200
-        print(response.json)
-        assert response.json == {
-                                 'app-version': '3.14.15',
-                                 'code-gen-image': {
-                                    'atlasxaod': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
-                                    'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
-                                    'python': 'sslhep/servicex_code_gen_python:develop',
-                                    'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
-                                    }
-                                }  # noqa: E501
+class TestLookupResultProcessor(ResourceTestBase):
+
+    def test_add_files_to_processing_queue(self, mocker, mock_rabbit_adaptor):
+        processor = LookupResultProcessor(mock_rabbit_adaptor,
+                                          "http://cern.analysis.ch:5000/")
+
+        request = self._generate_transform_request()
+        request.result_destination = 'object-store'
+
+        client = self._test_client()
+        with client.application.app_context():
+            processor.add_files_to_processing_queue(request, [self._generate_datafile()])
+
+            mock_rabbit_adaptor.basic_publish.assert_called_once()
+
+            mock_rabbit_adaptor.basic_publish.assert_called_with(
+                exchange='transformation_requests',
+                routing_key='BR549',
+                body=json.dumps(
+                    {"request-id": 'BR549',
+                     "file-id": 123456789,
+                     "paths": "/path1,/path2",
+                     "tree-name": "Events",
+                     "service-endpoint":
+                        "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                     "chunk-size": "1000",
+                     'result-destination': 'object-store',
+                     "result-format": "arrow"
+                     }
+                )
+            )

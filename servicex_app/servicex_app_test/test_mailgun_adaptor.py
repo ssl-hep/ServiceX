@@ -1,7 +1,7 @@
 from flask import render_template
 
 from servicex_app.mailgun_adaptor import MailgunAdaptor
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestMailgunAdaptor(ResourceTestBase):

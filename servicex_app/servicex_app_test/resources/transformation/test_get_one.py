@@ -1,4 +1,4 @@
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestTransformationRequest(ResourceTestBase):

@@ -1,7 +1,7 @@
 
 from flask import Response, make_response, url_for
 
-from tests.web.web_test_base import WebTestBase
+from servicex_app_test.web.web_test_base import WebTestBase
 
 
 def fake_route() -> Response:

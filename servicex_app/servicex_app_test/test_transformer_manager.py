@@ -33,7 +33,7 @@ from types import SimpleNamespace
 
 import pytest
 from servicex_app.transformer_manager import TransformerManager
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 def _arg_value(args, param):

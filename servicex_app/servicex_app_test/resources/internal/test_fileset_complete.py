@@ -28,7 +28,7 @@
 from datetime import timezone, datetime
 
 from servicex_app import LookupResultProcessor
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 from servicex_app.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
 from pytest import fixture

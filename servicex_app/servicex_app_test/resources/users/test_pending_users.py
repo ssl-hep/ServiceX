@@ -1,6 +1,6 @@
 from flask.wrappers import Response
 
-from tests.web.web_test_base import WebTestBase
+from servicex_app_test.web.web_test_base import WebTestBase
 
 
 class TestPendingUsers(WebTestBase):
