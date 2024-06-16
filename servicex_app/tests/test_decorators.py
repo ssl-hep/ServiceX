@@ -11,7 +11,7 @@ def fake_route() -> Response:
 class TestDecorators(WebTestBase):
 
     def test_oauth_decorator_auth_disabled(self, client):
-        from servicex.decorators import oauth_required
+        from servicex_app.decorators import oauth_required
         with client.application.app_context():
             decorated = oauth_required(fake_route)
             response: Response = decorated()
@@ -20,7 +20,7 @@ class TestDecorators(WebTestBase):
     def test_oauth_decorator_not_signed_in(self):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
-            from servicex.decorators import oauth_required
+            from servicex_app.decorators import oauth_required
             decorated = oauth_required(fake_route)
             response = decorated()
             assert response.status_code == 302
@@ -49,7 +49,7 @@ class TestDecorators(WebTestBase):
     def test_auth_decorator_integration_auth_disabled(self, mocker, client):
         fake_transform_id = 123
         data = {'id': fake_transform_id}
-        mock = mocker.patch('servicex.resources.transformation.get_one'
+        mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.to_json.return_value = data
         with client.application.app_context():
@@ -87,7 +87,7 @@ class TestDecorators(WebTestBase):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         fake_transform_id = 123
         data = {'id': fake_transform_id}
-        mock = mocker.patch('servicex.resources.transformation.get_one'
+        mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
         mock.to_json.return_value = data
@@ -102,7 +102,7 @@ class TestDecorators(WebTestBase):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         fake_transform_id = 123
         data = {'id': fake_transform_id}
-        mock = mocker.patch('servicex.resources.transformation.get_one'
+        mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
         mock.to_json.return_value = data
@@ -116,7 +116,7 @@ class TestDecorators(WebTestBase):
 
     def test_admin_decorator_integration_auth_disabled(self, mocker, client):
         data = {'users': [{'id': 1234}]}
-        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        mocker.patch('servicex_app.models.UserModel.return_all', return_value=data)
         with client.application.app_context():
             response: Response = client.get('users')
             assert response.status_code == 200
@@ -140,7 +140,7 @@ class TestDecorators(WebTestBase):
     def test_admin_decorator_integration_authorized(self, mocker, user):
         user.admin = True
         data = {'users': [{'id': 1234}]}
-        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        mocker.patch('servicex_app.models.UserModel.return_all', return_value=data)
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         with client.application.app_context():
             response: Response = client.get('users', headers=self.fake_header())
@@ -150,7 +150,7 @@ class TestDecorators(WebTestBase):
     def test_admin_decorator_integration_oauth_authorized(self, mocker, user):
         client = self._test_client(extra_config={'ENABLE_AUTH': True})
         data = {'users': [{'id': 1234}]}
-        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        mocker.patch('servicex_app.models.UserModel.return_all', return_value=data)
         with client.session_transaction() as sess:
             sess['is_authenticated'] = True
             sess['admin'] = True

@@ -2,13 +2,13 @@ from flask import Response, url_for
 
 from pytest import fixture
 
-from servicex.models import TransformRequest
+from servicex_app.models import TransformRequest
 from .web_test_base import WebTestBase
 
 
 class TestTransformationRequest(WebTestBase):
     endpoint = "transformation_request"
-    module = "servicex.web.transformation_request"
+    module = "servicex_app.web.transformation_request"
     template_name = 'transformation_request.html'
 
     @fixture

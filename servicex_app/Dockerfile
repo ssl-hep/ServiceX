@@ -15,7 +15,7 @@ RUN poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi
 
 COPY *.py docker-dev.conf boot.sh ./
-COPY servicex/ ./servicex
+COPY servicex_app/ ./servicex_app
 COPY migrations migrations
 ADD gai.conf /etc/gai.conf
 

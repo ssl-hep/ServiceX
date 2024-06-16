@@ -4,7 +4,7 @@ from .web_test_base import WebTestBase
 
 
 class TestAuthCallback(WebTestBase):
-    module = "servicex.web.auth_callback"
+    module = "servicex_app.web.auth_callback"
 
     def test_auth_callback_outgoing(self, client, globus_client):
         response: Response = client.get(url_for('auth_callback'))
@@ -14,8 +14,8 @@ class TestAuthCallback(WebTestBase):
         assert response.location == self._auth_url()
 
     def test_auth_callback_incoming_new(self, client, globus_client, mock_session, mocker):
-        mocker.patch('servicex.web.auth_callback.AccessTokenAuthorizer')
-        auth_client_cls = mocker.patch('servicex.web.auth_callback.AuthClient')
+        mocker.patch('servicex_app.web.auth_callback.AccessTokenAuthorizer')
+        auth_client_cls = mocker.patch('servicex_app.web.auth_callback.AuthClient')
         auth_client = auth_client_cls.return_value
         id_token = self._id_token()
 
@@ -35,9 +35,9 @@ class TestAuthCallback(WebTestBase):
     def test_auth_callback_incoming_existing(
         self, client, globus_client, user, mock_session, mocker
     ):
-        mocker.patch('servicex.web.auth_callback.AccessTokenAuthorizer')
+        mocker.patch('servicex_app.web.auth_callback.AccessTokenAuthorizer')
 
-        auth_client_cls = mocker.patch('servicex.web.auth_callback.AuthClient')
+        auth_client_cls = mocker.patch('servicex_app.web.auth_callback.AuthClient')
         auth_client = auth_client_cls.return_value
         id_token = self._id_token()
 

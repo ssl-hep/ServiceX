@@ -5,7 +5,7 @@ from .web_test_base import WebTestBase
 
 
 class TestCreateProfile(WebTestBase):
-    module = "servicex.web.create_profile"
+    module = "servicex_app.web.create_profile"
 
     @fixture
     def new_user(self, mocker):
@@ -24,7 +24,7 @@ class TestCreateProfile(WebTestBase):
             sess['name'] = 'Jane Doe'
             sess['email'] = 'jane@example.com'
             sess['institution'] = 'UChicago'
-        from servicex.web.forms import ProfileForm
+        from servicex_app.web.forms import ProfileForm
         form = ProfileForm()
         form.name.data = 'Jane Doe'
         form.email.data = 'jane@example.com'

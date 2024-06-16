@@ -6,7 +6,7 @@ from tests.resource_test_base import ResourceTestBase
 
 
 class TestDeploymentStatus(ResourceTestBase):
-    module = "servicex.resources.transformation.deployment"
+    module = "servicex_app.resources.transformation.deployment"
 
     @fixture
     def mock_transform_manager(self, mocker) -> MagicMock:

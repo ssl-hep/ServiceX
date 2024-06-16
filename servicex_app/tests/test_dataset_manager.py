@@ -29,11 +29,11 @@ from datetime import datetime, timezone
 
 import pytest
 from pytest import fixture
-from servicex.dataset_manager import DatasetManager
-from servicex.did_parser import DIDParser
-from servicex.lookup_result_processor import LookupResultProcessor
-from servicex.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
-from servicex.models import db
+from servicex_app.dataset_manager import DatasetManager
+from servicex_app.did_parser import DIDParser
+from servicex_app.lookup_result_processor import LookupResultProcessor
+from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
+from servicex_app.models import db
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -54,7 +54,7 @@ class TestDatasetManager(ResourceTestBase):
     def mock_dataset_cls(self, mocker):
 
         mock_dataset.save_to_db = mocker.Mock()
-        mock_dataset_cls = mocker.patch("servicex.dataset_manager.Dataset", return_value=mock_dataset("created", mocker))
+        mock_dataset_cls = mocker.patch("servicex_app.dataset_manager.Dataset", return_value=mock_dataset("created", mocker))
         mock_query = mocker.Mock(return_value=None)
         mock_dataset_cls.query.find_by_name = mock_query
         mock_dataset_cls.find_by_name.return_value = None
@@ -70,7 +70,7 @@ class TestDatasetManager(ResourceTestBase):
             file_events="file_events"
         )
         mock_dataset_file.save_to_db = mocker.Mock()
-        mock_dataset_cls = mocker.patch("servicex.dataset_manager.DatasetFile", return_value=mock_dataset_file)
+        mock_dataset_cls = mocker.patch("servicex_app.dataset_manager.DatasetFile", return_value=mock_dataset_file)
         return mock_dataset_cls
 
     def test_constructor(self, client):

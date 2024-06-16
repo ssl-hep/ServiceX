@@ -4,11 +4,11 @@ from flask import Response, url_for
 
 from .web_test_base import WebTestBase
 
-from servicex.web.servicex_file import get_correct_url
+from servicex_app.web.servicex_file import get_correct_url
 
 
 class TestServiceXFile(WebTestBase):
-    module = "servicex.web.servicex_file"
+    module = "servicex_app.web.servicex_file"
 
     def test_servicex_file(self, client, user):
         cfg = {'CODE_GEN_IMAGES': {'xaod': 'asdf', 'uproot': 'asdfasdf'}}

@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-from servicex.lookup_result_processor import LookupResultProcessor
+from servicex_app.lookup_result_processor import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
 

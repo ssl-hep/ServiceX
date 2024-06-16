@@ -32,7 +32,7 @@ import zipfile
 from types import SimpleNamespace
 
 import pytest
-from servicex.transformer_manager import TransformerManager
+from servicex_app.transformer_manager import TransformerManager
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -49,15 +49,15 @@ class TestTransformerManager(ResourceTestBase):
     @pytest.fixture
     def mock_kubernetes(self, mocker):
         mock_kubernetes = mocker.Mock(name="mock_kubernetes")
-        mocker.patch('servicex.transformer_manager.kubernetes', mock_kubernetes)
-        mocker.patch('servicex.transformer_manager.client', mock_kubernetes.client)
+        mocker.patch('servicex_app.transformer_manager.kubernetes', mock_kubernetes)
+        mocker.patch('servicex_app.transformer_manager.client', mock_kubernetes.client)
         return mock_kubernetes
 
     @pytest.fixture
     def transformer_manager(self, mocker):
         mock_kubernetes = mocker.Mock(name="mock_kubernetes")
-        mocker.patch('servicex.transformer_manager.kubernetes', mock_kubernetes)
-        mocker.patch('servicex.transformer_manager.client', mock_kubernetes.client)
+        mocker.patch('servicex_app.transformer_manager.kubernetes', mock_kubernetes)
+        mocker.patch('servicex_app.transformer_manager.client', mock_kubernetes.client)
 
         return mock_kubernetes
 
@@ -713,7 +713,7 @@ class TestTransformerManager(ResourceTestBase):
             return_value=False)
 
         mock_exit = mocker.Mock()
-        mocker.patch('servicex.sys.exit', mock_exit)
+        mocker.patch('servicex_app.sys.exit', mock_exit)
 
         client = self._test_client(
             transformation_manager=transformer_manager

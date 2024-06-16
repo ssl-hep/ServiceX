@@ -25,8 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from servicex.models import DatasetFile, TransformationResult, TransformRequest
-from servicex.transformer_manager import TransformerManager
+from servicex_app.models import DatasetFile, TransformationResult, TransformRequest
+from servicex_app.transformer_manager import TransformerManager
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -43,12 +43,12 @@ class TestTransformFileComplete(ResourceTestBase):
         }
 
     def test_put_transform_file_complete_files_remaining(self, mocker):
-        import servicex
+        import servicex_app
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'lookup', return_value=fake_req
+            servicex_app.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=1)
@@ -68,12 +68,12 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_unknown_files_remaining(self, mocker):
-        import servicex
+        import servicex_app
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'lookup', return_value=fake_req
+            servicex_app.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=None)
@@ -94,12 +94,12 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_no_files_remaining(self, mocker):
-        import servicex
+        import servicex_app
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         fake_req = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest, 'lookup', return_value=fake_req
+            servicex_app.models.TransformRequest, 'lookup', return_value=fake_req
         )
 
         mock_files_remaining = mocker.PropertyMock(return_value=0)
@@ -125,11 +125,11 @@ class TestTransformFileComplete(ResourceTestBase):
                                                                              'my-ws')
 
     def test_put_transform_file_complete_unknown_request_id(self, mocker):
-        import servicex
+        import servicex_app
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
+            servicex_app.models.TransformRequest,
             'lookup',
             return_value=None
         )

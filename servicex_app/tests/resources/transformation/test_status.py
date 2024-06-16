@@ -5,26 +5,26 @@ from tests.resource_test_base import ResourceTestBase
 
 class TestTransformStatus(ResourceTestBase):
     def test_get_status(self, mocker, client):
-        import servicex
+        import servicex_app
 
         mock_files_completed = mocker.PropertyMock(return_value=15)
-        servicex.models.TransformRequest.files_completed = mock_files_completed
+        servicex_app.models.TransformRequest.files_completed = mock_files_completed
         mock_files_remaining = mocker.PropertyMock(return_value=12)
-        servicex.models.TransformRequest.files_remaining = mock_files_remaining
+        servicex_app.models.TransformRequest.files_remaining = mock_files_remaining
         mock_files_failed = mocker.PropertyMock(return_value=2)
-        servicex.models.TransformRequest.files_failed = mock_files_failed
+        servicex_app.models.TransformRequest.files_failed = mock_files_failed
         mock_statistics = mocker.PropertyMock(return_value={
             "min-time": 1,
             "max-time": 30,
             "avg-time": 15.55,
             "total-time": 1024
         })
-        servicex.models.TransformRequest.statistics = mock_statistics
+        servicex_app.models.TransformRequest.statistics = mock_statistics
 
         fake_transform_request = self._generate_transform_request()
         fake_transform_request.finish_time = datetime.max
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
+            servicex_app.models.TransformRequest,
             'lookup',
             return_value=fake_transform_request
         )
@@ -51,10 +51,10 @@ class TestTransformStatus(ResourceTestBase):
         mock_transform_request_read.assert_called_with("1234")
 
     def test_get_status_404(self, mocker, client):
-        import servicex
+        import servicex_app
 
         mock_transform_request_read = mocker.patch.object(
-            servicex.models.TransformRequest,
+            servicex_app.models.TransformRequest,
             'lookup',
             return_value=None)
 

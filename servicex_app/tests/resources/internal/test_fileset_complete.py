@@ -27,10 +27,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import timezone, datetime
 
-from servicex import LookupResultProcessor
+from servicex_app import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
-from servicex.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
+from servicex_app.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
 from pytest import fixture
 
 

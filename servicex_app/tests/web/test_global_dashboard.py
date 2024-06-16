@@ -8,7 +8,7 @@ class TestGlobalDashboard(WebTestBase):
 
     @fixture
     def mock_query(self, mocker):
-        mock_tr = mocker.patch("servicex.web.dashboard.TransformRequest")
+        mock_tr = mocker.patch("servicex_app.web.dashboard.TransformRequest")
         return mock_tr.query.order_by.return_value
 
     def test_get_empty_state(self, client, user, mock_query, captured_templates):
