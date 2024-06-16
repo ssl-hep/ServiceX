@@ -43,13 +43,14 @@ class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
                  code_gen_service, lookup_result_processor, docker_repo_adapter,
-                 transformer_manager):
+                 transformer_manager, celery_app):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
         cls.transformer_manager = transformer_manager
+        cls.celery_app = celery_app
 
         cls.parser = reqparse.RequestParser()
         cls.parser.add_argument('title',
@@ -152,6 +153,21 @@ class SubmitTransformationRequest(ServiceXResource):
                 msg = f'Invalid Codegen Image Passed in Request: {user_codegen_name}'
                 current_app.logger.error(msg, extra={'requestId': request_id})
                 return {'message': msg}, 500
+
+            self.celery_app.send_task('transformer_manager.submit_transform',
+                                      args=[{'request': {
+                                        "request_id": str(request_id),
+                                        "title":args.get("title"),
+                                        "submit_time":datetime.now(tz=timezone.utc),
+                                        "submitted_by": user.id if user is not None else None,
+                                        "selection":args['selection'],
+                                        "tree_name":args['tree-name'],
+                                        "image":image,
+                                        "result_destination":args['result-destination'],
+                                        "result_format":args['result-format'],
+                                        "app_version":self._get_app_version(),
+                                        "code_gen_image":code_gen_image_name
+                                 }}])
 
             try:
                 dataset_manager = self._initialize_dataset_manager(

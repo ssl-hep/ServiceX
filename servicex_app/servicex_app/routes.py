@@ -30,7 +30,7 @@ from flask import current_app as app
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, code_gen_service,
-               lookup_result_processor, docker_repo_adapter):
+               lookup_result_processor, docker_repo_adapter, celery_app):
 
     from servicex_app.resources.info import Info
 
@@ -78,7 +78,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor,
                                          docker_repo_adapter=docker_repo_adapter,
-                                         transformer_manager=transformer_manager)
+                                         transformer_manager=transformer_manager,
+                                         celery_app=celery_app)
 
     # Web Frontend Routes
     app.add_url_rule('/', 'home', home)
