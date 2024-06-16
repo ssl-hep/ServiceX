@@ -34,7 +34,7 @@ from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
 from servicex_app.models import db
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 def mock_dataset(status: str, mocker) -> Dataset:

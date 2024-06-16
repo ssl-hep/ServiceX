@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import Response
 from pytest import fixture
-from tests.resource_test_base import ResourceTestBase
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestAllTransformationRequest(ResourceTestBase):
