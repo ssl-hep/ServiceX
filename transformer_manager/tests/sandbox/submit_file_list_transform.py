@@ -25,3 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime, timezone
+
+import uuid
+
+from celery import Celery
+
+app = Celery()
+app.config_from_object("transformer_manager.celeryconfig")
+request_id = str(uuid.uuid4())  # make sure we have a request id for all messages
+file_list = ["root://eospublic.cern.ch//eos/opendata/atlas/OutreachDatasets/2020-01-22/4lep/MC/mc_345060.ggH125_ZZ4lep.4lep.root"]  # NOQA 501
+request = "(call Where (call Select (call EventDataset) (lambda (list e) (dict (list 'lep_pt') (list (subscript e 'lep_pt'))))) (lambda (list e) (> (subscript e 'lep_pt') 1000)))"  # NOQA 501
+result = app.send_task('transformer_manager.submit_transform',
+                       args=[{'request': {
+                          "request_id": request_id,
+                          "title": "myTitle",
+                          "did": None,
+                          "file-list": file_list,
+                          "user_codegen_name": "uproot",
+                          "submit_time": datetime.now(tz=timezone.utc),
+                          "submitted_by": None,
+                          "selection": request,
+                          "tree_name": None,
+                          "image": None,
+                          "result_destination": "object-store",
+                          "result_format": "root-file",
+                          "app_version": "2.0",
+                          "code_gen_image": None
+                       }}])
+
+print(result)

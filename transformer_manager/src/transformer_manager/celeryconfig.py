@@ -25,11 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-## Broker settings.
+
+# Broker settings.
 broker_url = 'amqp://user:leftfoot1@localhost:5672//'
 
-task_serializer='json'
-accept_content=['json']  # Ignore other content
-result_serializer='json'
+task_serializer = 'json'
+accept_content = ['json']  # Ignore other content
+result_serializer = 'json'
 
-broker_connection_retry_on_startup=True
+broker_connection_retry_on_startup = True
+
+# ServiceX Configuration
+sqlalchemy_database_uri = 'postgresql://postgres:leftfoot1@localhost:5432/servicex'
+did_finder_default_scheme = 'rucio'
+valid_did_schemes = ['rucio']

@@ -25,3 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from celery import Task
+from celery.utils.log import get_task_logger
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+
+class ServiceXTask(Task):
+    def __init__(self):
+        super().__init__()
+        self.logger = get_task_logger(__name__)
+        self.engine = create_engine(self.app.conf['sqlalchemy_database_uri'])
+        self.Session = sessionmaker()
+
+    def before_start(self, task_id, args, kwargs):
+        # Create a new SQLAlchemy session
+        # self.session = Session()
+        super().before_start(task_id, args, kwargs)
+
+    def on_success(self, retval, task_id, args, kwargs):
+        # if self.session:
+        #     self.session.commit()
+        #     self.session.close()
+        super().on_success(retval, task_id, args, kwargs)
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        # Close the SQLAlchemy session
+        # if self.session:
+        #     self.session.rollback()
+        #     self.session.close()
+        super().on_failure(exc, task_id, args, kwargs, einfo)

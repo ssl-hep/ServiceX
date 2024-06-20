@@ -25,17 +25,23 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from celery import Celery
+from servicex_models.dataset import Dataset
+from transformer_manager.app import app
+from transformer_manager.servicex_task import ServiceXTask
 
-app = Celery('transformer_manager')
-app.config_from_object('transformer_manager.celeryconfig')
 
-def foo(bar):
-    return bar
-
-@app.task
-def submit_transform(request: dict):
-    print("Request received", request)
+@app.task(base=ServiceXTask, bind=True, name='transformer_manager.clear_dataset')
+def clear_dataset(self, dataset_id: int):
+    print(f"Looking for {dataset_id}")
+    with self.Session(bind=self.engine) as session:
+        dataset = Dataset.find_by_id(session, dataset_id)
+        print("Found dataset:", dataset)
+        if dataset:
+            session.delete(dataset)
+            session.commit()
+        else:
+            self.logger.error(f"Dataset with id {dataset_id} not found")
+        return dataset_id
 
 
 if __name__ == '__main__':

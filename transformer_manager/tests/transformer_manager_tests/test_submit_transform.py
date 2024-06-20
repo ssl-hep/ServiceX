@@ -25,15 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from transformer_manager.submit_transform import submit_transform
-from celery import Celery, signature
+from transformer_manager.tasks.submit_transform import submit_transform
+from celery import Celery
+
 
 class CeleryConfig:
     task_always_eager = True
+
 
 celery = Celery()
 celery.config_from_object(CeleryConfig())
 
 
 def test_submit_transform():
-    submit_transform.apply([{"a":"b"}])
+    submit_transform.apply([{"a": "b"}])
