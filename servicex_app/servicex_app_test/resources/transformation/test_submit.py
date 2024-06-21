@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from celery import Celery
 from datetime import datetime, timezone
 from unittest.mock import ANY
 from unittest.mock import call
@@ -106,46 +105,37 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock.start_transformers = mocker.Mock()
         return mock
 
-    @fixture
-    def mock_celery_app(self, mocker):
-        mock = mocker.MagicMock(Celery)
-        return mock
-
-    def test_submit_transformation_request_bad(self, mock_celery_app):
-        client = self._test_client(celery_app=mock_celery_app)
+    def test_submit_transformation_request_bad(self):
+        client = self._test_client()
 
         resp = client.post('/servicex/transformation', json={'timestamp': '20190101'})
         assert resp.status_code == 400
-        mock_celery_app.send_task.assert_not_called()
 
-    def test_submit_transformation_bad_result_dest(self, mock_celery_app):
-        client = self._test_client(celery_app=mock_celery_app)
+    def test_submit_transformation_bad_result_dest(self):
+        client = self._test_client()
 
         request = self._generate_transformation_request()
         request['result-destination'] = 'foo'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
-        mock_celery_app.send_task.assert_not_called()
 
-    def test_submit_transformation_bad_wrong_dest_for_format(self, mock_celery_app):
-        client = self._test_client(celery_app=mock_celery_app)
+    def test_submit_transformation_bad_wrong_dest_for_format(self):
+        client = self._test_client()
         request = self._generate_transformation_request()
         request['result-format'] = 'root-file'
         request['result-destination'] = 'minio'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
-        mock_celery_app.send_task.assert_not_called()
 
-    def test_submit_transformation_bad_result_format(self, mock_celery_app):
-        client = self._test_client(celery_app=mock_celery_app)
+    def test_submit_transformation_bad_result_format(self):
+        client = self._test_client()
         request = self._generate_transformation_request()
         request['result-format'] = 'foo'
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
-        mock_celery_app.send_task.assert_not_called()
 
-    def test_submit_transformation_bad_did_scheme(self, mock_celery_app):
-        client = self._test_client(celery_app=mock_celery_app)
+    def test_submit_transformation_bad_did_scheme(self):
+        client = self._test_client()
         request = self._generate_transformation_request(did='foobar://my-did')
         response = client.post('/servicex/transformation', json=request)
         assert response.status_code == 400
@@ -176,11 +166,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation(self, mock_rabbit_adaptor,
                                    mock_dataset_manager_from_did,
                                    mock_codegen,
-                                   mock_app_version,
-                                   mock_celery_app):
+                                   mock_app_version):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_codegen,
-                                   celery_app=mock_celery_app)
+                                   code_gen_service=mock_codegen)
         with client.application.app_context():
             request = self._generate_transformation_request(
                 image="sslhep/servicex_func_adl_xaod_transformer:develop")
@@ -190,8 +178,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    headers=self.fake_header())
             assert response.status_code == 200
             request_id = response.json['request_id']
-
-            mock_celery_app.send_task.assert_called()
 
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
