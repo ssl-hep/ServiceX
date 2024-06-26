@@ -1,6 +1,6 @@
 FROM sslhep/rucio-client:main
 
-LABEL maintainer Ilija Vukotic <ivukotic@cern.ch>
+LABEL maintainer Ilija Vukotic <ivukotic@uchicago.edu>
 
 # Create app directory
 WORKDIR /usr/src/app
