@@ -114,3 +114,4 @@ jobs:
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
           file: ${{ matrix.app.dockerfile }}
+          platforms: linux/amd64,linux/arm64
