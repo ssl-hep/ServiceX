@@ -58,4 +58,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 branch = true
-source = ["servicex"]
+source = ["servicex_app"]
