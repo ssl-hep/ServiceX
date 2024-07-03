@@ -66,7 +66,7 @@ jobs:
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
         run: |
-          poetry run python -m coverage run -m pytest -r sx
+          PYTHONPATH=src poetry run python -m coverage run -m pytest -r sx
       - name: Report coverage with Codecov
         if: ${{ matrix.app.test_required }}
         uses: codecov/codecov-action@v4
