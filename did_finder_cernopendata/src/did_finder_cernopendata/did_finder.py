@@ -1,21 +1,20 @@
 import os
 import logging
 from subprocess import PIPE, Popen, STDOUT
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, Dict, Generator
 
-from servicex_did_finder_lib import start_did_finder
+from servicex_did_finder_lib import DIDFinderApp
 
 __log = logging.getLogger(__name__)
 
 cache_prefix = os.environ.get('CACHE_PREFIX', '')
 
 
-async def find_files(did_name: str,
-                     info: Dict[str, Any],
-                     command: str = 'cernopendata-client'
-                     ) -> AsyncGenerator[Dict[str, Any], None]:
-    '''For each incoming did name, generate a list of files that ServiceX can
-    process
+def find_files(did_name: str,
+               info: Dict[str, Any],
+               did_finder_args: dict = None) -> Generator[Dict[str, Any], None, None]:
+    """
+    For each incoming did name, generate a list of files that ServiceX can process
 
     Notes:
 
@@ -25,23 +24,19 @@ async def find_files(did_name: str,
 
     Args:
         did_name (str): Dataset name
-        into (Dict[str, Any]): Information bag, mainly has the `request-id` which is
+        info (Dict[str, Any]): Information bag, mainly has the `request-id` which is
                                used to track error mesages accross logs.
-        command (str): Command to execute to get the did information. Used only for testing.
-
+        did_finder_args (dict): Additional arguments passed to the finder
     Returns:
-        AsyncGenerator[Dict[str, any], None]: yield each file
-    '''
-    __log.info('DID Lookup request received.', extra={
-               'requestId': info['request-id'], 'dataset': did_name})
+        Generator[Dict[str, any], None]: yield each file
+    """
+
     if not did_name.isnumeric():
         raise Exception('CERNOpenData can only work with dataset numbers as names (e.g. 1507)')
 
-    cmd = f'{command} get-file-locations --recid {did_name}'.split(' ')
+    cmd = f'cernopendata-client get-file-locations --recid {did_name}'.split(" ")
 
-    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1,
-               universal_newlines=1) as p:  # type: ignore
-
+    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1, universal_newlines=True) as p:
         assert p.stdout is not None
         all_lines = []
         non_root_uri = False
@@ -73,12 +68,14 @@ async def find_files(did_name: str,
 
 def run_open_data():
     __log.info('Starting CERNOpenData DID finder')
-    try:
-        __log.info('Starting CERNOpenData DID finder',
-                   extra={'requestId': 'forkingfork'})
-        start_did_finder('cernopendata', find_files)
-    finally:
-        __log.info('Done running CERNOpenData DID finder')
+    app = DIDFinderApp('cernopendata')
+
+    @app.did_lookup_task(name="did_finder_cern_opendata.lookup_dataset")
+    def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
+        self.do_lookup(did=did, dataset_id=dataset_id,
+                       endpoint=endpoint, user_did_finder=find_files)
+
+    app.start()
 
 
 if __name__ == "__main__":

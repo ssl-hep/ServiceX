@@ -29,7 +29,7 @@ COPY poetry.lock poetry.lock
 RUN poetry install --no-root --no-interaction --no-ansi
 
 # Bring over the main scripts
-COPY src/servicex_did_finder_cernopendata .
+COPY src/did_finder_cernopendata .
 
 # build stamp
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
