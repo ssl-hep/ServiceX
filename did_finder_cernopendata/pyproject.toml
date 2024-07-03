@@ -8,7 +8,11 @@ packages = [{include = "did_finder_cernopendata"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"
+<<<<<<< HEAD
 servicex-did-finder-lib = "^2.0.3"
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.1"
+>>>>>>> 9ab73753 (Migrated CERN Opendata DID finder to Celery)
 
 [tool.poetry.group.test]
 optional = true
