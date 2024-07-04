@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import timezone, datetime
 
-from servicex_app import LookupResultProcessor
+from servicex_app import LookupResultProcessor, TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 from servicex_app.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
@@ -82,13 +82,24 @@ class TestFilesetComplete(ResourceTestBase):
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
         pending_request = TransformRequest()
         pending_request.status = TransformStatus.pending_lookup
+
+        running_request = TransformRequest()
+        running_request.request_id = "111-111"
+        running_request.status = TransformStatus.running
+
         mock_lookup_pending = mocker.patch.object(TransformRequest,
                                                   "lookup_pending_on_dataset",
                                                   return_value=[pending_request])
+        mock_lookup_running = mocker.patch.object(TransformRequest,
+                                                  "lookup_running_by_dataset_id",
+                                                  return_value=[running_request])
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(lookup_result_processor=mock_processor,
+                                   transformation_manager=mock_transformer_manager)
 
         response = client.put('/servicex/internal/transformation/12345/complete',
                               json={
@@ -101,3 +112,7 @@ class TestFilesetComplete(ResourceTestBase):
         assert response.status_code == 200
         mock_find_dataset_by_id.assert_called_once_with(12345)
         mock_lookup_pending.assert_called_once_with(12345)
+        mock_lookup_running.assert_called_once_with(12345)
+        mock_transformer_manager.shutdown_transformer_job.assert_called_with("111-111", 'my-ws')
+        assert running_request.status == TransformStatus.complete
+        assert pending_request.status == TransformStatus.complete
