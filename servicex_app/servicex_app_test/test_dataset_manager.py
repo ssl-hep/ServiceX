@@ -245,19 +245,15 @@ class TestDatasetManager(ResourceTestBase):
             assert dm.is_complete
 
     def test_submit_lookup_request(self, mocker, client):
-        mock_rabbit = mocker.Mock()
+        mock_celery = mocker.Mock()
         with client.application.app_context():
             d = DatasetManager.from_did(did=DIDParser("rucio://my-did?files=1"),
                                         logger=client.application.logger, db=db)
-            d.submit_lookup_request("http://hit-me/here", mock_rabbit)
+            d.submit_lookup_request("http://hit-me/here", mock_celery)
 
             assert d.dataset.lookup_status == DatasetStatus.looking
 
-        mock_rabbit.basic_publish.assert_called_with(exchange="",
-                                                     routing_key='rucio_did_requests',
-                                                     body='{"dataset_id": 1, '
-                                                          '"did": "my-did?files=1", '
-                                                          '"endpoint": "http://hit-me/here"}')
+        mock_celery.send_task.assert_called_with('did_finder_rucio.lookup_dataset', args=['my-did?files=1', 1, 'http://hit-me/here'])
 
     def test_publish_files(self, mocker, client):
         with client.application.app_context():

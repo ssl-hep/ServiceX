@@ -70,7 +70,7 @@ def run_open_data():
     __log.info('Starting CERNOpenData DID finder')
     app = DIDFinderApp('cernopendata')
 
-    @app.did_lookup_task(name="did_finder_cern_opendata.lookup_dataset")
+    @app.did_lookup_task(name="did_finder_cernopendata.lookup_dataset")
     def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
         self.do_lookup(did=did, dataset_id=dataset_id,
                        endpoint=endpoint, user_did_finder=find_files)
