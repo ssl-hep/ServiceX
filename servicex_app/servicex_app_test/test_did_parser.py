@@ -46,7 +46,7 @@ class TestDIDParser:
 
     def test_microservice_queue(self):
         parser = DIDParser("rucio://my-did")
-        assert parser.microservice_queue == 'rucio_did_requests'
+        assert parser.microservice_queue == 'did_finder_rucio'
 
     def test_did_path_options(self):
         parser = DIDParser("rucio://my-did?files=1")

@@ -28,6 +28,7 @@
 import logging
 import os
 import sys
+from celery import Celery
 from distutils.util import strtobool
 
 import base64
@@ -133,7 +134,8 @@ def create_app(test_config=None,
                provided_object_store=None,
                provided_code_gen_service=None,
                provided_lookup_result_processor=None,
-               provided_docker_repo_adapter=None):
+               provided_docker_repo_adapter=None,
+               provided_celery_app=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -247,6 +249,11 @@ def create_app(test_config=None,
         else:
             transformer_manager = provided_transformer_manager
 
+        if not provided_celery_app:
+            celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
+        else:
+            celery_app = provided_celery_app
+
         if not provided_rabbit_adaptor:
             rabbit_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
         else:
@@ -296,7 +303,7 @@ def create_app(test_config=None,
             db.create_all()
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service,
-                   lookup_result_processor, docker_repo_adapter)
+                   lookup_result_processor, docker_repo_adapter, celery_app)
 
         # Inject useful Python modules to make them available in all templates
         @app.context_processor

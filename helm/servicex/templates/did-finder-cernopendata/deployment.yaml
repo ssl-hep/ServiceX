@@ -37,8 +37,8 @@ spec:
         args:
           - --rabbit-uri
     {{- if .Values.secrets }}
-          - amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672
+          - amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F
     {{- else }}
-          - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+          - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
     {{- end }}
 {{ end }}
