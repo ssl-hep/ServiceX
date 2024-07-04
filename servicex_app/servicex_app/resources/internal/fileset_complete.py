@@ -51,11 +51,28 @@ class FilesetComplete(ServiceXResource):
         dataset.lookup_status = DatasetStatus.complete
         db.session.commit()
 
-        # Now time to pick up any transform requests for this dataset that came in
-        # while we were still looking up files and send the dataset to them
-        pending_transforms = TransformRequest.lookup_pending_on_dataset(int(dataset_id))
-        for transform_request in pending_transforms:
-            dataset.publish_files(transform_request, self.lookup_result_processor)
-            transform_request.status = TransformStatus.running
+        if summary['files'] > 0:
+            # Now time to pick up any transform requests for this dataset that came in
+            # while we were still looking up files and send the dataset to them
+            for transform_request in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
+                dataset.publish_files(transform_request, self.lookup_result_processor)
+                transform_request.status = TransformStatus.running
+        else:
+            current_app.logger.info("No files found for datasetID. Shutting down transformers",
+                                    extra={'dataset_id': dataset_id})
+
+            # find running requests that needed this dataset and shut them down
+            # there will never be any files
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
+            for running_request in TransformRequest.lookup_running_by_dataset_id(int(dataset_id)):
+                running_request.status = TransformStatus.complete
+                self.transformer_manager.shutdown_transformer_job(
+                    running_request.request_id, namespace
+                )
+
+            # Tell any other transform that was waiting for the lookup to complete
+            # not to expect to run
+            for pending_transform in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
+                pending_transform.status = TransformStatus.complete
 
         db.session.commit()
