@@ -54,7 +54,7 @@ class DIDParser:
         on the scheme name
         :return: queue name
         """
-        return f"{self.scheme}_did_requests"
+        return f"did_finder_{self.scheme}"
 
     @property
     def full_did(self) -> str:

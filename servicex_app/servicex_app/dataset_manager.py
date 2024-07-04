@@ -26,11 +26,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
-import json
 from datetime import datetime, timezone
 from logging import Logger
 from typing import List
 
+from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
@@ -141,16 +141,11 @@ class DatasetManager:
     def refresh(self):
         self.db.session.refresh(self.dataset)
 
-    def submit_lookup_request(self, advertised_endpoint, rabbitmq_adaptor):
-        did_request = {
-            "dataset_id": self.dataset.id,
-            "did": self.did.did,
-            "endpoint": advertised_endpoint
-        }
-        rabbitmq_adaptor.basic_publish(exchange='',
-                                       routing_key=self.did.microservice_queue,
-                                       body=json.dumps(did_request))
+    def submit_lookup_request(self, advertised_endpoint, celery_app: Celery):
+        task_id = celery_app.send_task(f'{self.did.microservice_queue}.lookup_dataset',
+                                       args=[self.did.did, self.dataset.id, advertised_endpoint])
 
+        self.logger.debug(f"Submitted lookup request for {self.did.did} taskID {task_id} ")
         self.dataset.lookup_status = DatasetStatus.looking
 
     def publish_files(self, request: TransformRequest,

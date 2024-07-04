@@ -72,7 +72,7 @@ zstd = ["zstandard (==0.22.0)"]
 
 [[package]]
 name = "certifi"
-version = "2024.6.2"
+version = "2024.7.4"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -355,7 +355,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a1"
+version = "3.0.0a2"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -423,7 +423,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "b41c248cf4201deecbc6df52190e4f97a05ff871484057aa1a2b91ed4ffde5a3"
+content-hash = "354836662b7a4bbc874cd0a41eebd771bd6e0ade4b7da90c00776676f0c6c146"
 
 [metadata.files]
 amqp = [
@@ -439,8 +439,8 @@ celery = [
     {file = "celery-5.4.0.tar.gz", hash = "sha256:504a19140e8d3029d5acad88330c541d4c3f64c789d85f94756762d8bca7e706"},
 ]
 certifi = [
-    {file = "certifi-2024.6.2-py3-none-any.whl", hash = "sha256:ddc6c8ce995e6987e7faf5e3f1b02b302836a0e5d98ece18392cb1a36c72ad56"},
-    {file = "certifi-2024.6.2.tar.gz", hash = "sha256:3cd43f1c6fa7dedc5899d69d3ad0398fd018ad1a17fba83ddaf78aa46c747516"},
+    {file = "certifi-2024.7.4-py3-none-any.whl", hash = "sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90"},
+    {file = "certifi-2024.7.4.tar.gz", hash = "sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b"},
 ]
 charset-normalizer = [
     {file = "charset-normalizer-3.3.2.tar.gz", hash = "sha256:f30c3cb33b24454a82faecaf01b19c18562b1e89558fb6c56de4d9118a032fd5"},
@@ -671,8 +671,8 @@ requests = [
     {file = "requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760"},
 ]
 servicex-did-finder-lib = [
-    {file = "servicex_did_finder_lib-3.0.0a1-py3-none-any.whl", hash = "sha256:264eb5b5419ce6f8c000ef3c1af407ea6b1d61fe323ede7c0b32fb10cdb3dce3"},
-    {file = "servicex_did_finder_lib-3.0.0a1.tar.gz", hash = "sha256:d9aebce75f3d17231190032505b3c6e0062414c2ceed964b06634d415e4fd357"},
+    {file = "servicex_did_finder_lib-3.0.0a2-py3-none-any.whl", hash = "sha256:5934d2ba14d5ab94994ea3604721b6fb8d1482d52782cd2c2e204543d56f7c54"},
+    {file = "servicex_did_finder_lib-3.0.0a2.tar.gz", hash = "sha256:d60b1bf29fbcef086563014f02662f43537bdc7338c1026ca790617085cdae2e"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
