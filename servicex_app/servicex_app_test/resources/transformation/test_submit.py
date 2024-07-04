@@ -29,6 +29,7 @@ from datetime import datetime, timezone
 from unittest.mock import ANY
 from unittest.mock import call
 
+from celery import Celery
 from pytest import fixture
 from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
 
@@ -105,6 +106,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock.start_transformers = mocker.Mock()
         return mock
 
+    @fixture
+    def mock_celery_app(self, mocker):
+        return mocker.MagicMock(Celery)
+
     def test_submit_transformation_request_bad(self, client):
         resp = client.post('/servicex/transformation', json={'timestamp': '20190101'})
         assert resp.status_code == 400
@@ -159,9 +164,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation(self, mock_rabbit_adaptor,
                                    mock_dataset_manager_from_did,
                                    mock_codegen,
-                                   mock_app_version):
+                                   mock_app_version,
+                                   mock_celery_app):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_codegen)
+                                   code_gen_service=mock_codegen,
+                                   celery_app=mock_celery_app)
+
         with client.application.app_context():
             request = self._generate_transformation_request(
                 image="sslhep/servicex_func_adl_xaod_transformer:develop")
@@ -206,14 +214,16 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert mock_dataset_manager_from_did.call_args[0][0].full_did == 'rucio://123-45-678'
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
-                mock_rabbit_adaptor)
+                mock_celery_app)
 
     def test_submit_transformation_default_scheme(self, mock_rabbit_adaptor,
                                                   mock_dataset_manager_from_did,
                                                   mock_codegen,
-                                                  mock_app_version):
+                                                  mock_app_version,
+                                                  mock_celery_app):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   code_gen_service=mock_codegen)
+                                   code_gen_service=mock_codegen,
+                                   celery_app=mock_celery_app)
         mock_dataset_manager_from_did.name = ""
         with client.application.app_context():
             request = self._generate_transformation_request()
@@ -238,7 +248,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             mock_dataset_manager_from_did.return_value.submit_lookup_request.assert_called_with(
                 'http://cern.analysis.ch:5000/servicex/internal/transformation/',
-                mock_rabbit_adaptor)
+                mock_celery_app)
 
     def test_submit_transformation_existing_dataset(self, mocker, mock_rabbit_adaptor,
                                                     mock_dataset_manager_from_did,

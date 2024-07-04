@@ -28,6 +28,7 @@
 from datetime import datetime
 from unittest.mock import MagicMock
 
+from celery import Celery
 from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
 from pytest import fixture
@@ -99,7 +100,8 @@ class ResourceTestBase:
         object_store=None,
         code_gen_service=MagicMock(CodeGenAdapter),
         lookup_result_processor=MagicMock(LookupResultProcessor),
-        docker_repo_adapter=None
+        docker_repo_adapter=None,
+        celery_app=MagicMock(Celery)
     ) -> FlaskClient:
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
@@ -116,7 +118,7 @@ class ResourceTestBase:
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
                          object_store, code_gen_service,
-                         lookup_result_processor, docker_repo_adapter)
+                         lookup_result_processor, docker_repo_adapter, celery_app)
 
         return app.test_client()
 

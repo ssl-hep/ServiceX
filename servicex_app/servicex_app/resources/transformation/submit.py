@@ -43,13 +43,14 @@ class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
                  code_gen_service, lookup_result_processor, docker_repo_adapter,
-                 transformer_manager):
+                 transformer_manager, celery_app):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
         cls.object_store = object_store
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
         cls.transformer_manager = transformer_manager
+        cls.celery_app = celery_app
 
         cls.parser = reqparse.RequestParser()
         cls.parser.add_argument('title',
@@ -223,7 +224,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if dataset_manager.is_lookup_required:
                 dataset_manager.submit_lookup_request(
                     self._generate_advertised_endpoint("servicex/internal/transformation/"),
-                    self.rabbitmq_adaptor)
+                    self.celery_app)
                 request_rec.status = TransformStatus.lookup
             elif dataset_manager.is_complete:
                 current_app.logger.info("dataset already complete", extra={
