@@ -70,6 +70,11 @@ didFinder:
     image: sslhep/servicex-did-finder-cernopendata
     pullPolicy: Always
     tag: develop
+  xrootd:
+    enabled: true
+    image: sslhep/servicex-did-finder-xrootd
+    pullPolicy: Always
+    tag: develop
   rucio:
     auth_host: https://atlas-rucio-auth.cern.ch:443
     enabled: true
