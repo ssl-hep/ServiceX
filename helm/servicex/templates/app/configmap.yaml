@@ -178,6 +178,10 @@ data:
     DID_RUCIO_FINDER_TAG = '{{ .Values.didFinder.rucio.tag }}'
       {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
+    {{- if .Values.didFinder.xrootd.enabled }}
+    DID_XROOTD_FINDER_TAG = '{{ .Values.didFinder.xrootd.tag }}'
+      {{- $didFinders = append $didFinders "xrootd" }}
+    {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
@@ -185,6 +189,9 @@ data:
     {{- end }}
     {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
     {{- $defaultScheme = "cernopendata" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.xrootd.enabled }}
+    {{- $defaultScheme = "xrootd" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
