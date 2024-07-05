@@ -8,7 +8,11 @@ packages = [{include = "src/servicex_did_finder_xrootd"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
+<<<<<<< HEAD
 servicex-did-finder-lib = ">=2.0.3"
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.4"
+>>>>>>> cd67812d (Migrate xaod DID Finder to celery)
 xrootd = ">=5.6.9"
 
 [tool.poetry.group.test]
