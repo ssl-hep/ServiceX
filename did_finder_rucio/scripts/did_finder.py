@@ -32,19 +32,27 @@ import logging
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from rucio_did_finder.rucio_adapter import RucioAdapter
-from servicex_did_finder_lib import add_did_finder_cnd_arguments, start_did_finder
+from servicex_did_finder_lib import DIDFinderApp
 from rucio_did_finder.lookup_request import LookupRequest
 
 
+def find_files(did_name, info, did_finder_args):
+    lookup_request = LookupRequest(
+        did=did_name,
+        rucio_adapter=did_finder_args['rucio_adapter'],
+        dataset_id=info['dataset-id']
+    )
+    for file in lookup_request.lookup_files():
+        yield file
+
+
 def run_rucio_finder():
-    '''Run the rucio finder
-    '''
     logger = logging.getLogger()
 
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--report-logical-files", action="store_true")
-    add_did_finder_cnd_arguments(parser)
+    DIDFinderApp.add_did_finder_cnd_arguments(parser)
 
     args = parser.parse_args()
 
@@ -58,25 +66,17 @@ def run_rucio_finder():
     replica_client = ReplicaClient()
     rucio_adapter = RucioAdapter(did_client, replica_client, args.report_logical_files)
 
+    # Sneak the run_query method into the args. These values will be made available to the task
+    args.rucio_adapter = rucio_adapter
+
     # Run the DID Finder
-    try:
-        logger.info('Starting rucio DID finder')
+    app = DIDFinderApp('rucio', parsed_args=args)
 
-        async def callback(did_name, info):
-            lookup_request = LookupRequest(
-                did=did_name,
-                rucio_adapter=rucio_adapter,
-                dataset_id=info['dataset-id']
-            )
-            for file in lookup_request.lookup_files():
-                yield file
-
-        start_did_finder('rucio',
-                         callback,
-                         parsed_args=args)
-
-    finally:
-        logger.info('Done running rucio DID finder')
+    @app.did_lookup_task(name="did_finder_rucio.lookup_dataset")
+    def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
+        self.do_lookup(did=did, dataset_id=dataset_id,
+                       endpoint=endpoint, user_did_finder=find_files)
+    app.start()
 
 
 if __name__ == "__main__":
