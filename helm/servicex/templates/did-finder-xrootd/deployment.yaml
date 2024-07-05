@@ -1,0 +1,44 @@
+---
+{{ if .Values.didFinder.xrootd.enabled}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-xrootd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-xrootd
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-xrootd
+    spec:
+      initContainers:
+        - name: check-url
+          image: {{ .Values.app.checksImage }}
+          env:
+          - name: URL
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
+      containers:
+      - name: {{ .Release.Name }}-did-finder-xrootd
+        image: {{ .Values.didFinder.xrootd.image }}:{{ .Values.didFinder.xrootd.tag }}
+        imagePullPolicy: {{ .Values.didFinder.CERNOpenData.pullPolicy }}
+        env:
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS 
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+        {{- end }}
+        args:
+          - --rabbit-uri
+    {{- if .Values.secrets }}
+          - amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F
+    {{- else }}
+          - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
+    {{- end }}
+{{ end }}
