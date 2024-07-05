@@ -4,14 +4,13 @@ version = "0.1.0"
 description = ""
 authors = ["Ilija Vukotic <ivukotic@uchicago.edu>"]
 readme = "README.md"
-packages = [{include = "did_finder_rucio"}]
+packages = [{include = "rucio_did_finder", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 rucio-clients = "^34.2.0"
-pika = "1.1.0"
 xmltodict = "^0.13.0"
-servicex-did-finder-lib = "^2.0.2"
+servicex-did-finder-lib = "^3.0.0-alpha.4"
 requests = ">=2.25.0,<3.0.0"
 
 [tool.poetry.group.test]
