@@ -10,6 +10,7 @@ packages = [{include = "did_finder_cernopendata", from = "src"}]
 python = "~3.10"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 servicex-did-finder-lib = "^2.0.3"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.1"
@@ -17,6 +18,9 @@ servicex-did-finder-lib = "^3.0.0-alpha.1"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.2"
 >>>>>>> 488e1a12 (Make cernopendata DID finder work with celery. Update the submit code in the app to send DID finder request via Celery)
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.4"
+>>>>>>> a169a3a3 (Update did_finder lib to pick up better error reporting)
 
 [tool.poetry.group.test]
 optional = true
