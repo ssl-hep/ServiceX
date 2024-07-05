@@ -2,13 +2,12 @@ import pytest
 from src.servicex_did_finder_xrootd.did_finder import find_files
 
 
-@pytest.mark.asyncio
-async def test_working_call():
+def test_working_call():
     iter = find_files(('root://eospublic.cern.ch//eos/opendata/atlas/'
                        'OutreachDatasets/2020-01-22/4lep/MC/*'),
-                      {'request-id': '112233'}
+                      {'dataset-id': '112233'}
                       )
-    files = [f async for f in iter]
+    files = [f for f in iter]
 
     assert len(files) == 106
     assert isinstance(files[0], dict)
@@ -19,11 +18,10 @@ async def test_working_call():
             )
 
 
-@pytest.mark.asyncio
-async def test_exception_no_files():
+def test_exception_no_files():
     iter = find_files(('root://eospublic.cern.ch//eos/opendata/atlas/'
                        'OutreachDatasets/2020-01-22/4lep/MC/dummy*'),
-                      {'request-id': '112233'},
+                      {'dataset-id': '112233'},
                       )
     with pytest.raises(RuntimeError):
-        [f async for f in iter]
+        [f for f in iter]
