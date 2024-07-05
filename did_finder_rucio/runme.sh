@@ -13,7 +13,7 @@ while true; do
     sleep 5
 done
 
-export PYTHONPATH=.
+export PYTHONPATH=src
 
 # Assume $REPORT_LOGICAL_FILES is set to --report-logical-files to activate
 echo "----------->$PYTHONPATH"
