@@ -355,7 +355,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a2"
+version = "3.0.0a4"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -423,7 +423,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "354836662b7a4bbc874cd0a41eebd771bd6e0ade4b7da90c00776676f0c6c146"
+content-hash = "2c76e01d93c6a8fadd410039bc2b2bb447ed2e8f3b26af5293da8d2d4457698a"
 
 [metadata.files]
 amqp = [
@@ -671,8 +671,8 @@ requests = [
     {file = "requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760"},
 ]
 servicex-did-finder-lib = [
-    {file = "servicex_did_finder_lib-3.0.0a2-py3-none-any.whl", hash = "sha256:5934d2ba14d5ab94994ea3604721b6fb8d1482d52782cd2c2e204543d56f7c54"},
-    {file = "servicex_did_finder_lib-3.0.0a2.tar.gz", hash = "sha256:d60b1bf29fbcef086563014f02662f43537bdc7338c1026ca790617085cdae2e"},
+    {file = "servicex_did_finder_lib-3.0.0a4-py3-none-any.whl", hash = "sha256:1b2ee0c406b1f6998e6031b45a8f13969c3389feae2c7a413a695357a482288e"},
+    {file = "servicex_did_finder_lib-3.0.0a4.tar.gz", hash = "sha256:d83a1d5a67ebf69a4e36410955eb771b8978acbbf5c930ab3be795efc2ae63a7"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
