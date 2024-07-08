@@ -11,10 +11,14 @@ python = "^3.9"
 rucio-clients = "^34.2.0"
 xmltodict = "^0.13.0"
 <<<<<<< HEAD
+<<<<<<< HEAD
 servicex-did-finder-lib = "^2.0.3"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.4"
 >>>>>>> 75f6633f (Migrate rucio DID finder to celery)
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.5"
+>>>>>>> c834e3f7 (Give each DID Finder its own queue to read tasks from)
 requests = ">=2.25.0,<3.0.0"
 
 [tool.poetry.group.test]
