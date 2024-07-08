@@ -11,6 +11,7 @@ python = "~3.10"
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 servicex-did-finder-lib = "^2.0.3"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.1"
@@ -21,6 +22,9 @@ servicex-did-finder-lib = "^3.0.0-alpha.2"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.4"
 >>>>>>> a169a3a3 (Update did_finder lib to pick up better error reporting)
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.5"
+>>>>>>> c834e3f7 (Give each DID Finder its own queue to read tasks from)
 
 [tool.poetry.group.test]
 optional = true
