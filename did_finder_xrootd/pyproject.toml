@@ -8,7 +8,7 @@ packages = [{include = "src/servicex_did_finder_xrootd"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-servicex-did-finder-lib = "^3.0.0-alpha.4"
+servicex-did-finder-lib = "^3.0.0-alpha.5"
 xrootd = ">=5.6.9"
 
 [tool.poetry.group.test]

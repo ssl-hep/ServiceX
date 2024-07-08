@@ -66,7 +66,8 @@ data:
     RABBIT_RETRIES = {{ .Values.app.rabbitmq.retries }}
     RABBIT_RETRY_INTERVAL = {{ .Values.app.rabbitmq.retry_interval }}
 
-    {{- if .Values.app.ingress.enabled -}}
+
+    {{if .Values.app.ingress.enabled -}}
     ADVERTISED_HOSTNAME= '{{ .Release.Name }}.{{ .Values.app.ingress.host }}'
     {{ else }}
     ADVERTISED_HOSTNAME= '{{ .Release.Name }}-servicex-app:8000'
