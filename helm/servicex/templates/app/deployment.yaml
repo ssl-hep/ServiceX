@@ -132,6 +132,8 @@ spec:
         volumeMounts:
           - name: app-cfg
             mountPath: /opt/servicex
+          - name: celery-cfg
+            mountPath: /opt/servicex/celery
           - name: sqlite
             mountPath: /sqlite
           {{- if .Values.app.defaultUsers }}
@@ -147,6 +149,9 @@ spec:
         - name: app-cfg
           configMap:
             name:  {{ .Release.Name }}-flask-config
+        - name: celery-cfg
+          configMap:
+            name: {{ .Release.Name }}-celery-config
         - name: sqlite
           emptyDir: {}
         {{- if .Values.app.defaultUsers }}

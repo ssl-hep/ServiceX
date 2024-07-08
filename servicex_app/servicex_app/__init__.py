@@ -250,7 +250,11 @@ def create_app(test_config=None,
             transformer_manager = provided_transformer_manager
 
         if not provided_celery_app:
-            celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
+            sys.path.append('/opt/servicex/celery')
+
+            celery_app = Celery('ServiceX-App')
+            celery_app.config_from_object('celery_config')
+
         else:
             celery_app = provided_celery_app
 
