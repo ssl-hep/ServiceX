@@ -252,7 +252,7 @@ def create_app(test_config=None,
         if not provided_celery_app:
             sys.path.append('/opt/servicex/celery')
 
-            celery_app = Celery('ServiceX-App')
+            celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
             celery_app.config_from_object('celery_config')
 
         else:
