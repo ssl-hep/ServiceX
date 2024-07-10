@@ -11,7 +11,7 @@ metadata:
 data:
   celery_config.py: |
     task_routes = {
-        'did_finder_cernopendata.tasks.lookup_dataset': {'queue': 'did_finder_cernopendata'},
-        'did_finder_rucio.tasks.lookup_dataset': {'queue': 'did_finder_rucio'},
-        'did_finder_xrootd.tasks.lookup_dataset': {'queue': 'did_finder_xrootd'},
+        'did_finder_cernopendata.lookup_dataset': {'queue': 'did_finder_cernopendata'},
+        'did_finder_rucio.lookup_dataset': {'queue': 'did_finder_rucio'},
+        'did_finder_xrootd.lookup_dataset': {'queue': 'did_finder_xrootd'},
     }
