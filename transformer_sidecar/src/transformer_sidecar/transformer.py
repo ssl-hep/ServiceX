@@ -388,8 +388,6 @@ if __name__ == "__main__":
     with open(capabilities_file_path) as capabilities_file:
         transformer_capabilities = json.load(capabilities_file)
 
-    logger.debug('transformer capabilities', extra=transformer_capabilities)
-
     # If the user requested Parquet, but the transformer isn't capable of producing it,
     # then we will convert here....
     convert_root_to_parquet = args.result_format == 'parquet' and \
