@@ -20,7 +20,6 @@ spec:
       containers:
       - name: did-finder
         image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
-        command: ["/usr/src/app/runme.sh"]
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
         env:
           {{- if .Values.secrets }}
@@ -29,10 +28,10 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secrets }}
                 key: rabbitmq-password
-          - name: RMQ_URI
+          - name: BROKER_URL
             value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
           {{- else }}
-          - name: RMQ_URI
+          - name: BROKER_URL
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
           {{- end }}
           {{- if .Values.didFinder.rucio.reportLogicalFiles }}

@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from did_finder_cernopendata.did_finder import find_files
+from did_finder_cernopendata.celery import find_files
 
 
 @pytest.fixture

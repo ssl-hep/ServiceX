@@ -374,7 +374,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a5"
+version = "3.0.0a6"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -442,7 +442,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "e8aeb5393f2bd04aa001795b2f776cdba2401d5ced301029c41a832709ea69cd"
+content-hash = "bbb1b3442316b6805bf5dfd3bc5f80d40abc2376ee68c6308485aa4516604d6b"
 
 [metadata.files]
 amqp = [
@@ -757,8 +757,8 @@ requests = [
 >>>>>>> 9ab73753 (Migrated CERN Opendata DID finder to Celery)
 ]
 servicex-did-finder-lib = [
-    {file = "servicex_did_finder_lib-3.0.0a5-py3-none-any.whl", hash = "sha256:d07352bc8c89c001df232258b07a8417b50ed8542a98ad9f8a58924c2da95b66"},
-    {file = "servicex_did_finder_lib-3.0.0a5.tar.gz", hash = "sha256:20dca797de317ceb778424f1beb99757238eb753256717f030eae3e847101517"},
+    {file = "servicex_did_finder_lib-3.0.0a6-py3-none-any.whl", hash = "sha256:2113e8ee354b1b349ce1dd915f83638b7375adc36701e0ef54a738cb36a5ef94"},
+    {file = "servicex_did_finder_lib-3.0.0a6.tar.gz", hash = "sha256:9f5962fdad85a8215cd52f2e7d71097c813f3a71cda514eeaba6d3089d39d933"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

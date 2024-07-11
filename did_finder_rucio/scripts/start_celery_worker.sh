@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-
 /usr/src/app/proxy-exporter.sh &
 
-while true; do 
+while true; do
     date
     ls ${X509_USER_PROXY}
     RESULT=$?
@@ -13,10 +12,6 @@ while true; do
     sleep 5
 done
 
-export PYTHONPATH=src
-
-# Assume $REPORT_LOGICAL_FILES is set to --report-logical-files to activate
-echo "----------->$PYTHONPATH"
-ls -lht $PYTHONPATH
-python3 scripts/did_finder.py --rabbit-uri $RMQ_URI $REPORT_LOGICAL_FILES
-
+poetry run celery --broker="$BROKER_URL" -A rucio_did_finder worker \
+                  --loglevel=info -Q did_finder_rucio \
+                  --concurrency=1 --hostname=did_finder_rucio@%h
