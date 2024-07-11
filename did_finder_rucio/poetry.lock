@@ -484,7 +484,7 @@ swift = ["python-swiftclient (>=4.4.0,<4.5.0)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a5"
+version = "3.0.0a6"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -589,7 +589,7 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "53b7fcf70c9c262c0099a7793d1f5e0f194900ad1d8a24f062d72e4663e5dc62"
+content-hash = "0264d4609e065e8b1abeb5eed0282188e889afce78507ce806224a925f237cdf"
 
 [metadata.files]
 amqp = [
@@ -1208,8 +1208,8 @@ rucio-clients = [
 >>>>>>> 75f6633f (Migrate rucio DID finder to celery)
 ]
 servicex-did-finder-lib = [
-    {file = "servicex_did_finder_lib-3.0.0a5-py3-none-any.whl", hash = "sha256:d07352bc8c89c001df232258b07a8417b50ed8542a98ad9f8a58924c2da95b66"},
-    {file = "servicex_did_finder_lib-3.0.0a5.tar.gz", hash = "sha256:20dca797de317ceb778424f1beb99757238eb753256717f030eae3e847101517"},
+    {file = "servicex_did_finder_lib-3.0.0a6-py3-none-any.whl", hash = "sha256:2113e8ee354b1b349ce1dd915f83638b7375adc36701e0ef54a738cb36a5ef94"},
+    {file = "servicex_did_finder_lib-3.0.0a6.tar.gz", hash = "sha256:9f5962fdad85a8215cd52f2e7d71097c813f3a71cda514eeaba6d3089d39d933"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

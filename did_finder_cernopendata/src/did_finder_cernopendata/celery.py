@@ -9,6 +9,14 @@ __log = logging.getLogger(__name__)
 
 cache_prefix = os.environ.get('CACHE_PREFIX', '')
 
+app = DIDFinderApp('cernopendata')
+
+
+@app.did_lookup_task(name="did_finder_cernopendata.lookup_dataset")
+def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
+    self.do_lookup(did=did, dataset_id=dataset_id,
+                   endpoint=endpoint, user_did_finder=find_files)
+
 
 def find_files(did_name: str,
                info: Dict[str, Any],
@@ -64,19 +72,3 @@ def find_files(did_name: str,
         if non_root_uri:
             raise Exception('CMSOpenData: Opendata record returned a strange url'
                             '\n\t' + '\n\t'.join(all_lines))
-
-
-def run_open_data():
-    __log.info('Starting CERNOpenData DID finder')
-    app = DIDFinderApp('cernopendata')
-
-    @app.did_lookup_task(name="did_finder_cernopendata.lookup_dataset")
-    def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
-        self.do_lookup(did=did, dataset_id=dataset_id,
-                       endpoint=endpoint, user_did_finder=find_files)
-
-    app.start()
-
-
-if __name__ == "__main__":
-    run_open_data()

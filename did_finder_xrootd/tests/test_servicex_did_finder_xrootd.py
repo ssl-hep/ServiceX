@@ -1,5 +1,5 @@
 import pytest
-from src.servicex_did_finder_xrootd.did_finder import find_files
+from servicex_did_finder_xrootd.celery import find_files
 
 
 def test_working_call():

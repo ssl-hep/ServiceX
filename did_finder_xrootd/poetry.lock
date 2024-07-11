@@ -367,7 +367,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a5"
+version = "3.0.0a6"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -443,7 +443,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "cd5094b75f8053b16e1cc0778112c10532758f0746395d556132c8f633c1e1dd"
+content-hash = "a767c855eebb30c65ef6111128d359808f195c3d54fcfdd95c6c63a6a42ac01e"
 
 [metadata.files]
 amqp = [
@@ -873,6 +873,7 @@ files = [
 =======
 servicex-did-finder-lib = [
 <<<<<<< HEAD
+<<<<<<< HEAD
     {file = "servicex_did_finder_lib-3.0.0a4-py3-none-any.whl", hash = "sha256:1b2ee0c406b1f6998e6031b45a8f13969c3389feae2c7a413a695357a482288e"},
     {file = "servicex_did_finder_lib-3.0.0a4.tar.gz", hash = "sha256:d83a1d5a67ebf69a4e36410955eb771b8978acbbf5c930ab3be795efc2ae63a7"},
 >>>>>>> cd67812d (Migrate xaod DID Finder to celery)
@@ -880,6 +881,10 @@ servicex-did-finder-lib = [
     {file = "servicex_did_finder_lib-3.0.0a5-py3-none-any.whl", hash = "sha256:d07352bc8c89c001df232258b07a8417b50ed8542a98ad9f8a58924c2da95b66"},
     {file = "servicex_did_finder_lib-3.0.0a5.tar.gz", hash = "sha256:20dca797de317ceb778424f1beb99757238eb753256717f030eae3e847101517"},
 >>>>>>> c834e3f7 (Give each DID Finder its own queue to read tasks from)
+=======
+    {file = "servicex_did_finder_lib-3.0.0a6-py3-none-any.whl", hash = "sha256:2113e8ee354b1b349ce1dd915f83638b7375adc36701e0ef54a738cb36a5ef94"},
+    {file = "servicex_did_finder_lib-3.0.0a6.tar.gz", hash = "sha256:9f5962fdad85a8215cd52f2e7d71097c813f3a71cda514eeaba6d3089d39d933"},
+>>>>>>> 64c25a60 (Make DIDFinderApp a subclass of Celery App)
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
