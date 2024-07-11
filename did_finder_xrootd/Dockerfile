@@ -9,10 +9,6 @@ WORKDIR /usr/src/app
 USER root
 
 ENV  POETRY_VERSION=1.5.1
-#ENV POETRY_HOME=/opt/poetry
-#RUN python3 -m venv $POETRY_HOME && \
-#    $POETRY_HOME/bin/pip install poetry==$POETRY_VERSION
-
 
 # There is a bug in poetry with no virtual env where it can delete this package
 # during install. If we delete it before installing poetry it will
@@ -28,11 +24,11 @@ RUN pip install poetry==$POETRY_VERSION
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-#RUN poetry config virtualenvs.create false
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
 
 # Bring over the main scripts
-COPY src/servicex_did_finder_xrootd .
+COPY . .
 
 # build stamp
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
@@ -42,5 +38,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Needed for running as non-root
 ENV POETRY_CACHE_DIR=/root/.cache/pypoetry
+ENV PYTHONPATH /usr/src/app/src
 
-ENTRYPOINT [ "poetry", "run", "python", "/usr/src/app/did_finder.py" ]
+ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
+ENTRYPOINT [ "scripts/start_celery_worker.sh"]
