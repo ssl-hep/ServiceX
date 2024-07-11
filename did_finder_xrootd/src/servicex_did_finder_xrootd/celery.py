@@ -8,6 +8,13 @@ from servicex_did_finder_lib import DIDFinderApp
 __log = logging.getLogger(__name__)
 
 cache_prefix = os.environ.get('CACHE_PREFIX', '')
+app = DIDFinderApp('xrootd')
+
+
+@app.did_lookup_task(name="did_finder_xrootd.lookup_dataset")
+def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
+    self.do_lookup(did=did, dataset_id=dataset_id,
+                   endpoint=endpoint, user_did_finder=find_files)
 
 
 def find_files(did_name: str, info: Dict[str, Any],
@@ -41,19 +48,3 @@ def find_files(did_name: str, info: Dict[str, Any],
             'file_size': 0,  # We could look up the size but that would be slow
             'file_events': 0,  # And this we do not know
         }
-
-
-def run_xrootd():
-    __log.info('Starting XRootD DID finder')
-    app = DIDFinderApp('xrootd')
-
-    @app.did_lookup_task(name="did_finder_xrootd.lookup_dataset")
-    def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
-        self.do_lookup(did=did, dataset_id=dataset_id,
-                       endpoint=endpoint, user_did_finder=find_files)
-
-    app.start()
-
-
-if __name__ == "__main__":
-    run_xrootd()
