@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4.1.7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5.1.0
+        uses: actions/setup-python@v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
@@ -106,7 +106,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v6.3.0
+        uses: docker/build-push-action@v6.4.0
         with:
           context: ${{ matrix.app.dir_name }}
           push: true
