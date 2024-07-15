@@ -13,6 +13,7 @@ xmltodict = "^0.13.0"
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 servicex-did-finder-lib = "^2.0.3"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.4"
@@ -23,6 +24,9 @@ servicex-did-finder-lib = "^3.0.0-alpha.5"
 =======
 servicex-did-finder-lib = "^3.0.0-alpha.6"
 >>>>>>> 64c25a60 (Make DIDFinderApp a subclass of Celery App)
+=======
+servicex-did-finder-lib = "^3.0.0-alpha.7"
+>>>>>>> 1fd19bdc (Update project to pick up fixed did_finder_lib)
 requests = ">=2.25.0,<3.0.0"
 
 [tool.poetry.group.test]
