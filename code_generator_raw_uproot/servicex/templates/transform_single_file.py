@@ -47,7 +47,6 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             for treename, subarray in awkward_array_dict.items():
                 subarray['treename'] = treename
             awkward_array = awkward_array_dict.popitem()[1]
-            print(ak.type(awkward_array))
             for treename, subarray in awkward_array_dict.items():
                 awkward_array = ak.concatenate([awkward_array, subarray])
                 print(ak.type(subarray), ak.type(awkward_array))
