@@ -177,7 +177,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "exceptiongroup"
-version = "1.2.1"
+version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
 category = "dev"
 optional = false
@@ -374,7 +374,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0a6"
+version = "3.0.0a7"
 description = "ServiceX DID Library Routines"
 category = "main"
 optional = false
@@ -442,7 +442,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "bbb1b3442316b6805bf5dfd3bc5f80d40abc2376ee68c6308485aa4516604d6b"
+content-hash = "291cfd4d98e7223f9fa167b3f2cb4ba775246131d3446688c3426602020a5e0e"
 
 [metadata.files]
 amqp = [
@@ -641,9 +641,14 @@ files = [
     {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
 =======
 exceptiongroup = [
+<<<<<<< HEAD
     {file = "exceptiongroup-1.2.1-py3-none-any.whl", hash = "sha256:5258b9ed329c5bbdd31a309f53cbfb0b155341807f6ff7606a1e801a891b29ad"},
     {file = "exceptiongroup-1.2.1.tar.gz", hash = "sha256:a4785e48b045528f5bfe627b6ad554ff32def154f42372786903b7abcfe1aa16"},
 >>>>>>> 9ab73753 (Migrated CERN Opendata DID finder to Celery)
+=======
+    {file = "exceptiongroup-1.2.2-py3-none-any.whl", hash = "sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b"},
+    {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
+>>>>>>> 47926e5f (Pick up fixed did finder lib that fixes off by one error in count)
 ]
 flake8 = [
     {file = "flake8-5.0.4-py2.py3-none-any.whl", hash = "sha256:7a1cf6b73744f5806ab95e526f6f0d8c01c66d7bbe349562d22dfca20610b248"},
@@ -757,8 +762,8 @@ requests = [
 >>>>>>> 9ab73753 (Migrated CERN Opendata DID finder to Celery)
 ]
 servicex-did-finder-lib = [
-    {file = "servicex_did_finder_lib-3.0.0a6-py3-none-any.whl", hash = "sha256:2113e8ee354b1b349ce1dd915f83638b7375adc36701e0ef54a738cb36a5ef94"},
-    {file = "servicex_did_finder_lib-3.0.0a6.tar.gz", hash = "sha256:9f5962fdad85a8215cd52f2e7d71097c813f3a71cda514eeaba6d3089d39d933"},
+    {file = "servicex_did_finder_lib-3.0.0a7-py3-none-any.whl", hash = "sha256:f9d90f95d9b63b4380d0dfba28123fa6a66288dc6e3376c3e1ca7cb960e845ff"},
+    {file = "servicex_did_finder_lib-3.0.0a7.tar.gz", hash = "sha256:f28aa5189b8228c5d31bb6c36e1ee56ef41987f80ab65a1ad68e01e0c93676e2"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
