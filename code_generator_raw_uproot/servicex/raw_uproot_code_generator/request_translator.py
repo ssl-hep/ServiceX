@@ -136,13 +136,13 @@ def run_single_query(file_path, query):
                         arr = subarr
                     else:
                         arr = ak.concatenate([arr, subarr])
-                if len(arr):
+                if arr is not None and len(arr):  # iterate will not give anything if tree empty
                     rv_arrays_trees[outtreename] = (arr, None)
-                else: # want to return empty tree, but need to extract metadata to do so
+                else:  # recent uproot handles zero-length case properly for arrays()
                     if 'cut' in sanitized_args:
                         sanitized_args.pop('cut')
-                    arr = t.arrays(language=lang, entry_stop=1, **sanitized_args)
-                    rv_arrays_trees[outtreename] = (None, {{_: arr[_].type for _ in arr.fields}})
+                    arr = t.arrays(language=lang, entry_stop=0, **sanitized_args)
+                    rv_arrays_trees[outtreename] = (arr, None)
         else:
             histograms = query['copy_histograms']
             keys = fl.keys(filter_name=histograms, cycle=False)
