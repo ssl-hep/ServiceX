@@ -42,6 +42,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 for k, v in histograms.items():
                     writer[k] = v
                 print('writer', writer.keys())
+                print('file path?', writer.file_path)
             wtime = time.time()
 
         else:
