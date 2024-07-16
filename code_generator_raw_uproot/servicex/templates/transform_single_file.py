@@ -25,24 +25,23 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                             if awkward_array[0] is not None), 0)
 
         ttime = time.time()
-        print(total_events, output_path, output_format, awkward_array_dict, histograms)
 
         if output_format == 'root-file':
             import uproot
             etime = time.time()
-            with uproot.recreate(Path(output_path)) as writer:
-                print('got in here', writer)
-                for k, v in awkward_array_dict.items():
-                    if v[0] is not None:
-                        writer[k] = {field: v[0][field] for field in
-                                     v[0].fields} if v[0].fields \
-                            else v[0]
-                    else:
-                        writer.mktree(k, v[1])
-                for k, v in histograms.items():
-                    writer[k] = v
-                print('writer', writer.keys())
-                print('file path?', writer.file_path)
+            # opening the file with open() is a workaround for a bug handling multiple colons
+            # in the filename in uproot 5.3.9
+            with open(output_path, 'b+w') as wfile:
+                with uproot.recreate(wfile) as writer:
+                    for k, v in awkward_array_dict.items():
+                        if v[0] is not None:
+                            writer[k] = {field: v[0][field] for field in
+                                         v[0].fields} if v[0].fields \
+                                else v[0]
+                        else:
+                            writer.mktree(k, v[1])
+                    for k, v in histograms.items():
+                        writer[k] = v
             wtime = time.time()
 
         else:
@@ -53,7 +52,6 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             awkward_array = awkward_array_dict.popitem()[1]
             for treename, subarray in awkward_array_dict.items():
                 awkward_array = ak.concatenate([awkward_array, subarray])
-                print(ak.type(subarray), ak.type(awkward_array))
 
             arrow = ak.to_arrow_table(awkward_array)
 
