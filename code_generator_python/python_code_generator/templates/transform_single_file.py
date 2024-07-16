@@ -32,20 +32,21 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 awkward_arrays = {default_tree_name: output}
             elif isinstance(output, dict):
                 awkward_arrays = output
-            with uproot.recreate(output_path) as writer:
-                for key in awkward_arrays.keys():
-                    total_events = awkward_arrays[key].__len__()
-                    if awkward_arrays[key].fields and total_events:
-                        o_dict = {field: awkward_arrays[key][field]
-                                  for field in awkward_arrays[key].fields}
-                    elif awkward_arrays[key].fields and not total_events:
-                        o_dict = {field: np.array([])
-                                  for field in awkward_arrays[key].fields}
-                    elif not awkward_arrays[key].fields and total_events:
-                        o_dict = {default_branch_name: awkward_arrays[key]}
-                    else:
-                        o_dict = {default_branch_name: np.array([])}
-                    writer[key] = o_dict
+            with open(output_path, 'b+w') as wfile:
+                with uproot.recreate(wfile) as writer:
+                    for key in awkward_arrays.keys():
+                        total_events = awkward_arrays[key].__len__()
+                        if awkward_arrays[key].fields and total_events:
+                            o_dict = {field: awkward_arrays[key][field]
+                                      for field in awkward_arrays[key].fields}
+                        elif awkward_arrays[key].fields and not total_events:
+                            o_dict = {field: np.array([])
+                                      for field in awkward_arrays[key].fields}
+                        elif not awkward_arrays[key].fields and total_events:
+                            o_dict = {default_branch_name: awkward_arrays[key]}
+                        else:
+                            o_dict = {default_branch_name: np.array([])}
+                        writer[key] = o_dict
 
             wtime = time.time()
         elif output_format == 'raw-file':
