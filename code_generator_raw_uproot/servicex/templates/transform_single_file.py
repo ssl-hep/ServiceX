@@ -30,7 +30,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         if output_format == 'root-file':
             import uproot
             etime = time.time()
-            with uproot.recreate(output_path) as writer:
+            with uproot.recreate(Path(output_path)) as writer:
                 print('got in here', writer)
                 for k, v in awkward_array_dict.items():
                     if v[0] is not None:
