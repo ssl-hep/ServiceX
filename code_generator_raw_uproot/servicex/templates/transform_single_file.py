@@ -25,11 +25,13 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                             if awkward_array[0] is not None), 0)
 
         ttime = time.time()
+        print(total_events, output_path, output_format, awkward_array_dict, histograms)
 
         if output_format == 'root-file':
             import uproot
             etime = time.time()
             with uproot.recreate(output_path) as writer:
+                print('got in here')
                 for k, v in awkward_array_dict.items():
                     if v[0] is not None:
                         writer[k] = {field: v[0][field] for field in
