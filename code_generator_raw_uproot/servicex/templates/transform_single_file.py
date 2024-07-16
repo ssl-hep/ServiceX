@@ -34,7 +34,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             with open(output_path, 'b+w') as wfile:
                 with uproot.recreate(wfile) as writer:
                     for k, v in awkward_array_dict.items():
-                        if v[0] is not None:
+                        if v[0] is not None and len(v[0]) > 0:
                             writer[k] = {field: v[0][field] for field in
                                          v[0].fields} if v[0].fields \
                                 else v[0]
