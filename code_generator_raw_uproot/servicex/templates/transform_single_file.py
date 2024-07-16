@@ -31,7 +31,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             import uproot
             etime = time.time()
             with uproot.recreate(output_path) as writer:
-                print('got in here')
+                print('got in here', writer)
                 for k, v in awkward_array_dict.items():
                     if v[0] is not None:
                         writer[k] = {field: v[0][field] for field in
@@ -41,6 +41,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                         writer.mktree(k, v[1])
                 for k, v in histograms.items():
                     writer[k] = v
+                print('writer', writer.keys())
             wtime = time.time()
 
         else:
