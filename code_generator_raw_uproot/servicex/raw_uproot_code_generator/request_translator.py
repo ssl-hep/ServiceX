@@ -142,7 +142,7 @@ def run_single_query(file_path, query):
                     if 'cut' in sanitized_args:
                         sanitized_args.pop('cut')
                     arr = t.arrays(language=lang, entry_stop=0, **sanitized_args)
-                    rv_arrays_trees[outtreename] = (arr, None)
+                    rv_arrays_trees[outtreename] = (None, {{_: arr[_].type for _ in arr.fields}})
         else:
             histograms = query['copy_histograms']
             keys = fl.keys(filter_name=histograms, cycle=False)
