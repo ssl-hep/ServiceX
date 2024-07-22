@@ -8,7 +8,7 @@ packages = [{include = "did_finder_cernopendata"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"
-servicex-did-finder-lib = "^2.0.1"
+servicex-did-finder-lib = "^2.0.3"
 
 [tool.poetry.group.test]
 optional = true
