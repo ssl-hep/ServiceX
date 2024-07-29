@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4.1.7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5.1.0
+        uses: actions/setup-python@v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
@@ -97,16 +97,16 @@ jobs:
         run: |
           echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.1.0
+        uses: docker/setup-qemu-action@v3.2.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.4.0
+        uses: docker/setup-buildx-action@v3.6.1
       - name: Login to Docker Hub
-        uses: docker/login-action@v3.2.0
+        uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v6.3.0
+        uses: docker/build-push-action@v6.5.0
         with:
           context: ${{ matrix.app.dir_name }}
           push: true
