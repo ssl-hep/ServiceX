@@ -1,12 +1,14 @@
 FROM sslhep/rucio-client:main
 
-LABEL maintainer Ilija Vukotic <ivukotic@uchicago.edu>
+LABEL maintainer="Ilija Vukotic <ivukotic@uchicago.edu>"
 
 # Create app directory
 WORKDIR /usr/src/app
 
+# Create celery user
+RUN useradd -ms /bin/bash celery
+
 # for CA certificates
-USER root
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
 RUN yum clean all
@@ -28,13 +30,21 @@ RUN poetry config virtualenvs.create false && \
 
 COPY . .
 
+# Change ownership of the app directory to celery user
+RUN chown -R celery:celery /usr/src/app
+
+
 # build
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
-ENV X509_USER_PROXY /tmp/grid-security/x509up
-ENV X509_CERT_DIR /etc/grid-security/certificates
-ENV PYTHONPATH /usr/src/app/src
+ENV X509_USER_PROXY=/tmp/grid-security/x509up
+ENV X509_CERT_DIR=/etc/grid-security/certificates
+ENV PYTHONPATH=/usr/src/app/src
 
 ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
+
+# Switch to celery user
+USER celery
+
 ENTRYPOINT [ "scripts/start_celery_worker.sh"]
 
