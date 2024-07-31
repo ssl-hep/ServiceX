@@ -8,31 +8,7 @@ packages = [{include = "did_finder_cernopendata", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-servicex-did-finder-lib = "^2.0.3"
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.1"
->>>>>>> 9ab73753 (Migrated CERN Opendata DID finder to Celery)
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.2"
->>>>>>> 488e1a12 (Make cernopendata DID finder work with celery. Update the submit code in the app to send DID finder request via Celery)
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.4"
->>>>>>> a169a3a3 (Update did_finder lib to pick up better error reporting)
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.5"
->>>>>>> c834e3f7 (Give each DID Finder its own queue to read tasks from)
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.6"
->>>>>>> 64c25a60 (Make DIDFinderApp a subclass of Celery App)
-=======
-servicex-did-finder-lib = "^3.0.0-alpha.7"
->>>>>>> 47926e5f (Pick up fixed did finder lib that fixes off by one error in count)
+servicex-did-finder-lib = "^3.0.0"
 
 [tool.poetry.group.test]
 optional = true
