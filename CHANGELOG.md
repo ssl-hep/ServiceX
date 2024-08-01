@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.4.0
+August 1, 2024
+### Added
+- Uproot transformer can write Root files #519
+- Deploy multiple code generators #536
+- Support xCache for CERN Opendata #550
+- Uproot-raw: copy histograms, import awkward functions for cuts #770
+- Update the transform request document to show the title as well as the kabana url #757
+- multi-xcache-support #726
+- Python transformer can support multiple trees #572
+- Sidecar converts file to parquet for transformers that don't natively support it #607
+- XRootD DID Finder #790
+
+### Changed
+- 682 web dashboard selection string rendering for python transformer #699
+- Moved prefix handling from the DID finder to the transformer #553
+- Moved science images to their own repo #571
+- Reduced sleeps in the sidecar to increase throughput  #582
+- Transformer and sidecar communicate through sockets #597
+- Correct support for IPv6 #629
+- Reorganized the data model #496
+- Cache DID lookups #687
+- Update parquet serialization to be compatible with awkward2 #691
+- Renamed packages in monorepo to avoid conflicts #695, #696, #697, #793
+- DID Finder uses Celery #800
+
+### Fixed
+- Log reading issue #780
+- Don't Allow Transformer Pod to Die While there are still files to upload to object stpore #748
+- Update did finder deployment to find the new x509 secret name #746
+- Clean up the prepend_xcache comments #729
+- adding missing file-id and fixing time reported by the sidecar #714
+- Restart the app pod when the configmap changes #551
+- Fixed crash where Logstash port was being cast to int even if not set #621
+- DID Finder off-by-one error that was omitting the last file in a dataset #815
+
+### Removed
+
+
 ### 1.3.0
 January 11, 2023
 ### Added
