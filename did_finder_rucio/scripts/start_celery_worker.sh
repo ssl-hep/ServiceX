@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-/usr/src/app/proxy-exporter.sh &
+/opt/servicex/proxy-exporter.sh &
 
 while true; do
     date

@@ -3,10 +3,10 @@ FROM sslhep/rucio-client:main
 LABEL maintainer="Ilija Vukotic <ivukotic@uchicago.edu>"
 
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /opt/servicex
 
-# Create celery user
-RUN useradd -ms /bin/bash celery
+# Create celery user. Assign them to group zero since that is the group OpenShift will run the container as
+RUN useradd -g 0 -ms /bin/bash celery
 
 # for CA certificates
 RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
@@ -22,24 +22,24 @@ ENV POETRY_VERSION=1.2.2
 RUN python3 -m pip install --upgrade pip
 
 RUN pip install poetry==$POETRY_VERSION
+RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
+ENV XDG_CONFIG_HOME=/opt/servicex
+RUN poetry config virtualenvs.in-project true
+RUN poetry install --no-root --no-interaction --no-ansi
 
 COPY . .
 
-# Change ownership of the app directory to celery user
-RUN chown -R celery:celery /usr/src/app
-
-
-# build
-RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
+# Change ownership of the app directory to celery user. Also set the group to zero since
+# that is the group OpenShift will run the container as
+RUN chown -R celery:0 /opt/servicex
+RUN chmod -R g=u /opt/servicex
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR=/etc/grid-security/certificates
-ENV PYTHONPATH=/usr/src/app/src
+ENV PYTHONPATH=/opt/servicex/src
 
 ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
 
