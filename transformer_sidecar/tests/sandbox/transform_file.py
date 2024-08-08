@@ -25,45 +25,25 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# function to initialize logging
-import logstash
-import os
+import time
 
-import logging
+from celery import Celery
 
-from transformer_sidecar.transformer_logging.logstash_formatter import LogstashFormatter
-from transformer_sidecar.transformer_logging.stream_formatter import StreamFormatter
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+app = Celery(broker="amqp://user:leftfoot1@localhost:5672")
+app.conf.task_routes = {
+    'transformer-123-456.transform_file': {'queue': '123-456'}
+}
 
-
-def initialize_logging():
-    """
-    Get a logger and initialize it so that it outputs the correct format
-    :param request: Request id to insert into log messages
-    :return: logger with correct formatting that outputs to console
-    """
-
-    log = logging.getLogger()
-    log.level = getattr(logging, os.environ.get('LOG_LEVEL'), "DEBUG")
-
-    stream_handler = logging.StreamHandler()
-    stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} transformer sidecar " +
-                                       '%(message)s')
-    stream_handler.setFormatter(stream_formatter)
-    stream_handler.setLevel(log.level)
-    log.addHandler(stream_handler)
-
-    logstash_host = os.environ.get('LOGSTASH_HOST')
-
-    if logstash_host:
-        logstash_port = int(os.environ.get('LOGSTASH_PORT', 5959))
-        logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
-        logstash_formatter = LogstashFormatter('logstash', None, None)
-        logstash_handler.setFormatter(logstash_formatter)
-        logstash_handler.setLevel(log.level)
-        log.addHandler(logstash_handler)
-
-    log.debug("Initialized logging")
-
-    return log
+task_id = app.send_task('transformer-123-456.transform_file',
+                        kwargs={
+                            "request_id": "abc123",
+                            "file_id": 1,
+                            "paths": ["/path/to/file1.txt", "/path/to/file2.pdf",
+                                      "/path/to/file3.docx"],
+                            "file_path": "/path/to/file.txt",
+                            "tree_name": "my_tree",
+                            "service_endpoint": "https://example.com/api/v1",
+                            "result_destination": "/path/to/output/directory",
+                            "result_format": "root"
+                        })
+print(task_id)

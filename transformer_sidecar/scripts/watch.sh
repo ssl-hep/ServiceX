@@ -24,7 +24,7 @@ path=$3
 sleep 1
 echo "connecting..."
 
-coproc nc { nc localhost 8081; }
+coproc nc { nc host.docker.internal 8081; }
 
 while [[ $nc_PID ]] ; do
   

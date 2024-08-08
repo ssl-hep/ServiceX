@@ -34,6 +34,7 @@ import os
 import psutil as psutil
 import shutil
 import timeit
+from celery import Celery
 from hashlib import sha1, sha256
 from pathlib import Path
 from queue import Queue
@@ -70,6 +71,222 @@ PLACE = {
 }
 
 
+start_time = timeit.default_timer()
+parser = TransformerArgumentParser(description="ServiceX Transformer")
+args = parser.parse_args()
+
+logger = initialize_logging()
+
+# Create a Celery instance
+app = Celery(f"transformer-{args.request_id}", broker='amqp://user:leftfoot1@localhost:5672//')
+
+logger.info("transformer startup", extra={"result_destination": args.result_destination,
+                                          "output dir": args.output_dir, "place": PLACE})
+
+# Get the queue name from the command line argument
+if args.request_id:
+    queue_name = args.request_id
+else:
+    queue_name = 'generic_transformer'
+
+
+# Define a task
+@app.task(queue=queue_name)
+def transform_file(request_id, file_id, paths, file_path, tree_name, service_endpoint, result_destination, result_format):
+    """
+    This is the main function for the transformer. It is called whenever a new message
+    is available on the rabbit queue. These messages represent a single file to be
+    transformed.
+
+    Each request may include a list of replicas to try. This service will loop through
+    the replicas and produce a json document for the science package to actually work from.
+    This control document will have the replica for it to try to transform along with a
+    path in the output directory for the generated parquet or root file to be written.
+
+    This control document is sent via a socket to the science image.
+    Once science image has done its job, it sends back a message over the socket.
+    The sidecar will then add the parquet/root file in the output directory to the
+    S3 upload queue.
+
+    We will examine this log file to see if the transform succeeded or failed
+    """
+
+    transform_request = {}
+
+    # If we are converting root to parquet here, then the transformer
+    # doesn't need to know about. Tell it to write root, and we'll take it from here
+    if convert_root_to_parquet:
+        result_format = 'root'
+
+    # The transform can either include a single path, or a list of replicas
+    if file_path:
+        _file_paths = [file_path]
+
+        # make sure that paths starting with http are at the end of the list
+        _https = []
+        _roots = []
+        for _fp in _file_paths:
+            if _fp.startswith('http'):
+                _https.append(_fp)
+            else:
+                _roots.append(_fp)
+        _file_paths = _roots + _https
+    else:
+        _file_paths = paths
+
+    # adding cache prefix
+    _file_paths = prepend_xcache(_file_paths)
+
+    logger.info("got transform request.", extra={
+        "requestId": request_id,
+        "paths": _file_paths,
+        "result-destination":result_destination,
+        "result-format": result_format,
+        "service-endpoint": service_endpoint,
+        "place": PLACE
+    })
+    servicex = ServiceXAdapter(service_endpoint)
+
+    # creating output dir for transform output files
+    request_path = os.path.join(posix_path, request_id)
+    os.makedirs(request_path, exist_ok=True)
+
+    # scratch dir where the transformer temporarily writes the results.
+    scratch_path = os.path.join(posix_path, request_id, 'scratch')
+    os.makedirs(scratch_path, exist_ok=True)
+
+    start_process_info = get_process_info()
+    total_time = time.time()
+
+    transform_success = False
+    try:
+        # Loop through the replicas
+        for _file_path in _file_paths:
+            logger.info("trying to transform file", extra={
+                "requestId": request_id, "file-path": _file_path, "place": PLACE})
+
+            # Enrich the transform request to give more hints to the science container
+            transform_request['downloadPath'] = _file_path
+
+            # Decide an optional file extension for the results. If the output format is
+            # parquet then we add that as an extension, otherwise stick with the format
+            # of the input file.
+            result_extension = ".parquet" \
+                if result_format == 'parquet' \
+                else ""
+            hashed_file_name = hash_path(
+                _file_path.replace('/', ':') + result_extension)
+
+            # The transformer will write results here as they are generated. This
+            # directory isn't monitored.
+            transform_request['safeOutputFileName'] = os.path.join(
+                scratch_path,
+                hashed_file_name
+            )
+
+            while True:
+                print('waiting for the GeT')
+                req = conn.recv(4096)
+                if not req:
+                    print('problem in getting GeT')
+                    break
+                req1 = req.decode('utf8')
+                print("REQ >>>>>>>>>>>>>>>", req1)
+                if req1.startswith('GeT'):
+                    break
+
+            res = json.dumps(transform_request) + "\n"
+            print("sending:", res)
+            conn.send(res.encode())
+
+            print('WAITING FOR STATUS...')
+            req = conn.recv(4096)
+            if not req:
+                break
+            req2 = req.decode('utf8').strip()
+            print('STATUS RECEIVED :', req2)
+            logger.info(f"received result: {req2}", extra={
+                "requestId": request_id, "file-path": _file_path, "place": PLACE})
+
+            if req2 == 'success.':
+                logger.info("adding item to OSU queue", extra={
+                    "requestId": request_id, "file-path": _file_path,
+                    "place": PLACE})
+                upload_queue.put(ObjectStoreUploader.WorkQueueItem(
+                    Path(transform_request['safeOutputFileName'])))
+            conn.send("confirmed.\n".encode())
+
+            # Grab the logs
+            transformer_stats = fill_stats_parser(
+                transformer_capabilities['stats-parser'],
+                Path(os.path.join(request_path, 'abc.log'))
+            )
+
+            if req2 == 'success.':
+                transform_success = True
+                ts = {
+                    "requestId": request_id,
+                    "file-size": transformer_stats.file_size,
+                    "total-events": transformer_stats.total_events,
+                    "place": PLACE
+                }
+                logger.info("Transformer stats.", extra=ts)
+                break
+
+        # If none of the replicas resulted in a successful transform then we have
+        # a hard failure with this file.
+        if not transform_success:
+            hf = {
+                "requestId": request_id,
+                "file-id": file_id,
+                "error-info": transformer_stats.error_info,
+                "log_body": transformer_stats.log_body,
+                "place": PLACE
+            }
+            logger.error("Hard Failure", extra=hf)
+
+        if transform_success:
+            servicex.put_file_complete(request_id, file_path, file_id, "success",
+                                       total_time=time.time() - total_time,
+                                       total_events=transformer_stats.total_events,
+                                       total_bytes=transformer_stats.file_size
+                                       )
+        else:
+            servicex.put_file_complete(request_id, file_path=file_path,
+                                       file_id=file_id,
+                                       status='failure',
+                                       total_time=time.time() - total_time,
+                                       total_events=0,
+                                       total_bytes=0)
+
+        stop_process_info = get_process_info()
+        elapsed_times = TimeTuple(
+            user=stop_process_info.user - start_process_info.user,
+            system=stop_process_info.system - start_process_info.system,
+            iowait=stop_process_info.iowait - start_process_info.iowait)
+
+        logger.info("File processed.", extra={
+            'requestId': request_id, 'fileId': file_id,
+            'user': elapsed_times.user,
+            'sys': elapsed_times.system,
+            'iowait': elapsed_times.iowait,
+            "place": PLACE
+        })
+
+    except Exception as error:
+        logger.exception(f"Received exception doing transform: {error}")
+
+        transform_request['error'] = str(error)
+
+        servicex.put_file_complete(request_id, file_path=_file_paths[0],
+                                   file_id=file_id,
+                                   status='failure',
+                                   total_time=time.time() - total_time,
+                                   total_events=0,
+                                   total_bytes=0)
+
+        return transform_request
+
 class TimeTuple(NamedTuple):
     """
     Named tuple to store process time information.
@@ -98,9 +315,10 @@ def get_process_info():
     """
     process_info = psutil.Process()
     time_stats = process_info.cpu_times()
+    iowait = time_stats.iowait if hasattr(time_stats, 'iowait') else -1
     return TimeTuple(user=time_stats.user + time_stats.children_user,
                      system=time_stats.system + time_stats.children_system,
-                     iowait=time_stats.iowait)
+                     iowait=iowait)
 
 
 def hash_path(file_name):
@@ -157,199 +375,6 @@ def prepend_xcache(file_paths):
 # noinspection PyUnusedLocal
 
 
-def callback(channel, method, properties, body):
-    """
-    This is the main function for the transformer. It is called whenever a new message
-    is available on the rabbit queue. These messages represent a single file to be
-    transformed.
-
-    Each request may include a list of replicas to try. This service will loop through
-    the replicas and produce a json document for the science package to actually work from.
-    This control document will have the replica for it to try to transform along with a
-    path in the output directory for the generated parquet or root file to be written.
-
-    This control document is sent via a socket to the science image.
-    Once science image has done its job, it sends back a message over the socket.
-    The sidecar will then add the parquet/root file in the output directory to the
-    S3 upload queue.
-
-    We will examine this log file to see if the transform succeeded or failed
-    """
-    transform_request = json.loads(body)
-    _request_id = transform_request['request-id']
-
-    # If we are converting root to parquet here, then the transformer
-    # doesn't need to know about. Tell it to write root, and we'll take it from here
-    if convert_root_to_parquet:
-        transform_request['result-format'] = 'root'
-
-    # The transform can either include a single path, or a list of replicas
-    if 'file-path' in transform_request:
-        _file_paths = [transform_request['file-path']]
-
-        # make sure that paths starting with http are at the end of the list
-        _https = []
-        _roots = []
-        for _fp in _file_paths:
-            if _fp.startswith('http'):
-                _https.append(_fp)
-            else:
-                _roots.append(_fp)
-        _file_paths = _roots+_https
-    else:
-        _file_paths = transform_request['paths'].split(',')
-
-    # adding cache prefix
-    _file_paths = prepend_xcache(_file_paths)
-
-    _file_id = transform_request['file-id']
-    _server_endpoint = transform_request['service-endpoint']
-    logger.info("got transform request.", extra={
-        "requestId": _request_id,
-        "paths": _file_paths,
-        "result-destination": transform_request['result-destination'],
-        "result-format": transform_request['result-format'],
-        "service-endpoint": transform_request['service-endpoint'],
-        "place": PLACE
-    })
-    servicex = ServiceXAdapter(_server_endpoint)
-
-    # creating output dir for transform output files
-    request_path = os.path.join(posix_path, _request_id)
-    os.makedirs(request_path, exist_ok=True)
-
-    # scratch dir where the transformer temporarily writes the results.
-    scratch_path = os.path.join(posix_path, _request_id, 'scratch')
-    os.makedirs(scratch_path, exist_ok=True)
-
-    start_process_info = get_process_info()
-    total_time = time.time()
-
-    transform_success = False
-    try:
-        # Loop through the replicas
-        for _file_path in _file_paths:
-            logger.info("trying to transform file", extra={
-                        "requestId": _request_id, "file-path": _file_path, "place": PLACE})
-
-            # Enrich the transform request to give more hints to the science container
-            transform_request['downloadPath'] = _file_path
-
-            # Decide an optional file extension for the results. If the output format is
-            # parquet then we add that as an extension, otherwise stick with the format
-            # of the input file.
-            result_extension = ".parquet" \
-                if transform_request['result-format'] == 'parquet' \
-                else ""
-            hashed_file_name = hash_path(_file_path.replace('/', ':') + result_extension)
-
-            # The transformer will write results here as they are generated. This
-            # directory isn't monitored.
-            transform_request['safeOutputFileName'] = os.path.join(
-                scratch_path,
-                hashed_file_name
-            )
-
-            while True:
-                print('waiting for the GeT')
-                req = conn.recv(4096)
-                if not req:
-                    print('problem in getting GeT')
-                    break
-                req1 = req.decode('utf8')
-                print("REQ >>>>>>>>>>>>>>>", req1)
-                if req1.startswith('GeT'):
-                    break
-
-            res = json.dumps(transform_request)+"\n"
-            print("sending:", res)
-            conn.send(res.encode())
-
-            print('WAITING FOR STATUS...')
-            req = conn.recv(4096)
-            if not req:
-                break
-            req2 = req.decode('utf8').strip()
-            print('STATUS RECEIVED :', req2)
-            logger.info(f"received result: {req2}", extra={
-                        "requestId": _request_id, "file-path": _file_path, "place": PLACE})
-
-            if req2 == 'success.':
-                logger.info("adding item to OSU queue", extra={
-                            "requestId": _request_id, "file-path": _file_path,
-                            "place": PLACE})
-                upload_queue.put(ObjectStoreUploader.WorkQueueItem(
-                    Path(transform_request['safeOutputFileName'])))
-            conn.send("confirmed.\n".encode())
-
-            # Grab the logs
-            transformer_stats = fill_stats_parser(
-                transformer_capabilities['stats-parser'],
-                Path(os.path.join(request_path, 'abc.log'))
-            )
-
-            if req2 == 'success.':
-                transform_success = True
-                ts = {
-                    "requestId": _request_id,
-                    "file-size": transformer_stats.file_size,
-                    "total-events": transformer_stats.total_events,
-                    "place": PLACE
-                }
-                logger.info("Transformer stats.", extra=ts)
-                break
-
-        # If none of the replicas resulted in a successful transform then we have
-        # a hard failure with this file.
-        if not transform_success:
-            hf = {
-                "requestId": _request_id,
-                "file-id": _file_id,
-                "error-info": transformer_stats.error_info,
-                "log_body": transformer_stats.log_body,
-                "place": PLACE
-            }
-            logger.error("Hard Failure", extra=hf)
-
-        if transform_success:
-            servicex.put_file_complete(_request_id, _file_path, _file_id, "success",
-                                       total_time=time.time()-total_time,
-                                       total_events=transformer_stats.total_events,
-                                       total_bytes=transformer_stats.file_size
-                                       )
-        else:
-            servicex.put_file_complete(_request_id, file_path=_file_path, file_id=_file_id,
-                                       status='failure',
-                                       total_time=time.time()-total_time, total_events=0,
-                                       total_bytes=0)
-
-        stop_process_info = get_process_info()
-        elapsed_times = TimeTuple(user=stop_process_info.user - start_process_info.user,
-                                  system=stop_process_info.system - start_process_info.system,
-                                  iowait=stop_process_info.iowait - start_process_info.iowait)
-
-        logger.info("File processed.", extra={
-            'requestId': _request_id, 'fileId': _file_id,
-            'user': elapsed_times.user,
-            'sys': elapsed_times.system,
-            'iowait': elapsed_times.iowait,
-            "place": PLACE
-        })
-
-    except Exception as error:
-        logger.exception(f"Received exception doing transform: {error}")
-
-        transform_request['error'] = str(error)
-        channel.basic_publish(exchange='transformation_failures',
-                              routing_key=_request_id + '_errors',
-                              body=json.dumps(transform_request))
-
-        servicex.put_file_complete(_request_id, file_path=_file_paths[0], file_id=_file_id,
-                                   status='failure',
-                                   total_time=time.time()-total_time, total_events=0,
-                                   total_bytes=0)
-    finally:
-        channel.basic_ack(delivery_tag=method.delivery_tag)
 
 
 if __name__ == "__main__":
@@ -371,14 +396,15 @@ if __name__ == "__main__":
         posix_path = args.output_dir
     elif args.output_dir:
         object_store = None
+        posix_path = args.output_dir
 
     os.makedirs(posix_path, exist_ok=True)
 
     # creating scripts dir for access by science container
     scripts_path = os.path.join(posix_path, 'scripts')
     os.makedirs(scripts_path, exist_ok=True)
-    shutil.copy('watch.sh', scripts_path)
-    shutil.copy('proxy-exporter.sh', scripts_path)
+    shutil.copy('scripts/watch.sh', scripts_path)
+    shutil.copy('scripts/proxy-exporter.sh', scripts_path)
 
     logger.debug("Waiting for capabilities file")
     capabilities_file_path = Path(os.path.join(posix_path, 'transformer_capabilities.json'))
@@ -406,20 +432,22 @@ if __name__ == "__main__":
     serv.listen()
     conn, addr = serv.accept()
 
-    # Create a queue to communicate with the ObjestStore uploader
-    upload_queue = Queue()
+    logger.info("Connected to science container", extra={"place": PLACE})
 
-    uploader = ObjectStoreUploader(request_id=args.request_id, input_queue=upload_queue,
-                                   object_store=object_store, logger=logger,
-                                   convert_root_to_parquet=convert_root_to_parquet)
+    if object_store:
+        # Create a queue to communicate with the ObjectStore uploader
+        upload_queue = Queue()
 
-    uploader.start()
+        uploader = ObjectStoreUploader(request_id=args.request_id, input_queue=upload_queue,
+                                       object_store=object_store, logger=logger,
+                                       convert_root_to_parquet=convert_root_to_parquet)
+
+        uploader.start()
 
     if args.request_id:
-        rabbitmq = RabbitMQManager(args.rabbit_uri,
-                                   args.request_id,
-                                   callback)
-        rabbitmq.start()
+        app.worker_main(argv=['worker', '--loglevel=info',
+                              "-Q", queue_name,
+                              '-n', f"transformer-{args.request_id}@%h"])
 
     # This is the signal handler that will shut the transformer down gracefully
     def signal_handler(sig, frame):
@@ -432,5 +460,5 @@ if __name__ == "__main__":
     # Register the signal handler to shut the transformer down gracefully
     signal.signal(signal.SIGTERM, signal_handler)
 
-    uploader.join()
+    # uploader.join()
     logger.info("Uploader is done", extra={'requestId': args.request_id, "place": PLACE})
