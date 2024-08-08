@@ -448,6 +448,11 @@ if __name__ == "__main__":
         app.worker_main(argv=['worker', '--loglevel=info',
                               "-Q", queue_name,
                               '-n', f"transformer-{args.request_id}@%h"])
+    else:
+        logger.info("Streaming files from "+args.path)
+        transform_file(request_id="LocalTest", file_id=-1, paths=[], file_path=args.path,
+                       tree_name=None, service_endpoint=None,
+                       result_destination="volume", result_format="root")
 
     # This is the signal handler that will shut the transformer down gracefully
     def signal_handler(sig, frame):
