@@ -53,4 +53,13 @@ transformer:
 
 
 
+# Testing
+```shell
+docker run --rm -it -v ${PWD}/test_posix_vol:/servicex/output  \
+            -v ${PWD}/test_posix_vol/generated_code:/generated --net=host  \
+            sslhep/servicex_func_adl_uproot_transformer:uproot5 \
+            /servicex/output/scripts/watch.sh python /generated/transform_single_file.py /servicex/output/ 
+```
 
+```shell
+```

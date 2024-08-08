@@ -50,7 +50,7 @@ class TransformerArgumentParser(argparse.ArgumentParser):
 
         self.add_argument('--result-destination', dest='result_destination',
                           action='store',
-                          default='object-store', help='object-store, output-dir',
+                          default='object-store', help='object-store, output-dir, volume',
                           choices=['object-store', 'output-dir', 'volume'])
 
         self.add_argument('--output-dir', dest='output_dir',
@@ -65,7 +65,7 @@ class TransformerArgumentParser(argparse.ArgumentParser):
                           default='host.docker.internal')
 
         self.add_argument('--request-id', dest='request_id', action='store',
-                          default='servicex', help='Request ID to read from queue')
+                          default=None, help='Request ID to read from queue')
 
     @classmethod
     def extract_attr_list(cls, attr_names):
