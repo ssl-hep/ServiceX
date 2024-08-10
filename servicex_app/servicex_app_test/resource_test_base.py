@@ -183,6 +183,10 @@ class ResourceTestBase:
         return mocker.MagicMock(RabbitAdaptor)
 
     @fixture
+    def mock_celery_app(self, mocker):
+        return mocker.MagicMock(Celery)
+
+    @fixture
     def mock_code_gen_service(self, mocker):
         return mocker.MagicMock(CodeGenAdapter)
 

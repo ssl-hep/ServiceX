@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,23 +25,42 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import time
-
 from celery import Celery
+import re
+
+pattern = r'transformer-([0-9a-f-]+)-[a-z0-9]+\.transform_file'
+did_finder_pattern = r'(.+)\.lookup_dataset'
+
+
+def route_task(name, args, kwargs, options, task=None, **kw):
+    print(f"Routing task {name} with args {args} and kwargs {kwargs} to {task}")
+    match = re.search(pattern, name)
+    if match:
+        return {'queue': match.group(1)}
+    else:
+        return {
+            'did_finder_cernopendata.lookup_dataset': {'queue': 'did_finder_cernopendata'},
+            'did_finder_rucio.lookup_dataset': {'queue': 'did_finder_rucio'},
+            'did_finder_xrootd.lookup_dataset': {'queue': 'did_finder_xrootd'}
+        }[name]
 
 app = Celery(broker="amqp://user:leftfoot1@localhost:5672")
-app.conf.task_routes = {
-    'transformer-123-456.transform_file': {'queue': '123-456'}
-}
 
-routes = app.conf.task_routes
-routes['transformer-654-321.transform_file'] = {'queue': '654-321'}
-app.conf.task_routes = routes
-print(app.conf.task_routes)
-task_id = app.send_task('transformer-123-456.transform_file',
-                        kwargs={'request_id': 'c71584e9-077a-4cc0-832a-64b501cd20cc',
-                                'file_id': 271,
-                                'paths': 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/mtost/17/e2/user.mtost.39696075._000004.newer_TCPT_version.root', 'service_endpoint': 'http://host.docker.internal:5000/servicex/internal/transformation/c71584e9-077a-4cc0-832a-64b501cd20cc',
-                                'result_destination': 'object-store',
-                                'result_format': 'root-file'})
-print(task_id)
+app.conf.task_routes =(route_task,)
+
+app.send_task('did_finder_rucio.lookup_dataset',
+              kwargs={'dataset': 'mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zmumu.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630000_00'})
+
+
+app.send_task('transformer-2f748056-9db3-47f0-b51e-3ec46b8a284a.transform_file',
+              kwargs={
+                  "request_id": "abc123",
+                  "file_id": 1,
+                  "paths": ["/path/to/file1.txt", "/path/to/file2.pdf",
+                            "/path/to/file3.docx"],
+                  "file_path": "/path/to/file.txt",
+                  "tree_name": "my_tree",
+                  "service_endpoint": "https://example.com/api/v1",
+                  "result_destination": "/path/to/output/directory",
+                  "result_format": "root"
+              })

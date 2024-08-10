@@ -21,10 +21,17 @@ lang=$1
 cmd=$2
 path=$3
 
+if [ -n "$4" ]; then
+      export SIDECAR_HOST="$4"
+else
+    export SIDECAR_HOST="localhost"
+
+fi
+
 sleep 1
 echo "connecting..."
 
-coproc nc { nc host.docker.internal 8081; }
+coproc nc { nc "$SIDECAR_HOST" 8081; }
 
 while [[ $nc_PID ]] ; do
   

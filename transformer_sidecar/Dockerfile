@@ -17,11 +17,9 @@ RUN poetry config virtualenvs.create false && \
 # show up until much later!
 ENV PYTHONUNBUFFERED=1
 
+COPY scripts/ ./scripts/
 # Copy over the source
-COPY src/ \
-    scripts/proxy-exporter.sh \
-    scripts/watch.sh \
-    ./
+COPY src/ ./
 
 ADD gai.conf /etc/gai.conf
 

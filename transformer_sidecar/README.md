@@ -59,6 +59,14 @@ docker run --rm -it -v ${PWD}/test_posix_vol:/servicex/output  \
             sslhep/servicex_func_adl_uproot_transformer:uproot5 \
             /servicex/output/scripts/watch.sh python /generated/transform_single_file.py /servicex/output/ 
 ```
+
+There is a new, final argument to the watch.sh script that is hostname to use to connect to the sidecar.
+Inside the Kubernetes environment, this is just plain ol' `localhost` since the two containers are 
+running inside the same pod. In the docker environment we have to get a little fancy. For Docker Desktop
+on Mac, the hostname is `host.docker.internal`. I'm not sure what this is on windows @ketan96-m can you 
+verify?
+
+
 This mounts the test_posix_vol directory into the science image along with the generated_code 
 directory. It launches the watch script with the python command and the local paths.
 

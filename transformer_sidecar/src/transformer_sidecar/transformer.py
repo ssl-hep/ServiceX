@@ -45,7 +45,6 @@ import signal
 
 from object_store_manager import ObjectStoreManager
 from object_store_uploader import ObjectStoreUploader
-from rabbit_mq_manager import RabbitMQManager
 from servicex_adapter import ServiceXAdapter
 from transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
@@ -78,7 +77,7 @@ args = parser.parse_args()
 logger = initialize_logging()
 
 # Create a Celery instance
-app = Celery(f"transformer-{args.request_id}", broker='amqp://user:leftfoot1@localhost:5672//')
+app = Celery(f"transformer-{args.request_id}", broker=args.rabbit_uri)
 
 logger.info("transformer startup", extra={"result_destination": args.result_destination,
                                           "output dir": args.output_dir, "place": PLACE})
@@ -92,7 +91,9 @@ else:
 
 # Define a task
 @app.task(queue=queue_name)
-def transform_file(request_id, file_id, paths, file_path, tree_name, service_endpoint, result_destination, result_format):
+def transform_file(request_id, file_id, paths,
+                   service_endpoint, result_destination, result_format,
+                   file_path=None):
     """
     This is the main function for the transformer. It is called whenever a new message
     is available on the rabbit queue. These messages represent a single file to be
@@ -451,8 +452,7 @@ if __name__ == "__main__":
     else:
         logger.info("Streaming files from "+args.path)
         transform_file(request_id="LocalTest", file_id=-1, paths=[], file_path=args.path,
-                       tree_name=None, service_endpoint=None,
-                       result_destination="volume", result_format="root")
+                       service_endpoint=None, result_destination="volume", result_format="root")
 
     # This is the signal handler that will shut the transformer down gracefully
     def signal_handler(sig, frame):
@@ -460,10 +460,11 @@ if __name__ == "__main__":
                                                         "place": PLACE})
         conn.close()
         serv.close()
+        uploader.stop()
         uploader.input_queue.put(ObjectStoreUploader.WorkQueueItem(None))
 
     # Register the signal handler to shut the transformer down gracefully
-    signal.signal(signal.SIGTERM, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
 
     # uploader.join()
     logger.info("Uploader is done", extra={'requestId': args.request_id, "place": PLACE})
