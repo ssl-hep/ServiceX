@@ -25,15 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestLookupResultProcessor(ResourceTestBase):
 
-    def test_add_files_to_processing_queue(self, mocker, mock_rabbit_adaptor):
-        processor = LookupResultProcessor(mock_rabbit_adaptor,
+    def test_add_files_to_processing_queue(self, mocker, mock_celery_app):
+        processor = LookupResultProcessor(mock_celery_app,
                                           "http://cern.analysis.ch:5000/")
 
         request = self._generate_transform_request()
@@ -43,21 +42,19 @@ class TestLookupResultProcessor(ResourceTestBase):
         with client.application.app_context():
             processor.add_files_to_processing_queue(request, [self._generate_datafile()])
 
-            mock_rabbit_adaptor.basic_publish.assert_called_once()
+            mock_celery_app.send_task.assert_called_once()
 
-            mock_rabbit_adaptor.basic_publish.assert_called_with(
-                exchange='transformation_requests',
-                routing_key='BR549',
-                body=json.dumps(
-                    {"request-id": 'BR549',
-                     "file-id": 123456789,
-                     "paths": "/path1,/path2",
-                     "tree-name": "Events",
-                     "service-endpoint":
+            mock_celery_app.send_task.assert_called_with(
+                'transformer-BR549.transform_file',
+                kwargs={
+                    "request-id": 'BR549',
+                    "file-id": 123456789,
+                    "paths": "/path1,/path2",
+                    "tree-name": "Events",
+                    "service-endpoint":
                         "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-                     "chunk-size": "1000",
-                     'result-destination': 'object-store',
-                     "result-format": "arrow"
-                     }
-                )
+                    "chunk-size": "1000",
+                    'result-destination': 'object-store',
+                    "result-format": "arrow"
+                }
             )

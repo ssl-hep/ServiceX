@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,37 +25,19 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
 
-from celery import Celery
-from flask import current_app
+pattern = r'transformer-([0-9a-f-]{8}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{12})\.transform_file'
+did_finder_pattern = r'(.+)\.lookup_dataset'
 
 
-class LookupResultProcessor:
-    def __init__(self, celery_app: Celery, advertised_endpoint: str):
-        self.celery = celery_app
-        self.advertised_endpoint = advertised_endpoint
+def route_task(name, args, kwargs, options, task=None, **kw):
+    transformer_match = re.search(pattern, name)
+    if transformer_match:
+        return {'queue': transformer_match.group(1), 'auto_delete': True, 'durable': False}
 
-    @staticmethod
-    def celery_task_name(request_id):
-        return f'transformer-{request_id}.transform_file'
+    did_finder_match = re.search(did_finder_pattern, name)
+    if did_finder_match:
+        return {'queue': did_finder_match.group(1)}
 
-    def add_files_to_processing_queue(self, request, files=None):
-        if files is None:
-            files = request.all_files
-        for file_record in files:
-            self.celery.send_task(self.celery_task_name(request.request_id),
-                                  kwargs={
-                'request_id': request.request_id,
-                'file_id': file_record.id,
-                'paths': file_record.paths.split(','),
-                "service_endpoint": self.advertised_endpoint
-                + "servicex/internal/transformation/"
-                + request.request_id,
-                "result_destination": request.result_destination,
-                "result_format": request.result_format
-            })
-            current_app.logger.info(f"Added file to processing queue", extra={
-                                    "task_id": self.celery_task_name(request.request_id)})
-
-        current_app.logger.info("Added files to processing queue", extra={
-            'requestId': request.request_id})
+    return {'queue': 'celery'}

@@ -47,7 +47,9 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         else:
             if histograms:
                 raise RuntimeError("Cannot store histograms in a non-ROOT return file format")
+
             for treename, subarray in awkward_array_dict.items():
+                print(f"Treename: {treename}, subarray: {subarray}")
                 subarray['treename'] = treename
             awkward_array = awkward_array_dict.popitem()[1]
             for treename, subarray in awkward_array_dict.items():

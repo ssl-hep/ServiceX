@@ -58,6 +58,9 @@ class ObjectStoreUploader(threading.Thread):
         self.logger = logger
         self.convert_root_to_parquet = convert_root_to_parquet
 
+    def stop(self):
+        self.stop()
+
     def service_work_queue(self):
         while True:
             item = self.input_queue.get()

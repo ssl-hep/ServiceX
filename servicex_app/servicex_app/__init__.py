@@ -40,6 +40,8 @@ from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
+
+from servicex_app.celery_task_router import route_task
 from servicex_app.cli.user_commands import add_user, list_users, approve_user
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
@@ -253,8 +255,7 @@ def create_app(test_config=None,
             sys.path.append('/opt/servicex/celery')
 
             celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
-            celery_app.config_from_object('celery_config')
-
+            celery_app.conf.task_routes =(route_task,)
         else:
             celery_app = provided_celery_app
 
@@ -271,7 +272,7 @@ def create_app(test_config=None,
             code_gen_service = provided_code_gen_service
 
         if not provided_lookup_result_processor:
-            lookup_result_processor = LookupResultProcessor(rabbit_adaptor,
+            lookup_result_processor = LookupResultProcessor(celery_app,
                                                             "http://" +
                                                             app.config[
                                                                 'ADVERTISED_HOSTNAME'] + "/"
