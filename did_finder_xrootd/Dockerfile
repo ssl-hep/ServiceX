@@ -7,7 +7,6 @@ WORKDIR /opt/servicex
 
 # Create celery user. Assign them to group zero since that is the group OpenShift will run the container as
 RUN useradd -g 0 -ms /bin/bash celery
-RUN chmod -R g=u /opt/servicex
 
 ENV  POETRY_VERSION=1.5.1
 
@@ -29,6 +28,7 @@ COPY . .
 # Change ownership of the app directory to celery user. Also set the group to zero since
 # that is the group OpenShift will run the container as
 RUN chown -R celery:0 /opt/servicex
+RUN chmod -R g=u /opt/servicex
 
 # Switch to celery user
 USER celery
