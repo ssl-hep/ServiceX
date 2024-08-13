@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+from typing import Any
 
 import requests
 import os
@@ -33,6 +34,7 @@ import os
 from retry.api import retry_call
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2
@@ -44,6 +46,37 @@ PLACE = {
 
 
 class ServiceXAdapter:
+    class FileCompleteRecord:
+        def __init__(self, request_id: int, file_path: str, file_id: int, status: str,
+                     total_time: float, total_events: int, total_bytes: int):
+
+            assert request_id, "request_id is required"
+            assert file_path, "file_path is required"
+            assert file_id, "file_id is required"
+            assert status, "status is required"
+
+            self.request_id = request_id
+            self.file_path = file_path
+            self.file_id = file_id
+            self.status = status
+            self.total_time = total_time
+            self.total_events = total_events
+            self.total_bytes = total_bytes
+            self.avg_rate = total_events / total_time if total_time else 0
+
+        def to_json(self) -> dict[str, Any]:
+            return {
+                "requestId": self.request_id,
+                "file-path": self.file_path,
+                "file-id": self.file_id,
+                "status": self.status,
+                "total-time": self.total_time,
+                "total-events": self.total_events,
+                "total-bytes": self.total_bytes,
+                "avg-rate": self.avg_rate,
+                "place": PLACE
+            }
+
     def __init__(self, servicex_endpoint, logger=None):
         # Default logger doesn't print so that code that uses library
         # can override
@@ -60,29 +93,15 @@ class ServiceXAdapter:
                         backoff_factor=0.1)
         self.session.mount('http', HTTPAdapter(max_retries=retries))
 
-    def put_file_complete(self, request_id, file_path, file_id, status,
-                          total_time=None, total_events=None,
-                          total_bytes=None):
-        avg_rate = 0 if not total_time else int(total_events / total_time)
-        doc = {
-            "requestId": request_id,
-            "file-path": file_path,
-            "file-id": file_id,
-            "status": status,
-            "total-time": total_time,
-            "total-events": total_events,
-            "total-bytes": total_bytes,
-            "avg-rate": avg_rate,
-            "place": PLACE
-        }
-
+    def put_file_complete(self, rec: FileCompleteRecord):
         if self.server_endpoint:
             try:
                 retry_call(self.session.put,
                            fargs=[self.server_endpoint + "/file-complete"],
-                           fkwargs={"json": doc},
+                           fkwargs={"json": rec.to_json()},
                            tries=MAX_RETRIES,
                            delay=RETRY_DELAY)
-                self.logger.info("Put file complete.", extra=doc)
+                self.logger.info("Put file complete.", extra=rec.to_json())
             except requests.exceptions.ConnectionError:
-                self.logger.exception("Connection Error in put_file_complete", extra=doc)
+                self.logger.exception("Connection Error in put_file_complete",
+                                      extra=rec.to_json())

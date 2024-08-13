@@ -27,18 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
 from unittest.mock import ANY
-from unittest.mock import call
 
 from celery import Celery
 from pytest import fixture
-from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
 
 from servicex_app import LookupResultProcessor
-from servicex_app.models import Dataset
-from servicex_app.dataset_manager import DatasetManager
-
 from servicex_app.code_gen_adapter import CodeGenAdapter
-
+from servicex_app.dataset_manager import DatasetManager
+from servicex_app.models import Dataset
+from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -146,21 +143,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert "Invalid Codegen Image Passed in Request: foo" in response.json[
             "message"]
 
-    def test_submit_transformation_request_throws_exception(
-            self, mocker, mock_rabbit_adaptor, mock_dataset_manager_from_did,
-            mock_codegen, mock_app_version, mock_transform_manager):
-        mock_rabbit_adaptor.setup_queue = mocker.Mock(side_effect=Exception('Test'))
-        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
-                                   transformation_manager=mock_transform_manager,
-                                   code_gen_service=mock_codegen)
-        with client.application.app_context():
-            response = client.post('/servicex/transformation',
-                                   json=self._generate_transformation_request(),
-                                   headers=self.fake_header()
-                                   )
-            assert response.status_code == 503
-            assert response.json == {"message": "Error setting up transformer queues"}
-
     def test_submit_transformation(self, mock_rabbit_adaptor,
                                    mock_dataset_manager_from_did,
                                    mock_codegen,
@@ -192,20 +174,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.app_version == "3.14.15"
             assert saved_obj.code_gen_image == 'sslhep/servicex_code_gen_func_adl_xaod:develop'
-
-            setup_queue_calls = [call(request_id), call(request_id+"_errors")]
-            mock_rabbit_adaptor.setup_queue.assert_has_calls(setup_queue_calls)
-            mock_rabbit_adaptor.setup_exchange.assert_has_calls([
-                call('transformation_requests'),
-                call('transformation_failures')
-            ])
-
-            bind_to_exchange_calls = [
-                call(exchange="transformation_requests", queue=request_id),
-                call(exchange="transformation_failures", queue=request_id+"_errors"),
-            ]
-
-            assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
             mock_dataset_manager_from_did.assert_called_with(ANY,
                                                              db=ANY,

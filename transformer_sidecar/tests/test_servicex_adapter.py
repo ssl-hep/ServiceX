@@ -51,7 +51,11 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3)
+        rec = ServiceXAdapter.FileCompleteRecord(42, "my-root.root",
+                                                 42, "testing",
+                                                 1, 2, 3)
+
+        adapter.put_file_complete(rec)
         mock_session.put.assert_called()
         args = mock_session.put.call_args
         assert args[0][0] == 'http://foo.com/file-complete'
@@ -76,7 +80,10 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        adapter.put_file_complete("req_id", "my-root.root", 42, "testing", 1, 2, 3)
+        rec = ServiceXAdapter.FileCompleteRecord(42, "my-root.root",
+                                                 42, "testing",
+                                                 1, 2, 3)
+        adapter.put_file_complete(rec)
         assert mock_session.put.call_count == 2
         assert len(caplog.records) == 2
         assert caplog.records[0].levelno == logging.WARNING

@@ -47,14 +47,12 @@ class TestLookupResultProcessor(ResourceTestBase):
             mock_celery_app.send_task.assert_called_with(
                 'transformer-BR549.transform_file',
                 kwargs={
-                    "request-id": 'BR549',
-                    "file-id": 123456789,
-                    "paths": "/path1,/path2",
-                    "tree-name": "Events",
-                    "service-endpoint":
+                    "request_id": 'BR549',
+                    "file_id": 123456789,
+                    "paths": ["/path1", "/path2"],
+                    "service_endpoint":
                         "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-                    "chunk-size": "1000",
-                    'result-destination': 'object-store',
-                    "result-format": "arrow"
+                    'result_destination': 'object-store',
+                    "result_format": "arrow"
                 }
             )

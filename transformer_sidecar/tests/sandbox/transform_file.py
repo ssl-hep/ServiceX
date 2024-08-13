@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import time
 
 from celery import Celery
 
@@ -41,7 +40,7 @@ print(app.conf.task_routes)
 task_id = app.send_task('transformer-123-456.transform_file',
                         kwargs={'request_id': 'c71584e9-077a-4cc0-832a-64b501cd20cc',
                                 'file_id': 271,
-                                'paths': 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/mtost/17/e2/user.mtost.39696075._000004.newer_TCPT_version.root', 'service_endpoint': 'http://host.docker.internal:5000/servicex/internal/transformation/c71584e9-077a-4cc0-832a-64b501cd20cc',
+                                'paths': 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/mtost/17/e2/user.mtost.39696075._000004.newer_TCPT_version.root', 'service_endpoint': 'http://host.docker.internal:5000/servicex/internal/transformation/c71584e9-077a-4cc0-832a-64b501cd20cc',  # NOQA E501
                                 'result_destination': 'object-store',
                                 'result_format': 'root-file'})
 print(task_id)

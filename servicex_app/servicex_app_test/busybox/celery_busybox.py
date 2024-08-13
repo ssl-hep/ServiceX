@@ -44,12 +44,13 @@ def route_task(name, args, kwargs, options, task=None, **kw):
             'did_finder_xrootd.lookup_dataset': {'queue': 'did_finder_xrootd'}
         }[name]
 
+
 app = Celery(broker="amqp://user:leftfoot1@localhost:5672")
 
-app.conf.task_routes =(route_task,)
+app.conf.task_routes = (route_task,)
 
 app.send_task('did_finder_rucio.lookup_dataset',
-              kwargs={'dataset': 'mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zmumu.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630000_00'})
+              kwargs={'dataset': 'mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zmumu.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630000_00'})  # NOQA E501
 
 
 app.send_task('transformer-2f748056-9db3-47f0-b51e-3ec46b8a284a.transform_file',
