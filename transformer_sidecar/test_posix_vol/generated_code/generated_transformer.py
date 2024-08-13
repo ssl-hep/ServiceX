@@ -1,98 +1,30 @@
+def run_query(input_filenames=None, tree_name=None):
+    import functools, logging, numpy as np, dask_awkward as dak, uproot, vector
+    vector.register_awkward()
 
-def run_query(file_path):
-    jquery = [{'treename': 'reco', 'expressions': None, 'cut': None, 'filter_name': 'el_pt_NOSYS', 'filter_typename': None, 'aliases': None}]
-
-    rv_arrays_trees = {}; rv_arrays_histograms = {}
-    for subquery in jquery:
-        a, b = run_single_query(file_path, subquery)
-        rv_arrays_trees.update(a); rv_arrays_histograms.update(b)
-    return rv_arrays_trees, rv_arrays_histograms
-
-def run_single_query(file_path, query):
-    import uproot
-    import awkward as ak
-
-    lang = uproot.language.python.PythonLanguage()
-    lang.functions.update({ 'concatenate': ak.concatenate,
-                             'where': ak.where,
-                             'flatten': ak.flatten,
-                             'num': ak.num,
-                             'count': ak.count,
-                             'count_nonzero': ak.count_nonzero,
-                             'sum': ak.sum,
-                             'nansum': ak.nansum,
-                             'prod': ak.prod,
-                             'nanprod': ak.nanprod,
-                             'any': ak.any,
-                             'all': ak.all,
-                             'min': ak.min,
-                             'nanmin': ak.nanmin,
-                             'max': ak.max,
-                             'nanmax': ak.nanmax,
-                             'argmin': ak.argmin,
-                             'nanargmin': ak.nanargmin,
-                             'argmax': ak.argmax,
-                             'nanargmax': ak.nanargmax,
-                             'moment': ak.moment,
-                             'mean': ak.mean,
-                             'nanmean': ak.nanmean,
-                             'var': ak.var,
-                             'nanvar': ak.nanvar,
-                             'std': ak.std,
-                             'nanstd': ak.nanstd,
-                             'softmax': ak.softmax,
-                             'sort': ak.sort,
-                             'argsort': ak.argsort,
-                             'mask': ak.mask,
-                             'is_none': ak.is_none,
-                             'drop_none': ak.drop_none,
-                             'pad_none': ak.pad_none,
-                             'fill_none': ak.fill_none,
-                             'firsts': ak.firsts,
-                             'singletons': ak.singletons,
-                             'broadcast_arrays': ak.broadcast_arrays,
-                             'broadcast_fields': ak.broadcast_fields,
-                             'cartesian': ak.cartesian,
-                             'argcartesian': ak.argcartesian,
-                             'combinations': ak.combinations,
-                             'argcombinations': ak.argcombinations,
-                             'isclose': ak.isclose,
-                             'almost_equal': ak.almost_equal,
-                           })
-
-    sanitized_args = {'expressions': query.get('expressions'),
-                       'cut': query.get('cut'),
-                       'filter_name': query.get('filter_name'),
-                       'aliases': query.get('aliases')}
-
-    rv_arrays_trees = {}; rv_arrays_histograms = {}
-    with uproot.open({file_path: None}) as fl:
-        if 'treename' in query:
-            trees = query['treename']
-            if isinstance(trees, str):
-                trees = [trees]
-            if isinstance(trees, list):
-                trees = {_:_ for _ in trees}
-            for treename, outtreename in trees.items():
-                # exception will be propagated up if tree does not exist
-                t = fl[treename]
-                arr = None
-                for subarr in t.iterate(language=lang, **sanitized_args):
-                    if arr is None:
-                        arr = subarr
-                    else:
-                        arr = ak.concatenate([arr, subarr])
-                if arr is not None and len(arr):  # iterate will not give anything if tree empty
-                    rv_arrays_trees[outtreename] = (arr, None)
-                else:  # recent uproot handles zero-length case properly for arrays()
-                    if 'cut' in sanitized_args:
-                        sanitized_args.pop('cut')
-                    arr = t.arrays(language=lang, entry_stop=0, **sanitized_args)
-                    rv_arrays_trees[outtreename] = (None, {_: arr[_].type for _ in arr.fields})
+    def _remove_not_interpretable(branch):
+        if isinstance(branch.interpretation, uproot.interpretation.identify.uproot.AsGrouped):
+            for name, interpretation in branch.interpretation.subbranches.items():
+                if isinstance(
+                        interpretation, uproot.interpretation.identify.UnknownInterpretation
+                    ):
+                    logging.getLogger(__name__).warning(
+                        f"Skipping {branch.name} as it is not interpretable by Uproot"
+                    )
+                    return False
+        if isinstance(branch.interpretation, uproot.interpretation.identify.UnknownInterpretation):
+            logging.getLogger(__name__).warning(
+                f"Skipping {branch.name} as it is not interpretable by Uproot"
+            )
+            return False
+        try:
+            _ = branch.interpretation.awkward_form(None)
+        except uproot.interpretation.objects.CannotBeAwkward:
+            logging.getLogger(__name__).warning(
+                f"Skipping {branch.name} as it cannot be represented as an Awkward array"
+            )
+            return False
         else:
-            histograms = query['copy_histograms']
-            keys = fl.keys(filter_name=histograms, cycle=False)
-            for key in keys:
-                rv_arrays_histograms[key] = fl[key]
+            return True
 
-    return rv_arrays_trees, rv_arrays_histograms
+    return (lambda selection: dak.zip({key: (dak.zip(value, depth_limit=(None if len(value) == 1 else 1)) if isinstance(value, dict) else value) for key, value in selection.items()} if isinstance(selection, dict) else selection, depth_limit=(None if len(selection) == 1 else 1)) if not isinstance(selection, dak.Array) else selection)((lambda e: {'el_pt_NOSYS': e['el_pt_NOSYS']})((lambda input_files, tree_name_to_use: (logging.getLogger(__name__).info('Using treename=' + repr(tree_name_to_use)), uproot.dask({input_file: tree_name_to_use for input_file in input_files}, filter_branch=_remove_not_interpretable))[1])((lambda source: [source] if isinstance(source, str) else source)(input_filenames if input_filenames is not None else ['bogus.root']), tree_name if tree_name is not None else 'reco'))).compute()

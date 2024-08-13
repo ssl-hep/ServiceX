@@ -5,8 +5,9 @@ from pathlib import Path
 import generated_transformer
 import awkward as ak
 import pyarrow.parquet as pq
-import pyarrow
+import uproot
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+default_tree_name = "servicex"
 
 
 def transform_single_file(file_path: str, output_path: Path, output_format: str):
@@ -19,51 +20,26 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     try:
         stime = time.time()
 
-        awkward_array_dict, histograms = generated_transformer.run_query(file_path)
-        total_events = sum((ak.num(awkward_array[0], axis=0)
-                            for awkward_array in awkward_array_dict.values()
-                            if awkward_array[0] is not None), 0)
+        awkward_array = generated_transformer.run_query(file_path)
+        total_events = ak.num(awkward_array, axis=0)
 
         ttime = time.time()
 
         if output_format == 'root-file':
-            import uproot
             etime = time.time()
-            # opening the file with open() is a workaround for a bug handling multiple colons
-            # in the filename in uproot 5.3.9
             with open(output_path, 'b+w') as wfile:
                 with uproot.recreate(wfile) as writer:
-                    for k, v in awkward_array_dict.items():
-                        if v[0] is not None:
-                            writer[k] = {field: v[0][field] for field in
-                                         v[0].fields} if v[0].fields \
-                                else v[0]
-                        else:
-                            writer.mktree(k, v[1])
-                    for k, v in histograms.items():
-                        writer[k] = v
+                    writer[default_tree_name] = {field: awkward_array[field] for field in
+                                                 awkward_array.fields} if awkward_array.fields \
+                        else awkward_array
             wtime = time.time()
 
         else:
-            if histograms:
-                raise RuntimeError("Cannot store histograms in a non-ROOT return file format")
-
-            for treename, subarray in awkward_array_dict.items():
-                print(f"Treename: {treename}, subarray: {subarray}")
-                subarray['treename'] = treename
-            awkward_array = awkward_array_dict.popitem()[1]
-            for treename, subarray in awkward_array_dict.items():
-                awkward_array = ak.concatenate([awkward_array, subarray])
-
             arrow = ak.to_arrow_table(awkward_array)
 
             etime = time.time()
 
-            try:
-                writer = pq.ParquetWriter(output_path, arrow.schema)
-            except pyarrow.lib.ArrowNotImplementedError:
-                raise RuntimeError("Unable to translate output tables to parquet "
-                                   "(probably different queries give different branches?)")
+            writer = pq.ParquetWriter(output_path, arrow.schema)
             writer.write_table(table=arrow)
             writer.close()
 

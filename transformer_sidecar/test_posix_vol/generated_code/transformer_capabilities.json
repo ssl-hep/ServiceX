@@ -1,8 +1,8 @@
 {
-  "name": "Uproot transformer using native uproot arguments",
+  "name": "FuncADL based uproot transformer",
   "description": "Extracts data from flat ntuple style root files.",
   "limitations": "Would be good to note what isn't implemented",
-  "file-formats": ["parquet"],
+  "file-formats": ["parquet", "root"],
   "stats-parser": "UprootStats",
   "language": "python",
   "command": "/generated/transform_single_file.py"
