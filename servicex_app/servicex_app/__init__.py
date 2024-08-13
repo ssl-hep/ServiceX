@@ -255,7 +255,7 @@ def create_app(test_config=None,
             sys.path.append('/opt/servicex/celery')
 
             celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
-            celery_app.conf.task_routes =(route_task,)
+            celery_app.conf.task_routes = (route_task,)
         else:
             celery_app = provided_celery_app
 

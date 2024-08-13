@@ -209,14 +209,6 @@ class SubmitTransformationRequest(ServiceXResource):
                     current_app.logger.error(msg, extra={'requestId': request_id})
                     return {'message': msg}, 500
 
-            # # Insure the required queues and exchange exist in RabbitMQ broker
-            # try:
-            #     self._setup_rabbit_queues(request_id)
-            # except Exception:
-            #     current_app.logger.exception("Unable to create transformer exchange",
-            #                                  extra={'requestId': request_id})
-            #     return {'message': "Error setting up transformer queues"}, 503
-
             request_rec.save_to_db()
             dataset_manager.refresh()
 

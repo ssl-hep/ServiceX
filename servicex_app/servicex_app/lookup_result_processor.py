@@ -54,7 +54,7 @@ class LookupResultProcessor:
                 "result_destination": request.result_destination,
                 "result_format": request.result_format
             })
-            current_app.logger.info(f"Added file to processing queue", extra={
+            current_app.logger.info("Added file to processing queue", extra={
                                     "task_id": self.celery_task_name(request.request_id)})
 
         current_app.logger.info("Added files to processing queue", extra={

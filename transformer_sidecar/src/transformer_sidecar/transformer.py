@@ -112,7 +112,12 @@ def transform_file(request_id, file_id, paths,
     We will examine this log file to see if the transform succeeded or failed
     """
 
-    transform_request = {}
+    transform_request = {
+        'file-id': file_id,
+        'request-id': request_id,
+        'status': 'unknown',
+        'error': None,
+    }
 
     # If we are converting root to parquet here, then the transformer
     # doesn't need to know about. Tell it to write root, and we'll take it from here
@@ -141,7 +146,7 @@ def transform_file(request_id, file_id, paths,
     logger.info("got transform request.", extra={
         "requestId": request_id,
         "paths": _file_paths,
-        "result-destination":result_destination,
+        "result-destination": result_destination,
         "result-format": result_format,
         "service-endpoint": service_endpoint,
         "place": PLACE
@@ -165,6 +170,8 @@ def transform_file(request_id, file_id, paths,
         for _file_path in _file_paths:
             logger.info("trying to transform file", extra={
                 "requestId": request_id, "file-path": _file_path, "place": PLACE})
+
+            transform_request['file-path'] = _file_path
 
             # Enrich the transform request to give more hints to the science container
             transform_request['downloadPath'] = _file_path
@@ -209,6 +216,7 @@ def transform_file(request_id, file_id, paths,
             logger.info(f"received result: {req2}", extra={
                 "requestId": request_id, "file-path": _file_path, "place": PLACE})
 
+            transform_request['status'] = req2
             if req2 == 'success.':
                 logger.info("adding item to OSU queue", extra={
                     "requestId": request_id, "file-path": _file_path,
@@ -239,6 +247,7 @@ def transform_file(request_id, file_id, paths,
         if not transform_success:
             hf = {
                 "requestId": request_id,
+                "file-path": _file_paths[0],
                 "file-id": file_id,
                 "error-info": transformer_stats.error_info,
                 "log_body": transformer_stats.log_body,
@@ -247,18 +256,26 @@ def transform_file(request_id, file_id, paths,
             logger.error("Hard Failure", extra=hf)
 
         if transform_success:
-            servicex.put_file_complete(request_id, file_path, file_id, "success",
-                                       total_time=time.time() - total_time,
-                                       total_events=transformer_stats.total_events,
-                                       total_bytes=transformer_stats.file_size
-                                       )
+            rec = ServiceXAdapter.FileCompleteRecord(
+                request_id=request_id,
+                file_path=file_path,
+                file_id=file_id,
+                status='success',
+                total_time=time.time() - total_time,
+                total_events=transformer_stats.total_events,
+                total_bytes=transformer_stats.file_size)
+
+            servicex.put_file_complete(rec)
         else:
-            servicex.put_file_complete(request_id, file_path=file_path,
-                                       file_id=file_id,
-                                       status='failure',
-                                       total_time=time.time() - total_time,
-                                       total_events=0,
-                                       total_bytes=0)
+            rec = ServiceXAdapter.FileCompleteRecord(
+                request_id=request_id,
+                file_path=_file_paths[0],
+                file_id=file_id,
+                status='failure',
+                total_time=time.time() - total_time,
+                total_events=0,
+                total_bytes=0)
+            servicex.put_file_complete(rec)
 
         stop_process_info = get_process_info()
         elapsed_times = TimeTuple(
@@ -276,17 +293,16 @@ def transform_file(request_id, file_id, paths,
 
     except Exception as error:
         logger.exception(f"Received exception doing transform: {error}")
+        rec = ServiceXAdapter.FileCompleteRecord(
+            request_id=request_id,
+            file_path=_file_paths[0],
+            file_id=file_id,
+            status='failure',
+            total_time=time.time() - total_time,
+            total_events=0,
+            total_bytes=0)
+        servicex.put_file_complete(rec)
 
-        transform_request['error'] = str(error)
-
-        servicex.put_file_complete(request_id, file_path=_file_paths[0],
-                                   file_id=file_id,
-                                   status='failure',
-                                   total_time=time.time() - total_time,
-                                   total_events=0,
-                                   total_bytes=0)
-
-        return transform_request
 
 class TimeTuple(NamedTuple):
     """
@@ -376,8 +392,6 @@ def prepend_xcache(file_paths):
 # noinspection PyUnusedLocal
 
 
-
-
 if __name__ == "__main__":
     start_time = timeit.default_timer()
     parser = TransformerArgumentParser(description="ServiceX Transformer")
@@ -446,7 +460,8 @@ if __name__ == "__main__":
         uploader.start()
 
     if args.request_id:
-        app.worker_main(argv=['worker', '--loglevel=info',
+        app.worker_main(argv=['worker',
+                              "--concurrency=1", '--loglevel=info',
                               "-Q", queue_name,
                               '-n', f"transformer-{args.request_id}@%h"])
     else:
@@ -461,10 +476,11 @@ if __name__ == "__main__":
         conn.close()
         serv.close()
         uploader.stop()
+        app.control.broadcast('shutdown')
         uploader.input_queue.put(ObjectStoreUploader.WorkQueueItem(None))
 
     # Register the signal handler to shut the transformer down gracefully
-    # signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     # uploader.join()
     logger.info("Uploader is done", extra={'requestId': args.request_id, "place": PLACE})

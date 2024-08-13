@@ -30,11 +30,13 @@ from servicex_app.celery_task_router import route_task
 
 def test_transformer_route():
     assert (route_task('transformer-2f748056-9db3-47f0-b51e-3ec46b8a284a.transform_file',
-                      None, None, None) ==
-            {'queue': '2f748056-9db3-47f0-b51e-3ec46b8a284a'})
+                       None, None, None) ==
+            {'auto_delete': True,
+             'durable': False,
+             'queue': '2f748056-9db3-47f0-b51e-3ec46b8a284a'})
 
 
 def test_did_finder_route():
     assert (route_task('did_finder_rucio.lookup_dataset',
-                      None, None, None) ==
+                       None, None, None) ==
             {'queue': 'did_finder_rucio'})
