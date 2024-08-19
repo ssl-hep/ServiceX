@@ -47,3 +47,9 @@ class UprootStats(TransformerStats):
 
         if matches:
             self.error_info = f"Property naming error: {matches[0]} not available in dataset"
+
+        matches = re.findall(
+            r"awkward.errors.FieldNotFoundError: no field '([^\"]*)' in record.*", self.log_body)
+
+        if matches:
+            self.error_info = f"Property naming error: {matches[0]} not available in dataset"

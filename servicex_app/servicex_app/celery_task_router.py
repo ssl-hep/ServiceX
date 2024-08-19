@@ -27,14 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import re
 
-pattern = r'transformer-([0-9a-f-]{8}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{12})\.transform_file'
 did_finder_pattern = r'(.+)\.lookup_dataset'
 
 
 def route_task(name, args, kwargs, options, task=None, **kw):
-    transformer_match = re.search(pattern, name)
-    if transformer_match:
-        return {'queue': transformer_match.group(1), 'auto_delete': True, 'durable': False}
+    if name == 'transformer_sidecar.transform_file':
+        return {'queue': f"transformer-{kwargs['request_id']}",
+                'auto_delete': True, 'durable': False}
 
     did_finder_match = re.search(did_finder_pattern, name)
     if did_finder_match:

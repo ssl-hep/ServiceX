@@ -45,38 +45,38 @@ PLACE = {
 }
 
 
+class FileCompleteRecord:
+    def __init__(self, request_id: str, file_path: str, file_id: int, status: str,
+                 total_time: float, total_events: int, total_bytes: int):
+        assert request_id, "request_id is required"
+        assert file_path, "file_path is required"
+        assert file_id, "file_id is required"
+        assert status, "status is required"
+
+        self.request_id = request_id
+        self.file_path = file_path
+        self.file_id = file_id
+        self.status = status
+        self.total_time = total_time
+        self.total_events = total_events
+        self.total_bytes = total_bytes
+        self.avg_rate = total_events / total_time if total_time else 0
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "requestId": self.request_id,
+            "file-path": self.file_path,
+            "file-id": self.file_id,
+            "status": self.status,
+            "total-time": self.total_time,
+            "total-events": self.total_events,
+            "total-bytes": self.total_bytes,
+            "avg-rate": self.avg_rate,
+            "place": PLACE
+        }
+
+
 class ServiceXAdapter:
-    class FileCompleteRecord:
-        def __init__(self, request_id: int, file_path: str, file_id: int, status: str,
-                     total_time: float, total_events: int, total_bytes: int):
-
-            assert request_id, "request_id is required"
-            assert file_path, "file_path is required"
-            assert file_id, "file_id is required"
-            assert status, "status is required"
-
-            self.request_id = request_id
-            self.file_path = file_path
-            self.file_id = file_id
-            self.status = status
-            self.total_time = total_time
-            self.total_events = total_events
-            self.total_bytes = total_bytes
-            self.avg_rate = total_events / total_time if total_time else 0
-
-        def to_json(self) -> dict[str, Any]:
-            return {
-                "requestId": self.request_id,
-                "file-path": self.file_path,
-                "file-id": self.file_id,
-                "status": self.status,
-                "total-time": self.total_time,
-                "total-events": self.total_events,
-                "total-bytes": self.total_bytes,
-                "avg-rate": self.avg_rate,
-                "place": PLACE
-            }
-
     def __init__(self, servicex_endpoint, logger=None):
         # Default logger doesn't print so that code that uses library
         # can override

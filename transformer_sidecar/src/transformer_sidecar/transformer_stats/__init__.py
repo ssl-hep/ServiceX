@@ -26,17 +26,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from pathlib import Path
+from typing import Optional
 
-from abc import ABC
 
-
-class TransformerStats(ABC):
-    def __init__(self, log_path: Path):
-        if log_path.exists():
+class TransformerStats:
+    def __init__(self, log_path: Optional[Path] = None):
+        if log_path and log_path.exists():
             with open(log_path, encoding="utf8", errors='ignore') as log:
                 self.log_body = log.read()
         else:
             print("File does not exist:", log_path)
+            self.log_body = ""
         self.total_events = 0
         self.file_size = 0
         self.error_info = "Unable to determine error cause. Please consult log files"

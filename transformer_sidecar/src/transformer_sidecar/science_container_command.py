@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,23 +25,52 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+import socket
 
-from celery import Celery
 
-app = Celery(broker="amqp://user:leftfoot1@localhost:5672")
-app.conf.task_routes = {
-    'transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file': {'queue': '0ad80a11-c847-4874-90d6-6c0fc09bf854'}  # noqa 501
-}
+class ScienceContainerException(Exception):
+    pass
 
-routes = app.conf.task_routes
-routes['transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file'] = {'queue': '0ad80a11-c847-4874-90d6-6c0fc09bf854'}  # noqa 501
-app.conf.task_routes = routes
-print(app.conf.task_routes)
-task_id = app.send_task('transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file',
-                        kwargs={'request_id': '0ad80a11-c847-4874-90d6-6c0fc09bf854',
-                                'service_endpoint': 'http://localhost:5000',
-                                'file_id': 271,
-                                'paths': 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlasdatadisk/rucio/mc20_13TeV/20/01/DAOD_PHYSLITE.37110983._000012.pool.root.1"', # noqa 501
-                                'result_destination': 'object-store',
-                                'result_format': 'root-file'})
-print(task_id)
+
+class ScienceContainerCommand:
+    def __init__(self):
+        # Open a socket to the science container
+        self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serv.bind(("localhost", 8081))
+        self.serv.listen()
+        self.conn, self.addr = self.serv.accept()
+
+    def synch(self):
+        while True:
+            print("waiting for the GeT")
+            req = self.conn.recv(4096)
+            if not req:
+                print("problem in getting GeT")
+                raise ScienceContainerException("problem in getting GeT")
+            req1 = req.decode("utf8")
+            print("REQ >>>>>>>>>>>>>>>", req1)
+            if req1.startswith("GeT"):
+                break
+
+    def send(self, transform_request: dict):
+        res = json.dumps(transform_request) + "\n"
+        print("sending:", res)
+        self.conn.send(res.encode())
+
+    def await_response(self):
+        print("WAITING FOR STATUS...")
+        req = self.conn.recv(4096)
+        # if not req:
+        #     break
+        req2 = req.decode("utf8").strip()
+        print("STATUS RECEIVED :", req2)
+        return req2
+
+    def confirm(self):
+        self.conn.send("confirmed.\n".encode())
+
+    def close(self):
+        self.conn.send("stop.\n".encode())
+        self.conn.close()
+        self.serv.close()

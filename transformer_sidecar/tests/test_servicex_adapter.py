@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from transformer_sidecar.servicex_adapter import ServiceXAdapter
+from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
 
 
 class TestServiceXAdapter:
@@ -51,9 +51,9 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        rec = ServiceXAdapter.FileCompleteRecord(42, "my-root.root",
-                                                 42, "testing",
-                                                 1, 2, 3)
+        rec = FileCompleteRecord("42", "my-root.root",
+                                 42, "testing",
+                                 1, 2, 3)
 
         adapter.put_file_complete(rec)
         mock_session.put.assert_called()
@@ -80,9 +80,9 @@ class TestServiceXAdapter:
         mocker.patch('requests.session', return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        rec = ServiceXAdapter.FileCompleteRecord(42, "my-root.root",
-                                                 42, "testing",
-                                                 1, 2, 3)
+        rec = FileCompleteRecord("42", "my-root.root",
+                                 42, "testing",
+                                 1, 2, 3)
         adapter.put_file_complete(rec)
         assert mock_session.put.call_count == 2
         assert len(caplog.records) == 2

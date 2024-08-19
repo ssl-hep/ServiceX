@@ -188,6 +188,7 @@ class TransformerManager:
 
         sidecar_command = "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH " + \
             "python /servicex/transformer_sidecar/transformer.py " + \
+            " --shared-dir /servicex/output " + \
             " --request-id " + request_id + \
             " --rabbit-uri " + rabbitmq_uri + \
             " --result-destination " + result_destination + \
