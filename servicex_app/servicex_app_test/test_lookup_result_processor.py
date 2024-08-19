@@ -45,7 +45,7 @@ class TestLookupResultProcessor(ResourceTestBase):
             mock_celery_app.send_task.assert_called_once()
 
             mock_celery_app.send_task.assert_called_with(
-                'transformer-BR549.transform_file',
+                'transformer_sidecar.transform_file',
                 kwargs={
                     "request_id": 'BR549',
                     "file_id": 123456789,

@@ -42,7 +42,6 @@ class TestTransformerArgumentParser:
         arg_parser = TransformerArgumentParser(description="Test Transformer")
         sys.argv = ["foo",
                     "--path", "/foo/bar",
-                    "--tree", "Events",
                     "--limit", "10",
                     '--result-destination', 'object-store',
                     '--result-format', 'arrow',
@@ -52,7 +51,6 @@ class TestTransformerArgumentParser:
 
         args = arg_parser.parse_args()
         assert args.path == '/foo/bar'
-        assert args.tree == 'Events'
         assert args.limit == 10
         assert args.result_destination == 'object-store'
         assert args.result_format == 'arrow'

@@ -44,7 +44,7 @@ def initialize_logging():
     """
 
     log = logging.getLogger()
-    log.level = getattr(logging, os.environ.get('LOG_LEVEL'), "DEBUG")
+    log.level = getattr(logging, os.environ.get('LOG_LEVEL', "DEBUG"))
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +

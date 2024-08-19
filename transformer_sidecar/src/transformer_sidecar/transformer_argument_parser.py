@@ -36,9 +36,7 @@ class TransformerArgumentParser(argparse.ArgumentParser):
     def __init__(self, description="ServiceX Transformer"):
         super(TransformerArgumentParser, self).__init__(description=description)
 
-        self.add_argument("--tree", dest='tree', action='store',
-                          default="Events",
-                          help='Tree from which columns will be inspected')
+        self.add_argument("--shared-dir", dest='shared_dir', action='store')
 
         self.add_argument("--path", dest='path', action='store',
                           default=None,

@@ -44,6 +44,9 @@ while [[ $nc_PID ]] ; do
     if [[ -z "$line" ]]; then
       echo "received an empty line"
       break
+    elif [ "$line" = "stop" ]; then
+        kill "$nc_PID"
+        break
     fi
     download_path=$(echo $line | jq -r '.downloadPath')
     output_file=$(echo $line | jq -r '.safeOutputFileName')

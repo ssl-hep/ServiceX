@@ -27,12 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
-import threading
+from multiprocessing import Process
 from pathlib import Path
 from queue import Queue
 from typing import Optional
 
 from transformer_sidecar.object_store_manager import ObjectStoreManager
+from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
 
 PLACE = {
     "host_name": os.getenv("HOST_NAME", "unknown"),
@@ -40,28 +41,37 @@ PLACE = {
 }
 
 
-class ObjectStoreUploader(threading.Thread):
-    class WorkQueueItem:
-        def __init__(self, source_path: Path):
-            self.source_path = source_path
+class WorkQueueItem:
+    def __init__(self, source_path: Path,
+                 servicex: ServiceXAdapter = None,
+                 rec: FileCompleteRecord = None):
+        self.source_path = source_path
+        self.servicex = servicex
+        self.rec = rec
 
-        def is_complete(self):
-            return not self.source_path
+    def is_complete(self):
+        return not self.source_path
+
+
+class ObjectStoreUploader(Process):
 
     def __init__(self, request_id: str, input_queue: Queue,
-                 object_store: ObjectStoreManager, logger: logging.Logger,
+                 logger: logging.Logger,
                  convert_root_to_parquet: bool):
         super().__init__(target=self.service_work_queue)
         self.request_id = request_id
         self.input_queue = input_queue
-        self.object_store = object_store
         self.logger = logger
         self.convert_root_to_parquet = convert_root_to_parquet
 
-    def stop(self):
-        self.stop()
-
     def service_work_queue(self):
+        self.logger.info("Object store uploader starting.",
+                         extra={'requestId': self.request_id, "place": PLACE})
+
+        # We have to create the object store manager here, because it's not safe to
+        # create it in the main process and pass it to the child process.
+        object_store = ObjectStoreManager()
+
         while True:
             item = self.input_queue.get()
 
@@ -83,12 +93,12 @@ class ObjectStoreUploader(threading.Thread):
                 self.logger.info("Uploading file to object store.",
                                  extra={'requestId': self.request_id, "place": PLACE,
                                         "objectName": object_name})
-                self.object_store.upload_file(self.request_id,
-                                              object_name,
-                                              file_to_upload.as_posix())
+                object_store.upload_file(self.request_id, object_name, file_to_upload.as_posix())
                 self.logger.info("File uploaded to object store.",
                                  extra={'requestId': self.request_id, "place": PLACE,
                                         "objectName": object_name})
+
+                item.servicex.put_file_complete(item.rec)
 
     def convert_to_parquet(self, source_path: Path) -> Optional[Path]:
         """
