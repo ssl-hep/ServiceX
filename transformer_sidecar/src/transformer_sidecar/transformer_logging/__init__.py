@@ -43,8 +43,11 @@ def initialize_logging():
     :return: logger with correct formatting that outputs to console
     """
 
+    # Don't let the object store uploader get to chatty
+    logging.getLogger('transformer_sidecar.object_store_uploader').setLevel(logging.INFO)
+
     log = logging.getLogger()
-    log.level = getattr(logging, os.environ.get('LOG_LEVEL', "DEBUG"))
+    log.level = getattr(logging, os.environ.get('LOG_LEVEL', "INFO"))
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
