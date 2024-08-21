@@ -65,8 +65,8 @@ class ObjectStoreUploader(Process):
         self.convert_root_to_parquet = convert_root_to_parquet
 
     def service_work_queue(self):
-        self.logger.info("Object store uploader starting.",
-                         extra={'requestId': self.request_id, "place": PLACE})
+        self.logger.debug("Object store uploader starting.",
+                          extra={'requestId': self.request_id, "place": PLACE})
 
         # We have to create the object store manager here, because it's not safe to
         # create it in the main process and pass it to the child process.
@@ -77,8 +77,8 @@ class ObjectStoreUploader(Process):
 
             # When we receive the poison pill, we're done.
             if item.is_complete():
-                self.logger.info("Object store uploader done!",
-                                 extra={'requestId': self.request_id, "place": PLACE})
+                self.logger.debug("Object store uploader done!",
+                                  extra={'requestId': self.request_id, "place": PLACE})
                 break
             else:
                 # Now is the time to convert the file to parquet if that's what the user
