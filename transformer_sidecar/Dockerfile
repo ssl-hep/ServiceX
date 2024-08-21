@@ -13,6 +13,13 @@ COPY poetry.lock poetry.lock
 RUN poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi
 
+
+RUN useradd -ms /bin/bash output -G sudo && passwd -d output
+RUN chgrp -R 0 /home/output && chmod -R g+rwX /home/output
+RUN useradd -g 0 -ms /bin/bash celery
+
+USER celery
+
 # Turn this on so that stdout isn't buffered - otherwise logs in kubectl don't
 # show up until much later!
 ENV PYTHONUNBUFFERED=1
@@ -25,6 +32,5 @@ ADD gai.conf /etc/gai.conf
 
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR=/etc/grid-security/certificates
+ENV PYTHONPATH=/servicex
 
-RUN useradd -ms /bin/bash output -G sudo && passwd -d output
-RUN chgrp -R 0 /home/output && chmod -R g+rwX /home/output
