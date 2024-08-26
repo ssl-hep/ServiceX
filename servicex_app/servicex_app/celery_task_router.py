@@ -26,14 +26,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import re
+from kombu import Queue
 
 did_finder_pattern = r'(.+)\.lookup_dataset'
 
 
 def route_task(name, args, kwargs, options, task=None, **kw):
     if name == 'transformer_sidecar.transform_file':
-        return {'queue': f"transformer-{kwargs['request_id']}",
-                'auto_delete': True, 'durable': False}
+        return {
+            "queue": Queue(name=f"transformer-{kwargs['request_id']}",
+                           durable=False,
+                           auto_delete=True)
+        }
 
     did_finder_match = re.search(did_finder_pattern, name)
     if did_finder_match:

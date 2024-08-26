@@ -29,16 +29,16 @@ from servicex_app.celery_task_router import route_task
 
 
 def test_transformer_route():
-    assert (route_task('transformer_sidecar.transform_file',
+    route = route_task('transformer_sidecar.transform_file',
                        None,
                        {"request_id": "2f748056-9db3-47f0-b51e-3ec46b8a284a"},
-                       None) ==
-            {
-                'auto_delete': True,
-                'durable': False,
-                'queue': 'transformer-2f748056-9db3-47f0-b51e-3ec46b8a284a'
-            }
-            )
+                       None)
+
+    assert "queue" in route
+    queue = route['queue']
+    assert queue.durable is False
+    assert queue.name == 'transformer-2f748056-9db3-47f0-b51e-3ec46b8a284a'
+    assert queue.auto_delete is True
 
 
 def test_did_finder_route():
