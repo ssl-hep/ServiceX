@@ -37,6 +37,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import NamedTuple, Optional, Union
 
+import kombu
 import psutil as psutil
 import time
 from celery import Celery, shared_task
@@ -493,6 +494,11 @@ if __name__ == "__main__":  # pragma: no cover
     parser = TransformerArgumentParser(description="ServiceX Transformer")
     _args = parser.parse_args()
     app = Celery("transformer_sidecar", broker=_args.rabbit_uri)
+    app.conf.task_queues = [
+        kombu.Queue(name=f"transformer-{_args.request_id}",
+                    durable=False, auto_delete=True)
+    ]
+    app.conf.task_create_missing_queues = False
     init(_args, app)
 
     logger.debug(
