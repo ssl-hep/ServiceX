@@ -18,7 +18,7 @@ stop_port_forward() {
 # Start port forwarding for all services
 start_all() {
   start_port_forward "servicex-ben-postgresql" "5432:5432"
-  start_port_forward "servicex-ben-code-gen-uproot" "5001:8000"
+  start_port_forward "servicex-ben-code-gen-uproot-raw" "5001:8000"
   start_port_forward "servicex-ben-minio" "9000:9000"
   start_port_forward "servicex-ben-rabbitmq" "5672:5672"
   start_port_forward "servicex-ben-servicex-app" "8000:8000"
