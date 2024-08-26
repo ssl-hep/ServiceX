@@ -200,7 +200,6 @@ def transform_file(
                 Path(os.path.join(request_path, "abc.log")),
             )
             if science_container_response == "success.":
-
                 rec = FileCompleteRecord(
                     request_id=request_id,
                     file_path=_file_path,
@@ -228,6 +227,7 @@ def transform_file(
                     "place": PLACE,
                 }
                 logger.info("Transformer stats.", extra=ts)
+                science_container.confirm()
                 break
 
             science_container.confirm()
