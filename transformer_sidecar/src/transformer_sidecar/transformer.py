@@ -47,6 +47,7 @@ from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.raw_uproot_stats import RawUprootStats  # NOQA: 401
 from transformer_sidecar.object_store_manager import ObjectStoreManager
 from transformer_sidecar.object_store_uploader import ObjectStoreUploader, WorkQueueItem
 from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
