@@ -1,0 +1,9 @@
+TestName: local test
+codegen: 
+  port: 8005
+  query: '[{"treename": {"nominal": "modified"}, "filter_name": ["lbn"]}]'
+
+science:
+  rootfile: root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/mgeyik/e7/ee/user.mgeyik.30182995._000093.out.root
+  outputfile: /generated/out.parquet
+  outputformat: root-file
