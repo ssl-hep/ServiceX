@@ -136,7 +136,7 @@ x509Secrets:
 Deploy the chart to your cluster with
 
 ```
-helm install -f values.yaml --version v1.0.0-rc.3 servicex ssl-hep/servicex
+helm install -f values.yaml --version v1.4.1 servicex ssl-hep/servicex
 ```
 
 Initial deployment is typically rapid, with RabbitMQ requiring up to a minute to
