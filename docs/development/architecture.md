@@ -227,16 +227,44 @@ transactionally secure reprocessing
 
 ### Transformers
 
-Transformers are the worker pods for a transformation request. They get
-generated transformer code from Code generator servers (through the a zip file
-in the ConfigMap), compile it, and then
-subscribe to the RabbitMQ topic for the request. They will listen for a message
-(file) from the queue, and then attempt to transform the file. If any errors
-are encountered, they will post a status update and retry. Once the max retry
-limit is reached, they will mark the file as failed. If the file is transformed
-successfully, they will post an update and mark the file as done. A single
-transformer may transform multiple files. Once all files are complete for the
-transformation request, they are spun down.
+Transformers are the worker pods for a transformation request. They operate as
+two containers inside each worker pod. The sidecar container communicates with the server 
+as well as Minio to upload results. The science container is based on experiement
+approved docker images and have no ServiceX specific dependencies. 
+
+The sidecar operates as a Celery worker which handles the `transform_file` task. Each 
+invocation of the task is a single file transformation, which includes a list of XrootD 
+replica paths, the transformation request ID, and the file index. The sidecar container
+communicates with the science image via a localhost socket and a directory mounted in both
+containers.
+
+The generated code is mounted into the science container from a configmap. 
+
+The science container writes a log file to this shared directory. The sidecar uses information
+provided by the code generator to parse the file to report transform statistics to 
+the API server along with common error messages.
+
+The Celery worker is started with the `--concurrency` flag set to 1. This is to ensure
+that only one file is transformed at a time. This is necessary because the science container
+is not thread safe.
+
+The Celery worker is also initialized with a queue named after the transformation request ID. 
+The ServiceX App uses dynamic routing to send the task requests only to transformers belonging
+to the same transformation request.
+
+The sidecar initializes the queue with RabbitMQ options that specify the queue is not 
+durable and that it should be deleted when the last consumer disconnects. This is to ensure
+that the queue is cleaned up when the transformation request is completed.
+
+In addition to the Celery worker, the sidecar starts up a file upload process (it has to 
+be a process and not a thread in order to work alongside Celery). This process uses a queue
+to receive requests to upload transformed results to minio. The request includes data needed 
+to notify the client that the file has been completed.
+
+When the final file is transformed, the App will terminate the pods which will cause the 
+Celery worker to terminate cleanly. The sidecar will send a poison pill to the upload queue 
+to shut it down as well.
+
 
 ## Error handling
 
