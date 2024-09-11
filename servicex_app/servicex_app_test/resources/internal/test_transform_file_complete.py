@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import psycopg2
 import pytest
 
 from servicex_app.models import DatasetFile, TransformationResult, TransformRequest
@@ -162,3 +163,93 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response.status_code == 404
         mock_transform_request_lookup.assert_called_with('BR549')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_database_error_request_read(self, mocker,
+                                         mock_transformer_manager,
+                                         mock_files_remaining,
+                                         mock_file_transformed_successfully,
+                                         mock_transform_request_lookup,
+                                         fake_transform_request,
+                                         file_complete_response,
+                                         test_client):
+        mock_transform_request_lookup.side_effect = [
+            psycopg2.OperationalError('server closed the connection unexpectedly'),
+            fake_transform_request
+        ]
+
+        response = test_client.put('/servicex/internal/transformation/BR549/file-complete',
+                                   json=file_complete_response)
+        assert response.status_code == 200
+        assert fake_transform_request.finish_time is None
+
+        # Verify that we retried after the database error
+        assert mock_transform_request_lookup.call_count == 2
+        mock_transform_request_lookup.assert_called_with('BR549')
+
+        mock_files_remaining.assert_called()
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_database_error_request_update(self,
+                                           mock_transformer_manager,
+                                           mock_files_remaining,
+                                           mock_file_transformed_successfully,
+                                           mock_transform_request_lookup,
+                                           fake_transform_request,
+                                           file_complete_response,
+                                           test_client):
+
+        mock_file_transformed_successfully.side_effect = [
+                                    psycopg2.OperationalError('server closed the connection unexpectedly'),
+                                    None]
+
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
+                                   json=file_complete_response)
+        assert response.status_code == 200
+        assert fake_transform_request.finish_time is None
+
+        # Verify that we retried after the database error
+        assert mock_transform_request_lookup.call_count == 2
+        mock_transform_request_lookup.assert_called_with('1234')
+
+        mock_files_remaining.assert_called()
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_database_error_transform_result_save(self, mocker,
+                                                  mock_transformer_manager,
+                                                  mock_files_remaining,
+                                                  mock_file_transformed_successfully,
+                                                  mock_transform_request_lookup,
+                                                  fake_transform_request,
+                                                  file_complete_response,
+                                                  test_client):
+
+        mock_save_db = mocker.patch.object(TransformationResult, "save_to_db",
+                                           side_effect=[
+                                               psycopg2.OperationalError('server closed the connection unexpectedly'),
+                                               None
+                                           ])
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
+                                   json=file_complete_response)
+        assert response.status_code == 200
+        assert mock_save_db.call_count == 2
+
+    def test_database_error_transform_complete(self, mocker,
+                                               mock_transformer_manager,
+                                               mock_files_remaining,
+                                               mock_file_transformed_successfully,
+                                               mock_transform_request_lookup,
+                                               fake_transform_request,
+                                               file_complete_response,
+                                               test_client):
+
+        # Trigger the fileset complete by setting the files_remaining to 0
+        mock_files_remaining.return_value = 0
+
+        fake_transform_request.save_to_db = mocker.Mock(side_effect=[
+                                               psycopg2.OperationalError('server closed the connection unexpectedly'),
+                                               None
+                                           ])
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
+                                   json=file_complete_response)
+        assert response.status_code == 200
+        assert fake_transform_request.save_to_db.call_count == 2
