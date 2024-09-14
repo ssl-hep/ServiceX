@@ -56,7 +56,9 @@ class LookupResultProcessor:
                                     })
 
             current_app.logger.info("Added file to processing queue", extra={
+                                    "paths": file_record.paths.split(','),
                                     "task_id": self.celery_task_name(request.request_id)})
 
         current_app.logger.info("Added files to processing queue", extra={
+            "num_files": len(files),
             'requestId': request.request_id})
