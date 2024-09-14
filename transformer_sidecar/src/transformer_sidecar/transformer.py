@@ -500,6 +500,7 @@ if __name__ == "__main__":  # pragma: no cover
                     durable=False, auto_delete=True)
     ]
     app.conf.task_create_missing_queues = False
+    app.conf.worker_hijack_root_logger = False
     init(_args, app)
 
     logger.debug(

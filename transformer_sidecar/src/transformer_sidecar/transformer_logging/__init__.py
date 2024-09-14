@@ -30,15 +30,13 @@ import logstash
 import os
 
 import logging
-import celery.signals
 
 from transformer_sidecar.transformer_logging.logstash_formatter import LogstashFormatter
 from transformer_sidecar.transformer_logging.stream_formatter import StreamFormatter
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
-@celery.signals.after_setup_logger.connect
-def initialize_logging(logger=None, *args, **kwargs):
+def initialize_logging():
     """
     Get a logger and initialize it so that it outputs the correct format
     :param request: Request id to insert into log messages
@@ -48,10 +46,7 @@ def initialize_logging(logger=None, *args, **kwargs):
     # Don't let the object store uploader get to chatty
     logging.getLogger('transformer_sidecar.object_store_uploader').setLevel(logging.INFO)
 
-    if logger is None:
-        log = logging.getLogger()
-    else:
-        log = logger
+    log = logging.getLogger()
     log.level = getattr(logging, os.environ.get('LOG_LEVEL', "INFO"))
 
     stream_handler = logging.StreamHandler()
