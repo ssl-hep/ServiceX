@@ -38,7 +38,7 @@ instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
 @celery.signals.after_setup_logger.connect
-def initialize_logging(log=None):
+def initialize_logging(log=None, *args, **kwargs):
     """
     Get a logger and initialize it so that it outputs the correct format
     :param request: Request id to insert into log messages
