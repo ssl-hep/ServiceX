@@ -38,7 +38,7 @@ instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
 @celery.signals.after_setup_logger.connect
-def initialize_logging(log=None, *args, **kwargs):
+def initialize_logging(logger=None, *args, **kwargs):
     """
     Get a logger and initialize it so that it outputs the correct format
     :param request: Request id to insert into log messages
@@ -48,8 +48,10 @@ def initialize_logging(log=None, *args, **kwargs):
     # Don't let the object store uploader get to chatty
     logging.getLogger('transformer_sidecar.object_store_uploader').setLevel(logging.INFO)
 
-    if log is None:
+    if logger is None:
         log = logging.getLogger()
+    else:
+        log = logger
     log.level = getattr(logging, os.environ.get('LOG_LEVEL', "INFO"))
 
     stream_handler = logging.StreamHandler()
