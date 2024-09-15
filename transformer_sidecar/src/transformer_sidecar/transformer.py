@@ -490,6 +490,7 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
 
 
 if __name__ == "__main__":  # pragma: no cover
+    import logging
     start_time = timeit.default_timer()
 
     parser = TransformerArgumentParser(description="ServiceX Transformer")
@@ -501,6 +502,7 @@ if __name__ == "__main__":  # pragma: no cover
     ]
     app.conf.task_create_missing_queues = False
     app.conf.worker_hijack_root_logger = False
+    app.conf.worker_redirect_stdouts_level = logging.DEBUG
     init(_args, app)
 
     logger.debug(
