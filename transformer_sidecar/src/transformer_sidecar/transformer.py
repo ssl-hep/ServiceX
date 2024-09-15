@@ -511,7 +511,6 @@ if __name__ == "__main__":  # pragma: no cover
     )
     science_container.close()
 
-    celery_app.control.broadcast("shutdown")
     upload_queue.put(WorkQueueItem(None, None))
     uploader.join()  # Wait for the uploader to finish completely
     exit(0)
