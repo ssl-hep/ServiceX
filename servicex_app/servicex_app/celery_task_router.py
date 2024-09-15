@@ -36,7 +36,7 @@ def route_task(name, args, kwargs, options, task=None, **kw):
         return {
             "queue": Queue(name=f"transformer-{kwargs['request_id']}",
                            durable=False,
-                        #    auto_delete=True
+                           #    auto_delete=True
                            )
         }
 
