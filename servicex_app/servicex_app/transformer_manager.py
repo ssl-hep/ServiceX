@@ -43,6 +43,11 @@ class TransformerManager:
     # objects to the object store before it is terminated.
     POD_TERMINATION_GRACE_PERIOD = 5*60
 
+    @classmethod
+    def make_api(cls, rabbitmq_adaptor):
+        cls.rabbitmq_adaptor = rabbitmq_adaptor
+        return cls
+
     def __init__(self, manager_mode):
         if manager_mode == 'internal-kubernetes':
             kubernetes.config.load_incluster_config()
@@ -64,7 +69,7 @@ class TransformerManager:
         request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
 
         current_app.logger.info(
-            f"Lunching {request_rec.workers} transformers.",
+            f"Launching {request_rec.workers} transformers.",
             extra={'requestId': request_rec.request_id})
 
         self.launch_transformer_jobs(
@@ -368,8 +373,8 @@ class TransformerManager:
             hpa = self.create_hpa_object(request_id)
             self._create_hpa(autoscaler_api, hpa, namespace)
 
-    @staticmethod
-    def shutdown_transformer_job(request_id, namespace):
+    @classmethod
+    def shutdown_transformer_job(cls, request_id, namespace):
         try:
             if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
                 autoscaler_api = kubernetes.client.AutoscalingV1Api()
@@ -399,6 +404,15 @@ class TransformerManager:
         except ApiException:
             current_app.logger.exception("Exception during Job Deployment Shut Down", extra={
                                          "requestId": request_id})
+
+        # delete RabbitMQ queue
+        try:
+            cls.rabbitmq_adaptor.delete_queue(f"transformer-{request_id}")
+        except Exception as e:
+            current_app.logger.exception("Exception during Job Queue Deletion", extra={
+                "requestId": request_id,
+                "exception": e
+            })
 
     @staticmethod
     def get_deployment_status(
