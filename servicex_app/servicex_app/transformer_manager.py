@@ -407,6 +407,7 @@ class TransformerManager:
 
         # delete RabbitMQ queue
         try:
+            current_app.logger.info(f"Deleting queue transformer-{request_id}")
             cls.rabbitmq_adaptor.delete_queue(f"transformer-{request_id}")
         except Exception as e:
             current_app.logger.exception("Exception during Job Queue Deletion", extra={
