@@ -44,7 +44,7 @@ while [[ $nc_PID ]] ; do
     if [[ -z "$line" ]]; then
       echo "received an empty line"
       break
-    elif [ "$line" = "stop" ]; then
+    elif [ "$line" = "stop." ]; then
         kill "$nc_PID"
         break
     fi
