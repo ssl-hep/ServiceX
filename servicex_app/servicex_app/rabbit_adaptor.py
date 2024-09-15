@@ -144,6 +144,34 @@ class RabbitAdaptor(object):
                 self.reset_closed()
                 continue
 
+    def delete_queue(self, queue_name: str):
+        """Delete the queue on RabbitMQ by invoking the Queue.Delete RPC
+        command.
+
+        :param str queue_name: The name of the queue to delete.
+
+        """
+        current_app.logger.info('Declaring queue %s', queue_name)
+
+        while True:
+            try:
+                channel = self.channel
+                channel.queue_delete(queue=queue_name)
+                return
+            except pika.exceptions.ConnectionClosedByBroker:
+                current_app.logger.warning("Connection was closed by broker, stopping...")
+                break
+            # Attempt to reconnect if the channel closed due to timeout
+            except pika.exceptions.ChannelWrongStateError:
+                current_app.logger.warning("Connection was closed, retrying...")
+                self.reset_closed()
+                continue
+            # Recover on all other connection errors
+            except pika.exceptions.AMQPConnectionError:
+                current_app.logger.warning("Connection was closed, retrying...")
+                self.reset_closed()
+                continue
+
     def bind_queue_to_exchange(self, exchange, queue):
         current_app.logger.info(f"Binding queue {queue} to exchange {exchange}")
 
