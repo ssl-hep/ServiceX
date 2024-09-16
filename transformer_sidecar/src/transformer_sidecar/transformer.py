@@ -505,7 +505,7 @@ if __name__ == "__main__":  # pragma: no cover
     app.conf.worker_redirect_stdouts_level = 'DEBUG'
     init(_args, app)
 
-    logger.debug(
+    logger.info(
         "Shutting down transformer",
         extra={"requestId": request_id, "place": PLACE},
     )
