@@ -52,7 +52,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.transformer_manager = transformer_manager
         # propagate the rabbitmq_adaptor down to the TransformerManager
         if cls.transformer_manager is not None:
-            cls.transformer_manager.make_api(rabbitmq_adaptor)
+            cls.transformer_manager.make_api(rabbitmq_adaptor, celery_app)
         cls.celery_app = celery_app
 
         cls.parser = reqparse.RequestParser()
