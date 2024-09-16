@@ -65,6 +65,7 @@ def run_query(file_path):
 def run_single_query(file_path, query):
     import uproot
     import awkward as ak
+    from tenacity import retry, stop_after_attempt
 
     lang = uproot.language.python.PythonLanguage()
     lang.functions.update({{ 'concatenate': ak.concatenate,
@@ -120,7 +121,7 @@ def run_single_query(file_path, query):
                        'aliases': query.get('aliases')}}
 
     rv_arrays_trees = {{}}; rv_arrays_histograms = {{}}
-    with uproot.open({{file_path: None}}) as fl:
+    with retry(stop=stop_after_attempt(4))(uproot.open)({{file_path: None}}) as fl:
         if 'treename' in query:
             trees = query['treename']
             if isinstance(trees, str):
