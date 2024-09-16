@@ -50,9 +50,9 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
         cls.transformer_manager = transformer_manager
-        # propagate the rabbitmq_adaptor down to the TransformerManager
+        # propagate the celery_app down to the TransformerManager
         if cls.transformer_manager is not None:
-            cls.transformer_manager.make_api(rabbitmq_adaptor, celery_app)
+            cls.transformer_manager.make_api(celery_app)
         cls.celery_app = celery_app
 
         cls.parser = reqparse.RequestParser()
