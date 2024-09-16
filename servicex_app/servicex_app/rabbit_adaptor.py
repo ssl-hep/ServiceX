@@ -151,7 +151,7 @@ class RabbitAdaptor(object):
         :param str queue_name: The name of the queue to delete.
 
         """
-        current_app.logger.info('Declaring queue %s', queue_name)
+        current_app.logger.info('Deleting queue %s', queue_name)
 
         while True:
             try:
