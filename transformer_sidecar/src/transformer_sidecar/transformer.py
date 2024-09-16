@@ -497,15 +497,14 @@ if __name__ == "__main__":  # pragma: no cover
     app = Celery("transformer_sidecar", broker=_args.rabbit_uri)
     app.conf.task_queues = [
         kombu.Queue(name=f"transformer-{_args.request_id}",
-                    durable=False, auto_delete=True
-                    )
+                    durable=False, auto_delete=True)
     ]
     app.conf.task_create_missing_queues = False
     app.conf.worker_hijack_root_logger = False
     app.conf.worker_redirect_stdouts_level = 'DEBUG'
     init(_args, app)
 
-    logger.info(
+    logger.debug(
         "Shutting down transformer",
         extra={"requestId": request_id, "place": PLACE},
     )
