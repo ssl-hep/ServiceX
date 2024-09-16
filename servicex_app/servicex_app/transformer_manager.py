@@ -44,8 +44,9 @@ class TransformerManager:
     POD_TERMINATION_GRACE_PERIOD = 5*60
 
     @classmethod
-    def make_api(cls, rabbitmq_adaptor):
+    def make_api(cls, rabbitmq_adaptor, celery_app):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
+        cls.celery_app = celery_app
         return cls
 
     def __init__(self, manager_mode):
@@ -407,6 +408,8 @@ class TransformerManager:
 
         # delete RabbitMQ queue
         try:
+            current_app.logger.info(f"Stopping workers connected to transformer-{request_id}")
+            cls.celery_app.control.cancel_consumer(f"transformer-{request_id}")
             current_app.logger.info(f"Deleting queue transformer-{request_id}")
             cls.rabbitmq_adaptor.delete_queue(f"transformer-{request_id}")
         except Exception as e:
