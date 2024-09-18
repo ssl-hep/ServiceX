@@ -40,3 +40,15 @@ class RawUprootStats(TransformerStats):
             self.log_body)
         if len(matches) == 1:
             self.total_events, self.file_size = tuple(map(int, matches[0]))
+
+        matches = re.findall(
+            r".*Error.*", self.log_body)
+
+        if matches:
+            self.error_info = f"{matches[0]}"
+
+        matches = re.findall(
+            r".*Exception.*", self.log_body)
+
+        if matches:
+            self.error_info = f"{matches[0]}"
