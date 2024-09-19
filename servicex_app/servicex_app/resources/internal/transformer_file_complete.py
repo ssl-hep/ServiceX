@@ -25,10 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
 from datetime import datetime, timezone
 from logging import Logger
 
 from flask import request, current_app
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter, \
+    before_sleep_log, after_log
 
 from servicex_app import TransformerManager
 from servicex_app.models import TransformRequest, TransformationResult, db, TransformStatus
@@ -45,32 +48,14 @@ class TransformerFileComplete(ServiceXResource):
     def put(self, request_id):
         start_time = time.time()
         info = request.get_json()
-        current_app.logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
-        transform_req = TransformRequest.lookup(request_id)
+        logger = current_app.logger
+        logger.info("FileComplete", extra={'requestId': request_id, 'metric': info})
+        transform_req = self.record_file_complete(current_app.logger, request_id, info)
+
         if transform_req is None:
-            msg = f"Request not found with id: '{request_id}'"
-            current_app.logger.error(msg, extra={'requestId': request_id})
-            return {"message": msg}, 404
+            return "Request not found", 404
 
-        if info['status'] == 'success':
-            TransformRequest.file_transformed_successfully(request_id)
-        else:
-            TransformRequest.file_transformed_unsuccessfully(request_id)
-
-        rec = TransformationResult(
-            did=transform_req.did,
-            file_id=info['file-id'],
-            request_id=request_id,
-            file_path=info['file-path'],
-            transform_status=info['status'],
-            transform_time=info['total-time'],
-            total_bytes=info['total-bytes'],
-            total_events=info['total-events'],
-            avg_rate=info['avg-rate']
-        )
-        rec.save_to_db()
-
-        db.session.commit()
+        self.save_transform_result(transform_req, info)
 
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
@@ -86,6 +71,52 @@ class TransformerFileComplete(ServiceXResource):
         return "Ok"
 
     @staticmethod
+    @retry(stop=stop_after_attempt(3),
+           wait=wait_exponential_jitter(initial=0.1, max=30),
+           before_sleep=before_sleep_log(current_app.logger, logging.INFO),
+           after=after_log(current_app.logger, logging.INFO),
+           )
+    def record_file_complete(logger: Logger, request_id: str, info: dict[str, str]) -> TransformRequest | None:
+        transform_req = TransformRequest.lookup(request_id)
+        if transform_req is None:
+            msg = f"Request not found with id: '{request_id}'"
+            logger.error(msg, extra={'requestId': request_id})
+            return None
+
+        if info['status'] == 'success':
+            TransformRequest.file_transformed_successfully(request_id)
+        else:
+            TransformRequest.file_transformed_unsuccessfully(request_id)
+
+        return transform_req
+
+    @staticmethod
+    @retry(stop=stop_after_attempt(3),
+           wait=wait_exponential_jitter(initial=0.1, max=30),
+           before_sleep=before_sleep_log(current_app.logger, logging.INFO),
+           after=after_log(current_app.logger, logging.INFO),
+           )
+    def save_transform_result(transform_req: TransformRequest, info: dict[str, str]):
+        rec = TransformationResult(
+            did=transform_req.did,
+            file_id=info['file-id'],
+            request_id=transform_req.request_id,
+            file_path=info['file-path'],
+            transform_status=info['status'],
+            transform_time=info['total-time'],
+            total_bytes=info['total-bytes'],
+            total_events=info['total-events'],
+            avg_rate=info['avg-rate']
+        )
+        rec.save_to_db()
+        db.session.commit()
+
+    @staticmethod
+    @retry(stop=stop_after_attempt(3),
+           wait=wait_exponential_jitter(initial=0.1, max=30),
+           before_sleep=before_sleep_log(current_app.logger, logging.INFO),
+           after=after_log(current_app.logger, logging.INFO),
+           )
     def transform_complete(logger: Logger, transform_req: TransformRequest,
                            transformer_manager: TransformerManager):
         transform_req.status = TransformStatus.complete
