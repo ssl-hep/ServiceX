@@ -241,6 +241,7 @@ def transform_file(
                 "file-path": _file_paths[0],
                 "file-id": file_id,
                 "place": PLACE,
+                "transform-log": transformer_stats.log_body,
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
 

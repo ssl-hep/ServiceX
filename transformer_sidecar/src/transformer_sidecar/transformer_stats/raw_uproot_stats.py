@@ -42,13 +42,13 @@ class RawUprootStats(TransformerStats):
             self.total_events, self.file_size = tuple(map(int, matches[0]))
 
         matches = re.findall(
-            r".*Error.*", self.log_body)
+            r"^Error.*", self.log_body)
 
         if matches:
             self.error_info = f"{matches[0]}"
 
         matches = re.findall(
-            r".*Exception.*", self.log_body)
+            r"^Exception.*", self.log_body)
 
         if matches:
             self.error_info = f"{matches[0]}"
