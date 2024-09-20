@@ -58,7 +58,7 @@ data:
 
     # SQLAlchemy engine configuration
     {{ if .Values.app.sqlalchemyEngineOptions }}
-    SQLALCHEMY_ENGINE_OPTIONS = {{ .Values.app.sqlalchemyEngineOptions }}
+    SQLALCHEMY_ENGINE_OPTIONS = {{ toJson .Values.app.sqlalchemyEngineOptions }}
     {{ end }}
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
