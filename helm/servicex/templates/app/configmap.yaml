@@ -56,6 +56,11 @@ data:
     SQLALCHEMY_DATABASE_URI = 'sqlite:////sqlite/app.db'
     {{ end }}
 
+    # SQLAlchemy engine configuration
+    {{ if .Values.app.sqlalchemyEngineOptions }}
+    SQLALCHEMY_ENGINE_OPTIONS = {{ .Values.app.sqlalchemyEngineOptions }}
+    {{ end }}
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'some-secret-string'
     JWT_SECRET_KEY = 'jwt-secret-string'

@@ -28,6 +28,7 @@ app:
   tag: develop
   tokenExpires: false
   validateTransformerImage: true
+  sqlalchemyEngineOptions: null
 codeGen:
   atlasxaod:
     enabled: true
