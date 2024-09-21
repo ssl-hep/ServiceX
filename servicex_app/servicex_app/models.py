@@ -259,7 +259,7 @@ class TransformRequest(db.Model):
         """
         try:
             return db.session.query(cls).filter((cls.status == TransformStatus.lookup) &
-                                    (cls.did_id == dataset_id)).all()
+                                                (cls.did_id == dataset_id)).all()
         except NoResultFound:
             return []
 
