@@ -253,11 +253,12 @@ class TransformRequest(db.Model):
         """
         Looks up TransformRequests in "Lookup" state that needs the dataset
         given by its dataset_id.
-        :param dataset_id: dataset id. Must be an integer.
+        :param dataset
+        _id: dataset id. Must be an integer.
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter((cls.status == TransformStatus.lookup) &
+            return db.session.query(cls).filter((cls.status == TransformStatus.lookup) &
                                     (cls.did_id == dataset_id)).all()
         except NoResultFound:
             return []
