@@ -57,6 +57,12 @@ class TestFilesetComplete(ResourceTestBase):
         mock_lookup_pending = mocker.patch.object(TransformRequest,
                                                   "lookup_pending_on_dataset",
                                                   return_value=[pending_request])
+
+        lookup_request = TransformRequest()
+        lookup_request.status = TransformStatus.lookup
+        mock_lookup_running = mocker.patch.object(TransformRequest,
+                                                  "lookup_running_by_dataset_id",
+                                                  return_value=[lookup_request])
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(lookup_result_processor=mock_processor)
@@ -76,8 +82,10 @@ class TestFilesetComplete(ResourceTestBase):
         assert dataset.size == 2046
 
         mock_lookup_pending.assert_called_once_with(1234)
+        mock_lookup_running.assert_called_once_with(1234)
         dataset.publish_files.assert_called_once_with(pending_request, mock_processor)
         assert pending_request.status == TransformStatus.running
+        assert lookup_request.status == TransformStatus.running
 
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
         pending_request = TransformRequest()
