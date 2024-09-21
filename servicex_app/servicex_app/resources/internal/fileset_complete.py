@@ -57,6 +57,12 @@ class FilesetComplete(ServiceXResource):
             for transform_request in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
                 dataset.publish_files(transform_request, self.lookup_result_processor)
                 transform_request.status = TransformStatus.running
+
+            # also resolve the status of whatever transform prompted this lookup
+            for transform_request in \
+                    TransformRequest.lookup_running_by_dataset_id(int(dataset_id)):
+                transform_request.status = TransformStatus.running
+
         else:
             current_app.logger.info("No files found for datasetID. Shutting down transformers",
                                     extra={'dataset_id': dataset_id})
