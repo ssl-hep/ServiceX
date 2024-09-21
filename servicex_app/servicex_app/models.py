@@ -272,8 +272,8 @@ class TransformRequest(db.Model):
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter((cls.status == TransformStatus.pending_lookup) &
-                                    (cls.did_id == dataset_id)).all()
+            return db.session.query(cls).filter((cls.status == TransformStatus.pending_lookup) &
+                                                (cls.did_id == dataset_id)).all()
         except NoResultFound:
             return []
 
