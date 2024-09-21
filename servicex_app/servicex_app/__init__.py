@@ -207,6 +207,7 @@ def create_app(test_config=None,
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
         app.config.update(_override_config_with_environ(app))
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
     else:
         app.config.from_mapping(test_config)
         app.logger.info(f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}")
