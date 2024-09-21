@@ -57,6 +57,7 @@ class FilesetComplete(ServiceXResource):
             for transform_request in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
                 dataset.publish_files(transform_request, self.lookup_result_processor)
                 transform_request.status = TransformStatus.running
+                current_app.logger.info(f'here1 {db.session.dirty}')
         else:
             current_app.logger.info("No files found for datasetID. Shutting down transformers",
                                     extra={'dataset_id': dataset_id})
@@ -75,4 +76,5 @@ class FilesetComplete(ServiceXResource):
             for pending_transform in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
                 pending_transform.status = TransformStatus.complete
 
+        current_app.logger.info(f'here2 {db.session.dirty}')
         db.session.commit()
