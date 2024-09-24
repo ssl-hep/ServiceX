@@ -203,3 +203,11 @@ dataLifecycle:
   # See https://www.geeksforgeeks.org/date-command-linux-examples/#4-how-to-display-past-dates
   # for examples
   retention: "7 days ago"
+
+# Flower is a web based tool for monitoring and administrating Celery clusters.
+# It can be used to inspect tasks, view graphs and logs, restart workers, and more.
+flower:
+  enabled: true
+  image: mher/flower
+  tag: master
+  pullPolicy: Always

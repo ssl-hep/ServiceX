@@ -27,6 +27,16 @@ spec:
         backend:
           service:
             name: {{ .Release.Name }}-servicex-app
-            port: 
+            port:
               number: 8000
+      {{- if .Values.flower.enabled }}
+      - path: /flower
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-flower
+            port:
+              number: 8000
+      {{- end }}
+
 {{- end }}

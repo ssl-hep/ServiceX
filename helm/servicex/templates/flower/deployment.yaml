@@ -1,0 +1,42 @@
+
+{{- if .Values.flower.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-flower
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $.Release.Name }}-flower
+  template:
+    metadata:
+      labels:
+        app: {{ $.Release.Name }}-flower
+    spec:
+      containers:
+      - name: {{ $.Release.Name }}-flower
+        image: {{ .Values.flower.image }}:{{ .Values.flower.tag }}
+        tty: true
+        stdin: true
+        imagePullPolicy: {{ .Values.flower.pullPolicy }}
+        env:
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: BROKER_URL
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+        {{- else }}
+          - name: BROKER_URL
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
+        {{- end }}
+
+        command: [ "/bin/sh" ]
+        args: [ "-c", "celery --broker $BROKER_URL flower --purge_offline_workers=60" ]
+
+        ports:
+          - containerPort: 5555
+{{- end }}
