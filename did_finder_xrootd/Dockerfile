@@ -14,7 +14,7 @@ RUN apt-get update && \
     apt-get install cmake --no-install-recommends --assume-yes
 
 RUN pip install poetry==$POETRY_VERSION
-
+RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
