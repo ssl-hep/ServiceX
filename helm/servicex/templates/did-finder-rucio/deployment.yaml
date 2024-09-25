@@ -42,6 +42,10 @@ spec:
             value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE
             value: "{{ .Values.didFinder.rucio.servicex_longitude }}"
+          {{- if .Values.didFinder.rucio.site }}
+          - name: SITE_NAME
+            value: "{{ .Values.didFinder.rucio.site }}"
+          {{- end }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:
