@@ -28,6 +28,7 @@
 from flask import request, current_app
 
 from servicex_app.models import Dataset, db, TransformRequest, TransformStatus, DatasetStatus
+from servicex_app.dataset_manager import DatasetManager
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 
@@ -54,8 +55,9 @@ class FilesetComplete(ServiceXResource):
         if summary['files'] > 0:
             # Now time to pick up any transform requests for this dataset that came in
             # while we were still looking up files and send the dataset to them
+            dataset_manager = DatasetManager(dataset, current_app.logger, db)
             for transform_request in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
-                dataset.publish_files(transform_request, self.lookup_result_processor)
+                dataset_manager.publish_files(transform_request, self.lookup_result_processor)
                 transform_request.status = TransformStatus.running
 
             # also resolve the status of whatever transform prompted this lookup

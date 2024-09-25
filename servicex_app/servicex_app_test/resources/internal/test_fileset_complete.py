@@ -28,6 +28,7 @@
 from datetime import timezone, datetime
 
 from servicex_app import LookupResultProcessor, TransformerManager
+from servicex_app.dataset_manager import DatasetManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 from servicex_app.models import DatasetStatus, Dataset, TransformRequest, TransformStatus
@@ -65,6 +66,8 @@ class TestFilesetComplete(ResourceTestBase):
                                                   return_value=[lookup_request])
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
+        mock_publish_files = mocker.patch.object(DatasetManager, "publish_files")
+
         client = self._test_client(lookup_result_processor=mock_processor)
 
         response = client.put('/servicex/internal/transformation/1234/complete',
@@ -83,7 +86,7 @@ class TestFilesetComplete(ResourceTestBase):
 
         mock_lookup_pending.assert_called_once_with(1234)
         mock_lookup_running.assert_called_once_with(1234)
-        dataset.publish_files.assert_called_once_with(pending_request, mock_processor)
+        mock_publish_files.assert_called_once_with(pending_request, mock_processor)
         assert pending_request.status == TransformStatus.running
         assert lookup_request.status == TransformStatus.running
 
