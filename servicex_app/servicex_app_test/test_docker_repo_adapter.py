@@ -41,7 +41,7 @@ class TestDockerRepoAdapter:
         assert result
 
         mock_get.assert_called_with(
-            'https://hub.docker.com/v2/repositories/foo/bar/tags/baz'
+            'https://hub.docker.com/v2/repositories/foo/bar/tags/baz', timeout=0.5
         )
 
     def test_check_image_exists_not_there(self, mocker):
