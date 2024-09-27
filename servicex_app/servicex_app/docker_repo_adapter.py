@@ -28,6 +28,7 @@
 import re
 
 import requests
+from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 from flask import current_app
 
 
@@ -48,7 +49,11 @@ class DockerRepoAdapter:
         (repo, image, tag) = search_result.groups()
 
         query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
-        r = requests.get(query)
+        for attempt in Retrying(stop=stop_after_attempt(3),
+                                wait=wait_exponential_jitter(initial=0.1, max=30),
+                                reraise=True):
+            with attempt:
+                r = requests.get(query, timeout=0.5)
         if r.status_code == 404:
             return False
 

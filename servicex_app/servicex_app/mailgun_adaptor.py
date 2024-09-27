@@ -1,4 +1,5 @@
 import requests
+from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 from flask import current_app, render_template
 
 
@@ -22,5 +23,9 @@ class MailgunAdaptor:
             "subject": "Welcome to ServiceX!",
             "html": render_template(f"emails/{template_name}")
         }
-        res = requests.post(self.endpoint, data, auth=("api", self.api_key))
-        res.raise_for_status()
+        for attempt in Retrying(stop=stop_after_attempt(3),
+                                wait=wait_exponential_jitter(initial=0.1, max=30),
+                                reraise=True):
+            with attempt:
+                res = requests.post(self.endpoint, data, auth=("api", self.api_key), timeout=0.5)
+                res.raise_for_status()

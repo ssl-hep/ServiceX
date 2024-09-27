@@ -17,6 +17,7 @@ python-logstash = "^0.4.8"
 
 uproot = "^5.3.10"
 fsspec = "2023.6.0"
+tenacity = "^9.0.0"
 
 [tool.poetry.group.test]
 optional = true
