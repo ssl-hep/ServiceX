@@ -98,11 +98,12 @@ class ServiceXAdapter:
             try:
                 retry_call(self.session.put,
                            fargs=[self.server_endpoint + "/file-complete"],
-                           fkwargs={"json": rec.to_json()},
+                           fkwargs={"json": rec.to_json(), "timeout": 0.5},
                            tries=MAX_RETRIES,
                            delay=RETRY_DELAY)
                 self.logger.info("Put file complete.", extra={'requestId': rec.request_id,
-                                                              "place": PLACE})
+                                                              "place": PLACE,
+                                                              "file_path": rec.file_path})
             except requests.exceptions.ConnectionError:
                 self.logger.exception("Connection Error in put_file_complete",
                                       extra={'requestId': rec.request_id,

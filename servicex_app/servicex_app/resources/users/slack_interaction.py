@@ -4,6 +4,7 @@ import json
 import time
 
 import requests
+from tenacity import retry, Retrying, stop_after_attempt, wait_exponential_jitter
 from flask import request, current_app, Response
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -13,8 +14,11 @@ from servicex_app.web.slack_msg_builder import signup_ia, missing_slack_app, req
     verification_failed, user_not_found
 
 
+@retry(stop=stop_after_attempt(3),
+       wait=wait_exponential_jitter(initial=0.1, max=30),
+       reraise=True)
 def respond(url, message):
-    slack_response = requests.post(url, message)
+    slack_response = requests.post(url, message, timeout=0.5)
     slack_response.raise_for_status()
 
 
@@ -57,8 +61,12 @@ class SlackInteraction(ServiceXResource):
                 respond(response_url, user_not_found(str(err)))
                 return Response(status=404)
             response_msg = signup_ia(original_msg, initiating_user, action_id)
-            slack_response = requests.post(response_url, response_msg)
-            slack_response.raise_for_status()
+            for attempt in Retrying(stop=stop_after_attempt(3),
+                                    wait=wait_exponential_jitter(initial=0.1, max=30),
+                                    reraise=True):
+                with attempt:
+                    slack_response = requests.post(response_url, response_msg, timeout=0.5)
+                    slack_response.raise_for_status()
         elif action_id == "reject_user":
             # todo blocked by PR for delete-user endpoint
             raise NotImplementedError

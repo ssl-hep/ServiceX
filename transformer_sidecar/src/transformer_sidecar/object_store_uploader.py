@@ -65,6 +65,7 @@ class ObjectStoreUploader(Process):
         self.convert_root_to_parquet = convert_root_to_parquet
 
     def service_work_queue(self):
+        import time
         self.logger.debug("Object store uploader starting.",
                           extra={'requestId': self.request_id, "place": PLACE})
 
@@ -93,10 +94,12 @@ class ObjectStoreUploader(Process):
                 self.logger.info("Uploading file to object store.",
                                  extra={'requestId': self.request_id, "place": PLACE,
                                         "objectName": object_name})
+                t0 = time.time()
                 object_store.upload_file(self.request_id, object_name, file_to_upload.as_posix())
                 self.logger.info("File uploaded to object store.",
                                  extra={'requestId': self.request_id, "place": PLACE,
-                                        "objectName": object_name})
+                                        "objectName": object_name,
+                                        "elapsed": time.time()-t0})
 
                 item.servicex.put_file_complete(item.rec)
 
