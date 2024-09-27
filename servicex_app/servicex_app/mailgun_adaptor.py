@@ -27,5 +27,6 @@ class MailgunAdaptor:
                                 wait=wait_exponential_jitter(initial=0.1, max=30),
                                 reraise=True):
             with attempt:
-                res = requests.post(self.endpoint, data, auth=("api", self.api_key), timeout=0.5)
+                res = requests.post(self.endpoint, data, auth=("api", self.api_key),
+                                    timeout=(0.5, None))
                 res.raise_for_status()

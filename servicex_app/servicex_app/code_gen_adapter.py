@@ -68,7 +68,8 @@ class CodeGenAdapter:
                                 wait=wait_exponential_jitter(initial=0.1, max=30),
                                 reraise=True):
             with attempt:
-                result = requests.post(post_url + "/servicex/generated-code", json=postObj, timeout=0.5)
+                result = requests.post(post_url + "/servicex/generated-code", json=postObj,
+                                       timeout=(0.5, None))
 
         if result.status_code != 200:
             msg = result.json()['Message']

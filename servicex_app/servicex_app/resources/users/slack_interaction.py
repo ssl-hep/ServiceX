@@ -18,7 +18,7 @@ from servicex_app.web.slack_msg_builder import signup_ia, missing_slack_app, req
        wait=wait_exponential_jitter(initial=0.1, max=30),
        reraise=True)
 def respond(url, message):
-    slack_response = requests.post(url, message, timeout=0.5)
+    slack_response = requests.post(url, message, timeout=(0.5, None))
     slack_response.raise_for_status()
 
 
@@ -65,7 +65,7 @@ class SlackInteraction(ServiceXResource):
                                     wait=wait_exponential_jitter(initial=0.1, max=30),
                                     reraise=True):
                 with attempt:
-                    slack_response = requests.post(response_url, response_msg, timeout=0.5)
+                    slack_response = requests.post(response_url, response_msg, timeout=(0.5, None))
                     slack_response.raise_for_status()
         elif action_id == "reject_user":
             # todo blocked by PR for delete-user endpoint
