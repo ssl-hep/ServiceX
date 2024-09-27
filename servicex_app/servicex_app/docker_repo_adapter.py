@@ -53,7 +53,7 @@ class DockerRepoAdapter:
                                 wait=wait_exponential_jitter(initial=0.1, max=30),
                                 reraise=True):
             with attempt:
-                r = requests.get(query, timeout=0.5)
+                r = requests.get(query, timeout=(0.5, None))
         if r.status_code == 404:
             return False
 

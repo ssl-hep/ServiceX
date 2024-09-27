@@ -48,7 +48,8 @@ def create_profile():
                                             wait=wait_exponential_jitter(initial=0.1, max=30),
                                             reraise=True):
                         with attempt:
-                            res = requests.post(webhook_url, signup(new_user.email), timeout=0.5)
+                            res = requests.post(webhook_url, signup(new_user.email),
+                                                timeout=(0.5, None))
                             # Raise exception on error (e.g. bad request or forbidden url)
                             res.raise_for_status()
                             msg_segments += ["Your account is pending approval.",
