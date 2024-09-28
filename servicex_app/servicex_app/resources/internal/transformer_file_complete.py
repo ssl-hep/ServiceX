@@ -83,10 +83,11 @@ class TransformerFileComplete(ServiceXResource):
             logger.error(msg, extra={'requestId': request_id})
             return None
 
-        if info['status'] == 'success':
-            TransformRequest.file_transformed_successfully(request_id)
-        else:
-            TransformRequest.file_transformed_unsuccessfully(request_id)
+        with db.session().begin_nested():
+            if info['status'] == 'success':
+                TransformRequest.file_transformed_successfully(request_id)
+            else:
+                TransformRequest.file_transformed_unsuccessfully(request_id)
 
         return transform_req
 
