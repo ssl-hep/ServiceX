@@ -279,7 +279,7 @@ class TransformRequest(db.Model):
 
     @classmethod
     def file_transformed_successfully(cls, key: Union[str, int]) -> None:
-        db.session.commit()
+        # db.session.commit()
         req = cls.query.filter_by(request_id=key).one()
         req.files_completed = cls.files_completed + 1
         db.session.commit()
