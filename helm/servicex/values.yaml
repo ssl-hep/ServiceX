@@ -54,27 +54,27 @@ codeGen:
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: uproot5
 
-    atlasr21:
-      enabled: true
-      image: sslhep/servicex_code_gen_func_adl_xaod
-      pullPolicy: Always
-      tag: develop
-      defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
-      defaultScienceContainerTag: 21.2.231
+  atlasr21:
+    enabled: true
+    image: sslhep/servicex_code_gen_func_adl_xaod
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+    defaultScienceContainerTag: 21.2.231
 
-    atlasr22:
-      enabled: true
-      image: sslhep/servicex_code_gen_atlas_xaod
-      tag: v1.5.1-alpha.1
-      defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
-      defaultScienceContainerTag: 22.2.107
+  atlasr22:
+    enabled: true
+    image: sslhep/servicex_code_gen_atlas_xaod
+    tag: v1.5.1-alpha.1
+    defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
+    defaultScienceContainerTag: 22.2.107
 
-    cmssw-5-3-32:
-      enabled: true
-      image: sslhep/servicex_code_gen_cms_aod
-      tag: v1.5.1-alpha.1
-      defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
-      defaultScienceContainerTag: cmssw-5-3-32
+  cmssw-5-3-32:
+    enabled: true
+    image: sslhep/servicex_code_gen_cms_aod
+    tag: v1.5.1-alpha.1
+    defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
+    defaultScienceContainerTag: cmssw-5-3-32
 
 
 didFinder:
