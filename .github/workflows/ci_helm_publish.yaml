@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
       - name: Pull flux_river_configs
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages

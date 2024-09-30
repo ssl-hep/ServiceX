@@ -17,7 +17,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
 
       - name: Read file contents
         working-directory: ./.github/workflows
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5.2.0
@@ -84,7 +84,7 @@ jobs:
       matrix:
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.0
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
@@ -109,7 +109,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v6.7.0
+        uses: docker/build-push-action@v6.9.0
         with:
           context: ${{ matrix.app.dir_name }}
           push: true
