@@ -47,7 +47,7 @@ app:
 ```
 and you deployed the helm chart with
 ```
-helm install -f values.yaml --version v1.0.0-rc.3 my-release ssl-hep/servicex
+helm install -f values.yaml --version v1.4.1 my-release ssl-hep/servicex
 ```
 then the instance's URL would be `my-release.servicex.ssl-hep.org`.
 
