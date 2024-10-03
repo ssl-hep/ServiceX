@@ -109,7 +109,7 @@ data:
     
     TRANSFORMER_SIDECAR_VOLUME_PATH = "{{ .Values.transformer.outputDir }}"
     TRANSFORMER_LANGUAGE = "{{ .Values.transformer.language }}"
-    TRANSFORMER_EXEC = "{{ .Values.transformer.exec }}"
+    TRANSFORMER_EXEC = "{{ required "Transformer exec value is required" .Values.transformer.exec }}"
 
     TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
     TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
