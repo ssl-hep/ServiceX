@@ -294,7 +294,7 @@ def create_app(test_config=None,
             app.logger.error("Supplied Transformer Persistent Volume Claim Doesn't exist")
             sys.exit(-1)
 
-        api = Api(app)
+        api = Api(app, errors=Flask.errorhandler)
 
         # ensure the instance folder exists
         try:
