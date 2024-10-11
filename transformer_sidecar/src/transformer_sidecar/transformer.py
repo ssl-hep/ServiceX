@@ -82,7 +82,7 @@ start_time = timeit.default_timer()
 logger = initialize_logging()
 
 
-@shared_task
+@shared_task(acks_late=True)
 def transform_file(
         request_id,
         file_id,
