@@ -29,7 +29,7 @@ import logging
 import os
 from multiprocessing import Process
 from pathlib import Path
-from queue import Queue
+from queue import JoinableQueue as Queue
 from typing import Optional
 
 from transformer_sidecar.object_store_manager import ObjectStoreManager
@@ -99,6 +99,7 @@ class ObjectStoreUploader(Process):
                                         "objectName": object_name})
 
                 item.servicex.put_file_complete(item.rec)
+                self.input_queue.task_done()
 
     def convert_to_parquet(self, source_path: Path) -> Optional[Path]:
         """
