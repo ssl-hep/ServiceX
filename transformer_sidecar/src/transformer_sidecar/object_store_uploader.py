@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
+import signal
 from multiprocessing import Process
 from pathlib import Path
 from queue import Queue
@@ -58,11 +59,18 @@ class ObjectStoreUploader(Process):
     def __init__(self, request_id: str, input_queue: Queue,
                  logger: logging.Logger,
                  convert_root_to_parquet: bool):
+
         super().__init__(target=self.service_work_queue)
         self.request_id = request_id
         self.input_queue = input_queue
         self.logger = logger
         self.convert_root_to_parquet = convert_root_to_parquet
+
+        signal.signal(signal.SIGTERM, self.handle_sigterm)
+
+    def handle_sigterm(self, signum, frame):
+        # This method will be called when SIGTERM is received
+        print("SIGTERM received, but ignored.")
 
     def service_work_queue(self):
         import time
