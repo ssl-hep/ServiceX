@@ -29,6 +29,7 @@
 import json
 import os
 import shutil
+import sys
 import timeit
 from argparse import Namespace
 from hashlib import sha1, sha256
@@ -42,7 +43,8 @@ import psutil as psutil
 import time
 from celery import Celery, shared_task
 
-from transformer_sidecar.science_container_command import ScienceContainerCommand
+from transformer_sidecar.science_container_command import ScienceContainerCommand, \
+    ScienceContainerException
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
@@ -82,7 +84,7 @@ start_time = timeit.default_timer()
 logger = initialize_logging()
 
 
-@shared_task
+@shared_task(acks_late=True)
 def transform_file(
         request_id,
         file_id,
@@ -276,6 +278,9 @@ def transform_file(
             },
         )
 
+    except ScienceContainerException:
+        logger.exception("Science container not responding. Shutting down this transformer.")
+        sys.exit(0)
     except Exception as error:
         logger.exception(f"Received exception doing transform: {error}")
         rec = FileCompleteRecord(
