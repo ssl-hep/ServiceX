@@ -33,7 +33,7 @@ import sys
 import timeit
 from argparse import Namespace
 from hashlib import sha1, sha256
-from multiprocessing import Queue
+from multiprocessing import JoinableQueue as Queue
 from pathlib import Path
 from types import SimpleNamespace
 from typing import NamedTuple, Optional, Union
@@ -219,6 +219,7 @@ def transform_file(
                             Path(transform_request["safeOutputFileName"]), servicex, rec
                         )
                     )
+                    upload_queue.join()
                 else:
                     servicex.put_file_complete(rec)
 
