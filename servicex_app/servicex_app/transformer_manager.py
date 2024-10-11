@@ -239,7 +239,7 @@ class TransformerManager:
             env=env,
             args=[sidecar_command],
             resources=resources,
-            lifecycle=client.V1Lifecycle(pre_stop=client.V1LifecycleHandler(_exec=client.V1ExecAction(['/usr/bin/kill', '-TERM', '1', ])))
+            # lifecycle=client.V1Lifecycle(pre_stop=client.V1LifecycleHandler(_exec=client.V1ExecAction(['/usr/bin/kill', '-TERM', '1', ])))
         )
 
         # Create and Configure a spec section
