@@ -29,7 +29,7 @@ import logging
 import os
 from multiprocessing import Process
 from pathlib import Path
-from queue import JoinableQueue as Queue
+from queue import Queue
 from typing import Optional
 
 from transformer_sidecar.object_store_manager import ObjectStoreManager
