@@ -12,7 +12,7 @@ env:
 
 jobs:
   build-matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -37,7 +37,7 @@ jobs:
           - linux/arm64
         python-version: ["3.10"]
         app: "${{fromJson(needs.build-matrix.outputs.matrix)}}"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v4.1.7
