@@ -9,7 +9,7 @@ packages = [{include = "x509_secrets"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 kubernetes = "^25.3.0"
-urllib3 = "^2.0.7"
+urllib3 = "^2.2.2"
 
 
 [build-system]
