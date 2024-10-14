@@ -26,15 +26,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
-from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 from requests_toolbelt.multipart import decoder
+
 from servicex_app.models import TransformRequest
+from servicex_app.reliable_requests import request_timeout, servicex_retry
 
 
 class CodeGenAdapter:
     def __init__(self, code_gen_service_urls, transformer_manager):
         self.code_gen_service_urls = code_gen_service_urls
         self.transformer_manager = transformer_manager
+
+    @servicex_retry()
+    def post_request(self, post_url, post_obj):
+        result = requests.post(post_url + "/servicex/generated-code", json=post_obj,
+                               timeout=request_timeout)
+        return result
 
     def generate_code_for_selection(
             self, request_record: TransformRequest,
@@ -60,16 +67,9 @@ class CodeGenAdapter:
         if not post_url:
             raise ValueError(f'{user_codegen_name}, code generator unavailable for use')
 
-        postObj = {
+        result = self.post_request(post_url + "/servicex/generated-code", post_obj={
             "code": request_record.selection,
-        }
-
-        for attempt in Retrying(stop=stop_after_attempt(3),
-                                wait=wait_exponential_jitter(initial=0.1, max=30),
-                                reraise=True):
-            with attempt:
-                result = requests.post(post_url + "/servicex/generated-code", json=postObj,
-                                       timeout=(0.5, None))
+        })
 
         if result.status_code != 200:
             msg = result.json()['Message']

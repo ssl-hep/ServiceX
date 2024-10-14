@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,40 +25,30 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import re
+from functools import wraps
 
-import requests
-from flask import current_app
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
-from servicex_app.reliable_requests import servicex_retry, request_timeout
+# This is the default timeout settings for requests. It represents the time to make a
+# connection and then the time to wait for a response.
+request_timeout = (0.5, None)
 
 
-class DockerRepoAdapter:
-    def __init__(self, registry_endpoint="https://hub.docker.com"):
-        self.registry_endpoint = registry_endpoint
-
-    @servicex_retry()
-    def get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
-        query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
-        r = requests.get(query, timeout=request_timeout)
-        return r
-
-    def check_image_exists(self, tagged_image: str) -> bool:
-        """
-        Checks that the given Docker image
-        :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".
-        :return: Whether or not the image exists in the registry.
-        """
-        search_result = re.search("(.+)/(.+):(.+)", tagged_image)
-        if not search_result or len(search_result.groups()) != 3:
-            return False
-
-        (repo, image, tag) = search_result.groups()
-        r = self.get_image_by_tag(repo, image, tag)
-
-        if r.status_code == 404:
-            return False
-
-        current_app.logger.info(f"Requested Image: {tagged_image} exists, "
-                                f"last updated {r.json()['last_updated']}")
-        return True
+# Use this decorator on all functions that wrap requests to
+# servicex microservices.
+def servicex_retry(
+    max_attempts=3,
+    wait_min=0.1,
+    wait_max=30
+):
+    def decorator(func):
+        @retry(
+            reraise=True,
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_exponential_jitter(initial=wait_min, max=wait_max)
+        )
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator

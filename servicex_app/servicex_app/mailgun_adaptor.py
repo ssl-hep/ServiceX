@@ -1,6 +1,7 @@
 import requests
-from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 from flask import current_app, render_template
+
+from servicex_app.reliable_requests import servicex_retry, request_timeout
 
 
 class MailgunAdaptor:
@@ -8,6 +9,13 @@ class MailgunAdaptor:
         self.api_key = current_app.config.get('MAILGUN_API_KEY')
         self.domain = current_app.config.get('MAILGUN_DOMAIN')
         self.endpoint = f"https://api.mailgun.net/v3/{self.domain}/messages"
+
+    @servicex_retry()
+    def post_mailgun(self, data) -> requests.Response:
+        res = requests.post(self.endpoint, data,
+                            auth=("api", self.api_key),
+                            timeout=request_timeout)
+        return res
 
     def send(self, email: str, template_name: str):
         """
@@ -23,10 +31,6 @@ class MailgunAdaptor:
             "subject": "Welcome to ServiceX!",
             "html": render_template(f"emails/{template_name}")
         }
-        for attempt in Retrying(stop=stop_after_attempt(3),
-                                wait=wait_exponential_jitter(initial=0.1, max=30),
-                                reraise=True):
-            with attempt:
-                res = requests.post(self.endpoint, data, auth=("api", self.api_key),
-                                    timeout=(0.5, None))
-                res.raise_for_status()
+
+        res = self.post_mailgun(data)
+        res.raise_for_status()

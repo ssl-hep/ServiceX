@@ -1,5 +1,4 @@
 import requests
-from tenacity import Retrying, stop_after_attempt, wait_exponential_jitter
 from flask import request, render_template, redirect, url_for, session, \
     current_app, flash
 from flask_jwt_extended import create_refresh_token
@@ -8,6 +7,15 @@ from servicex_app.models import UserModel
 from servicex_app.decorators import oauth_required
 from .forms import ProfileForm
 from .slack_msg_builder import signup
+from ..reliable_requests import servicex_retry, request_timeout
+
+
+@servicex_retry()
+def post_signup(webhook_url=None, signup_data=None):
+    res = requests.post(webhook_url,
+                        signup_data,
+                        timeout=request_timeout)
+    return res
 
 
 @oauth_required
@@ -44,16 +52,10 @@ def create_profile():
                 webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
                 msg_segments = ["Profile created!"]
                 if webhook_url and new_user.pending:
-                    for attempt in Retrying(stop=stop_after_attempt(3),
-                                            wait=wait_exponential_jitter(initial=0.1, max=30),
-                                            reraise=True):
-                        with attempt:
-                            res = requests.post(webhook_url, signup(new_user.email),
-                                                timeout=(0.5, None))
-                            # Raise exception on error (e.g. bad request or forbidden url)
-                            res.raise_for_status()
-                            msg_segments += ["Your account is pending approval.",
-                                             "We'll email you when it's ready."]
+                    res = post_signup(webhook_url, signup(new_user.email))
+                    res.raise_for_status()
+                    msg_segments += ["Your account is pending approval.",
+                                     "We'll email you when it's ready."]
                 current_app.logger.info(f"Created profile for {new_user.id}")
                 flash(' '.join(msg_segments), 'success')
                 return redirect(url_for('profile'))
