@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from unittest.mock import patch, PropertyMock
+
 import psycopg2
 import pytest
 
@@ -47,16 +49,16 @@ class TestTransformFileComplete(ResourceTestBase):
 
     @pytest.fixture
     def mock_transform_request_lookup(self, mocker, fake_transform_request):
-        return mocker.patch.object(
-            TransformRequest, 'lookup',
-            return_value=fake_transform_request,
-        )
+        with patch('servicex_app.models.TransformRequest.lookup') as mock:
+            mock.return_value = fake_transform_request
+            yield mock
 
     @pytest.fixture
     def mock_files_remaining(self, mocker):
-        mock = mocker.PropertyMock(return_value=1)
-        TransformRequest.files_remaining = mock
-        return mock
+        with patch('servicex_app.models.TransformRequest.files_remaining',
+                   new_callable=PropertyMock) as mock_remaining:
+            mock_remaining.return_value = 1
+            yield mock_remaining
 
     @pytest.fixture
     def mock_file_transformed_successfully(self, mocker):
