@@ -1,7 +1,7 @@
 import requests
 from flask import current_app, render_template
 
-from servicex_app.reliable_requests import servicex_retry, request_timeout
+from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
 
 class MailgunAdaptor:
@@ -14,7 +14,7 @@ class MailgunAdaptor:
     def post_mailgun(self, data) -> requests.Response:
         res = requests.post(self.endpoint, data,
                             auth=("api", self.api_key),
-                            timeout=request_timeout)
+                            timeout=REQUEST_TIMEOUT)
         return res
 
     def send(self, email: str, template_name: str):

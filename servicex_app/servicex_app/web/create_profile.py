@@ -7,14 +7,14 @@ from servicex_app.models import UserModel
 from servicex_app.decorators import oauth_required
 from .forms import ProfileForm
 from .slack_msg_builder import signup
-from ..reliable_requests import servicex_retry, request_timeout
+from ..reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
 
 @servicex_retry()
 def post_signup(webhook_url=None, signup_data=None):
     res = requests.post(webhook_url,
                         signup_data,
-                        timeout=request_timeout)
+                        timeout=REQUEST_TIMEOUT)
     return res
 
 

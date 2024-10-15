@@ -8,7 +8,7 @@ from flask import request, current_app, Response
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex_app.models import UserModel
-from servicex_app.reliable_requests import servicex_retry, request_timeout
+from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.web.slack_msg_builder import signup_ia, missing_slack_app, \
     request_expired, \
@@ -17,13 +17,13 @@ from servicex_app.web.slack_msg_builder import signup_ia, missing_slack_app, \
 
 @servicex_retry()
 def respond(url, message):
-    slack_response = requests.post(url, message, timeout=request_timeout)
+    slack_response = requests.post(url, message, timeout=REQUEST_TIMEOUT)
     slack_response.raise_for_status()
 
 
 @servicex_retry()
 def slack_submit(response_url=None, response_msg=None):
-    slack_response = requests.post(response_url, response_msg, timeout=request_timeout)
+    slack_response = requests.post(response_url, response_msg, timeout=REQUEST_TIMEOUT)
     return slack_response
 
 
