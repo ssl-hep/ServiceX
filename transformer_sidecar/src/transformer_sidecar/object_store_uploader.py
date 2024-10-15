@@ -70,7 +70,11 @@ class ObjectStoreUploader(Process):
 
     def handle_sigterm(self, signum, frame):
         # This method will be called when SIGTERM is received
-        print("SIGTERM received, but ignored.")
+        self.logger.debug(
+            "SIGTERM received, but ignored",
+            extra={'requestId': self.request_id,
+                   "place": PLACE,
+                   "qsize": self.input_queue.qsize()})
 
     def service_work_queue(self):
         import time
