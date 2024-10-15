@@ -509,6 +509,7 @@ if __name__ == "__main__":  # pragma: no cover
     app.conf.worker_hijack_root_logger = False
     app.conf.worker_redirect_stdouts_level = 'DEBUG'
     app.conf.worker_prefetch_multiplier = 1
+    app.conf.broker_connection_retry_on_startup = True
     init(_args, app)
 
     logger.debug(
