@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.5.0
+September 19, 2024
+### Added
+- Builds for ARM64 architecture
+
+### Changed
+- Added database retries to the transform_file_complete endpoint
+- Use celery for the transformer sidecar
+- Add XrootD retries in the raw uproot generated code
+
+### Fixed
+- Permissions in the xAOD DID Finder container
+
+### Removed
+
 ### 1.4.0
 August 1, 2024
 ### Added
