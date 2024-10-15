@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+1.5.1
+September 20, 2024
+
+### Added
+- Use Rucio's Site closeness algorithm for replica ordering
+
+### Changed
+- Migrate all of the codegens into the values.yaml
+- Include full transformer logs on failure
+- Update the chart's values.yaml to use tags for the release
+
+### Fixed
+- Status change from looking to running
+
+### Removed
+
 ### 1.5.0
 September 19, 2024
 ### Added
