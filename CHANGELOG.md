@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-1.5.1
+### 1.5.2
+October 15, 2024
+
+### Added
+
+### Changed
+- Use Celery ack_late to acknowledge messages only after the task is complete
+- Increase the connection timeout for all requests
+- Add retries to all requests
+
+### Fixed
+- Put the correct link to the client docs from the dashboard
+- Fix exception propagation from the REST endpoints
+- Add no-op signal handler for the transformer object store uploader process to avoid losing files
+
+### Removed
+- The option for the transformers to communicate with the app via the ingress
+
+### 1.5.1
 September 20, 2024
 
 ### Added
