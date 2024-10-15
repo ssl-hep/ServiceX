@@ -31,7 +31,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
 # This is the default timeout settings for requests. It represents the time to make a
 # connection and then the time to wait for a response.
-request_timeout = (0.5, None)
+REQUEST_TIMEOUT = (0.5, None)
 
 
 # Use this decorator on all functions that wrap requests to

@@ -29,7 +29,7 @@ import requests
 from requests_toolbelt.multipart import decoder
 
 from servicex_app.models import TransformRequest
-from servicex_app.reliable_requests import request_timeout, servicex_retry
+from servicex_app.reliable_requests import REQUEST_TIMEOUT, servicex_retry
 
 
 class CodeGenAdapter:
@@ -40,7 +40,7 @@ class CodeGenAdapter:
     @servicex_retry()
     def post_request(self, post_url, post_obj):
         result = requests.post(post_url + "/servicex/generated-code", json=post_obj,
-                               timeout=request_timeout)
+                               timeout=REQUEST_TIMEOUT)
         return result
 
     def generate_code_for_selection(

@@ -30,7 +30,7 @@ import re
 import requests
 from flask import current_app
 
-from servicex_app.reliable_requests import servicex_retry, request_timeout
+from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
 
 class DockerRepoAdapter:
@@ -40,7 +40,7 @@ class DockerRepoAdapter:
     @servicex_retry()
     def get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
         query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
-        r = requests.get(query, timeout=request_timeout)
+        r = requests.get(query, timeout=REQUEST_TIMEOUT)
         return r
 
     def check_image_exists(self, tagged_image: str) -> bool:
