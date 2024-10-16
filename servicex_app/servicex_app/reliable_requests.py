@@ -49,6 +49,7 @@ def servicex_retry(
         )
         @wraps(func)
         def wrapper(*args, **kwargs):
+            print(f'I am invoking {func} with args {args} and kwargs {kwargs}')
             return func(*args, **kwargs)
         return wrapper
     return decorator
