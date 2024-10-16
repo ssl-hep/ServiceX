@@ -39,8 +39,7 @@ class CodeGenAdapter:
 
     @servicex_retry()
     def post_request(self, post_url, post_obj):
-        result = requests.post(post_url + "/servicex/generated-code", json=post_obj,
-                               timeout=REQUEST_TIMEOUT)
+        result = requests.post(post_url, json=post_obj, timeout=REQUEST_TIMEOUT)
         return result
 
     def generate_code_for_selection(
@@ -72,7 +71,10 @@ class CodeGenAdapter:
         })
 
         if result.status_code != 200:
-            msg = result.json()['Message']
+            try:
+                msg = result.json()['Message']
+            except KeyError:
+                msg = str(result.json())
             raise ValueError(f'Failed to generate translation code: {msg}')
 
         decoder_parts = decoder.MultipartDecoder.from_response(result)
