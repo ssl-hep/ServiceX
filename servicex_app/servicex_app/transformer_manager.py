@@ -33,7 +33,7 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 from typing import Optional
 
-from servicex_app.models import TransformRequest
+from servicex_app.models import TransformRequest, TransformStatus
 
 
 class TransformerManager:
@@ -75,6 +75,9 @@ class TransformerManager:
         self.launch_transformer_jobs(
             image=request_rec.image, request_id=request_rec.request_id,
             workers=request_rec.workers,
+            max_workers=(max(1, request_rec.files)
+                         if request_rec.status == TransformStatus.running
+                         else config["TRANSFORMER_MAX_REPLICAS"]),
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,
@@ -314,7 +317,7 @@ class TransformerManager:
         return False
 
     @staticmethod
-    def create_hpa_object(request_id):
+    def create_hpa_object(request_id, max_workers):
         target = client.V1CrossVersionObjectReference(
             api_version="apps/v1",
             kind='Deployment',
@@ -322,11 +325,12 @@ class TransformerManager:
         )
 
         cfg = current_app.config
+        # don't scale beyond the number of files
         spec = client.V1HorizontalPodAutoscalerSpec(
             scale_target_ref=target,
             target_cpu_utilization_percentage=cfg["TRANSFORMER_CPU_SCALE_THRESHOLD"],
             min_replicas=cfg["TRANSFORMER_MIN_REPLICAS"],
-            max_replicas=cfg["TRANSFORMER_MAX_REPLICAS"]
+            max_replicas=min(max_workers, cfg["TRANSFORMER_MAX_REPLICAS"])
         )
         hpa = client.V1HorizontalPodAutoscaler(
             api_version="autoscaling/v1",
@@ -355,7 +359,7 @@ class TransformerManager:
         except ApiException as e:
             current_app.logger.exception(f"Exception during HPA Creation: {e}")
 
-    def launch_transformer_jobs(self, image, request_id, workers,
+    def launch_transformer_jobs(self, image, request_id, workers, max_workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
                                 result_destination, result_format, transformer_language,
                                 transformer_command
@@ -370,7 +374,7 @@ class TransformerManager:
 
         if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            hpa = self.create_hpa_object(request_id)
+            hpa = self.create_hpa_object(request_id, max_workers)
             self._create_hpa(autoscaler_api, hpa, namespace)
 
     @classmethod
