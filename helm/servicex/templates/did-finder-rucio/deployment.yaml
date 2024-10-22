@@ -46,6 +46,10 @@ spec:
           - name: SITE_NAME
             value: "{{ .Values.didFinder.rucio.site }}"
           {{- end }}
+          {{- if .Values.replicaSorter.enabled }}
+          - name: USE_REPLICA_SORTER
+            value: "1"
+          {{- end }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:

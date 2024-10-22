@@ -195,3 +195,5 @@ minioCleanup:
   maxAge: 30
   maxSize: "1G"
   normSize: "700M"
+replicaSorter:
+  enabled: false
