@@ -57,7 +57,7 @@ codeGen:
 
   atlasr21:
     enabled: true
-    image: sslhep/servicex_code_gen_func_adl_xaod
+    image: sslhep/servicex_code_gen_atlas_xaod
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
