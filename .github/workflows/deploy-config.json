@@ -58,5 +58,10 @@
     "dir_name": "minio_cleanup",
     "image_name": "servicex_minio_cleanup",
     "test_required": false
-  }
+  },
+  {
+    "dir_name": "replica_distance_service",
+    "image_name": "servicex_replica_distance_service",
+    "test_required": false
+  } 
 ]

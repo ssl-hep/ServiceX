@@ -1,0 +1,56 @@
+---
+{{ if .Values.replicaSorter.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-replica-distance-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-replica-distance-service
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-replica-distance-service
+    spec:
+      containers:
+      - name: replica-distance-service
+        image: {{ .Values.replicaSorter.image }}:{{ .Values.replicaSorter.tag }}
+        imagePullPolicy: {{ .Values.replicaSorter.pullPolicy }}
+        env:
+          {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom: 
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: BROKER_URL
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- else }}
+          - name: BROKER_URL
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+          {{- end }}
+          {{- if .Values.replicaSorter.geoIPURL }}
+          - name: GEOIP_DB_URL
+            value: {{ .Values.replicaSorter.geoIPURL }}
+          {{- else }}
+          {{- if .Values.replicaSorter.geoIPEdition -}}
+          - name: GEOIP_DB_EDITION
+            value: {{ .Values.replicaSorter.geoIPEdition }}
+          {{- end -}}
+          {{- if .Values.secrets -}}
+          - name: GEOIP_DB_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: geoip-license-key
+          {{- end }}
+          {{- end -}}
+        volumeMounts:
+          - name: rucio-cfg
+            mountPath: /opt/rucio/etc/
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+{{- end }}
