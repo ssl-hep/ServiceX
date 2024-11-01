@@ -69,15 +69,18 @@ def get_distance(fqdn: str, my_lat: float, my_lon: float):
     return haversine_distance(site_lat, site_lon, my_lat, my_lon)
 
 
-@shared_task(name="order_replicas")
+@shared_task(name="replica_distance_service.order_replicas")
 def lookup_dataset(replicas: List[str], location: Mapping[str, str]) -> List[str]:
     global reader
+    print('Reader?', reader)
     if not reader:
         return replicas
     fqdns = [(urlparse(replica).hostname, replica) for replica in replicas]
+    print('fqdns', fqdns)
     distances = [(get_distance(fqdn, location['latitude'], location['longitude']),
                   replica) for fqdn, replica in fqdns]
     distances.sort()
+    print('distances', distances)
 
     return [replica for _, replica in distances]
 

@@ -19,7 +19,7 @@ RUN poetry config virtualenvs.create false && \
 RUN pip install gunicorn
 
 COPY boot.sh ./
-COPY servicex/ ./servicex
+COPY replica_distance_service.py ./
 RUN chmod +x boot.sh
 
 USER servicex
@@ -28,5 +28,5 @@ USER servicex
 ENV REPLICA_SVC_CONFIG_FILE "/home/servicex/app.conf"
 
 EXPOSE 5000
-# ENTRYPOINT ["./boot.sh"]
+ENTRYPOINT ["./boot.sh"]
 

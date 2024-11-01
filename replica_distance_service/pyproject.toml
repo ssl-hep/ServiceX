@@ -1,10 +1,9 @@
 [tool.poetry]
 name = "replica-distance-service"
 version = "0.1.0"
-description = "Scripts to set up "
+description = "Scripts to sort file replicas by distance"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "servicex"}]
 
 [tool.poetry.dependencies]
 python = "~3.12"

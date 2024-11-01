@@ -196,4 +196,9 @@ minioCleanup:
   maxSize: "1G"
   normSize: "700M"
 replicaSorter:
-  enabled: false
+  enabled: true
+  image: sslhep/servicex_replica_distance_service
+  tag: develop
+  pullPolicy: Always
+  geoIPURL: null
+  geoIPEdition: null

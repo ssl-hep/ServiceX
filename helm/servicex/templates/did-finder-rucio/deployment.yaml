@@ -49,6 +49,22 @@ spec:
           {{- if .Values.replicaSorter.enabled }}
           - name: USE_REPLICA_SORTER
             value: "1"
+          {{- if .Values.replicaSorter.geoIPURL }}
+          - name: GEOIP_DB_URL
+            value: {{ .Values.replicaSorter.geoIPURL }}
+          {{- else }}
+          {{- if .Values.replicaSorter.geoIPEdition -}}
+          - name: GEOIP_DB_EDITION
+            value: {{ .Values.replicaSorter.geoIPEdition }}
+          {{- end -}}
+          {{- if .Values.secrets -}}
+          - name: GEOIP_DB_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: geoip-license-key
+          {{- end }}
+          {{- end }}
           {{- end }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}

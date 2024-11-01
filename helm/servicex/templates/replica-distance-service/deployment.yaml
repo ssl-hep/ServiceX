@@ -1,5 +1,5 @@
 ---
-{{ if .Values.replicaSorter.enabled }}
+{{- if .Values.replicaSorter.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,11 +46,5 @@ spec:
                 name: {{ .Values.secrets }}
                 key: geoip-license-key
           {{- end }}
-          {{- end -}}
-        volumeMounts:
-          - name: rucio-cfg
-            mountPath: /opt/rucio/etc/
-          - name: x509-secret
-            mountPath: /etc/grid-security-ro
-            readOnly: true
+          {{- end }}
 {{- end }}
