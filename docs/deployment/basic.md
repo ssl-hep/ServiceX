@@ -183,7 +183,7 @@ This should output some JSON metadata for the deployment.
 
 ### Running a simple analysis
 
-Check out the [quick start guide](../user/getting-started.md) for new users,
+Check out the [ServiceX client documentation](https://servicex-frontend.readthedocs.io/),
 which contains some examples of basic requests you can make to ServiceX.
 
 Select one which corresponds to the file type you chose for your deployment.
