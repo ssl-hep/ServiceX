@@ -98,7 +98,6 @@ class TransformerFileComplete(ServiceXResource):
            )
     def save_transform_result(transform_req: TransformRequest, info: dict[str, str]):
         rec = TransformationResult(
-            did=transform_req.did,
             file_id=info['file-id'],
             request_id=transform_req.request_id,
             file_path=info['file-path'],

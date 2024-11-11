@@ -359,7 +359,6 @@ class TransformationResult(db.Model):
     __tablename__ = 'transform_result'
 
     id = db.Column(db.Integer, primary_key=True)
-    did = db.Column(db.String(512), unique=False, nullable=False)
     file_id = db.Column(db.Integer, ForeignKey('files.id'))
     file_path = db.Column(db.String(512), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=False, nullable=False)
@@ -378,7 +377,6 @@ class TransformationResult(db.Model):
         return {
             'id': x.id,
             'request-id': x.request_id,
-            'did': x.did,
             'file-id': x.id,
             'file-path': x.file_path,
             'transform_status': x.transform_status,
