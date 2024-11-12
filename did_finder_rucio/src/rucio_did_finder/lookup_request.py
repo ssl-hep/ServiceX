@@ -79,10 +79,10 @@ class LookupRequest:
                 ds_size += af['file_size']
                 total_paths += len(af['paths'])
                 ipaths = af['paths'].copy()
-                self.logger.info('path before', ipaths)
+                self.logger.info(f'path before {ipaths}')
                 if self.replica_sorter is not None and self.location is not None:
                     af['paths'] = self.replica_sorter.sort_replicas(ipaths, self.location)
-                self.logger.info('path after', af['paths'])
+                self.logger.info(f'path after {af["paths"]}')
                 full_file_list.append(af)
         yield full_file_list
 
