@@ -76,7 +76,6 @@ codeGen:
     defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
     defaultScienceContainerTag: cmssw-5-3-32
 
-
 didFinder:
   CERNOpenData:
     enabled: true
@@ -101,6 +100,7 @@ didFinder:
     replicaSorterEnabled: false
     geoIPURL: null
     geoIPEdition: null
+
 gridAccount: <your account>
 logging:
   logstash:
