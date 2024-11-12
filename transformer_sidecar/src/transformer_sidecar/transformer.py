@@ -399,7 +399,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             "--without-mingle",
             "--without-gossip",
             "--without-heartbeat",
-            "--loglevel=info",
+            "--loglevel=warning",
             "-Q", f"transformer-{args.request_id}",
             "-n",
             f"transformer-{args.request_id}@%h",
