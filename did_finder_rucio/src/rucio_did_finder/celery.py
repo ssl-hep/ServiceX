@@ -34,6 +34,7 @@ from rucio.client.replicaclient import ReplicaClient
 from rucio_did_finder.lookup_request import LookupRequest
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
+from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
 
 __log = logging.getLogger(__name__)
 
@@ -43,6 +44,16 @@ did_client = DIDClient()
 replica_client = ReplicaClient()
 rucio_adapter = RucioAdapter(did_client, replica_client, False)
 
+if 'RUCIO_LATITUDE' in os.environ and 'RUCIO_LONGITUDE' in os.environ\
+        and 'USE_REPLICA_SORTER' in os.environ:
+    location = {'latitude': float(os.environ['RUCIO_LATITUDE']),
+                'longitude': float(os.environ['RUCIO_LONGITUDE'])
+                }
+    replica_sorter = ReplicaSorter()
+else:
+    location = None
+    replica_sorter = None
+
 app = DIDFinderApp('rucio', did_finder_args={"rucio_adapter": rucio_adapter})
 
 
@@ -50,7 +61,9 @@ def find_files(did_name, info, did_finder_args):
     lookup_request = LookupRequest(
         did=did_name,
         rucio_adapter=did_finder_args['rucio_adapter'],
-        dataset_id=info['dataset-id']
+        dataset_id=info['dataset-id'],
+        replica_sorter=replica_sorter,
+        location=location,
     )
     for file in lookup_request.lookup_files():
         yield file

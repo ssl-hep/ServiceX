@@ -29,13 +29,15 @@ import logging
 from datetime import datetime
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
-import os
+from typing import Optional, Mapping
 
 
 class LookupRequest:
     def __init__(self, did: str,
                  rucio_adapter: RucioAdapter,
-                 dataset_id: str = 'bogus-id'):
+                 dataset_id: str = 'bogus-id',
+                 replica_sorter: Optional[ReplicaSorter] = None,
+                 location: Optional[Mapping[str, float]] = None):
         '''Create the `LookupRequest` object that is responsible for returning
         lists of files. Processes things in chunks.
 
@@ -53,14 +55,8 @@ class LookupRequest:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
-        self.location = None
-        self.replica_sorter = None
-        if 'RUCIO_LATITUDE' in os.environ and 'RUCIO_LONGITUDE' in os.environ\
-                and 'USE_REPLICA_SORTER' in os.environ:
-            self.location = {'latitude': float(os.environ['RUCIO_LATITUDE']),
-                             'longitude': float(os.environ['RUCIO_LONGITUDE'])
-                             }
-            self.replica_sorter = ReplicaSorter()
+        self.location = location
+        self.replica_sorter = replica_sorter
 
     def lookup_files(self):
         """
