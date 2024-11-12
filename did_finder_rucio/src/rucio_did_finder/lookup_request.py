@@ -31,6 +31,7 @@ from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
 import os
 
+
 class LookupRequest:
     def __init__(self, did: str,
                  rucio_adapter: RucioAdapter,
@@ -55,7 +56,7 @@ class LookupRequest:
         self.location = None
         self.replica_sorter = None
         if 'RUCIO_LATITUDE' in os.environ and 'RUCIO_LONGITUDE' in os.environ\
-            and 'USE_REPLICA_SORTER' in os.environ:
+                and 'USE_REPLICA_SORTER' in os.environ:
             self.location = {'latitude': float(os.environ['RUCIO_LATITUDE']),
                              'longitude': float(os.environ['RUCIO_LONGITUDE'])
                              }
@@ -79,10 +80,10 @@ class LookupRequest:
                 ds_size += af['file_size']
                 total_paths += len(af['paths'])
                 ipaths = af['paths'].copy()
-                self.logger.info(f'path before {ipaths}')
+                self.logger.debug(f'path before {ipaths}')
                 if self.replica_sorter is not None and self.location is not None:
                     af['paths'] = self.replica_sorter.sort_replicas(ipaths, self.location)
-                self.logger.info(f'path after {af["paths"]}')
+                self.logger.debug(f'path after {af["paths"]}')
                 full_file_list.append(af)
         yield full_file_list
 
