@@ -69,7 +69,7 @@ class LookupRequest:
                 ds_size += af['file_size']
                 total_paths += len(af['paths'])
                 full_file_list.append(af)
-        yield full_file_list
+            yield ds_files
 
         lookup_finish = datetime.now()
 
