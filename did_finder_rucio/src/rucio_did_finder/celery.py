@@ -34,17 +34,10 @@ from rucio.client.replicaclient import ReplicaClient
 from rucio_did_finder.lookup_request import LookupRequest
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
-from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
 
 __log = logging.getLogger(__name__)
 
 cache_prefix = os.environ.get('CACHE_PREFIX', '')
-
-location = None
-if 'RUCIO_LATITUDE' in os.environ and 'RUCIO_LONGITUDE' in os.environ:
-    location = {'latitude': float(os.environ['RUCIO_LATITUDE']),
-                'longitude': float(os.environ['RUCIO_LONGITUDE'])
-                }
 
 # Initialize the finder
 did_client = DIDClient()

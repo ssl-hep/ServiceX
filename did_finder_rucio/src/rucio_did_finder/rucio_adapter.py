@@ -46,7 +46,6 @@ class RucioAdapter:
 
     def client_location(self):
         client_location = {}
-        # setting the site actually seems to work
         if 'SITE_NAME' in os.environ:
             client_location['site'] = os.environ['SITE_NAME']
         latitude = os.environ.get('RUCIO_LATITUDE')

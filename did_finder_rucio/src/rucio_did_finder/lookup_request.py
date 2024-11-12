@@ -28,7 +28,8 @@
 import logging
 from datetime import datetime
 from rucio_did_finder.rucio_adapter import RucioAdapter
-
+from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
+import os
 
 class LookupRequest:
     def __init__(self, did: str,
@@ -51,6 +52,15 @@ class LookupRequest:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
 
+        self.location = None
+        self.replica_sorter = None
+        if 'RUCIO_LATITUDE' in os.environ and 'RUCIO_LONGITUDE' in os.environ\
+            and 'USE_REPLICA_SORTER' in os.environ:
+            self.location = {'latitude': float(os.environ['RUCIO_LATITUDE']),
+                             'longitude': float(os.environ['RUCIO_LONGITUDE'])
+                             }
+            self.replica_sorter = ReplicaSorter()
+
     def lookup_files(self):
         """
         lookup files.
@@ -68,6 +78,11 @@ class LookupRequest:
                 n_files += 1
                 ds_size += af['file_size']
                 total_paths += len(af['paths'])
+                ipaths = af['paths'].copy()
+                self.logger.info('path before', ipaths)
+                if self.replica_sorter is not None and self.location is not None:
+                    af['paths'] = self.replica_sorter.sort_replicas(ipaths, self.location)
+                self.logger.info('path after', af['paths'])
                 full_file_list.append(af)
         yield full_file_list
 

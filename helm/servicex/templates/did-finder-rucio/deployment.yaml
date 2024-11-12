@@ -46,16 +46,16 @@ spec:
           - name: SITE_NAME
             value: "{{ .Values.didFinder.rucio.site }}"
           {{- end }}
-          {{- if .Values.replicaSorter.enabled }}
+          {{- if .Values.didFinder.rucio.replicaSorterEnabled }}
           - name: USE_REPLICA_SORTER
             value: "1"
-          {{- if .Values.replicaSorter.geoIPURL }}
+          {{- if .Values.didFinder.rucio.geoIPURL }}
           - name: GEOIP_DB_URL
-            value: {{ .Values.replicaSorter.geoIPURL }}
+            value: {{ .Values.didFinder.rucio.geoIPURL }}
           {{- else }}
-          {{- if .Values.replicaSorter.geoIPEdition -}}
+          {{- if .Values.didFinder.rucio.geoIPEdition -}}
           - name: GEOIP_DB_EDITION
-            value: {{ .Values.replicaSorter.geoIPEdition }}
+            value: {{ .Values.didFinder.rucio.geoIPEdition }}
           {{- end -}}
           {{- if .Values.secrets -}}
           - name: GEOIP_DB_LICENSE_KEY
