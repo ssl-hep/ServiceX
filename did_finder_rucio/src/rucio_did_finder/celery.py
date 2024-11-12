@@ -38,16 +38,10 @@ from servicex_did_finder_lib import DIDFinderApp
 __log = logging.getLogger(__name__)
 
 cache_prefix = os.environ.get('CACHE_PREFIX', '')
-
 # Initialize the finder
 did_client = DIDClient()
 replica_client = ReplicaClient()
 rucio_adapter = RucioAdapter(did_client, replica_client, False)
-if 'USE_REPLICA_SORTER' in os.environ:
-    # will pick up configuration from environment
-    replica_sorter = ReplicaSorter()
-else:
-    replica_sorter = None
 
 app = DIDFinderApp('rucio', did_finder_args={"rucio_adapter": rucio_adapter})
 
@@ -58,16 +52,8 @@ def find_files(did_name, info, did_finder_args):
         rucio_adapter=did_finder_args['rucio_adapter'],
         dataset_id=info['dataset-id']
     )
-    for file_list in lookup_request.lookup_files():
-        retval = []
-        for file in file_list:
-            r_file = file.copy()
-            print('path before', r_file['paths'])
-            if replica_sorter is not None and location is not None:
-                r_file['paths'] = replica_sorter.sort_replicas(r_file['paths'], location)
-            print('path after', r_file['paths'])
-            retval.append(r_file)
-        yield retval
+    for file in lookup_request.lookup_files():
+        yield file
 
 
 @app.did_lookup_task(name="did_finder_rucio.lookup_dataset")
