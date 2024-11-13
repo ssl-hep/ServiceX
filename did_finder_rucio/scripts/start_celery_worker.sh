@@ -14,4 +14,4 @@ done
 
 poetry run celery --broker="$BROKER_URL" -A rucio_did_finder worker \
                   --loglevel=info -Q did_finder_rucio \
-                  --concurrency=1 --hostname=did_finder_rucio@%h
+                  --concurrency=5 --hostname=did_finder_rucio@%h
