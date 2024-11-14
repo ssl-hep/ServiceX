@@ -28,7 +28,7 @@
 import logging
 from datetime import datetime
 from rucio_did_finder.rucio_adapter import RucioAdapter
-from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
+from .replica_distance import ReplicaSorter
 from typing import Optional, Mapping
 
 

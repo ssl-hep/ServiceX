@@ -34,7 +34,7 @@ from rucio.client.replicaclient import ReplicaClient
 from rucio_did_finder.lookup_request import LookupRequest
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
-from servicex_did_finder_lib.replica_distance_service import ReplicaSorter
+from .replica_distance import ReplicaSorter
 
 __log = logging.getLogger(__name__)
 
