@@ -109,7 +109,7 @@ class ReplicaSorter(object):
                                       )
                      for fqdn, replica in fqdns]
         distances.sort(key=lambda x: x.distance)
-        return [replica for _, replica in distances]
+        return [_.replica for _ in distances]
 
     @classmethod
     def get_download_url_from_key_and_edition(cls, license_key: str, edition: str):

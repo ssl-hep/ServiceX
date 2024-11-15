@@ -73,6 +73,6 @@ def test_bad_geodb():
     """Tests what happens when we have a bad DB URL"""
     from rucio_did_finder.replica_distance import ReplicaSorter
     rs = ReplicaSorter(('https://junk.does.not.exist.org', False))
-    assert rs._reader is None
+    assert rs._database is None
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == REPLICAS
