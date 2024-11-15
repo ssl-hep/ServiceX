@@ -30,6 +30,7 @@ from flask import current_app as app
 from servicex_app.resources.datasets.delete_dataset import DeleteDataset
 from servicex_app.resources.datasets.get_all import AllDatasets
 from servicex_app.resources.datasets.get_one import OneDataset
+from servicex_app.resources.transformation.archive import ArchiveTransform
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
@@ -137,6 +138,10 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllTransformationRequests, prefix)
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
+
+    ArchiveTransform.make_api(object_store)
+    api.add_resource(ArchiveTransform, prefix)
+
     api.add_resource(TransformationStatus, prefix + "/status")
 
     DeploymentStatus.make_api(transformer_manager)

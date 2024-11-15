@@ -168,6 +168,7 @@ class TransformRequest(db.Model):
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     title = db.Column(db.String(128), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
+    archived = db.Column(db.Boolean, nullable=False, default=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
     did_id = db.Column(db.Integer, unique=False, nullable=False)
@@ -320,6 +321,10 @@ class TransformRequest(db.Model):
     @property
     def results(self) -> List['TransformationResult']:
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
+
+    def truncate_results(self):
+        TransformationResult.query.filter_by(request_id=self.request_id).delete()
+        db.session.commit()
 
     @property
     def all_files(self) -> List['DatasetFile']:

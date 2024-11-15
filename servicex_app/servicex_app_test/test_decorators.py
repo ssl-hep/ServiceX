@@ -52,6 +52,7 @@ class TestDecorators(WebTestBase):
         mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.to_json.return_value = data
+        mock.archived = False
         with client.application.app_context():
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}')
             print(response.data)
@@ -90,6 +91,7 @@ class TestDecorators(WebTestBase):
         mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
+        mock.archived = False
         mock.to_json.return_value = data
         with client.application.app_context():
             response: Response = client.get(f'servicex/transformation/{fake_transform_id}',
@@ -105,6 +107,7 @@ class TestDecorators(WebTestBase):
         mock = mocker.patch('servicex_app.resources.transformation.get_one'
                             '.TransformRequest.lookup').return_value
         mock.submitted_by = user.id
+        mock.archived = False
         mock.to_json.return_value = data
         with client.session_transaction() as sess:
             sess['is_authenticated'] = True

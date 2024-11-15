@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,30 +25,45 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from typing import List
-
-from flask import current_app
-from flask_restful import reqparse
-
+from servicex_app import ObjectStoreManager
 from servicex_app.decorators import auth_required
 from servicex_app.models import TransformRequest
 from servicex_app.resources.servicex_resource import ServiceXResource
-
-parser = reqparse.RequestParser()
-parser.add_argument('submitted_by', type=int, location='args')
+from flask import current_app
 
 
-class AllTransformationRequests(ServiceXResource):
+class ArchiveTransform(ServiceXResource):
+    @classmethod
+    def make_api(cls, object_store_manager: ObjectStoreManager):
+        cls.object_store = object_store_manager
 
     @auth_required
-    def get(self):
-        args = parser.parse_args()
-        query_id = args.get('submitted_by')
-        transforms: List[TransformRequest]
-        if query_id:
-            current_app.logger.debug(f"Querying transform request by id: {query_id}")
-            transforms = TransformRequest.query.filter_by(submitted_by=query_id)
-        else:
-            current_app.logger.debug("Querying for all  transform requests")
-            transforms = TransformRequest.query.filter_by(archived=False)
-        return TransformRequest.return_json(transforms)
+    def delete(self, request_id: str):
+        transform_req = TransformRequest.lookup(request_id)
+        if not transform_req:
+            msg = f'Transformation request not found with id: {request_id}'
+            current_app.logger.warning(msg, extra={'requestId': request_id})
+            return {'message': msg}, 404
+
+        if transform_req.archived:
+            msg = f'Transformation request with id: {request_id} is already archived.'
+            current_app.logger.warning(msg, extra={'requestId': request_id})
+            return {'message': msg}, 404
+
+        if not transform_req.status.is_complete:
+            msg = f"Transform request with id {request_id} is still in progress."
+            current_app.logger.warning(msg, extra={'requestId': request_id})
+            return {"message": msg}, 400
+
+        user = self.get_requesting_user()
+        if user and (not user.admin and user.id != transform_req.submitted_by):
+            return {"message": "You are not authorized to delete this request"}, 403
+
+        transform_req.archived = True
+        transform_req.save_to_db()
+        transform_req.truncate_results()
+        if self.object_store:
+            self.object_store.delete_bucket_and_contents(transform_req.request_id)
+        return {
+            "message": f"Transform request with id {request_id} has been archived."
+        }, 200

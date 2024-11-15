@@ -39,3 +39,15 @@ class ObjectStoreManager:
 
     def list_buckets(self):
         return self.minio_client.list_buckets()
+
+    def delete_bucket_and_contents(self,  bucket_name):
+        # List all objects in the bucket
+        objects = self.minio_client.list_objects(bucket_name, recursive=True)
+
+        # Remove each object
+        for obj in objects:
+            self.minio_client.remove_object(bucket_name, obj.object_name)
+
+        # Remove the bucket itself
+        self.minio_client.remove_bucket(bucket_name)
+        print(f"Bucket '{bucket_name}' deleted successfully.")

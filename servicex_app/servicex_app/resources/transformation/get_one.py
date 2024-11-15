@@ -44,6 +44,12 @@ class TransformationRequest(ServiceXResource):
             msg = f'Transformation request not found with id: {request_id}'
             current_app.logger.error(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
+
+        if transform.archived:
+            msg = f'Transformation request with id: {request_id} is archived'
+            current_app.logger.error(msg, extra={'requestId': request_id})
+            return {'message': msg}, 404
+
         transform_json = transform.to_json()
         if current_app.config['OBJECT_STORE_ENABLED'] and \
                 transform_json['result-destination'] == TransformRequest.OBJECT_STORE_DEST:

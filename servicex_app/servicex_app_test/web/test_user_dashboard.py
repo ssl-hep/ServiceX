@@ -11,25 +11,30 @@ class TestUserDashboard(WebTestBase):
         mock_tr = mocker.patch("servicex_app.web.dashboard.TransformRequest")
         return mock_tr.query.filter_by.return_value.order_by.return_value
 
-    def test_get_empty_state(self, client, user, mock_query, captured_templates):
+    @fixture
+    def mock_query_two_filters(self, mocker):
+        mock_tr = mocker.patch("servicex_app.web.dashboard.TransformRequest")
+        return mock_tr.query.filter_by().filter_by.return_value.order_by.return_value
+
+    def test_get_empty_state(self, client, user, mock_query_two_filters, captured_templates):
         with client.session_transaction() as sess:
             sess['user_id'] = user.id
         print(sess)
-        pagination = mock_query.paginate(page=1, per_page=15, total=0, items=[])
-        mock_query.paginate.return_value = pagination
+        pagination = mock_query_two_filters.paginate(page=1, per_page=15, total=0, items=[])
+        mock_query_two_filters.paginate.return_value = pagination
         response: Response = client.get(url_for('user-dashboard'), headers=self.fake_header())
         assert response.status_code == 200
         template, context = captured_templates[0]
         assert template.name == 'user_dashboard.html'
         assert context["pagination"] == pagination
 
-    def test_get_with_results(self, client, user, mock_query, captured_templates):
+    def test_get_with_results(self, client, user, mock_query_two_filters, captured_templates):
         with client.session_transaction() as sess:
             sess['user_id'] = user.id
         print(sess)
         items = [self._test_transformation_req(id=i+1) for i in range(3)]
-        pagination = mock_query.paginate(page=1, per_page=15, total=100, items=items)
-        mock_query.paginate.return_value = pagination
+        pagination = mock_query_two_filters.paginate(page=1, per_page=15, total=100, items=items)
+        mock_query_two_filters.paginate.return_value = pagination
         response: Response = client.get(url_for('user-dashboard'), headers=self.fake_header())
         assert response.status_code == 200
         template, context = captured_templates[0]
