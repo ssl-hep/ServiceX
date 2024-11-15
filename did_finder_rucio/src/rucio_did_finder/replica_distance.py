@@ -36,7 +36,10 @@ import tempfile
 from urllib.parse import urlparse
 import geoip2.database
 import geoip2.errors
+from collections import namedtuple
 
+
+Replica_distance = namedtuple('Replica_distance', 'replica distance')
 logger = logging.getLogger('ReplicaDistanceService')
 
 
@@ -51,16 +54,17 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float):
 
 
 @lru_cache
-def _get_distance(reader: Optional[geoip2.database.Reader],
+def _get_distance(database: Optional[geoip2.database.Reader],
                   fqdn: str, my_lat: float, my_lon: float):
     """
     Determine angular distance between server at fqdn and (my_lat, my_lon).
     If there is a failure of fdqn location lookup, will return pi
+    (the largest possible physical result)
     """
-    if reader is None:
+    if database is None:
         return math.pi
     try:
-        loc_data = reader.city(gethostbyname(fqdn)).location
+        loc_data = database.city(gethostbyname(fqdn)).location
     except geoip2.errors.AddressNotFoundError as e:
         logger.warning(f'Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}')
         return math.pi
@@ -71,7 +75,7 @@ def _get_distance(reader: Optional[geoip2.database.Reader],
 
 
 class ReplicaSorter(object):
-    _reader: Optional[geoip2.database.Reader] = None
+    _database: Optional[geoip2.database.Reader] = None
     # we keep the temporary directory around so it won't get randomly deleted by the GC
     _tmpdir: Optional[tempfile.TemporaryDirectory] = None
 
@@ -92,15 +96,19 @@ class ReplicaSorter(object):
         location: dict of the form {'latitude': xxx, 'longitude': yyy} where xxx and yyy are floats
         giving the latitude and longitude in signed degrees
         """
-        if not self._reader:
+        if not self._database:
             return replicas
         if len(replicas) == 1:
             return replicas
         fqdns = [(urlparse(replica).hostname, replica) for replica in replicas]
-        distances = [(_get_distance(self._reader, fqdn, location['latitude'],
-                                    location['longitude']),
-                      replica) for fqdn, replica in fqdns]
-        distances.sort()
+        distances = [Replica_distance(replica=replica,
+                                      distance=_get_distance(self._database, fqdn,
+                                                             location['latitude'],
+                                                             location['longitude']
+                                                             )
+                                      )
+                     for fqdn, replica in fqdns]
+        distances.sort(key=lambda x: x.distance)
         return [replica for _, replica in distances]
 
     @classmethod
@@ -145,15 +153,15 @@ class ReplicaSorter(object):
             return
         try:
             if unpacked:
-                self._reader = geoip2.database.Reader(fname)
+                self._database = geoip2.database.Reader(fname)
             else:
                 tarball = tarfile.open(fname)
                 self._tmpdir = tempfile.TemporaryDirectory()
                 tarball.extractall(self._tmpdir.name)
-                self._reader = geoip2.database.Reader(glob.glob(os.path.join(self._tmpdir.name,
-                                                                             '*/*mmdb')
-                                                                )[0])
+                self._database = geoip2.database.Reader(glob.glob(os.path.join(self._tmpdir.name,
+                                                                               '*/*mmdb')
+                                                                  )[0])
         except Exception as e:
             logger.error(f'Failure initializing the GeoIP database reader.\nError: {e}')
-            self._reader = None
+            self._database = None
             return
