@@ -825,23 +825,19 @@ swift = ["python-swiftclient (>=4.4.0,<4.5.0)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "1.0.0a1"
+version = "3.0.1"
 description = "ServiceX DID Library Routines"
 optional = false
-python-versions = "^3.8.1"
-files = []
-develop = false
+python-versions = "<4.0.0,>=3.8.1"
+files = [
+    {file = "servicex_did_finder_lib-3.0.1-py3-none-any.whl", hash = "sha256:8196330320453877a74623610d45003ec85d3492f518da3dc7f2d710f889e1f7"},
+    {file = "servicex_did_finder_lib-3.0.1.tar.gz", hash = "sha256:e9cd6237c80afad0ae9eb0113a6385ba3e390d5041d6a2f7482738a0755558ee"},
+]
 
 [package.dependencies]
-Celery = "^5.4"
-make-it-sync = "^1.0.0"
-requests = "^2.25.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/ponyisi/ServiceX_DID_Finder_lib.git"
-reference = "bulk_send"
-resolved_reference = "cbe1d881e71feec2973e4dbcd4355f64cc68d074"
+Celery = ">=5.4,<6.0"
+make-it-sync = ">=1.0.0,<2.0.0"
+requests = ">=2.25.0,<3.0.0"
 
 [[package]]
 name = "six"
@@ -967,4 +963,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "efd55356f16163f004d007982978350d1e4d897e30d26a6ae25f843a10ab883e"
+content-hash = "bf6b622bb020f2cf364b4011d72db0fd1f8e250ecbf7443168c1ef056ae8f144"
