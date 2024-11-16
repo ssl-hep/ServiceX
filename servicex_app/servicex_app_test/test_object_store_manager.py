@@ -59,6 +59,8 @@ class TestObjectStoreManager:
     def test_delete_bucket_and_contents(self, mocker):
         import minio
         mock_minio = mocker.MagicMock(minio.api.Minio)
+        mock_minio.bucket_exists = mocker.Mock(return_value=True)
+
         mock_object = mocker.MagicMock()
         mock_object.object_name = "a"
         mock_minio.list_objects = mocker.Mock(return_value=[mock_object])
@@ -67,6 +69,21 @@ class TestObjectStoreManager:
         object_store = ObjectStoreManager('localhost:9999', 'foo', 'bar')
         object_store.delete_bucket_and_contents("123-455")
 
+        mock_minio.bucket_exists.assert_called_with("123-455")
         mock_minio.list_objects.assert_called_with("123-455", recursive=True)
         mock_minio.remove_object.assert_called_with("123-455", "a")
         mock_minio.remove_bucket.assert_called_with("123-455")
+
+    def test_delete_bucket_and_contents_no_bucket(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mock_minio.bucket_exists = mocker.Mock(return_value=False)
+
+        mocker.patch('minio.Minio', return_value=mock_minio)
+
+        object_store = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        object_store.delete_bucket_and_contents("123-455")
+
+        mock_minio.bucket_exists.assert_called_with("123-455")
+        mock_minio.list_objects.assert_not_called()
+        mock_minio.remove_bucket.assert_not_called()

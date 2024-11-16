@@ -41,6 +41,10 @@ class ObjectStoreManager:
         return self.minio_client.list_buckets()
 
     def delete_bucket_and_contents(self,  bucket_name):
+        if not self.minio_client.bucket_exists(bucket_name):
+            print(f"Bucket '{bucket_name}' does not exist. Nothing to delete.")
+            return
+
         # List all objects in the bucket
         objects = self.minio_client.list_objects(bucket_name, recursive=True)
 
