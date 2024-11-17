@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v4.2.2
       - name: Pull flux_river_configs
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v4.2.2
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v4.2.2
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
@@ -107,7 +107,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2.0.8
+        uses: softprops/action-gh-release@v2.0.9
         with:
           tag_name: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,23 @@
+services:
+
+  codegen:
+    image: $CODEGEN 
+    env_file: .env
+    pull_policy: missing
+    ports:
+      - $PORT:5000
+
+  science:
+    image: $SCIENCE 
+    pull_policy: missing
+    env_file: .env
+    volumes:
+      - sidecar-volume:/servicex/output
+      - /tmp:/tmp/grid-security/
+      - $LOCAL_FOLDER:/generated
+    tty: true
+    depends_on:
+      - codegen
+
+volumes:
+  sidecar-volume:

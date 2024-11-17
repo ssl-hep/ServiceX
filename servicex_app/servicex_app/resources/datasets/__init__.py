@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2024, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,33 +25,3 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-class ObjectStoreManager:
-
-    def __init__(self, url, username, password, use_https=False):
-        from minio import Minio
-        self.minio_client = Minio(endpoint=url, access_key=username,
-                                  secret_key=password, secure=use_https)
-
-    def create_bucket(self, bucket_name):
-        self.minio_client.make_bucket(bucket_name)
-
-    def list_buckets(self):
-        return self.minio_client.list_buckets()
-
-    def delete_bucket_and_contents(self,  bucket_name):
-        if not self.minio_client.bucket_exists(bucket_name):
-            print(f"Bucket '{bucket_name}' does not exist. Nothing to delete.")
-            return
-
-        # List all objects in the bucket
-        objects = self.minio_client.list_objects(bucket_name, recursive=True)
-
-        # Remove each object
-        for obj in objects:
-            self.minio_client.remove_object(bucket_name, obj.object_name)
-
-        # Remove the bucket itself
-        self.minio_client.remove_bucket(bucket_name)
-        print(f"Bucket '{bucket_name}' deleted successfully.")

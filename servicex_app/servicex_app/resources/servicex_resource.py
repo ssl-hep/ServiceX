@@ -31,7 +31,7 @@ import pkg_resources
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restful import Resource
-from servicex_app.models import UserModel, TransformRequest
+from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
 from servicex_app.transformer_manager import TransformerManager
 
@@ -72,6 +72,7 @@ class ServiceXResource(Resource):
         except pkg_resources.DistributionNotFound:
             return "develop"
 
+    @classmethod
     def start_transformers(cls, transformer_manager: TransformerManager,
                            config: dict,
                            request_rec: TransformRequest):
@@ -92,6 +93,9 @@ class ServiceXResource(Resource):
         transformer_manager.launch_transformer_jobs(
             image=request_rec.image, request_id=request_rec.request_id,
             workers=request_rec.workers,
+            max_workers=(max(1, request_rec.files)
+                         if request_rec.status == TransformStatus.running
+                         else config["TRANSFORMER_MAX_REPLICAS"]),
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,

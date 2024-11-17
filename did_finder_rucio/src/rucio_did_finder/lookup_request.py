@@ -81,7 +81,7 @@ class LookupRequest:
                     af['paths'] = self.replica_sorter.sort_replicas(ipaths, self.location)
                 self.logger.debug(f'path after {af["paths"]}')
                 full_file_list.append(af)
-        yield full_file_list
+            yield ds_files
 
         lookup_finish = datetime.now()
 

@@ -17,7 +17,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v4.2.2
 
       - name: Read file contents
         working-directory: ./.github/workflows
@@ -40,16 +40,16 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v4.2.2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5.2.0
+        uses: actions/setup-python@v5.3.0
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
 
       - name: Install poetry
-        uses: abatilo/actions-poetry@v3.0.0
+        uses: abatilo/actions-poetry@v3.0.1
         with:
           poetry-version: 1.8.3
 
@@ -84,7 +84,7 @@ jobs:
       matrix:
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash

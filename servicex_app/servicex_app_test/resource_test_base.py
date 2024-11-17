@@ -163,6 +163,7 @@ class ResourceTestBase:
         transform_request.transformer_language = "scala"
         transform_request.transformer_command = "echo"
         transform_request.selection = "(cool (is LISP))"
+        transform_request.archived = False
         return transform_request
 
     @staticmethod

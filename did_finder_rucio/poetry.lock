@@ -1369,13 +1369,13 @@ swift = ["python-swiftclient (>=4.4.0,<4.5.0)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.0.0"
+version = "3.0.1"
 description = "ServiceX DID Library Routines"
 optional = false
 python-versions = "<4.0.0,>=3.8.1"
 files = [
-    {file = "servicex_did_finder_lib-3.0.0-py3-none-any.whl", hash = "sha256:183facb210d23b032f685eb951f47336e3ffc21ab159df517cf7cca025a5a565"},
-    {file = "servicex_did_finder_lib-3.0.0.tar.gz", hash = "sha256:7dc5987b8ffc6f52ad87ee11804e9155aa5ec319221b6dac5b6d9330aeba982d"},
+    {file = "servicex_did_finder_lib-3.0.1-py3-none-any.whl", hash = "sha256:8196330320453877a74623610d45003ec85d3492f518da3dc7f2d710f889e1f7"},
+    {file = "servicex_did_finder_lib-3.0.1.tar.gz", hash = "sha256:e9cd6237c80afad0ae9eb0113a6385ba3e390d5041d6a2f7482738a0755558ee"},
 ]
 
 [package.dependencies]
@@ -1623,4 +1623,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "61c1922fdaad658953faa674abc904d62a5ef61be1739fca56c2d7e5d721a329"
+content-hash = "e860819d835d1e904d5a01091b50d51b4c52dfe7be7327bd3bbe9fdc7d1b60c6"

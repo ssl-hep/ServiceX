@@ -146,7 +146,7 @@ def test_transformer_init(args, mock_celery, transformer_capabilities,
                 '--without-mingle',
                 '--without-gossip',
                 '--without-heartbeat',
-                "--loglevel=info",
+                "--loglevel=warning",
                 '-Q', 'transformer-1234',
                 "-n", "transformer-1234@%h",
             ]

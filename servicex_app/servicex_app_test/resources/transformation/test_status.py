@@ -54,3 +54,16 @@ class TestTransformStatus(ResourceTestBase):
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")
+
+    def test_get_status_archived(self, mocker, client):
+        import servicex_app
+        fake_transform_request = self._generate_transform_request()
+        fake_transform_request.archived = True
+        mock_transform_request_read = mocker.patch.object(
+            servicex_app.models.TransformRequest,
+            'lookup',
+            return_value=fake_transform_request)
+
+        response = client.get('/servicex/transformation/1234/status')
+        assert response.status_code == 404
+        mock_transform_request_read.assert_called_with("1234")

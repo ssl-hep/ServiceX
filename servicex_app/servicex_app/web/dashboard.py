@@ -32,7 +32,7 @@ parser.add_argument(
 def dashboard(template_name: str, user_specific=False):
     args = parser.parse_args()
     sort, order = args["sort"], args["order"]
-    query = TransformRequest.query
+    query = TransformRequest.query.filter_by(archived=False)
 
     if user_specific:
         query = query.filter_by(submitted_by=session["user_id"])

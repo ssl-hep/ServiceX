@@ -67,6 +67,7 @@ class TestTransformerManager(ResourceTestBase):
                 .assert_called_with(image=submitted_request.image,
                                     request_id=submitted_request.request_id,
                                     workers=submitted_request.workers,
+                                    max_workers=submitted_request.files,
                                     generated_code_cm=submitted_request.generated_code_cm,
                                     rabbitmq_uri='amqp://trans.rabbit',
                                     namespace='my-ws',
@@ -126,6 +127,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None)
@@ -195,6 +197,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None,
@@ -238,6 +241,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret='x509',
                 generated_code_cm=None,
@@ -283,6 +287,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
@@ -330,6 +335,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
@@ -379,6 +385,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store',
                 result_format='parquet', x509_secret='x509',
@@ -424,6 +431,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
@@ -472,6 +480,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='volume',
                 result_format='parquet', x509_secret='x509',
@@ -526,6 +535,7 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image='sslhep/servicex-transformer:pytest', request_id='1234', workers=17,
+                max_workers=17,
                 rabbitmq_uri='ampq://test.com', namespace='my-ns',
                 result_destination='object-store', result_format='arrow', x509_secret=None,
                 generated_code_cm=None,

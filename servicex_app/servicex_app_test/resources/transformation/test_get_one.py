@@ -50,3 +50,12 @@ class TestTransformationRequest(ResourceTestBase):
             response = client.get('/servicex/transformation/1234')
         assert response.status_code == 404
         mock_lookup.assert_called_with('1234')
+
+    def test_get_single_request_archived(self, mocker, client):
+        with patch('servicex_app.models.TransformRequest.lookup') as mock_lookup:
+            fake_transform_request = self._generate_transform_request()
+            fake_transform_request.archived = True
+            mock_lookup.return_value = fake_transform_request
+            response = client.get('/servicex/transformation/1234')
+        assert response.status_code == 404
+        mock_lookup.assert_called_with('1234')

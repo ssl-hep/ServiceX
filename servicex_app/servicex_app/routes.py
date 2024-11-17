@@ -27,6 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import current_app as app
 
+from servicex_app.resources.datasets.delete_dataset import DeleteDataset
+from servicex_app.resources.datasets.get_all import AllDatasets
+from servicex_app.resources.datasets.get_one import OneDataset
+from servicex_app.resources.transformation.archive import ArchiveTransform
+
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, code_gen_service,
@@ -124,11 +129,19 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     # Client public endpoints
     api.add_resource(Info, '/servicex')
+    api.add_resource(AllDatasets, '/servicex/datasets')
+    api.add_resource(OneDataset, '/servicex/datasets/<int:dataset_id>')
+    api.add_resource(DeleteDataset, '/servicex/datasets/<int:dataset_id>')
+
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
+
+    ArchiveTransform.make_api(object_store)
+    api.add_resource(ArchiveTransform, prefix)
+
     api.add_resource(TransformationStatus, prefix + "/status")
 
     DeploymentStatus.make_api(transformer_manager)

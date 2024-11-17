@@ -9,7 +9,7 @@ class TestGlobalDashboard(WebTestBase):
     @fixture
     def mock_query(self, mocker):
         mock_tr = mocker.patch("servicex_app.web.dashboard.TransformRequest")
-        return mock_tr.query.order_by.return_value
+        return mock_tr.query.filter_by().order_by.return_value
 
     def test_get_empty_state(self, client, user, mock_query, captured_templates):
         pagination = mock_query.paginate(page=1, per_page=15, total=0, items=[])

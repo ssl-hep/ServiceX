@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.5.4
+November 8, 2024
+
+### Added
+- Ability to specify SQLAlchemy connection string options in the helm chart
+- REST endpoint to list cached datasets
+
+### Changed
+- Don't request more pods than the number of files in the dataset
+- Documentation theme
+
+### Fixed
+- Made changes to values.yaml to revert to `develop` tags for all images by default 
+- Fixed the reference to obsolete xAOD code generator in values.yaml
+- Fixed links to the documentation
+
+### 1.5.3
+October 17, 2024
+
+### Fixed
+- Fixed bug in the code gen invocation
+
 ### 1.5.2
 October 15, 2024
 
