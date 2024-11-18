@@ -149,6 +149,7 @@ class ResourceTestBase:
         transform_request.workers = 42
         transform_request.workflow_name = "func_adl"
         transform_request.did = '123-456-789'
+        transform_request.did_id = 1234
         transform_request.image = 'ssl-hep/foo:latest'
         transform_request.result_format = 'arrow'
         transform_request.result_destination = "object-store"

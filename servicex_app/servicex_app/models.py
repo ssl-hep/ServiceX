@@ -33,7 +33,8 @@ from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy import DateTime, func
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -170,7 +171,7 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
-    did_id = db.Column(db.Integer, unique=False, nullable=False)
+    did_id = db.Column(db.Integer, ForeignKey('datasets.id'), unique=False, nullable=False)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     image = db.Column(db.String(128), nullable=True)
@@ -193,6 +194,8 @@ class TransformRequest(db.Model):
     code_gen_image = db.Column(db.String(256), nullable=True)
     transformer_language = db.Column(db.String(256), nullable=True)
     transformer_command = db.Column(db.String(256), nullable=True)
+
+    dataset = relationship("Dataset", back_populates="transform_requests")
 
     def save_to_db(self):
         db.session.add(self)
@@ -414,7 +417,9 @@ class Dataset(db.Model):
     events = db.Column(db.BigInteger, default=0, nullable=True)
     lookup_status = db.Column(db.Enum(DatasetStatus), nullable=False)
     stale = db.Column(db.Boolean, default=False, nullable=False)
+
     files = relationship("DatasetFile", back_populates="dataset")
+    transform_requests = relationship("TransformRequest", back_populates="dataset")
 
     def save_to_db(self):
         db.session.add(self)
