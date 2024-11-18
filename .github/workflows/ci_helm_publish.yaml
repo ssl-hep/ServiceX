@@ -43,7 +43,7 @@ jobs:
       - name: Set version in helm values.yaml
         # Update the tags for images in the helm Chart.yaml and values.yaml to match
         # The deployed docker image tag
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.44.5
         with:
           cmd: |
             # Update the version of the helm chart
@@ -88,7 +88,7 @@ jobs:
           user-email: 'bengal1@illinois.edu'
 
       - name: Set version in flux_river_config for the production environment
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.44.5
         with:
           cmd: |
             # Update the chart version to pick up
@@ -107,7 +107,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2.0.9
+        uses: softprops/action-gh-release@v2.1.0
         with:
           tag_name: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
