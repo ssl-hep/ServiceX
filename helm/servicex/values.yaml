@@ -188,14 +188,18 @@ x509Secrets:
   pullPolicy: Always
   tag: develop
   vomsOrg: atlas
-minioCleanup:
+
+dataLifecycle:
   enabled: false
-  image: sslhep/servicex_minio_cleanup
-  threads: "6"
-  logLevel: "INFO"
+  # This image should be a fully functional linux image with gnu date installed
+  # ideally it should be an image we have already pulled
+  image: python
+  tag: "3.10"
   pullPolicy: Always
-  tag: develop
   schedule: "* */8 * * *"
-  maxAge: 30
-  maxSize: "1G"
-  normSize: "700M"
+
+  # We will archive any transforms older than this. Use the gnu date command
+  # --date argument.
+  # See https://www.geeksforgeeks.org/date-command-linux-examples/#4-how-to-display-past-dates
+  # for examples
+  retention: "7 days ago"
