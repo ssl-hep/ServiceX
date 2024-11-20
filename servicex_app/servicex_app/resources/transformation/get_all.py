@@ -50,5 +50,5 @@ class AllTransformationRequests(ServiceXResource):
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
             current_app.logger.debug("Querying for all  transform requests")
-            transforms = TransformRequest.query.filter_by(archived=False)
+            transforms = TransformRequest.query.all()
         return TransformRequest.return_json(transforms)

@@ -6,8 +6,8 @@ from servicex_app.models import TransformRequest, TransformStatus
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
-class TestTransformArchive(ResourceTestBase):
-    module = "servicex_app.resources.transformation.archive"
+class TestTransformDelete(ResourceTestBase):
+    module = "servicex_app.resources.transformation.delete"
 
     @pytest.fixture
     def mock_object_store_manager(self, mocker) -> MagicMock:
@@ -17,12 +17,16 @@ class TestTransformArchive(ResourceTestBase):
     def fake_transform(self, mocker) -> TransformRequest:
         mock_transform_request_cls = mocker.patch(f"{self.module}.TransformRequest")
         transform = self._generate_transform_request()
-        transform.save_to_db = MagicMock()
-        transform.truncate_results = MagicMock()
         mock_transform_request_cls.lookup.return_value = transform
         return transform
 
-    def test_archive(self, fake_transform, mock_object_store_manager):
+    @pytest.fixture
+    def db_session(self, mocker):
+        mock_db = mocker.patch(f"{self.module}.db")
+        mock_db.session = mocker.MagicMock()
+        return mock_db.session
+
+    def test_delete(self, fake_transform, db_session, mock_object_store_manager):
         fake_transform.status = TransformStatus.complete
 
         local_config = {
@@ -37,12 +41,12 @@ class TestTransformArchive(ResourceTestBase):
 
         resp = client.delete("/servicex/transformation/BR549")
         assert resp.status_code == 200
-        assert fake_transform.archived
-        assert fake_transform.save_to_db.called
-        assert fake_transform.truncate_results.called
+        db_session.delete.assert_called_once_with(fake_transform)
+        db_session.query().filter_by.assert_called_once_with(request_id="BR549")
+        db_session.query().filter_by.return_value.delete.assert_called_once_with()
         mock_object_store_manager.delete_bucket_and_contents.assert_called_once_with("BR549")
 
-    def test_running(self, fake_transform):
+    def test_running(self, fake_transform, db_session):
         fake_transform.status = TransformStatus.running
 
         client = self._test_client()
@@ -50,22 +54,8 @@ class TestTransformArchive(ResourceTestBase):
         resp = client.delete("/servicex/transformation/BR549")
         assert resp.status_code == 400
         assert resp.json["message"] == "Transform request with id BR549 is still in progress."
-        assert not fake_transform.archived
-        assert not fake_transform.save_to_db.called
-        assert not fake_transform.truncate_results.called
-
-    def test_already_archived(self, fake_transform):
-        fake_transform.status = TransformStatus.running
-        fake_transform.archived = True
-
-        client = self._test_client()
-
-        resp = client.delete("/servicex/transformation/BR549")
-        assert resp.status_code == 404
-        assert resp.json["message"] == "Transformation request with id: BR549 is already archived."
-        assert fake_transform.archived
-        assert not fake_transform.save_to_db.called
-        assert not fake_transform.truncate_results.called
+        assert not db_session.query().filter_by.return_value.delete.called
+        assert not db_session.delete.called
 
     def test_not_found(self):
         client = self._test_client()
@@ -83,6 +73,7 @@ class TestTransformArchive(ResourceTestBase):
                                                 user_id, submitter_id, is_admin,
                                                 expected_status,
                                                 fake_transform,
+                                                db_session,
                                                 mock_jwt_extended, mock_requesting_user):
         fake_transform.status = TransformStatus.complete
         client = self._test_client(extra_config={'ENABLE_AUTH': True})

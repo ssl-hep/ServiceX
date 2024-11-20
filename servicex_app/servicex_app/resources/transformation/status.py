@@ -47,11 +47,6 @@ class TransformationStatus(ServiceXResource):
             current_app.logger.error(msg, extra={'requestId': request_id})
             return {'message': msg}, 404
 
-        if transform.archived:
-            msg = f'Transformation request with id: {request_id} is archived'
-            current_app.logger.error(msg, extra={'requestId': request_id})
-            return {'message': msg}, 404
-
         status_request = status_request_parser.parse_args()
 
         # Format timestamps with military timezone, given that they are in UTC.

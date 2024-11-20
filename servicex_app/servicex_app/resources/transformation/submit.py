@@ -176,7 +176,6 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
-                archived=False,
                 did=dataset_manager.name,
                 did_id=dataset_manager.id,
                 submit_time=datetime.now(tz=timezone.utc),
