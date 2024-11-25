@@ -7,13 +7,14 @@ from flask_jwt_extended import (get_jwt_identity, jwt_required,
                                 verify_jwt_in_request)
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
-from servicex_app.models import UserModel
+from servicex_app.models import UserModel, db
 
 
 @jwt_required()
 def get_jwt_user():
     jwt_val = get_jwt_identity()
     user = UserModel.find_by_sub(jwt_val)
+
     return user
 
 
@@ -53,17 +54,22 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
         except NoAuthorizationError as exc:
             assert "NoAuthorizationError"
             return make_response({'message': str(exc)}, 401)
-        user = get_jwt_user()
-        if not user:
-            msg = 'Not Authorized: No user found matching this API token. ' \
-                'Your account may have been deleted. ' \
-                'Please visit the ServiceX website to obtain a new API token.'
-            return make_response({'message': msg}, 401)
-        elif user.pending:
-            msg = 'Not Authorized: Your account is still pending. ' \
-                'An administrator should approve it shortly. If not, ' \
-                'please contact the ServiceX admins via email or Slack.'
-            return make_response({'message': msg}, 401)
+
+        # Explicitly start a transaction here to avoid unexpected in_transaction() b
+        # in the method wrapped by this decorator.
+        with db.session.begin():
+            user = get_jwt_user()
+
+            if not user:
+                msg = 'Not Authorized: No user found matching this API token. ' \
+                    'Your account may have been deleted. ' \
+                    'Please visit the ServiceX website to obtain a new API token.'
+                return make_response({'message': msg}, 401)
+            elif user.pending:
+                msg = 'Not Authorized: Your account is still pending. ' \
+                    'An administrator should approve it shortly. If not, ' \
+                    'please contact the ServiceX admins via email or Slack.'
+                return make_response({'message': msg}, 401)
 
         return fn(*args, **kwargs)
 
