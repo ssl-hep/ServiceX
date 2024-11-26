@@ -350,6 +350,7 @@ def upload_file(source_path: Path,
 
     servicex.put_file_complete(rec)
 
+
 class TimeTuple(NamedTuple):
     """
     Named tuple to store process time information.
