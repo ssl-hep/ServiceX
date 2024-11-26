@@ -51,7 +51,6 @@ from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 40
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.raw_uproot_stats import RawUprootStats  # NOQA: 401
 from transformer_sidecar.object_store_manager import ObjectStoreManager
-from transformer_sidecar.object_store_uploader import ObjectStoreUploader, WorkQueueItem
 from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 
@@ -63,7 +62,6 @@ startup_time = None
 convert_root_to_parquet: bool = False
 
 upload_queue: Optional[Queue] = None
-uploader: Optional[ObjectStoreUploader] = None
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
@@ -214,11 +212,10 @@ def transform_file(
                 )
 
                 if object_store:
-                    upload_queue.put(
-                        WorkQueueItem(
-                            Path(transform_request["safeOutputFileName"]), servicex, rec
-                        )
-                    )
+                    upload_file(Path(transform_request["safeOutputFileName"]),
+                                servicex,
+                                rec
+                                )
                 else:
                     servicex.put_file_complete(rec)
 
@@ -295,6 +292,64 @@ def transform_file(
         servicex.put_file_complete(rec)
 
 
+def convert_to_parquet(source_path: Path) -> Optional[Path]:
+    """
+    Convert a ROOT file to Parquet.  Returns the path to the Parquet file if successful,
+    """
+    import uproot
+    import awkward as ak
+
+    logger.info("Converting ROOT to Parquet.")
+    with uproot.open(source_path) as data:
+        if len(data.keys()) != 1:
+            logger.error(f"Expected one tree found {data.keys()}")
+            return None
+
+        try:
+            tree_name = data.keys()[0]
+            all_data = data[tree_name].arrays(library='ak')
+
+            parquet_file = source_path.with_suffix(".parquet")
+
+            # Save to temp file in same directory as parquet_file. The to_parquet
+            # method doesn't plqy well with long paths.
+            temp_file = Path(parquet_file.parent, "temp.parquet")
+            ak.to_parquet(all_data, temp_file.as_posix())
+            temp_file.rename(parquet_file)
+
+        except Exception as e:
+            logger.error(f"Failed to convert ROOT to Parquet: {e}")
+            return None
+
+        return parquet_file
+
+
+def upload_file(source_path: Path,
+                servicex: ServiceXAdapter,
+                rec: FileCompleteRecord) -> None:
+    object_store = ObjectStoreManager()
+
+    # Now is the time to convert the file to parquet if that's what the user
+    # requested, but our particular transformer doesn't support it.
+    if convert_root_to_parquet:
+        file_to_upload = convert_to_parquet(source_path)
+        object_name = source_path.with_suffix(".parquet").name
+    else:
+        file_to_upload = source_path
+        object_name = source_path.name
+
+    logger.info("Uploading file to object store.",
+                extra={'requestId': request_id, "place": PLACE,
+                       "objectName": object_name})
+    t0 = time.time()
+    object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
+    logger.info("File uploaded to object store.",
+                extra={'requestId': request_id, "place": PLACE,
+                       "objectName": object_name,
+                       "elapsed": time.time()-t0})
+
+    servicex.put_file_complete(rec)
+
 class TimeTuple(NamedTuple):
     """
     Named tuple to store process time information.
@@ -334,7 +389,7 @@ def read_capabilities_file() -> dict[str, str]:
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, startup_time, upload_queue, \
-        object_store, posix_path, science_container, uploader, \
+        object_store, posix_path, science_container, \
         shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
@@ -378,19 +433,6 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
 
     science_container = ScienceContainerCommand()
     logger.debug("Connected to science container", extra={"place": PLACE})
-
-    if object_store:
-        # Create a queue to communicate with the ObjectStore uploader
-        upload_queue = Queue()
-
-        uploader = ObjectStoreUploader(
-            request_id=args.request_id,
-            input_queue=upload_queue,
-            logger=logger,
-            convert_root_to_parquet=convert_root_to_parquet,
-        )
-
-        uploader.start()
 
     app.worker_main(
         argv=[
@@ -519,6 +561,4 @@ if __name__ == "__main__":  # pragma: no cover
     )
     science_container.close()
 
-    upload_queue.put(WorkQueueItem(None, None))
-    uploader.join()  # Wait for the uploader to finish completely
     exit(0)
