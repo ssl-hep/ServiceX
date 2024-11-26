@@ -31,7 +31,6 @@ import os
 import random
 import signal
 import tempfile
-from pathlib import PosixPath
 from types import SimpleNamespace
 
 from pytest import fixture
