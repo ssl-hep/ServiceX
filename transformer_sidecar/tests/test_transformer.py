@@ -79,18 +79,8 @@ def mock_object_store_manager(mocker):
 
 
 @fixture
-def mock_object_store_uploader(mocker):
-    return mocker.patch('transformer_sidecar.transformer.ObjectStoreUploader')
-
-
-@fixture
 def mock_science_container(mocker):
     return mocker.patch('transformer_sidecar.transformer.ScienceContainerCommand')
-
-
-@fixture
-def mock_input_queue(mocker):
-    return mocker.patch("transformer_sidecar.transformer.Queue")
 
 
 @fixture
@@ -127,16 +117,11 @@ def init_test(args, mock_celery, transformer_capabilities,
 
 
 def test_transformer_init(args, mock_celery, transformer_capabilities,
-                          mock_object_store_uploader, mock_object_store_manager,
+                          mock_object_store_manager,
                           mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
         init_test(args, mock_celery, transformer_capabilities, temp_dir,
                   ['root', 'parquet'], 'root')
-
-        mock_object_store_uploader.assert_called_once()
-        object_store_uploader_args = mock_object_store_uploader.call_args.kwargs
-        assert object_store_uploader_args["request_id"] == '1234'
-        assert object_store_uploader_args["convert_root_to_parquet"] is False
 
         mock_science_container.assert_called_once()
         mock_celery.worker_main.assert_called_with(
@@ -155,16 +140,11 @@ def test_transformer_init(args, mock_celery, transformer_capabilities,
 
 def test_transformer_root_to_parquet(args, mock_celery, transformer_capabilities,
                                      mock_servicex_adapter,
-                                     mock_object_store_uploader, mock_input_queue,
                                      mock_object_store_manager,
                                      mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
         init_test(args, mock_celery, transformer_capabilities, temp_dir,
                   ['root'], 'parquet')
-
-        object_store_uploader_args = mock_object_store_uploader.call_args.kwargs
-        assert object_store_uploader_args["request_id"] == '1234'
-        assert object_store_uploader_args["convert_root_to_parquet"] is True
 
         mock_science_container.return_value.await_response.side_effect = ["failure",
                                                                           "success."]
@@ -185,16 +165,11 @@ def test_transformer_root_to_parquet(args, mock_celery, transformer_capabilities
 
 def test_transformer_parquet(args, mock_celery, transformer_capabilities,
                              mock_servicex_adapter,
-                             mock_object_store_uploader, mock_input_queue,
                              mock_object_store_manager,
                              mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
         init_test(args, mock_celery, transformer_capabilities, temp_dir,
                   ['root', 'parquet'], 'parquet')
-
-        object_store_uploader_args = mock_object_store_uploader.call_args.kwargs
-        assert object_store_uploader_args["request_id"] == '1234'
-        assert object_store_uploader_args["convert_root_to_parquet"] is False
 
         mock_science_container.return_value.await_response.side_effect = ["failure",
                                                                           "success."]
@@ -245,16 +220,11 @@ def test_transformer_output_dir(args, mock_celery, transformer_capabilities,
 
 def test_transformer_long_filename(args, mock_celery, transformer_capabilities,
                                    mock_servicex_adapter,
-                                   mock_object_store_uploader, mock_input_queue,
                                    mock_object_store_manager,
                                    mock_science_container):
     with tempfile.TemporaryDirectory() as temp_dir:
         init_test(args, mock_celery, transformer_capabilities, temp_dir,
                   ['root', 'parquet'], 'parquet')
-
-        object_store_uploader_args = mock_object_store_uploader.call_args.kwargs
-        assert object_store_uploader_args["request_id"] == '1234'
-        assert object_store_uploader_args["convert_root_to_parquet"] is False
 
         mock_science_container.return_value.await_response.side_effect = ["failure",
                                                                           "success."]
@@ -288,7 +258,6 @@ def test_hash_path():
 
 def test_transform_file(args, mock_celery, transformer_capabilities,
                         mock_servicex_adapter,
-                        mock_object_store_uploader, mock_input_queue,
                         mock_object_store_manager,
                         mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
@@ -312,20 +281,11 @@ def test_transform_file(args, mock_celery, transformer_capabilities,
         assert os.path.isdir(os.path.join(temp_dir, "test-request-123", "scratch"))
 
         mock_servicex_adapter.called_with(test_service_endpoint)
-        success_result = mock_input_queue.return_value.put.call_args[0][0]
-
-        assert success_result.rec.file_path == test_paths[1]
-        assert success_result.rec.file_id == test_file_id
-        assert success_result.rec.status == "success"
-        assert success_result.source_path == PosixPath(
-            os.path.join(temp_dir, "test-request-123", "scratch", test_paths[1])
-        )
 
 
 def test_transform_file_hard_failure(args, mock_celery,
                                      transformer_capabilities,
                                      mock_servicex_adapter,
-                                     mock_object_store_uploader, mock_input_queue,
                                      mock_object_store_manager,
                                      mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
@@ -348,7 +308,6 @@ def test_transform_file_hard_failure(args, mock_celery,
         assert os.path.isdir(os.path.join(temp_dir, "test-request-123", "scratch"))
 
         mock_servicex_adapter.called_with(test_service_endpoint)
-        mock_input_queue.return_value.put.assert_not_called()
         mock_servicex_adapter.return_value.put_file_complete.assert_called_once()
         failure_report = mock_servicex_adapter.return_value.put_file_complete.call_args[0][0]
         assert failure_report.status == "failure"
@@ -360,7 +319,6 @@ def test_transform_file_hard_failure(args, mock_celery,
 def test_transform_file_exception(args, mock_celery,
                                   transformer_capabilities,
                                   mock_servicex_adapter,
-                                  mock_object_store_uploader, mock_input_queue,
                                   mock_object_store_manager,
                                   mock_science_container):
     with (tempfile.TemporaryDirectory() as temp_dir):
