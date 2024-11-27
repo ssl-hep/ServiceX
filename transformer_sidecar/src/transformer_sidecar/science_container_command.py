@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import logging
 import socket
 
 
@@ -35,6 +36,10 @@ class ScienceContainerException(Exception):
 
 class ScienceContainerCommand:
     def __init__(self):
+        handler = logging.NullHandler()
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(handler)
+
         # Open a socket to the science container
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serv.bind(("localhost", 8081))
@@ -43,28 +48,28 @@ class ScienceContainerCommand:
 
     def synch(self):
         while True:
-            print("waiting for the GeT")
+            self.logger.debug("waiting for the GeT")
             req = self.conn.recv(4096)
             if not req:
-                print("problem in getting GeT")
+                self.logger.error("problem in getting GeT")
                 raise ScienceContainerException("problem in getting GeT")
             req1 = req.decode("utf8")
-            print("REQ >>>>>>>>>>>>>>>", req1)
+            self.logger.debug(f"REQ >>>>>>>>>>>>>>>{req1}")
             if req1.startswith("GeT"):
                 break
 
     def send(self, transform_request: dict):
         res = json.dumps(transform_request) + "\n"
-        print("sending:", res)
+        self.logger.debug(f"sending: {res}")
         self.conn.send(res.encode())
 
     def await_response(self):
-        print("WAITING FOR STATUS...")
+        self.logger.debug("WAITING FOR STATUS...")
         req = self.conn.recv(4096)
         # if not req:
         #     break
         req2 = req.decode("utf8").strip()
-        print("STATUS RECEIVED :", req2)
+        self.logger.debug(f"STATUS RECEIVED: {req2}")
         return req2
 
     def confirm(self):
