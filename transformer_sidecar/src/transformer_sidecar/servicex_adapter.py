@@ -102,6 +102,7 @@ class ServiceXAdapter:
                            tries=MAX_RETRIES,
                            delay=RETRY_DELAY)
                 self.logger.info("Put file complete.", extra={'requestId': rec.request_id,
+                                                              "file-id": rec.file_id,
                                                               "place": PLACE,
                                                               "file_path": rec.file_path})
             except requests.exceptions.ConnectionError:
