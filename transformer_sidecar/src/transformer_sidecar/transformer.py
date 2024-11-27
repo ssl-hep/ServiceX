@@ -134,6 +134,7 @@ def transform_file(
         extra={
             "requestId": request_id,
             "paths": _file_paths,
+            "file-id": file_id,
             "result-destination": result_destination,
             "result-format": result_format,
             "service-endpoint": service_endpoint,
@@ -162,6 +163,7 @@ def transform_file(
                 "trying to transform file",
                 extra={
                     "requestId": request_id,
+                    "file-id": file_id,
                     "file-path": _file_path,
                     "place": PLACE,
                 },
@@ -223,6 +225,7 @@ def transform_file(
                 transform_success = True
                 ts = {
                     "requestId": request_id,
+                    "file-id": file_id,
                     "file-size": transformer_stats.file_size,
                     "total-events": transformer_stats.total_events,
                     "place": PLACE,
@@ -268,7 +271,7 @@ def transform_file(
             "File processed.",
             extra={
                 "requestId": request_id,
-                "fileId": file_id,
+                "file-id": file_id,
                 "user": elapsed_times.user,
                 "sys": elapsed_times.system,
                 "iowait": elapsed_times.iowait,
