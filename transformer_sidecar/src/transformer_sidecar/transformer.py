@@ -42,6 +42,7 @@ import kombu
 import psutil as psutil
 import time
 from celery import Celery, shared_task
+from celery.signals import after_setup_logger
 
 from transformer_sidecar.science_container_command import ScienceContainerCommand, \
     ScienceContainerException
@@ -538,6 +539,14 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
     return prefixed_paths
 
 
+@after_setup_logger.connect
+def setup_loggers(logger, *args, **kwargs):
+    """
+    Set the log level for the logger to INFO
+    """
+    initialize_logging(logger)
+
+
 if __name__ == "__main__":  # pragma: no cover
     start_time = timeit.default_timer()
 
@@ -550,8 +559,8 @@ if __name__ == "__main__":  # pragma: no cover
                     queue_arguments={'x-consumer-timeout': 2_629_746_000})
     ]
     app.conf.task_create_missing_queues = False
-    app.conf.worker_hijack_root_logger = False
-    app.conf.worker_redirect_stdouts_level = 'DEBUG'
+    app.conf.worker_hijack_root_logger = True
+    app.conf.worker_redirect_stdouts_level = 'INFO'
     app.conf.worker_prefetch_multiplier = 1
     app.conf.broker_connection_retry_on_startup = True
     init(_args, app)
