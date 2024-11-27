@@ -343,12 +343,16 @@ def upload_file(source_path: Path,
         object_name = source_path.name
 
     logger.info("Uploading file to object store.",
-                extra={'requestId': request_id, "place": PLACE,
+                extra={'requestId': request_id,
+                       "file-id": rec.file_id,
+                       "place": PLACE,
                        "objectName": object_name})
     t0 = time.time()
     object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
     logger.info("File uploaded to object store.",
-                extra={'requestId': request_id, "place": PLACE,
+                extra={'requestId': request_id,
+                       "file-id": rec.file_id,
+                       "place": PLACE,
                        "objectName": object_name,
                        "elapsed": time.time()-t0})
 
