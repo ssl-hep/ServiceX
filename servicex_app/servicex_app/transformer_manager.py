@@ -188,7 +188,7 @@ class TransformerManager:
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 
-        science_command = '"'
+        science_command = " "
         if x509_secret:
             science_command += "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
                               "do sleep 5;done &&" \
@@ -211,8 +211,6 @@ class TransformerManager:
                            "{TC} ".format(TC=transformer_command) + \
                            watch_path
 
-        science_command += '"'
-
         if result_destination == 'volume':
             sidecar_command += " --output-dir " + os.path.join(
                 TransformerManager.POSIX_VOLUME_MOUNT,
@@ -228,7 +226,7 @@ class TransformerManager:
             image=image,
             image_pull_policy=current_app.config['TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY'],
             volume_mounts=volume_mounts,
-            command=["bash", "-c"],
+            command=["bash", "--login", "-c"],
             env=env,
             args=[science_command],
             resources=resources
