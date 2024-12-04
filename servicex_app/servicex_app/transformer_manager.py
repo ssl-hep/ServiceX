@@ -190,7 +190,7 @@ class TransformerManager:
 
         science_command = '"'
         if x509_secret:
-            science_command = "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
+            science_command += "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
                               "do sleep 5;done &&" \
                               " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
 
