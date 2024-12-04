@@ -27,7 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 import logging
+import traceback
+
 from minio.error import MinioException, S3Error
+
+
+class ObjectStoreError(Exception):
+    pass
 
 
 class ObjectStoreManager:
@@ -58,12 +64,16 @@ class ObjectStoreManager:
                                                    file_path=path)
             self.logger.info("OSM > created object.", extra={
                              "requestId": bucket, "object": result.object_name})
-        except S3Error:
+        except S3Error as e:
             self.logger.error("S3Error", exc_info=True)
-        except MinioException:
+            traceback.print_exc()
+            raise ObjectStoreError(f"Error uploading file to object store: {path}") from e
+        except MinioException as e:
             self.logger.error("Minio error", exc_info=True)
+            traceback.print_exc()
+            raise ObjectStoreError(f"Error uploading file to object store: {path}") from e
 
         try:
             os.remove(path)
         except FileNotFoundError:
-            pass
+            pass  # Should never happen, but is not fatal if it occurs

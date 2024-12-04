@@ -51,7 +51,7 @@ from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.raw_uproot_stats import RawUprootStats  # NOQA: 401
-from transformer_sidecar.object_store_manager import ObjectStoreManager
+from transformer_sidecar.object_store_manager import ObjectStoreManager, ObjectStoreError
 from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 
@@ -348,15 +348,25 @@ def upload_file(source_path: Path,
                        "place": PLACE,
                        "objectName": object_name})
     t0 = time.time()
-    object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
-    logger.info("File uploaded to object store.",
-                extra={'requestId': request_id,
-                       "file-id": rec.file_id,
-                       "place": PLACE,
-                       "objectName": object_name,
-                       "elapsed": time.time()-t0})
+    try:
+        object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
+        logger.info("File uploaded to object store.",
+                    extra={'requestId': request_id,
+                           "file-id": rec.file_id,
+                           "place": PLACE,
+                           "objectName": object_name,
+                           "elapsed": time.time()-t0})
 
-    servicex.put_file_complete(rec)
+        servicex.put_file_complete(rec)
+
+    except ObjectStoreError as e:
+        logger.error(f"Error uploading file to object store: {e}",
+                     extra={'requestId': request_id, "place": PLACE,
+                            "file-id": rec.file_id,
+                            "objectName": object_name}
+                     )
+        rec.status = "failure"
+        servicex.put_file_complete(rec)
 
 
 class TimeTuple(NamedTuple):

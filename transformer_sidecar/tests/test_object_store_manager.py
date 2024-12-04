@@ -27,7 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 
-from transformer_sidecar.object_store_manager import ObjectStoreManager
+import pytest
+
+from transformer_sidecar.object_store_manager import ObjectStoreManager, ObjectStoreError
 
 
 class TestObjectStoreManager:
@@ -76,3 +78,24 @@ class TestObjectStoreManager:
         result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
         result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
         mock_minio.fput_object.assert_called()
+
+    def test_upload_file_exception(self, mocker):
+        import minio
+        mock_minio = mocker.MagicMock(minio.api.Minio)
+        mock_minio.fput_object = mocker.Mock()
+        mock_minio.fput_object.side_effect = minio.error.S3Error(
+            response=mocker.Mock(),
+            code='TestError',
+            message='Mocked S3 Error',
+            resource='test-resource',
+            request_id='test-request-id',
+            host_id='test-host-id'
+        )
+        mocker.patch('minio.Minio', return_value=mock_minio)
+        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        with pytest.raises(ObjectStoreError):
+            result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
+
+        mock_minio.fput_object.side_effect = minio.error.MinioException()
+        with pytest.raises(ObjectStoreError):
+            result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")

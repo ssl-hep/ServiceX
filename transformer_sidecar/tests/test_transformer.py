@@ -35,6 +35,7 @@ from types import SimpleNamespace
 
 from pytest import fixture
 
+from transformer_sidecar.object_store_manager import ObjectStoreError
 from transformer_sidecar.transformer import init, transform_file, prioritize_replicas, \
     prepend_xcache
 
@@ -341,6 +342,29 @@ def test_transform_file_exception(args, mock_celery,
         assert failure_report.file_path == test_paths[0]
         assert failure_report.file_id == test_file_id
         assert failure_report.request_id == test_request_id
+
+
+def test_transform_file_object_store_error(args, mock_celery, transformer_capabilities,
+                                           mock_servicex_adapter,
+                                           mock_object_store_manager,
+                                           mock_science_container):
+    with (tempfile.TemporaryDirectory() as temp_dir):
+        init_test(args, mock_celery, transformer_capabilities, temp_dir,
+                  ['root', 'parquet'], 'root')
+
+        mock_object_store_manager.return_value.upload_file.side_effect = ObjectStoreError("Test Exception")  # noqa E501
+        mock_science_container.return_value.await_response.side_effect = ["success."]
+
+        # Call the task
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination=test_result_destination,
+            result_format=test_result_format
+        )
+        assert mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status == 'failure'  # noqa E501
 
 
 @contextlib.contextmanager
