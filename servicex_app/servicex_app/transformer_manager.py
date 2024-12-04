@@ -210,7 +210,7 @@ class TransformerManager:
                            "{TL} ".format(TL=transformer_language) + \
                            "{TC} ".format(TC=transformer_command) + \
                            watch_path
-        
+
         science_command += '"'
 
         if result_destination == 'volume':
