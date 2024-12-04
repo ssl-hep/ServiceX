@@ -188,7 +188,7 @@ class TransformerManager:
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 
-        science_command = " "
+        science_command = '"'
         if x509_secret:
             science_command = "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
                               "do sleep 5;done &&" \
@@ -210,6 +210,8 @@ class TransformerManager:
                            "{TL} ".format(TL=transformer_language) + \
                            "{TC} ".format(TC=transformer_command) + \
                            watch_path
+        
+        science_command += '"'
 
         if result_destination == 'volume':
             sidecar_command += " --output-dir " + os.path.join(
