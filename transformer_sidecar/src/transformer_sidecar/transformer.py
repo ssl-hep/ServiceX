@@ -33,7 +33,6 @@ import sys
 import timeit
 from argparse import Namespace
 from hashlib import sha1, sha256
-from multiprocessing import Queue
 from pathlib import Path
 from types import SimpleNamespace
 from typing import NamedTuple, Optional, Union
@@ -61,8 +60,6 @@ object_store = None
 posix_path: str = ""
 startup_time = None
 convert_root_to_parquet: bool = False
-
-upload_queue: Optional[Queue] = None
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
@@ -103,8 +100,7 @@ def transform_file(
 
     This control document is sent via a socket to the science image.
     Once science image has done its job, it sends back a message over the socket.
-    The sidecar will then add the parquet/root file in the output directory to the
-    S3 upload queue.
+    The sidecar will then upload the file to object store
 
     We will examine this log file to see if the transform succeeded or failed
     """
@@ -407,7 +403,7 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, upload_queue, \
+    global convert_root_to_parquet, startup_time, \
         object_store, posix_path, science_container, \
         shared_dir, transformer_capabilities, request_id, celery_app
 
