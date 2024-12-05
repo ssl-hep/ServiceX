@@ -190,7 +190,7 @@ class TransformerManager:
 
         science_command = " "
         if x509_secret:
-            science_command = "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
+            science_command += "until [ -f /servicex/output/scripts/proxy-exporter.sh ];" \
                               "do sleep 5;done &&" \
                               " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
 
@@ -226,7 +226,7 @@ class TransformerManager:
             image=image,
             image_pull_policy=current_app.config['TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY'],
             volume_mounts=volume_mounts,
-            command=["bash", "-c"],
+            command=["bash", "--login", "-c"],
             env=env,
             args=[science_command],
             resources=resources
