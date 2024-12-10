@@ -279,24 +279,6 @@ class TransformRequest(db.Model):
         except NoResultFound:
             return []
 
-    @classmethod
-    def file_transformed_successfully(cls, key: Union[str, int]) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files_completed = cls.files_completed + 1
-        db.session.commit()
-
-    @classmethod
-    def file_transformed_unsuccessfully(cls, key: Union[str, int]) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files_failed = cls.files_failed + 1
-        db.session.commit()
-
-    @classmethod
-    def add_a_file(cls, key) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files = TransformRequest.files + 1
-        db.session.commit()
-
     @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
