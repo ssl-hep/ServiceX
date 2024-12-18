@@ -193,13 +193,18 @@ def test_transformer_output_dir(args, mock_celery, transformer_capabilities,
                                 mock_science_container, mocker):
     with (tempfile.TemporaryDirectory() as temp_dir):
         args.result_destination = 'volume'
-        args.output_dir = "/local/results"
+        args.output_dir = os.path.join(temp_dir, "local", "results")
+        os.makedirs(args.output_dir, exist_ok=True)
 
         init_test(args, mock_celery, transformer_capabilities, temp_dir,
                   ['root', 'parquet'], 'parquet')
 
         mock_science_container.return_value.await_response.side_effect = ["failure",
                                                                           "success."]
+
+        result_file_path = os.path.join(temp_dir, "local", "results", "site2:file.root.parquet")
+        with open(result_file_path, 'w') as f:
+            f.write("test")
 
         # Call the task
         transform_file(
@@ -212,10 +217,12 @@ def test_transformer_output_dir(args, mock_celery, transformer_capabilities,
         )
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
-        assert science_request["safeOutputFileName"] == '/local/results/site2:file.root.parquet'
+        assert science_request["safeOutputFileName"] == result_file_path
         mock_servicex_adapter.return_value.put_file_complete.assert_called_once()
         assert mock_servicex_adapter.return_value. \
             put_file_complete.call_args[0][0].status == 'success'
+        assert mock_servicex_adapter.return_value. \
+            put_file_complete.call_args[0][0].total_bytes == 4
 
 
 def test_transformer_long_filename(args, mock_celery, transformer_capabilities,

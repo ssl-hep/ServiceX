@@ -200,6 +200,7 @@ def transform_file(
                 Path(os.path.join(request_path, "abc.log")),
             )
             if science_container_response == "success.":
+                output_path = Path(transform_request["safeOutputFileName"])
                 rec = FileCompleteRecord(
                     request_id=request_id,
                     file_path=_file_path,
@@ -207,7 +208,7 @@ def transform_file(
                     status="success",
                     total_time=time.time() - total_time,
                     total_events=transformer_stats.total_events,
-                    total_bytes=transformer_stats.file_size,
+                    total_bytes=os.path.getsize(output_path),
                 )
 
                 if object_store:
