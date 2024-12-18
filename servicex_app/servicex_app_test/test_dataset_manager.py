@@ -98,14 +98,15 @@ class TestDatasetManager(ResourceTestBase):
         did = "rucio://my-did?files=1"
         with client.application.app_context():
             d = Dataset(name=did, did_finder="rucio", lookup_status=DatasetStatus.looking,
-                        last_used=datetime.now(tz=timezone.utc),
-                        last_updated=datetime.fromtimestamp(0))
+                        last_used=datetime.fromtimestamp(0),
+                        last_updated=datetime.now(tz=timezone.utc))
             d.save_to_db()
             dm = DatasetManager.from_did(DIDParser(did), logger=client.application.logger, db=db)
             assert dm.dataset.name == did
             assert dm.dataset.did_finder == "rucio"
             assert dm.dataset.lookup_status == DatasetStatus.looking
             assert dm.dataset.id == d.id
+            assert dm.dataset.last_used > datetime.fromtimestamp(0)
 
     def test_from_new_file_list(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
@@ -127,8 +128,8 @@ class TestDatasetManager(ResourceTestBase):
         with client.application.app_context():
             d = Dataset(name=DatasetManager.file_list_hash(file_list),
                         did_finder="user", lookup_status=DatasetStatus.created,
-                        last_used=datetime.now(tz=timezone.utc),
-                        last_updated=datetime.fromtimestamp(0),
+                        last_used=datetime.fromtimestamp(0),
+                        last_updated=datetime.now(tz=timezone.utc),
                         files=[
                             DatasetFile(
                                 paths=file,
@@ -144,6 +145,7 @@ class TestDatasetManager(ResourceTestBase):
             assert dm.dataset.did_finder == "user"
             assert dm.dataset.lookup_status == DatasetStatus.created
             assert dm.dataset.id == d.id
+            assert dm.dataset.last_used > datetime.fromtimestamp(0)
 
     def test_from_dataset_id(self, client):
         file_list = ["root://eospublic.cern.ch/1.root", "root://eospublic.cern.ch/2.root"]
