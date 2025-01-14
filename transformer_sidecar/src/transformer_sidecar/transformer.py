@@ -30,6 +30,7 @@ import json
 import os
 import shutil
 import sys
+import time
 import timeit
 from argparse import Namespace
 from hashlib import sha1, sha256
@@ -39,20 +40,20 @@ from typing import NamedTuple, Optional, Union
 
 import kombu
 import psutil as psutil
-import time
 from celery import Celery, shared_task
 from celery.signals import after_setup_logger
 
+from transformer_sidecar.object_store_manager import ObjectStoreError, ObjectStoreManager
 from transformer_sidecar.science_container_command import ScienceContainerCommand, \
     ScienceContainerException
+from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
+from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.raw_uproot_stats import \
+    RawUprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.raw_uproot_stats import RawUprootStats  # NOQA: 401
-from transformer_sidecar.object_store_manager import ObjectStoreManager, ObjectStoreError
-from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
-from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 
 # Module globals
 shared_dir: Optional[str] = None
@@ -80,7 +81,9 @@ start_time = timeit.default_timer()
 logger = initialize_logging()
 
 
-@shared_task(acks_late=True)
+@shared_task(
+    acks_late=True,
+)
 def transform_file(
         request_id,
         file_id,
@@ -107,6 +110,12 @@ def transform_file(
 
     global shared_dir
 
+    log_extra = {
+        "requestId": request_id,
+        "file-id": file_id,
+        "place": PLACE
+    }
+
     transform_request = {
         "file-id": file_id,
         "request-id": request_id,
@@ -128,13 +137,11 @@ def transform_file(
     logger.info(
         "got transform request.",
         extra={
-            "requestId": request_id,
+            **log_extra,
             "paths": _file_paths,
-            "file-id": file_id,
             "result-destination": result_destination,
             "result-format": result_format,
             "service-endpoint": service_endpoint,
-            "place": PLACE,
         },
     )
     servicex = ServiceXAdapter(service_endpoint)
@@ -158,10 +165,8 @@ def transform_file(
             logger.info(
                 "trying to transform file",
                 extra={
-                    "requestId": request_id,
-                    "file-id": file_id,
+                    **log_extra,
                     "file-path": _file_path,
-                    "place": PLACE,
                 },
             )
 
@@ -193,6 +198,10 @@ def transform_file(
             science_container_response = science_container.await_response()
 
             transform_request["status"] = science_container_response
+            logger.info(
+                "Science container completed with status %s" % science_container_response,
+                extra=log_extra
+            )
 
             # Grab the logs
             transformer_stats = fill_stats_parser(
@@ -220,11 +229,9 @@ def transform_file(
 
                 transform_success = True
                 ts = {
-                    "requestId": request_id,
-                    "file-id": file_id,
+                    **log_extra,
                     "file-size": transformer_stats.file_size,
                     "total-events": transformer_stats.total_events,
-                    "place": PLACE,
                 }
                 logger.info("Transformer stats.", extra=ts)
                 science_container.confirm()
@@ -236,10 +243,8 @@ def transform_file(
         # a hard failure with this file.
         if not transform_success:
             hf = {
-                "requestId": request_id,
+                **log_extra,
                 "file-path": _file_paths[0],
-                "file-id": file_id,
-                "place": PLACE,
                 "log_body": transformer_stats.log_body,
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
@@ -266,20 +271,21 @@ def transform_file(
         logger.info(
             "File processed.",
             extra={
-                "requestId": request_id,
-                "file-id": file_id,
+                **log_extra,
                 "user": elapsed_times.user,
                 "sys": elapsed_times.system,
                 "iowait": elapsed_times.iowait,
-                "place": PLACE,
             },
         )
 
-    except ScienceContainerException:
-        logger.exception("Science container not responding. Shutting down this transformer.")
-        sys.exit(0)
+    except ScienceContainerException as e:
+        logger.exception("Science container not responding. Shutting down this transformer.",
+                         extra=log_extra, exc_info=e)
+        sys.exit(-1)
+
     except Exception as error:
-        logger.exception(f"Received exception doing transform: {error}")
+        logger.exception("Received exception doing transform",
+                         extra=log_extra, exc_info=error)
         rec = FileCompleteRecord(
             request_id=request_id,
             file_path=_file_paths[0],
@@ -456,7 +462,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             "--without-mingle",
             "--without-gossip",
             "--without-heartbeat",
-            "--loglevel=warning",
+            "--loglevel=info",
             "-Q", f"transformer-{args.request_id}",
             "-n",
             f"transformer-{args.request_id}@%h",
