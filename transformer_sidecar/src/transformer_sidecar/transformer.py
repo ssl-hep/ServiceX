@@ -74,6 +74,7 @@ MAX_PATH_LEN = 255
 PLACE = {
     "host_name": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
+    "pod": os.getenv("POD_NAME", "unknown"),
 }
 
 

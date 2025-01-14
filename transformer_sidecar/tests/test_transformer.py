@@ -128,7 +128,7 @@ def test_transformer_init(args, mock_celery, transformer_capabilities,
             argv=[
                 "worker",
                 "--concurrency=1",
-                '--without-mingle',
+                "--without-mingle",
                 '--without-gossip',
                 '--without-heartbeat',
                 "--loglevel=info",
