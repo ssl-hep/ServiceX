@@ -357,6 +357,10 @@ class TransformationResult(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
 
+    __table_args__ = (
+        db.UniqueConstraint('file_id', 'request_id', name='uix_file_request'),
+    )
+
     @classmethod
     def to_json_list(cls, a_list):
         return [TransformationResult.to_json(msg) for msg in a_list]

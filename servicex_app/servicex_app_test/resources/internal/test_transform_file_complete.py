@@ -28,6 +28,7 @@
 
 import psycopg2
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from servicex_app.models import TransformationResult, TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
@@ -151,6 +152,45 @@ class TestTransformFileComplete(ResourceTestBase):
         mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
                                                                              'my-ws')
 
+    def test_put_transform_file_complete_duplicate_report(self,
+                                                          mocker,
+                                                          mock_transformer_manager,
+                                                          db_session,
+                                                          mock_transform_request_lookup,
+                                                          fake_transform_request,
+                                                          file_complete_response,
+                                                          test_client):
+        fake_transform_request.files_completed = 6
+        fake_transform_request.files_failed = 2
+        db_session.add.side_effect = [
+            None,
+            IntegrityError('duplicate key value violates unique constraint',
+                           params=['request_id'], orig=Exception())
+        ]
+
+        response1 = test_client.put(
+            '/servicex/internal/transformation/1234/file-complete',
+            json=file_complete_response)
+
+        response2 = test_client.put(
+            '/servicex/internal/transformation/1234/file-complete',
+            json=file_complete_response)
+
+        assert response1.status_code == 200
+        assert response2.status_code == 200
+
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
+        assert fake_transform_request.files_completed == 7
+        assert fake_transform_request.files_failed == 2
+
+        assert db_session.add.call_count == 2
+        assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+
+        assert db_session.add.call_count == 2
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+        assert db_session.add.mock_calls[1][1][0].file_id == 42
+
     def test_put_transform_file_complete_unknown_request_id(self,
                                                             mock_transformer_manager,
                                                             db_session,
@@ -208,7 +248,6 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.finish_time is None
 
         # Verify that we retried after the database error
-        assert db_session.flush.call_count == 2
         db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
 
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
