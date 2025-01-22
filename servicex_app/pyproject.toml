@@ -13,7 +13,7 @@ packages = [{include = "servicex_app"}]
 [tool.poetry.dependencies]
 python = "~3.10"
 markupsafe = "^2.1.1"
-jinja2 = "^3.1.4"
+jinja2 = "^3.1.5"
 flask = "^2.3.3"
 werkzeug = "^3.0.6"
 flask-wtf = "^1.0.1"
