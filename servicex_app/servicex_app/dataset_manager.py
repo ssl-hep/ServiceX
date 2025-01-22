@@ -51,10 +51,11 @@ class DatasetManager:
                  db: SQLAlchemy = None):
         dataset = Dataset.find_by_name(did.full_did)
         if not dataset:
+            dataset_timestamp = datetime.now(tz=timezone.utc)
             dataset = Dataset(
                 name=did.full_did,
-                last_used=datetime.now(tz=timezone.utc),
-                last_updated=datetime.now(tz=timezone.utc),
+                last_used=dataset_timestamp,
+                last_updated=dataset_timestamp,
                 lookup_status=DatasetStatus.created,
                 did_finder=did.scheme
             )
@@ -81,10 +82,11 @@ class DatasetManager:
         dataset = Dataset.find_by_name(name)
 
         if not dataset:
+            dataset_timestamp = datetime.now(tz=timezone.utc)
             dataset = Dataset(
                 name=name,
-                last_used=datetime.now(tz=timezone.utc),
-                last_updated=datetime.now(tz=timezone.utc),
+                last_used=dataset_timestamp,
+                last_updated=dataset_timestamp,
                 lookup_status=DatasetStatus.complete,
                 did_finder='user',
                 files=[
