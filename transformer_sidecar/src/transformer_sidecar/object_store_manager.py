@@ -30,6 +30,7 @@ import logging
 import traceback
 
 from minio.error import MinioException, S3Error
+from retry import retry
 
 
 class ObjectStoreError(Exception):
@@ -57,6 +58,9 @@ class ObjectStoreManager:
             'MINIO_SECRET_KEY'],
             secure=secure_connection)
 
+    @retry(tries=3, delay=3,
+           backoff=4,
+           jitter=(1, 3), logger=logging.getLogger(__name__))
     def upload_file(self, bucket, object_name, path):
         try:
             result = self.minio_client.fput_object(bucket_name=bucket,
