@@ -44,6 +44,8 @@ def send_request(query, port):
 
 
 def generate_zipfile(result, output_folder):
+    if result.status_code != 200:
+        raise RuntimeError(f"Codegen failed. Error:\n{result.text}")
     decoder_parts = decoder.MultipartDecoder.from_response(result)
     zipfile = decoder_parts.parts[3].content
     zipfile = ZipFile(BytesIO(zipfile))
@@ -58,22 +60,25 @@ def run_docker_compose_for_science(image, filepath):
 
 
 def send_root_file_to_science(root_file, output_file, output_format):
-    subprocess.run(["docker", "compose", "run", "science", "python",
-                    "/generated/transform_single_file.py",
-                    root_file, output_file, output_format])
+    subprocess.run(["docker", "compose", "run", "science",
+                    "bash", "--login", "-c", "python3 /generated/transform_single_file.py "
+                    f"{root_file} {output_file} {output_format}"])
 
 
-def run_x509_proxy(proxy_image = "sslhep/x509-secrets:develop"):
+def run_x509_proxy(proxy_image="sslhep/x509-secrets:develop"):
     my_env = os.environ.copy()
-    subprocess.run(["docker" ,"run", "-it", "--mount", f"type=bind,source={my_env['HOME']}/.globus,readonly,target=/globus",
-                    "-v", "/tmp:/tmp", "--rm", proxy_image,
+    subprocess.run(["docker", "run", "-it", "--mount", f"type=bind,source={my_env['HOME']}/.globus,readonly,target=/globus",
+                    "-v", "/tmp:/tmp", "--rm",
+                    "--user", f"{os.getuid()}:{os.getgid()}",
+                    proxy_image,
                     "voms-proxy-init", "-voms", "atlas", "-cert",
-                    "/globus/usercert.pem", "-key", "/globus/userkey.pem" ,"-out", "/tmp/x509up"
+                    "/globus/usercert.pem", "-key", "/globus/userkey.pem", "-out", "/tmp/x509up"
                     ]
                     )
 
 
 if __name__ == "__main__":
+    import os
     try:
         parser = argparse.ArgumentParser(description='Run the servicex codegen and science container')
         parser.add_argument('--proxy_image', help='Run the x509 proxy for image')
@@ -86,11 +91,22 @@ if __name__ == "__main__":
         docker_compose_up()
         time.sleep(10)
 
-        result = send_request(
-                            query=a.get_config()['codegen']['query'] , #query,#,
-                            port=a.get_config()['codegen']['port'])
-        generate_zipfile(result, output_folder="temp1")
+        cgc = a.get_config()['codegen']
+        if 'query' in cgc:
+            query = cgc['query']
+        elif 'query_file' in cgc:
+            with open(cgc['query_file'], 'r') as infile:
+                query = infile.read()
+        else:
+            raise RuntimeError('cannot find query or query_file in config.yaml')
 
+        output_folder = "temp1"
+        if not os.path.exists(output_folder):
+            os.mkdir(output_folder)
+        result = send_request(
+                            query=query,
+                            port=a.get_config()['codegen']['port'])
+        generate_zipfile(result, output_folder=output_folder)
 
         send_root_file_to_science(
             root_file= a.get_config()['science']['rootfile'],
