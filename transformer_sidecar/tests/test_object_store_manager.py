@@ -81,21 +81,50 @@ class TestObjectStoreManager:
 
     def test_upload_file_exception(self, mocker):
         import minio
+
+        def s3_error(code):
+            """
+            Construct an S3Error with a specific code.
+            """
+            return minio.error.S3Error(
+                response=mocker.Mock(),
+                code=code,
+                message='Mocked S3 Error',
+                resource='test-resource',
+                request_id='test-request-id',
+                host_id='test-host-id'
+            )
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
         mock_minio.fput_object = mocker.Mock()
-        mock_minio.fput_object.side_effect = minio.error.S3Error(
-            response=mocker.Mock(),
-            code='TestError',
-            message='Mocked S3 Error',
-            resource='test-resource',
-            request_id='test-request-id',
-            host_id='test-host-id'
-        )
+
+        # Throw three retryable errors
+        mock_minio.fput_object.side_effect = [
+            s3_error('SlowDown'),
+            s3_error('ServiceUnavailable'),
+            s3_error('Throttling')
+        ]
+
         mocker.patch('minio.Minio', return_value=mock_minio)
         result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
         with pytest.raises(ObjectStoreError):
             result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
+        assert mock_minio.fput_object.call_count == 3
 
+        # Now throw one retryable exception and one non-retryable which should
+        # cause the upload to fail after the first retry
+        mock_minio.fput_object.reset_mock()
+        mock_minio.fput_object.side_effect = [
+            s3_error('SlowDown'),
+            s3_error('ItsDeadJim')
+        ]
+        with pytest.raises(ObjectStoreError):
+            result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
+        assert mock_minio.fput_object.call_count == 2
+
+        # Now test out the MinioExceptions which are all non-retryable
+        mock_minio.fput_object.reset_mock()
         mock_minio.fput_object.side_effect = minio.error.MinioException()
         with pytest.raises(ObjectStoreError):
             result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
+        assert mock_minio.fput_object.call_count == 1

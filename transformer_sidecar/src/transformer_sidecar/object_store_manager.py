@@ -25,11 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
 import logging
+import os
 import traceback
 
 from minio.error import MinioException, S3Error
+from tenacity import RetryError, before_log, retry, retry_if_result, stop_after_attempt, \
+    wait_exponential, wait_random
 
 
 class ObjectStoreError(Exception):
@@ -57,23 +59,57 @@ class ObjectStoreManager:
             'MINIO_SECRET_KEY'],
             secure=secure_connection)
 
-    def upload_file(self, bucket, object_name, path):
+    @retry(
+        stop=stop_after_attempt(3),
+        retry=retry_if_result(lambda e:
+                              isinstance(e, S3Error)
+                              and hasattr(e, 'code')
+                              and e.code in ['SlowDown', 'ServiceUnavailable', 'Throttling']),
+        wait=wait_exponential(multiplier=3, exp_base=4) + wait_random(min=1, max=3),
+        before=before_log(logging.getLogger(__name__), logging.INFO)
+    )
+    def _upload_file_with_retry(self, bucket, object_name, path):
+        """
+        Upload a file to the object store with retry logic for certain S3 errors.
+        To take advantage of tenacity's retry logic based on specific errors, this
+        function needs to return the exception rather than raise it.
+        """
         try:
             result = self.minio_client.fput_object(bucket_name=bucket,
                                                    object_name=object_name,
                                                    file_path=path)
+        except Exception as e:
+            # retry_if_result needs the exception to be returned and not raised
+            return e
+        return result
+
+    def upload_file(self, bucket, object_name, path):
+        try:
+            result = self._upload_file_with_retry(bucket, object_name, path)
+
+            # The retry logic will return the exception rather than raise it
+            if isinstance(result, Exception):
+                raise result
+
             self.logger.info("OSM > created object.", extra={
                              "requestId": bucket, "object": result.object_name})
-        except S3Error as e:
+
+        except (RetryError, S3Error) as e:
+            # If a non-retryable S3Error is raised it will come here. If we
+            # ran out of retries it will also come here, but the exception will
+            # wrapped by tenacity
             self.logger.error("S3Error", exc_info=True)
             traceback.print_exc()
             raise ObjectStoreError(f"Error uploading file to object store: {path}") from e
+
         except MinioException as e:
             self.logger.error("Minio error", exc_info=True)
             traceback.print_exc()
             raise ObjectStoreError(f"Error uploading file to object store: {path}") from e
 
-        try:
-            os.remove(path)
-        except FileNotFoundError:
-            pass  # Should never happen, but is not fatal if it occurs
+        finally:
+            # Delete the file regardless of success or failure
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass  # Should never happen, but is not fatal if it occurs
