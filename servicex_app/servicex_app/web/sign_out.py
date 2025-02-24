@@ -1,7 +1,7 @@
 from flask import redirect, url_for, current_app, session
 
 from servicex_app.decorators import oauth_required
-from .utils import load_app_client, load_oauth_client
+from .utils import load_oauth_client
 
 
 @oauth_required
