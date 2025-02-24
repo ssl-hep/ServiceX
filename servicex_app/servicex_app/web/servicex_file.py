@@ -12,8 +12,8 @@ from servicex_app.models import UserModel
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
     code_gen_types = current_app.config.get('CODE_GEN_IMAGES', '').keys()
-    sub = session.get('sub')
-    user = UserModel.find_by_sub(sub)
+    email = session.get('email')
+    user = UserModel.find_by_email(email)
     endpoint_url = get_correct_url(request)
 
     body = "api_endpoints:\n"

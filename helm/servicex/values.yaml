@@ -4,8 +4,10 @@ app:
   authExpires: 21600
   checksImage: ncsa/checks:latest
   defaultDIDFinderScheme: null
-  globusClientID: null
-  globusClientSecret: null
+  oauthMetadataURL: null
+  oauthClientID: null
+  oauthClientSecret: null
+  allowAllAfterAuth: false
   defaultUsers:
   image: sslhep/servicex_app
   ingress:
