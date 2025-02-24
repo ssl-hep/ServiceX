@@ -26,9 +26,10 @@ data:
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
-    # Globus configuration
-    GLOBUS_CLIENT_ID = '{{ .Values.app.globusClientID }}'
-    GLOBUS_CLIENT_SECRET = '{{ .Values.app.globusClientSecret }}'
+    # OAuth configuration
+    OAUTH_METADATA_URL = '{{ .Values.app.oauthMetadataURL }}'
+    OAUTH_CLIENT_ID = '{{ .Values.app.oauthClientID }}'
+    OAUTH_CLIENT_SECRET = '{{ .Values.app.oauthClientSecret }}'
 
     # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'

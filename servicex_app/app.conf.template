@@ -10,9 +10,10 @@ DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/latest/'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
-# Globus configuration - obtained at https://auth.globus.org/v2/web/developers
-GLOBUS_CLIENT_ID='globus-client-id'
-GLOBUS_CLIENT_SECRET='globus-client-secret'
+# OAuth configuration
+OAUTH_METADATA_URL='https://auth.globus.org/.well-known/openid-configuration'
+OAUTH_CLIENT_ID='globus-client-id'
+OAUTH_CLIENT_SECRET='globus-client-secret'
 
 # JWT admin email address
 JWT_ADMIN='admin@example.com'

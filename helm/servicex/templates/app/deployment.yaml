@@ -55,12 +55,17 @@ spec:
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
     {{- if .Values.secrets }}
-        - name: GLOBUS_CLIENT_ID
+        - name: OAUTH_METADATA_URL
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}
-              key: globusClientID
-        - name: GLOBUS_CLIENT_SECRET
+              key: oauthMetadataURL        
+        - name: OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: oauthClientID
+        - name: OAUTH_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}

@@ -1,11 +1,11 @@
-FROM python:3.10
+FROM python:3.11
 
 RUN useradd -ms /bin/bash servicex
 
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
-ENV  POETRY_VERSION=1.2.2
+ENV  POETRY_VERSION=2.0.0
 RUN pip install poetry==$POETRY_VERSION
 
 COPY README.rst README.rst

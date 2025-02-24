@@ -3,7 +3,7 @@ from typing import Callable
 
 from flask import (Response, current_app, make_response, redirect, request,
                    session, url_for)
-from flask_jwt_extended import (get_jwt_identity, jwt_required,
+from flask_jwt_extended import (get_jwt, jwt_required,
                                 verify_jwt_in_request)
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
@@ -12,8 +12,8 @@ from servicex_app.models import UserModel, db
 
 @jwt_required()
 def get_jwt_user():
-    jwt_val = get_jwt_identity()
-    user = UserModel.find_by_sub(jwt_val)
+    jwt_val = get_jwt()
+    user = UserModel.find_by_email(jwt_val['sub'])
 
     return user
 

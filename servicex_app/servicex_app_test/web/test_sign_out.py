@@ -23,7 +23,7 @@ class TestSignOut(WebTestBase):
         assert not session.get('tokens')
         ga_logout_url = ''.join([
             "https://auth.globus.org/v2/web/logout",
-            f"?client={client.application.config['GLOBUS_CLIENT_ID']}",
+            f"?client={client.application.config['OAUTH_CLIENT_ID']}",
             f"&redirect_uri={url_for('home', _external=True)}",
             f"&redirect_name={quote('ServiceX Portal')}"
         ])

@@ -10,8 +10,8 @@ from .forms import ProfileForm
 
 @oauth_required
 def edit_profile():
-    sub = session.get('sub')
-    user: UserModel = UserModel.find_by_sub(sub)
+    email = session.get('email')
+    user: UserModel = UserModel.find_by_email(email)
     form = ProfileForm()
     if request.method == 'GET':
         form = ProfileForm(user)

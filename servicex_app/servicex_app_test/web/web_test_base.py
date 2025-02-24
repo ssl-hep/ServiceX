@@ -80,8 +80,9 @@ class WebTestBase:
                 'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
             },
             'ENABLE_AUTH': False,
-            'GLOBUS_CLIENT_ID': 'globus-client-id',
-            'GLOBUS_CLIENT_SECRET': 'globus-client-secret',
+            'OAUTH_METADATA_URL': 'https://auth.globus.org/.well-known/openid-configuration',
+            'OAUTH_CLIENT_ID': 'globus-client-id',
+            'OAUTH_CLIENT_SECRET': 'globus-client-secret',
             'DID_FINDER_DEFAULT_SCHEME': 'rucio',
             'VALID_DID_SCHEMES': ['rucio'],
             'JWT_ADMIN': 'admin',
