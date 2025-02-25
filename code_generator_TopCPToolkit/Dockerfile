@@ -17,8 +17,6 @@ RUN poetry config virtualenvs.create false && \
 
 RUN pip install gunicorn
 
-RUN sed -i 's/TopCPParser/RawUprootStats/' transformer_capabilities.json
-
 COPY boot.sh ./
 COPY transformer_capabilities.json ./
 COPY servicex/ ./servicex
@@ -28,8 +26,9 @@ RUN chmod 644 transformer_capabilities.json
 USER servicex
 COPY app.conf .
 
-ENV CODEGEN_CONFIG_FILE "/home/servicex/app.conf"
+ENV CODEGEN_CONFIG_FILE="/home/servicex/app.conf"
 
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]
 
+#RUN sed -i 's/TopCPParser/RawUprootStats/' transformer_capabilities.json

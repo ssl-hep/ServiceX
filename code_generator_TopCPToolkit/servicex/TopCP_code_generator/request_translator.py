@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 import shutil
-import yaml
 
 from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
     GenerateCodeException
@@ -56,7 +55,7 @@ class TopCPTranslator(CodeGenerator):
                                            "/home/servicex/transformer_capabilities.json")
         shutil.copyfile(capabilities_path, os.path.join(query_file_path,
                                                         "transformer_capabilities.json"))
-        with open(os.path.join(query_file_path, "reco.yaml","w")) as reco:
-            reco.write(query)
+        with open(os.path.join(query_file_path, "reco.yaml"),"w") as reco:
+                reco.write(query)
 
         return GeneratedFileResult(_hash, query_file_path)

@@ -5,5 +5,5 @@
   "file-formats": ["root-file"],
   "stats-parser": "TopCPParser",
   "language": "python",
-  "command": "TopCPToolkit/generate/transform_single_file.py"
+  "command": "/generated/transform_single_file.py"
 }
