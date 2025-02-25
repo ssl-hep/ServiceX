@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime
 
-from flask import template_rendered
+from flask import template_rendered, redirect
 from flask.testing import FlaskClient
 from flask_jwt_extended import create_access_token
 from pytest import fixture
@@ -122,20 +122,35 @@ class WebTestBase:
     @staticmethod
     def _oauth_tokens():
         return {
-            'auth.globus.org': {
-                'access_token': 'globus-auth-access-token',
-                'expires_at_seconds': 1596734412,
-                'refresh_token': 'globus-auth-refresh-token',
-                'resource_server': 'auth.globus.org',
-                'scope': 'email profile openid',
-                'token_type': 'Bearer'},
-            'transfer.api.globus.org': {
-                'access_token': 'globus-transfer-access-token',
-                'expires_at_seconds': 1596734412,
-                'refresh_token': 'globus-transfer-refresh-token',
-                'resource_server': 'transfer.api.globus.org',
-                'scope': 'urn:globus:auth:scope:transfer.api.globus.org:all',
-                'token_type': 'Bearer'}
+            'access_token': 'globus-auth-access-token',
+            'expires_at_seconds': 1596734412,
+            'resource_server': 'auth.globus.org',
+            'scope': 'email profile openid',
+            'token_type': 'Bearer'
+        }
+
+    @staticmethod
+    def _globus_metadata():
+        return {
+            'request_token_url': None,
+            'request_token_params': None,
+            'refresh_token_url': None,
+            'refresh_token_params': None,
+            'issuer': 'https://auth.globus.org',
+            'authorization_endpoint': 'https://auth.globus.org/v2/oauth2/authorize',
+            'userinfo_endpoint': 'https://auth.globus.org/v2/oauth2/userinfo',
+            'token_endpoint': 'https://auth.globus.org/v2/oauth2/token',
+            'revocation_endpoint': 'https://auth.globus.org/v2/oauth2/token/revoke',
+            # the following is not actually returned for Globus, but we use for testing
+            'end_session_endpoint': 'https://auth.globus.org/v2/web/logout',
+            'jwks_uri': 'https://auth.globus.org/jwk.json',
+            'response_types_supported': ['code', 'token', 'token id_token', 'id_token'],
+            'id_token_signing_alg_values_supported': ['RS512'],
+            'scopes_supported': ['openid', 'email', 'profile'],
+            'token_endpoint_auth_methods_supported': ['client_secret_basic'],
+            'claims_supported': ['at_hash', 'aud', 'email', 'exp', 'name', 'nonce', 'preferred_username', 'iat', 'iss', 'sub'],
+            'subject_types_supported': ['public'],
+            '_loaded_at': 1740439075.4229648
         }
 
     @staticmethod
@@ -223,22 +238,27 @@ class WebTestBase:
         return mocker.patch('flask_sqlalchemy.SQLAlchemy').return_value
 
     @fixture
-    def globus_client(self, mocker):
-        client_cls = mocker.patch('globus_sdk.ConfidentialAppAuthClient')
+    def oauth_client(self, mocker):
+        client_cls = mocker.patch('authlib.integrations.flask_client.FlaskOAuth2App')
         client = client_cls.return_value
         auth_url = self._auth_url()
-        client.oauth2_get_authorize_url = mocker.Mock(return_value=auth_url)
-        mock_oauth_tokens = mocker.Mock()
-        mock_oauth_tokens.decode_id_token = \
-            mocker.MagicMock(return_value=self._id_token())
-        mock_oauth_tokens.by_resource_server = self._oauth_tokens()
+        client.authorize_redirect = mocker.Mock(return_value=redirect(auth_url))
+        tokens = self._oauth_tokens()
+        tokens['userinfo'] = self._id_token()
+        client.authorize_access_token = mocker.Mock(return_value=tokens)
+        client.server_metadata = self._globus_metadata()
+        from authlib.integrations.flask_client import OAuth
+        mocker.patch.object(OAuth, 'oauth2_client_cls', client_cls)
 
-        mock_intro = mocker.Mock()
-        mock_intro.data = {'identity_set': ['primary-oauth-id',
-                                            'secondary-oauth-id']}
-        client.oauth2_token_introspect = mocker.Mock(return_value=mock_intro)
+        yield client
 
-        return client
+    @fixture
+    def oauth_session(self, mocker):
+        session_cls = mocker.patch('authlib.integrations.requests_client.OAuth2Session')
+        session = session_cls.return_value
+        session.revoke_token = mocker.MagicMock()
+
+        return session
 
     @fixture
     def mock_session(self, mocker):

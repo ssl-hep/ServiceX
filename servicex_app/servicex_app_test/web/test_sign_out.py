@@ -1,5 +1,4 @@
 from urllib.parse import quote
-from functools import reduce
 
 from flask import Response, url_for, session
 
@@ -7,19 +6,19 @@ from .web_test_base import WebTestBase
 
 
 class TestSignOut(WebTestBase):
-    def test_sign_out(self, client, mocker, globus_client):
+    def test_sign_out(self, mocker, oauth_client, oauth_session, client):
         oauth_tokens = self._oauth_tokens()
         with client.session_transaction() as sess:
             sess['tokens'] = oauth_tokens
         response: Response = client.get(url_for('sign_out'))
-        calls = reduce(lambda cs, token_info: cs + [
-            mocker.call(token_info['access_token'],
-                        body_params={'token_type_hint': 'access_token'}),
-            mocker.call(token_info['refresh_token'],
-                        body_params={'token_type_hint': 'refresh_token'})
-        ], oauth_tokens.values(), [])
-        assert len(globus_client.mock_calls) == 2 * len(oauth_tokens)
-        globus_client.oauth2_revoke_token.assert_has_calls(calls)
+        relevant_tokens = [_[1] for _ in oauth_tokens.items()
+                           if _[0] in ('access_token', 'refresh_token')]
+        calls = [
+            mocker.call('https://auth.globus.org/v2/oauth2/token/revoke',
+                        token=token_info)
+            for token_info in relevant_tokens]
+        assert len(oauth_session.mock_calls) == len(relevant_tokens)
+        oauth_session.revoke_token.assert_has_calls(calls)
         assert not session.get('tokens')
         ga_logout_url = ''.join([
             "https://auth.globus.org/v2/web/logout",

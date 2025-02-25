@@ -8,13 +8,6 @@ from .utils import load_oauth_client
 def sign_out():
     """Revoke tokens with Globus Auth and destroy session state."""
     from authlib.integrations.requests_client import OAuth2Session
-    # Revoke tokens with Globus Auth
-    # client = load_app_client()
-    # for token, _type in ((token_info[ty], ty)
-    #                      for token_info in session['tokens'].values()
-    #                      for ty in ('access_token', 'refresh_token')
-    #                      if token_info[ty] is not None):
-    #     client.oauth2_revoke_token(token, body_params={'token_type_hint': _type})
     oauth = load_oauth_client()
     client = OAuth2Session(oauth.oauth.client_id, oauth.oauth.client_secret,
                            scope=oauth.oauth.client_kwargs['scope'])
