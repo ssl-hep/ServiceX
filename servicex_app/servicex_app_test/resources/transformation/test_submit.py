@@ -458,7 +458,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.image == 'ssl-hep/func_adl:latest'
 
     def test_submit_transformation_provided_image_ignored(self, mocker, mock_codegen,
-                                                  mock_dataset_manager_from_did):
+                                                          mock_dataset_manager_from_did):
         client = self._test_client(code_gen_service=mock_codegen)
         with client.application.app_context():
             request = self._generate_transformation_request(**{
