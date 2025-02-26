@@ -863,24 +863,6 @@ wtforms = "*"
 email = ["email-validator"]
 
 [[package]]
-name = "globus-sdk"
-version = "3.50.0"
-description = "Globus SDK for Python"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "globus_sdk-3.50.0-py3-none-any.whl", hash = "sha256:6bdd4214d19b5b3f7ebf1b0bdf8e0b4933c7e22ab43753af0f1bea144cc5c85d"},
-    {file = "globus_sdk-3.50.0.tar.gz", hash = "sha256:758e638cd28f13c310d97ee5b30605496b3ca5d83f048d2bc1bbcbe4527c29c5"},
-]
-
-[package.dependencies]
-cryptography = ">=3.3.1,<3.4.0 || >3.4.0"
-pyjwt = {version = ">=2.0.0,<3.0.0", extras = ["crypto"]}
-requests = ">=2.19.1,<3.0.0"
-typing_extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
-
-[[package]]
 name = "google-auth"
 version = "2.37.0"
 description = "Google Authentication Library"
@@ -1563,9 +1545,6 @@ files = [
     {file = "pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953"},
 ]
 
-[package.dependencies]
-cryptography = {version = ">=3.4.0", optional = true, markers = "extra == \"crypto\""}
-
 [package.extras]
 crypto = ["cryptography (>=3.4.0)"]
 dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx", "sphinx-rtd-theme", "zope.interface"]
@@ -2134,4 +2113,4 @@ email = ["email-validator"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "186c98efa12162be395c8998b0e6058bb2ef598a2c2369d0949b97ccaf134be8"
+content-hash = "1d0f7aa99afe6ec2ea177f50fe913fee8bd219f54c939402addcaba8bd527ba0"

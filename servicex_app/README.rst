@@ -22,16 +22,19 @@ user's identity) and authorization (control of access to API resources).
 
 Authentication
 **************
-Authentication is currently implemented via `Globus <https://www.globus.org/>`_,
-a federated identity provider which implements the OAuth 2.0 protocol.
+Authentication is currently implemented via an interface to an OpenID Connect 
+provider of your choice. It has so far been tested with `Globus <https://www.globus.org/>` and Keycloak.
 Prospective users must visit the ServiceX website included in this Flask app
-at its hosted domain. There, they can sign in via Globus to confirm their
-identity using any supported identity provider (e.g. their university, CILogon,
-or GitHub account). A corresponding ServiceX user account will be created.
+at its hosted domain. There, they can sign in via the OIDC provider. 
+A corresponding ServiceX user account will be created.
 Existing users can also visit the website to view information associated with
 their account.
 
-Authorization
+By default there is an additional step where new users need to be approved. If successful
+authentication with the OIDC provider can be considered to constitute authorization to use
+ServiceX as well, then this step can be skipped.
+
+Authorization for Requests
 *************
 If authentication is enabled, API resources will be protected with JWT bearer
 tokens. Authenticated users will be issued a ServiceX API token, which is a JWT
@@ -53,7 +56,8 @@ initial admin user. The first user to sign up with this email address will be
 made an admin user automatically. This should be done immediately after
 deployment.
 
-New users are marked as pending, and will be unable to submit requests until
+Unless the system is set up to auto-accept new users, new users are marked as pending,
+and will be unable to submit requests until
 approved. ServiceX admins can view the pending users with a GET on the
 ``/pending`` endpoint. They can approve a pending user with a POST to
 ``/accept`` with a body of:

@@ -1,5 +1,4 @@
 from flask import current_app
-import globus_sdk
 from authlib.integrations.flask_client import OAuth
 
 oauth = None
@@ -19,9 +18,3 @@ def load_oauth_client():
     )
     oauth.init_app(current_app)
     return oauth
-
-
-def load_app_client():
-    client_id = current_app.config['OAUTH_CLIENT_ID']
-    client_secret = current_app.config['OAUTH_CLIENT_SECRET']
-    return globus_sdk.ConfidentialAppAuthClient(client_id, client_secret)

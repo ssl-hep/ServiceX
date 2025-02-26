@@ -6,7 +6,7 @@ from .utils import load_oauth_client
 
 @oauth_required
 def sign_out():
-    """Revoke tokens with Globus Auth and destroy session state."""
+    """Revoke tokens with OIDC and destroy session state."""
     from authlib.integrations.requests_client import OAuth2Session
     oauth = load_oauth_client()
     client = OAuth2Session(oauth.oauth.client_id, oauth.oauth.client_secret,
