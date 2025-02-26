@@ -31,6 +31,8 @@ from servicex_app.models import Dataset, db, TransformRequest, TransformStatus, 
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.resources.servicex_resource import ServiceXResource
 
+from datetime import datetime, timezone
+
 
 class FilesetComplete(ServiceXResource):
     @classmethod
@@ -74,6 +76,7 @@ class FilesetComplete(ServiceXResource):
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
             for running_request in TransformRequest.lookup_running_by_dataset_id(int(dataset_id)):
                 running_request.status = TransformStatus.complete
+                running_request.finish_time = datetime.now(tz=timezone.utc)
                 self.transformer_manager.shutdown_transformer_job(
                     running_request.request_id, namespace
                 )
@@ -82,5 +85,6 @@ class FilesetComplete(ServiceXResource):
             # not to expect to run
             for pending_transform in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
                 pending_transform.status = TransformStatus.complete
+                pending_transform.finish_time = datetime.now(tz=timezone.utc)
 
         db.session.commit()
