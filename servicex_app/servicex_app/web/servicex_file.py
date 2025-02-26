@@ -14,11 +14,13 @@ def servicex_file():
     sub = session.get('sub')
     user = UserModel.find_by_sub(sub)
     endpoint_url = get_correct_url(request)
+    endpoint_name = urlparse(endpoint_url).hostname
 
     body = "api_endpoints:\n"
-    body += f"  - name: {backend_type}\n"
+    body += f"  - name: {endpoint_name}\n"
     body += f"    endpoint: {endpoint_url}\n"
     body += f"    token: {user.refresh_token}\n"
+    body += f"default_endpoint: {endpoint_name}\n"
     return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
                      as_attachment=True, download_name="servicex.yaml")
 
