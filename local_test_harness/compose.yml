@@ -1,23 +1,25 @@
 services:
-
   codegen:
-    image: ponyisi/codegen_topcp:latest # sslhep/servicex_code_gen_raw_uproot:develop # alexschmidty/codegen_topcp:1.1 #  #$CODEGEN 
+    image: $CODEGEN 
     env_file: .env
     pull_policy: missing
     ports:
       - $PORT:5000
+#    user: 1000:1000
 
   science:
-    image:  ponyisi/topcp:25.2.38-2.16.0 # sslhep/servicex_func_adl_uproot_transformer:uproot5 # alexschmidty/science_topcp:1.1 # $SCIENCE 
+    image: $SCIENCE 
     pull_policy: missing
     env_file: .env
     volumes:
       - sidecar-volume:/servicex/output
-      - /tmp:/tmp/grid-security/
+      #- /tmp/:/tmp/grid-security/:ro
+      - /tmp/x509up_u1005/:/tmp/grid-security/x509up #:ro
       - $LOCAL_FOLDER:/generated
     tty: true
     depends_on:
       - codegen
+#   user: 1000:1000
 
 volumes:
   sidecar-volume:

@@ -1,0 +1,238 @@
+CommonServices:
+  #systematicsHistogram: 'listOfSystematics'
+  runSystematics: False
+
+PileupReweighting: {}
+
+EventCleaning:
+    runEventCleaning: True
+
+# Jets:
+#   - containerName: 'AnaJets'
+#     jetCollection: 'AntiKt4EMPFlowJets'
+#     runJvtUpdate: False
+#     runNNJvtUpdate: True
+#     runGhostMuonAssociation: True
+#     systematicsModelJES: 'Category'
+#     systematicsModelJER: 'Full'
+#     JVT: {}
+#     PtEtaSelection:
+#         minPt: 25000.0
+#         maxEta: 2.5
+#     FlavourTagging:
+#       - btagger: 'DL1dv01'
+#         btagWP: 'FixedCutBEff_85'
+#         generator: 'autoconfig'
+#       - btagger: 'DL1dv01'
+#         btagWP: 'FixedCutBEff_77'
+#         generator: 'autoconfig'
+#       - btagger: 'DL1dv01'
+#         btagWP: 'FixedCutBEff_70'
+#         generator: 'autoconfig'
+#       - btagger: 'DL1dv01'
+#         btagWP: 'FixedCutBEff_60'
+#         generator: 'autoconfig'
+#       - btagger: 'DL1dv01'
+#         btagWP: 'Continuous'
+#         generator: 'autoconfig'
+    # BTaggingScores:
+    #   - bTagCalibFile : /cvmfs/atlas.cern.ch/repo/sw/database/GroupData/xAODBTaggingEfficiency/13p6TeV/2023-22-13p6TeV-MC21-CDI_Test_2023-08-1_v1.root
+    #     bTagCalibFile : xAODBTaggingEfficiency/13TeV/MC20_2024-10-17_GN2v01_v1.root
+    #     #/cvmfs/atlas.cern.ch/repo/sw/database/GroupData/
+    #     taggerName: 'GN2v00LegacyWP'
+    #     #taggerName: 'DL1dv01'
+    #     minPt: 25000.0
+    #     saveAllProbabilities: True
+    #     eventSelection : ''
+    # FlavourTaggingEventSF:
+    #   - containerName: 'AnaJets.baselineJvt'
+    #     btagger: 'DL1dv01'
+    #     btagWP: 'Continuous'
+
+Electrons:
+  - containerName: 'OutElectrons'
+    crackVeto: True
+    IFFClassification: {}
+    WorkingPoint:
+      - selectionName: 'loose'
+        identificationWP: 'TightLH'
+        isolationWP: 'NonIso'
+        noEffSF: True
+      - selectionName: 'tight'
+        identificationWP: 'TightLH'
+        isolationWP: 'Tight_VarRad'
+        noEffSF: True
+    PtEtaSelection:
+        minPt: 25000.0
+        maxEta: 2.47
+
+# Muons:
+#   - containerName: 'AnaMuons'
+#     IFFClassification: {}
+#     WorkingPoint:
+#       - selectionName: 'loose'
+#         quality: 'Medium'
+#         isolation: 'NonIso'
+#       - selectionName: 'tight'
+#         quality: 'Medium'
+#         isolation: 'Tight_VarRad'
+#         systematicBreakdown: True
+#     PtEtaSelection:
+#         minPt: 25000.0
+#         maxEta: 2.5
+
+
+# GeneratorLevelAnalysis: {}
+
+# # containerName and postfix must be defined in their respective blocks
+# MissingET:
+#   - containerName: 'AnaMET'
+#     # Format should follow Object: '<containerName>.<postfix>'
+#     jets: 'AnaJets'
+#     #taus: 'AnaTauJets.tight'
+#     electrons: 'AnaElectrons.tight'
+#     #photons: 'AnaPhotons.tight&&selectPtEta'
+#     muons: 'AnaMuons.tight'
+
+# # containerName and postfix must be defined in their respective blocks
+# OverlapRemoval:
+#   inputLabel: 'preselectOR'
+#   outputLabel: 'passesOR'
+#   # Format should follow Object: '<containerName>.<postfix>'
+#   jets: 'AnaJets.baselineJvt'
+#   #taus: 'AnaTauJets.tight'
+#   electrons: 'AnaElectrons.tight'
+#   #photons: 'AnaPhotons.tight'
+#   muons: 'AnaMuons.tight'
+
+# ObjectCutFlow:
+#   - containerName: 'AnaElectrons'
+#     selectionName: 'tight'
+#   - containerName: 'AnaMuons'
+#     selectionName: 'tight'
+#   # - containerName: 'AnaTauJets'
+#   #   selectionName: 'tight'
+#   # - containerName: 'AnaPhotons'
+#   #   selectionName: 'tight'
+#   - containerName: 'AnaJets'
+#     selectionName: 'baselineJvt'
+
+# Thinning:
+#   - containerName: 'AnaJets'
+#     outputName: 'OutJets'
+#     selectionName: 'baselineJvt'
+#   - containerName: 'AnaElectrons'
+#     outputName: 'OutElectrons'
+#     selectionName: 'tight||loose'
+#   # - containerName: 'AnaPhotons'
+#   #   outputName: 'OutPhotons'
+#   #   selectionName: 'tight||loose'
+#   - containerName: 'AnaMuons'
+#     outputName: 'OutMuons'
+#     selectionName: 'tight||loose'
+#   # - containerName: 'AnaTauJets'
+#   #   outputName: 'OutTauJets'
+#   #   selectionName: 'tight'
+
+# LeptonSF:
+#   - electrons: 'AnaElectrons.tight'
+#     muons: 'AnaMuons.tight'
+#     lepton_postfix: 'tight'
+
+# Trigger:
+#     triggerChainsPerYear:
+#         '2015':
+#             - 'HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose'
+#             - 'HLT_mu20_iloose_L1MU15 || HLT_mu40'
+#         '2016':
+#             - 'HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0'
+#             - 'HLT_mu26_ivarmedium || HLT_mu50'
+#         '2017':
+#             - 'HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0'
+#             - 'HLT_mu26_ivarmedium || HLT_mu50'
+#         '2018':
+#             - 'HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0'
+#             - 'HLT_mu26_ivarmedium || HLT_mu50'
+#         '2022':
+#             - 'HLT_e26_lhtight_ivarloose_L1EM22VHI || HLT_e60_lhmedium_L1EM22VHI || HLT_e140_lhloose_L1EM22VHI'
+#             - 'HLT_mu26_ivarmedium_L1MU14FCH || HLT_mu50_L1MU14FCH'
+#     noFilter: False
+#     electrons: 'AnaElectrons.tight'
+#     muons: 'AnaMuons.tight'
+#     electronID: 'Tight'
+#     electronIsol: 'Tight_VarRad'
+#     muonID: 'Medium'
+
+# EventSelection:
+#   - electrons: 'AnaElectrons.loose'
+#     muons: 'AnaMuons.tight'
+#     jets: 'AnaJets.baselineJvt'
+#     met: 'AnaMET'
+#     btagDecoration: 'ftag_select_DL1dv01_FixedCutBEff_85'
+#     noFilter: False
+#     cutFlowHistograms: True
+#     selectionCutsDict:
+#       'ejets': |
+#         EL_N 25000 == 1
+#         MU_N 100 == 0
+#         JET_N 25000 >= 3
+#         SAVE
+#       'mujets': |
+#         MU_N 25000 == 1
+#         EL_N 100 == 0
+#         JET_N 25000 >= 3
+#         SAVE
+
+
+# After configuring each container, many variables will be saved automatically.
+Output:
+  treeName: 'reco'
+  vars: [] #[OutJets_NOSYS.HadronConeExclTruthLabelID -> jet_TruthFlavour]
+  metVars: []
+  containers:
+      # Format should follow: '<suffix>:<output container>'
+      # mu_: 'OutMuons'
+      el_: 'OutElectrons'
+      # jet_: 'OutJets'
+      # met_: 'AnaMET'
+      '': 'EventInfo'
+  # commands:
+  #     # Turn output branches on and off with 'enable' and 'disable'
+  #     - disable jet_.*_eff.*
+  #     - disable jet_jvtEfficiency.*
+  #     - disable trigPassed_HLT.*
+  #     - enable trigPassed_HLT_e.*
+
+# AddConfigBlocks:
+#     - modulePath: 'TopCPToolkit.LeptonSFCalculatorConfig'
+#       functionName: 'LeptonSFCalculatorConfig'
+#       algName: 'LeptonSF'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.KLFitterConfig'
+#       functionName: 'KLFitterConfig'
+#       algName: 'KLFitter'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.TopSpaNetConfig'
+#       functionName: 'TopSpaNetConfig'
+#       algName: 'SpaNet'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.particleLevelConfig'
+#       functionName: 'particleLevelConfig'
+#       algName: 'ParticleLevel'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.truthConfig'
+#       functionName: 'truthConfig'
+#       algName: 'PartonHistory'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.JetMatchingConfig'
+#       functionName: 'JetMatchingConfig'
+#       algName: 'JetMatching'
+#       pos: 'Output'
+#     - modulePath: 'TopCPToolkit.BTagScoresConfig'
+#       functionName: 'BTagScoresConfig'
+#       algName: 'BTaggingScores'
+#       superBlocks: 'Jets'
+#     - modulePath: 'TopCPToolkit.PartonToJetsMatchConfig'
+#       functionName: 'PartonToJetsMatchConfig'
+#       algName: 'PartonToJetsMatch'
+#       pos: 'Output'

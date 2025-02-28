@@ -1,9 +1,18 @@
 TestName: local test
 codegen: 
-  port: 8006
-  query: '[{"treename": {"nominal": "modified"}, "filter_name": ["lbn"]}]'
+  port: 8005
+  #query: '[{"treename": {"nominal": "modified"}}]'
+  query_file: reco.yaml #query.json
+  #query_file: query.json
+  # query:
+  #   RecoYAML: reco.yaml #file path
+    # NEvents: 1
+    # RunSystematics: False
+
 
 science:
-  rootfile: root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlaslocalgroupdisk/rucio/user/mgeyik/e7/ee/user.mgeyik.30182995._000093.out.root
-  outputfile: /generated/out.parquet
+  rootfile: root://xrootd.aglt2.org:1094//pnfs/aglt2.org/atlasdatadisk/rucio/mc20_13TeV/d4/32/DAOD_PHYS.37620644._000804.pool.root.1
+  # root://xrootd.echo.stfc.ac.uk:1094/atlas:datadisk/rucio/mc20_13TeV/40/58/DAOD_PHYS.37620653._000005.pool.root.1
+  # root: root://xrootd.aglt2.org:1094//pnfs/aglt2.org/atlasdatadisk/rucio/mc20_13TeV/59/3d/DAOD_PHYS.37620644._001256.pool.root.1
+  outputfile: /generated/ #outputFinal.root
   outputformat: root-file
