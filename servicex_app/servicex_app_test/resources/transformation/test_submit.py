@@ -153,8 +153,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    celery_app=mock_celery_app)
 
         with client.application.app_context():
-            request = self._generate_transformation_request(
-                image="sslhep/servicex_func_adl_xaod_transformer:develop")
+            request = self._generate_transformation_request()
 
             response = client.post('/servicex/transformation',
                                    json=request,
@@ -168,7 +167,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
-            assert saved_obj.image == "sslhep/servicex_func_adl_xaod_transformer:develop"
             assert saved_obj.selection == 'test-string'
             assert saved_obj.workers == 10
             assert saved_obj.result_destination == 'object-store'
@@ -362,19 +360,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 start_transformers \
                 .assert_called_with(ANY, submitted_request)
 
-    def test_submit_transformation_request_bad_image(
-        self, mocker, mock_docker_repo_adapter,
-            mock_dataset_manager_from_did, mock_codegen
-    ):
-        mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
-        client = self._test_client(docker_repo_adapter=mock_docker_repo_adapter,
-                                   code_gen_service=mock_codegen)
-        request = self._generate_transformation_request()
-        request["image"] = "ssl-hep/foo:latest"
-        response = client.post('/servicex/transformation', json=request)
-        assert response.status_code == 500
-        assert response.json == {"message": "Requested transformer docker image doesn't exist: " + request["image"]}  # noqa: E501
-
     def test_submit_transformation_request_no_docker_check(
         self, mocker, mock_docker_repo_adapter, mock_dataset_manager_from_did,
             mock_codegen
@@ -472,8 +457,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.image == 'ssl-hep/func_adl:latest'
 
-    def test_submit_transformation_provided_image(self, mocker, mock_codegen,
-                                                  mock_dataset_manager_from_did):
+    def test_submit_transformation_provided_image_ignored(self, mocker, mock_codegen,
+                                                          mock_dataset_manager_from_did):
         client = self._test_client(code_gen_service=mock_codegen)
         with client.application.app_context():
             request = self._generate_transformation_request(**{
@@ -490,7 +475,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.image == 'my-image:latest'
+            assert saved_obj.image == 'ssl-hep/func_adl:latest'
 
     def test_submit_transformation_auth_enabled(
         self, mock_jwt_extended, mock_requesting_user,
