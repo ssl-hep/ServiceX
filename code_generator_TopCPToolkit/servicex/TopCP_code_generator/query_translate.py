@@ -1,0 +1,117 @@
+import json
+import os
+
+options = {
+    "RecoYAML":{
+        "properType": str,
+        "properTypeString":"string",
+        "fileName": "reco.yaml",
+        "default": None
+    },
+    "PartonYAML":{
+        "properType": str,
+        "properTypeString":"string",
+        "fileName": "parton.yaml",
+        "default": None
+    },
+     "ParticleYAML":{
+        "properType": str,
+        "properTypeString":"string",
+        "fileName": "particle.yaml",
+        "default": None
+    },
+    "NEvents":{
+        "properType": int,
+        "properTypeString":"integer",
+        "default":["-e", "-1"],
+        "option": "-e",
+        "minimum":-1
+    },
+    "NoReco":{
+        "properType": bool,
+        "properTypeString":"boolean",
+        "ifTrue": ["--no-reco"],
+        "ifFalse": None,
+        "default": None
+    },
+    "RunParton":{
+        "properType": bool,
+        "properTypeString":"boolean",
+        "ifTrue": ["--parton"],
+        "ifFalse": None,
+        "default": None
+    },
+    "RunParticle":{
+        "properType": bool,
+        "properTypeString":"boolean",
+        "ifTrue": ["--particle"],
+        "ifFalse": None,
+        "default": None
+    },
+    "RunSystematics":{
+        "properType": bool,
+        "properTypeString":"boolean",
+        "ifTrue": None,
+        "ifFalse": ["--no-systematics"],
+        "default": ["--no-systematics"]
+    },
+    "NoFilter":{
+        "properType": bool,
+        "properTypeString":"boolean",
+        "ifTrue": ["--no-filter"],
+        "ifFalse": None,
+        "default": None
+    }
+    }
+
+def generate_files_from_query(query, query_file_path):
+    jquery = json.loads(query)
+    # with open(os.path.join(query_file_path, "reco.yaml"),"w") as file:
+    #         file.write(jquery["RecoYAML"])
+    runTopCommand = ["runTop_el.py", "-i", "input.txt", "-o", "output", "-t", "customConfig"]
+
+    for key in jquery:
+        # make sure only aviable options are allowed  
+        if key not in options:
+            raise KeyError(key + " is not implemented. Available keys: " + options.keys())
+        
+        # type check all keys            
+        if not isinstance(jquery[key], options[key]["properType"]):
+            raise TypeError(key+" must be of type "+ options[key]["properTypeString"])
+
+        # check for reco.yaml, parton.yaml and particle.yaml files
+        if isinstance(jquery[key], str): 
+            with open(os.path.join(query_file_path, options[key]["fileName"]),"w") as file:
+                file.write(jquery[key])
+
+        # check for toggle option
+        elif isinstance(jquery[key], bool):
+            if jquery[key]:
+                optStr = "ifTrue"
+            else:
+                optStr = "ifFalse"
+
+            if options[key][optStr] is not None:
+                runTopCommand.extend(options[key][optStr])
+        
+        # check max events and skip events
+        elif isinstance(jquery[key], int):
+            if jquery[key]< options[key]["minimum"]:
+                raise ValueError(key + "cannot be less than " + str(options[key]["minimum"]))
+            else:
+                runTopCommand.extend([options[key]["option"], str(jquery[key])])
+    
+    # implement default values for all values not specified
+    for key in options:
+        if key not in jquery:
+            if options[key]["default"] is not None:
+                runTopCommand.extend(options[key]["default"])
+    
+    # make generated_transformer.py
+    generated_code= f'''
+import subprocess
+def runTop_el():
+    subprocess.run({runTopCommand})
+'''
+    with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+            python_file.write(generated_code)    
