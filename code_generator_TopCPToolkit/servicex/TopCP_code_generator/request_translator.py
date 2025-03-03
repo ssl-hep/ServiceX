@@ -59,17 +59,7 @@ class TopCPTranslator(CodeGenerator):
                                                         "transformer_capabilities.json"))
 
         query_translate.generate_files_from_query(query, query_file_path)
-#         jquery = json.loads(query)
-#         with open(os.path.join(query_file_path, "reco.yaml"),"w") as file:
-#             file.write(jquery["RecoYAML"])
-#         runTopCommand = ["runTop_el.py", "-i", "input.txt", "-o", "output", "-t", "customConfig", "-e", "1", "--no-systematics"]
-#         generated_code= f'''
-# import subprocess
-# def runTop_el():
-#     subprocess.run({runTopCommand})
-# '''
-        # with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
-        #         python_file.write(generated_code)
+
         return GeneratedFileResult(_hash, query_file_path)
 
     
