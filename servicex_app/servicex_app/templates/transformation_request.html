@@ -23,7 +23,7 @@
     {% endif %}
 
     <dt class="col-sm-3">Submitted at</dt>
-    <dd class="col-sm-9">{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</dd>
+    <dd class="col-sm-9">{{ moment(req.submit_time).format("YYYY-MM-DD HH:mm:ss") }} <span class="tz"></span></dd>
 
     <dt class="col-sm-3">Data ID</dt>
     <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
@@ -63,4 +63,12 @@
 
   </dl>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $(".tz").text(moment.tz(moment.tz.guess()).format("z"));
+  })
+  </script>
 {% endblock %}
