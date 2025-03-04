@@ -16,16 +16,10 @@ class TestServiceXFile(WebTestBase):
         response: Response = client.get(url_for('servicex-file'))
         expected = """\
         api_endpoints:
-          - name: xaod
+          - name: localhost
             endpoint: http://localhost/
             token: abcdef
-            codegen: xaod
-            return_data: root-file
-          - name: uproot
-            endpoint: http://localhost/
-            token: abcdef
-            codegen: uproot
-            return_data: root-file
+        default_endpoint: localhost
         """
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
