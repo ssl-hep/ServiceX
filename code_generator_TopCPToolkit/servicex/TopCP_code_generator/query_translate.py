@@ -66,14 +66,13 @@ options = {
 
 def generate_files_from_query(query, query_file_path):
     jquery = json.loads(query)
-    # with open(os.path.join(query_file_path, "reco.yaml"),"w") as file:
-    #         file.write(jquery["RecoYAML"])
+    
     runTopCommand = ["runTop_el.py", "-i", "input.txt", "-o", "output", "-t", "customConfig"]
 
     for key in jquery:
         # make sure only aviable options are allowed  
         if key not in options:
-            raise KeyError(key + " is not implemented. Available keys: " + options.keys())
+            raise KeyError(key + " is not implemented. Available keys: " + str(options.keys()))
         
         # type check all keys            
         if not isinstance(jquery[key], options[key]["properType"]):
@@ -97,7 +96,7 @@ def generate_files_from_query(query, query_file_path):
         # check max events and skip events
         elif isinstance(jquery[key], int):
             if jquery[key]< options[key]["minimum"]:
-                raise ValueError(key + "cannot be less than " + str(options[key]["minimum"]))
+                raise ValueError(key + " cannot be less than " + str(options[key]["minimum"]))
             else:
                 runTopCommand.extend([options[key]["option"], str(jquery[key])])
     
