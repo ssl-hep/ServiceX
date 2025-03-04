@@ -30,29 +30,30 @@ import json
 import os
 import shutil
 import sys
+import time
 import timeit
 from argparse import Namespace
 from hashlib import sha1, sha256
-from multiprocessing import Queue
 from pathlib import Path
 from types import SimpleNamespace
 from typing import NamedTuple, Optional, Union
 
 import kombu
 import psutil as psutil
-import time
 from celery import Celery, shared_task
+from celery.signals import after_setup_logger
 
+from transformer_sidecar.object_store_manager import ObjectStoreError, ObjectStoreManager
 from transformer_sidecar.science_container_command import ScienceContainerCommand, \
     ScienceContainerException
+from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
+from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.raw_uproot_stats import \
+    RawUprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.raw_uproot_stats import RawUprootStats  # NOQA: 401
-from transformer_sidecar.object_store_manager import ObjectStoreManager
-from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
-from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 
 # Module globals
 shared_dir: Optional[str] = None
@@ -60,8 +61,6 @@ object_store = None
 posix_path: str = ""
 startup_time = None
 convert_root_to_parquet: bool = False
-
-upload_queue: Optional[Queue] = None
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
@@ -75,6 +74,7 @@ MAX_PATH_LEN = 255
 PLACE = {
     "host_name": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
+    "pod": os.getenv("POD_NAME", "unknown"),
 }
 
 
@@ -82,7 +82,9 @@ start_time = timeit.default_timer()
 logger = initialize_logging()
 
 
-@shared_task(acks_late=True)
+@shared_task(
+    acks_late=True,
+)
 def transform_file(
         request_id,
         file_id,
@@ -102,13 +104,18 @@ def transform_file(
 
     This control document is sent via a socket to the science image.
     Once science image has done its job, it sends back a message over the socket.
-    The sidecar will then add the parquet/root file in the output directory to the
-    S3 upload queue.
+    The sidecar will then upload the file to object store
 
     We will examine this log file to see if the transform succeeded or failed
     """
 
     global shared_dir
+
+    log_extra = {
+        "requestId": request_id,
+        "file-id": file_id,
+        "place": PLACE
+    }
 
     transform_request = {
         "file-id": file_id,
@@ -131,12 +138,11 @@ def transform_file(
     logger.info(
         "got transform request.",
         extra={
-            "requestId": request_id,
+            **log_extra,
             "paths": _file_paths,
             "result-destination": result_destination,
             "result-format": result_format,
             "service-endpoint": service_endpoint,
-            "place": PLACE,
         },
     )
     servicex = ServiceXAdapter(service_endpoint)
@@ -160,9 +166,8 @@ def transform_file(
             logger.info(
                 "trying to transform file",
                 extra={
-                    "requestId": request_id,
+                    **log_extra,
                     "file-path": _file_path,
-                    "place": PLACE,
                 },
             )
 
@@ -194,6 +199,10 @@ def transform_file(
             science_container_response = science_container.await_response()
 
             transform_request["status"] = science_container_response
+            logger.info(
+                "Science container completed with status %s" % science_container_response,
+                extra=log_extra
+            )
 
             # Grab the logs
             transformer_stats = fill_stats_parser(
@@ -201,6 +210,7 @@ def transform_file(
                 Path(os.path.join(request_path, "abc.log")),
             )
             if science_container_response == "success.":
+                output_path = Path(transform_request["safeOutputFileName"])
                 rec = FileCompleteRecord(
                     request_id=request_id,
                     file_path=_file_path,
@@ -208,7 +218,7 @@ def transform_file(
                     status="success",
                     total_time=time.time() - total_time,
                     total_events=transformer_stats.total_events,
-                    total_bytes=transformer_stats.file_size,
+                    total_bytes=os.path.getsize(output_path),
                 )
 
                 if object_store:
@@ -221,10 +231,9 @@ def transform_file(
 
                 transform_success = True
                 ts = {
-                    "requestId": request_id,
+                    **log_extra,
                     "file-size": transformer_stats.file_size,
                     "total-events": transformer_stats.total_events,
-                    "place": PLACE,
                 }
                 logger.info("Transformer stats.", extra=ts)
                 science_container.confirm()
@@ -236,10 +245,8 @@ def transform_file(
         # a hard failure with this file.
         if not transform_success:
             hf = {
-                "requestId": request_id,
+                **log_extra,
                 "file-path": _file_paths[0],
-                "file-id": file_id,
-                "place": PLACE,
                 "log_body": transformer_stats.log_body,
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
@@ -266,20 +273,21 @@ def transform_file(
         logger.info(
             "File processed.",
             extra={
-                "requestId": request_id,
-                "fileId": file_id,
+                **log_extra,
                 "user": elapsed_times.user,
                 "sys": elapsed_times.system,
                 "iowait": elapsed_times.iowait,
-                "place": PLACE,
             },
         )
 
-    except ScienceContainerException:
-        logger.exception("Science container not responding. Shutting down this transformer.")
-        sys.exit(0)
+    except ScienceContainerException as e:
+        logger.exception("Science container not responding. Shutting down this transformer.",
+                         extra=log_extra, exc_info=e)
+        sys.exit(-1)
+
     except Exception as error:
-        logger.exception(f"Received exception doing transform: {error}")
+        logger.exception("Received exception doing transform",
+                         extra=log_extra, exc_info=error)
         rec = FileCompleteRecord(
             request_id=request_id,
             file_path=_file_paths[0],
@@ -339,16 +347,30 @@ def upload_file(source_path: Path,
         object_name = source_path.name
 
     logger.info("Uploading file to object store.",
-                extra={'requestId': request_id, "place": PLACE,
+                extra={'requestId': request_id,
+                       "file-id": rec.file_id,
+                       "place": PLACE,
                        "objectName": object_name})
     t0 = time.time()
-    object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
-    logger.info("File uploaded to object store.",
-                extra={'requestId': request_id, "place": PLACE,
-                       "objectName": object_name,
-                       "elapsed": time.time()-t0})
+    try:
+        object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
+        logger.info("File uploaded to object store.",
+                    extra={'requestId': request_id,
+                           "file-id": rec.file_id,
+                           "place": PLACE,
+                           "objectName": object_name,
+                           "elapsed": time.time()-t0})
 
-    servicex.put_file_complete(rec)
+        servicex.put_file_complete(rec)
+
+    except ObjectStoreError as e:
+        logger.error(f"Error uploading file to object store: {e}",
+                     extra={'requestId': request_id, "place": PLACE,
+                            "file-id": rec.file_id,
+                            "objectName": object_name}
+                     )
+        rec.status = "failure"
+        servicex.put_file_complete(rec)
 
 
 class TimeTuple(NamedTuple):
@@ -389,7 +411,7 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, upload_queue, \
+    global convert_root_to_parquet, startup_time, \
         object_store, posix_path, science_container, \
         shared_dir, transformer_capabilities, request_id, celery_app
 
@@ -442,7 +464,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             "--without-mingle",
             "--without-gossip",
             "--without-heartbeat",
-            "--loglevel=warning",
+            "--loglevel=info",
             "-Q", f"transformer-{args.request_id}",
             "-n",
             f"transformer-{args.request_id}@%h",
@@ -538,6 +560,14 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
     return prefixed_paths
 
 
+@after_setup_logger.connect
+def setup_loggers(logger, *args, **kwargs):
+    """
+    Set the log level for the logger to INFO
+    """
+    initialize_logging(logger)
+
+
 if __name__ == "__main__":  # pragma: no cover
     start_time = timeit.default_timer()
 
@@ -550,8 +580,8 @@ if __name__ == "__main__":  # pragma: no cover
                     queue_arguments={'x-consumer-timeout': 2_629_746_000})
     ]
     app.conf.task_create_missing_queues = False
-    app.conf.worker_hijack_root_logger = False
-    app.conf.worker_redirect_stdouts_level = 'DEBUG'
+    app.conf.worker_hijack_root_logger = True
+    app.conf.worker_redirect_stdouts_level = 'INFO'
     app.conf.worker_prefetch_multiplier = 1
     app.conf.broker_connection_retry_on_startup = True
     init(_args, app)

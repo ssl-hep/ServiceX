@@ -25,17 +25,18 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from unittest.mock import patch, PropertyMock
 
 import psycopg2
 import pytest
+from sqlalchemy.exc import IntegrityError
 
-from servicex_app.models import DatasetFile, TransformationResult, TransformRequest
+from servicex_app.models import TransformationResult, TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestTransformFileComplete(ResourceTestBase):
+    module = "servicex_app.resources.internal.transformer_file_complete"
 
     @pytest.fixture
     def mock_transformer_manager(self, mocker):
@@ -44,33 +45,24 @@ class TestTransformFileComplete(ResourceTestBase):
         return manager
 
     @pytest.fixture
+    def db_session(self, mocker):
+        db = mocker.patch(f"{self.module}.db")
+        db.session = mocker.Mock()
+        db.session.begin = mocker.MagicMock()
+        return db.session
+
+    @pytest.fixture
     def fake_transform_request(self):
-        return self._generate_transform_request()
+        fake_request = self._generate_transform_request()
+        fake_request.request_id = '1234'
+        fake_request.status = TransformStatus.running
+        fake_request.files = 10
+        return fake_request
 
     @pytest.fixture
-    def mock_transform_request_lookup(self, mocker, fake_transform_request):
-        with patch('servicex_app.models.TransformRequest.lookup') as mock:
-            mock.return_value = fake_transform_request
-            yield mock
-
-    @pytest.fixture
-    def mock_files_remaining(self, mocker):
-        with patch('servicex_app.models.TransformRequest.files_remaining',
-                   new_callable=PropertyMock) as mock_remaining:
-            mock_remaining.return_value = 1
-            yield mock_remaining
-
-    @pytest.fixture
-    def mock_file_transformed_successfully(self, mocker):
-        return mocker.patch.object(
-            TransformRequest,
-            "file_transformed_successfully")
-
-    @pytest.fixture
-    def mock_file_transformed_unsuccessfully(self, mocker):
-        return mocker.patch.object(
-            TransformRequest,
-            "file_transformed_unsuccessfully")
+    def mock_transform_request_lookup(self, mocker, db_session, fake_transform_request):
+        db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = fake_transform_request
+        return db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none
 
     @pytest.fixture
     def test_client(self, mock_transformer_manager):
@@ -91,85 +83,132 @@ class TestTransformFileComplete(ResourceTestBase):
 
     def test_put_transform_file_complete_files_remaining(self,
                                                          mock_transformer_manager,
-                                                         mock_files_remaining,
-                                                         mock_file_transformed_successfully,
+                                                         db_session,
                                                          mock_transform_request_lookup,
                                                          fake_transform_request,
                                                          file_complete_response,
                                                          test_client):
+        fake_transform_request.files_completed = 0
+        fake_transform_request.files_failed = 2
         response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
         assert response.status_code == 200
         assert fake_transform_request.finish_time is None
-        mock_transform_request_lookup.assert_called_with('1234')
-        mock_file_transformed_successfully.assert_called_with("1234")
-        mock_files_remaining.assert_called()
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
+        assert fake_transform_request.files_completed == 1
+        assert fake_transform_request.files_failed == 2
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+        db_session.add.assert_called_once()
+        assert db_session.add.call_args[0][0].file_id == 42
 
     def test_put_transform_file_complete_unknown_files_remaining(self,
                                                                  mock_transformer_manager,
-                                                                 mock_files_remaining,
-                                                                 mock_file_transformed_successfully,
+                                                                 db_session,
                                                                  mock_transform_request_lookup,
                                                                  fake_transform_request,
                                                                  file_complete_response,
                                                                  test_client):
-        mock_files_remaining.return_value = None
+        fake_transform_request.files = None
+        fake_transform_request.files_completed = 0
+        fake_transform_request.files_failed = 2
 
         response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
         assert response.status_code == 200
         assert fake_transform_request.finish_time is None
-        mock_transform_request_lookup.assert_called_with('1234')
-        mock_file_transformed_successfully.assert_called_with("1234")
-        mock_files_remaining.assert_called()
-
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
+        assert fake_transform_request.files_completed == 1
+        assert fake_transform_request.files_failed == 2
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+        db_session.add.assert_called_once()
+        assert db_session.add.call_args[0][0].file_id == 42
 
-    def test_put_transform_file_complete_no_files_remaining(self, mocker,
+    def test_put_transform_file_complete_no_files_remaining(self,
                                                             mock_transformer_manager,
-                                                            mock_files_remaining,
-                                                            mock_file_transformed_successfully,
+                                                            db_session,
                                                             mock_transform_request_lookup,
                                                             fake_transform_request,
                                                             file_complete_response,
                                                             test_client):
+        fake_transform_request.files_completed = 7
+        fake_transform_request.files_failed = 2
 
-        mock_files_remaining.return_value = 0
-
-        mocker.patch.object(DatasetFile, "get_by_id")
-        mocker.patch.object(TransformationResult, "save_to_db")
-        mocker.patch.object(TransformRequest, "save_to_db")
-
-        response = test_client.put('/servicex/internal/transformation/BR549/file-complete',
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
 
         assert response.status_code == 200
-        assert fake_transform_request.finish_time is not None
-        mock_transform_request_lookup.assert_called_with('BR549')
-        mock_file_transformed_successfully.assert_called_with("BR549")
-        mock_files_remaining.assert_called()
-        mock_transformer_manager.shutdown_transformer_job.assert_called_with('BR549',
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
+        assert fake_transform_request.files_completed == 8
+        assert fake_transform_request.files_failed == 2
+
+        assert db_session.add.call_count == 2
+        assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+
+        updated_transform = db_session.add.mock_calls[1][1][0]
+        assert isinstance(updated_transform, TransformRequest)
+        assert updated_transform.status == TransformStatus.complete
+        assert updated_transform.finish_time is not None
+        mock_transformer_manager.shutdown_transformer_job.assert_called_with('1234',
                                                                              'my-ws')
+
+    def test_put_transform_file_complete_duplicate_report(self,
+                                                          mocker,
+                                                          mock_transformer_manager,
+                                                          db_session,
+                                                          mock_transform_request_lookup,
+                                                          fake_transform_request,
+                                                          file_complete_response,
+                                                          test_client):
+        fake_transform_request.files_completed = 6
+        fake_transform_request.files_failed = 2
+        db_session.add.side_effect = [
+            None,
+            IntegrityError('duplicate key value violates unique constraint',
+                           params=['request_id'], orig=Exception())
+        ]
+
+        response1 = test_client.put(
+            '/servicex/internal/transformation/1234/file-complete',
+            json=file_complete_response)
+
+        response2 = test_client.put(
+            '/servicex/internal/transformation/1234/file-complete',
+            json=file_complete_response)
+
+        assert response1.status_code == 200
+        assert response2.status_code == 200
+
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
+        assert fake_transform_request.files_completed == 7
+        assert fake_transform_request.files_failed == 2
+
+        assert db_session.add.call_count == 2
+        assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+
+        assert db_session.add.call_count == 2
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+        assert db_session.add.mock_calls[1][1][0].file_id == 42
 
     def test_put_transform_file_complete_unknown_request_id(self,
                                                             mock_transformer_manager,
+                                                            db_session,
                                                             mock_transform_request_lookup,
                                                             fake_transform_request,
                                                             file_complete_response,
                                                             test_client):
         mock_transform_request_lookup.return_value = None
-        response = test_client.put('/servicex/internal/transformation/BR549/file-complete',
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
 
         assert response.status_code == 404
-        mock_transform_request_lookup.assert_called_with('BR549')
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_database_error_request_read(self, mocker,
                                          mock_transformer_manager,
-                                         mock_files_remaining,
-                                         mock_file_transformed_successfully,
+                                         db_session,
                                          mock_transform_request_lookup,
                                          fake_transform_request,
                                          file_complete_response,
@@ -179,30 +218,29 @@ class TestTransformFileComplete(ResourceTestBase):
             fake_transform_request
         ]
 
-        response = test_client.put('/servicex/internal/transformation/BR549/file-complete',
+        response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
         assert response.status_code == 200
         assert fake_transform_request.finish_time is None
 
         # Verify that we retried after the database error
         assert mock_transform_request_lookup.call_count == 2
-        mock_transform_request_lookup.assert_called_with('BR549')
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
 
-        mock_files_remaining.assert_called()
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_database_error_request_update(self,
                                            mock_transformer_manager,
-                                           mock_files_remaining,
-                                           mock_file_transformed_successfully,
+                                           db_session,
                                            mock_transform_request_lookup,
                                            fake_transform_request,
                                            file_complete_response,
                                            test_client):
 
-        mock_file_transformed_successfully.side_effect = [
-                                    psycopg2.OperationalError('server closed the connection unexpectedly'),
-                                    None]
+        db_session.flush.side_effect = [
+            psycopg2.OperationalError('server closed the connection unexpectedly'),
+            fake_transform_request
+        ]
 
         response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
@@ -210,48 +248,47 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.finish_time is None
 
         # Verify that we retried after the database error
-        assert mock_transform_request_lookup.call_count == 2
-        mock_transform_request_lookup.assert_called_with('1234')
+        db_session.query.return_value.filter_by.assert_called_with(request_id='1234')
 
-        mock_files_remaining.assert_called()
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
-    def test_database_error_transform_result_save(self, mocker,
+    def test_database_error_transform_result_save(self,
                                                   mock_transformer_manager,
-                                                  mock_files_remaining,
-                                                  mock_file_transformed_successfully,
+                                                  db_session,
                                                   mock_transform_request_lookup,
                                                   fake_transform_request,
                                                   file_complete_response,
                                                   test_client):
 
-        mock_save_db = mocker.patch.object(TransformationResult, "save_to_db",
-                                           side_effect=[
-                                               psycopg2.OperationalError('server closed the connection unexpectedly'),
-                                               None
-                                           ])
+        db_session.add.side_effect = [
+            psycopg2.OperationalError('server closed the connection unexpectedly'),
+            fake_transform_request
+        ]
+
         response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
         assert response.status_code == 200
-        assert mock_save_db.call_count == 2
 
-    def test_database_error_transform_complete(self, mocker,
+    def test_database_error_transform_complete(self,
                                                mock_transformer_manager,
-                                               mock_files_remaining,
-                                               mock_file_transformed_successfully,
+                                               db_session,
                                                mock_transform_request_lookup,
                                                fake_transform_request,
                                                file_complete_response,
                                                test_client):
 
         # Trigger the fileset complete by setting the files_remaining to 0
-        mock_files_remaining.return_value = 0
+        fake_transform_request.files_completed = 9
 
-        fake_transform_request.save_to_db = mocker.Mock(side_effect=[
-                                               psycopg2.OperationalError('server closed the connection unexpectedly'),
-                                               None
-                                           ])
+        db_session.add.side_effect = [
+            fake_transform_request,
+            psycopg2.OperationalError('server closed the connection unexpectedly'),
+            fake_transform_request
+        ]
+
         response = test_client.put('/servicex/internal/transformation/1234/file-complete',
                                    json=file_complete_response)
         assert response.status_code == 200
-        assert fake_transform_request.save_to_db.call_count == 2
+        # add called once for the transform result and then once for the updated transform request
+        # once with a failure and once successfully
+        assert db_session.add.call_count == 3

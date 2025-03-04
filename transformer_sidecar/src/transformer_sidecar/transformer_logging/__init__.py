@@ -26,29 +26,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # function to initialize logging
-import logstash
+import logging
 import os
 
-import logging
+import logstash
 
 from transformer_sidecar.transformer_logging.logstash_formatter import LogstashFormatter
 from transformer_sidecar.transformer_logging.stream_formatter import StreamFormatter
+
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 
-def initialize_logging():
+def initialize_logging(log=None,  **kwargs):
     """
     Get a logger and initialize it so that it outputs the correct format
     :param request: Request id to insert into log messages
+    :param log: optional logger to initialize
     :return: logger with correct formatting that outputs to console
     """
 
-    # Don't let the object store uploader get to chatty
-    logging.getLogger('transformer_sidecar.object_store_uploader').setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO, force=True)
 
-    log = logging.getLogger()
-    log.level = getattr(logging, os.environ.get('LOG_LEVEL', "INFO"))
+    if log is None:
+        log = logging.getLogger()
 
+    log.setLevel(logging.INFO)
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter('%(levelname)s ' +
                                        f"{instance} transformer sidecar " +

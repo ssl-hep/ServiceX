@@ -279,24 +279,6 @@ class TransformRequest(db.Model):
         except NoResultFound:
             return []
 
-    @classmethod
-    def file_transformed_successfully(cls, key: Union[str, int]) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files_completed = cls.files_completed + 1
-        db.session.commit()
-
-    @classmethod
-    def file_transformed_unsuccessfully(cls, key: Union[str, int]) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files_failed = cls.files_failed + 1
-        db.session.commit()
-
-    @classmethod
-    def add_a_file(cls, key) -> None:
-        req = cls.query.filter_by(request_id=key).one()
-        req.files = TransformRequest.files + 1
-        db.session.commit()
-
     @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
@@ -374,6 +356,10 @@ class TransformationResult(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('file_id', 'request_id', name='uix_file_request'),
+    )
 
     @classmethod
     def to_json_list(cls, a_list):

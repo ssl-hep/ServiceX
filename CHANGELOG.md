@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.5.5
+January 22, 2025
+
+### Added
+- Tag for XRootD DID Finder shown in _about_ page
+- Return partial results from Rucio DID finder so large lookups return faster
+- More concurrency in the Rucio DID Finder
+- Ability to mark datasets as stale so they will be re-queried on next request
+- REST endpoint to mark a dataset as stale
+- First past of data lifecycle operations and endpoint to run them
+- Transformer reports the size of the generated file to include in transform result
+
+### Changed
+- Ack timeout for transformer messages increased to one month
+- Tell gunicorn to bind to IPv6 addresses too
+- Major rewrite of transaction management on the fileset complete handler
+- Object store file upload runs in the same thead as the transformer
+- Use login shells in science images to pick up the correct environment
+
+### Fixed
+- Protect against empty strings in the transformer cache prefix
+- Logging from the Celery task
+- Object store errors were being swallowed now they are correctly handled and logged
+- Correctly record the time a dataset was created and when it was last used
+### Removed
+
 ### 1.5.4
 November 8, 2024
 
