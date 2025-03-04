@@ -4,7 +4,7 @@ WORKDIR /servicex
 
 RUN python3 -m pip install --upgrade pip
 
-ENV  POETRY_VERSION=1.2.2
+ENV  POETRY_VERSION=2.1.1
 RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
