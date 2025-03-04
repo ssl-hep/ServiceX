@@ -126,4 +126,6 @@ class TestFilesetComplete(ResourceTestBase):
         mock_lookup_running.assert_called_once_with(12345)
         mock_transformer_manager.shutdown_transformer_job.assert_called_with("111-111", 'my-ws')
         assert running_request.status == TransformStatus.complete
+        assert running_request.finish_time is not None
         assert pending_request.status == TransformStatus.complete
+        assert pending_request.finish_time is not None
