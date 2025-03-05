@@ -61,6 +61,11 @@ def generate_files_from_query(query, query_file_path):
     
     runTopCommand = ["runTop_el.py", "-i", "input.txt", "-o", "output", "-t", "customConfig"]
 
+    # ensure all keys are specified
+    for key in options:
+        if key not in jquery:
+            raise ValueError(key+" must be specified. May be type None or ", options[key]["properTypeString"])
+
     for key in jquery:
         # ensure only aviable options are allowed  
         if key not in options:
@@ -78,7 +83,7 @@ def generate_files_from_query(query, query_file_path):
         if isinstance(jquery[key], str): 
             with open(os.path.join(query_file_path, options[key]["fileName"]),"w") as file:
                 file.write(jquery[key])
-        
+
         # check for toggle option
         elif isinstance(jquery[key], bool):
             if jquery[key]:
