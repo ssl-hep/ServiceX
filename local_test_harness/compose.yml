@@ -1,14 +1,14 @@
 services:
 
   codegen:
-    image: $CODEGEN 
+    image: ponyisi/codegen_topcp:latest # sslhep/servicex_code_gen_raw_uproot:develop # alexschmidty/codegen_topcp:1.1 #  #$CODEGEN 
     env_file: .env
     pull_policy: missing
     ports:
       - $PORT:5000
 
   science:
-    image: $SCIENCE 
+    image:  ponyisi/topcp:25.2.38-2.16.0 # sslhep/servicex_func_adl_uproot_transformer:uproot5 # alexschmidty/science_topcp:1.1 # $SCIENCE 
     pull_policy: missing
     env_file: .env
     volumes:

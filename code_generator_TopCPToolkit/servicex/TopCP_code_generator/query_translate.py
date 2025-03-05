@@ -6,19 +6,16 @@ options = {
         "properType": str,
         "properTypeString":"string",
         "fileName": "reco.yaml",
-        "default": None
     },
     "PartonYAML":{
         "properType": str,
         "properTypeString":"string",
         "fileName": "parton.yaml",
-        "default": None
     },
      "ParticleYAML":{
         "properType": str,
         "properTypeString":"string",
         "fileName": "particle.yaml",
-        "default": None
     },
     "NEvents":{
         "properType": int,
@@ -32,35 +29,29 @@ options = {
         "properTypeString":"boolean",
         "ifTrue": ["--no-reco"],
         "ifFalse": None,
-        "default": None
     },
     "RunParton":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--parton"],
         "ifFalse": None,
-        "default": None
     },
     "RunParticle":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--particle"],
         "ifFalse": None,
-        "default": None
     },
     "RunSystematics":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": None,
-        "ifFalse": ["--no-systematics"],
-        "default": ["--no-systematics"]
     },
     "NoFilter":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--no-filter"],
         "ifFalse": None,
-        "default": None
     }
     }
 
@@ -69,12 +60,21 @@ def generate_files_from_query(query, query_file_path):
     
     runTopCommand = ["runTop_el.py", "-i", "input.txt", "-o", "output", "-t", "customConfig"]
 
+    # ensure all keys are specified
+    for key in options:
+        if key not in jquery:
+            raise ValueError(key+" must be specified. May be type None or ", options[key]["properTypeString"])
+
     for key in jquery:
-        # make sure only aviable options are allowed  
+        # ensure only aviable options are allowed  
         if key not in options:
             raise KeyError(key + " is not implemented. Available keys: " + str(options.keys()))
         
-        # type check all keys            
+        # ensure None entries are ignored
+        if jquery[key] is None:
+            continue
+
+        # type check key            
         if not isinstance(jquery[key], options[key]["properType"]):
             raise TypeError(key+" must be of type "+ options[key]["properTypeString"])
 
@@ -99,12 +99,6 @@ def generate_files_from_query(query, query_file_path):
                 raise ValueError(key + " cannot be less than " + str(options[key]["minimum"]))
             else:
                 runTopCommand.extend([options[key]["option"], str(jquery[key])])
-    
-    # implement default values for all values not specified
-    for key in options:
-        if key not in jquery:
-            if options[key]["default"] is not None:
-                runTopCommand.extend(options[key]["default"])
     
     # make generated_transformer.py
     generated_code= f'''

@@ -1,6 +1,6 @@
 TestName: local test
 codegen: 
-  port: 8005
+  port: 8006
   query: '[{"treename": {"nominal": "modified"}, "filter_name": ["lbn"]}]'
 
 science:

@@ -89,7 +89,7 @@ if __name__ == "__main__":
         a = ConfigReader("config.yml")
         a.read_config_file()
         docker_compose_up()
-        time.sleep(10)
+        time.sleep(15)
 
         cgc = a.get_config()['codegen']
         if 'query' in cgc:
