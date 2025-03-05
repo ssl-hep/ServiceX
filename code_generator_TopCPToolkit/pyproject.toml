@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "code-generator-funcadl-uproot-raw"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "code_generator_funcadl_uproot_raw"}]
+
+[tool.poetry.dependencies]
+python = "~3.10"
+servicex-code-gen-lib = "^1.1.7"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest-flask = "^1.2.0"
+pytest-cov = "^4.0.0"
+pytest-mock = "^3.10.0"
+pytest = "^7.1.3"
+autopep8 = "^1.7.0"
+flake8 = "^5.0.4"
+coverage = "^6.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
