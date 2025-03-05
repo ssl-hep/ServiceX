@@ -46,7 +46,6 @@ options = {
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": None,
-        "ifFalse": ["--no-systematics"],
     },
     "NoFilter":{
         "properType": bool,

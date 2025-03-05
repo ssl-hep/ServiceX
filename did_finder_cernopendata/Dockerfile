@@ -10,7 +10,7 @@ WORKDIR /opt/servicex
 # Create celery user. Assign them to group zero since that is the group OpenShift will run the container as
 RUN useradd -g 0 -ms /bin/bash celery
 
-ENV  POETRY_VERSION=1.5.1
+ENV  POETRY_VERSION=2.1.1
 
 # There is a bug in poetry with no virtual env where it can delete this package
 # during install. If we delete it before installing poetry it will

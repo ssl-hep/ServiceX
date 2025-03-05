@@ -15,7 +15,7 @@ sort_choices = tuple(model_attributes.keys())
 parser.add_argument(
     "sort",
     choices=sort_choices,
-    default="finish",
+    default="start",
     location='args',
     help=f"Sort must be one of: {', '.join(map(repr, sort_choices))}."
 )

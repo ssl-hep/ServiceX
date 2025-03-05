@@ -4,7 +4,7 @@
 
 {% macro requests_table(pagination, humanize) %}
 <table class="table table-sm table-bordered table-striped">
-  <caption>All times in UTC.</caption>
+  <caption>All times in timezone: <span class="tz"></span>.</caption>
   <thead class="thead-dark">
     <tr>
       <th scope="col">Title</th>
@@ -25,10 +25,10 @@
       </th>
 
       {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
-      <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td>{{ moment(req.submit_time).format("YYYY-MM-DD HH:mm:ss") }}</td>
 
       <td id="finish-time-{{ req.request_id }}">
-        {{ req.finish_time.strftime("%Y-%m-%d %H:%M:%S") if req.finish_time else "-" }}
+        {{ moment(req.finish_time).format("YYYY-MM-DD HH:mm:ss") if req.finish_time else "-" }}
       </td>
 
       <td>
@@ -144,6 +144,7 @@
   }
 
   $(document).ready(function () {
+    $(".tz").text(moment.tz(moment.tz.guess()).format("z"));
     update_progress();
   })
 </script>

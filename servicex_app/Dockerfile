@@ -5,7 +5,7 @@ RUN useradd -ms /bin/bash servicex
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
-ENV  POETRY_VERSION=1.2.2
+ENV  POETRY_VERSION=2.1.1
 RUN pip install poetry==$POETRY_VERSION
 
 COPY README.rst README.rst
