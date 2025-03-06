@@ -51,10 +51,12 @@ from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
 from servicex_app.transformer_manager import TransformerManager
 from flask_migrate import Migrate
+from flask_moment import Moment
 from servicex_app.models import db
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 migrate = Migrate()
+moment = Moment()
 
 
 class StreamFormatter(logging.Formatter):
@@ -222,6 +224,7 @@ def create_app(test_config=None,
             db.create_all()
 
         migrate.init_app(app, db)
+        moment.init_app(app)
 
         # Validate did-finder scheme
         schemes = app.config['VALID_DID_SCHEMES']

@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y netcat-traditional && rm -rf /var/lib/a
 WORKDIR /home/servicex
 RUN mkdir ./servicex
 
-ENV  POETRY_VERSION=1.2.2
+ENV  POETRY_VERSION=2.1.1
 RUN pip install poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml

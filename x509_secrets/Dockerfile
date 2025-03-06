@@ -11,7 +11,7 @@ RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 
 RUN yum -y update
 
-ENV POETRY_VERSION=1.2.2
+ENV POETRY_VERSION=2.1.1
 RUN python3 -m pip install --upgrade pip
 
 RUN pip install poetry==$POETRY_VERSION

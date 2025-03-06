@@ -68,7 +68,6 @@ class SubmitTransformationRequest(ServiceXResource):
             help='Static list of Root Files. Provide this or Dataset Identifier.'
         )
         cls.parser.add_argument('selection', help='Query string')
-        cls.parser.add_argument('image')
         cls.parser.add_argument('codegen')
         cls.parser.add_argument('tree-name')
         cls.parser.add_argument('workers', type=int, default=1)
@@ -144,7 +143,6 @@ class SubmitTransformationRequest(ServiceXResource):
             config = current_app.config
             user = self.get_requesting_user()
 
-            image = args.get("image")
             did = args.get("did")
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
@@ -182,7 +180,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 submitted_by=user.id if user is not None else None,
                 selection=args['selection'],
                 tree_name=args['tree-name'],
-                image=image,
                 result_destination=args['result-destination'],
                 result_format=args['result-format'],
                 workers=args['workers'],
@@ -201,9 +198,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 self.code_gen_service.generate_code_for_selection(request_rec, namespace,
                                                                   user_codegen_name)
 
-            # If the user didn't specify an image, use the one from the codegen
-            if not request_rec.image:
-                request_rec.image = codegen_transformer_image
+            request_rec.image = codegen_transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
