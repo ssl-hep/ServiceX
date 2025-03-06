@@ -35,7 +35,9 @@ def create_profile():
                 name=form.name.data,
                 institution=form.institution.data,
                 experiment=form.experiment.data,
-                refresh_token=create_refresh_token(identity=sub))
+                refresh_token=create_refresh_token(identity=form.email.data))
+            if current_app.config.get("OAUTH_ALLOW_ALL_AFTER_AUTH"):
+                new_user.pending = False
             if new_user.email == current_app.config.get('JWT_ADMIN'):
                 new_user.admin = True
                 new_user.pending = False

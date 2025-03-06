@@ -205,7 +205,7 @@ class ResourceTestBase:
         mock_user.admin = False
         mock_user.pending = False
         mocker.patch(
-            'servicex_app.resources.servicex_resource.UserModel.find_by_sub',
+            'servicex_app.resources.servicex_resource.UserModel.find_by_email',
             return_value=mock_user)
         return mock_user
 

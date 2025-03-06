@@ -11,8 +11,8 @@ from servicex_app.models import UserModel
 @oauth_required
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
-    sub = session.get('sub')
-    user = UserModel.find_by_sub(sub)
+    email = session.get('email')
+    user = UserModel.find_by_email(email)
     endpoint_url = get_correct_url(request)
     endpoint_name = urlparse(endpoint_url).hostname
 
