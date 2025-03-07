@@ -3,7 +3,7 @@ from textwrap import dedent
 from urllib.parse import urlparse
 
 import flask
-from flask import (request, send_file, session)
+from flask import (request, send_file, session, current_app)
 from servicex_app.decorators import oauth_required
 from servicex_app.models import UserModel
 
@@ -14,7 +14,7 @@ def servicex_file():
     email = session.get('email')
     user = UserModel.find_by_email(email)
     endpoint_url = get_correct_url(request)
-    endpoint_name = urlparse(endpoint_url).hostname
+    endpoint_name = current_app.config.get("INSTANCE_NAME", urlparse(endpoint_url).hostname)
 
     body = "api_endpoints:\n"
     body += f"  - name: {endpoint_name}\n"
