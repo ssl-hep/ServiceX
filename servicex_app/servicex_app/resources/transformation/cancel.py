@@ -55,7 +55,7 @@ class CancelTransform(ServiceXResource):
 
         namespace = current_app.config['TRANSFORMER_NAMESPACE']
 
-        if transform_req.status == TransformStatus.running:
+        if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
             try:
                 self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
