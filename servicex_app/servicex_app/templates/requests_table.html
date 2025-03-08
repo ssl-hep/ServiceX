@@ -63,7 +63,7 @@
       </td>
       <td id="replicas-{{ req.request_id }}">-</td>
       <td>
-        {% if req.status.string_name == 'Running' %}
+        {% if not req.status.is_complete %}
         <button id="cancel-{{ req.request_id }}"
           onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
           type="button" class="btn btn-danger btn-sm">
