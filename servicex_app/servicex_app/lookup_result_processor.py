@@ -42,6 +42,11 @@ class LookupResultProcessor:
     def add_files_to_processing_queue(self, request, files=None):
         if files is None:
             files = request.all_files
+        if request.status.is_complete:
+            current_app.logger.debug("Rejecting file addition request, request is canceled",
+                                     extra={
+                                        "task_id": self.celery_task_name(request.request_id)})
+            return
         for file_record in files:
             self.celery.send_task("transformer_sidecar.transform_file",
                                   kwargs={
