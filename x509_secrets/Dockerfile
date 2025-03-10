@@ -1,4 +1,4 @@
-FROM sslhep/rucio-client:main
+FROM sslhep/rucio-client:2025-03-update
 
 USER root
 
