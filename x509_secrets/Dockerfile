@@ -27,5 +27,7 @@ COPY . .
 RUN echo "Timestamp:" `date --utc` | tee /image-build-info.txt
 
 ENV X509_USER_PROXY /tmp/x509up
+# overrides deprecated auth servers. Remove when upstream fixes this
+ENV VOMS_USERCONF /usr/src/app/vomses
 
 CMD sh -c "python3 x509_updater.py --voms $VOMS"
