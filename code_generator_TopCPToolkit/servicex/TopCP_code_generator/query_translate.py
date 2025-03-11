@@ -2,52 +2,53 @@ import json
 import os
 
 options = {
-    "RecoYAML":{
+    "reco":{
         "properType": str,
         "properTypeString":"string",
         "fileName": "reco.yaml",
     },
-    "PartonYAML":{
+    "parton":{
         "properType": str,
         "properTypeString":"string",
         "fileName": "parton.yaml",
     },
-     "ParticleYAML":{
+     "particle":{
         "properType": str,
         "properTypeString":"string",
         "fileName": "particle.yaml",
     },
-    "NEvents":{
+    "max_events":{
         "properType": int,
         "properTypeString":"integer",
         "default":["-e", "-1"],
         "option": "-e",
         "minimum":-1
     },
-    "NoReco":{
+    "no_reco":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--no-reco"],
         "ifFalse": None,
     },
-    "RunParton":{
+    "run_parton":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--parton"],
         "ifFalse": None,
     },
-    "RunParticle":{
+    "run_particle":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--particle"],
         "ifFalse": None,
     },
-    "RunSystematics":{
+    "no_systematics":{
         "properType": bool,
         "properTypeString":"boolean",
-        "ifTrue": None,
+        "ifTrue": ["--no-systematics"],
+        "ifFalse": None,
     },
-    "NoFilter":{
+    "no_filter":{
         "properType": bool,
         "properTypeString":"boolean",
         "ifTrue": ["--no-filter"],
