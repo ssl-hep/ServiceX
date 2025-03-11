@@ -224,8 +224,20 @@ since your grid certs will be usable by anyone on the Internet.
 
 To prevent this, ServiceX supports an authentication system which requires 
 new users to create accounts with your ServiceX deployment by authenticating 
-to Globus with the identity provider of their choice 
-(such as CERN or their university).
+to an OpenID Connect provider of your choice. Below we document setting it up for
+Globus, but other providers can be set up with the same kind of configuration.
+
+A system like Globus will provide authentication credentials for essentially
+anyone, and you may not want all those people to have access to your instance. For
+this reason, by default, there is an additional user approval step, also documented below.
+However, if the authentication provider is such that getting credentials at all is
+good enough to authorize the user to use ServiceX (for example, only members of a
+certain experiment can authenticate), then this step can be skipped, by setting the following
+in `values.yaml`:
+```yaml
+app:
+  allowAllAfterAuth: true
+```
 
 
 ### Setting up Globus Auth
@@ -252,16 +264,25 @@ If you want to use port-forwarding, also include
 
 Save the record.
 
+For the configuration below, we can use the `values.yaml` or a secrets file. If it
+is in the secrets, drop the `app` block.
+
+We need to tell ServiceX to use the Globus OIDC endpoints:
+```yaml
+app:
+  oauthMetadataURL: "https://auth.globus.org/.well-known/openid-configuration"
+```
+
 Copy the Client ID and paste this into your `values.yaml`.
 ```yaml
 app:
-  globusClientID: <Client ID here>
+  oauthClientID: <Client ID here>
 ```
 
 Generate a Client Secret and paste this value into `values.yaml` as well:
 ```yaml
 app:
-  globusClientSecret: <Client Secret here>
+  oauthClientSecret: <Client Secret here>
 ```
 
 Finally, you can enable authentication in `values.yaml`:
@@ -273,8 +294,7 @@ app:
 
 The system works as follows:
 - New users will be required to create accounts with their Globus logins. 
-- New accounts will be pending, and cannot make requests until approved. 
-- Accounts must be approved by a ServiceX admin.
+- Unless `allowAllAfterAuth` is enabled, new accounts will be pending, and cannot make requests until approved by a ServiceX admin.
 - To bootstrap the initial admin account, you must set `app.adminEmail` 
 to the email address associated with the administrator's Globus account.
 

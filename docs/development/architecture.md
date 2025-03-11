@@ -97,7 +97,7 @@ and retrieving status updates, and retrieving the results. It also has a set of
 private in-cluster REST endpoints for orchestrating the microservices
 
 It also serves a frontend web application where users can authenticate via
-Globus and obtain ServiceX API tokens.  Authentication is optional, and may be
+OpenID Connect and obtain ServiceX API tokens.  Authentication is optional, and may be
 enabled on a per-deployment basis (see below for more details).
 
 Potential roadmap features for the web frontend include a dashboard of current
@@ -114,13 +114,14 @@ refresh token) in their `servicex.yaml` file. The frontend Python client will
 use this to obtain access tokens.
 
 Users can obtain a ServiceX API token by visiting the frontend web application.
-Users must authenticate by signing in to Globus via the identity provider of
-choice.  New accounts will be marked as pending, and can be approved by the
+Users must authenticate by signing in to the configured OpenID Connect provider.
+ServiceX can be set up to auto-accept new accounts, or to mark them as pending
+approval by the
 deployment's administrators.  This can be done via Slack if the webhook is
 configured.  Once approved, new users will receive a welcome email via Mailgun
 (if configured).
 
-Future versions of ServiceX may support disabling Globus auth and the internal
+Future versions of ServiceX may support disabling OIDC auth and the internal
 user management system, but retaining the JWT system.  ServiceX API Tokens would
 need to be generated externally using the same secret used for the deployment.
 

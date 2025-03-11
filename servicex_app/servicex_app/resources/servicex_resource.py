@@ -57,7 +57,7 @@ class ServiceXResource(Resource):
         """
         user = None
         if current_app.config.get('ENABLE_AUTH'):
-            user = UserModel.find_by_sub(get_jwt_identity())
+            user = UserModel.find_by_email(get_jwt_identity())
         return user
 
     @classmethod

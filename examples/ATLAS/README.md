@@ -30,9 +30,8 @@ pip install jupyterlab-widgets
 
 Visit SSL's [xAOD ServiceX](https://xaod.servicex.af.uchicago.edu) instance. Click
 on the _Sign-in_ button in the upper right hand corner. You will be asked to
-authenticate via GlobusAuth and complete a registration form. Once this form is
-complete, it will be reviewed by SSL staff. You will receive an email upon
-approval.
+authenticate via the ATLAS SSO and complete a registration form. Once this form is
+complete, your account will be created.
 
 At this time you may return to the ServiceX page. Click on your name in the
 upper right hand corner and then select _Profile_ tab. Click on the download
