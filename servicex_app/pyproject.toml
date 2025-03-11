@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "servicex-app"
-version = "1.0.0-RC.3"
+version = "1.6.0-a1"
 homepage = "https://iris-hep.org"
 license = "BSD"
 maintainers = ["ServiceX Team <bengal1@illinois.edu>"]
@@ -28,7 +28,6 @@ flask-jwt-extended = "^4.4.4"
 passlib = "^1.7.4"
 flask-sqlalchemy = "^3.0.2"
 kubernetes = "^25.3.0"
-globus-sdk = "^3.13.0"
 cryptography = "^44.0.1"
 bootstrap-flask = "^2.1.0"
 blinker = "^1.5"
@@ -42,6 +41,7 @@ gunicorn = "^22.0.0"
 requests-toolbelt = "^0.10.1"
 urllib3 = "1.26.19"
 requests = "^2.31"
+authlib = "^1.4.1"
 flask-moment = "^1.0.6"
 
 [tool.poetry.group.test]

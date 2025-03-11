@@ -24,6 +24,19 @@ class TestServiceXFile(WebTestBase):
         assert response.data.decode() == dedent(expected)
         assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
 
+        cfg = {'INSTANCE_NAME': 'important-instance'}
+        client.application.config.update(cfg)
+        response: Response = client.get(url_for('servicex-file'))
+        expected = """\
+        api_endpoints:
+          - name: important-instance
+            endpoint: http://localhost/
+            token: abcdef
+        default_endpoint: important-instance
+        """
+        assert response.data.decode() == dedent(expected)
+        assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
+
     def test_correct_url(self, client):
         """
         Test that http endpoints are replaced with https addresses with the

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.6.0
+March 6, 2025
+
+### Added
+- Support for an external OIDC provider for user authentication
+- Option to bypass new user approval. This is useful for deployments where the user being presenting in OIDC is tacit approval
+- Support for C++ Enums in the xAOD funcADL code generator
+
+### Changed
+- Dashboard times now shown in the user's local timezone
+- Default sort order in dashboard is now by start time (descending)
+- Update poetry version 
+
+### Fixed
+- Reporting of finish times even when there are zero files
+- .servicex file download now matches the ServiceX 3.0 client
+
+### Removed
+- Ability to run arbitrary science container images
+
 ### 1.5.6
 February 4, 2025
 

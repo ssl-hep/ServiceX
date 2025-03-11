@@ -48,14 +48,14 @@ class UserModel(db.Model):
     __tablename__ = 'users'
     admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
-    email = db.Column(db.String(320), nullable=False, unique=True)
+    email = db.Column(db.String(320), nullable=False, unique=True, index=True)
     experiment = db.Column(db.String(120))
     id = db.Column(db.Integer, primary_key=True)
     institution = db.Column(db.String(120))
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)
     refresh_token = db.Column(db.Text, nullable=True, unique=True)
-    sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    sub = db.Column(db.String(120), nullable=False, unique=True)
     requests = db.relationship('TransformRequest', backref='user')
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
@@ -72,12 +72,12 @@ class UserModel(db.Model):
 
     @classmethod
     def find_by_email(cls, email) -> Optional['UserModel']:
-        return cls.query.filter_by(email=email).first()
+        return cls.query.filter(func.lower(UserModel.email) == func.lower(email)).first()
 
     @classmethod
-    def update_refresh_token_by_email(cls, email, refresh_token, pending) -> Optional['UserModel']:
+    def update_refresh_token_by_email(cls, email, refresh_token, pending) -> dict[str, str]:
         db.session.query(UserModel). \
-            filter(UserModel.email == email). \
+            filter(func.lower(UserModel.email) == func.lower(email)). \
             update({'refresh_token': refresh_token, 'pending': pending})
         db.session.commit()
         return {'message': '{}\'s refresh token updated'.format(email)}
@@ -292,7 +292,7 @@ class TransformRequest(db.Model):
         return self.user.name
 
     @property
-    def files_remaining(self) -> int:
+    def files_remaining(self) -> Optional[int]:
         if self.files:
             return self.files - self.files_completed - self.files_failed
         else:

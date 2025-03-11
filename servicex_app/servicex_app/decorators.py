@@ -12,8 +12,7 @@ from servicex_app.models import UserModel, db
 
 @jwt_required()
 def get_jwt_user():
-    jwt_val = get_jwt_identity()
-    user = UserModel.find_by_sub(jwt_val)
+    user = UserModel.find_by_email(get_jwt_identity())
 
     return user
 
