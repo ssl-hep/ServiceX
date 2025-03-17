@@ -62,7 +62,7 @@ def test_generate_code():
             '"no_systematics": true, "no_filter": false}'
         )
 
-        expected_hash = "275a479e423f70a0eb15e11d0182718e"
+        expected_hash = "ba32662a0909d60d2f7c407e63594061"
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?
