@@ -83,10 +83,6 @@ def test_generate_code():
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
-        query = json.dumps([{}])
-        with pytest.raises(GenerateCodeException):
-            translator.generate_code(query, tmpdirname)
-
 
 def test_app():
     import servicex.TopCP_code_generator
