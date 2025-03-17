@@ -53,5 +53,10 @@
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_atlas_xaod",
     "test_required": true
+  },
+  {
+    "dir_name": "code_generator_TopCPToolkit",
+    "image_name": "servicex_code_gen_topcp",
+    "test_required": true
   }
 ]
