@@ -28,7 +28,6 @@
 
 from servicex.TopCP_code_generator.request_translator import \
     TopCPTranslator
-import json
 import os
 import tempfile
 import pytest
