@@ -79,8 +79,10 @@ def test_generate_code():
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
-        query = json.dumps('abc')
-        with pytest.raises(GenerateCodeException):
+        # reco is string
+        query = ('{"reco": 1, "parton": "a", "particle": "c", "max_events": 1, '
+                 '"no_systematics": false, "no_filter": false}')
+        with pytest.raises(TypeError):
             translator.generate_code(query, tmpdirname)
 
 
