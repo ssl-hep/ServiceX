@@ -26,8 +26,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from servicex.raw_uproot_code_generator.request_translator import \
-    RawUprootTranslator
+from servicex.TopCP_code_generator.request_translator import \
+    TopCPTranslator
 import json
 import os
 import tempfile
@@ -41,16 +41,28 @@ def test_generate_code():
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # proper query
-        translator = RawUprootTranslator()
-        query = json.dumps([{'treename': 'sumWeights', 'filter_name': ['/totalE.*/']},
-                            {'treename': ['nominal', 'JET_JER_EffectiveNP_1__1down'],
-                             'filter_name': ['/mu_.*/', 'runNumber', 'lbn'],
-                             'cut': 'met_met>150e3'},
-                            {'treename': {'nominal': 'modified'},
-                             'filter_name': ['lbn']},
-                            {'copy_histograms': 'CutBookkeeper*'}
-                            ])
-        expected_hash = "39d5be3ad995e2c17559c6678960cf84"
+        translator = TopCPTranslator()
+        query = (
+            '{"reco": "CommonServices:\\n  systematicsHistogram: \'listOfSystematics\'\\n\\n'
+            'PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n'
+            '    runGRL: False\\n\\nElectrons:\\n  - containerName: \'AnaElectrons\'\\n'
+            '    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n'
+            '      - selectionName: \'loose\'\\n        identificationWP: \'TightLH\'\\n'
+            '        isolationWP: \'NonIso\'\\n        noEffSF: True\\n'
+            '      - selectionName: \'tight\'\\n        identificationWP: \'TightLH\'\\n'
+            '        isolationWP: \'Tight_VarRad\'\\n        noEffSF: True\\n'
+            '    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n'
+            '        useClusterEta: True\\n\\n'
+            '# After configuring each container, many variables will be saved automatically.\\n'
+            'Output:\\n  treeName: \'reco\'\\n  vars: []\\n  metVars: []\\n  containers:\\n'
+            '      # Format should follow: \'<suffix>:<output container>\'\\n'
+            '      el_: \'AnaElectrons\'\\n      \'\': \'EventInfo\'\\n  commands:\\n'
+            '    # Turn output branches on and off with \'enable\' and \'disable\'\\n\\n'
+            'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
+            '"no_systematics": true, "no_filter": false}'
+        )
+
+        expected_hash = "275a479e423f70a0eb15e11d0182718e"
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?
@@ -77,5 +89,5 @@ def test_generate_code():
 
 
 def test_app():
-    import servicex.raw_uproot_code_generator
-    servicex.raw_uproot_code_generator.create_app()
+    import servicex.TopCP_code_generator
+    servicex.TopCP_code_generator.create_app()
