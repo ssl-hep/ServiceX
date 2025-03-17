@@ -24,24 +24,6 @@ options = {
         "option": "-e",
         "minimum": -1
     },
-    # "no_reco":{
-    #     "properType": bool,
-    #     "properTypeString":"boolean",
-    #     "ifTrue": ["--no-reco"],
-    #     "ifFalse": None,
-    # },
-    # "run_parton":{
-    #     "properType": bool,
-    #     "properTypeString":"boolean",
-    #     "ifTrue": ["--parton"],
-    #     "ifFalse": None,
-    # },
-    # "run_particle":{
-    #     "properType": bool,
-    #     "properTypeString":"boolean",
-    #     "ifTrue": ["--particle"],
-    #     "ifFalse": None,
-    # },
     "no_systematics": {
         "properType": bool,
         "properTypeString": "boolean",
@@ -65,7 +47,8 @@ def generate_files_from_query(query, query_file_path):
     # ensure all keys are specified
     for key in options:
         if key not in jquery:
-            raise ValueError(key+" must be specified. May be type None or ", options[key]["properTypeString"])
+            raise ValueError(key+" must be specified. May be type None or ",
+                             options[key]["properTypeString"])
 
     for key in jquery:
         # ensure only aviable options are allowed

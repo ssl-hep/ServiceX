@@ -28,10 +28,9 @@
 import os
 import shutil
 from . import query_translate
-import json
-
 from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
     GenerateCodeException
+
 
 class TopCPTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
@@ -61,5 +60,3 @@ class TopCPTranslator(CodeGenerator):
         query_translate.generate_files_from_query(query, query_file_path)
 
         return GeneratedFileResult(_hash, query_file_path)
-
-    
