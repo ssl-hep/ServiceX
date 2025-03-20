@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 class ObjectStoreManager:
@@ -34,6 +35,9 @@ class ObjectStoreManager:
         self.minio_client = Minio(endpoint=url, access_key=username,
                                   secret_key=password, secure=use_https)
 
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_random_exponential(max=60), reraise=True
+    )
     def create_bucket(self, bucket_name):
         self.minio_client.make_bucket(bucket_name)
 
