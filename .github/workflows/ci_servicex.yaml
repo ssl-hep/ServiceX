@@ -111,11 +111,21 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
         uses: docker/build-push-action@v6.15.0
+        if: ${{ github.secret_source == 'Actions' }}
         with:
           context: ${{ matrix.app.dir_name }}
-          push: ${{ github.secret_source == 'Actions' }}
+          push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
+          file: ${{ matrix.app.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+      - name: Build
+        uses: docker/build-push-action@v6.15.0
+        if: ${{ github.secret_source != 'Actions' }}
+        with:
+          context: ${{ matrix.app.dir_name }}
+          tags: ${{ steps.extract_tag_name.outputs.imagetag }}
+          cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           file: ${{ matrix.app.dockerfile }}
           platforms: linux/amd64,linux/arm64
