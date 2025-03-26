@@ -62,8 +62,8 @@ else:
 
 
 myCmd = """
- voms-proxy-init --pwstdin -key /etc/grid-certs/userkey.pem \
-                  -cert /etc/grid-certs/usercert.pem \
+ voms-proxy-init3 --pwstdin --key /etc/grid-certs/userkey.pem \
+                  --cert /etc/grid-certs/usercert.pem \
                   --voms=%s \
                   <  /etc/grid-certs-ro/passphrase
                   """
