@@ -40,10 +40,18 @@ class TopCPStats(TransformerStats):
         if len(matches) == 1:
             self.total_events = int(matches[0])
 
-        # Look for incorrect property names
+        # Look for EventLoop error first
         matches = re.findall(
-            r"^.*Error: .*", self.log_body, re.MULTILINE
+            r"^.*ERROR.*", self.log_body, re.MULTILINE
         )
         if matches:
             # Return the first error
             self.error_info = matches[0]
+        else:
+            # Look for configuration error
+            matches = re.findall(
+                r"^.*Error: .*", self.log_body, re.MULTILINE
+            )
+            if matches:
+                # Return the first error
+                self.error_info = matches[0]
