@@ -65,5 +65,5 @@ make: *** [all] Error 2
         """)
         fp.close()
         aod_stats = AODStats(test_logfile_path)
-        assert aod_stats.error_info == "Unable to determine error cause. Please consult log files"
+        assert aod_stats.error_info == "Property naming error: 'const class xAOD::Electron_v1' has not member named 'pttt'; did you mean 'pt'"
         os.remove(test_logfile_path)

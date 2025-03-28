@@ -42,7 +42,7 @@ class AODStats(TransformerStats):
 
         # Look for incorrect property names
         matches = re.findall(
-            r"/error: ('[^']+') has no member named ('[^']+'); did you mean ('[^']+')?/gm",
+            r"error: ('[^']+') has no member named ('[^']+'); did you mean ('[^']+')?",
             self.log_body
         )
         if matches:
