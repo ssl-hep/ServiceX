@@ -361,22 +361,21 @@ email = ["email-validator"]
 
 [[package]]
 name = "func-adl"
-version = "3.3.3"
+version = "3.4.0"
 description = "Functional Analysis Description Language Base Package"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "func_adl-3.3.3-py3-none-any.whl", hash = "sha256:5322f68cc5de1a9b7c825b6c22329fc2a2cd1e3ae51797f2849d3a71bc1ce7d6"},
-    {file = "func_adl-3.3.3.tar.gz", hash = "sha256:62e2928b9ceb911bc889532403d6e786a0561f0d51b7a8c9335ee499b0a61d20"},
+    {file = "func_adl-3.4.0-py3-none-any.whl", hash = "sha256:99f8cb0498d66e2e1f93a20df558a8d04a7fe999f594760e422f1116bc4ef20d"},
+    {file = "func_adl-3.4.0.tar.gz", hash = "sha256:b0d0b11f70037ef11188d533b6d58d681970532556af12b76cee8090de567ebb"},
 ]
 
 [package.dependencies]
 make-it-sync = "*"
 
 [package.extras]
-complete = ["astunparse", "black", "coverage", "flake8", "isort", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "twine", "wheel"]
-test = ["astunparse", "black", "coverage", "flake8", "isort", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "twine", "wheel"]
+test = ["astunparse", "black", "coverage", "flake8", "hatch", "isort", "numpy", "pytest", "pytest-asyncio", "pytest-cov", "twine", "wheel"]
 
 [[package]]
 name = "func-adl-xaod"
