@@ -18,13 +18,18 @@ RUN poetry config virtualenvs.create false && \
 RUN pip install gunicorn
 
 COPY boot.sh ./
-COPY transformer_capabilities.json ./
-COPY servicex/ ./servicex
 RUN chmod 755 boot.sh
+
+COPY transformer_capabilities.json ./
 RUN chmod 644 transformer_capabilities.json
 
-USER servicex
+COPY servicex/ ./servicex
+RUN chmod 777 -R servicex
+
 COPY app.conf .
+RUN chmod 755 app.conf
+
+USER servicex
 
 ENV CODEGEN_CONFIG_FILE="/home/servicex/app.conf"
 
