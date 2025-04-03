@@ -4,6 +4,6 @@
   "limitations": "Would be good to note what isn't implemented",
   "file-formats": ["root-file"],
   "stats-parser": "TopCPStats",
-  "language": "bash",
+  "language": "python",
   "command": "/generated/transform_single_file.py"
 }
