@@ -56,8 +56,8 @@ class TransformerArgumentParser(argparse.ArgumentParser):
                           default=None, help='Local directory to output results')
 
         self.add_argument('--result-format', dest='result_format', action='store',
-                          default='arrow', help='arrow, parquet, root-file',
-                          choices=['arrow', 'parquet', 'root-file'])
+                          default='parquet', help='parquet, root-file, root-rntuple',
+                          choices=['parquet', 'root-file', 'root-rntuple'])
 
         self.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
                           default='host.docker.internal')

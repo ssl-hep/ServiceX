@@ -50,7 +50,7 @@ def test_generate_code():
                              'filter_name': ['lbn']},
                             {'copy_histograms': 'CutBookkeeper*'}
                             ])
-        expected_hash = "6f8ac79962ef753d3e7fd6161cba6fe8"
+        expected_hash = "5c3235898f268e81080455c92b7c914e"
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?

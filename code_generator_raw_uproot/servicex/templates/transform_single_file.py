@@ -26,7 +26,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         ttime = time.time()
 
-        if output_format == 'root-file':
+        if output_format in ('root-file', 'root-rntuple'):
             import uproot
             etime = time.time()
             # opening the file with open() is a workaround for a bug handling multiple colons
@@ -34,12 +34,26 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             with open(output_path, 'b+w') as wfile:
                 with uproot.recreate(wfile) as writer:
                     for k, v in awkward_array_dict.items():
-                        if v[0] is not None:
-                            writer[k] = {field: v[0][field] for field in
-                                         v[0].fields} if v[0].fields \
-                                else v[0]
-                        else:
-                            writer.mktree(k, v[1])
+                        if output_format == 'root-file':
+                            if v[0] is not None:
+                                writer[k] = {field: v[0][field] for field in
+                                             v[0].fields}
+                            else:
+                                writer.mktree(k, dict(zip(v[1].form.columns(),
+                                                          v[1].form.column_types())))
+                        else:  # RNTuple
+                            if v[0] is not None:
+                                # Work around a limitation in uproot 5.6.0
+                                # If a cut is specified, we'll get ListArrays which can't be
+                                # written via uproot. Convert them to ListOffsetArrays
+                                # Assume the ListArrays are only at top level
+                                warr = ak.zip({_: v[0][_].layout.to_ListOffsetArray64()
+                                               if isinstance(v[0][_].layout, ak.contents.ListArray)
+                                               else v[0][_]
+                                               for _ in v[0].fields}, depth_limit=1)
+                                writer.mkrntuple(k, warr)
+                            else:
+                                writer.mkrntuple(k, v[1].form)
                     for k, v in histograms.items():
                         writer[k] = v
             wtime = time.time()
