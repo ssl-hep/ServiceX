@@ -134,7 +134,11 @@ def run_single_query(file_path, query):
                 trees = {{_:_ for _ in trees}}
             for treename, outtreename in trees.items():
                 # exception will be propagated up if tree does not exist
-                t = fl[treename]
+                try:
+                    t = fl[treename]
+                except uproot.KeyInFileError:
+                    if query.get('fail_on_missing_trees', False):
+                        raise
                 arr = None
                 for subarr in t.iterate(language=lang, **sanitized_args):
                     if arr is None:
