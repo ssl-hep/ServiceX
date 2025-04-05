@@ -76,7 +76,8 @@ class SubmitTransformationRequest(ServiceXResource):
             TransformRequest.VOLUME_DEST
         ])
         cls.parser.add_argument(
-            'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
+            'result-format', choices=['parquet', 'root-file',
+                                      'root-rntuple'], default='parquet'
         )
         return cls
 

@@ -44,7 +44,7 @@ class TestTransformerArgumentParser:
                     "--path", "/foo/bar",
                     "--limit", "10",
                     '--result-destination', 'object-store',
-                    '--result-format', 'arrow',
+                    '--result-format', 'parquet',
                     '--rabbit-uri', "http://rabbit.org",
                     '--request-id', "123-45-678"
                     ]
@@ -53,7 +53,7 @@ class TestTransformerArgumentParser:
         assert args.path == '/foo/bar'
         assert args.limit == 10
         assert args.result_destination == 'object-store'
-        assert args.result_format == 'arrow'
+        assert args.result_format == 'parquet'
         assert args.rabbit_uri == "http://rabbit.org"
         assert args.request_id == "123-45-678"
 
