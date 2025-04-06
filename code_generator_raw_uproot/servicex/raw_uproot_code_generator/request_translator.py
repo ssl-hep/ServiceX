@@ -139,6 +139,8 @@ def run_single_query(file_path, query):
                 except uproot.KeyInFileError:
                     if query.get('fail_on_missing_trees', False):
                         raise
+                    else:
+                        continue
                 arr = None
                 for subarr in t.iterate(language=lang, **sanitized_args):
                     if arr is None:
