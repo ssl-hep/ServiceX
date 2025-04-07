@@ -5,7 +5,7 @@
 SECRET_KEY = 'abc123!'
 
 # Base URL of documentation
-DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/latest/'
+DOCS_BASE_URL = 'https://servicex-frontend.readthedocs.io/en/stable/'
 
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
