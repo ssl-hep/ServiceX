@@ -45,7 +45,7 @@ codeGen:
     enabled: true
     image: sslhep/servicex_code_gen_func_adl_uproot
     pullPolicy: Always
-    tag: develop
+    tag: 5.5.1
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: uproot5
 
