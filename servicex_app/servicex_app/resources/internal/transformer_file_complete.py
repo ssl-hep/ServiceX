@@ -154,11 +154,12 @@ class TransformerFileComplete(ServiceXResource):
 
             if info['status'] == 'success':
                 transform_req.files_completed += 1
-                transform_req.total_bytes += info['total-bytes']
                 if transform_req.total_events is None:
                     transform_req.total_events = info['total-events']
+                    transform_req.total_bytes = info['total-bytes']
                 else:
                     transform_req.total_events += info['total-events']
+                    transform_req.total_bytes += info['total-bytes']
             else:
                 transform_req.files_failed += 1
 
