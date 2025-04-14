@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.6.1
+April 14, 2025
+### Added
+- Ability to cancel any non-completed request
+- Bucket creation is protected with retires
+- Enable pointer returns in the xAOD code generator
+- Basic RNTuple output support
+
+### Changed
+- Changed the .servicex endpoint name to use the deployment name if available
+- Give dependabot the ability to test out docker builds even though it lacks secrets to push to dockerhub
+- Updated the VOMS servers used in the docker images
+- Ignore missing trees in uproot-raw transformer by default
+- Update to Uproot scince image to use uproot 5.5.1
+- Store transform events and size in the database 
+
+### Fixed
+- XAOD Transformer now correctly catches exceptions and reports them
+- FuncADL AST Bugfixes
+- Documentation links
+
+
 ### 1.6.0
 March 6, 2025
 
