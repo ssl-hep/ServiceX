@@ -1,23 +1,20 @@
 import json
 import os
-from ruamel.yaml import YAML
-yaml=YAML()
-yaml.default_flow_style = False
 
 options = {
     "reco": {
-        "properType": dict,
-        "properTypeString": "dictionary",
+        "properType": str,
+        "properTypeString": "string",
         "fileName": "reco.yaml",
     },
     "parton": {
-        "properType": dict,
-        "properTypeString": "dictionary",
+        "properType": str,
+        "properTypeString": "string",
         "fileName": "parton.yaml",
     },
     "particle": {
-        "properType": dict,
-        "properTypeString": "dictionary",
+        "properType": str,
+        "properTypeString": "string",
         "fileName": "particle.yaml",
     },
     "max_events": {
@@ -67,9 +64,9 @@ def generate_files_from_query(query, query_file_path):
             raise TypeError(key+" must be of type " + options[key]["properTypeString"])
 
         # check for reco.yaml, parton.yaml and particle.yaml files
-        if isinstance(jquery[key], dict):
+        if isinstance(jquery[key], str):
             with open(os.path.join(query_file_path, options[key]["fileName"]), "w") as file:
-                yaml.dump(jquery[key], file)
+                file.write(jquery[key])
 
         # check for toggle option
         elif isinstance(jquery[key], bool):
