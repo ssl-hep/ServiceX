@@ -35,5 +35,3 @@ ENV CODEGEN_CONFIG_FILE="/home/servicex/app.conf"
 
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]
-
-#RUN sed -i 's/TopCPParser/RawUprootStats/' transformer_capabilities.json
