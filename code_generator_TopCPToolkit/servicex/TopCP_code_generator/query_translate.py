@@ -89,7 +89,7 @@ def generate_files_from_query(query, query_file_path):
     generated_code = f'''
 import subprocess
 def runTop_el():
-    subprocess.run({runTopCommand})
+    subprocess.run({runTopCommand}, check=True)
 '''
     with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
         python_file.write(generated_code)
