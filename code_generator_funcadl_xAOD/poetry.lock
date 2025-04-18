@@ -361,14 +361,14 @@ email = ["email-validator"]
 
 [[package]]
 name = "func-adl"
-version = "3.4.0"
+version = "3.4.2"
 description = "Functional Analysis Description Language Base Package"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "func_adl-3.4.0-py3-none-any.whl", hash = "sha256:99f8cb0498d66e2e1f93a20df558a8d04a7fe999f594760e422f1116bc4ef20d"},
-    {file = "func_adl-3.4.0.tar.gz", hash = "sha256:b0d0b11f70037ef11188d533b6d58d681970532556af12b76cee8090de567ebb"},
+    {file = "func_adl-3.4.2-py3-none-any.whl", hash = "sha256:25cdc793f62328be65d7c9f0b9d0a75f63c04f6d956b17fa1d07d02dc4a86dbb"},
+    {file = "func_adl-3.4.2.tar.gz", hash = "sha256:962f56fa667832f44296652fcaf4ac1e00342d10217022c025ede595ce53c337"},
 ]
 
 [package.dependencies]
@@ -379,18 +379,18 @@ test = ["astunparse", "black", "coverage", "flake8", "hatch", "isort", "numpy", 
 
 [[package]]
 name = "func-adl-xaod"
-version = "2.2.1"
+version = "2.2.4"
 description = "Functional Analysis Description Language backend for accessing ATLAS xAOD files."
 optional = false
-python-versions = "*"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "func_adl_xaod-2.2.1-py3-none-any.whl", hash = "sha256:dcbc544278519f54d0f2c84c4b6ccf8b4e601626db92bf70db48019b98abae91"},
-    {file = "func_adl_xaod-2.2.1.tar.gz", hash = "sha256:a35f52286650980125c2fc9db3ef8de0b06b81c7420cd707278d8428828b20b8"},
+    {file = "func_adl_xaod-2.2.4-py3-none-any.whl", hash = "sha256:12a99dbb811c67be4faa68408e8c01338cded1a8de1b8045d3e57f940116a4d0"},
+    {file = "func_adl_xaod-2.2.4.tar.gz", hash = "sha256:52b1a1d36835722d446178d16ac797dd8ab966e708780f054dfc1058d6e49199"},
 ]
 
 [package.dependencies]
-func_adl = ">=3.2"
+func-adl = ">3.4"
 jinja2 = "*"
 qastle = "*"
 requests = "*"
