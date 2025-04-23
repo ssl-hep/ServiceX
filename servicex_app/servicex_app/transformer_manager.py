@@ -218,7 +218,7 @@ class TransformerManager:
 
         resources = client.V1ResourceRequirements(
             limits={"cpu": current_app.config['TRANSFORMER_CPU_LIMIT'],
-                    "memory": "2Gi"}
+                    "memory": current_app.config['TRANSFORMER_MEMORY_LIMIT']}
         )
 
         # Configure Pod template container
