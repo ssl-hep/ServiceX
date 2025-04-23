@@ -35,8 +35,7 @@ class TransformerStats:
             with open(log_path, encoding="utf8", errors='ignore') as log:
                 self.log_body = log.read()
         else:
-            print("File does not exist:", log_path)
-            self.log_body = ""
+            self.log_body = f"File does not exist: {log_path}"
         self.total_events = 0
         self.file_size = 0
         self.error_info = "Unable to determine error cause. Please consult log files"
