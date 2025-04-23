@@ -170,6 +170,7 @@ transformer:
     maxReplicas: 20
     minReplicas: 1
   cpuLimit: 1
+  memoryLimit: 2Gi
 
   sidecarImage: sslhep/servicex_sidecar_transformer
   sidecarTag: develop

@@ -58,6 +58,8 @@ TRANSFORMER_MAX_REPLICAS = 20
 
 # Use one core per transformer
 TRANSFORMER_CPU_LIMIT = 1
+# Use 2GB per transformer
+TRANSFORMER_MEMORY_LIMIT = 2Gi
 
 # CPU threshold for HPA (in percent) to spawn additional transformers
 TRANSFORMER_CPU_SCALE_THRESHOLD = 70
