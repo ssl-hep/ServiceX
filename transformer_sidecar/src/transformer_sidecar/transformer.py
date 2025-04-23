@@ -308,9 +308,13 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
     import uproot
     import awkward as ak
 
-    logger.info("Converting ROOT to Parquet.")
-    with uproot.open(source_path) as data:
-        if len(data.keys()) != 1:
+    logger.info("Converting ROOT to Parquet.",
+                extra={"requestId": request_id,
+                       "source_path": source_path}
+                )
+    with open(source_path, 'rb') as datafile:
+        data = uproot.open(datafile)
+        if len(data.keys(cycle=False)) != 1:
             logger.error(f"Expected one tree found {data.keys()}")
             return None
 
