@@ -54,6 +54,7 @@ from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 40
 from transformer_sidecar.transformer_stats.raw_uproot_stats import \
     RawUprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
 
 # Module globals
 shared_dir: Optional[str] = None
