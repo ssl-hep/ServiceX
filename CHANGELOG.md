@@ -8,25 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 1.6.1
 April 14, 2025
 ### Added
+- TopCP CodeGen
 - Ability to cancel any non-completed request
 - Bucket creation is protected with retires
 - Enable pointer returns in the xAOD code generator
 - Basic RNTuple output support
+- Ability to set memory limit for transformer pods
 
 ### Changed
 - Changed the .servicex endpoint name to use the deployment name if available
 - Give dependabot the ability to test out docker builds even though it lacks secrets to push to dockerhub
 - Updated the VOMS servers used in the docker images
 - Ignore missing trees in uproot-raw transformer by default
-- Update to Uproot scince image to use uproot 5.5.1
+- Update to Uproot scince image to use uproot 5.6.0
 - Store transform events and size in the database 
 
 ### Fixed
 - XAOD Transformer now correctly catches exceptions and reports them
 - FuncADL AST Bugfixes
 - Documentation links
-
-
+- Bug that allowed min pods to be greater than max for autoscaler
+- Parquet conversion in sidecar
+- Removed some useless log file entries in transformer
 ### 1.6.0
 March 6, 2025
 
