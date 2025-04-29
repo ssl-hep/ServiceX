@@ -7,8 +7,8 @@ from servicex_app.decorators import auth_required
 from servicex_app.models import DatasetFile
 from servicex_app.resources.servicex_resource import ServiceXResource
 
-parser = reqparse.RequestParser()
-parser.add_argument('cutoff', type=str, location='args', required=False)
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 class GetDatasetFilesSince(ServiceXResource):
     @auth_required
     def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('cutoff', type=str, location='args', required=False)
         args = parser.parse_args()
         files_query = DatasetFile.query
 
