@@ -44,6 +44,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex_app.resources.internal.fileset_complete import FilesetComplete
     from servicex_app.resources.internal.transform_status import TransformationStatusInternal
     from servicex_app.resources.internal.transformer_file_complete import TransformerFileComplete
+    from servicex_app.resources.internal.get_dataset_files_since import GetDatasetFilesSince
 
     from servicex_app.resources.transformation.submit import SubmitTransformationRequest
     from servicex_app.resources.transformation.status import TransformationStatus
@@ -133,6 +134,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllDatasets, '/servicex/datasets')
     api.add_resource(OneDataset, '/servicex/datasets/<int:dataset_id>')
     api.add_resource(DeleteDataset, '/servicex/datasets/<int:dataset_id>')
+    api.add_resource(GetDatasetFilesSince, '/servicex/datasets/updated-since')
 
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
