@@ -7,9 +7,6 @@ from servicex_app.decorators import auth_required
 from servicex_app.models import DatasetFile
 from servicex_app.resources.servicex_resource import ServiceXResource
 
-
-
-
 logger = logging.getLogger(__name__)
 
 
