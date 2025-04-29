@@ -33,7 +33,9 @@ class GetDatasetFilesSince(ServiceXResource):
                 logger.debug(f"Filtering files created after {cutoff_datetime}")
             except ValueError as e:
                 logger.error(f"Error parsing cutoff datetime: {e}")
-                abort(400, message="Invalid cutoff parameter. Must be a valid ISO 8601 datetime (YYYY-MM-DDTHH:MM:SS+00:00)")
+                return {
+                    'message': f"Invalid cutoff parameter: {cutoff_str}. Must be a valid ISO 8601 datetime (YYYY-MM-DDTHH:MM:SS+00:00)"
+                }, 400
 
         files = [file.to_json() for file in files_query]
         return {
