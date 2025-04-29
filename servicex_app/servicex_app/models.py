@@ -473,8 +473,8 @@ class DatasetFile(db.Model):
             'file_size': self.file_size,
             'file_events': self.file_events,
             'paths': self.paths,
-            'updated_at': self.updated_at.isoformat(),
-            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
     def save_to_db(self):
