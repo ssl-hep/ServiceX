@@ -27,7 +27,7 @@ class GetDatasetFilesSince(ServiceXResource):
 
                 cutoff_datetime = datetime.fromisoformat(cutoff_str)
 
-                files_query = files_query.filter(DatasetFile.created_at >= cutoff_datetime)
+                files_query = files_query.filter(DatasetFile.created_at > cutoff_datetime)
 
                 logger.debug(f"Filtering files created after {cutoff_datetime}")
             except ValueError as e:

@@ -464,7 +464,6 @@ class DatasetFile(db.Model):
     paths = db.Column(db.Text(), unique=False, nullable=False)
     dataset = relationship("Dataset", back_populates="files")
     created_at = db.Column(DateTime, default=func.now())
-    updated_at = db.Column(DateTime, default=func.now(), onupdate=func.now())
 
     def to_json(self):
         return {
@@ -473,7 +472,6 @@ class DatasetFile(db.Model):
             'file_size': self.file_size,
             'file_events': self.file_events,
             'paths': self.paths,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
