@@ -37,6 +37,11 @@ spec:
       containers:
       - name: {{ .Release.Name }}-servicex-app
         image: {{ .Values.app.image }}:{{ .Values.app.tag }}
+        {{- if eq .Values.app.environment "dev" }}
+        {{- if .Values.app.reload }}
+        command: [ "./boot.sh", "--reload" ]
+        {{- end }}
+        {{- end }}
         env:
         - name: APP_CONFIG_FILE
           value: "/opt/servicex/app.conf"
@@ -135,6 +140,12 @@ spec:
         {{- end }}
 
         volumeMounts:
+          {{- if eq .Values.app.environment "dev" }}
+          {{- if .Values.app.mount_local }}
+          - name: host-volume
+            mountPath: /home/servicex
+          {{- end }}
+          {{- end }}
           - name: app-cfg
             mountPath: /opt/servicex
           - name: sqlite
@@ -149,6 +160,14 @@ spec:
           - containerPort: 5000
 
       volumes:
+        {{- if eq .Values.app.environment "dev" }}
+        {{- if .Values.app.mount_local }}
+        - name: host-volume
+          hostPath:
+          - path: /mnt/servicex
+          - type: DirectoryOrCreate
+        {{- end }}
+        {{- end }}
         - name: app-cfg
           configMap:
             name:  {{ .Release.Name }}-flask-config

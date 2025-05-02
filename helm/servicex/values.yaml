@@ -1,4 +1,5 @@
 app:
+  environment: production
   adminEmail: admin@example.com
   auth: false
   authExpires: 21600
