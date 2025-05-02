@@ -32,7 +32,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot 5.3.9
             with open(output_path, 'b+w') as wfile:
-                with uproot.recreate(wfile) as writer:
+                with uproot.recreate(wfile, compression=uproot.ZSTD(5)) as writer:
                     for k, v in awkward_array_dict.items():
                         if output_format == 'root-file':
                             if v[0] is not None:
