@@ -174,28 +174,23 @@ check_port_forward() {
         # Use curl with a short timeout to prevent long waits
         response_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "${PING_URL}" || echo "failed")
 
-        if [[ "$response_code" =~ ^(200|302|301|303|307|308|403|0|failed)$ ]]; then
-            if [[ "$response_code" == "failed" ]]; then
-                log "Connection failed - no response"
-                return 1
-            elif [[ "$response_code" == "0" ]]; then
-                log "Connection failed - empty response"
-                return 1
-            elif [[ "$response_code" == "403" ]]; then
-                # For 403 responses, this means the server is up but authentication failed
-                # This is actually a successful connection for our purposes
-                log "Port forward is working - received HTTP ${response_code} (authentication required)"
+        if [[ "$response_code" =~ ^(200|302|301|303|307|308|403)$ ]]; then
+            # Any of these HTTP response codes indicates the port forward is working
+            log "Port forward is working - received HTTP ${response_code}"
+            return 0
+        elif [[ "$response_code" == "failed" || "$response_code" == "0" || "$response_code" == "000" ]]; then
+            log "Connection failed - no response from service. Will retry."
+            return 1
+        else
+            log "Received unexpected status code: ${response_code}"
+            # Check if we should consider this a success
+            if [[ "$response_code" =~ ^[1-5][0-9][0-9]$ ]]; then
+                log "But got a valid HTTP response, so port forward is working"
                 return 0
             else
-                # Any HTTP response code indicates the port forward is working
-                log "Port forward is working - received HTTP ${response_code}"
-                return 0
+                log "Invalid response - port forward may not be working correctly"
+                return 1
             fi
-        else
-            log "Unexpected status code: ${response_code}"
-            # Consider this a success anyway if we got any response
-            log "But got a response, so port forward is working"
-            return 0
         fi
     fi
 }
