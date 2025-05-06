@@ -463,7 +463,6 @@ class DatasetFile(db.Model):
     file_events = db.Column(db.BigInteger, nullable=True)
     paths = db.Column(db.Text(), unique=False, nullable=False)
     dataset = relationship("Dataset", back_populates="files")
-    created_at = db.Column(DateTime, default=func.now())
 
     def to_json(self):
         return {
@@ -472,7 +471,6 @@ class DatasetFile(db.Model):
             'file_size': self.file_size,
             'file_events': self.file_events,
             'paths': self.paths,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
     def save_to_db(self):
