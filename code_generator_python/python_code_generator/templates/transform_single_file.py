@@ -3,10 +3,6 @@ import sys
 import time
 from pathlib import Path
 import generated_transformer
-import awkward as ak
-import uproot
-import pyarrow.parquet as pq
-import numpy as np
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 default_tree_name = "servicex"
 default_branch_name = "branch"
@@ -34,6 +30,11 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
             total_events = 0
         except AttributeError:
+            import awkward as ak
+            import uproot
+            import pyarrow.parquet as pq
+            import numpy as np
+
             output = generated_transformer.run_query(file_path)
 
             ttime = time.time()
