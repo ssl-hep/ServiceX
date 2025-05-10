@@ -21,7 +21,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         # We first see if the function has the signature to directly write output
         # If it doesn't, then we assume it's giving us back awkward array results
         try:
-            generated_transformer.run_query(file_path, output_path)
+            generated_transformer.run_query(file_path, str(output_path))
             if not output_path.exists():
                 raise RuntimeError("Transformation did not produce expected output file "
                                    f"{output_path}")
