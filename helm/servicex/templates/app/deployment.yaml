@@ -164,8 +164,8 @@ spec:
         {{- if .Values.app.mount_local }}
         - name: host-volume
           hostPath:
-          - path: /mnt/servicex
-          - type: DirectoryOrCreate
+            path: /mnt/servicex
+            type: DirectoryOrCreate
         {{- end }}
         {{- end }}
         - name: app-cfg
