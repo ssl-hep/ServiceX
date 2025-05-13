@@ -32,7 +32,7 @@ class TransformationResults(ServiceXResource):
         if cutoff_str:
             try:
                 cutoff = datetime.datetime.fromisoformat(cutoff_str)
-            except AttributeError as exc:
+            except AttributeError:
                 return {"message": f"Cutoff value {cutoff_str} is not an ISO 8601 compliant datetime"}, 400
             transform_result_query = transform_result_query.filter(TransformationResult.created_at > cutoff)
 

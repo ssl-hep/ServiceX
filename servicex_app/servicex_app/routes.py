@@ -142,7 +142,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationResults, prefix + '/results')
 
-
     DeleteTransform.make_api(object_store)
     api.add_resource(DeleteTransform, prefix)
 
