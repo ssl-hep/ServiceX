@@ -44,7 +44,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex_app.resources.internal.fileset_complete import FilesetComplete
     from servicex_app.resources.internal.transform_status import TransformationStatusInternal
     from servicex_app.resources.internal.transformer_file_complete import TransformerFileComplete
-    from servicex_app.resources.internal.get_transformation_results import GetTransformationResults
 
     from servicex_app.resources.transformation.submit import SubmitTransformationRequest
     from servicex_app.resources.transformation.status import TransformationStatus
@@ -52,6 +51,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex_app.resources.transformation.get_all import AllTransformationRequests
     from servicex_app.resources.transformation.get_one import TransformationRequest
     from servicex_app.resources.transformation.deployment import DeploymentStatus
+    from servicex_app.resources.transformation.results import TransformationResults
 
     from servicex_app.resources.users.all_users import AllUsers
     from servicex_app.resources.users.token_refresh import TokenRefresh
@@ -140,6 +140,8 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(AllTransformationRequests, prefix)
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
+    api.add_resource(TransformationResults, prefix + '/results')
+
 
     DeleteTransform.make_api(object_store)
     api.add_resource(DeleteTransform, prefix)
@@ -170,5 +172,3 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     DataLifecycleOps.make_api(object_store)
     api.add_resource(DataLifecycleOps, '/servicex/internal/data-lifecycle')
-
-    api.add_resource(GetTransformationResults, '/servicex/internal/transformation/<string:request_id>/results')
