@@ -18,7 +18,7 @@ class TransformationResults(ServiceXResource):
 
         parser = reqparse.RequestParser()
         parser.add_argument(
-            'cutoff',
+            'begin_at',
             type=str,
             required=False,
             location='args'
@@ -28,13 +28,13 @@ class TransformationResults(ServiceXResource):
 
         transform_result_query = TransformationResult.query.filter_by(request_id=request_id)
 
-        cutoff_str = args.get('cutoff')
-        if cutoff_str:
+        begin_at_str = args.get('begin_at')
+        if begin_at_str:
             try:
-                cutoff = datetime.datetime.fromisoformat(cutoff_str)
+                begin_at = datetime.datetime.fromisoformat(begin_at_str)
             except AttributeError:
-                return {"message": f"Cutoff value {cutoff_str} is not an ISO 8601 compliant datetime"}, 400
-            transform_result_query = transform_result_query.filter(TransformationResult.created_at > cutoff)
+                return {"message": f"begin_at value {begin_at_str} is not an ISO 8601 compliant datetime"}, 400
+            transform_result_query = transform_result_query.filter(TransformationResult.created_at > begin_at)
 
         results = [transformation_result.to_json(transformation_result) for transformation_result in transform_result_query]
 
