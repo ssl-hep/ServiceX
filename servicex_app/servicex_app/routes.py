@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import current_app as app
+from flask_restful import Resource
 
 from servicex_app.resources.datasets.delete_dataset import DeleteDataset
 from servicex_app.resources.datasets.get_all import AllDatasets
@@ -171,3 +172,27 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     DataLifecycleOps.make_api(object_store)
     api.add_resource(DataLifecycleOps, '/servicex/internal/data-lifecycle')
+
+    class ResourceList(Resource):
+        def get(self):
+            resources = {}
+
+            for rule in app.url_map.iter_rules():
+                url = str(rule)
+
+                if url.startswith('/servicex/internal/'):
+                    continue
+
+                if not url.startswith('/servicex/'):
+                    continue
+
+                endpoint = rule.endpoint
+                if endpoint != 'static':  # Skip Flask's static file endpoint
+                    resources[endpoint] = {
+                        'url': url,
+                        'methods': list(rule.methods)
+                    }
+
+            return resources
+
+    api.add_resource(ResourceList, '/servicex/resources')
