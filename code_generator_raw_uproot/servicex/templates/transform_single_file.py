@@ -107,27 +107,29 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         else:  # parquet
             awkward_array = None
             writer = None
-            for dt, item in get_generator_timing(run_query)(file_path):
-                ttimedt += dt
-                match item:
-                    case ('tree', k, awkward_array):
-                        total_events += ak.num(awkward_array, axis=0)
-                        awkward_array['treename'] = k
-                        dt2, arrow = get_direct_timing(ak.to_arrow_table)(awkward_array)
-                        etimedt += dt2
-                        if not writer:
-                            writer = pq.ParquetWriter(output_path, arrow.schema)
-                        try:
-                            writer.write_table(table=arrow)
-                        except ValueError as e:
-                            raise RuntimeError("Unable to translate output tables to parquet "
-                                               "(probably different queries give different "
-                                               f"branches?)\n{e}")
-                    case ('obj', k, v):
-                        raise RuntimeError("Cannot store histograms in a non-ROOT "
-                                           "return file format")
-            if writer:
-                writer.close()
+            try:
+                for dt, item in get_generator_timing(run_query)(file_path):
+                    ttimedt += dt
+                    match item:
+                        case ('tree', k, awkward_array):
+                            total_events += ak.num(awkward_array, axis=0)
+                            awkward_array['treename'] = k
+                            dt2, arrow = get_direct_timing(ak.to_arrow_table)(awkward_array)
+                            etimedt += dt2
+                            if not writer:
+                                writer = pq.ParquetWriter(output_path, arrow.schema)
+                            try:
+                                writer.write_table(table=arrow)
+                            except ValueError as e:
+                                raise RuntimeError("Unable to translate output tables to parquet "
+                                                   "(probably different queries give different "
+                                                   f"branches?)\n{e}")
+                        case ('obj', k, v):
+                            raise RuntimeError("Cannot store histograms in a non-ROOT "
+                                               "return file format")
+            finally:
+                if writer:
+                    writer.close()
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size
