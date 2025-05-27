@@ -170,6 +170,9 @@ class TransformerFileComplete(ServiceXResource):
     def save_transform_result(request_id: str, info: dict[str, str], session: Session):
         import json
         with session.begin():
+            logger = logging.getLogger(__name__)
+            logger.error('info')
+            logger.error(json.dumps(info))
             rec = TransformationResult(
                 file_id=info['file-id'],
                 request_id=request_id,
