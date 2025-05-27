@@ -374,6 +374,7 @@ class TransformationResult(db.Model):
             'request-id': x.request_id,
             'file-id': x.id,
             'file-path': x.file_path,
+            's3-object-name': x.s3_object_name,
             'transform_status': x.transform_status,
             'transform_time': x.transform_time,
             'total-events': x.total_events,
