@@ -20,7 +20,6 @@ def upgrade():
     op.create_index('ix_transform_result_created_at', 'transform_result', ['created_at'])
 
     op.add_column('transform_result', sa.Column('s3_object_name', sa.String(length=512), nullable=True))
-    op.create_index('ix_transform_result_s3_object_name', 'transform_result', ['s3_object_name'])
 
     op.create_index('ix_transform_result_request_id', 'transform_result', ['request_id'])
 
@@ -29,7 +28,6 @@ def downgrade():
     op.drop_index('ix_transform_result_created_at', table_name='transform_result')
     op.drop_column('transform_result', 'created_at')
 
-    op.drop_index('ix_transform_result_s3_object_name', table_name='transform_result')
     op.drop_column('transform_result', 's3_object_name')
 
     op.drop_index('ix_transform_result_request_id', table_name='transform_result')
