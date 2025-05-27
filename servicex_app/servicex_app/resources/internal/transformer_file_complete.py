@@ -168,6 +168,7 @@ class TransformerFileComplete(ServiceXResource):
     @staticmethod
     @file_complete_ops_retry
     def save_transform_result(request_id: str, info: dict[str, str], session: Session):
+        import json
         with session.begin():
             rec = TransformationResult(
                 file_id=info['file-id'],
@@ -178,7 +179,7 @@ class TransformerFileComplete(ServiceXResource):
                 total_bytes=info['total-bytes'],
                 total_events=info['total-events'],
                 avg_rate=info['avg-rate'],
-                s3_object_name=info['s3-object-name'],
+                s3_object_name=json.dumps(info),
             )
             session.add(rec)
 
