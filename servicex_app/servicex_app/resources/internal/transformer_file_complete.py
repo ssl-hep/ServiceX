@@ -171,8 +171,9 @@ class TransformerFileComplete(ServiceXResource):
         import json
         with session.begin():
             logger = logging.getLogger(__name__)
-            logger.error('info')
+            logger.error('info:')
             logger.error(json.dumps(info))
+            assert False, json.dumps(info)
             rec = TransformationResult(
                 file_id=info['file-id'],
                 request_id=request_id,
