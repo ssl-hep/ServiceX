@@ -177,7 +177,8 @@ class TransformerFileComplete(ServiceXResource):
                 transform_time=info['total-time'],
                 total_bytes=info['total-bytes'],
                 total_events=info['total-events'],
-                avg_rate=info['avg-rate']
+                avg_rate=info['avg-rate'],
+                s3_object_name=info['s3-object-name'],
             )
             session.add(rec)
 

@@ -357,6 +357,7 @@ class TransformationResult(db.Model):
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
     created_at = db.Column(DateTime, default=func.now())
+    s3_object_name = db.Column(db.String(512), unique=False, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint('file_id', 'request_id', name='uix_file_request'),
