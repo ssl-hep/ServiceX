@@ -40,7 +40,8 @@ class TestTransformationResults(ResourceTestBase):
         )
         request = self._generate_transformation_request()
 
-        create_transformation_response = client.post('/servicex/transformation',
+        create_transformation_response = client.post(
+            '/servicex/transformation',
             json=request,
         )
         assert create_transformation_response.status_code == 200
