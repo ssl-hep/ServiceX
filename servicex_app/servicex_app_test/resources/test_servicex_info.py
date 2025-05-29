@@ -40,5 +40,6 @@ class TestServicexInfo(ResourceTestBase):
                                     'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
                                     'python': 'sslhep/servicex_code_gen_python:develop',
                                     'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
-                                    }
+                                    },
+                                 'capabilities': []
                                 }  # noqa: E501
