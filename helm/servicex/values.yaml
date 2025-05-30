@@ -39,15 +39,15 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: uproot5
+    defaultScienceContainerTag: 5.6.1
 
   uproot:
     enabled: true
     image: sslhep/servicex_code_gen_func_adl_uproot
     pullPolicy: Always
-    tag: 5.6.0
+    tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: uproot5
+    defaultScienceContainerTag: 5.6.1
 
   python:
     enabled: true
@@ -55,7 +55,7 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: uproot5
+    defaultScienceContainerTag: 5.6.1
 
   atlasr21:
     enabled: true
