@@ -187,6 +187,32 @@ def test_transformer_parquet(args, mock_celery, transformer_capabilities,
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "parquet"
 
+def test_transformer_compression(args, mock_celery, transformer_capabilities,
+                             mock_servicex_adapter,
+                             mock_object_store_manager,
+                             mock_science_container):
+    with (tempfile.TemporaryDirectory() as temp_dir):
+        init_test(args, mock_celery, transformer_capabilities, temp_dir,
+                  ['root', 'parquet'], 'root')
+
+        mock_science_container.return_value.await_response.side_effect = ["failure",
+                                                                          "success."]
+
+        # Call the task
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination=test_result_destination,
+            result_format="root",
+            result_compression_algorithm="ZLIB",
+            result_compression_level=9
+        )
+
+        science_request = mock_science_container.return_value.send.call_args[0][0]
+        assert science_request["result-compression-algorithm"] == "ZLIB"
+        assert science_request["result-compression-level"] == 9
 
 def test_transformer_output_dir(args, mock_celery, transformer_capabilities,
                                 mock_servicex_adapter,
