@@ -92,7 +92,9 @@ def transform_file(
         paths: list[str],
         service_endpoint,
         result_destination,
-        result_format):
+        result_format,
+        result_compression_algorithm='ZSTD',
+        result_compression_level=5):
     """
     This is the main function for the transformer. It is called whenever a new message
     is available on the rabbit queue. These messages represent a single file to be
@@ -143,6 +145,8 @@ def transform_file(
             "paths": _file_paths,
             "result-destination": result_destination,
             "result-format": result_format,
+            "result-compression-algorithm": result_compression_algorithm,
+            "result-compression-level": result_compression_level,
             "service-endpoint": service_endpoint,
         },
     )
@@ -195,6 +199,8 @@ def transform_file(
                     os.path.join(scratch_path, hashed_file_name)
 
             transform_request['result-format'] = result_format
+            transform_request['result-compression-algorithm'] = result_compression_algorithm
+            transform_request['result-compression-level'] = result_compression_level
             science_container.synch()
             science_container.send(transform_request)
             science_container_response = science_container.await_response()

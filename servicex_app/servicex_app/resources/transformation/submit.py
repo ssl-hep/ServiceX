@@ -79,6 +79,12 @@ class SubmitTransformationRequest(ServiceXResource):
             'result-format', choices=['parquet', 'root-file',
                                       'root-rntuple'], default='parquet'
         )
+        cls.parser.add_argument(
+            'result-compression-algorithm', choices=['ZSTD', 'LZ4', 'ZLIB', 'LZMA'], default='ZSTD'
+        )
+        cls.parser.add_argument(
+            'result-compression-level', type=int, default=5, choices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        )
         return cls
 
     def _initialize_dataset_manager(self, did: Optional[str],
@@ -183,6 +189,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 tree_name=args['tree-name'],
                 result_destination=args['result-destination'],
                 result_format=args['result-format'],
+                result_compression_algorithm=args['result-compression-algorithm'],
+                result_compression_level=args['result-compression-level'],
                 workers=args['workers'],
                 status=TransformStatus.submitted,
                 app_version=self._get_app_version(),

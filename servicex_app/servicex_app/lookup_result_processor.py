@@ -57,7 +57,9 @@ class LookupResultProcessor:
                                         + "servicex/internal/transformation/"
                                         + request.request_id,
                                         "result_destination": request.result_destination,
-                                        "result_format": request.result_format
+                                        "result_format": request.result_format,
+                                        "result_compression_algorithm": request.result_compression_algorithm,
+                                        "result_compression_level": request.result_compression_level
                                     })
 
             current_app.logger.info("Added file to processing queue", extra={

@@ -102,6 +102,8 @@ class ServiceXResource(Resource):
             generated_code_cm=generated_code_cm,
             result_destination=request_rec.result_destination,
             result_format=request_rec.result_format,
+            result_compression_algorithm=request_rec.result_compression_algorithm,
+            result_compression_level=request_rec.result_compression_level,
             transformer_language=request_rec.transformer_language,
             transformer_command=request_rec.transformer_command
         )

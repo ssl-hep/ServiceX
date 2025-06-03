@@ -75,11 +75,14 @@ def root_write_table_data(output_format, writer, outtreename, data):
             writer.mkrntuple(outtreename, data)
 
 
-def transform_single_file(file_path: str, output_path: Path, output_format: str):
+def transform_single_file(file_path: str, output_path: Path, output_format: str, compression_algorithm: str = 'ZSTD', compression_level: int = 5):
     """
     Transform a single file and return some information about output
     :param file_path: path for file to process
     :param output_path: path to file
+    :param output_format: format of output file
+    :param compression_algorithm: compression algorithm to use (default ZSTD)
+    :param compression_level: compression level to use (default 5)
     :return: Tuple with (total_events: Int, output_size: Int)
     """
     try:
@@ -93,7 +96,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
             with open(output_path, 'b+w') as wfile:
-                with uproot.recreate(wfile, compression=uproot.ZSTD(5)) as writer:
+                compression = getattr(uproot, compression_algorithm)(compression_level)
+                with uproot.recreate(wfile, compression=compression) as writer:
                     for dt, item in get_generator_timing(run_query)(file_path):
                         ttimedt += dt
                         match item:

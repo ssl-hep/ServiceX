@@ -178,6 +178,8 @@ class TransformRequest(db.Model):
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
+    result_compression_algorithm = db.Column(db.String(32), nullable=False)
+    result_compression_level = db.Column(db.Integer, nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
@@ -214,6 +216,8 @@ class TransformRequest(db.Model):
             'workers': self.workers,
             'result-destination': self.result_destination,
             'result-format': self.result_format,
+            'result-compression-algorithm': self.result_compression_algorithm,
+            'result-compression-level': self.result_compression_level,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status.string_name,
             'failure-info': self.failure_description,

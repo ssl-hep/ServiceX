@@ -51,9 +51,11 @@ while [[ $nc_PID ]] ; do
     download_path=$(echo $line | jq -r '.downloadPath')
     output_file=$(echo $line | jq -r '.safeOutputFileName')
     output_format=$(echo $line | jq -r '."result-format"')
+    output_compression_algorithm=$(echo $line | jq -r '."result-compression-algorithm"')
+    output_compression_level=$(echo $line | jq -r '."result-compression-level"')
 
     echo "Attempting $download_path -> $output_file with $output_format format"
-    $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $path/abc.log
+    $lang "$cmd" "$download_path" "$output_file" "$output_format" "$output_compression_algorithm" "$output_compression_level" 2>&1 | tee $path/abc.log
 
     # sending status back
     if [ "${PIPESTATUS[0]}" == 0 ]; then

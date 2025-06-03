@@ -59,6 +59,14 @@ class TransformerArgumentParser(argparse.ArgumentParser):
                           default='parquet', help='parquet, root-file, root-rntuple',
                           choices=['parquet', 'root-file', 'root-rntuple'])
 
+        self.add_argument('--result-compression-algorithm', dest='result_compression_algorithm', action='store',
+                          default='ZSTD', help='Compression algorithm to use: [ZSTD, LZ4, ZLIB, LZMA]',
+                          choices=['ZSTD', 'LZ4', 'ZLIB', 'LZMA'])
+
+        self.add_argument('--result-compression-level', dest='result_compression_level', action='store',
+                          default=5, help='Compression level  (int, 0-9): 0 is uncompressed, 1 is minimally compressed, 9 is maximally compressed.',
+                          choices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
         self.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
                           default='host.docker.internal')
 

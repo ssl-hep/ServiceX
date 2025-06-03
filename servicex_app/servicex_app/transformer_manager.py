@@ -84,14 +84,17 @@ class TransformerManager:
             generated_code_cm=generated_code_cm,
             result_destination=request_rec.result_destination,
             result_format=request_rec.result_format,
+            result_compression_algorithm=request_rec.result_compression_algorithm,
+            result_compression_level=request_rec.result_compression_level,
             transformer_language=request_rec.transformer_language,
             transformer_command=request_rec.transformer_command
         )
 
     @staticmethod
     def create_job_object(request_id, image, rabbitmq_uri, workers,
-                          result_destination, result_format, x509_secret,
-                          generated_code_cm, transformer_language, transformer_command):
+                          result_destination, result_format, result_compression_algorithm,
+                          result_compression_level, x509_secret, generated_code_cm,
+                          transformer_language, transformer_command):
         volume_mounts = []
         volumes = []
 
@@ -200,7 +203,9 @@ class TransformerManager:
             " --request-id " + request_id + \
             " --rabbit-uri " + rabbitmq_uri + \
             " --result-destination " + result_destination + \
-            " --result-format " + result_format
+            " --result-format " + result_format + \
+            " --result-compression-algorithm " + result_compression_algorithm + \
+            " --result-compression-level " + str(result_compression_level)
 
         watch_path = os.path.join(current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH'],
                                   request_id)
@@ -362,12 +367,14 @@ class TransformerManager:
 
     def launch_transformer_jobs(self, image, request_id, workers, max_workers,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
-                                result_destination, result_format, transformer_language,
+                                result_destination, result_format, result_compression_algorithm,
+                                result_compression_level, transformer_language,
                                 transformer_command
                                 ):
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, rabbitmq_uri, workers,
                                      result_destination, result_format,
+                                     result_compression_algorithm, result_compression_level,
                                      x509_secret, generated_code_cm,
                                      transformer_language, transformer_command)
 
