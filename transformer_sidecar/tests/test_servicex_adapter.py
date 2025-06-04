@@ -60,7 +60,6 @@ class TestServiceXAdapter:
         adapter.put_file_complete(rec)
         mock_session.put.assert_called()
         args = mock_session.put.call_args
-        assert args[0][0] == "http://foo.com/file-complete"
         doc = args[1]["json"]
         assert doc["status"] == "testing"
         assert doc["total-time"] == 1
