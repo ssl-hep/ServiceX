@@ -28,7 +28,7 @@ spec:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         {{- if .Values.secrets }}
-          - name: RMQ_PASS 
+          - name: RMQ_PASS
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.secrets }}

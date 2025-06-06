@@ -29,14 +29,14 @@ import sys
 
 from minio import Minio
 
-minioClient = Minio('localhost:9000',
-                    access_key='miniouser',
-                    secret_key='leftfoot1', secure=False)
+minioClient = Minio(
+    "localhost:9000", access_key="miniouser", secret_key="leftfoot1", secure=False
+)
 
 if len(sys.argv) == 0:
     buckets = minioClient.list_buckets()
     print([bucket.name for bucket in buckets])
 else:
     objects = minioClient.list_objects(sys.argv[1])
-    sizes =[object.size for object in objects]
+    sizes = [object.size for object in objects]
     print(sum(sizes) / 1e6)

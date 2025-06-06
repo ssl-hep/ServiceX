@@ -59,7 +59,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}
-              key: oauthMetadataURL        
+              key: oauthMetadataURL
         - name: OAUTH_CLIENT_ID
           valueFrom:
             secretKeyRef:

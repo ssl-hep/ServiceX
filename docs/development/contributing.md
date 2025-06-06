@@ -4,10 +4,10 @@ Welcome to the ServiceX contributor guide, and thank you for your interest in co
 
 ## Overview
 
-ServiceX uses a microservice architecture, 
-and is designed to be hosted on a Kubernetes cluster. 
-The ServiceX project uses a polyrepo strategy for source code management: 
-the source code for each microservice is located in a dedicated repo. 
+ServiceX uses a microservice architecture,
+and is designed to be hosted on a Kubernetes cluster.
+The ServiceX project uses a polyrepo strategy for source code management:
+the source code for each microservice is located in a dedicated repo.
 
 Below is a partial list of these repositories:
 
@@ -21,14 +21,14 @@ Please read our [architecture document](https://servicex.readthedocs.io/en/lates
 
 ## Branching Strategy
 
-ServiceX uses a slightly modified GitLab flow. Each repository has a main branch, usually named `develop` (or `master` for the Python frontend). All changes should be made on feature branches and submitted as PRs to the main branch. Releases are frozen on dedicated release branches, e.g. `v1.0.0-RC.2`. 
+ServiceX uses a slightly modified GitLab flow. Each repository has a main branch, usually named `develop` (or `master` for the Python frontend). All changes should be made on feature branches and submitted as PRs to the main branch. Releases are frozen on dedicated release branches, e.g. `v1.0.0-RC.2`.
 
 ## Development Workflow
 
 1. Set up a local development environment:
-    - Decide which microservice (or Helm chart) you'd like to change, 
-    and locate the corresponding repository. 
-    - If you are a not a member of the `ssl-hep` GitHub organization, 
+    - Decide which microservice (or Helm chart) you'd like to change,
+    and locate the corresponding repository.
+    - If you are a not a member of the `ssl-hep` GitHub organization,
     fork the repository.
     - Clone the (forked) repository to your local machine:
     ```
@@ -68,9 +68,9 @@ ServiceX uses a slightly modified GitLab flow. Each repository has a main branch
     app:
       image: <organization>/<image repository>
       tag: my-feature-branch
-    ``` 
-    - For more details, please read our full 
-    [deployment guide](https://servicex.readthedocs.io/en/latest/deployment/basic). 
+    ```
+    - For more details, please read our full
+    [deployment guide](https://servicex.readthedocs.io/en/latest/deployment/basic).
 1. Submit a pull request to the upstream repository.
 
 ## Issues
@@ -131,17 +131,17 @@ The best way to work on ServiceX is using the unit tests. That isn't always poss
 1. Finally restart the pod, which should cause it to pick up the new build. This might kill a port-forward you have in place, so don't forget to restart that!
 
 ## Debugging Tips
-Microservice architectures can be difficult to test and debug. Here are some 
+Microservice architectures can be difficult to test and debug. Here are some
 helpful hints to make this easier.
 
 1. Instead of relying on the DID Finder to locate some particular datafile, you
-can mount one of your local directories into the transformer pod and then 
+can mount one of your local directories into the transformer pod and then
 instruct the DID Finder to always offer up the path to that file regardless of
 the submitted DID. You can use the `hostMount` value to have a local directory
-mounted into each transformer pod under `/data`. You can use the 
+mounted into each transformer pod under `/data`. You can use the
 `didFinder.staticFile` value to instruct DID Finder to offer up a file from that
 directory.
-2. You can use port-forwarding to expose port 15672 from the RabbitMQ pod to 
+2. You can use port-forwarding to expose port 15672 from the RabbitMQ pod to
 your laptop and log into the Rabbit admin console using the username: `user` and
 password `leftfoot1`. From here you can monitor the queues, purge old messages
 and inject your own messages
@@ -150,4 +150,4 @@ and inject your own messages
 
 ### Hotfixes
 
-If a critical bugfix or hotfix must be applied to a previous release, it should be merged to the main branch and then applied to each affected release branch using `git cherry-pick <merge commit hash> -m 1`. Merge commits have 2 parents, so the `-m 1` flag is used to specify that the first parent (i.e. previous commit on the main branch) should be used 
+If a critical bugfix or hotfix must be applied to a previous release, it should be merged to the main branch and then applied to each affected release branch using `git cherry-pick <merge commit hash> -m 1`. Merge commits have 2 parents, so the `-m 1` flag is used to specify that the first parent (i.e. previous commit on the main branch) should be used

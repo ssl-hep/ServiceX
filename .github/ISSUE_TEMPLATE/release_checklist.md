@@ -24,7 +24,7 @@ assignees: ''
 * [ ]  Activate [ReadTheDocs version](https://readthedocs.org/projects/servicex/versions/) for the release branch
 * [ ]  Update links to docs in README on release branch
 * [ ]  Set chart version in `servicex/Chart.yaml`
-    - Note that the version must match the release branch name. Do not include the leading "v" and RC should be lowercase. 
+    - Note that the version must match the release branch name. Do not include the leading "v" and RC should be lowercase.
       Verify the settings with `helm template serviceX | grep URL` and insure the link works.
 * [ ]  Make sure that DockerHub has tags for this release in sslhep/servicex_app and other image repos
 * [ ]  Fix the default images and tags in `servicex/values.yaml` on release branch

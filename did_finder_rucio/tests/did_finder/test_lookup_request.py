@@ -34,26 +34,27 @@ class TestLookupRequest:
         mock_rucio = mocker.MagicMock(RucioAdapter)
         request = LookupRequest("my-did", mock_rucio)
         assert request.rucio_adapter == mock_rucio
-        assert request.did == 'my-did'
+        assert request.did == "my-did"
 
         def test_lookup_files(self, mocker):
-            'Good lookup, chunk size is same as file size'
+            "Good lookup, chunk size is same as file size"
             mock_rucio = mocker.MagicMock(RucioAdapter)
             rucio_file_list = [
                 {
                     "scope": "my-scope",
-                    "name": "file"+str(i),
+                    "name": "file" + str(i),
                     "bytes": 31400,
-                    "events": 5000
-                } for i in range(10)
+                    "events": 5000,
+                }
+                for i in range(10)
             ]
 
             mock_rucio.list_files_for_did.return_value = rucio_file_list
 
             mock_rucio.find_replicas.return_value = [
                 {
-                    'adler32': 21231,
-                    'bytes': 1122233344,
+                    "adler32": 21231,
+                    "bytes": 1122233344,
                 }
             ]
 

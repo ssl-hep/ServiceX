@@ -15,4 +15,3 @@ _As a <blah> I want to <blah> so I can <blah>_
 
 # Assumptions
 1. List assumptions behind this story
-
