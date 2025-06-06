@@ -3,8 +3,8 @@ Local Test Harness for running the codegen and science image for the root file
 ### Step1. Configure the config.yml file
 ```yaml
     TestName: local test
-    codegen: 
-    port: 8005 
+    codegen:
+    port: 8005
     query: '[{"treename": {"nominal": "modified"}, "filter_name": ["lbn"]}]' #provide the query as string
 
     science:

@@ -26,29 +26,38 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-GEOIP_URL = 'https://ponyisi.web.cern.ch/public/GeoLite2-City.mmdb'
-GEOIP_TGZ_URL = 'https://ponyisi.web.cern.ch/public/GeoLite2-City_20241015.tar.gz'
+GEOIP_URL = "https://ponyisi.web.cern.ch/public/GeoLite2-City.mmdb"
+GEOIP_TGZ_URL = "https://ponyisi.web.cern.ch/public/GeoLite2-City_20241015.tar.gz"
 
 # some URLs (real FQDNs, not real file paths)
-REPLICAS = ['https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1',
-            'root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1',
-            'root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1']
+REPLICAS = [
+    "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    "root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+]
 
-SORTED_REPLICAS = ['root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1',
-                   'https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1',  # noqa: E501
-                   'root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1']  # noqa: E501
+SORTED_REPLICAS = [
+    "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
+    "root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+]  # noqa: E501
 
-JUNK_REPLICAS = ['https://junk.does.not.exist.org/',
-                 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/']
-SORTED_JUNK_REPLICAS = ['root://fax.mwt2.org:1094//pnfs/uchicago.edu/',
-                        'https://junk.does.not.exist.org/']
+JUNK_REPLICAS = [
+    "https://junk.does.not.exist.org/",
+    "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
+]
+SORTED_JUNK_REPLICAS = [
+    "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
+    "https://junk.does.not.exist.org/",
+]
 
-LOCATION = {'latitude': 41.78, 'longitude': -87.7}
+LOCATION = {"latitude": 41.78, "longitude": -87.7}
 
 
 def test_sorting():
     """Also test unpacking tgz database"""
     from rucio_did_finder.replica_distance import ReplicaSorter
+
     rs = ReplicaSorter((GEOIP_TGZ_URL, False))
     # Given location (Chicago) replicas should sort US, FR, DE
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
@@ -62,17 +71,19 @@ def test_envvars():
     """Only tests unpacked DB download"""
     from rucio_did_finder.replica_distance import ReplicaSorter
     import os
-    os.environ['GEOIP_DB_URL'] = GEOIP_URL
+
+    os.environ["GEOIP_DB_URL"] = GEOIP_URL
     rs = ReplicaSorter()
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == SORTED_REPLICAS
-    del os.environ['GEOIP_DB_URL']
+    del os.environ["GEOIP_DB_URL"]
 
 
 def test_bad_geodb():
     """Tests what happens when we have a bad DB URL"""
     from rucio_did_finder.replica_distance import ReplicaSorter
-    rs = ReplicaSorter(('https://junk.does.not.exist.org', False))
+
+    rs = ReplicaSorter(("https://junk.does.not.exist.org", False))
     assert rs._database is None
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == REPLICAS

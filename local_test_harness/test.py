@@ -6,9 +6,9 @@ Step 4: Run the docker compose up with the relevant root file
 
 Input: Query, Root file and output format
 """
+
 import requests
 import subprocess
-import os
 from requests_toolbelt.multipart import decoder
 from io import BytesIO
 from zipfile import ZipFile
@@ -18,7 +18,7 @@ import argparse
 
 
 class ConfigReader:
-    
+
     def __init__(self, file):
         self._file = file
         self._config = None
@@ -30,11 +30,14 @@ class ConfigReader:
     def get_config(self):
         return self._config
 
+
 def docker_compose_up():
     subprocess.run(["docker", "compose", "up", "-d", "--remove-orphans"])
 
+
 def docker_compose_down():
     subprocess.run(["docker", "compose", "down"])
+
 
 def send_request(query, port):
     post_url = f"http://localhost:{port}"
@@ -60,58 +63,85 @@ def run_docker_compose_for_science(image, filepath):
 
 
 def send_root_file_to_science(root_file, output_file, output_format):
-    subprocess.run(["docker", "compose", "run", "science",
-                    "bash", "--login", "-c", "python3 /generated/transform_single_file.py "
-                    f"{root_file} {output_file} {output_format}"])
+    subprocess.run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "science",
+            "bash",
+            "--login",
+            "-c",
+            "python3 /generated/transform_single_file.py "
+            f"{root_file} {output_file} {output_format}",
+        ]
+    )
 
 
 def run_x509_proxy(proxy_image="sslhep/x509-secrets:develop"):
     my_env = os.environ.copy()
-    subprocess.run(["docker", "run", "-it", "--mount", f"type=bind,source={my_env['HOME']}/.globus,readonly,target=/globus",
-                    "-v", "/tmp:/tmp", "--rm",
-                    "--user", f"{os.getuid()}:{os.getgid()}",
-                    proxy_image,
-                    "voms-proxy-init", "-voms", "atlas", "-cert",
-                    "/globus/usercert.pem", "-key", "/globus/userkey.pem", "-out", "/tmp/x509up"
-                    ]
-                    )
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-it",
+            "--mount",
+            f"type=bind,source={my_env['HOME']}/.globus,readonly,target=/globus",
+            "-v",
+            "/tmp:/tmp",
+            "--rm",
+            "--user",
+            f"{os.getuid()}:{os.getgid()}",
+            proxy_image,
+            "voms-proxy-init",
+            "-voms",
+            "atlas",
+            "-cert",
+            "/globus/usercert.pem",
+            "-key",
+            "/globus/userkey.pem",
+            "-out",
+            "/tmp/x509up",
+        ]
+    )
 
 
 if __name__ == "__main__":
     import os
+
     try:
-        parser = argparse.ArgumentParser(description='Run the servicex codegen and science container')
-        parser.add_argument('--proxy_image', help='Run the x509 proxy for image')
+        parser = argparse.ArgumentParser(
+            description="Run the servicex codegen and science container"
+        )
+        parser.add_argument("--proxy_image", help="Run the x509 proxy for image")
         args = parser.parse_args()
         if args.proxy_image:
-            run_x509_proxy(proxy_image = args.proxy_image)
-        
+            run_x509_proxy(proxy_image=args.proxy_image)
+
         a = ConfigReader("config.yml")
         a.read_config_file()
         docker_compose_up()
         time.sleep(10)
 
-        cgc = a.get_config()['codegen']
-        if 'query' in cgc:
-            query = cgc['query']
-        elif 'query_file' in cgc:
-            with open(cgc['query_file'], 'r') as infile:
+        cgc = a.get_config()["codegen"]
+        if "query" in cgc:
+            query = cgc["query"]
+        elif "query_file" in cgc:
+            with open(cgc["query_file"], "r") as infile:
                 query = infile.read()
         else:
-            raise RuntimeError('cannot find query or query_file in config.yaml')
+            raise RuntimeError("cannot find query or query_file in config.yaml")
 
         output_folder = "temp1"
         if not os.path.exists(output_folder):
             os.mkdir(output_folder)
-        result = send_request(
-                            query=query,
-                            port=a.get_config()['codegen']['port'])
+        result = send_request(query=query, port=a.get_config()["codegen"]["port"])
         generate_zipfile(result, output_folder=output_folder)
 
         send_root_file_to_science(
-            root_file= a.get_config()['science']['rootfile'],
-            output_file=a.get_config()['science']['outputfile'],
-            output_format=a.get_config()['science']['outputformat']
+            root_file=a.get_config()["science"]["rootfile"],
+            output_file=a.get_config()["science"]["outputfile"],
+            output_format=a.get_config()["science"]["outputformat"],
         )
     finally:
         docker_compose_down()

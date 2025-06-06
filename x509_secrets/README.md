@@ -7,7 +7,7 @@ It accepts as runtime parameter the VOMS organization to use for validating
 the user. It also can be run inside docker (without a kubernetes cluster) for
 testing.
 
-To start docker container: 
+To start docker container:
 ```bash
 docker run --rm -it \
     -e VOMS=atlas \
@@ -17,5 +17,5 @@ docker run --rm -it \
     --name=x509-secrets sslhep/x509-secrets:develop
 ```
 
-The environment var `VOMS` can be set to CMS if you wish to authenticate against 
+The environment var `VOMS` can be set to CMS if you wish to authenticate against
 that experiment.
