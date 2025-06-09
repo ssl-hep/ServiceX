@@ -15,6 +15,7 @@ def mock_cernopendata_client():
     specific output or exit code.
     Many thanks to Claude 3.5 Sonnet for this code.
     """
+
     @contextmanager
     def _mock_cernopendata_client(mock_output=None, mock_exit_code=None):
         # Create a temporary directory
@@ -30,32 +31,30 @@ def mock_cernopendata_client():
             os.chmod(mock_script_path, 0o755)  # Make the script executable
 
             # Prepare a modified PATH
-            original_path = os.environ['PATH']
-            os.environ['PATH'] = f"{temp_dir}:{original_path}"
+            original_path = os.environ["PATH"]
+            os.environ["PATH"] = f"{temp_dir}:{original_path}"
 
             yield  # This is where the test runs
 
             # Restore the original PATH
-            os.environ['PATH'] = original_path
+            os.environ["PATH"] = original_path
 
     return _mock_cernopendata_client
 
 
 def test_working_call(mock_cernopendata_client):
-    with mock_cernopendata_client(mock_output='root://root.idiot.it/dude'):
-        iter = find_files('1507', {'request-id': '112233'})
+    with mock_cernopendata_client(mock_output="root://root.idiot.it/dude"):
+        iter = find_files("1507", {"request-id": "112233"})
         files = [f for f in iter]
 
         assert len(files) == 1
         assert isinstance(files[0], dict)
-        assert files[0]['paths'][0] == 'root://root.idiot.it/dude'
+        assert files[0]["paths"][0] == "root://root.idiot.it/dude"
 
 
 def test_exit_code_no_output(mock_cernopendata_client):
     with mock_cernopendata_client(mock_exit_code=10):
-        iter = find_files('1507',
-                          {'request-id': '112233'}
-                          )
+        iter = find_files("1507", {"request-id": "112233"})
         with pytest.raises(Exception) as e:
             [f for f in iter]
 
@@ -63,18 +62,16 @@ def test_exit_code_no_output(mock_cernopendata_client):
 
 
 def test_non_root_return(mock_cernopendata_client):
-    with mock_cernopendata_client(mock_output='http://root.idiot.it/dude'):
-        iter = find_files('1507',
-                          {'request-id': '112233'}
-                          )
+    with mock_cernopendata_client(mock_output="http://root.idiot.it/dude"):
+        iter = find_files("1507", {"request-id": "112233"})
         with pytest.raises(Exception) as e:
             [f for f in iter]
 
-        assert 'strange' in str(e)
+        assert "strange" in str(e)
 
 
 def test_invalid_did_alpha():
     with pytest.raises(Exception) as e:
-        [f for f in find_files('dude', {'request-id': '112233'})]
+        [f for f in find_files("dude", {"request-id": "112233"})]
 
-    assert 'number' in str(e)
+    assert "number" in str(e)

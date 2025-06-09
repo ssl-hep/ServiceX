@@ -47,4 +47,3 @@ ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
 USER celery
 
 ENTRYPOINT [ "scripts/start_celery_worker.sh"]
-

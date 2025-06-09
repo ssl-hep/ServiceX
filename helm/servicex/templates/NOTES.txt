@@ -22,7 +22,7 @@ Optionally, you can use a port forward to access the RabbitMQ Dashboard:
 and then visit http://localhost:15672
 
 {{ if .Values.secrets }}
-Log in with 
+Log in with
     username: user
     password: rabbitmq-password from {{ .Values.secrets }} secret that you set up
 {{ else }}
@@ -49,7 +49,7 @@ and connect with this JDBC Connection String:
   {{ if not .Values.objectStore.internal }}
 Using an external minio object store at {{ .Values.objectStore.publicURL }}
     {{ if .Values.objectStore.usetls }}
-with a https connection. 
+with a https connection.
     {{ else }}
 with a http connection.
     {{ end }}
@@ -71,11 +71,10 @@ You can use the minio browser by visiting:
 Log in with minio-accesskey and minio-secretkey from {{ .Values.secrets }} secret that you set up.
 {{ else }}
 {{if and .Values.minio.auth.rootUser  .Values.minio.auth.rootPassword }}
-Log in with 
+Log in with
     User: {{ .Values.minio.auth.rootUser }}
     Pass: {{ .Values.minio.auth.rootPassword }}
 {{ end }}
 {{ end }}
 
 {{ end }}
-

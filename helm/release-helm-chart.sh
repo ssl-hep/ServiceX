@@ -12,7 +12,3 @@ mv servicex/Chart.new.yaml servicex/Chart.yaml
 sed -E -e "s/  tag:\s*[[:digit:]]{8}-[[:digit:]]{4}-stable.*$/  tag: $1/" -e "s/  defaultTransformerTag:\s*.+$/  defaultTransformerTag: $1/" servicex/values.yaml > servicex/values.new.yaml
 mv servicex/values.new.yaml servicex/values.yaml
 helm package servicex
-
-
-
-

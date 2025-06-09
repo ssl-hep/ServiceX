@@ -1,5 +1,5 @@
 TestName: local test
-codegen: 
+codegen:
   port: 8005
   query: '[{"treename": {"nominal": "modified"}, "filter_name": ["lbn"]}]'
 

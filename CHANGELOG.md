@@ -21,7 +21,7 @@ April 14, 2025
 - Updated the VOMS servers used in the docker images
 - Ignore missing trees in uproot-raw transformer by default
 - Update to Uproot scince image to use uproot 5.6.0
-- Store transform events and size in the database 
+- Store transform events and size in the database
 
 ### Fixed
 - XAOD Transformer now correctly catches exceptions and reports them
@@ -41,7 +41,7 @@ March 6, 2025
 ### Changed
 - Dashboard times now shown in the user's local timezone
 - Default sort order in dashboard is now by start time (descending)
-- Update poetry version 
+- Update poetry version
 
 ### Fixed
 - Reporting of finish times even when there are zero files
@@ -98,7 +98,7 @@ November 8, 2024
 - Documentation theme
 
 ### Fixed
-- Made changes to values.yaml to revert to `develop` tags for all images by default 
+- Made changes to values.yaml to revert to `develop` tags for all images by default
 - Fixed the reference to obsolete xAOD code generator in values.yaml
 - Fixed links to the documentation
 
@@ -221,7 +221,7 @@ September 4, 2023
 ### Added
 - Better replica filtering in Rucio DID Finder
 - Sidecar can convert files from root to parquet for cases where the transformer can't
-- Network configuration in docker images to support IPv6 
+- Network configuration in docker images to support IPv6
 ### Changed
 - Transformer Sidecar and science images communicate over a unix socket instead of the shared volume
 ### Fixed
@@ -264,7 +264,7 @@ April 12, 2023
 -  Updated werkzeug library to avoid security vulnerabilities
 - Web app restarts when helm chart updates the app.config
 
-### Fixed 
+### Fixed
 - The python code generator didn't get properly ported to the transformer sidecar architecture. This is now fixed
 
 ### Removed
@@ -277,7 +277,7 @@ February 7, 2023
 - Cron job to clean up Minio storage from old transforms
 ### Changed
 
-### Fixed 
+### Fixed
 
 ### Removed
 
@@ -413,7 +413,7 @@ script to update the transformer tag.
 ### Added
 
 - Support for xCache in DID Finders
-- Sorting of results in web page  
+- Sorting of results in web page
 - Cleaned up and improved documentation
 - Examples for ATLAS, tcut, and CMS
 - ServiceX Logo
