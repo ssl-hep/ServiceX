@@ -13,7 +13,7 @@ did-finder-xrootd = {path = "did_finder_xrootd", develop = true}
 did-finder-rucio = {path = "did_finder_rucio", develop = true}
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.3.5"
+pytest = "^8.4.0"
 flake8 = "^7.2"
 pytest-mock = "^3.14.1"
 coverage = "^7.8.2"
