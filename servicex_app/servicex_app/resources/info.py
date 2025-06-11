@@ -35,6 +35,6 @@ class Info(ServiceXResource):
             "app-version": self._get_app_version(),
             "code-gen-image": current_app.config['CODE_GEN_IMAGES'],
             "capabilities": [
-                # "poll_local_transformation_results"
+                "poll_local_transformation_results"
             ]
         }
