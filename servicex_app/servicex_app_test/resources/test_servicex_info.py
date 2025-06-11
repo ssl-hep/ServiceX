@@ -41,5 +41,7 @@ class TestServicexInfo(ResourceTestBase):
                                     'python': 'sslhep/servicex_code_gen_python:develop',
                                     'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
                                     },
-                                 'capabilities': []
+                                 'capabilities': [
+                                     'poll_local_transformation_results'
+                                 ]
                                 }  # noqa: E501
