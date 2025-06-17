@@ -163,7 +163,7 @@ def transform_file(
     transformer_stats = TransformerStats()
     try:
         # Loop through the replicas
-        for _file_path in _file_paths:
+        for path, _file_path in zip(paths, _file_paths):
             logger.info(
                 "trying to transform file",
                 extra={
@@ -215,6 +215,7 @@ def transform_file(
                 rec = FileCompleteRecord(
                     request_id=request_id,
                     file_path=_file_path,
+                    s3_object_name=path,
                     file_id=file_id,
                     status="success",
                     total_time=time.time() - total_time,
@@ -256,6 +257,7 @@ def transform_file(
             rec = FileCompleteRecord(
                 request_id=request_id,
                 file_path=_file_paths[0],
+                s3_object_name=paths[0],
                 file_id=file_id,
                 status="failure",
                 total_time=time.time() - total_time,
@@ -292,6 +294,7 @@ def transform_file(
         rec = FileCompleteRecord(
             request_id=request_id,
             file_path=_file_paths[0],
+            s3_object_name=paths[0],
             file_id=file_id,
             status="failure",
             total_time=time.time() - total_time,
