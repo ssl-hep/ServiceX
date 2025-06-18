@@ -33,12 +33,15 @@ from typing import Optional, Mapping
 
 
 class LookupRequest:
-    def __init__(self, did: str,
-                 rucio_adapter: RucioAdapter,
-                 dataset_id: str = 'bogus-id',
-                 replica_sorter: Optional[ReplicaSorter] = None,
-                 location: Optional[Mapping[str, float]] = None):
-        '''Create the `LookupRequest` object that is responsible for returning
+    def __init__(
+        self,
+        did: str,
+        rucio_adapter: RucioAdapter,
+        dataset_id: str = "bogus-id",
+        replica_sorter: Optional[ReplicaSorter] = None,
+        location: Optional[Mapping[str, float]] = None,
+    ):
+        """Create the `LookupRequest` object that is responsible for returning
         lists of files. Processes things in chunks.
 
         Args:
@@ -46,7 +49,7 @@ class LookupRequest:
             rucio_adapter (RucioAdapter): Rucio lookup object
             dataset_id (str, optional): ServiceX Request ID that requested this DID.
                 Defaults to 'bogus-id'.
-        '''
+        """
         self.did = did
         self.rucio_adapter = rucio_adapter
         self.dataset_id = dataset_id
@@ -68,17 +71,19 @@ class LookupRequest:
         avg_replicas = 0
         lookup_start = datetime.now()
 
-        self.logger.info('Doing Rucio lookup.')
+        self.logger.info("Doing Rucio lookup.")
         full_file_list = []
         for ds_files in self.rucio_adapter.list_files_for_did(self.did):
             for af in ds_files:
                 n_files += 1
-                ds_size += af['file_size']
-                total_paths += len(af['paths'])
-                ipaths = af['paths'].copy()
-                self.logger.debug(f'path before {ipaths}')
+                ds_size += af["file_size"]
+                total_paths += len(af["paths"])
+                ipaths = af["paths"].copy()
+                self.logger.debug(f"path before {ipaths}")
                 if self.replica_sorter is not None and self.location is not None:
-                    af['paths'] = self.replica_sorter.sort_replicas(ipaths, self.location)
+                    af["paths"] = self.replica_sorter.sort_replicas(
+                        ipaths, self.location
+                    )
                 self.logger.debug(f'path after {af["paths"]}')
                 full_file_list.append(af)
             yield ds_files
@@ -86,13 +91,13 @@ class LookupRequest:
         lookup_finish = datetime.now()
 
         if n_files:
-            avg_replicas = float(total_paths)/n_files
+            avg_replicas = float(total_paths) / n_files
 
         metric = {
-            'dataset_id': self.dataset_id,
-            'n_files': n_files,
-            'size': ds_size,
-            'avg_replicas': avg_replicas,
-            'lookup_duration': (lookup_finish-lookup_start).total_seconds()
+            "dataset_id": self.dataset_id,
+            "n_files": n_files,
+            "size": ds_size,
+            "avg_replicas": avg_replicas,
+            "lookup_duration": (lookup_finish - lookup_start).total_seconds(),
         }
         self.logger.info("Lookup finished. ", extra=metric)

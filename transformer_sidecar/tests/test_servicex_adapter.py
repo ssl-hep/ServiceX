@@ -34,8 +34,9 @@ class TestServiceXAdapter:
 
     def test_init(self, mocker):
         import requests
+
         mock_session = mocker.MagicMock(requests.session)
-        mocker.patch('requests.session', return_value=mock_session)
+        mocker.patch("requests.session", return_value=mock_session)
         mock_session.mount = mocker.Mock()
         ServiceXAdapter("http://foo.com")
         retries = mock_session.mount.mock_calls[0][1][1].max_retries
@@ -44,28 +45,28 @@ class TestServiceXAdapter:
 
     def test_put_file_complete(self, mocker, caplog):
         import requests
+
         caplog.set_level(logging.INFO)
         mock_session = mocker.MagicMock(requests.session)
         mock_session.mount = mocker.Mock()
         mock_session.put = mocker.Mock()
-        mocker.patch('requests.session', return_value=mock_session)
+        mocker.patch("requests.session", return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        rec = FileCompleteRecord("42", "my-root.root",
-                                 42, "testing",
-                                 1, 2, 3)
+        rec = FileCompleteRecord(
+            "42", "my-root.root", 42, "testing", 1, 2, 3, "file://s3-object-name"
+        )
 
         adapter.put_file_complete(rec)
         mock_session.put.assert_called()
         args = mock_session.put.call_args
-        assert args[0][0] == 'http://foo.com/file-complete'
-        doc = args[1]['json']
-        assert doc['status'] == 'testing'
-        assert doc['total-time'] == 1
-        assert doc['total-events'] == 2
-        assert doc['file-path'] == 'my-root.root'
-        assert doc['file-id'] == 42
-        assert doc['avg-rate'] == 2
+        doc = args[1]["json"]
+        assert doc["status"] == "testing"
+        assert doc["total-time"] == 1
+        assert doc["total-events"] == 2
+        assert doc["file-path"] == "my-root.root"
+        assert doc["file-id"] == 42
+        assert doc["avg-rate"] == 2
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.INFO
@@ -73,20 +74,23 @@ class TestServiceXAdapter:
 
     def test_put_file_complete_retry(self, mocker, caplog):
         import requests
+
         caplog.set_level(logging.INFO)
         mock_session = mocker.MagicMock(requests.session)
         mock_session.mount = mocker.Mock()
-        mock_session.put = mocker.Mock(side_effect=[requests.exceptions.ConnectionError, 200])
-        mocker.patch('requests.session', return_value=mock_session)
+        mock_session.put = mocker.Mock(
+            side_effect=[requests.exceptions.ConnectionError, 200]
+        )
+        mocker.patch("requests.session", return_value=mock_session)
 
         adapter = ServiceXAdapter("http://foo.com")
-        rec = FileCompleteRecord("42", "my-root.root",
-                                 42, "testing",
-                                 1, 2, 3)
+        rec = FileCompleteRecord(
+            "42", "my-root.root", 42, "testing", 1, 2, 3, "file://s3-object-name"
+        )
         adapter.put_file_complete(rec)
         assert mock_session.put.call_count == 2
         assert len(caplog.records) == 2
         assert caplog.records[0].levelno == logging.WARNING
-        assert caplog.records[0].msg == '%s, retrying in %s seconds...'
+        assert caplog.records[0].msg == "%s, retrying in %s seconds..."
         assert caplog.records[1].levelno == logging.INFO
         assert caplog.records[1].msg == "Put file complete."

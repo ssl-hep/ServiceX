@@ -27,6 +27,6 @@ spec:
         backend:
           service:
             name: {{ .Release.Name }}-servicex-app
-            port: 
+            port:
               number: 8000
 {{- end }}

@@ -356,6 +356,8 @@ class TransformationResult(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
+    created_at = db.Column(DateTime, default=func.now())
+    s3_object_name = db.Column(db.String(512), unique=False, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint('file_id', 'request_id', name='uix_file_request'),
@@ -372,11 +374,13 @@ class TransformationResult(db.Model):
             'request-id': x.request_id,
             'file-id': x.id,
             'file-path': x.file_path,
+            's3-object-name': x.s3_object_name,
             'transform_status': x.transform_status,
             'transform_time': x.transform_time,
             'total-events': x.total_events,
             'total-bytes': x.total_bytes,
-            'avg-rate': x.avg_rate
+            'avg-rate': x.avg_rate,
+            'created_at': x.created_at.isoformat() if x.created_at else None,
         }
 
     def save_to_db(self):
@@ -470,7 +474,7 @@ class DatasetFile(db.Model):
             'adler32': self.adler32,
             'file_size': self.file_size,
             'file_events': self.file_events,
-            'paths': self.paths
+            'paths': self.paths,
         }
 
     def save_to_db(self):

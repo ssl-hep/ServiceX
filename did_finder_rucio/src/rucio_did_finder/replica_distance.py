@@ -39,23 +39,25 @@ import geoip2.errors
 from collections import namedtuple
 
 
-Replica_distance = namedtuple('Replica_distance', 'replica distance')
-logger = logging.getLogger('ReplicaDistanceService')
+Replica_distance = namedtuple("Replica_distance", "replica distance")
+logger = logging.getLogger("ReplicaDistanceService")
 
 
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float):
-    ''' Assume inputs are in degrees; will convert to radians. Returns distance in radians '''
-    dellat = math.radians(lat2-lat1)
-    dellon = math.radians(lon2-lon1)
-    hav_theta = ((1-math.cos(dellat))/2 +
-                 math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*(1-math.cos(dellon))/2)
+    """Assume inputs are in degrees; will convert to radians. Returns distance in radians"""
+    dellat = math.radians(lat2 - lat1)
+    dellon = math.radians(lon2 - lon1)
+    hav_theta = (1 - math.cos(dellat)) / 2 + math.cos(math.radians(lat1)) * math.cos(
+        math.radians(lat2)
+    ) * (1 - math.cos(dellon)) / 2
 
-    return 2*math.asin(math.sqrt(hav_theta))
+    return 2 * math.asin(math.sqrt(hav_theta))
 
 
 @lru_cache
-def _get_distance(database: Optional[geoip2.database.Reader],
-                  fqdn: str, my_lat: float, my_lon: float):
+def _get_distance(
+    database: Optional[geoip2.database.Reader], fqdn: str, my_lat: float, my_lon: float
+):
     """
     Determine angular distance between server at fqdn and (my_lat, my_lon).
     If there is a failure of fdqn location lookup, will return pi
@@ -66,7 +68,9 @@ def _get_distance(database: Optional[geoip2.database.Reader],
     try:
         loc_data = database.city(gethostbyname(fqdn)).location
     except geoip2.errors.AddressNotFoundError as e:
-        logger.warning(f'Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}')
+        logger.warning(
+            f"Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}"
+        )
         return math.pi
     site_lat, site_lon = loc_data.latitude, loc_data.longitude
     if site_lat is None or site_lon is None:
@@ -89,7 +93,9 @@ class ReplicaSorter(object):
             db_url_tuple = self.get_download_url_from_environment()
         self._download_data(db_url_tuple)
 
-    def sort_replicas(self, replicas: List[str], location: Mapping[str, float]) -> List[str]:
+    def sort_replicas(
+        self, replicas: List[str], location: Mapping[str, float]
+    ) -> List[str]:
         """
         Main method of this class.
         replicas: list of strings which are the URLs for the replicas for a file
@@ -101,13 +107,15 @@ class ReplicaSorter(object):
         if len(replicas) == 1:
             return replicas
         fqdns = [(urlparse(replica).hostname, replica) for replica in replicas]
-        distances = [Replica_distance(replica=replica,
-                                      distance=_get_distance(self._database, fqdn,
-                                                             location['latitude'],
-                                                             location['longitude']
-                                                             )
-                                      )
-                     for fqdn, replica in fqdns]
+        distances = [
+            Replica_distance(
+                replica=replica,
+                distance=_get_distance(
+                    self._database, fqdn, location["latitude"], location["longitude"]
+                ),
+            )
+            for fqdn, replica in fqdns
+        ]
         distances.sort(key=lambda x: x.distance)
         return [_.replica for _ in distances]
 
@@ -117,9 +125,13 @@ class ReplicaSorter(object):
         Construct the (url, unpacked) tuple to feed to the constructor from a license key
         and an edition of the MaxMind database.
         """
-        return (('https://download.maxmind.com/app/geoip_download?'
-                f'edition_id={edition}&license_key={license_key}&suffix=tar.gz'),
-                False)
+        return (
+            (
+                "https://download.maxmind.com/app/geoip_download?"
+                f"edition_id={edition}&license_key={license_key}&suffix=tar.gz"
+            ),
+            False,
+        )
 
     @classmethod
     def get_download_url_from_environment(cls) -> Optional[Tuple[str, bool]]:
@@ -127,11 +139,11 @@ class ReplicaSorter(object):
         Based on environment variables, this will give a tuple of the URL and a bool which is
         True if the file from the URL is ready to use as is, False if needs to be unpacked
         """
-        if url := os.environ.get('GEOIP_DB_URL', ''):
+        if url := os.environ.get("GEOIP_DB_URL", ""):
             return (url, True)
-        key = os.environ.get('GEOIP_DB_LICENSE_KEY', '')
-        edition = os.environ.get('GEOIP_DB_EDITION', '')
-        if (key and edition):
+        key = os.environ.get("GEOIP_DB_LICENSE_KEY", "")
+        edition = os.environ.get("GEOIP_DB_EDITION", "")
+        if key and edition:
             return cls.get_download_url_from_key_and_edition(key, edition)
         else:
             return None
@@ -143,13 +155,14 @@ class ReplicaSorter(object):
         from urllib.request import urlretrieve
         import tarfile
         import glob
+
         if db_url_tuple is None:
             return
         url, unpacked = db_url_tuple
         try:
             fname, _ = urlretrieve(url)
         except Exception as e:
-            logger.error(f'Failure retrieving GeoIP database {url}.\nError: {e}')
+            logger.error(f"Failure retrieving GeoIP database {url}.\nError: {e}")
             return
         try:
             if unpacked:
@@ -158,10 +171,10 @@ class ReplicaSorter(object):
                 tarball = tarfile.open(fname)
                 self._tmpdir = tempfile.TemporaryDirectory()
                 tarball.extractall(self._tmpdir.name)
-                self._database = geoip2.database.Reader(glob.glob(os.path.join(self._tmpdir.name,
-                                                                               '*/*mmdb')
-                                                                  )[0])
+                self._database = geoip2.database.Reader(
+                    glob.glob(os.path.join(self._tmpdir.name, "*/*mmdb"))[0]
+                )
         except Exception as e:
-            logger.error(f'Failure initializing the GeoIP database reader.\nError: {e}')
+            logger.error(f"Failure initializing the GeoIP database reader.\nError: {e}")
             self._database = None
             return

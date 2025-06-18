@@ -10,7 +10,7 @@ metadata:
 data:
   app.conf: |
     INSTANCE_NAME = '{{ .Release.Name }}'
-    
+
     CHART = '{{ .Chart.Name }}-{{ .Chart.Version }}'
     APP_IMAGE_TAG = '{{ .Values.app.tag }}'
 
@@ -104,13 +104,13 @@ data:
     {{- end }}
     TRANSFORMER_VALIDATE_DOCKER_IMAGE = {{- ternary "True" "False" .Values.app.validateTransformerImage }}
     TRANSFORMER_MESSAGING = 'none'
-    
+
     TRANSFORMER_SIDECAR_IMAGE = "{{ .Values.transformer.sidecarImage }}:{{ .Values.transformer.sidecarTag }}"
     TRANSFORMER_SIDECAR_PULL_POLICY = '{{ .Values.transformer.sidecarPullPolicy }}'
 
     TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY = '{{ .Values.transformer.scienceContainerPullPolicy }}'
 
-    
+
     TRANSFORMER_SIDECAR_VOLUME_PATH = "{{ .Values.transformer.outputDir }}"
     TRANSFORMER_LANGUAGE = "{{ .Values.transformer.language }}"
     TRANSFORMER_EXEC = "{{ .Values.transformer.exec }}"
@@ -129,13 +129,13 @@ data:
     MINIO_ENCRYPT_PUBLIC = False
       {{ end }}
       {{ if not .Values.objectStore.internal }}
-    # using external minio 
+    # using external minio
     MINIO_URL = '{{ .Values.objectStore.publicURL }}'
     MINIO_URL_TRANSFORMER = '{{ .Values.objectStore.publicURL }}'
     MINIO_PUBLIC_URL = '{{ .Values.objectStore.publicURL }}'
     MINIO_ENCRYPT = {{ ternary "True" "False" .Values.objectStore.useTLS }}
       {{ else }}
-    # using internal minio 
+    # using internal minio
     MINIO_URL = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
     MINIO_URL_TRANSFORMER = '{{ .Release.Name }}-minio:{{ .Values.minio.service.ports.api }}'
         {{ if .Values.minio.apiIngress.enabled }}
@@ -169,7 +169,7 @@ data:
          {{- $dictItem := printf "\"%s\":\"%s\"" $codeGenName $codeGenImage }}
          {{- $code_gen_images = append $code_gen_images $dictItem }}
          {{ end }}
-    {{- end }} 
+    {{- end }}
     CODE_GEN_SERVICE_URLS = { {{ join "," $code_gen_service_urls }} }
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
     {{- end }}
@@ -203,7 +203,7 @@ data:
 
     {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.monitor }}
     MONITOR_URL = {{ tpl .Values.logging.logstash.monitor . | quote}}
-    {{ end }}   
+    {{ end }}
     {{ if and .Values.logging.logstash.enabled .Values.logging.logstash.logs }}
     LOGS_URL = {{ tpl .Values.logging.logstash.logs . | quote}}
-    {{ end }}   
+    {{ end }}

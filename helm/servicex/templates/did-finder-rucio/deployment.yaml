@@ -24,7 +24,7 @@ spec:
         env:
           {{- if .Values.secrets }}
           - name: RMQ_PASS
-            valueFrom: 
+            valueFrom:
               secretKeyRef:
                 name: {{ .Values.secrets }}
                 key: rabbitmq-password

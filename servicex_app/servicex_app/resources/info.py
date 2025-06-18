@@ -33,5 +33,8 @@ class Info(ServiceXResource):
     def get(self):
         return {
             "app-version": self._get_app_version(),
-            "code-gen-image": current_app.config['CODE_GEN_IMAGES']
+            "code-gen-image": current_app.config['CODE_GEN_IMAGES'],
+            "capabilities": [
+                "poll_local_transformation_results"
+            ]
         }

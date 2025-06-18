@@ -1,6 +1,6 @@
 # User Management
 ServiceX can optionally require logins and authenticate users. This is enabled
-with `app.auth` set to true. 
+with `app.auth` set to true.
 
 You will need to set `app.adminEmail` to the email address for the bootstrapped
 admin user. All other users can be added by:
@@ -11,7 +11,7 @@ admin user. All other users can be added by:
 Here are each of the mechanisms in more detail:
 
 ## Using the Flask CLI
-This CLI is currently only available inside a running ServiceX App pod. An 
+This CLI is currently only available inside a running ServiceX App pod. An
 administrator needs to create a shell in the pod. They can create a single
 user with this command:
 ```shell
@@ -29,14 +29,14 @@ or "CERN").
 If this user has been previously created and a valid refresh token is known for
 them this can be optionally added as the last argument.
 
-Now when a user logs in with this sub the first time, they will immediately be 
+Now when a user logs in with this sub the first time, they will immediately be
 granted access to the system without being marked as pending. If the refresh
-token is provided, the user can submit transform requests with that token 
+token is provided, the user can submit transform requests with that token
 without having to log into the dashboard at all.
 
 ## Loading Default Users Using JSON File
 For integration tests, we often redeploy and erase the database. This means that
-it is not possible to have long-standing integration tests against these 
+it is not possible to have long-standing integration tests against these
 instances. We can get around this by publishing a JSON file containing initial
 default users as a secret in the cluster. The app will read this secret upon
 startup and automatically load them into the datbase.
@@ -53,7 +53,7 @@ This file must be named `users.json` and the format should be:
   }
 ]
 ```
-You install this secret in the cluster with 
+You install this secret in the cluster with
 ```shell
 % kubectl create secret generic users --from-file=users.json
 ```

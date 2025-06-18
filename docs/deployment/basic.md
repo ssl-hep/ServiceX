@@ -53,7 +53,7 @@ pip install servicex-cli
 You can run the CLI to install your certs with the following command:
 
 ```
-servicex --namespace <default> init --cert-dir ~/.globus 
+servicex --namespace <default> init --cert-dir ~/.globus
 ```
 
 By default, this will look for the certificates in your `~/.globus` directory.

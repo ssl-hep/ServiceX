@@ -36,10 +36,11 @@ url = servicex_endpoint + "/transformation/{}/status?details=true".format(sys.ar
 response = requests.get(url)
 
 doc = response.json()
-status_list = sorted([(status['file-path'], status['transform_status'])
-                      for status in doc['details']])
-print(doc['files-completed'], len(status_list))
-print(doc['files-remaining'])
+status_list = sorted(
+    [(status["file-path"], status["transform_status"]) for status in doc["details"]]
+)
+print(doc["files-completed"], len(status_list))
+print(doc["files-remaining"])
 
 duplicates = 0
 prev = None

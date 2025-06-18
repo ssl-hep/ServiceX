@@ -78,7 +78,8 @@ class TestTransformFileComplete(ResourceTestBase):
             'total-time': 100,
             'total-events': 10000,
             'total-bytes': 325683,
-            'avg-rate': 30.2
+            'avg-rate': 30.2,
+            's3-object-name': 'file://s3-object-name',
         }
 
     def test_put_transform_file_complete_files_remaining(self,

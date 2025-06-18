@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-2025, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,8 @@ def run_query(file_path):
 
     rv_arrays_trees = {{}}; rv_arrays_histograms = {{}}
     for subquery in jquery:
-        a, b = run_single_query(file_path, subquery)
-        rv_arrays_trees.update(a); rv_arrays_histograms.update(b)
-    return rv_arrays_trees, rv_arrays_histograms
+        for obj in run_single_query(file_path, subquery):
+            yield obj
 
 def run_single_query(file_path, query):
     import uproot
@@ -141,26 +140,20 @@ def run_single_query(file_path, query):
                         raise
                     else:
                         continue
-                arr = None
+                arrfound = False
                 for subarr in t.iterate(language=lang, **sanitized_args):
-                    if arr is None:
-                        arr = subarr
-                    else:
-                        arr = ak.concatenate([arr, subarr])
-                if arr is not None and len(arr):  # iterate will not give anything if tree empty
-                    rv_arrays_trees[outtreename] = (arr, None)
-                else:  # recent uproot handles zero-length case properly for arrays()
+                    arrfound = True
+                    yield ('tree', outtreename, subarr)
+                if not arrfound:  # need this branch if the original tree has no entries
                     if 'cut' in sanitized_args:
                         sanitized_args.pop('cut')
                     arr = t.arrays(language=lang, entry_stop=0, **sanitized_args)
-                    rv_arrays_trees[outtreename] = (None, arr.layout)
+                    yield ('tree', outtreename, arr)
         else:
             histograms = query['copy_histograms']
             keys = fl.keys(filter_name=histograms, cycle=False)
             for key in keys:
-                rv_arrays_histograms[key] = fl[key]
-
-    return rv_arrays_trees, rv_arrays_histograms
+                yield ('obj', key, fl[key])
 '''
 
         _hash = hashlib.md5(generated_code.encode(), usedforsecurity=False).hexdigest()
