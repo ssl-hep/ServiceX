@@ -1,254 +1,161 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -euo pipefail
 
 # Constants
-NAMESPACE="default"
-PING_INTERVAL=2  # seconds
-MAX_HELM_RETRIES=12  # Maximum number of times to check for helm installation
+readonly NAMESPACE="${NAMESPACE:-default}"
+readonly PING_INTERVAL=5
+readonly MAX_RETRIES=10
 
-# Configuration based on service type
-if [ "$1" = "app" ]; then
-    APP_LABEL="servicex-servicex-app"
-    LOCAL_PORT=5000
-    CONTAINER_PORT=5000
-    PING_URL="http://localhost:${LOCAL_PORT}/servicex"
-elif [ "$1" = "minio" ]; then
-    APP_LABEL="minio"
-    LOCAL_PORT=9000
-    CONTAINER_PORT=9000
-    # Don't use direct HTTP check for Minio as it might require auth
-    PING_URL=""
-elif [ "$1" = "db" ]; then
-    APP_LABEL="postgresql"
-    LOCAL_PORT=5432
-    CONTAINER_PORT=5432
-    PING_URL=""  # No HTTP endpoint to check for DB
-    POD_NAME="servicex-postgresql-0"  # Fixed pod name for DB
-else
-    echo "Usage: $0 [app|minio|db]"
-    echo "  app   - Port forward to ServiceX app (5000:5000)"
-    echo "  minio - Port forward to Minio (9000:9000)"
-    echo "  db    - Port forward to PostgreSQL (5432:5432)"
-    exit 1
-fi
+# Parse service configuration
+case "${1:-}" in
+    app)
+        SERVICE_NAME="servicex-servicex-app"
+        CONTAINER_PORT="8000"
+        LOCAL_PORT="5001"
+        ;;
+    minio)
+        SERVICE_NAME="servicex-minio"
+        CONTAINER_PORT="9000"
+        LOCAL_PORT="9000"
+        ;;
+    db)
+        SERVICE_NAME="servicex-postgresql"
+        CONTAINER_PORT="5432"
+        LOCAL_PORT="5432"
+        ;;
+    *)
+        echo "Usage: $0 [app|minio|db]"
+        echo "  app   - Port forward to ServiceX app (5001 -> 8000)"
+        echo "  minio - Port forward to Minio (9000 -> 9000)"
+        echo "  db    - Port forward to PostgreSQL (5432 -> 5432)"
+        exit 1
+        ;;
+esac
+
+readonly SERVICE_TYPE="$1"
 
 # Function to log with timestamp
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >&2
 }
 
-# Function to check if servicex helm installation exists
-check_helm_installation() {
-    log "Checking if 'servicex' helm installation exists"
-    if helm list | grep -q servicex; then
-        log "Found 'servicex' helm installation"
-        return 0
-    else
-        log "No 'servicex' helm installation found"
-        return 1
-    fi
+# Function to check if service exists
+check_service_exists() {
+    kubectl get service "$SERVICE_NAME" --namespace="$NAMESPACE" >/dev/null 2>&1
 }
 
-# Function to wait for helm installation
-wait_for_helm_installation() {
-    log "Waiting for 'servicex' helm installation"
+# Function to wait for service availability
+wait_for_service() {
+    log "Waiting for service $SERVICE_NAME to be available..."
     local retries=0
 
-    while ! check_helm_installation && [ $retries -lt $MAX_HELM_RETRIES ]; do
-        retries=$((retries+1))
-        log "Waiting for 'servicex' helm installation... ($retries/$MAX_HELM_RETRIES)"
-        sleep 5
+    while ! check_service_exists && [[ $retries -lt $MAX_RETRIES ]]; do
+        ((retries++))
+        log "Service not found, retrying... ($retries/$MAX_RETRIES)"
+        sleep 3
     done
 
-    if [ $retries -ge $MAX_HELM_RETRIES ]; then
-        log "Timed out waiting for 'servicex' helm installation"
+    if [[ $retries -ge $MAX_RETRIES ]]; then
+        log "Service $SERVICE_NAME not found after $MAX_RETRIES attempts"
         return 1
     fi
 
+    log "Service $SERVICE_NAME is available"
     return 0
 }
 
-# Function to get pod name
-get_pod_name() {
-    # Skip for DB since we already know the pod name
-    if [ "$1" = "db" ]; then
-        return 0
-    fi
-
-    log "Getting pod name for $APP_LABEL"
-
-    if [ "$1" = "app" ]; then
-        POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app=servicex-servicex-app" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-    elif [ "$1" = "minio" ]; then
-        # Try multiple approaches to find the minio pod without detailed logging
-        POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app=minio,release=servicex" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-
-        if [ -z "$POD_NAME" ]; then
-            POD_NAME=$(kubectl get pods --namespace $NAMESPACE -l "app=minio" -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-        fi
-
-        if [ -z "$POD_NAME" ]; then
-            POD_NAME=$(kubectl get pods --namespace $NAMESPACE | grep -i "servicex-minio" | awk '{print $1}' | head -1)
-        fi
-
-        if [ -z "$POD_NAME" ]; then
-            POD_NAME=$(kubectl get pods --namespace $NAMESPACE | grep -i "minio" | awk '{print $1}' | head -1)
-        fi
-
-        if [ -z "$POD_NAME" ]; then
-            log "Error: Could not find any minio pods."
-            return 1
-        fi
-    fi
-
-    if [ -z "$POD_NAME" ]; then
-        log "Error: Could not find pod for $APP_LABEL"
-        return 1
-    fi
-
-    log "Found pod: ${POD_NAME}"
-    return 0
-}
-
-# Function to start port forwarding
+# Function to start port forwarding using service
 start_port_forward() {
-    if [ "$1" = "db" ]; then
-        log "Starting port forwarding from localhost:${LOCAL_PORT} to servicex-postgresql-0:${CONTAINER_PORT}"
-        kubectl port-forward --namespace $NAMESPACE servicex-postgresql-0 ${LOCAL_PORT}:${CONTAINER_PORT} &
-    else
-        log "Starting port forwarding from localhost:${LOCAL_PORT} to ${POD_NAME}:${CONTAINER_PORT}"
-        kubectl port-forward --namespace $NAMESPACE $POD_NAME ${LOCAL_PORT}:${CONTAINER_PORT} &
-    fi
-
+    log "Starting port forwarding: localhost:${LOCAL_PORT} -> ${SERVICE_NAME}:${CONTAINER_PORT}"
+    kubectl port-forward --namespace="$NAMESPACE" "service/$SERVICE_NAME" "${LOCAL_PORT}:${CONTAINER_PORT}" &
     PORT_FORWARD_PID=$!
 
     # Give it a moment to establish connection
     sleep 2
 
-    # Check if port forward is successful
-    if ! ps -p $PORT_FORWARD_PID > /dev/null; then
-        log "Error: Port forwarding failed to start"
+    # Check if port forward process is still running
+    if ! kill -0 "$PORT_FORWARD_PID" 2>/dev/null; then
+        log "Port forwarding failed to start"
         return 1
     fi
 
-    log "Port forwarding established with PID: ${PORT_FORWARD_PID}"
+    log "Port forwarding established (PID: $PORT_FORWARD_PID)"
     return 0
 }
 
-# Function to check if the port forwarding is working
+# Function to check if port forwarding is working
 check_port_forward() {
-    # For services without HTTP endpoints or with auth requirements like Minio
-    if [ -z "$PING_URL" ]; then
-        # Check if the port is listening
-        if command -v nc >/dev/null 2>&1; then
-            if nc -z localhost ${LOCAL_PORT} >/dev/null 2>&1; then
-                log "Port forward is working - port ${LOCAL_PORT} is open"
-                return 0
-            else
-                log "Connection failed - port ${LOCAL_PORT} is not open"
-                return 1
-            fi
-        else
-            # If nc is not available, try lsof
-            if command -v lsof >/dev/null 2>&1; then
-                if lsof -i:${LOCAL_PORT} >/dev/null 2>&1; then
-                    log "Port forward is working - port ${LOCAL_PORT} is open"
-                    return 0
-                else
-                    log "Connection failed - port ${LOCAL_PORT} is not open"
-                    return 1
-                fi
-            else
-                # If neither nc nor lsof is available, just check if the process is running
-                if ps -p $PORT_FORWARD_PID > /dev/null; then
-                    log "Port forward process is still running"
-                    return 0
-                else
-                    log "Port forward process is not running"
-                    return 1
-                fi
-            fi
-        fi
-    else
-        # For services with HTTP endpoints
-        local response_code
-        # Use curl with a short timeout to prevent long waits
-        response_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "${PING_URL}" || echo "failed")
-
-        if [[ "$response_code" =~ ^(200|302|301|303|307|308|403)$ ]]; then
-            # Any of these HTTP response codes indicates the port forward is working
-            log "Port forward is working - received HTTP ${response_code}"
-            return 0
-        elif [[ "$response_code" == "failed" || "$response_code" == "0" || "$response_code" == "000" ]]; then
-            log "Connection failed - no response from service. Will retry."
+    # Simply check if the port forward process is still running
+    if ! kill -0 "$PORT_FORWARD_PID" 2>/dev/null; then
+        log "Port forward process is not running"
+        return 1
+    fi
+    
+    # Additional check: verify port is actually listening
+    if command -v nc >/dev/null 2>&1; then
+        if ! nc -z localhost "$LOCAL_PORT" 2>/dev/null; then
+            log "Port $LOCAL_PORT is not accessible"
             return 1
-        else
-            log "Received unexpected status code: ${response_code}"
-            # Check if we should consider this a success
-            if [[ "$response_code" =~ ^[1-5][0-9][0-9]$ ]]; then
-                log "But got a valid HTTP response, so port forward is working"
-                return 0
-            else
-                log "Invalid response - port forward may not be working correctly"
-                return 1
-            fi
         fi
     fi
+    
+    return 0
 }
 
 # Function to clean up resources
 cleanup() {
-    log "Cleaning up resources..."
-    if [ ! -z "$PORT_FORWARD_PID" ]; then
-        log "Killing port forwarding process (PID: ${PORT_FORWARD_PID})"
-        kill $PORT_FORWARD_PID 2>/dev/null || true
+    log "Cleaning up..."
+    if [[ -n "${PORT_FORWARD_PID:-}" ]]; then
+        log "Terminating port forwarding process (PID: $PORT_FORWARD_PID)"
+        kill "$PORT_FORWARD_PID" 2>/dev/null || true
+        wait "$PORT_FORWARD_PID" 2>/dev/null || true
     fi
-    log "Cleanup complete, exiting"
+    log "Cleanup complete"
     exit 0
 }
 
 # Set trap for cleanup
-trap cleanup SIGINT SIGTERM
+trap cleanup SIGINT SIGTERM EXIT
 
-# Main loop
-log "Starting port forwarding monitor script for $1"
-
-# First, wait for the helm installation
-if ! wait_for_helm_installation; then
-    log "Failed to find servicex helm installation after multiple attempts"
-    log "Please check if the servicex helm chart is properly installed"
-    exit 1
-fi
-
-while true; do
-    # Get pod name
-    if ! get_pod_name "$1"; then
-        log "Retrying in 5 seconds..."
-        sleep 5
-        continue
+# Main execution
+main() {
+    log "Starting port forwarding for $SERVICE_TYPE: $SERVICE_NAME"
+    
+    # Wait for service to be available
+    if ! wait_for_service; then
+        log "Service $SERVICE_NAME is not available"
+        exit 1
     fi
 
-    # Start port forwarding
-    if ! start_port_forward "$1"; then
-        log "Retrying in 5 seconds..."
-        sleep 5
-        continue
-    fi
-
-    # Monitor port forwarding
+    # Main monitoring loop
     while true; do
-        if ! check_port_forward "$1"; then
-            log "Port forward appears to be down, restarting..."
-
-            # Kill existing port forward process if it exists
-            if [ ! -z "$PORT_FORWARD_PID" ]; then
-                kill $PORT_FORWARD_PID 2>/dev/null || true
-                unset PORT_FORWARD_PID
+        # Start port forwarding if not already running
+        if [[ -z "${PORT_FORWARD_PID:-}" ]] || ! kill -0 "$PORT_FORWARD_PID" 2>/dev/null; then
+            log "Starting port forwarding..."
+            if ! start_port_forward; then
+                log "Failed to start port forwarding, retrying in $PING_INTERVAL seconds..."
+                sleep "$PING_INTERVAL"
+                continue
             fi
-
-            break
         fi
 
-        # Wait before checking again
-        sleep $PING_INTERVAL
+        # Check if port forwarding is working
+        if ! check_port_forward; then
+            log "Port forwarding failed, restarting..."
+            if [[ -n "${PORT_FORWARD_PID:-}" ]]; then
+                kill "$PORT_FORWARD_PID" 2>/dev/null || true
+                wait "$PORT_FORWARD_PID" 2>/dev/null || true
+                unset PORT_FORWARD_PID
+            fi
+            sleep 2
+            continue
+        fi
+
+        # Wait before next check
+        sleep "$PING_INTERVAL"
     done
-done
+}
+
+# Run main function
+main
