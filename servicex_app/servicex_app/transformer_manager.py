@@ -109,6 +109,41 @@ class TransformerManager:
                 empty_dir=client.V1EmptyDirVolumeSource())
         )
 
+        # Only mount local volumes in development environment with mountLocal enabled
+        if (current_app.config.get('APP_ENVIRONMENT') == 'dev' and 
+            current_app.config.get('APP_MOUNT_LOCAL')):
+
+            volume_mounts.append(
+                client.V1VolumeMount(
+                    name='host-volume',
+                    mount_path='/servicex'
+                )
+            )
+            volumes.append(
+                client.V1Volume(
+                    name='host-volume',
+                    host_path=client.V1HostPathVolumeSource(
+                        path='/mnt/servicex/transformer_sidecar/src',
+                        type='DirectoryOrCreate'
+                    ),
+                )
+            )
+            volume_mounts.append(
+                client.V1VolumeMount(
+                    name='host-scripts-volume',
+                    mount_path='/servicex/scripts'
+                )
+            )
+            volumes.append(
+                client.V1Volume(
+                    name='host-scripts-volume',
+                    host_path=client.V1HostPathVolumeSource(
+                        path='/mnt/servicex/transformer_sidecar/scripts',
+                        type='DirectoryOrCreate'
+                    ),
+                )
+            )
+
         if x509_secret:
             volume_mounts.append(
                 client.V1VolumeMount(
