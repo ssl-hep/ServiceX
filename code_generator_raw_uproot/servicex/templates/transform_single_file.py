@@ -87,6 +87,11 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     :param output_path: path to file
     :return: Tuple with (total_events: Int, output_size: Int)
     """
+    print(f"Compression algorithm: {compression_algorithm}")
+    print(f"Compression level: {compression_level}")
+    print(f"Allowed compression algorithms: {ALLOWED_COMPRESSION_ALGORITHMS}")
+    print(f"Allowed compression levels: {ALLOWED_COMPRESSION_LEVELS}")
+
     try:
         stime = time.time()
         total_events = 0
