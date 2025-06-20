@@ -34,8 +34,16 @@ from generated_transformer import run_query  # noqa
 import awkward as ak
 import pyarrow.parquet as pq
 import functools
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+import logging
 
+logger = logging.getLogger(__name__)
+
+instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
+compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
+
+ALLOWED_COMPRESSION_ALGORITHMS = ['ZSTD', 'ZLIB', 'LZMA', 'ZSTD']
+ALLOWED_COMPRESSION_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 def get_generator_timing(f):
     from time import perf_counter
@@ -90,10 +98,23 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         if output_format in ('root-file', 'root-rntuple'):
             import uproot
+
+            if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
+                logger.warning(
+                    f"Invalid compression algorithm '{compression_algorithm}'. "
+                    f"Using default 'ZSTD' instead."
+                )
+                compression_algorithm = 'ZSTD'
+            
+            if compression_level not in ALLOWED_COMPRESSION_LEVELS:
+                logger.warning(
+                    f"Invalid compression level '{compression_level}'. "
+                    f"Using default '5' instead."
+                )
+                compression_level = 5
+
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
-            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
-            compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
             with open(output_path, 'b+w') as wfile:
                 compression_obj = getattr(uproot, compression_algorithm)(compression_level)
                 with uproot.recreate(wfile, compression=compression_obj) as writer:
