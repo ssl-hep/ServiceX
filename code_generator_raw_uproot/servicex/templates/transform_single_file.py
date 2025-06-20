@@ -34,9 +34,6 @@ from generated_transformer import run_query  # noqa
 import awkward as ak
 import pyarrow.parquet as pq
 import functools
-import logging
-
-logger = logging.getLogger(__name__)
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
@@ -100,15 +97,15 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             import uproot
 
             if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
-                logger.warning(
-                    f"Invalid compression algorithm '{compression_algorithm}'. "
+                print(
+                    f"WARNING: Invalid compression algorithm '{compression_algorithm}'. "
                     f"Using default 'ZSTD' instead."
                 )
                 compression_algorithm = 'ZSTD'
             
             if compression_level not in ALLOWED_COMPRESSION_LEVELS:
-                logger.warning(
-                    f"Invalid compression level '{compression_level}'. "
+                print(
+                    f"WARNING: Invalid compression level '{compression_level}'. "
                     f"Using default '5' instead."
                 )
                 compression_level = 5
@@ -157,11 +154,16 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size
-        print(f'Detailed transformer times. query_time:{round(ttimedt, 3)} '
-              f'serialization: {round(etimedt, 3)} '
-              f'writing: {round((wtime - stime) - etimedt - ttimedt, 3)}')
+        print(
+            f"Detailed transformer times. query_time:{round(ttimedt, 3)} "
+            f"serialization: {round(etimedt, 3)} "
+            f"writing: {round((wtime - stime) - etimedt - ttimedt, 3)}"
+        )
 
-        print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
+        print(
+            f"Transform stats: Total Events: {total_events}, "
+            f"resulting file size {output_size}"
+        )
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)
