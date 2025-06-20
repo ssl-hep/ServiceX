@@ -95,7 +95,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
             compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
             with open(output_path, 'b+w') as wfile:
-                with uproot.recreate(wfile, compression=getattr(uproot, compression_algorithm)(compression_level)) as writer:
+                compression_obj = getattr(uproot, compression_algorithm)(compression_level)
+                with uproot.recreate(wfile, compression=compression_obj) as writer:
                     for dt, item in get_generator_timing(run_query)(file_path):
                         ttimedt += dt
                         match item:
