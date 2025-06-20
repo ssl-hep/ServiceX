@@ -92,8 +92,10 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             import uproot
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
+            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
+            compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
             with open(output_path, 'b+w') as wfile:
-                with uproot.recreate(wfile, compression=uproot.ZSTD(5)) as writer:
+                with uproot.recreate(wfile, compression=getattr(uproot, compression_algorithm)(compression_level)) as writer:
                     for dt, item in get_generator_timing(run_query)(file_path):
                         ttimedt += dt
                         match item:

@@ -40,6 +40,8 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: 5.6.1
+    compressionAlgorithm: ZSTD
+    compressionLevel: 5
 
   uproot:
     enabled: true
