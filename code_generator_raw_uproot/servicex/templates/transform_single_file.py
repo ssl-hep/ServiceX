@@ -42,8 +42,8 @@ try:
 except ValueError:
     compression_level = 5
 
-ALLOWED_COMPRESSION_ALGORITHMS = ['ZSTD', 'ZLIB', 'LZMA', 'ZSTD']
-ALLOWED_COMPRESSION_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4' 'ZSTD'}
+ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 def get_generator_timing(f):
     from time import perf_counter
