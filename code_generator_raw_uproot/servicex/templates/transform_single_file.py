@@ -37,7 +37,10 @@ import functools
 
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
-compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
+try:
+    compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
+except ValueError:
+    compression_level = 5
 
 ALLOWED_COMPRESSION_ALGORITHMS = ['ZSTD', 'ZLIB', 'LZMA', 'ZSTD']
 ALLOWED_COMPRESSION_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
