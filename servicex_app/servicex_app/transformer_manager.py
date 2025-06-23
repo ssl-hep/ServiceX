@@ -221,7 +221,6 @@ class TransformerManager:
                     "memory": current_app.config['TRANSFORMER_MEMORY_LIMIT']}
         )
 
-
         # Configure Pod template container
         science_container = client.V1Container(
             name="transformer",
