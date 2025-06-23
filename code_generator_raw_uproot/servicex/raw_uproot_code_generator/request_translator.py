@@ -31,7 +31,7 @@ import shutil
 from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
     GenerateCodeException
 
-ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4' 'ZSTD'}
+ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4', 'ZSTD'}
 ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 
@@ -60,19 +60,17 @@ class RawUprootTranslator(CodeGenerator):
             compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
         except ValueError:
             raise RuntimeError(
-                f"WARNING: Invalid compression level '{os.environ.get('COMPRESSION_LEVEL', 5)}'. "
+                f"Invalid compression level '{os.environ.get('COMPRESSION_LEVEL', 5)}'. "
             )
 
         if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
             raise RuntimeError(
-                f"WARNING: Invalid compression algorithm '{compression_algorithm}'. "
-                f"Using default 'ZSTD' instead."
+                f"Invalid compression algorithm '{compression_algorithm}'. "
             )
 
         if compression_level not in ALLOWED_COMPRESSION_LEVELS:
             raise RuntimeError(
-                f"WARNING: Invalid compression level '{compression_level}'. "
-                f"Using default '5' instead."
+                f"Invalid compression level '{compression_level}'. "
             )
 
         generated_code = f'''
