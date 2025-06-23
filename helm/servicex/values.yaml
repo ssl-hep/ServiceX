@@ -43,7 +43,6 @@ codeGen:
     compressionAlgorithm: ZSTD
     compressionLevel: 5
 
-
   uproot:
     enabled: true
     image: sslhep/servicex_code_gen_func_adl_uproot
@@ -188,7 +187,6 @@ transformer:
     existingClaim: null
     subdir: null
   priorityClassName: null
-
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6

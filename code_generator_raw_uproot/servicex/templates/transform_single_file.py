@@ -34,7 +34,6 @@ from generated_transformer import run_query  # noqa
 import awkward as ak
 import pyarrow.parquet as pq
 import functools
-
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
 ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4' 'ZSTD'}
@@ -86,7 +85,6 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     :param output_path: path to file
     :return: Tuple with (total_events: Int, output_size: Int)
     """
-
     try:
         stime = time.time()
         total_events = 0
