@@ -36,9 +36,6 @@ import pyarrow.parquet as pq
 import functools
 instance = os.environ.get('INSTANCE_NAME', 'Unknown')
 
-ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4' 'ZSTD'}
-ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
-
 
 def get_generator_timing(f):
     from time import perf_counter
@@ -94,25 +91,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         if output_format in ('root-file', 'root-rntuple'):
             import uproot
 
-            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
-            try:
-                compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
-            except ValueError:
-                compression_level = 5
-
-            if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
-                print(
-                    f"WARNING: Invalid compression algorithm '{compression_algorithm}'. "
-                    f"Using default 'ZSTD' instead."
-                )
-                compression_algorithm = 'ZSTD'
-
-            if compression_level not in ALLOWED_COMPRESSION_LEVELS:
-                print(
-                    f"WARNING: Invalid compression level '{compression_level}'. "
-                    f"Using default '5' instead."
-                )
-                compression_level = 5
+            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM')
+            compression_level = int(os.environ.get('COMPRESSION_LEVEL'))
 
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
