@@ -75,7 +75,7 @@ class RawUprootTranslator(CodeGenerator):
 
         generated_code = f'''
 import os
-os.environ['COMPRESSION_ALGORITHM'] = {compression_algorithm}
+os.environ['COMPRESSION_ALGORITHM'] = '{compression_algorithm}'
 os.environ['COMPRESSION_LEVEL'] = {compression_level}
 
 def run_query(file_path):
