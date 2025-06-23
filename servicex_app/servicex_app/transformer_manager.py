@@ -221,8 +221,6 @@ class TransformerManager:
                     "memory": current_app.config['TRANSFORMER_MEMORY_LIMIT']}
         )
 
-        current_app.logger.info(f"COMPRESSION_ALGORITHM (current_app.config): {current_app.config['TRANSFORMER_COMPRESSION_ALGORITHM']}")
-        current_app.logger.info(f"COMPRESSION_LEVEL (current_app.config): {current_app.config['TRANSFORMER_COMPRESSION_LEVEL']}")
         env += [
             client.V1EnvVar(name='COMPRESSION_ALGORITHM',
                             value=current_app.config['TRANSFORMER_COMPRESSION_ALGORITHM']),
