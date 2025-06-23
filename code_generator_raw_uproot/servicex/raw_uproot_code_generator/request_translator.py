@@ -52,11 +52,9 @@ class RawUprootTranslator(CodeGenerator):
                 raise GenerateCodeException("At least one tree or histogram must be "
                                             f"specified for query {subquery}")
 
+        print("COMPRESSION_ALGORITHM:", os.environ['COMPRESSION_ALGORITHM'])
+        print("COMPRESSION_LEVEL:", os.environ['COMPRESSION_LEVEL'])
         generated_code = f'''
-import os
-os.environ['COMPRESSION_ALGORITHM'] = '{os.environ['COMPRESSION_ALGORITHM']}'
-os.environ['COMPRESSION_LEVEL'] = '{os.environ['COMPRESSION_LEVEL']}'
-
 def run_query(file_path):
     jquery = {jquery}
 
