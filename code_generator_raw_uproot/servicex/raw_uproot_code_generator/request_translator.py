@@ -53,6 +53,10 @@ class RawUprootTranslator(CodeGenerator):
                                             f"specified for query {subquery}")
 
         generated_code = f'''
+import os
+os.environ['COMPRESSION_ALGORITHM'] = '{os.environ['COMPRESSION_ALGORITHM']}'
+os.environ['COMPRESSION_LEVEL'] = '{os.environ['COMPRESSION_LEVEL']}'
+
 def run_query(file_path):
     jquery = {jquery}
 

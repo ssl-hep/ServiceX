@@ -24,6 +24,10 @@ spec:
           value: {{ $.Release.Name }}
         - name: TRANSFORMER_SCIENCE_IMAGE
           value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
+        - name: TRANSFORMER_COMPRESSION_ALGORITHM
+          value: {{ .compressionAlgorithm }}
+        - name: TRANSFORMER_COMPRESSION_LEVEL
+          value: {{ .compressionLevel }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .pullPolicy }}
