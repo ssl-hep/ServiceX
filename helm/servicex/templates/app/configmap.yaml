@@ -118,6 +118,8 @@ data:
     TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
     TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
 
+    TRANSFORMER_COMPRESSION_ALGORITHM = "{{ .Values.transformer.compressionAlgorithm }}"
+    TRANSFORMER_COMPRESSION_LEVEL = "{{ .Values.transformer.compressionLevel }}"
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True

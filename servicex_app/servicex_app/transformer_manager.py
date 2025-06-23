@@ -221,6 +221,13 @@ class TransformerManager:
                     "memory": current_app.config['TRANSFORMER_MEMORY_LIMIT']}
         )
 
+        env += [
+            client.V1EnvVar(name='COMPRESSION_ALGORITHM',
+                            value=current_app.config['TRANSFORMER_COMPRESSION_ALGORITHM']),
+            client.V1EnvVar(name='COMPRESSION_LEVEL',
+                            value=current_app.config['TRANSFORMER_COMPRESSION_LEVEL'])
+        ]
+
         # Configure Pod template container
         science_container = client.V1Container(
             name="transformer",

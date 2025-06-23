@@ -40,8 +40,6 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: 5.6.1
-    compressionAlgorithm: ZSTD
-    compressionLevel: 5
 
   uproot:
     enabled: true
@@ -187,6 +185,11 @@ transformer:
     existingClaim: null
     subdir: null
   priorityClassName: null
+
+  # applied only in uproot-raw code generator
+  compressionAlgorithm: ZSTD
+  compressionLevel: 5
+
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6
