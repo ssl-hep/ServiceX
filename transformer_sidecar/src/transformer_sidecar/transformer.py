@@ -163,7 +163,7 @@ def transform_file(
     transformer_stats = TransformerStats()
     try:
         # Loop through the replicas
-        for path, _file_path in zip(paths, _file_paths):
+        for _file_path in _file_paths:
             logger.info(
                 "trying to transform file",
                 extra={
@@ -215,19 +215,19 @@ def transform_file(
                 rec = FileCompleteRecord(
                     request_id=request_id,
                     file_path=_file_path,
-                    s3_object_name=path,
+                    s3_object_name="none",
                     file_id=file_id,
                     status="success",
                     total_time=time.time() - total_time,
                     total_events=transformer_stats.total_events,
                     total_bytes=os.path.getsize(output_path),
                 )
-
                 if object_store:
-                    upload_file(Path(transform_request["safeOutputFileName"]),
-                                servicex,
-                                rec
-                                )
+                    upload_file(
+                        Path(transform_request["safeOutputFileName"]),
+                        servicex,
+                        rec
+                    )
                 else:
                     servicex.put_file_complete(rec)
 
@@ -257,8 +257,8 @@ def transform_file(
             rec = FileCompleteRecord(
                 request_id=request_id,
                 file_path=_file_paths[0],
-                s3_object_name=paths[0],
                 file_id=file_id,
+                s3_object_name="none",
                 status="failure",
                 total_time=time.time() - total_time,
                 total_events=0,
@@ -294,7 +294,7 @@ def transform_file(
         rec = FileCompleteRecord(
             request_id=request_id,
             file_path=_file_paths[0],
-            s3_object_name=paths[0],
+            s3_object_name="none",
             file_id=file_id,
             status="failure",
             total_time=time.time() - total_time,
@@ -353,6 +353,8 @@ def upload_file(source_path: Path,
     else:
         file_to_upload = source_path
         object_name = source_path.name
+
+    rec.s3_object_name = object_name
 
     logger.info("Uploading file to object store.",
                 extra={'requestId': request_id,

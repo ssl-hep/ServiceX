@@ -104,10 +104,13 @@ class ServiceXAdapter:
                            fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
                            tries=MAX_RETRIES,
                            delay=RETRY_DELAY)
-                self.logger.info("Put file complete.", extra={'requestId': rec.request_id,
-                                                              "file-id": rec.file_id,
-                                                              "place": PLACE,
-                                                              "file_path": rec.file_path})
+                self.logger.info("Put file complete.", extra={
+                    'requestId': rec.request_id,
+                    "file-id": rec.file_id,
+                    "place": PLACE,
+                    "file_path": rec.file_path,
+                    "s3-object-name": rec.s3_object_name,
+                })
             except requests.exceptions.ConnectionError:
                 self.logger.exception("Connection Error in put_file_complete",
                                       extra={'requestId': rec.request_id,

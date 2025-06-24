@@ -89,8 +89,9 @@ class TransformerFileComplete(ServiceXResource):
         info = request.get_json()
         logger = current_app.logger
         log_extra = {
-                    'requestId': request_id,
-                    'file-id': info['file-id']
+            'requestId': request_id,
+            'file-id': info['file-id'],
+            's3-object-name': info['s3-object-name'],
         }
 
         logger.info("FileComplete", extra={**log_extra, 'metric': info})
