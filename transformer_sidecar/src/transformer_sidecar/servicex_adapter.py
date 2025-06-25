@@ -47,14 +47,16 @@ PLACE = {
 
 class FileCompleteRecord:
     def __init__(self, request_id: str, file_path: str, file_id: int, status: str,
-                 total_time: float, total_events: int, total_bytes: int):
+                 total_time: float, total_events: int, total_bytes: int, s3_object_name: str):
         assert request_id, "request_id is required"
         assert file_path, "file_path is required"
+        assert s3_object_name, "s3_object_name is required"
         assert file_id, "file_id is required"
         assert status, "status is required"
 
         self.request_id = request_id
         self.file_path = file_path
+        self.s3_object_name = s3_object_name
         self.file_id = file_id
         self.status = status
         self.total_time = total_time
@@ -66,6 +68,7 @@ class FileCompleteRecord:
         return {
             "requestId": self.request_id,
             "file-path": self.file_path,
+            "s3-object-name": self.s3_object_name,
             "file-id": self.file_id,
             "status": self.status,
             "total-time": self.total_time,
