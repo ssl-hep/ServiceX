@@ -83,6 +83,7 @@ codeGen:
   atlasr25:
     enabled: true
     image: sslhep/servicex_code_gen_atlas_xaod
+    pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
     defaultScienceContainerTag: 25.2.41
