@@ -28,8 +28,11 @@
 import os
 import shutil
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
-    GenerateCodeException
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4', 'ZSTD'}
 ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -44,16 +47,20 @@ class RawUprootTranslator(CodeGenerator):
             raise GenerateCodeException("Requested codegen for an empty string.")
 
         import json
+
         jquery = json.loads(query)
 
         if not isinstance(jquery, list):
             raise GenerateCodeException("Provided query is not a list")
 
         for subquery in jquery:
-            if (('treename' not in subquery or not subquery['treename'])
-                    and ('copy_histograms' not in subquery or not subquery['copy_histograms'])):
-                raise GenerateCodeException("At least one tree or histogram must be "
-                                            f"specified for query {subquery}")
+            if ("treename" not in subquery or not subquery["treename"]) and (
+                "copy_histograms" not in subquery or not subquery["copy_histograms"]
+            ):
+                raise GenerateCodeException(
+                    "At least one tree or histogram must be "
+                    f"specified for query {subquery}"
+                )
 
         compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
         try:
@@ -73,7 +80,7 @@ class RawUprootTranslator(CodeGenerator):
                 f"Invalid compression level '{compression_level}'. "
             )
 
-        generated_code = f'''
+        generated_code = f"""
 import os
 os.environ['COMPRESSION_ALGORITHM'] = '{compression_algorithm}'
 os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
@@ -86,41 +93,48 @@ def run_query(file_path):
         for obj in run_single_query(file_path, subquery):
             yield obj
 
-def run_single_query(file_path, query):
-    import uproot
-    import awkward as ak
-    from tenacity import retry, stop_after_attempt, retry_if_exception_message,\
-                         wait_exponential_jitter
+def change_axis(func, axis=1):
+    # change the axis argument
+    import functools
+    return functools.partial(func, axis=axis)
 
+def get_lang(default_axis=False):
+    import awkward as ak
+    import uproot
     lang = uproot.language.python.PythonLanguage()
-    lang.functions.update({{ 'concatenate': ak.concatenate,
+    if default_axis:
+        import functools
+        fa = functools.partial
+    else:
+        fa = change_axis
+    lang.functions.update({{ 'concatenate': fa(ak.concatenate),
                              'where': ak.where,
-                             'flatten': ak.flatten,
+                             'flatten': fa(ak.flatten, axis=2),
                              'num': ak.num,
-                             'count': ak.count,
-                             'count_nonzero': ak.count_nonzero,
-                             'sum': ak.sum,
-                             'nansum': ak.nansum,
-                             'prod': ak.prod,
-                             'nanprod': ak.nanprod,
-                             'any': ak.any,
-                             'all': ak.all,
-                             'min': ak.min,
-                             'nanmin': ak.nanmin,
-                             'max': ak.max,
-                             'nanmax': ak.nanmax,
-                             'argmin': ak.argmin,
-                             'nanargmin': ak.nanargmin,
-                             'argmax': ak.argmax,
-                             'nanargmax': ak.nanargmax,
-                             'moment': ak.moment,
-                             'mean': ak.mean,
-                             'nanmean': ak.nanmean,
-                             'var': ak.var,
-                             'nanvar': ak.nanvar,
-                             'std': ak.std,
-                             'nanstd': ak.nanstd,
-                             'softmax': ak.softmax,
+                             'count': fa(ak.count),
+                             'count_nonzero': fa(ak.count_nonzero),
+                             'sum': fa(ak.sum),
+                             'nansum': fa(ak.nansum),
+                             'prod': fa(ak.prod),
+                             'nanprod': fa(ak.nanprod),
+                             'any': fa(ak.any),
+                             'all': fa(ak.all),
+                             'min': fa(ak.min),
+                             'nanmin': fa(ak.nanmin),
+                             'max': fa(ak.max),
+                             'nanmax': fa(ak.nanmax),
+                             'argmin': fa(ak.argmin),
+                             'nanargmin': fa(ak.nanargmin),
+                             'argmax': fa(ak.argmax),
+                             'nanargmax': fa(ak.nanargmax),
+                             'moment': fa(ak.moment),
+                             'mean': fa(ak.mean),
+                             'nanmean': fa(ak.nanmean),
+                             'var': fa(ak.var),
+                             'nanvar': fa(ak.nanvar),
+                             'std': fa(ak.std),
+                             'nanstd': fa(ak.nanstd),
+                             'softmax': fa(ak.softmax),
                              'sort': ak.sort,
                              'argsort': ak.argsort,
                              'mask': ak.mask,
@@ -139,6 +153,12 @@ def run_single_query(file_path, query):
                              'isclose': ak.isclose,
                              'almost_equal': ak.almost_equal,
                            }})
+    return lang
+
+def run_single_query(file_path, query):
+    import uproot
+    from tenacity import retry, stop_after_attempt, retry_if_exception_message,\
+                         wait_exponential_jitter
 
     sanitized_args = {{'expressions': query.get('expressions'),
                        'cut': query.get('cut'),
@@ -152,6 +172,7 @@ def run_single_query(file_path, query):
     with open_func({{file_path: None}}) as fl:
         if 'treename' in query:
             trees = query['treename']
+            lang = get_lang(query.get('use_standard_awkward_axis', False))
             if isinstance(trees, str):
                 trees = [trees]
             if isinstance(trees, list):
@@ -179,7 +200,7 @@ def run_single_query(file_path, query):
             keys = fl.keys(filter_name=histograms, cycle=False)
             for key in keys:
                 yield ('obj', key, fl[key])
-'''
+"""
 
         _hash = hashlib.md5(generated_code.encode(), usedforsecurity=False).hexdigest()
         query_file_path = os.path.join(cache_path, _hash)
@@ -188,17 +209,26 @@ def run_single_query(file_path, query):
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
 
-        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+        with open(
+            os.path.join(query_file_path, "generated_transformer.py"), "w"
+        ) as python_file:
             python_file.write(generated_code)
 
         # Transfer the templated main python script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
-        shutil.copyfile(template_path, os.path.join(query_file_path, "transform_single_file.py"))
+        template_path = os.environ.get(
+            "TEMPLATE_PATH",
+            "/home/servicex/servicex/templates/transform_single_file.py",
+        )  # NOQA: 501
+        shutil.copyfile(
+            template_path, os.path.join(query_file_path, "transform_single_file.py")
+        )
 
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
-                                                        "transformer_capabilities.json"))
+        capabilities_path = os.environ.get(
+            "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
+        )
+        shutil.copyfile(
+            capabilities_path,
+            os.path.join(query_file_path, "transformer_capabilities.json"),
+        )
 
         return GeneratedFileResult(_hash, query_file_path)

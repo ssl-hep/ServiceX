@@ -26,8 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from servicex.raw_uproot_code_generator.request_translator import \
-    RawUprootTranslator
+from servicex.raw_uproot_code_generator.request_translator import RawUprootTranslator
 import json
 import os
 import tempfile
@@ -36,38 +35,45 @@ from servicex_codegen.code_generator import GenerateCodeException
 
 
 def test_generate_code():
-    os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
-    os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # proper query
         translator = RawUprootTranslator()
-        query = json.dumps([{'treename': 'sumWeights', 'filter_name': ['/totalE.*/']},
-                            {'treename': ['nominal', 'JET_JER_EffectiveNP_1__1down'],
-                             'filter_name': ['/mu_.*/', 'runNumber', 'lbn'],
-                             'cut': 'met_met>150e3'},
-                            {'treename': {'nominal': 'modified'},
-                             'filter_name': ['lbn']},
-                            {'copy_histograms': 'CutBookkeeper*'}
-                            ])
+        query = json.dumps(
+            [
+                {"treename": "sumWeights", "filter_name": ["/totalE.*/"]},
+                {
+                    "treename": ["nominal", "JET_JER_EffectiveNP_1__1down"],
+                    "filter_name": ["/mu_.*/", "runNumber", "lbn"],
+                    "cut": "met_met>150e3",
+                },
+                {"treename": {"nominal": "modified"}, "filter_name": ["lbn"]},
+                {"copy_histograms": "CutBookkeeper*"},
+            ]
+        )
         expected_hash = "5342f813a78392e667cfb346d561618b"
+
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?
         try:
-            exec(open(os.path.join(result.output_dir, 'generated_transformer.py')).read())
+            exec(
+                open(os.path.join(result.output_dir, "generated_transformer.py")).read()
+            )
         except SyntaxError:
-            pytest.fail('Generated Python is not valid code')
+            pytest.fail("Generated Python is not valid code")
 
         assert result.hash == expected_hash
         assert result.output_dir == os.path.join(tmpdirname, expected_hash)
 
         # empty query
-        query = ''
+        query = ""
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
-        query = json.dumps('abc')
+        query = json.dumps("abc")
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
@@ -78,4 +84,5 @@ def test_generate_code():
 
 def test_app():
     import servicex.raw_uproot_code_generator
+
     servicex.raw_uproot_code_generator.create_app()

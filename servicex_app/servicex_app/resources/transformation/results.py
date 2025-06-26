@@ -1,4 +1,3 @@
-import logging
 import datetime
 
 from flask_restful import reqparse
@@ -6,8 +5,6 @@ from flask_restful import reqparse
 from servicex_app.decorators import auth_required
 from servicex_app.models import TransformationResult
 from servicex_app.resources.servicex_resource import ServiceXResource
-
-logger = logging.getLogger(__name__)
 
 
 class TransformationResults(ServiceXResource):
