@@ -26,6 +26,22 @@ An example illustrating these features:
                             ])
 ```
 
+Output File Compression
+-----------------------
+For output files in ROOT formats (`root-file` or `root-rntuple`), the compression algorithm and level can be configured across all queries processed by this code generator. The compression parameters are set in the Helm chart configuration:
+
+```
+codeGen:
+  uproot-raw:
+    compressionAlgorithm: ZSTD
+    compressionLevel: 5
+```
+
+**Supported compression algorithms:** `ZLIB`, `LZMA`, `LZ4`, `ZSTD`
+
+**Supported compression levels:** Integer values between 1 and 9.
+
+
 Usage
 -----
 This repo builds a container to be used in the `ServiceX` application. You can 
