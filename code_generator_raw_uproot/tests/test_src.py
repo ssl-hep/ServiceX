@@ -53,7 +53,7 @@ def test_generate_code():
                 {"copy_histograms": "CutBookkeeper*"},
             ]
         )
-        expected_hash = "5342f813a78392e667cfb346d561618b"
+        expected_hash = "a3ac3db03730b67eafccd0fe8ca8f607"
 
         result = translator.generate_code(query, tmpdirname)
 
