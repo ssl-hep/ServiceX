@@ -97,6 +97,14 @@ codeGen:
     defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
     defaultScienceContainerTag: cmssw-5-3-32
 
+  topcp:
+    enabled: true
+    image: sslhep/servicex_code_gen_topcp
+    pullPolicy: Always
+    tag: develop
+    defaultScienceContainerImage: sslhep/servicex_science_image_topcp
+    defaultScienceContainerTag: 2.17.0-25.2.45
+
 didFinder:
   CERNOpenData:
     enabled: true
