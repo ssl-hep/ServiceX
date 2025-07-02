@@ -24,6 +24,7 @@ July 1, 2025
 - Axis default on a number of functions in uproot-raw codegen
 - Uproot raw can perform chunk processing
 - Transform title can now be 512 characters long
+- Updated bitnami chart versions to pick up supported RabbitMQ and Minio
 
 ### Fixed
 - Bug in minimum workers for HPA
