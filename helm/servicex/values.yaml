@@ -145,8 +145,6 @@ minio:
   volumePermissions:
     image:
       repository: bitnami/bitnami-shell-archived
-  apiIngress:
-    enabled: false
   auth:
     rootPassword: leftfoot1
     rootUser: miniouser
