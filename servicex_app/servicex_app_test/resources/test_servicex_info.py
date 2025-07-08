@@ -30,18 +30,19 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 
 class TestServicexInfo(ResourceTestBase):
     def test_get_info(self, client, mock_app_version):
-        response = client.get('/servicex')
+        response = client.get("/servicex")
         assert response.status_code == 200
         print(response.json)
         assert response.json == {
-                                 'app-version': '3.14.15',
-                                 'code-gen-image': {
-                                    'atlasxaod': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
-                                    'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
-                                    'python': 'sslhep/servicex_code_gen_python:develop',
-                                    'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
-                                    },
-                                 'capabilities': [
-                                     'poll_local_transformation_results'
-                                 ]
-                                }  # noqa: E501
+            "app-version": "3.14.15",
+            "code-gen-image": {
+                "atlasxaod": "sslhep/servicex_code_gen_func_adl_xaod:develop",
+                "cms": "sslhep/servicex_code_gen_cms_aod:develop",
+                "python": "sslhep/servicex_code_gen_python:develop",
+                "uproot": "sslhep/servicex_code_gen_func_adl_uproot:develop",
+            },
+            "capabilities": [
+                "poll_local_transformation_results",
+                "long_sample_titles_10240",
+            ],
+        }  # noqa: E501

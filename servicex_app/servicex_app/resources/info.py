@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-2025, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@ class Info(ServiceXResource):
     def get(self):
         return {
             "app-version": self._get_app_version(),
-            "code-gen-image": current_app.config['CODE_GEN_IMAGES'],
+            "code-gen-image": current_app.config["CODE_GEN_IMAGES"],
             "capabilities": [
-                "poll_local_transformation_results"
-            ]
+                "poll_local_transformation_results",
+                "long_sample_titles_10240",
+            ],
         }
