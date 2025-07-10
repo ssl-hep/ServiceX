@@ -90,10 +90,15 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         if output_format in ('root-file', 'root-rntuple'):
             import uproot
+
+            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM')
+            compression_level = int(os.environ.get('COMPRESSION_LEVEL'))
+
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
             with open(output_path, 'b+w') as wfile:
-                with uproot.recreate(wfile, compression=uproot.ZSTD(5)) as writer:
+                compression_obj = getattr(uproot, compression_algorithm)(compression_level)
+                with uproot.recreate(wfile, compression=compression_obj) as writer:
                     for dt, item in get_generator_timing(run_query)(file_path):
                         ttimedt += dt
                         match item:
@@ -133,11 +138,16 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size
-        print(f'Detailed transformer times. query_time:{round(ttimedt, 3)} '
-              f'serialization: {round(etimedt, 3)} '
-              f'writing: {round((wtime - stime) - etimedt - ttimedt, 3)}')
+        print(
+            f"Detailed transformer times. query_time:{round(ttimedt, 3)} "
+            f"serialization: {round(etimedt, 3)} "
+            f"writing: {round((wtime - stime) - etimedt - ttimedt, 3)}"
+        )
 
-        print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
+        print(
+            f"Transform stats: Total Events: {total_events}, "
+            f"resulting file size {output_size}"
+        )
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)

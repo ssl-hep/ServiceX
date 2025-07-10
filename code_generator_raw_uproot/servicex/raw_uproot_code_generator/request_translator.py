@@ -34,6 +34,9 @@ from servicex_codegen.code_generator import (
     GenerateCodeException,
 )
 
+ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4', 'ZSTD'}
+ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
+
 
 class RawUprootTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
@@ -59,7 +62,29 @@ class RawUprootTranslator(CodeGenerator):
                     f"specified for query {subquery}"
                 )
 
+        compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
+        try:
+            compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
+        except ValueError:
+            raise RuntimeError(
+                f"Invalid compression level '{os.environ.get('COMPRESSION_LEVEL', 5)}'. "
+            )
+
+        if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
+            raise RuntimeError(
+                f"Invalid compression algorithm '{compression_algorithm}'. "
+            )
+
+        if compression_level not in ALLOWED_COMPRESSION_LEVELS:
+            raise RuntimeError(
+                f"Invalid compression level '{compression_level}'. "
+            )
+
         generated_code = f"""
+import os
+os.environ['COMPRESSION_ALGORITHM'] = '{compression_algorithm}'
+os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
+
 def run_query(file_path):
     jquery = {jquery}
 
