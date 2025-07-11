@@ -813,6 +813,31 @@ files = [
 test = ["autopep8", "codecov", "coverage", "flake8", "pytest (>=3.9)", "pytest-asyncio", "pytest-cov", "pytest-mock", "twine", "wheel"]
 
 [[package]]
+name = "markdown-it-py"
+version = "3.0.0"
+description = "Python port of markdown-it. Markdown parsing, done right!"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
+    {file = "markdown_it_py-3.0.0-py3-none-any.whl", hash = "sha256:355216845c60bd96232cd8d8c40e8f9765cc86f46880e43a8fd22dc1a1a8cab1"},
+]
+
+[package.dependencies]
+mdurl = ">=0.1,<1.0"
+
+[package.extras]
+benchmarking = ["psutil", "pytest", "pytest-benchmark"]
+code-style = ["pre-commit (>=3.0,<4.0)"]
+compare = ["commonmark (>=0.9,<1.0)", "markdown (>=3.4,<4.0)", "mistletoe (>=1.0,<2.0)", "mistune (>=2.0,<3.0)", "panflute (>=2.3,<3.0)"]
+linkify = ["linkify-it-py (>=1,<3)"]
+plugins = ["mdit-py-plugins"]
+profiling = ["gprof2dot"]
+rtd = ["jupyter_sphinx", "mdit-py-plugins", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[[package]]
 name = "maxminddb"
 version = "2.6.2"
 description = "Reader for the MaxMind DB format"
@@ -901,6 +926,18 @@ groups = ["test"]
 files = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
+]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+description = "Markdown URL utilities"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 
 [[package]]
@@ -1014,7 +1051,7 @@ version = "24.2"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
-groups = ["test"]
+groups = ["main", "test"]
 files = [
     {file = "packaging-24.2-py3-none-any.whl", hash = "sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759"},
     {file = "packaging-24.2.tar.gz", hash = "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"},
@@ -1196,6 +1233,21 @@ files = [
 ]
 
 [[package]]
+name = "pygments"
+version = "2.19.2"
+description = "Pygments is a syntax highlighting package written in Python."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
+    {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
+]
+
+[package.extras]
+windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
 name = "pytest"
 version = "7.4.4"
 description = "pytest: simple powerful testing with Python"
@@ -1288,6 +1340,26 @@ urllib3 = ">=1.21.1,<3"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[[package]]
+name = "rich"
+version = "14.0.0"
+description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+optional = false
+python-versions = ">=3.8.0"
+groups = ["main"]
+files = [
+    {file = "rich-14.0.0-py3-none-any.whl", hash = "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0"},
+    {file = "rich-14.0.0.tar.gz", hash = "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725"},
+]
+
+[package.dependencies]
+markdown-it-py = ">=2.2.0"
+pygments = ">=2.13.0,<3.0.0"
+typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.11\""}
+
+[package.extras]
+jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rpds-py"
@@ -1391,29 +1463,34 @@ files = [
 
 [[package]]
 name = "rucio-clients"
-version = "34.6.0"
+version = "37.7.0"
 description = "Rucio Client Lite Package"
 optional = false
 python-versions = "<4,>=3.9"
 groups = ["main"]
 files = [
-    {file = "rucio_clients-34.6.0.tar.gz", hash = "sha256:ea835451d818fff1aab4ce5bc49f28b018e22bda84365af72a5a5b7c7b5f8890"},
+    {file = "rucio_clients-37.7.0-py3-none-any.whl", hash = "sha256:090bd9870b9c485dadbed2c1fcbfa9b4660cfd0f0bd15da85eabe601c4fb6af5"},
+    {file = "rucio_clients-37.7.0.tar.gz", hash = "sha256:b74471722d43458b3df8efde99f85acb995d2ce88bfd5d0d18e6617604d87f88"},
 ]
 
 [package.dependencies]
-"dogpile.cache" = ">=1.2.2,<1.3.0"
-jsonschema = ">=4.20.0,<4.21.0"
-requests = ">=2.32.0,<2.33.0"
-tabulate = ">=0.9.0,<0.10.0"
-urllib3 = ">=1.26.18,<1.27.0"
+click = "*"
+dogpile-cache = "<=1.2.2"
+jsonschema = "*"
+packaging = "*"
+requests = "*"
+rich = "*"
+tabulate = "*"
+typing_extensions = "*"
+urllib3 = "*"
 
 [package.extras]
-argcomplete = ["argcomplete (>=3.1.6,<3.2.0)"]
-dumper = ["python-magic (>=0.4.27,<0.5.0)"]
-kerberos = ["kerberos (>=1.3.1,<1.4.0)", "pykerberos (>=1.2.4,<1.3.0)", "requests-kerberos (>=0.14.0)"]
-sftp = ["paramiko (>=3.4.0,<3.5.0)"]
-ssh = ["paramiko (>=3.4.0,<3.5.0)"]
-swift = ["python-swiftclient (>=4.4.0,<4.5.0)"]
+argcomplete = ["argcomplete"]
+dumper = ["python-magic"]
+kerberos = ["kerberos", "pykerberos", "requests-kerberos"]
+sftp = ["paramiko"]
+ssh = ["paramiko"]
+swift = ["python-swiftclient"]
 
 [[package]]
 name = "servicex-did-finder-lib"
@@ -1515,7 +1592,6 @@ description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "python_version < \"3.11\""
 files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
@@ -1686,4 +1762,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "39f4f997b65045fd659f67757c0891652d331d64a54de3037b73a474dca0ec1b"
+content-hash = "db10ea47d743c7504117b67676f6432d508b971c2e347611d9e0f85bafca601d"

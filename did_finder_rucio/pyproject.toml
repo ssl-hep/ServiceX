@@ -8,7 +8,7 @@ packages = [{include = "rucio_did_finder", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-rucio-clients = "^34.2.0"
+rucio-clients = "^37.7.0"
 xmltodict = "^0.13.0"
 servicex-did-finder-lib = "^3.0.1"
 geoip2 = "^4.7.0"
