@@ -1208,14 +1208,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-toolbelt"
-version = "0.10.1"
+version = "1.0.0"
 description = "A utility belt for advanced users of python-requests"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 groups = ["main"]
 files = [
-    {file = "requests-toolbelt-0.10.1.tar.gz", hash = "sha256:62e09f7ff5ccbda92772a29f394a49c3ad6cb181d568b1337626b2abb628a63d"},
-    {file = "requests_toolbelt-0.10.1-py2.py3-none-any.whl", hash = "sha256:18565aa58116d9951ac39baa288d3adb5b3ff975c4f25eee78555d89e8f247f7"},
+    {file = "requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6"},
+    {file = "requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"},
 ]
 
 [package.dependencies]
@@ -1223,14 +1223,14 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "servicex-code-gen-lib"
-version = "1.2"
+version = "1.3"
 description = "Library for creating ServiceX Code Generators"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "servicex_code_gen_lib-1.2-py3-none-any.whl", hash = "sha256:126abf1df475021836c9d1cc6c450efdcf39b6c24b6f24101d461d3288dc9415"},
-    {file = "servicex_code_gen_lib-1.2.tar.gz", hash = "sha256:fce65c44e894e4f5f46e971cb8e6ea15f0a53451846b894532feaa93bd3f1fcc"},
+    {file = "servicex_code_gen_lib-1.3-py3-none-any.whl", hash = "sha256:3f282b542c0cc3a67d79467cf7bb610108ad8d99a655a83c971dba4956ecd364"},
+    {file = "servicex_code_gen_lib-1.3.tar.gz", hash = "sha256:dba7387460ccca897b353930e5d6014e1d7cb56d54a4c0066ef9ddc2364583bd"},
 ]
 
 [package.dependencies]
@@ -1239,8 +1239,8 @@ Flask-RESTful = ">=0.3.9,<0.4.0"
 Flask-WTF = ">=1.0.1,<2.0.0"
 itsdangerous = ">=2.1.2,<3.0.0"
 Jinja2 = ">=3.1.2,<4.0.0"
-requests-toolbelt = ">=0.10.1,<0.11.0"
-urllib3 = ">=1.26.19,<2.0.0"
+requests-toolbelt = ">=1.0.0,<2.0.0"
+urllib3 = ">=2.5.0,<3.0.0"
 Werkzeug = ">=3.0.4,<4.0.0"
 
 [[package]]
@@ -1332,20 +1332,21 @@ xrootd = ["fsspec-xrootd"]
 
 [[package]]
 name = "urllib3"
-version = "1.26.20"
+version = "2.5.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"},
-    {file = "urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32"},
+    {file = "urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"},
+    {file = "urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760"},
 ]
 
 [package.extras]
-brotli = ["brotli (==1.0.9) ; os_name != \"nt\" and python_version < \"3\" and platform_python_implementation == \"CPython\"", "brotli (>=1.0.9) ; python_version >= \"3\" and platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; (os_name != \"nt\" or python_version >= \"3\") and platform_python_implementation != \"CPython\"", "brotlipy (>=0.6.0) ; os_name == \"nt\" and python_version < \"3\""]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress ; python_version == \"2.7\"", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
-socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotli (>=1.0.9) ; platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; platform_python_implementation != \"CPython\""]
+h2 = ["h2 (>=4,<5)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "vector"
@@ -1427,4 +1428,4 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-it
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "1ab0ff1f2f6dc3ea4252e692e08ae4741f5069d474a5888870bf592fcb67004d"
+content-hash = "8606b135c07c09740d2da907ce2ea62e2a255dcb8805c5a11edf34d8c7c92c06"
