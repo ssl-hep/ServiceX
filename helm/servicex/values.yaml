@@ -1,4 +1,6 @@
 app:
+  environment: production
+  mountLocal: false
   adminEmail: admin@example.com
   auth: false
   authExpires: 21600
