@@ -56,8 +56,8 @@ from transformer_sidecar.transformer_argument_parser import TransformerArgumentP
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.raw_uproot_stats import (
-    RawUprootStats,  # NOQA: F401
+from transformer_sidecar.transformer_stats.raw_uproot_stats import (  # noqa: F401
+    RawUprootStats,
 )
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
@@ -550,7 +550,7 @@ def hash_path(file_name: str) -> str:
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],
+                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1):],
             ]
         )
     else:
