@@ -9,6 +9,7 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: ["--pytest-test-first"]
+        exclude: ^transformer_sidecar/tests/sandbox/
       - id: trailing-whitespace
   - repo: https://github.com/pycqa/flake8
     rev: "7.2.0"

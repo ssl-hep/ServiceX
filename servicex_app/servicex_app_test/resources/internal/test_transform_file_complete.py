@@ -61,11 +61,11 @@ class TestTransformFileComplete(ResourceTestBase):
 
     @pytest.fixture
     def mock_transform_request_lookup(self, mocker, db_session, fake_transform_request):
-        db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
+        db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
             fake_transform_request
         )
         return (
-            db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none
+            db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none  # noqa: E501
         )
 
     @pytest.fixture
