@@ -41,18 +41,23 @@ class TransformationRequest(ServiceXResource):
         # Validate that the user is an admin or submitted the request
         transform = TransformRequest.lookup(request_id)
         if not transform:
-            msg = f'Transformation request not found with id: {request_id}'
-            current_app.logger.error(msg, extra={'requestId': request_id})
-            return {'message': msg}, 404
+            msg = f"Transformation request not found with id: {request_id}"
+            current_app.logger.error(msg, extra={"requestId": request_id})
+            return {"message": msg}, 404
 
         transform_json = transform.to_json()
-        if current_app.config['OBJECT_STORE_ENABLED'] and \
-                transform_json['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
-            transform_json['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
-            transform_json['minio-secured'] = current_app.config.get('MINIO_ENCRYPT_PUBLIC', True)
-            transform_json['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
-            transform_json['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
+        if (
+            current_app.config["OBJECT_STORE_ENABLED"]
+            and transform_json["result-destination"]
+            == TransformRequest.OBJECT_STORE_DEST
+        ):
+            transform_json["minio-endpoint"] = current_app.config["MINIO_PUBLIC_URL"]
+            transform_json["minio-secured"] = current_app.config.get(
+                "MINIO_ENCRYPT_PUBLIC", True
+            )
+            transform_json["minio-access-key"] = current_app.config["MINIO_ACCESS_KEY"]
+            transform_json["minio-secret-key"] = current_app.config["MINIO_SECRET_KEY"]
 
-        if 'LOGS_URL' in current_app.config:
-            transform_json['log-url'] = current_app.config['LOGS_URL']
+        if "LOGS_URL" in current_app.config:
+            transform_json["log-url"] = current_app.config["LOGS_URL"]
         return transform_json

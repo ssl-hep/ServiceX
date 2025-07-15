@@ -33,18 +33,21 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestAllTransformationRequest(ResourceTestBase):
     @staticmethod
     def example_json():
-        return [{'request_id': '123'}, {'request_id': '456'}]
+        return [{"request_id": "123"}, {"request_id": "456"}]
 
     @fixture()
     def mock_return_json(self, mocker):
         import servicex_app
+
         mock_return_json = mocker.patch.object(
-            servicex_app.models.TransformRequest, 'return_json',
-            return_value=self.example_json())
+            servicex_app.models.TransformRequest,
+            "return_json",
+            return_value=self.example_json(),
+        )
         return mock_return_json
 
     def test_get_all_auth_disabled(self, client, mock_return_json):
-        response: Response = client.get('/servicex/transformation')
+        response: Response = client.get("/servicex/transformation")
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()
@@ -52,9 +55,11 @@ class TestAllTransformationRequest(ResourceTestBase):
     def test_get_all_auth_enabled(
         self, mock_jwt_extended, mock_return_json, mock_requesting_user
     ):
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.application.app_context():
-            response = client.get('/servicex/transformation', headers=self.fake_header())
+            response = client.get(
+                "/servicex/transformation", headers=self.fake_header()
+            )
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()
@@ -63,10 +68,12 @@ class TestAllTransformationRequest(ResourceTestBase):
         self, mock_jwt_extended, mock_requesting_user, mock_return_json
     ):
         user_id = mock_requesting_user.id
-        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.application.app_context():
             response = client.get(
-                f'/servicex/transformation?submitted_by={user_id}', headers=self.fake_header())
+                f"/servicex/transformation?submitted_by={user_id}",
+                headers=self.fake_header(),
+            )
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()

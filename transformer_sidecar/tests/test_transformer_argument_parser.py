@@ -40,24 +40,31 @@ class TestTransformerArgumentParser:
 
     def test_parse(self, mocker):
         arg_parser = TransformerArgumentParser(description="Test Transformer")
-        sys.argv = ["foo",
-                    "--path", "/foo/bar",
-                    "--limit", "10",
-                    '--result-destination', 'object-store',
-                    '--result-format', 'parquet',
-                    '--rabbit-uri', "http://rabbit.org",
-                    '--request-id', "123-45-678"
-                    ]
+        sys.argv = [
+            "foo",
+            "--path",
+            "/foo/bar",
+            "--limit",
+            "10",
+            "--result-destination",
+            "object-store",
+            "--result-format",
+            "parquet",
+            "--rabbit-uri",
+            "http://rabbit.org",
+            "--request-id",
+            "123-45-678",
+        ]
 
         args = arg_parser.parse_args()
-        assert args.path == '/foo/bar'
+        assert args.path == "/foo/bar"
         assert args.limit == 10
-        assert args.result_destination == 'object-store'
-        assert args.result_format == 'parquet'
+        assert args.result_destination == "object-store"
+        assert args.result_format == "parquet"
         assert args.rabbit_uri == "http://rabbit.org"
         assert args.request_id == "123-45-678"
 
     def test_extract_attr_list(self):
         attrs = TransformerArgumentParser.extract_attr_list("a,b,c")
         assert len(attrs) == 3
-        assert attrs == ['a', 'b', 'c']
+        assert attrs == ["a", "b", "c"]

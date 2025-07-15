@@ -34,8 +34,9 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 
 
 status_request_parser = reqparse.RequestParser()
-status_request_parser.add_argument('details', type=bool, default=False,
-                                   required=False, location='args')
+status_request_parser.add_argument(
+    "details", type=bool, default=False, required=False, location="args"
+)
 
 
 class TransformationStatus(ServiceXResource):
@@ -43,15 +44,15 @@ class TransformationStatus(ServiceXResource):
     def get(self, request_id):
         transform = TransformRequest.lookup(request_id)
         if not transform:
-            msg = f'Transformation request not found with id: {request_id}'
-            current_app.logger.error(msg, extra={'requestId': request_id})
-            return {'message': msg}, 404
+            msg = f"Transformation request not found with id: {request_id}"
+            current_app.logger.error(msg, extra={"requestId": request_id})
+            return {"message": msg}, 404
 
         status_request = status_request_parser.parse_args()
 
         # Format timestamps with military timezone, given that they are in UTC.
         # See https://stackoverflow.com/a/42777551/8534196
-        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        iso_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
         result_dict = {
             "status": transform.status.string_name,
             "request-id": request_id,
@@ -62,13 +63,17 @@ class TransformationStatus(ServiceXResource):
             "files-failed": transform.files_failed,
             "files-skipped": transform.files_failed,  # obsolete
             "files-remaining": transform.files_remaining,
-            "stats": transform.statistics
+            "stats": transform.statistics,
         }
         if transform.finish_time is not None:
             result_dict["finish-time"] = transform.finish_time.strftime(iso_fmt)
 
         if status_request.details:
-            result_dict['details'] = TransformationResult.to_json_list(transform.results)
-        current_app.logger.debug("Transformation status",
-                                 extra={'requestId': request_id, 'metric': result_dict})
+            result_dict["details"] = TransformationResult.to_json_list(
+                transform.results
+            )
+        current_app.logger.debug(
+            "Transformation status",
+            extra={"requestId": request_id, "metric": result_dict},
+        )
         return jsonify(result_dict)

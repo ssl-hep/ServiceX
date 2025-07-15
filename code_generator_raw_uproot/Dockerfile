@@ -29,4 +29,3 @@ ENV CODEGEN_CONFIG_FILE "/home/servicex/app.conf"
 
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]
-

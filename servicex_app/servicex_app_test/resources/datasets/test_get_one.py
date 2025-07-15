@@ -36,30 +36,32 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestDatasetsGetOne(ResourceTestBase):
     @fixture
     def datasets(self):
-        dataset = Dataset(last_used=datetime(2022, 1, 1),
-                          last_updated=datetime(2022, 1, 1),
-                          id='123',
-                          name='dataset1',
-                          events=100,
-                          size=1000,
-                          n_files=1,
-                          lookup_status='looking',
-                          did_finder='rucio')
+        dataset = Dataset(
+            last_used=datetime(2022, 1, 1),
+            last_updated=datetime(2022, 1, 1),
+            id="123",
+            name="dataset1",
+            events=100,
+            size=1000,
+            n_files=1,
+            lookup_status="looking",
+            did_finder="rucio",
+        )
         dataset.files = [
             DatasetFile(
                 id=12,
                 dataset_id=dataset.id,
                 file_size=100,
                 file_events=100,
-                paths=['root://root.cern.ch/file1.root']
+                paths=["root://root.cern.ch/file1.root"],
             )
         ]
         return dataset
 
-    @patch('servicex_app.models.Dataset.find_by_id')
+    @patch("servicex_app.models.Dataset.find_by_id")
     def test_get_one(self, mock_get, datasets):
         mock_get.return_value = datasets
         client = self._test_client()
-        response = client.get('/servicex/datasets/123')
+        response = client.get("/servicex/datasets/123")
         mock_get.assert_called()
         assert response.status_code == 200

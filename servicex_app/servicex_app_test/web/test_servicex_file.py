@@ -11,9 +11,9 @@ class TestServiceXFile(WebTestBase):
     module = "servicex_app.web.servicex_file"
 
     def test_servicex_file(self, client, user):
-        cfg = {'CODE_GEN_IMAGES': {'xaod': 'asdf', 'uproot': 'asdfasdf'}}
+        cfg = {"CODE_GEN_IMAGES": {"xaod": "asdf", "uproot": "asdfasdf"}}
         client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
+        response: Response = client.get(url_for("servicex-file"))
         expected = """\
         api_endpoints:
           - name: localhost
@@ -22,11 +22,14 @@ class TestServiceXFile(WebTestBase):
         default_endpoint: localhost
         """
         assert response.data.decode() == dedent(expected)
-        assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
+        assert (
+            response.headers["Content-Disposition"]
+            == "attachment; filename=servicex.yaml"
+        )
 
-        cfg = {'INSTANCE_NAME': 'important-instance'}
+        cfg = {"INSTANCE_NAME": "important-instance"}
         client.application.config.update(cfg)
-        response: Response = client.get(url_for('servicex-file'))
+        response: Response = client.get(url_for("servicex-file"))
         expected = """\
         api_endpoints:
           - name: important-instance
@@ -35,7 +38,10 @@ class TestServiceXFile(WebTestBase):
         default_endpoint: important-instance
         """
         assert response.data.decode() == dedent(expected)
-        assert response.headers['Content-Disposition'] == 'attachment; filename=servicex.yaml'
+        assert (
+            response.headers["Content-Disposition"]
+            == "attachment; filename=servicex.yaml"
+        )
 
     def test_correct_url(self, client):
         """
@@ -49,29 +55,27 @@ class TestServiceXFile(WebTestBase):
         import werkzeug
 
         # Test provided scheme always prevails
-        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
-                                                    base_url="http://localhost/",
-                                                    headers={
-                                                        "X-Scheme": "https"
-                                                    }).get_request()
+        test_request = werkzeug.test.EnvironBuilder(
+            path="foo/test", base_url="http://localhost/", headers={"X-Scheme": "https"}
+        ).get_request()
         test_url = "https://localhost/"
         result = get_correct_url(test_request)
         assert result == test_url
 
         # Test upgrade scheme to https if not localhost and no scheme provided
         request_environ = {}
-        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
-                                                    base_url="http://test.com/",
-                                                    environ_base=request_environ).get_request()
+        test_request = werkzeug.test.EnvironBuilder(
+            path="foo/test", base_url="http://test.com/", environ_base=request_environ
+        ).get_request()
         test_url = "https://test.com/"
         result = get_correct_url(test_request)
         assert result == test_url
 
         # Test keep scheme if localhost
         request_environ = {}
-        test_request = werkzeug.test.EnvironBuilder(path="foo/test",
-                                                    base_url="http://localhost/",
-                                                    environ_base=request_environ).get_request()
+        test_request = werkzeug.test.EnvironBuilder(
+            path="foo/test", base_url="http://localhost/", environ_base=request_environ
+        ).get_request()
         test_url = "http://localhost/"
         result = get_correct_url(test_request)
         assert result == test_url

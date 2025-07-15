@@ -43,16 +43,22 @@ import psutil as psutil
 from celery import Celery, shared_task
 from celery.signals import after_setup_logger
 
-from transformer_sidecar.object_store_manager import ObjectStoreError, ObjectStoreManager
-from transformer_sidecar.science_container_command import ScienceContainerCommand, \
-    ScienceContainerException
+from transformer_sidecar.object_store_manager import (
+    ObjectStoreError,
+    ObjectStoreManager,
+)
+from transformer_sidecar.science_container_command import (
+    ScienceContainerCommand,
+    ScienceContainerException,
+)
 from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.raw_uproot_stats import \
-    RawUprootStats  # NOQA: 401
+from transformer_sidecar.transformer_stats.raw_uproot_stats import (
+    RawUprootStats,
+)  # NOQA: 401
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
 
@@ -87,12 +93,13 @@ logger = initialize_logging()
     acks_late=True,
 )
 def transform_file(
-        request_id,
-        file_id,
-        paths: list[str],
-        service_endpoint,
-        result_destination,
-        result_format):
+    request_id,
+    file_id,
+    paths: list[str],
+    service_endpoint,
+    result_destination,
+    result_format,
+):
     """
     This is the main function for the transformer. It is called whenever a new message
     is available on the rabbit queue. These messages represent a single file to be
@@ -112,11 +119,7 @@ def transform_file(
 
     global shared_dir
 
-    log_extra = {
-        "requestId": request_id,
-        "file-id": file_id,
-        "place": PLACE
-    }
+    log_extra = {"requestId": request_id, "file-id": file_id, "place": PLACE}
 
     transform_request = {
         "file-id": file_id,
@@ -188,21 +191,24 @@ def transform_file(
             # The transformer will write results here as they are generated. This
             # directory isn't monitored.
             if result_destination == "volume":
-                transform_request["safeOutputFileName"] = \
-                    os.path.join(posix_path, hashed_file_name)
+                transform_request["safeOutputFileName"] = os.path.join(
+                    posix_path, hashed_file_name
+                )
             else:
-                transform_request["safeOutputFileName"] = \
-                    os.path.join(scratch_path, hashed_file_name)
+                transform_request["safeOutputFileName"] = os.path.join(
+                    scratch_path, hashed_file_name
+                )
 
-            transform_request['result-format'] = result_format
+            transform_request["result-format"] = result_format
             science_container.synch()
             science_container.send(transform_request)
             science_container_response = science_container.await_response()
 
             transform_request["status"] = science_container_response
             logger.info(
-                "Science container completed with status %s" % science_container_response,
-                extra=log_extra
+                "Science container completed with status %s"
+                % science_container_response,
+                extra=log_extra,
             )
 
             # Grab the logs
@@ -224,9 +230,7 @@ def transform_file(
                 )
                 if object_store:
                     upload_file(
-                        Path(transform_request["safeOutputFileName"]),
-                        servicex,
-                        rec
+                        Path(transform_request["safeOutputFileName"]), servicex, rec
                     )
                 else:
                     servicex.put_file_complete(rec)
@@ -284,13 +288,17 @@ def transform_file(
         )
 
     except ScienceContainerException as e:
-        logger.exception("Science container not responding. Shutting down this transformer.",
-                         extra=log_extra, exc_info=e)
+        logger.exception(
+            "Science container not responding. Shutting down this transformer.",
+            extra=log_extra,
+            exc_info=e,
+        )
         sys.exit(-1)
 
     except Exception as error:
-        logger.exception("Received exception doing transform",
-                         extra=log_extra, exc_info=error)
+        logger.exception(
+            "Received exception doing transform", extra=log_extra, exc_info=error
+        )
         rec = FileCompleteRecord(
             request_id=request_id,
             file_path=_file_paths[0],
@@ -311,11 +319,11 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
     import uproot
     import awkward as ak
 
-    logger.info("Converting ROOT to Parquet.",
-                extra={"requestId": request_id,
-                       "source_path": source_path}
-                )
-    with open(source_path, 'rb') as datafile:
+    logger.info(
+        "Converting ROOT to Parquet.",
+        extra={"requestId": request_id, "source_path": source_path},
+    )
+    with open(source_path, "rb") as datafile:
         data = uproot.open(datafile)
         if len(data.keys(cycle=False)) != 1:
             logger.error(f"Expected one tree found {data.keys()}")
@@ -323,7 +331,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
 
         try:
             tree_name = data.keys()[0]
-            all_data = data[tree_name].arrays(library='ak')
+            all_data = data[tree_name].arrays(library="ak")
 
             parquet_file = source_path.with_suffix(".parquet")
 
@@ -340,9 +348,9 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         return parquet_file
 
 
-def upload_file(source_path: Path,
-                servicex: ServiceXAdapter,
-                rec: FileCompleteRecord) -> None:
+def upload_file(
+    source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
+) -> None:
     object_store = ObjectStoreManager()
 
     # Now is the time to convert the file to parquet if that's what the user
@@ -356,29 +364,41 @@ def upload_file(source_path: Path,
 
     rec.s3_object_name = object_name
 
-    logger.info("Uploading file to object store.",
-                extra={'requestId': request_id,
-                       "file-id": rec.file_id,
-                       "place": PLACE,
-                       "objectName": object_name})
+    logger.info(
+        "Uploading file to object store.",
+        extra={
+            "requestId": request_id,
+            "file-id": rec.file_id,
+            "place": PLACE,
+            "objectName": object_name,
+        },
+    )
     t0 = time.time()
     try:
         object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
-        logger.info("File uploaded to object store.",
-                    extra={'requestId': request_id,
-                           "file-id": rec.file_id,
-                           "place": PLACE,
-                           "objectName": object_name,
-                           "elapsed": time.time()-t0})
+        logger.info(
+            "File uploaded to object store.",
+            extra={
+                "requestId": request_id,
+                "file-id": rec.file_id,
+                "place": PLACE,
+                "objectName": object_name,
+                "elapsed": time.time() - t0,
+            },
+        )
 
         servicex.put_file_complete(rec)
 
     except ObjectStoreError as e:
-        logger.error(f"Error uploading file to object store: {e}",
-                     extra={'requestId': request_id, "place": PLACE,
-                            "file-id": rec.file_id,
-                            "objectName": object_name}
-                     )
+        logger.error(
+            f"Error uploading file to object store: {e}",
+            extra={
+                "requestId": request_id,
+                "place": PLACE,
+                "file-id": rec.file_id,
+                "objectName": object_name,
+            },
+        )
         rec.status = "failure"
         servicex.put_file_complete(rec)
 
@@ -421,9 +441,7 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, \
-        object_store, posix_path, science_container, \
-        shared_dir, transformer_capabilities, request_id, celery_app
+    global convert_root_to_parquet, startup_time, object_store, posix_path, science_container, shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
     request_id = args.request_id
@@ -475,7 +493,8 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             "--without-gossip",
             "--without-heartbeat",
             "--loglevel=info",
-            "-Q", f"transformer-{args.request_id}",
+            "-Q",
+            f"transformer-{args.request_id}",
             "-n",
             f"transformer-{args.request_id}@%h",
         ]
@@ -530,7 +549,7 @@ def hash_path(file_name: str) -> str:
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1):],
+                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],
             ]
         )
     else:
@@ -585,13 +604,16 @@ if __name__ == "__main__":  # pragma: no cover
     _args = parser.parse_args()
     app = Celery("transformer_sidecar", broker=_args.rabbit_uri)
     app.conf.task_queues = [
-        kombu.Queue(name=f"transformer-{_args.request_id}",
-                    durable=False, auto_delete=True,
-                    queue_arguments={'x-consumer-timeout': 2_629_746_000})
+        kombu.Queue(
+            name=f"transformer-{_args.request_id}",
+            durable=False,
+            auto_delete=True,
+            queue_arguments={"x-consumer-timeout": 2_629_746_000},
+        )
     ]
     app.conf.task_create_missing_queues = False
     app.conf.worker_hijack_root_logger = True
-    app.conf.worker_redirect_stdouts_level = 'INFO'
+    app.conf.worker_redirect_stdouts_level = "INFO"
     app.conf.worker_prefetch_multiplier = 1
     app.conf.broker_connection_retry_on_startup = True
     init(_args, app)

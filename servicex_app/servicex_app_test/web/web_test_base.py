@@ -38,64 +38,63 @@ class WebTestBase:
 
     @staticmethod
     def fake_header():
-        access_token = create_access_token('testuser')
-        headers = {
-            'Authorization': 'Bearer {}'.format(access_token)
-        }
+        access_token = create_access_token("testuser")
+        headers = {"Authorization": "Bearer {}".format(access_token)}
         return headers
 
     @staticmethod
     def _app_config():
         return {
-            'TESTING': True,
-            'SECRET_KEY': 'secret',
-            'WTF_CSRF_ENABLED': False,
-            'RABBIT_MQ_URL': 'amqp://foo.com',
-            'RABBIT_RETRIES': 12,
-            'RABBIT_RETRY_INTERVAL': 10,
-            'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:",
-            'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-            'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
-            'TRANSFORMER_NAMESPACE': "my-ws",
-            'TRANSFORMER_MANAGER_ENABLED': False,
-            'TRANSFORMER_MANAGER_MODE': 'external',
-            'TRANSFORMER_AUTOSCALE_ENABLED': True,
-            'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
-            'TRANSFORMER_PULL_POLICY': 'Always',
-            'OBJECT_STORE_ENABLED': False,
-            'MINIO_URL': 'localhost:9000',
-            'MINIO_ACCESS_KEY': 'miniouser',
-            'MINIO_SECRET_KEY': 'leftfoot1',
-            'CODE_GEN_SERVICE_URL': 'http://localhost:5001',
-            'CODE_GEN_SERVICE_URLS': {
-                'atlasxaod': 'http://servicex-code-gen-atlasxaod:8000',
-                'cms': 'http://servicex-code-gen-cms:8000',
-                'python': 'http://servicex-code-gen-python:8000',
-                'uproot': 'http://servicex-code-gen-uproot:8000'
+            "TESTING": True,
+            "SECRET_KEY": "secret",
+            "WTF_CSRF_ENABLED": False,
+            "RABBIT_MQ_URL": "amqp://foo.com",
+            "RABBIT_RETRIES": 12,
+            "RABBIT_RETRY_INTERVAL": 10,
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+            "TRANSFORMER_RABBIT_MQ_URL": "amqp://trans.rabbit",
+            "TRANSFORMER_NAMESPACE": "my-ws",
+            "TRANSFORMER_MANAGER_ENABLED": False,
+            "TRANSFORMER_MANAGER_MODE": "external",
+            "TRANSFORMER_AUTOSCALE_ENABLED": True,
+            "ADVERTISED_HOSTNAME": "cern.analysis.ch:5000",
+            "TRANSFORMER_PULL_POLICY": "Always",
+            "OBJECT_STORE_ENABLED": False,
+            "MINIO_URL": "localhost:9000",
+            "MINIO_ACCESS_KEY": "miniouser",
+            "MINIO_SECRET_KEY": "leftfoot1",
+            "CODE_GEN_SERVICE_URL": "http://localhost:5001",
+            "CODE_GEN_SERVICE_URLS": {
+                "atlasxaod": "http://servicex-code-gen-atlasxaod:8000",
+                "cms": "http://servicex-code-gen-cms:8000",
+                "python": "http://servicex-code-gen-python:8000",
+                "uproot": "http://servicex-code-gen-uproot:8000",
             },
-            'CODE_GEN_IMAGES': {
-                'atlasxaod': 'sslhep/servicex_code_gen_func_adl_xaod:develop',
-                'cms': 'sslhep/servicex_code_gen_cms_aod:develop',
-                'python': 'sslhep/servicex_code_gen_python:develop',
-                'uproot': 'sslhep/servicex_code_gen_func_adl_uproot:develop'
+            "CODE_GEN_IMAGES": {
+                "atlasxaod": "sslhep/servicex_code_gen_func_adl_xaod:develop",
+                "cms": "sslhep/servicex_code_gen_cms_aod:develop",
+                "python": "sslhep/servicex_code_gen_python:develop",
+                "uproot": "sslhep/servicex_code_gen_func_adl_uproot:develop",
             },
-            'ENABLE_AUTH': False,
-            'OAUTH_METADATA_URL': 'https://auth.globus.org/.well-known/openid-configuration',
-            'OAUTH_CLIENT_ID': 'globus-client-id',
-            'OAUTH_CLIENT_SECRET': 'globus-client-secret',
-            'DID_FINDER_DEFAULT_SCHEME': 'rucio',
-            'VALID_DID_SCHEMES': ['rucio'],
-            'JWT_ADMIN': 'admin',
-            'JWT_PASS': 'pass',
-            'JWT_SECRET_KEY': 'schtum',
-            'DID_RUCIO_FINDER_TAG': 'develop',
-            'DID_CERNOPENDATA_FINDER_TAG': 'develop',
-            'APP_IMAGE_TAG': 'develop',
+            "ENABLE_AUTH": False,
+            "OAUTH_METADATA_URL": "https://auth.globus.org/.well-known/openid-configuration",
+            "OAUTH_CLIENT_ID": "globus-client-id",
+            "OAUTH_CLIENT_SECRET": "globus-client-secret",
+            "DID_FINDER_DEFAULT_SCHEME": "rucio",
+            "VALID_DID_SCHEMES": ["rucio"],
+            "JWT_ADMIN": "admin",
+            "JWT_PASS": "pass",
+            "JWT_SECRET_KEY": "schtum",
+            "DID_RUCIO_FINDER_TAG": "develop",
+            "DID_CERNOPENDATA_FINDER_TAG": "develop",
+            "APP_IMAGE_TAG": "develop",
         }
 
     @staticmethod
     def _test_client(extra_config=None) -> FlaskClient:
         from servicex_app import create_app
+
         config = WebTestBase._app_config()
         if extra_config:
             config.update(extra_config)
@@ -106,51 +105,63 @@ class WebTestBase:
     @staticmethod
     def _test_user():
         from servicex_app.models import UserModel
+
         return UserModel(
-            name='Jane Doe',
-            email='jane@example.com',
-            sub='janedoe',
-            institution='UChicago',
-            experiment='ATLAS',
-            refresh_token="abcdef"
+            name="Jane Doe",
+            email="jane@example.com",
+            sub="janedoe",
+            institution="UChicago",
+            experiment="ATLAS",
+            refresh_token="abcdef",
         )
 
     @staticmethod
     def _auth_url():
-        return 'http://www.example.com'
+        return "http://www.example.com"
 
     @staticmethod
     def _oauth_tokens():
         return {
-            'access_token': 'globus-auth-access-token',
-            'expires_at_seconds': 1596734412,
-            'resource_server': 'auth.globus.org',
-            'scope': 'email profile openid',
-            'token_type': 'Bearer'
+            "access_token": "globus-auth-access-token",
+            "expires_at_seconds": 1596734412,
+            "resource_server": "auth.globus.org",
+            "scope": "email profile openid",
+            "token_type": "Bearer",
         }
 
     @staticmethod
     def _globus_metadata():
         return {
-            'request_token_url': None,
-            'request_token_params': None,
-            'refresh_token_url': None,
-            'refresh_token_params': None,
-            'issuer': 'https://auth.globus.org',
-            'authorization_endpoint': 'https://auth.globus.org/v2/oauth2/authorize',
-            'userinfo_endpoint': 'https://auth.globus.org/v2/oauth2/userinfo',
-            'token_endpoint': 'https://auth.globus.org/v2/oauth2/token',
-            'revocation_endpoint': 'https://auth.globus.org/v2/oauth2/token/revoke',
+            "request_token_url": None,
+            "request_token_params": None,
+            "refresh_token_url": None,
+            "refresh_token_params": None,
+            "issuer": "https://auth.globus.org",
+            "authorization_endpoint": "https://auth.globus.org/v2/oauth2/authorize",
+            "userinfo_endpoint": "https://auth.globus.org/v2/oauth2/userinfo",
+            "token_endpoint": "https://auth.globus.org/v2/oauth2/token",
+            "revocation_endpoint": "https://auth.globus.org/v2/oauth2/token/revoke",
             # the following is not actually returned for Globus, but we use for testing
-            'end_session_endpoint': 'https://auth.globus.org/v2/web/logout',
-            'jwks_uri': 'https://auth.globus.org/jwk.json',
-            'response_types_supported': ['code', 'token', 'token id_token', 'id_token'],
-            'id_token_signing_alg_values_supported': ['RS512'],
-            'scopes_supported': ['openid', 'email', 'profile'],
-            'token_endpoint_auth_methods_supported': ['client_secret_basic'],
-            'claims_supported': ['at_hash', 'aud', 'email', 'exp', 'name', 'nonce', 'preferred_username', 'iat', 'iss', 'sub'],
-            'subject_types_supported': ['public'],
-            '_loaded_at': 1740439075.4229648
+            "end_session_endpoint": "https://auth.globus.org/v2/web/logout",
+            "jwks_uri": "https://auth.globus.org/jwk.json",
+            "response_types_supported": ["code", "token", "token id_token", "id_token"],
+            "id_token_signing_alg_values_supported": ["RS512"],
+            "scopes_supported": ["openid", "email", "profile"],
+            "token_endpoint_auth_methods_supported": ["client_secret_basic"],
+            "claims_supported": [
+                "at_hash",
+                "aud",
+                "email",
+                "exp",
+                "name",
+                "nonce",
+                "preferred_username",
+                "iat",
+                "iss",
+                "sub",
+            ],
+            "subject_types_supported": ["public"],
+            "_loaded_at": 1740439075.4229648,
         }
 
     @staticmethod
@@ -174,7 +185,7 @@ class WebTestBase:
                     "username": "jane@cern.ch",
                     "name": "Jane Doe",
                     "last_authentication": 1595620302,
-                    "sub": "primary-oauth-id"
+                    "sub": "primary-oauth-id",
                 },
                 {
                     "email": "jane@uchicago.edu",
@@ -183,24 +194,25 @@ class WebTestBase:
                     "identity_provider": "secondary-oauth-id",
                     "username": "jane@uchicago.edu@accounts.google.com",
                     "name": "Jane Doe",
-                    "sub": "secondary-oauth-id"
-                }
+                    "sub": "secondary-oauth-id",
+                },
             ],
             "name": "Jane Doe",
             "aud": "application-audience-id",
             "iat": 1595955388,
-            "sub": "primary-oauth-id"
+            "sub": "primary-oauth-id",
         }
 
     @staticmethod
     def _test_transformation_req(**kwargs):
         from servicex_app.models import TransformRequest
+
         defaults = {
             "id": 1234,
             "did": "foo",
             "request_id": "b5901cca-9858-42e7-a093-0929cf391f0e",
             "submit_time": datetime.utcnow(),
-            "code_gen_image": "someimage:dev"
+            "code_gen_image": "someimage:dev",
         }
         defaults.update(kwargs)
         return TransformRequest(**defaults)
@@ -228,33 +240,34 @@ class WebTestBase:
         user = self._test_user()
         user.save_to_db = mocker.Mock()
         user.delete_from_db = mocker.Mock()
-        mocker.patch('servicex_app.models.UserModel.find_by_sub', return_value=user)
-        mocker.patch('servicex_app.models.UserModel.find_by_email', return_value=user)
-        mocker.patch('servicex_app.models.UserModel.find_by_id', return_value=user)
+        mocker.patch("servicex_app.models.UserModel.find_by_sub", return_value=user)
+        mocker.patch("servicex_app.models.UserModel.find_by_email", return_value=user)
+        mocker.patch("servicex_app.models.UserModel.find_by_id", return_value=user)
         return user
 
     @fixture
     def db(self, mocker):
-        return mocker.patch('flask_sqlalchemy.SQLAlchemy').return_value
+        return mocker.patch("flask_sqlalchemy.SQLAlchemy").return_value
 
     @fixture
     def oauth_client(self, mocker):
-        client_cls = mocker.patch('authlib.integrations.flask_client.FlaskOAuth2App')
+        client_cls = mocker.patch("authlib.integrations.flask_client.FlaskOAuth2App")
         client = client_cls.return_value
         auth_url = self._auth_url()
         client.authorize_redirect = mocker.Mock(return_value=redirect(auth_url))
         tokens = self._oauth_tokens()
-        tokens['userinfo'] = self._id_token()
+        tokens["userinfo"] = self._id_token()
         client.authorize_access_token = mocker.Mock(return_value=tokens)
         client.server_metadata = self._globus_metadata()
         from authlib.integrations.flask_client import OAuth
-        mocker.patch.object(OAuth, 'oauth2_client_cls', client_cls)
+
+        mocker.patch.object(OAuth, "oauth2_client_cls", client_cls)
 
         yield client
 
     @fixture
     def oauth_session(self, mocker):
-        session_cls = mocker.patch('authlib.integrations.requests_client.OAuth2Session')
+        session_cls = mocker.patch("authlib.integrations.requests_client.OAuth2Session")
         session = session_cls.return_value
         session.revoke_token = mocker.MagicMock()
 

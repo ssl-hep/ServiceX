@@ -13,7 +13,7 @@ data:
 
     CHART = '{{ .Chart.Name }}-{{ .Chart.Version }}'
     APP_IMAGE_TAG = '{{ .Values.app.tag }}'
-    
+
     # Application environment and local development settings
     APP_ENVIRONMENT = '{{ .Values.app.environment }}'
     APP_MOUNT_LOCAL = {{- if .Values.app.mountLocal }}True{{- else }}False{{- end }}

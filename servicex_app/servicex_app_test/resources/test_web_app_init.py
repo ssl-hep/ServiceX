@@ -33,8 +33,8 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestWebAppInit(ResourceTestBase):
     def test_invalid_default_did_finder(self):
         bad_config = {
-            'DID_FINDER_DEFAULT_SCHEME': 'cuckoo',
-            'VALID_DID_SCHEMES': 'rucio'
+            "DID_FINDER_DEFAULT_SCHEME": "cuckoo",
+            "VALID_DID_SCHEMES": "rucio",
         }
 
         with pytest.raises(ValueError):

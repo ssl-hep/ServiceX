@@ -14,27 +14,29 @@ class TransformationResults(ServiceXResource):
             return {"message": "Missing required transformation request_id"}, 400
 
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            'later_than',
-            type=str,
-            required=False,
-            location='args'
-        )
+        parser.add_argument("later_than", type=str, required=False, location="args")
 
         args = parser.parse_args()
 
-        transform_result_query = TransformationResult.query.filter_by(request_id=request_id)
+        transform_result_query = TransformationResult.query.filter_by(
+            request_id=request_id
+        )
 
-        later_than_str = args.get('later_than')
+        later_than_str = args.get("later_than")
         if later_than_str:
             try:
                 later_than = datetime.datetime.fromisoformat(later_than_str)
             except (AttributeError, ValueError):
-                return {"message": f"later_than value {later_than_str} is not an ISO 8601 compliant datetime"}, 400
-            transform_result_query = transform_result_query.filter(TransformationResult.created_at > later_than)
+                return {
+                    "message": f"later_than value {later_than_str} is not an ISO 8601 compliant datetime"
+                }, 400
+            transform_result_query = transform_result_query.filter(
+                TransformationResult.created_at > later_than
+            )
 
-        results = [transformation_result.to_json(transformation_result) for transformation_result in transform_result_query]
+        results = [
+            transformation_result.to_json(transformation_result)
+            for transformation_result in transform_result_query
+        ]
 
-        return {
-            "results": results
-        }
+        return {"results": results}

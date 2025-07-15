@@ -9,7 +9,7 @@ from .web_test_base import WebTestBase
 class TestTransformationRequest(WebTestBase):
     endpoint = "transformation_request"
     module = "servicex_app.web.transformation_request"
-    template_name = 'transformation_request.html'
+    template_name = "transformation_request.html"
 
     @fixture
     def mock_tr_cls(self, mocker):
@@ -21,7 +21,9 @@ class TestTransformationRequest(WebTestBase):
         mock_tr_cls.lookup.return_value = req
         return req
 
-    def test_get_by_primary_key(self, client, mock_tr: TransformRequest, captured_templates):
+    def test_get_by_primary_key(
+        self, client, mock_tr: TransformRequest, captured_templates
+    ):
         resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
         assert resp.status_code == 200
         template, context = captured_templates[0]

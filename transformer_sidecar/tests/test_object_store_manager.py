@@ -29,53 +29,57 @@ import os
 
 import pytest
 
-from transformer_sidecar.object_store_manager import ObjectStoreManager, ObjectStoreError
+from transformer_sidecar.object_store_manager import (
+    ObjectStoreManager,
+    ObjectStoreError,
+)
 
 
 class TestObjectStoreManager:
     def test_init(self, mocker):
-        mock_minio = mocker.patch('minio.Minio')
-        ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mock_minio = mocker.patch("minio.Minio")
+        ObjectStoreManager("localhost:9999", "foo", "bar")
         called_config = mock_minio.call_args[1]
-        assert called_config['endpoint'] == 'localhost:9999'
-        assert called_config['access_key'] == 'foo'
-        assert called_config['secret_key'] == 'bar'
-        assert not called_config['secure']
+        assert called_config["endpoint"] == "localhost:9999"
+        assert called_config["access_key"] == "foo"
+        assert called_config["secret_key"] == "bar"
+        assert not called_config["secure"]
 
-        ObjectStoreManager('localhost:9999', 'foo', 'bar', True)
+        ObjectStoreManager("localhost:9999", "foo", "bar", True)
         called_config = mock_minio.call_args[1]
-        assert called_config['endpoint'] == 'localhost:9999'
-        assert called_config['access_key'] == 'foo'
-        assert called_config['secret_key'] == 'bar'
-        assert called_config['secure']
+        assert called_config["endpoint"] == "localhost:9999"
+        assert called_config["access_key"] == "foo"
+        assert called_config["secret_key"] == "bar"
+        assert called_config["secure"]
 
     def test_init_from_env(self, mocker):
-        os.environ['MINIO_URL'] = 'localhost:9999'
-        os.environ['MINIO_ACCESS_KEY'] = 'test'
-        os.environ['MINIO_SECRET_KEY'] = 'shhh'
-        mock_minio = mocker.patch('minio.Minio')
+        os.environ["MINIO_URL"] = "localhost:9999"
+        os.environ["MINIO_ACCESS_KEY"] = "test"
+        os.environ["MINIO_SECRET_KEY"] = "shhh"
+        mock_minio = mocker.patch("minio.Minio")
 
         ObjectStoreManager()
         called_config = mock_minio.call_args[1]
-        assert called_config['endpoint'] == 'localhost:9999'
-        assert called_config['access_key'] == 'test'
-        assert called_config['secret_key'] == 'shhh'
-        assert not called_config['secure']
+        assert called_config["endpoint"] == "localhost:9999"
+        assert called_config["access_key"] == "test"
+        assert called_config["secret_key"] == "shhh"
+        assert not called_config["secure"]
 
-        os.environ['MINIO_ENCRYPT'] = "True"
+        os.environ["MINIO_ENCRYPT"] = "True"
         ObjectStoreManager()
         called_config = mock_minio.call_args[1]
-        assert called_config['endpoint'] == 'localhost:9999'
-        assert called_config['access_key'] == 'test'
-        assert called_config['secret_key'] == 'shhh'
-        assert called_config['secure']
+        assert called_config["endpoint"] == "localhost:9999"
+        assert called_config["access_key"] == "test"
+        assert called_config["secret_key"] == "shhh"
+        assert called_config["secure"]
 
     def test_upload_file(self, mocker):
         import minio
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
         mock_minio.fput_object = mocker.Mock()
-        mocker.patch('minio.Minio', return_value=mock_minio)
-        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mocker.patch("minio.Minio", return_value=mock_minio)
+        result = ObjectStoreManager("localhost:9999", "foo", "bar")
         result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
         mock_minio.fput_object.assert_called()
 
@@ -89,10 +93,10 @@ class TestObjectStoreManager:
             return minio.error.S3Error(
                 response=mocker.Mock(),
                 code=code,
-                message='Mocked S3 Error',
-                resource='test-resource',
-                request_id='test-request-id',
-                host_id='test-host-id'
+                message="Mocked S3 Error",
+                resource="test-resource",
+                request_id="test-request-id",
+                host_id="test-host-id",
             )
 
         mock_minio = mocker.MagicMock(minio.api.Minio)
@@ -100,13 +104,13 @@ class TestObjectStoreManager:
 
         # Throw three retryable errors
         mock_minio.fput_object.side_effect = [
-            s3_error('SlowDown'),
-            s3_error('ServiceUnavailable'),
-            s3_error('Throttling')
+            s3_error("SlowDown"),
+            s3_error("ServiceUnavailable"),
+            s3_error("Throttling"),
         ]
 
-        mocker.patch('minio.Minio', return_value=mock_minio)
-        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mocker.patch("minio.Minio", return_value=mock_minio)
+        result = ObjectStoreManager("localhost:9999", "foo", "bar")
         with pytest.raises(ObjectStoreError):
             result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")
         assert mock_minio.fput_object.call_count == 3
@@ -115,8 +119,8 @@ class TestObjectStoreManager:
         # cause the upload to fail after the first retry
         mock_minio.fput_object.reset_mock()
         mock_minio.fput_object.side_effect = [
-            s3_error('SlowDown'),
-            s3_error('ItsDeadJim')
+            s3_error("SlowDown"),
+            s3_error("ItsDeadJim"),
         ]
         with pytest.raises(ObjectStoreError):
             result.upload_file("my-bucket", "foo.txt", "/tmp/foo.txt")

@@ -32,9 +32,9 @@ from servicex_app.models import TransformRequest
 
 class TestCodeGenAdapter:
     code_gen_service_urls = {
-        'uproot': 'http://localhost:8000',
-        'xAOD': 'http://localhost:8000',
-        'python': 'http://localhost:8000'
+        "uproot": "http://localhost:8000",
+        "xAOD": "http://localhost:8000",
+        "python": "http://localhost:8000",
     }
 
     def _generate_test_request(self):
@@ -53,7 +53,7 @@ class TestCodeGenAdapter:
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
 
-        mock_requests_post = mocker.patch('requests.post', return_value=mock_response)
+        mock_requests_post = mocker.patch("requests.post", return_value=mock_response)
 
         mock_parts = mocker.MagicMock()
         mock_transformer_image_part = mocker.MagicMock()
@@ -67,50 +67,61 @@ class TestCodeGenAdapter:
 
         mock_zip_part = mocker.MagicMock()
 
-        mock_parts.parts = [mock_transformer_image_part,
-                            mock_transformer_language_part,
-                            mock_transformer_command_part,
-                            mock_zip_part]
-        mocker.patch('servicex_app.code_gen_adapter.decoder.MultipartDecoder.from_response',
-                     return_value=mock_parts)
+        mock_parts.parts = [
+            mock_transformer_image_part,
+            mock_transformer_language_part,
+            mock_transformer_command_part,
+            mock_zip_part,
+        ]
+        mocker.patch(
+            "servicex_app.code_gen_adapter.decoder.MultipartDecoder.from_response",
+            return_value=mock_parts,
+        )
 
         mock_transformer_manager = mocker.MagicMock()
         mock_zip = mocker.patch("zipfile.ZipFile")
         mocker.patch("io.BytesIO")
 
         code_gen = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
-        (config_map, transformer_image, transformer_language, transformer_command) = \
-            code_gen.generate_code_for_selection(self._generate_test_request(), "servicex", "uproot")
+        (config_map, transformer_image, transformer_language, transformer_command) = (
+            code_gen.generate_code_for_selection(
+                self._generate_test_request(), "servicex", "uproot"
+            )
+        )
 
         assert transformer_image == "my-transformer:test"
         assert transformer_language == "scala"
         assert transformer_command == "echo hello, world"
 
         mock_requests_post.assert_called()
-        mock_transformer_manager.create_configmap_from_zip.assert_called_with(mock_zip(),
-                                                                              "462-33",
-                                                                              "servicex")
+        mock_transformer_manager.create_configmap_from_zip.assert_called_with(
+            mock_zip(), "462-33", "servicex"
+        )
 
     def test_generate_code_bad_response(self, mocker):
         mock_response = mocker.MagicMock()
         mock_response.status_code = 500
         mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
-        mocker.patch('requests.post', return_value=mock_response)
+        mocker.patch("requests.post", return_value=mock_response)
         mock_transformer_manager = mocker.MagicMock()
         service = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
-            service.generate_code_for_selection(self._generate_test_request(), "servicex", "uproot")
-        assert str(eek.value) == 'Failed to generate translation code: Ooops'
+            service.generate_code_for_selection(
+                self._generate_test_request(), "servicex", "uproot"
+            )
+        assert str(eek.value) == "Failed to generate translation code: Ooops"
 
     def test_wrong_user_input_codegen(self, mocker):
         mock_response = mocker.MagicMock()
         mock_response.status_code = 500
         mock_response.json = mocker.MagicMock(return_value={"Message": "Ooops"})
-        mocker.patch('requests.post', return_value=mock_response)
+        mocker.patch("requests.post", return_value=mock_response)
         mock_transformer_manager = mocker.MagicMock()
         service = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
 
         with pytest.raises(ValueError) as eek:
-            service.generate_code_for_selection(self._generate_test_request(), "servicex", "foo")
-        assert str(eek.value) == 'foo, code generator unavailable for use'
+            service.generate_code_for_selection(
+                self._generate_test_request(), "servicex", "foo"
+            )
+        assert str(eek.value) == "foo, code generator unavailable for use"

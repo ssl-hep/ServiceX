@@ -34,16 +34,27 @@ from servicex_app.resources.transformation.delete import DeleteTransform
 from servicex_app.resources.internal.data_lifecycle_ops import DataLifecycleOps
 
 
-def add_routes(api, transformer_manager, rabbit_mq_adaptor,
-               object_store, code_gen_service,
-               lookup_result_processor, docker_repo_adapter, celery_app):
+def add_routes(
+    api,
+    transformer_manager,
+    rabbit_mq_adaptor,
+    object_store,
+    code_gen_service,
+    lookup_result_processor,
+    docker_repo_adapter,
+    celery_app,
+):
 
     from servicex_app.resources.info import Info
 
     from servicex_app.resources.internal.add_file_to_dataset import AddFileToDataset
     from servicex_app.resources.internal.fileset_complete import FilesetComplete
-    from servicex_app.resources.internal.transform_status import TransformationStatusInternal
-    from servicex_app.resources.internal.transformer_file_complete import TransformerFileComplete
+    from servicex_app.resources.internal.transform_status import (
+        TransformationStatusInternal,
+    )
+    from servicex_app.resources.internal.transformer_file_complete import (
+        TransformerFileComplete,
+    )
 
     from servicex_app.resources.transformation.submit import SubmitTransformationRequest
     from servicex_app.resources.transformation.status import TransformationStatus
@@ -80,67 +91,69 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     # Must be its own module to allow patching
     from servicex_app.web.create_profile import create_profile
 
-    SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
-                                         object_store=object_store,
-                                         code_gen_service=code_gen_service,
-                                         lookup_result_processor=lookup_result_processor,
-                                         docker_repo_adapter=docker_repo_adapter,
-                                         transformer_manager=transformer_manager,
-                                         celery_app=celery_app)
+    SubmitTransformationRequest.make_api(
+        rabbitmq_adaptor=rabbit_mq_adaptor,
+        object_store=object_store,
+        code_gen_service=code_gen_service,
+        lookup_result_processor=lookup_result_processor,
+        docker_repo_adapter=docker_repo_adapter,
+        transformer_manager=transformer_manager,
+        celery_app=celery_app,
+    )
 
     # Web Frontend Routes
-    app.add_url_rule('/', 'home', home)
-    app.add_url_rule('/about', 'about', about)
-    app.add_url_rule('/monitor', 'monitor', monitor)
-    app.add_url_rule('/logs', 'logs', logs)
-    app.add_url_rule('/global-dashboard', 'global-dashboard', global_dashboard)
-    app.add_url_rule('/sign-in', 'sign_in', sign_in)
-    app.add_url_rule('/sign-out', 'sign_out', sign_out)
-    app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
-    app.add_url_rule('/api-token', 'api_token', api_token)
-    app.add_url_rule('/.servicex', 'servicex-file', servicex_file)
-    app.add_url_rule('/dashboard', 'user-dashboard', user_dashboard)
-    app.add_url_rule('/profile', 'profile', view_profile)
-    app.add_url_rule('/profile/new', 'create_profile', create_profile,
-                     methods=['GET', 'POST'])
-    app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
-                     methods=['GET', 'POST'])
+    app.add_url_rule("/", "home", home)
+    app.add_url_rule("/about", "about", about)
+    app.add_url_rule("/monitor", "monitor", monitor)
+    app.add_url_rule("/logs", "logs", logs)
+    app.add_url_rule("/global-dashboard", "global-dashboard", global_dashboard)
+    app.add_url_rule("/sign-in", "sign_in", sign_in)
+    app.add_url_rule("/sign-out", "sign_out", sign_out)
+    app.add_url_rule("/auth-callback", "auth_callback", auth_callback)
+    app.add_url_rule("/api-token", "api_token", api_token)
+    app.add_url_rule("/.servicex", "servicex-file", servicex_file)
+    app.add_url_rule("/dashboard", "user-dashboard", user_dashboard)
+    app.add_url_rule("/profile", "profile", view_profile)
     app.add_url_rule(
-        '/transformation-request/<id_>',
-        'transformation_request',
-        transformation_request
+        "/profile/new", "create_profile", create_profile, methods=["GET", "POST"]
     )
     app.add_url_rule(
-        '/transformation-request/<id_>/results',
-        'transformation_results',
-        transformation_results
+        "/profile/edit", "edit_profile", edit_profile, methods=["GET", "POST"]
     )
     app.add_url_rule(
-        '/multiple-codegen-list',
-        'multiple_codegen_list',
-        multiple_codegen_list
+        "/transformation-request/<id_>",
+        "transformation_request",
+        transformation_request,
+    )
+    app.add_url_rule(
+        "/transformation-request/<id_>/results",
+        "transformation_results",
+        transformation_results,
+    )
+    app.add_url_rule(
+        "/multiple-codegen-list", "multiple_codegen_list", multiple_codegen_list
     )
 
     # User management and Authentication Endpoints
-    api.add_resource(TokenRefresh, '/token/refresh')
-    api.add_resource(AllUsers, '/users')
-    api.add_resource(AcceptUser, '/accept')
-    api.add_resource(DeleteUser, '/users/<user_id>')
-    api.add_resource(PendingUsers, '/pending')
-    api.add_resource(SlackInteraction, '/slack')
+    api.add_resource(TokenRefresh, "/token/refresh")
+    api.add_resource(AllUsers, "/users")
+    api.add_resource(AcceptUser, "/accept")
+    api.add_resource(DeleteUser, "/users/<user_id>")
+    api.add_resource(PendingUsers, "/pending")
+    api.add_resource(SlackInteraction, "/slack")
 
     # Client public endpoints
-    api.add_resource(Info, '/servicex')
-    api.add_resource(AllDatasets, '/servicex/datasets')
-    api.add_resource(OneDataset, '/servicex/datasets/<int:dataset_id>')
-    api.add_resource(DeleteDataset, '/servicex/datasets/<int:dataset_id>')
+    api.add_resource(Info, "/servicex")
+    api.add_resource(AllDatasets, "/servicex/datasets")
+    api.add_resource(OneDataset, "/servicex/datasets/<int:dataset_id>")
+    api.add_resource(DeleteDataset, "/servicex/datasets/<int:dataset_id>")
 
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
-    api.add_resource(TransformationResults, prefix + '/results')
+    api.add_resource(TransformationResults, prefix + "/results")
 
     DeleteTransform.make_api(object_store)
     api.add_resource(DeleteTransform, prefix)
@@ -154,20 +167,27 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(CancelTransform, prefix + "/cancel")
 
     # Internal service endpoints
-    api.add_resource(TransformationStatusInternal,
-                     '/servicex/internal/transformation/<string:request_id>/status')
+    api.add_resource(
+        TransformationStatusInternal,
+        "/servicex/internal/transformation/<string:request_id>/status",
+    )
 
     AddFileToDataset.make_api(lookup_result_processor, transformer_manager)
-    api.add_resource(AddFileToDataset,
-                     '/servicex/internal/transformation/<string:dataset_id>/files')
+    api.add_resource(
+        AddFileToDataset, "/servicex/internal/transformation/<string:dataset_id>/files"
+    )
 
     FilesetComplete.make_api(lookup_result_processor, transformer_manager)
-    api.add_resource(FilesetComplete,
-                     '/servicex/internal/transformation/<string:dataset_id>/complete')
+    api.add_resource(
+        FilesetComplete,
+        "/servicex/internal/transformation/<string:dataset_id>/complete",
+    )
 
     TransformerFileComplete.make_api(transformer_manager)
-    api.add_resource(TransformerFileComplete,
-                     '/servicex/internal/transformation/<string:request_id>/file-complete')
+    api.add_resource(
+        TransformerFileComplete,
+        "/servicex/internal/transformation/<string:request_id>/file-complete",
+    )
 
     DataLifecycleOps.make_api(object_store)
-    api.add_resource(DataLifecycleOps, '/servicex/internal/data-lifecycle')
+    api.add_resource(DataLifecycleOps, "/servicex/internal/data-lifecycle")

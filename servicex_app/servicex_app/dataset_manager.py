@@ -40,15 +40,20 @@ from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetS
 class DatasetManager:
     def __init__(self, dataset: Dataset, logger: Logger, db: SQLAlchemy):
         self.dataset = dataset
-        self.did = None if dataset.did_finder == 'user' else DIDParser(dataset.name)
+        self.did = None if dataset.did_finder == "user" else DIDParser(dataset.name)
         self.logger = logger
         self.db = db
 
         self.logger.debug(f"DatasetManager: {self.dataset.name}")
 
     @classmethod
-    def from_did(cls, did: DIDParser, logger: Logger, extras: dict[str, str] = None,
-                 db: SQLAlchemy = None):
+    def from_did(
+        cls,
+        did: DIDParser,
+        logger: Logger,
+        extras: dict[str, str] = None,
+        db: SQLAlchemy = None,
+    ):
         dataset = Dataset.find_by_name(did.full_did)
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
@@ -57,14 +62,17 @@ class DatasetManager:
                 last_used=dataset_timestamp,
                 last_updated=dataset_timestamp,
                 lookup_status=DatasetStatus.created,
-                did_finder=did.scheme
+                did_finder=did.scheme,
             )
             dataset.save_to_db()
-            logger.info(f"Created new dataset: {dataset.name}, id is {dataset.id}",
-                        extra=extras)
+            logger.info(
+                f"Created new dataset: {dataset.name}, id is {dataset.id}", extra=extras
+            )
         else:
-            logger.info(f"Found existing dataset: {dataset.name}, id is {dataset.id}",
-                        extra=extras)
+            logger.info(
+                f"Found existing dataset: {dataset.name}, id is {dataset.id}",
+                extra=extras,
+            )
             dataset.last_used = datetime.now(tz=timezone.utc)
             dataset.save_to_db()
 
@@ -75,9 +83,13 @@ class DatasetManager:
         return hashlib.sha256(" ".join(file_list).encode()).hexdigest()
 
     @classmethod
-    def from_file_list(cls, file_list: List[str], logger: Logger,
-                       extras: dict[str, str] = None,
-                       db: SQLAlchemy = None):
+    def from_file_list(
+        cls,
+        file_list: List[str],
+        logger: Logger,
+        extras: dict[str, str] = None,
+        db: SQLAlchemy = None,
+    ):
         name = cls.file_list_hash(file_list)
         dataset = Dataset.find_by_name(name)
 
@@ -88,23 +100,23 @@ class DatasetManager:
                 last_used=dataset_timestamp,
                 last_updated=dataset_timestamp,
                 lookup_status=DatasetStatus.complete,
-                did_finder='user',
+                did_finder="user",
                 files=[
-                    DatasetFile(
-                        paths=file,
-                        adler32="xxx",
-                        file_events=0,
-                        file_size=0
-                    ) for file in file_list
-                ]
+                    DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
+                    for file in file_list
+                ],
             )
 
             dataset.save_to_db()
-            logger.info(f"Created new dataset for file list. Dataset Id is {dataset.id}",
-                        extra=extras)
+            logger.info(
+                f"Created new dataset for file list. Dataset Id is {dataset.id}",
+                extra=extras,
+            )
         else:
-            logger.info(f"Found existing dataset for file list. Dataset Id is {dataset.id}",
-                        extra=extras)
+            logger.info(
+                f"Found existing dataset for file list. Dataset Id is {dataset.id}",
+                extra=extras,
+            )
             dataset.last_used = datetime.now(tz=timezone.utc)
             dataset.save_to_db()
 
@@ -134,7 +146,10 @@ class DatasetManager:
         Report whether a submission to a DID finder is called for. Thid is true if the
         dataset is not complete and the lookup status is not 'looking'
         """
-        return self.dataset.lookup_status not in [DatasetStatus.looking, DatasetStatus.complete]
+        return self.dataset.lookup_status not in [
+            DatasetStatus.looking,
+            DatasetStatus.complete,
+        ]
 
     @property
     def is_complete(self) -> bool:
@@ -148,27 +163,36 @@ class DatasetManager:
         self.db.session.refresh(self.dataset)
 
     def submit_lookup_request(self, advertised_endpoint, celery_app: Celery):
-        task_id = celery_app.send_task(f'{self.did.microservice_queue}.lookup_dataset',
-                                       args=[self.did.did, self.dataset.id, advertised_endpoint])
+        task_id = celery_app.send_task(
+            f"{self.did.microservice_queue}.lookup_dataset",
+            args=[self.did.did, self.dataset.id, advertised_endpoint],
+        )
 
-        self.logger.debug(f"Submitted lookup request for {self.did.did} taskID {task_id} ")
+        self.logger.debug(
+            f"Submitted lookup request for {self.did.did} taskID {task_id} "
+        )
         self.dataset.lookup_status = DatasetStatus.looking
 
-    def publish_files(self, request: TransformRequest,
-                      lookup_result_processor: LookupResultProcessor) -> None:
+    def publish_files(
+        self, request: TransformRequest, lookup_result_processor: LookupResultProcessor
+    ) -> None:
         request.files = len(self.dataset.files)
-        lookup_result_processor.add_files_to_processing_queue(request, files=[
-            file for file in self.dataset.files
-        ])
+        lookup_result_processor.add_files_to_processing_queue(
+            request, files=[file for file in self.dataset.files]
+        )
 
-    def add_files(self, files: List[DatasetFile], requests: List[TransformRequest],
-                  lookup_result_processor: LookupResultProcessor) -> None:
+    def add_files(
+        self,
+        files: List[DatasetFile],
+        requests: List[TransformRequest],
+        lookup_result_processor: LookupResultProcessor,
+    ) -> None:
         self.dataset.files.extend(files)
         self.dataset.save_to_db()
 
         for request in requests:
             request.files += len(files)
-            lookup_result_processor.add_files_to_processing_queue(request, files=[
-                file for file in files
-            ])
+            lookup_result_processor.add_files_to_processing_queue(
+                request, files=[file for file in files]
+            )
             request.save_to_db()

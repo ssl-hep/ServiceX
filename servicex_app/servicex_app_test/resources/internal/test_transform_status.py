@@ -31,45 +31,42 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestTransformStatusInternal(ResourceTestBase):
     def test_post_status(self, mocker, client):
         from servicex_app.models import TransformRequest
+
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
-        mocker.patch.object(
-            TransformRequest,
-            'lookup',
-            return_value=mock_request)
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
 
-        response = client.post('/servicex/internal/transformation/1234/status',
-                               json={
-                                   'timestamp': '2019-09-18T16:15:09.457481',
-                                   'severity': "info",
-                                   'info': 'Just testing',
-                                   'source': 'TESTER'
-                               })
+        response = client.post(
+            "/servicex/internal/transformation/1234/status",
+            json={
+                "timestamp": "2019-09-18T16:15:09.457481",
+                "severity": "info",
+                "info": "Just testing",
+                "source": "TESTER",
+            },
+        )
 
         assert response.status_code == 200
         mock_request.save_to_db.assert_not_called()
 
     def test_post_status_fatal(self, mocker, client):
         from servicex_app.models import TransformRequest
+
         mock_request = self._generate_transform_request()
         mock_request.save_to_db = mocker.Mock()
-        mocker.patch.object(
-            TransformRequest,
-            'lookup',
-            return_value=mock_request)
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
 
-        response = client.post('/servicex/internal/transformation/1234/status',
-                               json={
-                                   'severity': "fatal",
-                                   'info': 'Just testing',
-                                   'source': 'test source'
-                               })
+        response = client.post(
+            "/servicex/internal/transformation/1234/status",
+            json={"severity": "fatal", "info": "Just testing", "source": "test source"},
+        )
 
         assert response.status_code == 200
         assert mock_request.finish_time is not None
         mock_request.save_to_db.assert_called()
 
     def test_post_status_bad_data(self, client):
-        response = client.post('/servicex/internal/transformation/1234/status',
-                               json={'foo': 'bar'})
+        response = client.post(
+            "/servicex/internal/transformation/1234/status", json={"foo": "bar"}
+        )
         assert response.status_code == 400

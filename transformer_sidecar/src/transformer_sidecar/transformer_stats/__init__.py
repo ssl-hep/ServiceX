@@ -32,7 +32,7 @@ from typing import Optional
 class TransformerStats:
     def __init__(self, log_path: Optional[Path] = None):
         if log_path and log_path.exists():
-            with open(log_path, encoding="utf8", errors='ignore') as log:
+            with open(log_path, encoding="utf8", errors="ignore") as log:
                 self.log_body = log.read()
         else:
             self.log_body = f"File does not exist: {log_path}"

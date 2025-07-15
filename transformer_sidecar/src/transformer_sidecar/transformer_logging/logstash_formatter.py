@@ -29,24 +29,23 @@ import os
 
 import logstash
 
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
 
     def format(self, record):
         message = {
-            '@timestamp': self.format_timestamp(record.created),
-            '@version': '1',
-            'message': record.getMessage(),
-            'path': record.pathname,
-            'tags': self.tags,
-            'type': self.message_type,
-            'instance': instance,
-            'component': 'transformer sidecar',
-
+            "@timestamp": self.format_timestamp(record.created),
+            "@version": "1",
+            "message": record.getMessage(),
+            "path": record.pathname,
+            "tags": self.tags,
+            "type": self.message_type,
+            "instance": instance,
+            "component": "transformer sidecar",
             # Extra Fields
-            'level': record.levelname
+            "level": record.levelname,
         }
 
         # Add extra fields

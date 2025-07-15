@@ -28,10 +28,10 @@ class TestDeploymentStatus(ResourceTestBase):
         }
         return mock_deployment_status
 
-    def test_deployment_status(
-            self, mock_transform_manager, mock_deployment_status
-    ):
-        mock_transform_manager.get_deployment_status.return_value = mock_deployment_status
+    def test_deployment_status(self, mock_transform_manager, mock_deployment_status):
+        mock_transform_manager.get_deployment_status.return_value = (
+            mock_deployment_status
+        )
 
         client = self._test_client(transformation_manager=mock_transform_manager)
         response = client.get("/servicex/transformation/1234/deployment-status")

@@ -28,8 +28,11 @@
 import os
 import shutil
 from . import query_translate
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
-    GenerateCodeException
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 
 class TopCPTranslator(CodeGenerator):
@@ -48,14 +51,21 @@ class TopCPTranslator(CodeGenerator):
             os.makedirs(query_file_path)
 
         # Transfer the templated main python script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/servicex/templates/transform_single_file.py")  # NOQA: 501
-        shutil.copyfile(template_path, os.path.join(query_file_path, "transform_single_file.py"))
+        template_path = os.environ.get(
+            "TEMPLATE_PATH",
+            "/home/servicex/servicex/templates/transform_single_file.py",
+        )  # NOQA: 501
+        shutil.copyfile(
+            template_path, os.path.join(query_file_path, "transform_single_file.py")
+        )
 
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
-                                                        "transformer_capabilities.json"))
+        capabilities_path = os.environ.get(
+            "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
+        )
+        shutil.copyfile(
+            capabilities_path,
+            os.path.join(query_file_path, "transformer_capabilities.json"),
+        )
 
         query_translate.generate_files_from_query(query, query_file_path)
 

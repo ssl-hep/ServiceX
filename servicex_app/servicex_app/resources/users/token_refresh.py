@@ -26,8 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from flask_jwt_extended import (create_access_token, decode_token, get_jwt,
-                                jwt_required)
+from flask_jwt_extended import create_access_token, decode_token, get_jwt, jwt_required
 from flask_restful import Resource
 from servicex_app.models import UserModel
 
@@ -36,10 +35,10 @@ class TokenRefresh(Resource):
     @jwt_required(refresh=True)
     def post(self):
         claims = get_jwt()
-        user = UserModel.find_by_email(claims['sub'])
+        user = UserModel.find_by_email(claims["sub"])
         decoded = decode_token(user.refresh_token)
-        if not claims['jti'] == decoded['jti']:
-            return {'message': 'Invalid or outdated refresh token'}, 401
+        if not claims["jti"] == decoded["jti"]:
+            return {"message": "Invalid or outdated refresh token"}, 401
         current_user = user.email
         access_token = create_access_token(identity=current_user)
-        return {'access_token': access_token}
+        return {"access_token": access_token}

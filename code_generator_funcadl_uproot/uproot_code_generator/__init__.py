@@ -32,7 +32,9 @@ from uproot_code_generator.ast_translator import AstUprootTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
-    return servicex_codegen.create_app(test_config,
-                                       provided_translator=provided_translator
-                                       if provided_translator else AstUprootTranslator()
-                                       )
+    return servicex_codegen.create_app(
+        test_config,
+        provided_translator=(
+            provided_translator if provided_translator else AstUprootTranslator()
+        ),
+    )

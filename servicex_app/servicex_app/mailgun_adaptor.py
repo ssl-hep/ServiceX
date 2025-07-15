@@ -6,15 +6,15 @@ from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
 class MailgunAdaptor:
     def __init__(self):
-        self.api_key = current_app.config.get('MAILGUN_API_KEY')
-        self.domain = current_app.config.get('MAILGUN_DOMAIN')
+        self.api_key = current_app.config.get("MAILGUN_API_KEY")
+        self.domain = current_app.config.get("MAILGUN_DOMAIN")
         self.endpoint = f"https://api.mailgun.net/v3/{self.domain}/messages"
 
     @servicex_retry()
     def post_mailgun(self, data) -> requests.Response:
-        res = requests.post(self.endpoint, data,
-                            auth=("api", self.api_key),
-                            timeout=REQUEST_TIMEOUT)
+        res = requests.post(
+            self.endpoint, data, auth=("api", self.api_key), timeout=REQUEST_TIMEOUT
+        )
         return res
 
     def send(self, email: str, template_name: str):
@@ -29,7 +29,7 @@ class MailgunAdaptor:
             "from": f"ServiceX <noreply@{self.domain}>",
             "to": [email],
             "subject": "Welcome to ServiceX!",
-            "html": render_template(f"emails/{template_name}")
+            "html": render_template(f"emails/{template_name}"),
         }
 
         res = self.post_mailgun(data)

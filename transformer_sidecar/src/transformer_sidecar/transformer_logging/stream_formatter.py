@@ -33,11 +33,30 @@ class StreamFormatter(logging.Formatter):
     A custom formatter that adds extras.
     Normally log messages are "level instance component msg extra: {}"
     """
-    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
-                'pathname', 'filename', 'module', 'exc_info',
-                'exc_text', 'stack_info', 'lineno', 'funcName',
-                'created', 'msecs', 'relativeCreated', 'thread',
-                'threadName', 'processName', 'process', 'message']
+
+    def_keys = [
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+    ]
 
     def format(self, record: logging.LogRecord) -> str:
         """
@@ -46,8 +65,7 @@ class StreamFormatter(logging.Formatter):
         """
 
         string = super().format(record)
-        extra = {k: v for k, v in record.__dict__.items()
-                 if k not in self.def_keys}
+        extra = {k: v for k, v in record.__dict__.items() if k not in self.def_keys}
         if len(extra) > 0:
             string += " extra: " + str(extra)
         return string

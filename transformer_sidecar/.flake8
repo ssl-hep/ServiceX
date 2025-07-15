@@ -11,7 +11,3 @@ exclude =
     migrations
     ./test_posix_vol/sample_files
     ./test_posix_vol/generated_code
-
-
-
-

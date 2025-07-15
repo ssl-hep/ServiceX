@@ -27,7 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex_app.models import Dataset, db, TransformRequest, TransformStatus, DatasetStatus
+from servicex_app.models import (
+    Dataset,
+    db,
+    TransformRequest,
+    TransformStatus,
+    DatasetStatus,
+)
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.resources.servicex_resource import ServiceXResource
 
@@ -45,36 +51,46 @@ class FilesetComplete(ServiceXResource):
         summary = request.get_json()
         dataset = Dataset.find_by_id(int(dataset_id))
 
-        current_app.logger.info("Completed fileset for datasetID",
-                                extra={'dataset_id': dataset_id,
-                                       'elapsed-time': summary['elapsed-time']})
-        dataset.n_files = summary['files']
-        dataset.events = summary['total-events']
-        dataset.size = summary['total-bytes']
+        current_app.logger.info(
+            "Completed fileset for datasetID",
+            extra={"dataset_id": dataset_id, "elapsed-time": summary["elapsed-time"]},
+        )
+        dataset.n_files = summary["files"]
+        dataset.events = summary["total-events"]
+        dataset.size = summary["total-bytes"]
         dataset.lookup_status = DatasetStatus.complete
         db.session.commit()
 
-        if summary['files'] > 0:
+        if summary["files"] > 0:
             # Now time to pick up any transform requests for this dataset that came in
             # while we were still looking up files and send the dataset to them
             dataset_manager = DatasetManager(dataset, current_app.logger, db)
-            for transform_request in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
-                dataset_manager.publish_files(transform_request, self.lookup_result_processor)
+            for transform_request in TransformRequest.lookup_pending_on_dataset(
+                int(dataset_id)
+            ):
+                dataset_manager.publish_files(
+                    transform_request, self.lookup_result_processor
+                )
                 transform_request.status = TransformStatus.running
 
             # also resolve the status of whatever transform prompted this lookup
-            for transform_request in \
-                    TransformRequest.lookup_running_by_dataset_id(int(dataset_id)):
+            for transform_request in TransformRequest.lookup_running_by_dataset_id(
+                int(dataset_id)
+            ):
                 transform_request.status = TransformStatus.running
 
         else:
-            current_app.logger.info("No files found for datasetID. Shutting down transformers",
-                                    extra={'dataset_id': dataset_id})
+            current_app.logger.info(
+                "No files found for datasetID. Shutting down transformers",
+                extra={"dataset_id": dataset_id},
+            )
 
             # find running requests that needed this dataset and shut them down
             # there will never be any files
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            for running_request in TransformRequest.lookup_running_by_dataset_id(int(dataset_id)):
+            namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+            for running_request in TransformRequest.lookup_running_by_dataset_id(
+                int(dataset_id)
+            ):
                 running_request.status = TransformStatus.complete
                 running_request.finish_time = datetime.now(tz=timezone.utc)
                 self.transformer_manager.shutdown_transformer_job(
@@ -83,7 +99,9 @@ class FilesetComplete(ServiceXResource):
 
             # Tell any other transform that was waiting for the lookup to complete
             # not to expect to run
-            for pending_transform in TransformRequest.lookup_pending_on_dataset(int(dataset_id)):
+            for pending_transform in TransformRequest.lookup_pending_on_dataset(
+                int(dataset_id)
+            ):
                 pending_transform.status = TransformStatus.complete
                 pending_transform.finish_time = datetime.now(tz=timezone.utc)
 

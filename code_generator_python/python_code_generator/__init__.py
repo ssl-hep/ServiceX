@@ -32,7 +32,9 @@ from python_code_generator.python_translator import PythonTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
-    return servicex_codegen.create_app(test_config,
-                                       provided_translator=provided_translator
-                                       if provided_translator else PythonTranslator()
-                                       )
+    return servicex_codegen.create_app(
+        test_config,
+        provided_translator=(
+            provided_translator if provided_translator else PythonTranslator()
+        ),
+    )

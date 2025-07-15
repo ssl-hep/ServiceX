@@ -45,15 +45,15 @@ class CancelTransform(ServiceXResource):
     def get(self, request_id: str):
         transform_req = TransformRequest.lookup(request_id)
         if not transform_req:
-            msg = f'Transformation request not found with id: {request_id}'
-            current_app.logger.warning(msg, extra={'requestId': request_id})
-            return {'message': msg}, 404
+            msg = f"Transformation request not found with id: {request_id}"
+            current_app.logger.warning(msg, extra={"requestId": request_id})
+            return {"message": msg}, 404
         elif transform_req.status.is_complete:
             msg = f"Transform request with id {request_id} is not in progress."
-            current_app.logger.warning(msg, extra={'requestId': request_id})
+            current_app.logger.warning(msg, extra={"requestId": request_id})
             return {"message": msg}, 400
 
-        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
 
         if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
             try:
@@ -62,9 +62,11 @@ class CancelTransform(ServiceXResource):
                 if exc.status == 404:
                     pass
                 else:
-                    current_app.logger.error(f"Got Kubernetes api exception: {exc.reason}",
-                                             extra={'requestId': request_id})
-                    return {'message': exc.reason}, exc.status
+                    current_app.logger.error(
+                        f"Got Kubernetes api exception: {exc.reason}",
+                        extra={"requestId": request_id},
+                    )
+                    return {"message": exc.reason}, exc.status
 
         transform_req.status = TransformStatus.canceled
         transform_req.finish_time = datetime.now(tz=timezone.utc)

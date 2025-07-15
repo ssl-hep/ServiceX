@@ -43,9 +43,8 @@ class CodeGenAdapter:
         return result
 
     def generate_code_for_selection(
-            self, request_record: TransformRequest,
-            namespace: str,
-            user_codegen_name: str) -> tuple[str, str, str, str]:
+        self, request_record: TransformRequest, namespace: str, user_codegen_name: str
+    ) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
@@ -58,24 +57,29 @@ class CodeGenAdapter:
         from io import BytesIO
         from zipfile import ZipFile
 
-        assert self.transformer_manager, "Code Generator won't work without a Transformer Manager"
+        assert (
+            self.transformer_manager
+        ), "Code Generator won't work without a Transformer Manager"
 
         # Finding Codegen URL from the config dictionary and user provided input
         post_url = self.code_gen_service_urls.get(user_codegen_name, None)
 
         if not post_url:
-            raise ValueError(f'{user_codegen_name}, code generator unavailable for use')
+            raise ValueError(f"{user_codegen_name}, code generator unavailable for use")
 
-        result = self.post_request(post_url + "/servicex/generated-code", post_obj={
-            "code": request_record.selection,
-        })
+        result = self.post_request(
+            post_url + "/servicex/generated-code",
+            post_obj={
+                "code": request_record.selection,
+            },
+        )
 
         if result.status_code != 200:
             try:
-                msg = result.json()['Message']
+                msg = result.json()["Message"]
             except KeyError:
                 msg = str(result.json())
-            raise ValueError(f'Failed to generate translation code: {msg}')
+            raise ValueError(f"Failed to generate translation code: {msg}")
 
         decoder_parts = decoder.MultipartDecoder.from_response(result)
 
@@ -86,9 +90,11 @@ class CodeGenAdapter:
 
         zipfile = ZipFile(BytesIO(zipfile))
 
-        return (self.transformer_manager.create_configmap_from_zip(zipfile,
-                                                                   request_record.request_id,
-                                                                   namespace),
-                transformer_image,
-                transformer_language,
-                transformer_command)
+        return (
+            self.transformer_manager.create_configmap_from_zip(
+                zipfile, request_record.request_id, namespace
+            ),
+            transformer_image,
+            transformer_language,
+            transformer_command,
+        )

@@ -30,43 +30,46 @@ from servicex_app.object_store_manager import ObjectStoreManager
 
 class TestObjectStoreManager:
     def test_init(self, mocker):
-        mock_minio = mocker.patch('minio.Minio')
-        ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mock_minio = mocker.patch("minio.Minio")
+        ObjectStoreManager("localhost:9999", "foo", "bar")
         called_config = mock_minio.call_args[1]
-        assert called_config['endpoint'] == 'localhost:9999'
-        assert called_config['access_key'] == 'foo'
-        assert called_config['secret_key'] == 'bar'
-        assert not called_config['secure']
+        assert called_config["endpoint"] == "localhost:9999"
+        assert called_config["access_key"] == "foo"
+        assert called_config["secret_key"] == "bar"
+        assert not called_config["secure"]
 
     def test_add_bucket(self, mocker):
         import minio
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
-        mocker.patch('minio.Minio', return_value=mock_minio)
-        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mocker.patch("minio.Minio", return_value=mock_minio)
+        result = ObjectStoreManager("localhost:9999", "foo", "bar")
         result.create_bucket("123-455")
         mock_minio.make_bucket.assert_called_with("123-455")
 
     def test_list_buckets(self, mocker):
         import minio
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
-        mock_minio.list_buckets = mocker.Mock(return_value=['a', 'b'])
-        mocker.patch('minio.Minio', return_value=mock_minio)
-        result = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        mock_minio.list_buckets = mocker.Mock(return_value=["a", "b"])
+        mocker.patch("minio.Minio", return_value=mock_minio)
+        result = ObjectStoreManager("localhost:9999", "foo", "bar")
         bucket_list = result.list_buckets()
         mock_minio.list_buckets.assert_called()
-        assert bucket_list == ['a', 'b']
+        assert bucket_list == ["a", "b"]
 
     def test_delete_bucket_and_contents(self, mocker):
         import minio
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
         mock_minio.bucket_exists = mocker.Mock(return_value=True)
 
         mock_object = mocker.MagicMock()
         mock_object.object_name = "a"
         mock_minio.list_objects = mocker.Mock(return_value=[mock_object])
-        mocker.patch('minio.Minio', return_value=mock_minio)
+        mocker.patch("minio.Minio", return_value=mock_minio)
 
-        object_store = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        object_store = ObjectStoreManager("localhost:9999", "foo", "bar")
         object_store.delete_bucket_and_contents("123-455")
 
         mock_minio.bucket_exists.assert_called_with("123-455")
@@ -76,12 +79,13 @@ class TestObjectStoreManager:
 
     def test_delete_bucket_and_contents_no_bucket(self, mocker):
         import minio
+
         mock_minio = mocker.MagicMock(minio.api.Minio)
         mock_minio.bucket_exists = mocker.Mock(return_value=False)
 
-        mocker.patch('minio.Minio', return_value=mock_minio)
+        mocker.patch("minio.Minio", return_value=mock_minio)
 
-        object_store = ObjectStoreManager('localhost:9999', 'foo', 'bar')
+        object_store = ObjectStoreManager("localhost:9999", "foo", "bar")
         object_store.delete_bucket_and_contents("123-455")
 
         mock_minio.bucket_exists.assert_called_with("123-455")

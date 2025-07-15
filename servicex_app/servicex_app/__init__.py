@@ -54,7 +54,7 @@ from flask_migrate import Migrate
 from flask_moment import Moment
 from servicex_app.models import db
 
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+instance = os.environ.get("INSTANCE_NAME", "Unknown")
 migrate = Migrate()
 moment = Moment()
 
@@ -64,11 +64,30 @@ class StreamFormatter(logging.Formatter):
     A custom formatter that adds extras.
     Normally log messages are "level instance component msg extra: {}"
     """
-    def_keys = ['name', 'msg', 'args', 'levelname', 'levelno',
-                'pathname', 'filename', 'module', 'exc_info',
-                'exc_text', 'stack_info', 'lineno', 'funcName',
-                'created', 'msecs', 'relativeCreated', 'thread',
-                'threadName', 'processName', 'process', 'message']
+
+    def_keys = [
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+    ]
 
     def format(self, record: logging.LogRecord) -> str:
         """
@@ -77,8 +96,7 @@ class StreamFormatter(logging.Formatter):
         """
 
         string = super().format(record)
-        extra = {k: v for k, v in record.__dict__.items()
-                 if k not in self.def_keys}
+        extra = {k: v for k, v in record.__dict__.items() if k not in self.def_keys}
         if len(extra) > 0:
             string += " extra: " + str(extra)
         return string
@@ -90,19 +108,18 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
 
     def format(self, record):
         message = {
-            '@timestamp': self.format_timestamp(record.created),
-            '@version': '1',
-            'message': record.getMessage(),
-            'host': self.host,
-            'path': record.pathname,
-            'tags': self.tags,
-            'type': self.message_type,
-            'instance': instance,
-            'component': 'servicex_app',
-
+            "@timestamp": self.format_timestamp(record.created),
+            "@version": "1",
+            "message": record.getMessage(),
+            "host": self.host,
+            "path": record.pathname,
+            "tags": self.tags,
+            "type": self.message_type,
+            "instance": instance,
+            "component": "servicex_app",
             # Extra Fields
-            'level': record.levelname,
-            'logger_name': record.name,
+            "level": record.levelname,
+            "logger_name": record.name,
         }
 
         # Add extra fields
@@ -127,44 +144,50 @@ def _override_config_with_environ(app):
 
     # Create a dictionary of environment vars that have keys that match keys from the
     # loaded config. These will override anything from the config file
-    return {k: (lambda key, value: _convert_string(os.environ[k]))(k, v) for (k, v)
-            in app.config.items()
-            if k in os.environ}
+    return {
+        k: (lambda key, value: _convert_string(os.environ[k]))(k, v)
+        for (k, v) in app.config.items()
+        if k in os.environ
+    }
 
 
-def create_app(test_config=None,
-               provided_transformer_manager=None,
-               provided_rabbit_adaptor=None,
-               provided_object_store=None,
-               provided_code_gen_service=None,
-               provided_lookup_result_processor=None,
-               provided_docker_repo_adapter=None,
-               provided_celery_app=None):
+def create_app(
+    test_config=None,
+    provided_transformer_manager=None,
+    provided_rabbit_adaptor=None,
+    provided_object_store=None,
+    provided_code_gen_service=None,
+    provided_lookup_result_processor=None,
+    provided_docker_repo_adapter=None,
+    provided_celery_app=None,
+):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
     """Flask CLI Plugin to manage users"""
-    user_cli = AppGroup('user')
+    user_cli = AppGroup("user")
 
-    @user_cli.command('create')
-    @click.argument('sub')
-    @click.argument('email')
-    @click.argument('name')
-    @click.argument('institution')
-    @click.argument('refresh_token', required=False)
+    @user_cli.command("create")
+    @click.argument("sub")
+    @click.argument("email")
+    @click.argument("name")
+    @click.argument("institution")
+    @click.argument("refresh_token", required=False)
     def create_user(sub, email, name, institution, refresh_token=None):
-        add_user(sub=sub,
-                 email=email,
-                 name=name,
-                 institution=institution,
-                 refresh_token=refresh_token)
+        add_user(
+            sub=sub,
+            email=email,
+            name=name,
+            institution=institution,
+            refresh_token=refresh_token,
+        )
 
-    @user_cli.command('list')
+    @user_cli.command("list")
     def list_users_command():
         list_users()
 
-    @user_cli.command('approve')
-    @click.argument('sub')
+    @user_cli.command("approve")
+    @click.argument("sub")
     def approve_user_command(sub):
         approve_user(sub)
 
@@ -177,10 +200,10 @@ def create_app(test_config=None,
 
     # setup logging
 
-    logstash_host = os.environ.get('LOGSTASH_HOST')
-    logstash_port = os.environ.get('LOGSTASH_PORT')
+    logstash_host = os.environ.get("LOGSTASH_HOST")
+    logstash_port = os.environ.get("LOGSTASH_PORT")
 
-    level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+    level = os.environ.get("LOG_LEVEL", "INFO").upper()
     if app.debug:
         level = "DEBUG"
     app.logger.level = getattr(logging, level, None)
@@ -190,16 +213,18 @@ def create_app(test_config=None,
         app.logger.removeHandler(h)
 
     stream_handler = logging.StreamHandler()
-    stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} servicex_app " +
-                                       '%(message)s')
+    stream_formatter = StreamFormatter(
+        "%(levelname)s " + f"{instance} servicex_app " + "%(message)s"
+    )
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(level)
     app.logger.addHandler(stream_handler)
 
-    if (logstash_host and logstash_port):
-        logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
-        logstash_formatter = LogstashFormatter('logstash', None, None)
+    if logstash_host and logstash_port:
+        logstash_handler = logstash.TCPLogstashHandler(
+            logstash_host, logstash_port, version=1
+        )
+        logstash_formatter = LogstashFormatter("logstash", None, None)
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
@@ -207,14 +232,17 @@ def create_app(test_config=None,
     app.logger.info("Initialized logging")
 
     if not test_config:
-        app.config.from_envvar('APP_CONFIG_FILE')
+        app.config.from_envvar("APP_CONFIG_FILE")
         app.config.update(_override_config_with_environ(app))
     else:
         app.config.from_mapping(test_config)
-        app.logger.info(f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}")
+        app.logger.info(
+            f"Transformer enabled: {test_config['TRANSFORMER_MANAGER_ENABLED']}"
+        )
 
     def b64decode(text):  # needed for python selection decoding to web page.
         return base64.b64decode(text).decode()
+
     app.add_template_filter(b64decode)
 
     with app.app_context():
@@ -227,59 +255,64 @@ def create_app(test_config=None,
         moment.init_app(app)
 
         # Validate did-finder scheme
-        schemes = app.config['VALID_DID_SCHEMES']
-        if app.config['DID_FINDER_DEFAULT_SCHEME'] not in schemes:
+        schemes = app.config["VALID_DID_SCHEMES"]
+        if app.config["DID_FINDER_DEFAULT_SCHEME"] not in schemes:
             raise ValueError(f"Default DID Finder Scheme not listed in {schemes}")
 
-        if app.config['OBJECT_STORE_ENABLED']:
+        if app.config["OBJECT_STORE_ENABLED"]:
             if not provided_object_store:
-                if 'MINIO_ENCRYPT' in app.config:
-                    if isinstance(app.config['MINIO_ENCRYPT'], bool):
-                        use_https = app.config['MINIO_ENCRYPT']
+                if "MINIO_ENCRYPT" in app.config:
+                    if isinstance(app.config["MINIO_ENCRYPT"], bool):
+                        use_https = app.config["MINIO_ENCRYPT"]
                     else:
-                        use_https = strtobool(app.config['MINIO_ENCRYPT'])
+                        use_https = strtobool(app.config["MINIO_ENCRYPT"])
                 else:
                     use_https = False
-                object_store = ObjectStoreManager(app.config['MINIO_URL'],
-                                                  username=app.config['MINIO_ACCESS_KEY'],
-                                                  password=app.config['MINIO_SECRET_KEY'],
-                                                  use_https=use_https)
+                object_store = ObjectStoreManager(
+                    app.config["MINIO_URL"],
+                    username=app.config["MINIO_ACCESS_KEY"],
+                    password=app.config["MINIO_SECRET_KEY"],
+                    use_https=use_https,
+                )
             else:
                 object_store = provided_object_store
         else:
             object_store = None
 
-        if app.config['TRANSFORMER_MANAGER_ENABLED'] and not provided_transformer_manager:
-            transformer_manager = TransformerManager(app.config['TRANSFORMER_MANAGER_MODE'])
+        if (
+            app.config["TRANSFORMER_MANAGER_ENABLED"]
+            and not provided_transformer_manager
+        ):
+            transformer_manager = TransformerManager(
+                app.config["TRANSFORMER_MANAGER_MODE"]
+            )
         else:
             transformer_manager = provided_transformer_manager
 
         if not provided_celery_app:
-            sys.path.append('/opt/servicex/celery')
+            sys.path.append("/opt/servicex/celery")
 
-            celery_app = Celery('ServiceX-App', broker=app.config['RABBIT_MQ_URL'])
+            celery_app = Celery("ServiceX-App", broker=app.config["RABBIT_MQ_URL"])
             celery_app.conf.task_routes = (route_task,)
         else:
             celery_app = provided_celery_app
 
         if not provided_rabbit_adaptor:
-            rabbit_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
+            rabbit_adaptor = RabbitAdaptor(app.config["RABBIT_MQ_URL"])
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 
         if not provided_code_gen_service:
             code_gen_service = CodeGenAdapter(
-                app.config['CODE_GEN_SERVICE_URLS'],
-                transformer_manager)
+                app.config["CODE_GEN_SERVICE_URLS"], transformer_manager
+            )
         else:
             code_gen_service = provided_code_gen_service
 
         if not provided_lookup_result_processor:
-            lookup_result_processor = LookupResultProcessor(celery_app,
-                                                            "http://" +
-                                                            app.config[
-                                                                'ADVERTISED_HOSTNAME'] + "/"
-                                                            )
+            lookup_result_processor = LookupResultProcessor(
+                celery_app, "http://" + app.config["ADVERTISED_HOSTNAME"] + "/"
+            )
         else:
             lookup_result_processor = provided_lookup_result_processor
 
@@ -288,13 +321,18 @@ def create_app(test_config=None,
         else:
             docker_repo_adapter = provided_docker_repo_adapter
 
-        if transformer_manager and \
-                'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' in app.config and \
-                app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
-                not transformer_manager.persistent_volume_claim_exists(
-                    app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'],
-                    app.config['TRANSFORMER_NAMESPACE']):
-            app.logger.error("Supplied Transformer Persistent Volume Claim Doesn't exist")
+        if (
+            transformer_manager
+            and "TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM" in app.config
+            and app.config["TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM"]
+            and not transformer_manager.persistent_volume_claim_exists(
+                app.config["TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM"],
+                app.config["TRANSFORMER_NAMESPACE"],
+            )
+        ):
+            app.logger.error(
+                "Supplied Transformer Persistent Volume Claim Doesn't exist"
+            )
             sys.exit(-1)
 
         api = Api(app, errors=Flask.errorhandler)
@@ -307,11 +345,20 @@ def create_app(test_config=None,
 
         def create_tables():
             from servicex_app.models import db
+
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service,
-                   lookup_result_processor, docker_repo_adapter, celery_app)
+        add_routes(
+            api,
+            transformer_manager,
+            rabbit_adaptor,
+            object_store,
+            code_gen_service,
+            lookup_result_processor,
+            docker_repo_adapter,
+            celery_app,
+        )
 
         # Inject useful Python modules to make them available in all templates
         @app.context_processor
@@ -319,6 +366,7 @@ def create_app(test_config=None,
             import datetime
 
             import humanize
+
             return dict(datetime=datetime, humanize=humanize)
 
     return app

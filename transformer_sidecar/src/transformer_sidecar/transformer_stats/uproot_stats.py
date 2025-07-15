@@ -36,20 +36,26 @@ class UprootStats(TransformerStats):
         super().__init__(log_path)
 
         matches = re.findall(
-            r'Transform stats: Total Events: (\d+), resulting file size (\d+)',
-            self.log_body)
+            r"Transform stats: Total Events: (\d+), resulting file size (\d+)",
+            self.log_body,
+        )
         if len(matches) == 1:
             self.total_events, self.file_size = tuple(map(int, matches[0]))
 
         # Look for bad property names
-        matches = re.findall(
-            r'ValueError: key "([^"]*)" does not exist', self.log_body)
+        matches = re.findall(r'ValueError: key "([^"]*)" does not exist', self.log_body)
 
         if matches:
-            self.error_info = f"Property naming error: {matches[0]} not available in dataset"
+            self.error_info = (
+                f"Property naming error: {matches[0]} not available in dataset"
+            )
 
         matches = re.findall(
-            r"awkward.errors.FieldNotFoundError: no field '([^\"]*)' in record.*", self.log_body)
+            r"awkward.errors.FieldNotFoundError: no field '([^\"]*)' in record.*",
+            self.log_body,
+        )
 
         if matches:
-            self.error_info = f"Property naming error: {matches[0]} not available in dataset"
+            self.error_info = (
+                f"Property naming error: {matches[0]} not available in dataset"
+            )

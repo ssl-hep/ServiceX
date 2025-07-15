@@ -26,4 +26,3 @@ USER servicex
 
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]
-

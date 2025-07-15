@@ -22,10 +22,10 @@ user's identity) and authorization (control of access to API resources).
 
 Authentication
 **************
-Authentication is currently implemented via an interface to an OpenID Connect 
+Authentication is currently implemented via an interface to an OpenID Connect
 provider of your choice. It has so far been tested with `Globus <https://www.globus.org/>` and Keycloak.
 Prospective users must visit the ServiceX website included in this Flask app
-at its hosted domain. There, they can sign in via the OIDC provider. 
+at its hosted domain. There, they can sign in via the OIDC provider.
 A corresponding ServiceX user account will be created.
 Existing users can also visit the website to view information associated with
 their account.

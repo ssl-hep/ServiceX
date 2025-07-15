@@ -36,34 +36,65 @@ class TransformerArgumentParser(argparse.ArgumentParser):
     def __init__(self, description="ServiceX Transformer"):
         super(TransformerArgumentParser, self).__init__(description=description)
 
-        self.add_argument("--shared-dir", dest='shared_dir', action='store')
+        self.add_argument("--shared-dir", dest="shared_dir", action="store")
 
-        self.add_argument("--path", dest='path', action='store',
-                          default=None,
-                          help='Path to single Root file to transform')
+        self.add_argument(
+            "--path",
+            dest="path",
+            action="store",
+            default=None,
+            help="Path to single Root file to transform",
+        )
 
-        self.add_argument("--limit", dest='limit', action='store',
-                          default=None, type=int,
-                          help='Max number of events to process')
+        self.add_argument(
+            "--limit",
+            dest="limit",
+            action="store",
+            default=None,
+            type=int,
+            help="Max number of events to process",
+        )
 
-        self.add_argument('--result-destination', dest='result_destination',
-                          action='store',
-                          default='object-store', help='object-store, output-dir, volume',
-                          choices=['object-store', 'output-dir', 'volume'])
+        self.add_argument(
+            "--result-destination",
+            dest="result_destination",
+            action="store",
+            default="object-store",
+            help="object-store, output-dir, volume",
+            choices=["object-store", "output-dir", "volume"],
+        )
 
-        self.add_argument('--output-dir', dest='output_dir',
-                          action='store',
-                          default=None, help='Local directory to output results')
+        self.add_argument(
+            "--output-dir",
+            dest="output_dir",
+            action="store",
+            default=None,
+            help="Local directory to output results",
+        )
 
-        self.add_argument('--result-format', dest='result_format', action='store',
-                          default='parquet', help='parquet, root-file, root-rntuple',
-                          choices=['parquet', 'root-file', 'root-rntuple'])
+        self.add_argument(
+            "--result-format",
+            dest="result_format",
+            action="store",
+            default="parquet",
+            help="parquet, root-file, root-rntuple",
+            choices=["parquet", "root-file", "root-rntuple"],
+        )
 
-        self.add_argument('--rabbit-uri', dest="rabbit_uri", action='store',
-                          default='host.docker.internal')
+        self.add_argument(
+            "--rabbit-uri",
+            dest="rabbit_uri",
+            action="store",
+            default="host.docker.internal",
+        )
 
-        self.add_argument('--request-id', dest='request_id', action='store',
-                          default=None, help='Request ID to read from queue')
+        self.add_argument(
+            "--request-id",
+            dest="request_id",
+            action="store",
+            default=None,
+            help="Request ID to read from queue",
+        )
 
     @classmethod
     def extract_attr_list(cls, attr_names):

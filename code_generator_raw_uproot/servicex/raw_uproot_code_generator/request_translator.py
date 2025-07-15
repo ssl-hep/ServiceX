@@ -34,7 +34,7 @@ from servicex_codegen.code_generator import (
     GenerateCodeException,
 )
 
-ALLOWED_COMPRESSION_ALGORITHMS = {'ZLIB', 'LZMA', 'LZ4', 'ZSTD'}
+ALLOWED_COMPRESSION_ALGORITHMS = {"ZLIB", "LZMA", "LZ4", "ZSTD"}
 ALLOWED_COMPRESSION_LEVELS = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 
@@ -62,9 +62,9 @@ class RawUprootTranslator(CodeGenerator):
                     f"specified for query {subquery}"
                 )
 
-        compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM', 'ZSTD')
+        compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM", "ZSTD")
         try:
-            compression_level = int(os.environ.get('COMPRESSION_LEVEL', 5))
+            compression_level = int(os.environ.get("COMPRESSION_LEVEL", 5))
         except ValueError:
             raise RuntimeError(
                 f"Invalid compression level '{os.environ.get('COMPRESSION_LEVEL', 5)}'. "
@@ -76,9 +76,7 @@ class RawUprootTranslator(CodeGenerator):
             )
 
         if compression_level not in ALLOWED_COMPRESSION_LEVELS:
-            raise RuntimeError(
-                f"Invalid compression level '{compression_level}'. "
-            )
+            raise RuntimeError(f"Invalid compression level '{compression_level}'. ")
 
         generated_code = f"""
 import os
