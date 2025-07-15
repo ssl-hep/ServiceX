@@ -57,8 +57,8 @@ from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.raw_uproot_stats import (
-    RawUprootStats,
-)  # NOQA: 401
+    RawUprootStats,  # NOQA: 401
+)
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
 
@@ -441,7 +441,8 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, object_store, posix_path, science_container, shared_dir, transformer_capabilities, request_id, celery_app
+    global convert_root_to_parquet, startup_time, object_store, posix_path, science_container
+    global shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
     request_id = args.request_id
@@ -549,7 +550,7 @@ def hash_path(file_name: str) -> str:
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],
+                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1):],
             ]
         )
     else:
