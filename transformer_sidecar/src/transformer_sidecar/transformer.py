@@ -547,7 +547,7 @@ def hash_path(file_name: str) -> str:
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1):],
+                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],
             ]
         )
     else:
