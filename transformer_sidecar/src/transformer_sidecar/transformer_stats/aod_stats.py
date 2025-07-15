@@ -46,6 +46,7 @@ class AODStats(TransformerStats):
         )
         if matches:
             err = matches[0]
-            self.error_info = (f"Property naming error: {err[0]} has not member named {err[1]};"
-                               f" did you mean {err[2]}"
-                               )
+            self.error_info = (
+                f"Property naming error: {err[0]} has not member named {err[1]};"
+                f" did you mean {err[2]}"
+            )
