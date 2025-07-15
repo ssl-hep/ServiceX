@@ -117,7 +117,8 @@ class TransformerFileComplete(ServiceXResource):
                 logger.warning("Ignoring duplicate result report", extra=log_extra)
                 return "Ignoring duplicate result report", 200
 
-            # Lookup the transformation request and increment either the successful or failed file count
+            # Lookup the transformation request and increment either the successful
+            # or failed file count
             transform_req = self.record_file_complete(
                 session, current_app.logger, request_id, info, log_extra
             )

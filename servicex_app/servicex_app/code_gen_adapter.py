@@ -51,7 +51,8 @@ class CodeGenAdapter:
         Starts a transformation request, deploys transformers, and updates record.
         :param request_record: A TransformationRequest.
         :param namespace: Namespace in which to place resulting ConfigMap.
-        :param user_codegen_name: Name provided by user for selecting the codegen URL from config dictionary
+        :param user_codegen_name: Name provided by user for selecting the codegen URL
+               from config dictionary
         :returns a tuple of (config map name, default transformer image)
         """
         from io import BytesIO

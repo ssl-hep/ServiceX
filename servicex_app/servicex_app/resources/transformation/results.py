@@ -28,7 +28,8 @@ class TransformationResults(ServiceXResource):
                 later_than = datetime.datetime.fromisoformat(later_than_str)
             except (AttributeError, ValueError):
                 return {
-                    "message": f"later_than value {later_than_str} is not an ISO 8601 compliant datetime"
+                    "message": (f"later_than value {later_than_str} "
+                                "is not an ISO 8601 compliant datetime")
                 }, 400
             transform_result_query = transform_result_query.filter(
                 TransformationResult.created_at > later_than

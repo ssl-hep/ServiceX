@@ -92,8 +92,8 @@ def upgrade():
     status_enum_postgres.create(op.get_bind(), checkfirst=False)
 
     op.execute(
-        "alter table requests ALTER COLUMN status TYPE transformstatus using status::transformstatus"
-    )  # noqa;
+        "alter table requests ALTER COLUMN status TYPE transformstatus using status::transformstatus"  # noqa;
+    )
 
     op.create_foreign_key(
         "transform_result_file_id_fkey",

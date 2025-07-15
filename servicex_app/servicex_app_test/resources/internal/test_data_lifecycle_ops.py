@@ -229,11 +229,11 @@ class TestDataLifecycleOps(ResourceTestBase):
         assert len(db_session.query(DatasetFile).all()) == 1
 
     @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",
+        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",  # noqa: E501
         return_value=["expired"],
     )
     @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",
+        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",  # noqa: E501
         return_value=["orphaned"],
     )
     def test_post(self, mock_orphaned, mock_delete_expired, mocker):
@@ -258,11 +258,11 @@ class TestDataLifecycleOps(ResourceTestBase):
         mock_orphaned.assert_called_with(ANY)
 
     @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",
+        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",  # noqa: E501
         return_value=[],
     )
     @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",
+        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",  # noqa: E501
         return_value=[],
     )
     def test_post_no_op(self, mock_orphaned, mock_delete_expired, mocker):

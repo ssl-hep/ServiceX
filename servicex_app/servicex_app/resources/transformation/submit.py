@@ -212,8 +212,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 files=0,
             )
 
-            # The first thing to do is make sure the requested selection is correct, and can generate
-            # the requested code
+            # The first thing to do is make sure the requested selection is correct,
+            # and can generate the requested code
             (
                 request_rec.generated_code_cm,
                 codegen_transformer_image,

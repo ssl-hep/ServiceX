@@ -117,8 +117,6 @@ def transform_file(
     We will examine this log file to see if the transform succeeded or failed
     """
 
-    global shared_dir
-
     log_extra = {"requestId": request_id, "file-id": file_id, "place": PLACE}
 
     transform_request = {
@@ -428,7 +426,6 @@ def read_capabilities_file() -> dict[str, str]:
     The capabilities file is mounted in the pod at startup. It's possible for
     the code to start before the file is available. We'll wait for it here.
     """
-    global shared_dir
     logger.debug("Waiting for capabilities file")
     capabilities_file_path = Path(
         os.path.join(shared_dir, "transformer_capabilities.json")

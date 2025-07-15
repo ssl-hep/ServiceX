@@ -53,7 +53,7 @@ class TestLookupResultProcessor(ResourceTestBase):
                     "request_id": "BR549",
                     "file_id": 123456789,
                     "paths": ["/path1", "/path2"],
-                    "service_endpoint": "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                    "service_endpoint": "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",  # noqa: E501
                     "result_destination": "object-store",
                     "result_format": "arrow",
                 },

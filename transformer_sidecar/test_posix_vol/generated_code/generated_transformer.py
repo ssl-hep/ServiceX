@@ -1,5 +1,8 @@
 def run_query(input_filenames=None, tree_name=None):
-    import functools, logging, numpy as np, dask_awkward as dak, uproot, vector
+    import logging
+    import dask_awkward as dak
+    import uproot
+    import vector
 
     vector.register_awkward()
 
