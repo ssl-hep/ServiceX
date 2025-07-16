@@ -34,7 +34,8 @@ from generated_transformer import run_query  # noqa
 import awkward as ak
 import pyarrow.parquet as pq
 import functools
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+
+instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 
 def get_generator_timing(f):
@@ -44,9 +45,10 @@ def get_generator_timing(f):
     def wrapper(*args, **kwargs):
         t0 = perf_counter()
         for yv in f(*args, **kwargs):
-            dt = perf_counter()-t0
+            dt = perf_counter() - t0
             yield dt, yv
             t0 = perf_counter()
+
     return wrapper
 
 
@@ -57,13 +59,14 @@ def get_direct_timing(f):
     def wrapper(*args, **kwargs):
         t0 = perf_counter()
         rv = f(*args, **kwargs)
-        dt = perf_counter()-t0
+        dt = perf_counter() - t0
         return dt, rv
+
     return wrapper
 
 
 def root_write_table_data(output_format, writer, outtreename, data):
-    if output_format == 'root-file':
+    if output_format == "root-file":
         if outtreename in writer:
             writer[outtreename].extend({field: data[field] for field in data.fields})
         else:
@@ -88,24 +91,26 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         ttimedt = 0
         etimedt = 0
 
-        if output_format in ('root-file', 'root-rntuple'):
+        if output_format in ("root-file", "root-rntuple"):
             import uproot
 
-            compression_algorithm = os.environ.get('COMPRESSION_ALGORITHM')
-            compression_level = int(os.environ.get('COMPRESSION_LEVEL'))
+            compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM")
+            compression_level = int(os.environ.get("COMPRESSION_LEVEL"))
 
             # opening the file with open() is a workaround for a bug handling multiple colons
             # in the filename in uproot
-            with open(output_path, 'b+w') as wfile:
-                compression_obj = getattr(uproot, compression_algorithm)(compression_level)
+            with open(output_path, "b+w") as wfile:
+                compression_obj = getattr(uproot, compression_algorithm)(
+                    compression_level
+                )
                 with uproot.recreate(wfile, compression=compression_obj) as writer:
                     for dt, item in get_generator_timing(run_query)(file_path):
                         ttimedt += dt
                         match item:
-                            case ('tree', k, v):
+                            case ("tree", k, v):
                                 total_events += ak.num(v, axis=0)
                                 root_write_table_data(output_format, writer, k, v)
-                            case ('obj', k, v):
+                            case ("obj", k, v):
                                 writer[k] = v
             wtime = time.time()
 
@@ -116,22 +121,28 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 for dt, item in get_generator_timing(run_query)(file_path):
                     ttimedt += dt
                     match item:
-                        case ('tree', k, awkward_array):
+                        case ("tree", k, awkward_array):
                             total_events += ak.num(awkward_array, axis=0)
-                            awkward_array['treename'] = k
-                            dt2, arrow = get_direct_timing(ak.to_arrow_table)(awkward_array)
+                            awkward_array["treename"] = k
+                            dt2, arrow = get_direct_timing(ak.to_arrow_table)(
+                                awkward_array
+                            )
                             etimedt += dt2
                             if not writer:
                                 writer = pq.ParquetWriter(output_path, arrow.schema)
                             try:
                                 writer.write_table(table=arrow)
                             except ValueError as e:
-                                raise RuntimeError("Unable to translate output tables to parquet "
-                                                   "(probably different queries give different "
-                                                   f"branches?)\n{e}")
-                        case ('obj', k, v):
-                            raise RuntimeError("Cannot store histograms in a non-ROOT "
-                                               "return file format")
+                                raise RuntimeError(
+                                    "Unable to translate output tables to parquet "
+                                    "(probably different queries give different "
+                                    f"branches?)\n{e}"
+                                )
+                        case ("obj", k, v):
+                            raise RuntimeError(
+                                "Cannot store histograms in a non-ROOT "
+                                "return file format"
+                            )
             finally:
                 if writer:
                     writer.close()

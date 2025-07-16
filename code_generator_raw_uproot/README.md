@@ -4,7 +4,7 @@
 
 ServiceX Code Generator
 -----------------------
-This microservice is a REST API that will generate python code for use in 
+This microservice is a REST API that will generate python code for use in
 uproot-raw transformer. The query to extract the data is encoded in a JSON string.
 
 Query Format
@@ -44,7 +44,7 @@ codeGen:
 
 Usage
 -----
-This repo builds a container to be used in the `ServiceX` application. You can 
+This repo builds a container to be used in the `ServiceX` application. You can
 see the containers on docker hub.
 
 Development
@@ -52,5 +52,3 @@ Development
 - Note that this service is tested on Python 3.10
 - Use `pytest` to run the tests
 - Use the `postman` template to send some sample queries to the service.
-
-

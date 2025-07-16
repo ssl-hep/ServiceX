@@ -30,13 +30,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from transformer_sidecar.science_container_command import ScienceContainerCommand, \
-    ScienceContainerException
+from transformer_sidecar.science_container_command import (
+    ScienceContainerCommand,
+    ScienceContainerException,
+)
 
 
 @pytest.fixture
 def mock_socket(mocker):
-    mock_socket = mocker.patch('transformer_sidecar.science_container_command.socket.socket')
+    mock_socket = mocker.patch(
+        "transformer_sidecar.science_container_command.socket.socket"
+    )
     mock_socket_instance = MagicMock()
     mock_socket.return_value = mock_socket_instance
     mock_socket_instance.accept.return_value = MagicMock(), MagicMock()

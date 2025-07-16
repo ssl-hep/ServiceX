@@ -12,7 +12,7 @@ statuses = ["success", "failure"]
 class TestUserDashboard(WebTestBase):
     endpoint = "transformation_results"
     module = "servicex_app.web.transformation_results"
-    template_name = 'transformation_results.html'
+    template_name = "transformation_results.html"
 
     @pytest.fixture
     def mock_tr_cls(self, mocker):
@@ -32,14 +32,21 @@ class TestUserDashboard(WebTestBase):
         results = [TransformationResult(transform_status=status) for status in statuses]
         return results
 
-    def test_get_empty_state(self, client, mock_tr, mock_result_cls, captured_templates):
-        mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
+    def test_get_empty_state(
+        self, client, mock_tr, mock_result_cls, captured_templates
+    ):
+        mock_result_query = (
+            mock_result_cls.query.filter_by.return_value.order_by.return_value
+        )
         pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=[])
         mock_result_query.paginate.return_value = pagination
         response: Response = client.get(
-            url_for(self.endpoint, id_=mock_tr.id), headers=self.fake_header())
+            url_for(self.endpoint, id_=mock_tr.id), headers=self.fake_header()
+        )
         assert response.status_code == 200
-        mock_result_cls.query.filter_by.assert_called_once_with(request_id=mock_tr.request_id)
+        mock_result_cls.query.filter_by.assert_called_once_with(
+            request_id=mock_tr.request_id
+        )
         template, context = captured_templates[0]
         assert template.name == self.template_name
         assert context["pagination"] == pagination
@@ -48,9 +55,17 @@ class TestUserDashboard(WebTestBase):
     def test_get_with_results(
         self, client, mock_tr, mock_result_cls, status, captured_templates
     ):
-        mock_result_query = mock_result_cls.query.filter_by.return_value.order_by.return_value
-        items = [r for r in self._fake_transformation_results() if r.transform_status == status]
-        pagination = mock_result_query.paginate(page=1, per_page=100, total=0, items=items)
+        mock_result_query = (
+            mock_result_cls.query.filter_by.return_value.order_by.return_value
+        )
+        items = [
+            r
+            for r in self._fake_transformation_results()
+            if r.transform_status == status
+        ]
+        pagination = mock_result_query.paginate(
+            page=1, per_page=100, total=0, items=items
+        )
         mock_result_query.paginate.return_value = pagination
         query_params = {"status": status} if status is not None else {}
         url = url_for(self.endpoint, id_=mock_tr.id, **query_params)
@@ -66,5 +81,7 @@ class TestUserDashboard(WebTestBase):
 
     def test_404(self, client, mock_tr_cls):
         mock_tr_cls.lookup.return_value = None
-        resp: Response = client.get(url_for(self.endpoint, id_=1), headers=self.fake_header())
+        resp: Response = client.get(
+            url_for(self.endpoint, id_=1), headers=self.fake_header()
+        )
         assert resp.status_code == 404

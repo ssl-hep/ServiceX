@@ -10,9 +10,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from servicex_app.models import UserModel
 from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 from servicex_app.resources.servicex_resource import ServiceXResource
-from servicex_app.web.slack_msg_builder import signup_ia, missing_slack_app, \
-    request_expired, \
-    verification_failed, user_not_found
+from servicex_app.web.slack_msg_builder import (
+    signup_ia,
+    missing_slack_app,
+    request_expired,
+    verification_failed,
+    user_not_found,
+)
 
 
 @servicex_retry()
@@ -29,37 +33,42 @@ def slack_submit(response_url=None, response_msg=None):
 
 class SlackInteraction(ServiceXResource):
     def post(self) -> Response:
-        body = request.get_data().decode('utf-8')
+        body = request.get_data().decode("utf-8")
         decoder = json.JSONDecoder()
-        data = decoder.decode(request.form['payload'])
+        data = decoder.decode(request.form["payload"])
         response_url = data["response_url"]
 
-        secret = current_app.config.get('SLACK_SIGNING_SECRET')
+        secret = current_app.config.get("SLACK_SIGNING_SECRET")
         if not secret:
-            current_app.logger.error("Slack interaction received but no Slack app configured")
+            current_app.logger.error(
+                "Slack interaction received but no Slack app configured"
+            )
             respond(response_url, missing_slack_app())
             return Response(status=403)
 
-        timestamp = request.headers['X-Slack-Request-Timestamp']
+        timestamp = request.headers["X-Slack-Request-Timestamp"]
         if abs(time.time() - float(timestamp) > 60 * 5):
             respond(response_url, request_expired())
             return Response(status=403)
 
-        sig_basestring = f"v0:{timestamp}:{body}".encode('utf-8')
-        signature = "v0=" + hmac.new(secret.encode('utf-8'),
-                                     sig_basestring,
-                                     digestmod=hashlib.sha256).hexdigest()
-        slack_signature = request.headers['X-Slack-Signature']
+        sig_basestring = f"v0:{timestamp}:{body}".encode("utf-8")
+        signature = (
+            "v0="
+            + hmac.new(
+                secret.encode("utf-8"), sig_basestring, digestmod=hashlib.sha256
+            ).hexdigest()
+        )
+        slack_signature = request.headers["X-Slack-Signature"]
         if not hmac.compare_digest(signature, slack_signature):
             respond(response_url, verification_failed())
             return Response(status=401)
 
         action = data["actions"][0]
-        initiating_user = data['user']
-        original_msg = data['message']
-        action_id = action['action_id']
+        initiating_user = data["user"]
+        original_msg = data["message"]
+        action_id = action["action_id"]
         if action_id == "accept_user":
-            email = action['value']
+            email = action["value"]
             try:
                 UserModel.accept(email)
             except NoResultFound as err:

@@ -32,7 +32,7 @@ class DIDParser:
     # RE to find the first scheme reference and add any remaining ones into the did
     did_re = re.compile("^(\\w+):\\/\\/(.*$)")
 
-    def __init__(self, did: str, default_scheme: str = 'rucio'):
+    def __init__(self, did: str, default_scheme: str = "rucio"):
         """
         Parse the did and extract the scheme. If no scheme is found, default to the
         provided one
@@ -62,4 +62,4 @@ class DIDParser:
         Reconstruct the full DID with scheme - this is useful if the scheme was defaulted
         :return:
         """
-        return f'{self.scheme}://{self.did}'
+        return f"{self.scheme}://{self.did}"

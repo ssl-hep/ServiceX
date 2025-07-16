@@ -45,7 +45,7 @@ class ServiceXResource(Resource):
 
     @classmethod
     def _generate_advertised_endpoint(cls, endpoint):
-        return "http://" + current_app.config['ADVERTISED_HOSTNAME'] + "/" + endpoint
+        return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
     @jwt_required(optional=True)
@@ -56,7 +56,7 @@ class ServiceXResource(Resource):
         which are decorated with @auth_required or @admin_required.
         """
         user = None
-        if current_app.config.get('ENABLE_AUTH'):
+        if current_app.config.get("ENABLE_AUTH"):
             user = UserModel.find_by_email(get_jwt_identity())
         return user
 
@@ -67,35 +67,42 @@ class ServiceXResource(Resource):
         :return: The version number, or the string "develop" if servicex_app not installed
         """
         try:
-            app_version = pkg_resources.get_distribution('servicex_app').version
+            app_version = pkg_resources.get_distribution("servicex_app").version
             return app_version
         except pkg_resources.DistributionNotFound:
             return "develop"
 
     @classmethod
-    def start_transformers(cls, transformer_manager: TransformerManager,
-                           config: dict,
-                           request_rec: TransformRequest):
+    def start_transformers(
+        cls,
+        transformer_manager: TransformerManager,
+        config: dict,
+        request_rec: TransformRequest,
+    ):
         """
         Start the transformers for a given request
         """
-        rabbitmq_uri = config['TRANSFORMER_RABBIT_MQ_URL']
-        namespace = config['TRANSFORMER_NAMESPACE']
-        x509_secret = config['TRANSFORMER_X509_SECRET']
+        rabbitmq_uri = config["TRANSFORMER_RABBIT_MQ_URL"]
+        namespace = config["TRANSFORMER_NAMESPACE"]
+        x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
         request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
 
         current_app.logger.info(
             f"Lunching {request_rec.workers} transformers.",
-            extra={'requestId': request_rec.request_id})
+            extra={"requestId": request_rec.request_id},
+        )
 
         transformer_manager.launch_transformer_jobs(
-            image=request_rec.image, request_id=request_rec.request_id,
+            image=request_rec.image,
+            request_id=request_rec.request_id,
             workers=request_rec.workers,
-            max_workers=(max(1, request_rec.files)
-                         if request_rec.status == TransformStatus.running
-                         else config["TRANSFORMER_MAX_REPLICAS"]),
+            max_workers=(
+                max(1, request_rec.files)
+                if request_rec.status == TransformStatus.running
+                else config["TRANSFORMER_MAX_REPLICAS"]
+            ),
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,
@@ -103,5 +110,5 @@ class ServiceXResource(Resource):
             result_destination=request_rec.result_destination,
             result_format=request_rec.result_format,
             transformer_language=request_rec.transformer_language,
-            transformer_command=request_rec.transformer_command
+            transformer_command=request_rec.transformer_command,
         )

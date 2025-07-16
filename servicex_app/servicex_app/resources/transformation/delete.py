@@ -44,13 +44,13 @@ class DeleteTransform(ServiceXResource):
 
             transform_req = TransformRequest.lookup(request_id)
             if not transform_req:
-                msg = f'Transformation request not found with id: {request_id}'
-                current_app.logger.warning(msg, extra={'requestId': request_id})
-                return {'message': msg}, 404
+                msg = f"Transformation request not found with id: {request_id}"
+                current_app.logger.warning(msg, extra={"requestId": request_id})
+                return {"message": msg}, 404
 
             if not transform_req.status.is_complete:
                 msg = f"Transform request with id {request_id} is still in progress."
-                current_app.logger.warning(msg, extra={'requestId': request_id})
+                current_app.logger.warning(msg, extra={"requestId": request_id})
                 return {"message": msg}, 400
 
             user = self.get_requesting_user()
@@ -59,7 +59,8 @@ class DeleteTransform(ServiceXResource):
 
             # Delete all the results for this transform
             session.query(TransformationResult).filter_by(
-                request_id=transform_req.request_id).delete()
+                request_id=transform_req.request_id
+            ).delete()
 
             # Delete the transformed files out of object store along with the bucket
             if self.object_store:

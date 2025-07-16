@@ -37,33 +37,41 @@ class LookupResultProcessor:
 
     @staticmethod
     def celery_task_name(request_id):
-        return f'transformer-{request_id}.transform_file'
+        return f"transformer-{request_id}.transform_file"
 
     def add_files_to_processing_queue(self, request, files=None):
         if files is None:
             files = request.all_files
         if request.status.is_complete:
-            current_app.logger.debug("Rejecting file addition request, request is canceled",
-                                     extra={
-                                        "task_id": self.celery_task_name(request.request_id)})
+            current_app.logger.debug(
+                "Rejecting file addition request, request is canceled",
+                extra={"task_id": self.celery_task_name(request.request_id)},
+            )
             return
         for file_record in files:
-            self.celery.send_task("transformer_sidecar.transform_file",
-                                  kwargs={
-                                        'request_id': request.request_id,
-                                        'file_id': file_record.id,
-                                        'paths': file_record.paths.split(','),
-                                        "service_endpoint": self.advertised_endpoint
-                                        + "servicex/internal/transformation/"
-                                        + request.request_id,
-                                        "result_destination": request.result_destination,
-                                        "result_format": request.result_format
-                                    })
+            self.celery.send_task(
+                "transformer_sidecar.transform_file",
+                kwargs={
+                    "request_id": request.request_id,
+                    "file_id": file_record.id,
+                    "paths": file_record.paths.split(","),
+                    "service_endpoint": self.advertised_endpoint
+                    + "servicex/internal/transformation/"
+                    + request.request_id,
+                    "result_destination": request.result_destination,
+                    "result_format": request.result_format,
+                },
+            )
 
-            current_app.logger.info("Added file to processing queue", extra={
-                                    "paths": file_record.paths.split(','),
-                                    "task_id": self.celery_task_name(request.request_id)})
+            current_app.logger.info(
+                "Added file to processing queue",
+                extra={
+                    "paths": file_record.paths.split(","),
+                    "task_id": self.celery_task_name(request.request_id),
+                },
+            )
 
-        current_app.logger.info("Added files to processing queue", extra={
-            "num_files": len(files),
-            'requestId': request.request_id})
+        current_app.logger.info(
+            "Added files to processing queue",
+            extra={"num_files": len(files), "requestId": request.request_id},
+        )

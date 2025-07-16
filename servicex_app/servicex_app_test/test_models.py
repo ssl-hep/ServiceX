@@ -22,7 +22,7 @@ class TestTransformRequest:
         delta = timedelta(days=1, hours=3, minutes=5)
         request.submit_time = t
         mock_dt = mocker.patch("servicex_app.models.datetime")
-        mock_dt.utcnow.return_value = t+delta
+        mock_dt.utcnow.return_value = t + delta
         assert request.age == delta
         assert mock_dt.utcnow.called_once()
 
@@ -53,7 +53,9 @@ class TestTransformRequest:
         mock_result_cls.query.filter_by.return_value.all.return_value = results
         request = TransformRequest(request_id="1234")
         assert request.results == results
-        mock_result_cls.query.filter_by.assert_called_once_with(request_id=request.request_id)
+        mock_result_cls.query.filter_by.assert_called_once_with(
+            request_id=request.request_id
+        )
         mock_result_cls.query.filter_by.return_value.all.assert_called_once()
 
     def test_files_remaining_unknown(self):

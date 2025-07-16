@@ -45,7 +45,7 @@ max_string_size = 10485760
 
 
 class UserModel(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = "users"
     admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
     email = db.Column(db.String(320), nullable=False, unique=True, index=True)
@@ -56,7 +56,7 @@ class UserModel(db.Model):
     pending = db.Column(db.Boolean, default=True)
     refresh_token = db.Column(db.Text, nullable=True, unique=True)
     sub = db.Column(db.String(120), nullable=False, unique=True)
-    requests = db.relationship('TransformRequest', backref='user')
+    requests = db.relationship("TransformRequest", backref="user")
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
     def save_to_db(self):
@@ -71,24 +71,28 @@ class UserModel(db.Model):
         MailgunAdaptor().send(self.email, template_path)
 
     @classmethod
-    def find_by_email(cls, email) -> Optional['UserModel']:
-        return cls.query.filter(func.lower(UserModel.email) == func.lower(email)).first()
+    def find_by_email(cls, email) -> Optional["UserModel"]:
+        return cls.query.filter(
+            func.lower(UserModel.email) == func.lower(email)
+        ).first()
 
     @classmethod
-    def update_refresh_token_by_email(cls, email, refresh_token, pending) -> dict[str, str]:
-        db.session.query(UserModel). \
-            filter(func.lower(UserModel.email) == func.lower(email)). \
-            update({'refresh_token': refresh_token, 'pending': pending})
+    def update_refresh_token_by_email(
+        cls, email, refresh_token, pending
+    ) -> dict[str, str]:
+        db.session.query(UserModel).filter(
+            func.lower(UserModel.email) == func.lower(email)
+        ).update({"refresh_token": refresh_token, "pending": pending})
         db.session.commit()
-        return {'message': '{}\'s refresh token updated'.format(email)}
+        return {"message": "{}'s refresh token updated".format(email)}
 
     @classmethod
-    def find_by_sub(cls, sub) -> Optional['UserModel']:
+    def find_by_sub(cls, sub) -> Optional["UserModel"]:
         return cls.query.filter_by(sub=sub).first()
 
     # Defined for convenience in testing, since query is difficult to mock.
     @classmethod
-    def find_by_id(cls, user_id) -> Optional['UserModel']:
+    def find_by_id(cls, user_id) -> Optional["UserModel"]:
         return db.session.get(cls, user_id)
         # return cls.query.get(user_id)
 
@@ -96,37 +100,36 @@ class UserModel(db.Model):
     def return_all(cls):
         def to_json(x):
             return {
-                'email': x.email,
-                'id': x.id,
-                'admin': x.admin,
-                'pending': x.pending
+                "email": x.email,
+                "id": x.id,
+                "admin": x.admin,
+                "pending": x.pending,
             }
 
-        return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
+        return {"users": list(map(lambda x: to_json(x), UserModel.query.all()))}
 
     @classmethod
     def return_all_pending(cls):
         def to_json(x):
-            return {
-                'email': x.email,
-                'id': x.id,
-                'admin': x.admin
-            }
+            return {"email": x.email, "id": x.id, "admin": x.admin}
 
-        return {'users': list(map(lambda x: to_json(x),
-                                  UserModel.query.filter_by(pending=True)))}
+        return {
+            "users": list(
+                map(lambda x: to_json(x), UserModel.query.filter_by(pending=True))
+            )
+        }
 
     @classmethod
     def delete_all(cls):
         num_rows_deleted = db.session.query(cls).delete()
         db.session.commit()
-        return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
+        return {"message": "{} row(s) deleted".format(num_rows_deleted)}
 
     @classmethod
     def delete_all_pending(cls):
         num_rows_deleted = db.session.query.filter_by(pending=True).delete()
         db.session.commit()
-        return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
+        return {"message": "{} row(s) deleted".format(num_rows_deleted)}
 
     @classmethod
     def accept(cls, email):
@@ -135,7 +138,7 @@ class UserModel(db.Model):
             raise NoResultFound(f"No user registered with email: {email}")
         pending_user.pending = False
         pending_user.save_to_db()
-        pending_user.send_email('welcome.html')
+        pending_user.send_email("welcome.html")
 
     @staticmethod
     def generate_hash(password):
@@ -161,9 +164,9 @@ class TransformStatus(Enum):
 
 
 class TransformRequest(db.Model):
-    __tablename__ = 'requests'
-    OBJECT_STORE_DEST = 'object-store'
-    VOLUME_DEST = 'volume'
+    __tablename__ = "requests"
+    OBJECT_STORE_DEST = "object-store"
+    VOLUME_DEST = "volume"
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
@@ -171,14 +174,16 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
-    did_id = db.Column(db.Integer, ForeignKey('datasets.id'), unique=False, nullable=False)
+    did_id = db.Column(
+        db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False
+    )
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     image = db.Column(db.String(128), nullable=True)
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
-    submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    submitted_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
     files_completed = db.Column(db.Integer, default=0, nullable=False)
@@ -202,40 +207,40 @@ class TransformRequest(db.Model):
         db.session.commit()
 
     def to_json(self):
-        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        iso_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
         result_obj = {
-            'request_id': self.request_id,
-            'title': self.title,
-            'did': self.did,
-            'did_id': self.did_id,
-            'selection': self.selection,
-            'tree-name': self.tree_name,
-            'image': self.image,
-            'workers': self.workers,
-            'result-destination': self.result_destination,
-            'result-format': self.result_format,
-            'generated-code-cm': self.generated_code_cm,
-            'status': self.status.string_name,
-            'failure-info': self.failure_description,
-            'app-version': self.app_version,
-            'code-gen-image': self.code_gen_image,
-            'files': self.files,
-            'files-completed': self.files_completed,
-            'files-failed': self.files_failed,
-            'files-remaining': self.files_remaining,
-            'submit-time': str(self.submit_time.strftime(iso_fmt)),
-            'finish-time': str(self.finish_time)
+            "request_id": self.request_id,
+            "title": self.title,
+            "did": self.did,
+            "did_id": self.did_id,
+            "selection": self.selection,
+            "tree-name": self.tree_name,
+            "image": self.image,
+            "workers": self.workers,
+            "result-destination": self.result_destination,
+            "result-format": self.result_format,
+            "generated-code-cm": self.generated_code_cm,
+            "status": self.status.string_name,
+            "failure-info": self.failure_description,
+            "app-version": self.app_version,
+            "code-gen-image": self.code_gen_image,
+            "files": self.files,
+            "files-completed": self.files_completed,
+            "files-failed": self.files_failed,
+            "files-remaining": self.files_remaining,
+            "submit-time": str(self.submit_time.strftime(iso_fmt)),
+            "finish-time": str(self.finish_time),
         }
         if self.finish_time is not None:
-            result_obj['finish-time'] = str(self.finish_time.strftime(iso_fmt))
+            result_obj["finish-time"] = str(self.finish_time.strftime(iso_fmt))
         return result_obj
 
     @classmethod
-    def return_json(cls, requests: Iterable['TransformRequest']):
-        return {'requests': [r.to_json() for r in requests]}
+    def return_json(cls, requests: Iterable["TransformRequest"]):
+        return {"requests": [r.to_json() for r in requests]}
 
     @classmethod
-    def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
+    def lookup(cls, key: Union[str, int]) -> Optional["TransformRequest"]:
         """
         Looks up a TransformRequest by its request_id (UUID) or integer ID.
         :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
@@ -260,8 +265,9 @@ class TransformRequest(db.Model):
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter((cls.status == TransformStatus.lookup) &
-                                    (cls.did_id == dataset_id)).all()
+            return cls.query.filter(
+                (cls.status == TransformStatus.lookup) & (cls.did_id == dataset_id)
+            ).all()
         except NoResultFound:
             return []
 
@@ -274,8 +280,10 @@ class TransformRequest(db.Model):
         :return result: list of TransformRequests, or empty list if not found.
         """
         try:
-            return cls.query.filter((cls.status == TransformStatus.pending_lookup) &
-                                    (cls.did_id == dataset_id)).all()
+            return cls.query.filter(
+                (cls.status == TransformStatus.pending_lookup)
+                & (cls.did_id == dataset_id)
+            ).all()
         except NoResultFound:
             return []
 
@@ -303,7 +311,7 @@ class TransformRequest(db.Model):
         return self.files_completed + self.files_failed
 
     @property
-    def results(self) -> List['TransformationResult']:
+    def results(self) -> List["TransformationResult"]:
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
 
     def truncate_results(self):
@@ -311,22 +319,26 @@ class TransformRequest(db.Model):
         db.session.commit()
 
     @property
-    def all_files(self) -> List['DatasetFile']:
+    def all_files(self) -> List["DatasetFile"]:
         return DatasetFile.query.filter_by(dataset_id=self.did_id).all()
 
     @property
     def statistics(self) -> Optional[dict]:
-        rslt_list = db.session.query(
-            TransformationResult.request_id,
-            func.min(TransformationResult.transform_time).label('min_time'),
-            func.max(TransformationResult.transform_time).label('max_time'),
-            func.avg(TransformationResult.transform_time).label('avg_time'),
-            func.sum(TransformationResult.transform_time).label('total_time'),
-            func.avg(TransformationResult.avg_rate).label('avg_rate'),
-            func.sum(TransformationResult.total_bytes).label('total_bytes'),
-            func.sum(TransformationResult.total_events).label('total_events')
-        ).group_by(TransformationResult.request_id).filter_by(
-            request_id=self.request_id).all()
+        rslt_list = (
+            db.session.query(
+                TransformationResult.request_id,
+                func.min(TransformationResult.transform_time).label("min_time"),
+                func.max(TransformationResult.transform_time).label("max_time"),
+                func.avg(TransformationResult.transform_time).label("avg_time"),
+                func.sum(TransformationResult.transform_time).label("total_time"),
+                func.avg(TransformationResult.avg_rate).label("avg_rate"),
+                func.sum(TransformationResult.total_bytes).label("total_bytes"),
+                func.sum(TransformationResult.total_events).label("total_events"),
+            )
+            .group_by(TransformationResult.request_id)
+            .filter_by(request_id=self.request_id)
+            .all()
+        )
 
         if len(rslt_list) == 0:
             return None
@@ -340,15 +352,15 @@ class TransformRequest(db.Model):
             "total-time": int(rslt.total_time),
             "avg-rate": float(rslt.avg_rate),
             "total-bytes": int(rslt.total_bytes),
-            "total-events": int(rslt.total_events)
+            "total-events": int(rslt.total_events),
         }
 
 
 class TransformationResult(db.Model):
-    __tablename__ = 'transform_result'
+    __tablename__ = "transform_result"
 
     id = db.Column(db.Integer, primary_key=True)
-    file_id = db.Column(db.Integer, ForeignKey('files.id'))
+    file_id = db.Column(db.Integer, ForeignKey("files.id"))
     file_path = db.Column(db.String(512), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=False, nullable=False)
     transform_status = db.Column(db.String(120), nullable=False)
@@ -360,7 +372,7 @@ class TransformationResult(db.Model):
     s3_object_name = db.Column(db.String(512), unique=False, nullable=True)
 
     __table_args__ = (
-        db.UniqueConstraint('file_id', 'request_id', name='uix_file_request'),
+        db.UniqueConstraint("file_id", "request_id", name="uix_file_request"),
     )
 
     @classmethod
@@ -370,17 +382,17 @@ class TransformationResult(db.Model):
     @classmethod
     def to_json(cls, x):
         return {
-            'id': x.id,
-            'request-id': x.request_id,
-            'file-id': x.id,
-            'file-path': x.file_path,
-            's3-object-name': x.s3_object_name,
-            'transform_status': x.transform_status,
-            'transform_time': x.transform_time,
-            'total-events': x.total_events,
-            'total-bytes': x.total_bytes,
-            'avg-rate': x.avg_rate,
-            'created_at': x.created_at.isoformat() if x.created_at else None,
+            "id": x.id,
+            "request-id": x.request_id,
+            "file-id": x.id,
+            "file-path": x.file_path,
+            "s3-object-name": x.s3_object_name,
+            "transform_status": x.transform_status,
+            "transform_time": x.transform_time,
+            "total-events": x.total_events,
+            "total-bytes": x.total_bytes,
+            "avg-rate": x.avg_rate,
+            "created_at": x.created_at.isoformat() if x.created_at else None,
         }
 
     def save_to_db(self):
@@ -395,7 +407,7 @@ class DatasetStatus(str, Enum):
 
 
 class Dataset(db.Model):
-    __tablename__ = 'datasets'
+    __tablename__ = "datasets"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(1024), unique=False, nullable=False, index=True)
@@ -416,27 +428,27 @@ class Dataset(db.Model):
         db.session.commit()
 
     def to_json(self):
-        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        iso_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
         result_obj = {
-            'id': self.id,
-            'name': self.name,
-            'did_finder': self.did_finder,
-            'n_files': self.n_files,
-            'size': self.size,
-            'events': self.events,
-            'last_used': str(self.last_used.strftime(iso_fmt)),
-            'last_updated': str(self.last_updated.strftime(iso_fmt)),
-            'lookup_status': self.lookup_status,
-            'is_stale': self.stale
+            "id": self.id,
+            "name": self.name,
+            "did_finder": self.did_finder,
+            "n_files": self.n_files,
+            "size": self.size,
+            "events": self.events,
+            "last_used": str(self.last_used.strftime(iso_fmt)),
+            "last_updated": str(self.last_updated.strftime(iso_fmt)),
+            "lookup_status": self.lookup_status,
+            "is_stale": self.stale,
         }
         return result_obj
 
     @classmethod
-    def find_by_name(cls, name) -> Optional['Dataset']:
+    def find_by_name(cls, name) -> Optional["Dataset"]:
         return cls.query.filter_by(name=name, stale=False).first()
 
     @classmethod
-    def find_by_id(cls, id) -> Optional['Dataset']:
+    def find_by_id(cls, id) -> Optional["Dataset"]:
         return cls.query.get(id)
 
     @classmethod
@@ -455,13 +467,12 @@ class Dataset(db.Model):
 
 
 class DatasetFile(db.Model):
-    __tablename__ = 'files'
+    __tablename__ = "files"
 
     id = db.Column(db.Integer, primary_key=True)
-    dataset_id = db.Column(db.Integer,
-                           ForeignKey('datasets.id'),
-                           unique=False,
-                           nullable=False)
+    dataset_id = db.Column(
+        db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False
+    )
     adler32 = db.Column(db.String(48), nullable=True)
     file_size = db.Column(db.BigInteger, nullable=True)
     file_events = db.Column(db.BigInteger, nullable=True)
@@ -470,11 +481,11 @@ class DatasetFile(db.Model):
 
     def to_json(self):
         return {
-            'id': self.id,
-            'adler32': self.adler32,
-            'file_size': self.file_size,
-            'file_events': self.file_events,
-            'paths': self.paths,
+            "id": self.id,
+            "adler32": self.adler32,
+            "file_size": self.file_size,
+            "file_events": self.file_events,
+            "paths": self.paths,
         }
 
     def save_to_db(self):

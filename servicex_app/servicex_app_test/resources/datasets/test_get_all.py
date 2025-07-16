@@ -37,23 +37,25 @@ class TestDatasetsGetAll(ResourceTestBase):
     @fixture
     def datasets(self):
         return [
-            Dataset(last_used=datetime(2022, 1, 1),
-                    last_updated=datetime(2022, 1, 1),
-                    id='123',
-                    name='dataset1',
-                    events=100,
-                    size=1000,
-                    n_files=1,
-                    lookup_status='looking',
-                    did_finder='rucio'),
+            Dataset(
+                last_used=datetime(2022, 1, 1),
+                last_updated=datetime(2022, 1, 1),
+                id="123",
+                name="dataset1",
+                events=100,
+                size=1000,
+                n_files=1,
+                lookup_status="looking",
+                did_finder="rucio",
+            ),
         ]
 
-    @patch('servicex_app.models.Dataset.get_by_did_finder')
+    @patch("servicex_app.models.Dataset.get_by_did_finder")
     def test_get_all_rucio(self, mock_get_by_did_finder, datasets):
         mock_get_by_did_finder.return_value = datasets
         client = self._test_client()
-        response = client.get('/servicex/datasets?did-finder=rucio')
-        mock_get_by_did_finder.assert_called_with('rucio', None)
+        response = client.get("/servicex/datasets?did-finder=rucio")
+        mock_get_by_did_finder.assert_called_with("rucio", None)
         assert response.status_code == 200
 
         assert response.json == {
@@ -62,21 +64,21 @@ class TestDatasetsGetAll(ResourceTestBase):
                     "last_used": "2022-01-01T00:00:00.000000Z",
                     "last_updated": "2022-01-01T00:00:00.000000Z",
                     "id": "123",
-                    'is_stale': None,
+                    "is_stale": None,
                     "did_finder": "rucio",
-                    'lookup_status': 'looking',
-                    'name': 'dataset1',
-                    'size': 1000,
-                    'events': 100,
-                    'n_files': 1
+                    "lookup_status": "looking",
+                    "name": "dataset1",
+                    "size": 1000,
+                    "events": 100,
+                    "n_files": 1,
                 }
             ]
         }
 
-    @patch('servicex_app.models.Dataset.get_all')
+    @patch("servicex_app.models.Dataset.get_all")
     def test_get_all(self, mock_get, datasets):
         mock_get.return_value = datasets
         client = self._test_client()
-        response = client.get('/servicex/datasets')
+        response = client.get("/servicex/datasets")
         mock_get.assert_called()
         assert response.status_code == 200

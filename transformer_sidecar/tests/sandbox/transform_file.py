@@ -30,18 +30,26 @@ from celery import Celery
 
 app = Celery(broker="amqp://user:leftfoot1@localhost:5672")
 app.conf.task_routes = {
-    'transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file': {'queue': '0ad80a11-c847-4874-90d6-6c0fc09bf854'}  # noqa 501
+    "transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file": {
+        "queue": "0ad80a11-c847-4874-90d6-6c0fc09bf854"
+    }  # noqa 501
 }
 
 routes = app.conf.task_routes
-routes['transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file'] = {'queue': '0ad80a11-c847-4874-90d6-6c0fc09bf854'}  # noqa 501
+routes["transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file"] = {
+    "queue": "0ad80a11-c847-4874-90d6-6c0fc09bf854"
+}  # noqa 501
 app.conf.task_routes = routes
 print(app.conf.task_routes)
-task_id = app.send_task('transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file',
-                        kwargs={'request_id': '0ad80a11-c847-4874-90d6-6c0fc09bf854',
-                                'service_endpoint': 'http://localhost:5000',
-                                'file_id': 271,
-                                'paths': 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlasdatadisk/rucio/mc20_13TeV/20/01/DAOD_PHYSLITE.37110983._000012.pool.root.1"', # noqa 501
-                                'result_destination': 'object-store',
-                                'result_format': 'root-file'})
+task_id = app.send_task(
+    "transformer-0ad80a11-c847-4874-90d6-6c0fc09bf854.transform_file",
+    kwargs={
+        "request_id": "0ad80a11-c847-4874-90d6-6c0fc09bf854",
+        "service_endpoint": "http://localhost:5000",
+        "file_id": 271,
+        "paths": 'root://fax.mwt2.org:1094//pnfs/uchicago.edu/atlasdatadisk/rucio/mc20_13TeV/20/01/DAOD_PHYSLITE.37110983._000012.pool.root.1"',  # noqa 501
+        "result_destination": "object-store",
+        "result_format": "root-file",
+    },
+)
 print(task_id)

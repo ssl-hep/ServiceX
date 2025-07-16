@@ -34,7 +34,7 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestRabbitAdaptor(ResourceTestBase):
     def test_connect(self, mocker, client):
         with client.application.app_context():
-            mock_pika = mocker.patch('pika.BlockingConnection')
+            mock_pika = mocker.patch("pika.BlockingConnection")
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.connect()
             mock_pika.assert_called_with([pika.URLParameters("amqp://test.com")])
@@ -45,7 +45,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.queue_declare = mocker.Mock()
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
             # rabbit.connect()
@@ -64,9 +66,12 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.queue_declare = mocker.Mock(
-                side_effect=pika.exceptions.ConnectionClosedByBroker(1, "u-oh"))
+                side_effect=pika.exceptions.ConnectionClosedByBroker(1, "u-oh")
+            )
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.setup_queue("my_queue")
@@ -76,13 +81,12 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.queue_declare = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.ChannelWrongStateError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.ChannelWrongStateError, "ok"]
             )
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.setup_queue("my_queue")
@@ -95,13 +99,12 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.queue_declare = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPConnectionError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.AMQPConnectionError, "ok"]
             )
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
             rabbit.setup_queue("my_queue")
@@ -115,7 +118,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.queue_bind = mocker.Mock()
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -123,9 +128,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
             mock_channel.queue_bind.assert_called_with(
-                exchange="exchange1",
-                queue="my_queue",
-                routing_key='my_queue')
+                exchange="exchange1", queue="my_queue", routing_key="my_queue"
+            )
 
     def test_bind_queue_to_exchange_connection_closed(self, mocker, client):
         with client.application.app_context():
@@ -133,14 +137,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.queue_bind = mocker.Mock()
             mock_channel.queue_bind = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"),
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"), "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -148,9 +151,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
             mock_channel.queue_bind.assert_called_with(
-                exchange="exchange1",
-                queue="my_queue",
-                routing_key='my_queue')
+                exchange="exchange1", queue="my_queue", routing_key="my_queue"
+            )
             assert mock_channel.queue_bind.call_count == 2
             assert mock_pika.call_count == 1  # No retry
 
@@ -166,7 +168,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -174,9 +178,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
             mock_channel.queue_bind.assert_called_with(
-                exchange="exchange1",
-                queue="my_queue",
-                routing_key='my_queue')
+                exchange="exchange1", queue="my_queue", routing_key="my_queue"
+            )
             assert mock_channel.queue_bind.call_count == 1
             assert mock_pika.call_count == 1  # No retry
 
@@ -186,14 +189,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.queue_bind = mocker.Mock()
             mock_channel.queue_bind = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPConnectionError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.AMQPConnectionError, "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -201,9 +203,8 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
             mock_channel.queue_bind.assert_called_with(
-                exchange="exchange1",
-                queue="my_queue",
-                routing_key='my_queue')
+                exchange="exchange1", queue="my_queue", routing_key="my_queue"
+            )
             assert mock_channel.queue_bind.call_count == 2
             assert mock_pika.call_count == 2  # Retried the connection
 
@@ -213,7 +214,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.basic_publish = mocker.Mock()
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -223,23 +226,23 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel.basic_publish.assert_called_with(
                 exchange="exchange1",
                 mandatory=True,
-                routing_key='my_queue',
+                routing_key="my_queue",
                 properties=pika.BasicProperties(delivery_mode=1),
-                body="{my: body}")
+                body="{my: body}",
+            )
 
     def test_basic_publish_connection_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.basic_publish = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"),
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"), "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -254,13 +257,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.basic_publish = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPChannelError
-                ]
+                side_effect=[pika.exceptions.AMQPChannelError]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -275,14 +278,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.basic_publish = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPConnectionError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.AMQPConnectionError, "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -298,29 +300,29 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
             mock_channel.exchange_declare = mocker.Mock()
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
             rabbit.setup_exchange("exchange1")
             mock_pika.assert_called()
             mock_connection.channel.assert_called()
-            mock_channel.exchange_declare.assert_called_with(
-                exchange="exchange1")
+            mock_channel.exchange_declare.assert_called_with(exchange="exchange1")
 
     def test_setup_exchange_connection_closed(self, mocker, client):
         with client.application.app_context():
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.exchange_declare = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"),
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.ConnectionClosedByBroker(1, "uh-oh"), "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -335,14 +337,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.exchange_declare = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPChannelError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.AMQPChannelError, "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -357,14 +358,13 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_connection = mocker.Mock()
             mock_channel = mocker.Mock()
             mock_channel.exchange_declare = mocker.Mock(
-                side_effect=[
-                    pika.exceptions.AMQPConnectionError,
-                    "ok"
-                ]
+                side_effect=[pika.exceptions.AMQPConnectionError, "ok"]
             )
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -381,7 +381,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel.close = mocker.Mock()
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -401,7 +403,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 
@@ -421,7 +425,9 @@ class TestRabbitAdaptor(ResourceTestBase):
             mock_channel = mocker.Mock()
 
             mock_connection.channel = mocker.Mock(return_value=mock_channel)
-            mock_pika = mocker.patch('pika.BlockingConnection', return_value=mock_connection)
+            mock_pika = mocker.patch(
+                "pika.BlockingConnection", return_value=mock_connection
+            )
             mock_pika.channel = mocker.Mock()
             rabbit = RabbitAdaptor("amqp://test.com")
 

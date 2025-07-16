@@ -12,9 +12,10 @@ def add_user(sub, email, name, institution, refresh_token):
         email=email,
         name=name,
         institution=institution,
-        refresh_token=refresh_token)
+        refresh_token=refresh_token,
+    )
 
-    if new_user.email == current_app.config.get('JWT_ADMIN'):
+    if new_user.email == current_app.config.get("JWT_ADMIN"):
         new_user.admin = True
     if refresh_token:
         new_user.pending = False
@@ -31,8 +32,17 @@ def list_users() -> None:
     users = UserModel.query.all()
     print("Sub, Email, Name, Institution, Pending?")
     for user in users:
-        print(", ".join([user.sub, user.email, user.name, user.institution,
-                         "Pending" if user.pending else "Approved"]))
+        print(
+            ", ".join(
+                [
+                    user.sub,
+                    user.email,
+                    user.name,
+                    user.institution,
+                    "Pending" if user.pending else "Approved",
+                ]
+            )
+        )
 
 
 def approve_user(sub: str) -> None:

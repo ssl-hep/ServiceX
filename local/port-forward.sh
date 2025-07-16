@@ -49,29 +49,29 @@ check_service_exists() {
 wait_for_pod_ready() {
     log "Waiting for pods of service $SERVICE_NAME to be ready..."
     local retries=0
-    
+
     while [[ $retries -lt $MAX_RETRIES ]]; do
         # Get pods for the service using selector
         local selector=$(kubectl get service "$SERVICE_NAME" --namespace="$NAMESPACE" -o jsonpath='{.spec.selector}' 2>/dev/null || echo "")
-        
+
         if [[ -n "$selector" ]]; then
             # Convert JSON selector to kubectl selector format
             local kubectl_selector=$(echo "$selector" | sed 's/[{}"]//g' | sed 's/:/=/g' | sed 's/,/,/g')
-            
+
             # Check if any pods are ready
             local ready_pods=$(kubectl get pods --namespace="$NAMESPACE" --selector="$kubectl_selector" --field-selector=status.phase=Running -o name 2>/dev/null | wc -l)
-            
+
             if [[ $ready_pods -gt 0 ]]; then
                 log "Found $ready_pods ready pod(s) for service $SERVICE_NAME"
                 return 0
             fi
         fi
-        
+
         ((retries++))
         log "No ready pods found, retrying... ($retries/$MAX_RETRIES)"
         sleep 5
     done
-    
+
     log "No ready pods found for service $SERVICE_NAME after $MAX_RETRIES attempts"
     return 1
 }
@@ -99,13 +99,13 @@ wait_for_service() {
 # Function to start port forwarding using service
 start_port_forward() {
     log "Starting port forwarding: localhost:${LOCAL_PORT} -> ${SERVICE_NAME}:${CONTAINER_PORT}"
-    
+
     # Check if pods are still ready before attempting port forward
     if ! wait_for_pod_ready; then
         log "Pods not ready, cannot start port forwarding"
         return 1
     fi
-    
+
     kubectl port-forward --namespace="$NAMESPACE" "service/$SERVICE_NAME" "${LOCAL_PORT}:${CONTAINER_PORT}" &
     PORT_FORWARD_PID=$!
 
@@ -129,7 +129,7 @@ check_port_forward() {
         log "Port forward process is not running"
         return 1
     fi
-    
+
     # Additional check: verify port is actually listening
     if command -v nc >/dev/null 2>&1; then
         if ! nc -z localhost "$LOCAL_PORT" 2>/dev/null; then
@@ -137,7 +137,7 @@ check_port_forward() {
             return 1
         fi
     fi
-    
+
     return 0
 }
 
@@ -159,13 +159,13 @@ trap cleanup SIGINT SIGTERM EXIT
 # Main execution
 main() {
     log "Starting port forwarding for $SERVICE_TYPE: $SERVICE_NAME"
-    
+
     # Wait for service to be available
     if ! wait_for_service; then
         log "Service $SERVICE_NAME is not available"
         exit 1
     fi
-    
+
     # Wait for pods to be ready
     if ! wait_for_pod_ready; then
         log "No ready pods found for service $SERVICE_NAME"

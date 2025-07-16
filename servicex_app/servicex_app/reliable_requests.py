@@ -36,19 +36,17 @@ REQUEST_TIMEOUT = (0.5, None)
 
 # Use this decorator on all functions that wrap requests to
 # servicex microservices.
-def servicex_retry(
-    max_attempts=3,
-    wait_min=0.1,
-    wait_max=30
-):
+def servicex_retry(max_attempts=3, wait_min=0.1, wait_max=30):
     def decorator(func):
         @retry(
             reraise=True,
             stop=stop_after_attempt(max_attempts),
-            wait=wait_exponential_jitter(initial=wait_min, max=wait_max)
+            wait=wait_exponential_jitter(initial=wait_min, max=wait_max),
         )
         @wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

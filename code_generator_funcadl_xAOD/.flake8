@@ -9,5 +9,3 @@ exclude =
     .local
     build
     migrations
-
-

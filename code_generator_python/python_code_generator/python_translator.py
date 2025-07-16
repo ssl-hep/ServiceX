@@ -37,7 +37,7 @@ class PythonTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
 
-        src = base64.b64decode(query).decode('ascii')
+        src = base64.b64decode(query).decode("ascii")
         hash = "no-hash"
         query_file_path = os.path.join(cache_path, hash)
 
@@ -45,19 +45,27 @@ class PythonTranslator(CodeGenerator):
         if not os.path.exists(query_file_path):
             os.makedirs(query_file_path)
 
-        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+        with open(
+            os.path.join(query_file_path, "generated_transformer.py"), "w"
+        ) as python_file:
             python_file.write(src)
 
         # Transfer the templated main python script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/python_code_generator/templates/transform_single_file.py")  # NOQA: 501
-        shutil.copyfile(template_path,
-                        os.path.join(query_file_path, "transform_single_file.py"))
+        template_path = os.environ.get(
+            "TEMPLATE_PATH",
+            "/home/servicex/python_code_generator/templates/transform_single_file.py",
+        )  # NOQA: 501
+        shutil.copyfile(
+            template_path, os.path.join(query_file_path, "transform_single_file.py")
+        )
 
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
-                                                        "transformer_capabilities.json"))
+        capabilities_path = os.environ.get(
+            "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
+        )
+        shutil.copyfile(
+            capabilities_path,
+            os.path.join(query_file_path, "transformer_capabilities.json"),
+        )
 
         os.system("ls -lht " + query_file_path)
         os.system(f"cat {query_file_path}/generated_transformer.py")

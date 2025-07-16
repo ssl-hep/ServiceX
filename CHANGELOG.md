@@ -13,7 +13,7 @@ July 1, 2025
 - Ability to set memory and cpu limits for workers
 - Python codegen can create arbitrary ROOT file output.
 - Meta resource that lists deployment capabilities so frontend can accommodate new versions
-- RDataFrame Codegen 
+- RDataFrame Codegen
 - ATLAS R25 codegen and science image
 
 ### Changed

@@ -32,8 +32,10 @@ class ObjectStoreManager:
 
     def __init__(self, url, username, password, use_https=False):
         from minio import Minio
-        self.minio_client = Minio(endpoint=url, access_key=username,
-                                  secret_key=password, secure=use_https)
+
+        self.minio_client = Minio(
+            endpoint=url, access_key=username, secret_key=password, secure=use_https
+        )
 
     @retry(
         stop=stop_after_attempt(3), wait=wait_random_exponential(max=60), reraise=True
@@ -44,7 +46,7 @@ class ObjectStoreManager:
     def list_buckets(self):
         return self.minio_client.list_buckets()
 
-    def delete_bucket_and_contents(self,  bucket_name):
+    def delete_bucket_and_contents(self, bucket_name):
         if not self.minio_client.bucket_exists(bucket_name):
             print(f"Bucket '{bucket_name}' does not exist. Nothing to delete.")
             return

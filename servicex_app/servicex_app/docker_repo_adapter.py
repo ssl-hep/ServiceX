@@ -39,7 +39,7 @@ class DockerRepoAdapter:
 
     @servicex_retry()
     def get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
-        query = f'{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}'
+        query = f"{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}"
         r = requests.get(query, timeout=REQUEST_TIMEOUT)
         return r
 
@@ -59,6 +59,8 @@ class DockerRepoAdapter:
         if r.status_code == 404:
             return False
 
-        current_app.logger.info(f"Requested Image: {tagged_image} exists, "
-                                f"last updated {r.json()['last_updated']}")
+        current_app.logger.info(
+            f"Requested Image: {tagged_image} exists, "
+            f"last updated {r.json()['last_updated']}"
+        )
         return True

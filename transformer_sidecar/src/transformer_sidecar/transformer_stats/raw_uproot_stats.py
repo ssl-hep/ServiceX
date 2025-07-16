@@ -36,19 +36,18 @@ class RawUprootStats(TransformerStats):
         super().__init__(log_path)
 
         matches = re.findall(
-            r'Transform stats: Total Events: (\d+), resulting file size (\d+)',
-            self.log_body)
+            r"Transform stats: Total Events: (\d+), resulting file size (\d+)",
+            self.log_body,
+        )
         if len(matches) == 1:
             self.total_events, self.file_size = tuple(map(int, matches[0]))
 
-        matches = re.findall(
-            r"^\S*Error.*", self.log_body, re.MULTILINE)
+        matches = re.findall(r"^\S*Error.*", self.log_body, re.MULTILINE)
 
         if matches:
             self.error_info = f"{matches[0]}"
 
-        matches = re.findall(
-            r"^\S*Exception.*", self.log_body, re.MULTILINE)
+        matches = re.findall(r"^\S*Exception.*", self.log_body, re.MULTILINE)
 
         if matches:
             self.error_info = f"{matches[0]}"

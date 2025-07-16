@@ -35,18 +35,18 @@ class AODStats(TransformerStats):
     def __init__(self, log_path: Path):
         super().__init__(log_path)
 
-        matches = re.findall(
-            r'Processed (\d+) events', self.log_body)
+        matches = re.findall(r"Processed (\d+) events", self.log_body)
         if len(matches) == 1:
             self.total_events = int(matches[0])
 
         # Look for incorrect property names
         matches = re.findall(
             r"error: ('[^']+') has no member named ('[^']+'); did you mean ('[^']+')?",
-            self.log_body
+            self.log_body,
         )
         if matches:
             err = matches[0]
-            self.error_info = \
-                "Property naming error: {cl} has not member named {bad}; did you mean {good}".\
-                format(cl=err[0], bad=err[1], good=err[2])
+            self.error_info = (
+                f"Property naming error: {err[0]} has not member named {err[1]};"
+                f" did you mean {err[2]}"
+            )

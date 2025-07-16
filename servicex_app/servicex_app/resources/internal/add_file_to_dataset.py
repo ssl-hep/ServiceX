@@ -45,7 +45,9 @@ class AddFileToDataset(ServiceXResource):
             # this request can be a single file dictionary
             # or a list of file dictionaries.
             add_file_request = request.get_json()
-            dataset_manager = DatasetManager.from_dataset_id(dataset_id, current_app.logger, db)
+            dataset_manager = DatasetManager.from_dataset_id(
+                dataset_id, current_app.logger, db
+            )
 
             # find running requests that need this ds.
             running_requests = TransformRequest.lookup_running_by_dataset_id(dataset_id)
@@ -56,20 +58,28 @@ class AddFileToDataset(ServiceXResource):
 
             current_app.logger.info(
                 f"Adding {len(add_file_request)} files to dataset: {dataset_manager.name}",
-                extra={'dataset_id': dataset_id})
+                extra={"dataset_id": dataset_id},
+            )
 
-            new_files = [DatasetFile(dataset_id=dataset_id,
-                                     paths=','.join(file['paths']),
-                                     adler32=file['adler32'],
-                                     file_events=file['file_events'],
-                                     file_size=file['file_size']) for file in add_file_request]
-            dataset_manager.add_files(new_files, running_requests, self.lookup_result_processor)
+            new_files = [
+                DatasetFile(
+                    dataset_id=dataset_id,
+                    paths=",".join(file["paths"]),
+                    adler32=file["adler32"],
+                    file_events=file["file_events"],
+                    file_size=file["file_size"],
+                )
+                for file in add_file_request
+            ]
+            dataset_manager.add_files(
+                new_files, running_requests, self.lookup_result_processor
+            )
             db.session.commit()
 
-            return {
-                "dataset_id": str(dataset_id)
-            }
+            return {"dataset_id": str(dataset_id)}
         except Exception as e:
-            current_app.logger.exception("Exception occurred when adding file to dataset",
-                                         extra={'dataset_id': dataset_id})
-            return {'message': f"Something went wrong: {e}"}, 500
+            current_app.logger.exception(
+                "Exception occurred when adding file to dataset",
+                extra={"dataset_id": dataset_id},
+            )
+            return {"message": f"Something went wrong: {e}"}, 500

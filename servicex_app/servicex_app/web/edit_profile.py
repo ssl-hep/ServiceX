@@ -1,7 +1,14 @@
 from datetime import datetime
 
-from flask import session, render_template, redirect, url_for, \
-    request, flash, current_app
+from flask import (
+    session,
+    render_template,
+    redirect,
+    url_for,
+    request,
+    flash,
+    current_app,
+)
 
 from servicex_app.models import db, UserModel
 from servicex_app.decorators import oauth_required
@@ -10,12 +17,12 @@ from .forms import ProfileForm
 
 @oauth_required
 def edit_profile():
-    email = session.get('email')
+    email = session.get("email")
     user: UserModel = UserModel.find_by_email(email)
     form = ProfileForm()
-    if request.method == 'GET':
+    if request.method == "GET":
         form = ProfileForm(user)
-    elif request.method == 'POST':
+    elif request.method == "POST":
         if form.validate_on_submit():
             user.name = form.name.data
             user.email = form.email.data
@@ -23,10 +30,12 @@ def edit_profile():
             user.experiment = form.experiment.data
             user.updated_at = datetime.utcnow()
             db.session.commit()
-            flash("Your profile has been saved!", 'success')
+            flash("Your profile has been saved!", "success")
             current_app.logger.info(f"Updated profile for {user.name}")
-            return redirect(url_for('profile'))
+            return redirect(url_for("profile"))
         else:
             current_app.logger.error(f"Edit Profile Form errors {form.errors}")
-            flash("Profile could not be saved. Please fix invalid fields below.", 'danger')
+            flash(
+                "Profile could not be saved. Please fix invalid fields below.", "danger"
+            )
     return render_template("profile_form.html", form=form, action="Edit Profile")

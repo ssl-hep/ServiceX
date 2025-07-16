@@ -36,52 +36,54 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestDatasetsDelete(ResourceTestBase):
     @fixture
     def dataset(self):
-        dataset = Dataset(last_used=datetime(2022, 1, 1),
-                          last_updated=datetime(2022, 1, 1),
-                          id='123',
-                          stale=False,
-                          name='dataset1',
-                          events=100,
-                          size=1000,
-                          n_files=1,
-                          lookup_status='looking',
-                          did_finder='rucio')
+        dataset = Dataset(
+            last_used=datetime(2022, 1, 1),
+            last_updated=datetime(2022, 1, 1),
+            id="123",
+            stale=False,
+            name="dataset1",
+            events=100,
+            size=1000,
+            n_files=1,
+            lookup_status="looking",
+            did_finder="rucio",
+        )
         dataset.files = [
             DatasetFile(
                 id=12,
                 dataset_id=dataset.id,
                 file_size=100,
                 file_events=100,
-                paths=['root://root.cern.ch/file1.root']
+                paths=["root://root.cern.ch/file1.root"],
             )
         ]
         return dataset
 
-    @patch('servicex_app.models.Dataset.find_by_id')
+    @patch("servicex_app.models.Dataset.find_by_id")
     def test_delete_dataset(self, mock_get, dataset, mocker):
         dataset.stale = False
         mock_get.return_value = dataset
         dataset.save_to_db = mocker.Mock()
         client = self._test_client()
-        response = client.delete('/servicex/datasets/123')
+        response = client.delete("/servicex/datasets/123")
         mock_get.assert_called()
         assert dataset.stale
         dataset.save_to_db.assert_called()
         assert response.status_code == 200
 
-    @patch('servicex_app.models.Dataset.find_by_id')
+    @patch("servicex_app.models.Dataset.find_by_id")
     def test_delete_dataset_not_found(self, mock_get):
         mock_get.return_value = None
         client = self._test_client()
-        response = client.delete('/servicex/datasets/123')
+        response = client.delete("/servicex/datasets/123")
         mock_get.assert_called()
         assert response.status_code == 404
 
-    @patch('servicex_app.models.Dataset.find_by_id')
+    @patch("servicex_app.models.Dataset.find_by_id")
     def test_delete_dataset_already_deleted(self, mock_get, dataset):
         dataset.stale = True
         mock_get.return_value = dataset
         client = self._test_client()
-        response = client.delete('/servicex/datasets/123')
+        response = client.delete("/servicex/datasets/123")
         mock_get.assert_called()
         assert response.status_code == 400

@@ -4,7 +4,7 @@
 # From this doc, it extracts the source
 # input file URI, an output filename and a file path to write
 # the transformed file upon completion.
-# To signal to the sidecar that the transformation is done, we send result over 
+# To signal to the sidecar that the transformation is done, we send result over
 # the socket. Also write the log files to the shared volume.
 #
 # Communication steps for each input file
@@ -34,7 +34,7 @@ echo "connecting..."
 coproc nc { nc "$SIDECAR_HOST" 8081; }
 
 while [[ $nc_PID ]] ; do
-  
+
     start=$(date +%s%N | cut -b1-13)
     echo "start: $start"
     # ask for a file to be processed
@@ -63,27 +63,27 @@ while [[ $nc_PID ]] ; do
       echo "Operation failed for $download_path"
       printf >&${nc[1]} '%s\n' "failure."
     fi
-    
+
     # get confirmation.
     read -r -u${nc[0]} line
     printf >&2 '%s\n' "Reply:" "$line"
-    
+
     end=$(date +%s%N | cut -b1-13)
     echo "Elapsed Time: $(($end-$start)) ms"
 done
 
 
 # {
-#   "request-id": "decfc25d-4b19-47c9-a742-6259450142c7", 
-#   "file-id": null, 
-#   "columns": null, 
-#   "paths": "root://lcg-lrz-rootd.grid.lrz.de:1094/pnfs/lrz-muenchen.de/data/atlas/dq2/atlaslocalgroupdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root,root://eosatlas.cern.ch:1094//eos/atlas/atlasscratchdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root", 
-#   "tree-name": null, 
-#   "service-endpoint": "http://servicex-release-testing-2-servicex-app:8000/servicex/internal/transformation/decfc25d-4b19-47c9-a742-6259450142c7", 
-#   "chunk-size": "1000", 
-#   "result-destination": "object-store", 
-#   "result-format": "parquet", 
-#   "downloadPath": "root://xcache.af.uchicago.edu:1094//root://lcg-lrz-rootd.grid.lrz.de:1094/pnfs/lrz-muenchen.de/data/atlas/dq2/atlaslocalgroupdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root", 
-#   "safeOutputFileName": "/servicex/output/decfc25d-4b19-47c9-a742-6259450142c7/scratch/root:::xcache.af.uchicago.edu:1094::root:::lcg-lrz-rootd.grid.lrz.de:1094:pnfs:lrz-muenchen.de:data:atlas:dq2:atlaslocalgroupdisk:rucio:user:ivukotic:53:26:00284890-DCDB-E511-9F9D-02163E012FCA.root.parquet", 
+#   "request-id": "decfc25d-4b19-47c9-a742-6259450142c7",
+#   "file-id": null,
+#   "columns": null,
+#   "paths": "root://lcg-lrz-rootd.grid.lrz.de:1094/pnfs/lrz-muenchen.de/data/atlas/dq2/atlaslocalgroupdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root,root://eosatlas.cern.ch:1094//eos/atlas/atlasscratchdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root",
+#   "tree-name": null,
+#   "service-endpoint": "http://servicex-release-testing-2-servicex-app:8000/servicex/internal/transformation/decfc25d-4b19-47c9-a742-6259450142c7",
+#   "chunk-size": "1000",
+#   "result-destination": "object-store",
+#   "result-format": "parquet",
+#   "downloadPath": "root://xcache.af.uchicago.edu:1094//root://lcg-lrz-rootd.grid.lrz.de:1094/pnfs/lrz-muenchen.de/data/atlas/dq2/atlaslocalgroupdisk/rucio/user/ivukotic/53/26/00284890-DCDB-E511-9F9D-02163E012FCA.root",
+#   "safeOutputFileName": "/servicex/output/decfc25d-4b19-47c9-a742-6259450142c7/scratch/root:::xcache.af.uchicago.edu:1094::root:::lcg-lrz-rootd.grid.lrz.de:1094:pnfs:lrz-muenchen.de:data:atlas:dq2:atlaslocalgroupdisk:rucio:user:ivukotic:53:26:00284890-DCDB-E511-9F9D-02163E012FCA.root.parquet",
 #   "completedFileName": "/servicex/output/decfc25d-4b19-47c9-a742-6259450142c7/root:::xcache.af.uchicago.edu:1094::root:::lcg-lrz-rootd.grid.lrz.de:1094:pnfs:lrz-muenchen.de:data:atlas:dq2:atlaslocalgroupdisk:rucio:user:ivukotic:53:26:00284890-DCDB-E511-9F9D-02163E012FCA.root.parquet"
 # }
