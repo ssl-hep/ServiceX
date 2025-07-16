@@ -11,9 +11,7 @@ Congratulations! You deployed an ingress for this service. You can access the
 REST service at http://{{ .Release.Name }}.{{ .Values.app.ingress.host }}
 {{ else }}
 To access the REST server you will need to run a Kubernetes Port-Forward:
-
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ .Release.Name }}-servicex-app" -o jsonpath="{.items[0].metadata.name}")
-  kubectl port-forward $POD_NAME 5000:5000
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-servicex-app 8000:8000
 
 {{ end }}
 
@@ -35,7 +33,7 @@ Log in with
 
 {{ if .Values.postgres.enabled }}
 You can also connect to the deployed postgres server with your favorite SQL client
-  kubectl port-forward --namespace {{ .Release.Namespace }} {{ .Release.Name }}-postgresql-0 5432:5432
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-postgresql 5432:5432
 
 and connect with this JDBC Connection String:
 {{ if .Values.secrets }}
@@ -61,8 +59,7 @@ Since you declared an internet ingress to Minio you can access it at
 {{ .Values.objectStore.publicURL | default .Values.minio.apiIngress.hostname }}
   {{ else }}
 Finally, you can interact with the minio object store with another Port-Forward:
-  export MINIO_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app=minio,release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
-  kubectl port-forward $MINIO_POD_NAME 9000:9000
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-minio 9000:9000
 
 You can use the minio browser by visiting:
     http://localhost:9000

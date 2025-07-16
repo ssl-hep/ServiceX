@@ -141,7 +141,7 @@ spec:
 
         volumeMounts:
           {{- if eq .Values.app.environment "dev" }}
-          {{- if .Values.app.mount_local }}
+          {{- if .Values.app.mountLocal }}
           - name: host-volume
             mountPath: /home/servicex
           {{- end }}
@@ -161,7 +161,7 @@ spec:
 
       volumes:
         {{- if eq .Values.app.environment "dev" }}
-        {{- if .Values.app.mount_local }}
+        {{- if .Values.app.mountLocal }}
         - name: host-volume
           hostPath:
             path: /mnt/servicex/servicex_app

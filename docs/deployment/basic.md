@@ -23,7 +23,7 @@ see the [production deployment guide](production.md).
 - A Kubernetes cluster running K8s version 1.16 or later.
 Your account will need to have permission to:
   - Create a Service Account
-  - Peform Rolebindings
+  - Perform Rolebindings
 - [Helm 3](https://helm.sh/docs/intro/install/) installed.
 - Python 3.6+
 - A valid set of CERN X509 certificates (`usercert.pem` and `userkey.pem`)in the `~/.globus` directory.
