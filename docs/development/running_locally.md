@@ -97,7 +97,7 @@ Install Overmind following the documentation at: https://github.com/DarthSim/ove
 Navigate to your ServiceX checkout (where the `Procfile` is located) and set the required environment variables:
 
 - `LOCAL_DIR`: Path to your ServiceX directory
-- `CHART_DIR`: Path to your helm chart directory  
+- `CHART_DIR`: Path to your helm chart directory
 - `VALUES_FILE`: Path to your helm values file (can be absolute or relative to `$CHART_DIR`)
 
 Example command:
