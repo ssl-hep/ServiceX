@@ -53,7 +53,7 @@ class RabbitAdaptor(object):
 
         """
         random.shuffle(self._url_list)
-        current_app.logger.info('Connecting to %s', self._url_list)
+        current_app.logger.info("Connecting to %s", self._url_list)
         self._connection = pika.BlockingConnection(self._url_list)
 
     def open_channel(self):
@@ -63,7 +63,7 @@ class RabbitAdaptor(object):
         will be invoked.
 
         """
-        current_app.logger.info('Creating a new channel')
+        current_app.logger.info("Creating a new channel")
         self._channel = self._connection.channel()
 
         # Turn on delivery confirmations
@@ -90,7 +90,7 @@ class RabbitAdaptor(object):
         :param str|unicode exchange_name: The name of the exchange to declare
 
         """
-        current_app.logger.info('Declaring exchange %s', exchange_name)
+        current_app.logger.info("Declaring exchange %s", exchange_name)
 
         while True:
             try:
@@ -107,7 +107,9 @@ class RabbitAdaptor(object):
                 continue
             # Do not recover on channel errors
             except pika.exceptions.AMQPChannelError as err:
-                current_app.logger.warning("Caught a channel error: {}, retrying...".format(err))
+                current_app.logger.warning(
+                    "Caught a channel error: {}, retrying...".format(err)
+                )
                 self.reset_closed()
                 continue
             # Recover on all other connection errors
@@ -123,7 +125,7 @@ class RabbitAdaptor(object):
         :param str|unicode queue_name: The name of the queue to declare.
 
         """
-        current_app.logger.info('Declaring queue %s', queue_name)
+        current_app.logger.info("Declaring queue %s", queue_name)
 
         while True:
             try:
@@ -131,7 +133,9 @@ class RabbitAdaptor(object):
                 channel.queue_declare(queue=queue_name)
                 return
             except pika.exceptions.ConnectionClosedByBroker:
-                current_app.logger.warning("Connection was closed by broker, stopping...")
+                current_app.logger.warning(
+                    "Connection was closed by broker, stopping..."
+                )
                 break
             # Attempt to reconnect if the channel closed due to timeout
             except pika.exceptions.ChannelWrongStateError:
@@ -150,9 +154,7 @@ class RabbitAdaptor(object):
         while True:
             try:
                 channel = self.channel
-                channel.queue_bind(exchange=exchange,
-                                   queue=queue,
-                                   routing_key=queue)
+                channel.queue_bind(exchange=exchange, queue=queue, routing_key=queue)
                 return
             except pika.exceptions.ConnectionClosedByBroker:
                 # Uncomment this to make the example not attempt recovery
@@ -163,7 +165,9 @@ class RabbitAdaptor(object):
                 continue
             # Do not recover on channel errors
             except pika.exceptions.AMQPChannelError as err:
-                current_app.logger.exception("Caught a channel error: {}, stopping...".format(err))
+                current_app.logger.exception(
+                    "Caught a channel error: {}, stopping...".format(err)
+                )
                 break
             # Recover on all other connection errors
             except pika.exceptions.AMQPConnectionError:
@@ -176,11 +180,13 @@ class RabbitAdaptor(object):
             try:
                 channel = self.channel
 
-                channel.basic_publish(exchange=exchange,
-                                      routing_key=routing_key,
-                                      body=body,
-                                      properties=pika.BasicProperties(delivery_mode=1),
-                                      mandatory=True)
+                channel.basic_publish(
+                    exchange=exchange,
+                    routing_key=routing_key,
+                    body=body,
+                    properties=pika.BasicProperties(delivery_mode=1),
+                    mandatory=True,
+                )
                 return
 
             except pika.exceptions.ConnectionClosedByBroker:
@@ -191,13 +197,17 @@ class RabbitAdaptor(object):
                 # break
                 continue
             except pika.exceptions.ChannelWrongStateError:
-                current_app.logger.info("Channel in wrong state. Reset and see if that fixes it")
+                current_app.logger.info(
+                    "Channel in wrong state. Reset and see if that fixes it"
+                )
                 self.reset_closed()
                 continue
 
             # Do not recover on channel errors
             except pika.exceptions.AMQPChannelError as err:
-                current_app.logger.exception("Caught a channel error: {}, stopping...".format(err))
+                current_app.logger.exception(
+                    "Caught a channel error: {}, stopping...".format(err)
+                )
                 break
 
             # Recover on all other connection errors
@@ -212,11 +222,11 @@ class RabbitAdaptor(object):
 
         """
         if self._channel is not None:
-            current_app.logger.info('Closing the channel')
+            current_app.logger.info("Closing the channel")
             self._channel.close()
 
     def close_connection(self):
         """This method closes the connection to RabbitMQ."""
         if self._connection is not None:
-            current_app.logger.info('Closing connection')
+            current_app.logger.info("Closing connection")
             self._connection.close()

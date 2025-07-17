@@ -32,7 +32,9 @@ from servicex.raw_uproot_code_generator.request_translator import RawUprootTrans
 
 
 def create_app(test_config=None, provided_translator=None):
-    return servicex_codegen.create_app(test_config,
-                                       provided_translator=provided_translator
-                                       if provided_translator else RawUprootTranslator()
-                                       )
+    return servicex_codegen.create_app(
+        test_config,
+        provided_translator=(
+            provided_translator if provided_translator else RawUprootTranslator()
+        ),
+    )

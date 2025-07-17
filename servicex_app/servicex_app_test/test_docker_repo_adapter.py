@@ -31,21 +31,25 @@ from servicex_app.docker_repo_adapter import DockerRepoAdapter
 class TestDockerRepoAdapter:
     def test_check_image_exists(self, mocker):
         import requests
+
         mock_response = mocker.Mock()
         mock_get = mocker.patch.object(requests, "get", return_value=mock_response)
         mock_response.status_code = 200
-        mock_response.json = mocker.Mock(return_value={
-            'last_updated': '2020-07-22T21:13:55.317762Z'})
+        mock_response.json = mocker.Mock(
+            return_value={"last_updated": "2020-07-22T21:13:55.317762Z"}
+        )
         docker = DockerRepoAdapter()
         result = docker.check_image_exists("foo/bar:baz")
         assert result
 
         mock_get.assert_called_with(
-            'https://hub.docker.com/v2/repositories/foo/bar/tags/baz', timeout=(0.5, None)
+            "https://hub.docker.com/v2/repositories/foo/bar/tags/baz",
+            timeout=(0.5, None),
         )
 
     def test_check_image_exists_not_there(self, mocker):
         import requests
+
         mock_response = mocker.Mock()
         mocker.patch.object(requests, "get", return_value=mock_response)
         mock_response.status_code = 404
@@ -55,6 +59,7 @@ class TestDockerRepoAdapter:
 
     def test_check_image_exists_invalid_name(self, mocker):
         import requests
+
         mock_response = mocker.Mock()
         mocker.patch.object(requests, "get", return_value=mock_response)
         mock_response.status_code = 404

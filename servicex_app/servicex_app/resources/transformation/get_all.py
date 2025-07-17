@@ -35,7 +35,7 @@ from servicex_app.models import TransformRequest
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
-parser.add_argument('submitted_by', type=int, location='args')
+parser.add_argument("submitted_by", type=int, location="args")
 
 
 class AllTransformationRequests(ServiceXResource):
@@ -43,7 +43,7 @@ class AllTransformationRequests(ServiceXResource):
     @auth_required
     def get(self):
         args = parser.parse_args()
-        query_id = args.get('submitted_by')
+        query_id = args.get("submitted_by")
         transforms: List[TransformRequest]
         if query_id:
             current_app.logger.debug(f"Querying transform request by id: {query_id}")

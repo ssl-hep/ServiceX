@@ -9,7 +9,7 @@ This microservice is a REST API that will run TopCPToolkit remotely. The query t
 Query Format
 ------------
 ```
-       
+
 ```
 
 Usage
@@ -18,6 +18,3 @@ This repo builds a container to be used in the `ServiceX` application. You can s
 
 Development
 -----------
-
-
-

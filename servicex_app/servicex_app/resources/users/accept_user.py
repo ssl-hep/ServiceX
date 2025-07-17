@@ -6,16 +6,16 @@ from servicex_app.decorators import admin_required
 from servicex_app.models import UserModel
 
 parser = reqparse.RequestParser()
-parser.add_argument('email', help='This field cannot be blank', required=True)
+parser.add_argument("email", help="This field cannot be blank", required=True)
 
 
 class AcceptUser(ServiceXResource):
     @admin_required
     def post(self):
         data = parser.parse_args()
-        email = data['email']
+        email = data["email"]
         try:
             UserModel.accept(email)
-            return {'message': 'user {} now ready for access'.format(email)}
+            return {"message": "user {} now ready for access".format(email)}
         except NoResultFound as err:
-            return {'message': str(err)}, 404
+            return {"message": str(err)}, 404

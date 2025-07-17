@@ -34,10 +34,10 @@ import logstash
 from transformer_sidecar.transformer_logging.logstash_formatter import LogstashFormatter
 from transformer_sidecar.transformer_logging.stream_formatter import StreamFormatter
 
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 
-def initialize_logging(log=None,  **kwargs):
+def initialize_logging(log=None, **kwargs):
     """
     Get a logger and initialize it so that it outputs the correct format
     :param request: Request id to insert into log messages
@@ -52,19 +52,21 @@ def initialize_logging(log=None,  **kwargs):
 
     log.setLevel(logging.INFO)
     stream_handler = logging.StreamHandler()
-    stream_formatter = StreamFormatter('%(levelname)s ' +
-                                       f"{instance} transformer sidecar " +
-                                       '%(message)s')
+    stream_formatter = StreamFormatter(
+        "%(levelname)s " + f"{instance} transformer sidecar " + "%(message)s"
+    )
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
     log.addHandler(stream_handler)
 
-    logstash_host = os.environ.get('LOGSTASH_HOST')
+    logstash_host = os.environ.get("LOGSTASH_HOST")
 
     if logstash_host:
-        logstash_port = int(os.environ.get('LOGSTASH_PORT', 5959))
-        logstash_handler = logstash.TCPLogstashHandler(logstash_host, logstash_port, version=1)
-        logstash_formatter = LogstashFormatter('logstash', None, None)
+        logstash_port = int(os.environ.get("LOGSTASH_PORT", 5959))
+        logstash_handler = logstash.TCPLogstashHandler(
+            logstash_host, logstash_port, version=1
+        )
+        logstash_formatter = LogstashFormatter("logstash", None, None)
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(log.level)
         log.addHandler(logstash_handler)

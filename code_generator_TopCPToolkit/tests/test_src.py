@@ -26,8 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from servicex.TopCP_code_generator.request_translator import \
-    TopCPTranslator
+from servicex.TopCP_code_generator.request_translator import TopCPTranslator
 import os
 import tempfile
 import pytest
@@ -35,28 +34,28 @@ from servicex_codegen.code_generator import GenerateCodeException
 
 
 def test_generate_code():
-    os.environ['TEMPLATE_PATH'] = "servicex/templates/transform_single_file.py"
-    os.environ['CAPABILITIES_PATH'] = "transformer_capabilities.json"
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # proper query
         translator = TopCPTranslator()
         query = (
             '{"reco": "CommonServices:\\n  systematicsHistogram: \'listOfSystematics\'\\n\\n'
-            'PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n'
-            '    runGRL: False\\n\\nElectrons:\\n  - containerName: \'AnaElectrons\'\\n'
-            '    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n'
-            '      - selectionName: \'loose\'\\n        identificationWP: \'TightLH\'\\n'
-            '        isolationWP: \'NonIso\'\\n        noEffSF: True\\n'
-            '      - selectionName: \'tight\'\\n        identificationWP: \'TightLH\'\\n'
-            '        isolationWP: \'Tight_VarRad\'\\n        noEffSF: True\\n'
-            '    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n'
-            '        useClusterEta: True\\n\\n'
-            '# After configuring each container, many variables will be saved automatically.\\n'
-            'Output:\\n  treeName: \'reco\'\\n  vars: []\\n  metVars: []\\n  containers:\\n'
-            '      # Format should follow: \'<suffix>:<output container>\'\\n'
-            '      el_: \'AnaElectrons\'\\n      \'\': \'EventInfo\'\\n  commands:\\n'
-            '    # Turn output branches on and off with \'enable\' and \'disable\'\\n\\n'
+            "PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n"
+            "    runGRL: False\\n\\nElectrons:\\n  - containerName: 'AnaElectrons'\\n"
+            "    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n"
+            "      - selectionName: 'loose'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'NonIso'\\n        noEffSF: True\\n"
+            "      - selectionName: 'tight'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'Tight_VarRad'\\n        noEffSF: True\\n"
+            "    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n"
+            "        useClusterEta: True\\n\\n"
+            "# After configuring each container, many variables will be saved automatically.\\n"
+            "Output:\\n  treeName: 'reco'\\n  vars: []\\n  metVars: []\\n  containers:\\n"
+            "      # Format should follow: '<suffix>:<output container>'\\n"
+            "      el_: 'AnaElectrons'\\n      '': 'EventInfo'\\n  commands:\\n"
+            "    # Turn output branches on and off with 'enable' and 'disable'\\n\\n"
             'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
             '"no_systematics": true, "no_filter": false}'
         )
@@ -66,25 +65,30 @@ def test_generate_code():
 
         # is the generated code at least syntactically valid Python?
         try:
-            exec(open(os.path.join(result.output_dir, 'generated_transformer.py')).read())
+            exec(
+                open(os.path.join(result.output_dir, "generated_transformer.py")).read()
+            )
         except SyntaxError:
-            pytest.fail('Generated Python is not valid code')
+            pytest.fail("Generated Python is not valid code")
 
         assert result.hash == expected_hash
         assert result.output_dir == os.path.join(tmpdirname, expected_hash)
 
         # empty query
-        query = ''
+        query = ""
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
         # reco is string
-        query = ('{"reco": 1, "parton": "a", "particle": "c", "max_events": 1, '
-                 '"no_systematics": false, "no_filter": false}')
+        query = (
+            '{"reco": 1, "parton": "a", "particle": "c", "max_events": 1, '
+            '"no_systematics": false, "no_filter": false}'
+        )
         with pytest.raises(TypeError):
             translator.generate_code(query, tmpdirname)
 
 
 def test_app():
     import servicex.TopCP_code_generator
+
     servicex.TopCP_code_generator.create_app()

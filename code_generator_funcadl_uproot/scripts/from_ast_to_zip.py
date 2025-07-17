@@ -5,11 +5,18 @@ from servicex.xaod_code_generator.ast_translator import AstTranslator
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--ast",
-                        help="The text AST to be converted into zip file. STDIN if this is left off")  # noqa: E501
-    parser.add_argument("-z", "--zipfile",
-                        help="The name of the zip file to write out. STDOUT if this is left off")
+    parser.add_argument(
+        "-a",
+        "--ast",
+        help="The text AST to be converted into zip file. STDIN if this is left off",
+    )  # noqa: E501
+    parser.add_argument(
+        "-z",
+        "--zipfile",
+        help="The name of the zip file to write out. STDOUT if this is left off",
+    )
     args = parser.parse_args()
 
     # Get the input AST
@@ -21,5 +28,5 @@ if __name__ == "__main__":
     if args.zipfile is None:
         sys.stdout.buffer.write(zip_data)
     else:
-        with open(args.zipfile, 'wb') as w:
+        with open(args.zipfile, "wb") as w:
             w.write(zip_data)

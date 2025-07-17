@@ -28,20 +28,22 @@
 import re
 from kombu import Queue
 
-did_finder_pattern = r'(.+)\.lookup_dataset'
+did_finder_pattern = r"(.+)\.lookup_dataset"
 
 
 def route_task(name, args, kwargs, options, task=None, **kw):
-    if name == 'transformer_sidecar.transform_file':
+    if name == "transformer_sidecar.transform_file":
         return {
-            "queue": Queue(name=f"transformer-{kwargs['request_id']}",
-                           durable=False,
-                           auto_delete=True,
-                           queue_arguments={'x-consumer-timeout': 2_629_746_000})
+            "queue": Queue(
+                name=f"transformer-{kwargs['request_id']}",
+                durable=False,
+                auto_delete=True,
+                queue_arguments={"x-consumer-timeout": 2_629_746_000},
+            )
         }
 
     did_finder_match = re.search(did_finder_pattern, name)
     if did_finder_match:
-        return {'queue': did_finder_match.group(1)}
+        return {"queue": did_finder_match.group(1)}
 
-    return {'queue': 'celery'}
+    return {"queue": "celery"}

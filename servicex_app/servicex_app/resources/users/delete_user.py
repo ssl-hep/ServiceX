@@ -8,6 +8,6 @@ class DeleteUser(ServiceXResource):
     def delete(self, user_id):
         user: UserModel = UserModel.find_by_id(user_id)
         if not user:
-            return {'message': 'user {} not found'.format(user_id)}, 404
+            return {"message": "user {} not found".format(user_id)}, 404
         user.delete_from_db()
-        return {'message': 'user {} has been deleted'.format(user_id)}, 200
+        return {"message": "user {} has been deleted".format(user_id)}, 200

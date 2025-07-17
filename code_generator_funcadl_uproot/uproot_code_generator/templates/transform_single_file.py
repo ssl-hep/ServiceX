@@ -6,7 +6,8 @@ import generated_transformer
 import awkward as ak
 import pyarrow.parquet as pq
 import uproot
-instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+
+instance = os.environ.get("INSTANCE_NAME", "Unknown")
 default_tree_name = "servicex"
 
 
@@ -25,13 +26,15 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         ttime = time.time()
 
-        if output_format == 'root-file':
+        if output_format == "root-file":
             etime = time.time()
-            with open(output_path, 'b+w') as wfile:
+            with open(output_path, "b+w") as wfile:
                 with uproot.recreate(wfile) as writer:
-                    writer[default_tree_name] = {field: awkward_array[field] for field in
-                                                 awkward_array.fields} if awkward_array.fields \
+                    writer[default_tree_name] = (
+                        {field: awkward_array[field] for field in awkward_array.fields}
+                        if awkward_array.fields
                         else awkward_array
+                    )
             wtime = time.time()
 
         else:
@@ -46,11 +49,15 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size
-        print(f'Detailed transformer times. query_time:{round(ttime - stime, 3)} '
-              f'serialization: {round(etime - ttime, 3)} '
-              f'writing: {round(wtime - etime, 3)}')
+        print(
+            f"Detailed transformer times. query_time:{round(ttime - stime, 3)} "
+            f"serialization: {round(etime - ttime, 3)} "
+            f"writing: {round(wtime - etime, 3)}"
+        )
 
-        print(f"Transform stats: Total Events: {total_events}, resulting file size {output_size}")
+        print(
+            f"Transform stats: Total Events: {total_events}, resulting file size {output_size}"
+        )
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
         print(mesg)

@@ -36,22 +36,20 @@ class TopCPStats(TransformerStats):
         super().__init__(log_path)
 
         matches = re.findall(
-            r'Package.EventLoop        INFO    Processing events 0-(\d+) in file', self.log_body)
+            r"Package.EventLoop        INFO    Processing events 0-(\d+) in file",
+            self.log_body,
+        )
         if len(matches) == 1:
             self.total_events = int(matches[0])
 
         # Look for EventLoop error first
-        matches = re.findall(
-            r"^.*ERROR.*", self.log_body, re.MULTILINE
-        )
+        matches = re.findall(r"^.*ERROR.*", self.log_body, re.MULTILINE)
         if matches:
             # Return the first error
             self.error_info = matches[0]
         else:
             # Look for configuration error
-            matches = re.findall(
-                r"^.*Error: .*", self.log_body, re.MULTILINE
-            )
+            matches = re.findall(r"^.*Error: .*", self.log_body, re.MULTILINE)
             if matches:
                 # Return the first error
                 self.error_info = matches[0]

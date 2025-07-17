@@ -35,27 +35,32 @@ from func_adl_xAOD.cms.aod.executor import cms_aod_executor
 from func_adl_xAOD.common.executor import executor
 from qastle import text_ast_to_python_ast
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
-    GenerateCodeException
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 
 class AstAODTranslator(CodeGenerator):
     def __init__(self, exe: Optional[Union[executor, str]] = None):
-        '''
+        """
         Create the ast translator objects
 
         Arguments
 
             executor    The object that will do the translation if an executor is specified or
                         if it's a string then appropriate executor is chosen
-        '''
+        """
         if isinstance(exe, str) or not exe:
-            if exe == 'CMS AOD':
+            if exe == "CMS AOD":
                 self._exe = cms_aod_executor()
-            elif exe == 'ATLAS xAOD':
+            elif exe == "ATLAS xAOD":
                 self._exe = atlas_xaod_executor()
             else:
-                raise ValueError(f'The executor name, {exe}, must be "CMS AOD" or "ATLAS xAOD" only.')  # noqa: E501
+                raise ValueError(
+                    f'The executor name, {exe}, must be "CMS AOD" or "ATLAS xAOD" only.'
+                )  # noqa: E501
         else:
             self._exe = exe
 
@@ -75,21 +80,25 @@ class AstAODTranslator(CodeGenerator):
 
         if len(body) != 1:
             raise GenerateCodeException(
-                f'Requested codegen for "{query}" yielded no code statements (or too many).')  # noqa: E501
+                f'Requested codegen for "{query}" yielded no code statements (or too many).'
+            )  # noqa: E501
         a = body[0].value
 
-        self._exe.write_cpp_files(
-            self._exe.apply_ast_transformations(a), path)
+        self._exe.write_cpp_files(self._exe.apply_ast_transformations(a), path)
 
         # Transfer the templated pilot bash script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/xaod_code_generator/templates/transform_single_file.sh") # NOQA: 501
+        template_path = os.environ.get(
+            "TEMPLATE_PATH",
+            "/home/servicex/xaod_code_generator/templates/transform_single_file.sh",
+        )  # NOQA: 501
         shutil.copyfile(template_path, os.path.join(path, "transform_single_file.sh"))
 
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(path,
-                                                        "transformer_capabilities.json"))
+        capabilities_path = os.environ.get(
+            "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
+        )
+        shutil.copyfile(
+            capabilities_path, os.path.join(path, "transformer_capabilities.json")
+        )
 
         os.system("ls -lht " + cache_path)
 

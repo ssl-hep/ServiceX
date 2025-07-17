@@ -33,4 +33,3 @@ ADD gai.conf /etc/gai.conf
 ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR=/etc/grid-security/certificates
 ENV PYTHONPATH=/servicex
-

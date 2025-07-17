@@ -3,7 +3,7 @@ from textwrap import dedent
 from urllib.parse import urlparse
 
 import flask
-from flask import (request, send_file, session, current_app)
+from flask import request, send_file, session, current_app
 from servicex_app.decorators import oauth_required
 from servicex_app.models import UserModel
 
@@ -11,18 +11,24 @@ from servicex_app.models import UserModel
 @oauth_required
 def servicex_file():
     """Generate a servicex.yaml config file prepopulated with this endpoint."""
-    email = session.get('email')
+    email = session.get("email")
     user = UserModel.find_by_email(email)
     endpoint_url = get_correct_url(request)
-    endpoint_name = current_app.config.get("INSTANCE_NAME", urlparse(endpoint_url).hostname)
+    endpoint_name = current_app.config.get(
+        "INSTANCE_NAME", urlparse(endpoint_url).hostname
+    )
 
     body = "api_endpoints:\n"
     body += f"  - name: {endpoint_name}\n"
     body += f"    endpoint: {endpoint_url}\n"
     body += f"    token: {user.refresh_token}\n"
     body += f"default_endpoint: {endpoint_name}\n"
-    return send_file(BytesIO(dedent(body).encode()), mimetype="text/plain",
-                     as_attachment=True, download_name="servicex.yaml")
+    return send_file(
+        BytesIO(dedent(body).encode()),
+        mimetype="text/plain",
+        as_attachment=True,
+        download_name="servicex.yaml",
+    )
 
 
 def get_correct_url(request: flask.Request) -> str:
@@ -36,7 +42,7 @@ def get_correct_url(request: flask.Request) -> str:
     """
 
     parsed_url = urlparse(request.url_root)
-    request_scheme = request.headers.get('X-Scheme')
+    request_scheme = request.headers.get("X-Scheme")
     if request_scheme is not None:
         # use the same scheme that the request used
         return parsed_url._replace(scheme=request_scheme).geturl()

@@ -7,25 +7,25 @@ from servicex_app.models import TransformRequest
 model_attributes = {
     "start": TransformRequest.submit_time,
     "finish": TransformRequest.finish_time,
-    "status": TransformRequest.status
+    "status": TransformRequest.status,
 }
 parser = reqparse.RequestParser()
-parser.add_argument("page", default=1, type=int, location='args')
+parser.add_argument("page", default=1, type=int, location="args")
 sort_choices = tuple(model_attributes.keys())
 parser.add_argument(
     "sort",
     choices=sort_choices,
     default="start",
-    location='args',
-    help=f"Sort must be one of: {', '.join(map(repr, sort_choices))}."
+    location="args",
+    help=f"Sort must be one of: {', '.join(map(repr, sort_choices))}.",
 )
 order_choices = ("asc", "desc")
 parser.add_argument(
     "order",
     choices=order_choices,
     default="desc",
-    location='args',
-    help="Order must be 'asc' or 'desc'."
+    location="args",
+    help="Order must be 'asc' or 'desc'.",
 )
 
 
@@ -39,9 +39,9 @@ def dashboard(template_name: str, user_specific=False):
 
     sort_column = model_attributes[sort]
     sort_order = sort_column.asc() if order == "asc" else sort_column.desc()
-    pagination = query \
-        .order_by(sort_order) \
-        .paginate(page=args["page"], per_page=15, error_out=False)
+    pagination = query.order_by(sort_order).paginate(
+        page=args["page"], per_page=15, error_out=False
+    )
     return render_template(
         template_name,
         pagination=pagination,

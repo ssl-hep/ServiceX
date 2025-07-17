@@ -41,13 +41,22 @@ RETRY_DELAY = 2
 
 PLACE = {
     "host_name": os.getenv("HOST_NAME", "unknown"),
-    "site": os.getenv("site", "unknown")
+    "site": os.getenv("site", "unknown"),
 }
 
 
 class FileCompleteRecord:
-    def __init__(self, request_id: str, file_path: str, file_id: int, status: str,
-                 total_time: float, total_events: int, total_bytes: int, s3_object_name: str):
+    def __init__(
+        self,
+        request_id: str,
+        file_path: str,
+        file_id: int,
+        status: str,
+        total_time: float,
+        total_events: int,
+        total_bytes: int,
+        s3_object_name: str,
+    ):
         assert request_id, "request_id is required"
         assert file_path, "file_path is required"
         assert s3_object_name, "s3_object_name is required"
@@ -75,7 +84,7 @@ class FileCompleteRecord:
             "total-events": self.total_events,
             "total-bytes": self.total_bytes,
             "avg-rate": self.avg_rate,
-            "place": PLACE
+            "place": PLACE,
         }
 
 
@@ -91,28 +100,31 @@ class ServiceXAdapter:
         self.server_endpoint = servicex_endpoint
         self.session = requests.session()
 
-        retries = Retry(total=5,
-                        connect=3,
-                        backoff_factor=0.1)
-        self.session.mount('http', HTTPAdapter(max_retries=retries))
+        retries = Retry(total=5, connect=3, backoff_factor=0.1)
+        self.session.mount("http", HTTPAdapter(max_retries=retries))
 
     def put_file_complete(self, rec: FileCompleteRecord):
         if self.server_endpoint:
             try:
-                retry_call(self.session.put,
-                           fargs=[self.server_endpoint + "/file-complete"],
-                           fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
-                           tries=MAX_RETRIES,
-                           delay=RETRY_DELAY)
-                self.logger.info("Put file complete.", extra={
-                    'requestId': rec.request_id,
-                    "file-id": rec.file_id,
-                    "place": PLACE,
-                    "file_path": rec.file_path,
-                    "s3-object-name": rec.s3_object_name,
-                })
+                retry_call(
+                    self.session.put,
+                    fargs=[self.server_endpoint + "/file-complete"],
+                    fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
+                    tries=MAX_RETRIES,
+                    delay=RETRY_DELAY,
+                )
+                self.logger.info(
+                    "Put file complete.",
+                    extra={
+                        "requestId": rec.request_id,
+                        "file-id": rec.file_id,
+                        "place": PLACE,
+                        "file_path": rec.file_path,
+                        "s3-object-name": rec.s3_object_name,
+                    },
+                )
             except requests.exceptions.ConnectionError:
-                self.logger.exception("Connection Error in put_file_complete",
-                                      extra={'requestId': rec.request_id,
-                                             "place": PLACE}
-                                      )
+                self.logger.exception(
+                    "Connection Error in put_file_complete",
+                    extra={"requestId": rec.request_id, "place": PLACE},
+                )

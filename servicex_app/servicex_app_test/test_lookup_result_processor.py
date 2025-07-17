@@ -32,27 +32,29 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_files_to_processing_queue(self, mocker, mock_celery_app):
-        processor = LookupResultProcessor(mock_celery_app,
-                                          "http://cern.analysis.ch:5000/")
+        processor = LookupResultProcessor(
+            mock_celery_app, "http://cern.analysis.ch:5000/"
+        )
 
         request = self._generate_transform_request()
-        request.result_destination = 'object-store'
+        request.result_destination = "object-store"
 
         client = self._test_client()
         with client.application.app_context():
-            processor.add_files_to_processing_queue(request, [self._generate_datafile()])
+            processor.add_files_to_processing_queue(
+                request, [self._generate_datafile()]
+            )
 
             mock_celery_app.send_task.assert_called_once()
 
             mock_celery_app.send_task.assert_called_with(
-                'transformer_sidecar.transform_file',
+                "transformer_sidecar.transform_file",
                 kwargs={
-                    "request_id": 'BR549',
+                    "request_id": "BR549",
                     "file_id": 123456789,
                     "paths": ["/path1", "/path2"],
-                    "service_endpoint":
-                        "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
-                    'result_destination': 'object-store',
-                    "result_format": "arrow"
-                }
+                    "service_endpoint": "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",  # noqa: E501
+                    "result_destination": "object-store",
+                    "result_format": "arrow",
+                },
             )

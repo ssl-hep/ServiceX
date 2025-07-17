@@ -35,5 +35,5 @@ class OneDataset(ServiceXResource):
     def get(self, dataset_id):
         dataset = Dataset.find_by_id(dataset_id)
         result = dataset.to_json()
-        result['files'] = [f.to_json() for f in dataset.files]
+        result["files"] = [f.to_json() for f in dataset.files]
         return result

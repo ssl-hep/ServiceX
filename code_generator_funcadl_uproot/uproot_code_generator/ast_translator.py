@@ -32,8 +32,11 @@ from func_adl.ast import ast_hash
 from func_adl_uproot.translation import generate_python_source
 from qastle import text_ast_to_python_ast
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult, \
-    GenerateCodeException
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 
 class AstUprootTranslator(CodeGenerator):
@@ -46,7 +49,8 @@ class AstUprootTranslator(CodeGenerator):
         body = text_ast_to_python_ast(query).body
         if len(body) != 1:
             raise GenerateCodeException(
-                f'Requested codegen for "{query}" yielded no code statements (or too many).')  # noqa: E501
+                f'Requested codegen for "{query}" yielded no code statements (or too many).'
+            )  # noqa: E501
         a = body[0].value
 
         hash = ast_hash.calc_ast_hash(a)
@@ -58,19 +62,28 @@ class AstUprootTranslator(CodeGenerator):
 
         src = generate_python_source(a)
         print(query_file_path)
-        with open(os.path.join(query_file_path, 'generated_transformer.py'), 'w') as python_file:
+        with open(
+            os.path.join(query_file_path, "generated_transformer.py"), "w"
+        ) as python_file:
             python_file.write(src)
 
         # Transfer the templated main python script
-        template_path = os.environ.get('TEMPLATE_PATH',
-                                       "/home/servicex/uproot_code_generator/"
-                                       "templates/transform_single_file.py")
-        shutil.copyfile(template_path, os.path.join(query_file_path, "transform_single_file.py"))
+        template_path = os.environ.get(
+            "TEMPLATE_PATH",
+            "/home/servicex/uproot_code_generator/"
+            "templates/transform_single_file.py",
+        )
+        shutil.copyfile(
+            template_path, os.path.join(query_file_path, "transform_single_file.py")
+        )
 
-        capabilities_path = os.environ.get('CAPABILITIES_PATH',
-                                           "/home/servicex/transformer_capabilities.json")
-        shutil.copyfile(capabilities_path, os.path.join(query_file_path,
-                                                        "transformer_capabilities.json"))
+        capabilities_path = os.environ.get(
+            "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
+        )
+        shutil.copyfile(
+            capabilities_path,
+            os.path.join(query_file_path, "transformer_capabilities.json"),
+        )
 
         os.system("ls -lht " + query_file_path)
 

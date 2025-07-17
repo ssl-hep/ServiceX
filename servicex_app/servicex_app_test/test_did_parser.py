@@ -31,23 +31,23 @@ from servicex_app.did_parser import DIDParser
 class TestDIDParser:
     def test_scheme_included(self):
         parser = DIDParser("http://my-did")
-        assert parser.scheme == 'http'
-        assert parser.did == 'my-did'
+        assert parser.scheme == "http"
+        assert parser.did == "my-did"
 
     def test_scheme_defaulted(self):
         parser = DIDParser("my-did", default_scheme="http")
-        assert parser.scheme == 'http'
-        assert parser.did == 'my-did'
+        assert parser.scheme == "http"
+        assert parser.did == "my-did"
 
     def test_embedded_schemes(self):
         parser = DIDParser("file://http://foo.bar/my-did,https://baz.com/fff")
-        assert parser.scheme == 'file'
-        assert parser.did == 'http://foo.bar/my-did,https://baz.com/fff'
+        assert parser.scheme == "file"
+        assert parser.did == "http://foo.bar/my-did,https://baz.com/fff"
 
     def test_microservice_queue(self):
         parser = DIDParser("rucio://my-did")
-        assert parser.microservice_queue == 'did_finder_rucio'
+        assert parser.microservice_queue == "did_finder_rucio"
 
     def test_did_path_options(self):
         parser = DIDParser("rucio://my-did?files=1")
-        assert parser.full_did == 'rucio://my-did?files=1'
+        assert parser.full_did == "rucio://my-did?files=1"

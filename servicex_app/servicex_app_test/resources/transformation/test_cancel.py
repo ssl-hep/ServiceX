@@ -41,7 +41,9 @@ class TestTransformCancel(ResourceTestBase):
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
+            "1234", namespace
+        )
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -53,7 +55,9 @@ class TestTransformCancel(ResourceTestBase):
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
+            "1234", namespace
+        )
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -65,15 +69,16 @@ class TestTransformCancel(ResourceTestBase):
         resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 403
         namespace = client.application.config["TRANSFORMER_NAMESPACE"]
-        mock_transform_manager.shutdown_transformer_job.assert_called_once_with("1234", namespace)
+        mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
+            "1234", namespace
+        )
         assert fake_transform.status == TransformStatus.running
         assert fake_transform.finish_time is None
 
-    @pytest.mark.parametrize("status", [
-        TransformStatus.complete,
-        TransformStatus.fatal,
-        TransformStatus.canceled
-    ])
+    @pytest.mark.parametrize(
+        "status",
+        [TransformStatus.complete, TransformStatus.fatal, TransformStatus.canceled],
+    )
     def test_complete(self, client, fake_transform, status: TransformStatus):
         fake_transform.status = status
         resp = client.get("/servicex/transformation/1234/cancel")
