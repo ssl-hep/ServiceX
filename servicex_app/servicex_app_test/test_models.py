@@ -24,7 +24,7 @@ class TestTransformRequest:
         mock_dt = mocker.patch("servicex_app.models.datetime")
         mock_dt.utcnow.return_value = t + delta
         assert request.age == delta
-        assert mock_dt.utcnow.called_once()
+        mock_dt.utcnow.assert_called_once()
 
     def test_submitter_name(self):
         user = UserModel()

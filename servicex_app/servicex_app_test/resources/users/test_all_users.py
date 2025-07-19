@@ -11,7 +11,7 @@ class TestAllUsers(WebTestBase):
         )
         response: Response = client.get("/users")
         assert response.status_code == 200
-        assert mock.called_once()
+        mock.assert_called_once()
         assert response.json == resp_json
 
     def test_delete_users(self, client, mocker):
@@ -21,5 +21,5 @@ class TestAllUsers(WebTestBase):
         )
         response: Response = client.delete("/users")
         assert response.status_code == 200
-        assert mock.called_once()
+        mock.assert_called_once()
         assert response.json == resp_json

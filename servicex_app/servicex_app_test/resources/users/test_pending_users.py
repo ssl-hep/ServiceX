@@ -11,7 +11,7 @@ class TestPendingUsers(WebTestBase):
         )
         response: Response = client.get("/pending")
         assert response.status_code == 200
-        assert mock.called_once()
+        mock.assert_called_once()
         assert response.json == resp_json
 
     def test_delete_pending_users(self, client, mocker):
@@ -21,5 +21,5 @@ class TestPendingUsers(WebTestBase):
         )
         response: Response = client.delete("/pending")
         assert response.status_code == 200
-        assert mock.called_once()
+        mock.assert_called_once()
         assert response.json == resp_json

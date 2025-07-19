@@ -42,8 +42,8 @@ class TestCreateProfile(WebTestBase):
         keys = ["name", "email", "institution", "experiment"]
         data = {key: new_user.__dict__[key] for key in keys}
         response: Response = client.post(url_for("create_profile"), data=data)
-        assert db.session.commit.called_once()
-        assert new_user.save_to_db.called_once()
+        db.session.commit.assert_called_once()
+        new_user.save_to_db.assert_called_once()
         mock_flash.assert_called_once()
         assert "Profile created!" in mock_flash.call_args[0][0]
         assert response.status_code == 302

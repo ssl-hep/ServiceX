@@ -28,7 +28,7 @@ class TestEditProfile(WebTestBase):
                 "experiment": user.experiment,
             },
         )
-        assert db.session.commit.called_once()
+        db.session.commit.assert_called_once()
         assert user.name == "new name"
         mock_flash.assert_called_once()
         assert "Your profile has been saved!" in mock_flash.call_args[0][0]

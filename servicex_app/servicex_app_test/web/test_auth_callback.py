@@ -9,7 +9,7 @@ class TestAuthCallback(WebTestBase):
     def test_auth_callback_outgoing(self, client, oauth_client):
         response: Response = client.get(url_for("auth_callback"))
         assert response.status_code == 302
-        assert oauth_client.authorize_redirect.called_once()
+        oauth_client.authorize_redirect.assert_called_once()
         assert response.location == self._auth_url()
 
     def test_auth_callback_incoming_new(
@@ -18,7 +18,7 @@ class TestAuthCallback(WebTestBase):
         response: Response = client.get(
             url_for("auth_callback"), query_string={"code": "oauth-code"}
         )
-        assert oauth_client.authorize_access_token.called_once()
+        oauth_client.authorize_access_token.assert_called_once()
         id_token = self._id_token()
         assert mock_session.get("is_authenticated")
         assert mock_session.get("name") == id_token["name"]
@@ -32,7 +32,7 @@ class TestAuthCallback(WebTestBase):
         response: Response = client.get(
             url_for("auth_callback"), query_string={"code": "oauth-code"}
         )
-        assert oauth_client.authorize_access_token.called_once()
+        oauth_client.authorize_access_token.assert_called_once()
         id_token = self._id_token()
         assert mock_session.get("user_id") == user.id
         assert mock_session.get("admin") == user.admin
