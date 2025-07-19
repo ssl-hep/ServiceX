@@ -39,8 +39,7 @@ class TestAuthCallback(WebTestBase):
         response: Response = client.get(
             url_for("auth_callback"), query_string={"code": "oauth-code"}
         )
-        mock_oauth.authorize_redirect.assert_not_called()
-        mock_user_model.find_by_email.assert_called_once()
+        oauth_client.authorize_access_token.assert_called_once()
         id_token = self._id_token()
         assert mock_session.get("is_authenticated")
         assert mock_session.get("name") == id_token["name"]
