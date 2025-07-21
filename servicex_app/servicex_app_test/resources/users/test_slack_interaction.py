@@ -134,7 +134,9 @@ class TestSlackInteraction(ResourceTestBase):
 
     def test_slack_interaction_accept_user(self, mocker):
         mock_post = mocker.patch("requests.post")
-        mock_user_model = mocker.patch("servicex_app.resources.users.slack_interaction.UserModel")
+        mock_user_model = mocker.patch(
+            "servicex_app.resources.users.slack_interaction.UserModel"
+        )
         secret = "my-slack-secret"
         client = self._test_client(
             extra_config={"SLACK_SIGNING_SECRET": "my-slack-secret"}
