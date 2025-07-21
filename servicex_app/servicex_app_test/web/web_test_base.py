@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime
+from unittest.mock import MagicMock
 
 from flask import template_rendered, redirect
 from flask.testing import FlaskClient
@@ -247,7 +248,10 @@ class WebTestBase:
 
     @fixture
     def db(self, mocker):
-        return mocker.patch("flask_sqlalchemy.SQLAlchemy").return_value
+        mock_db = MagicMock()
+        mock_db.session = MagicMock()
+        mock_db.session.commit = MagicMock()
+        return mock_db
 
     @fixture
     def oauth_client(self, mocker):
