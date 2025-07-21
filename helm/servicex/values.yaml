@@ -94,7 +94,7 @@ codeGen:
     defaultScienceContainerTag: 25.2.41
 
   cmssw-5-3-32:
-    enabled: true
+    enabled: false
     image: sslhep/servicex_code_gen_cms_aod
     pullPolicy: Always
     tag: develop
