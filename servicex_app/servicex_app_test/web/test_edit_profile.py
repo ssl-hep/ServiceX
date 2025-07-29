@@ -15,7 +15,9 @@ class TestEditProfile(WebTestBase):
         assert template.name == "profile_form.html"
         assert context["action"] == "Edit Profile"
 
-    def test_post_edit_profile(self, client, user, db, mock_flash):
+    def test_post_edit_profile(self, client, user, db, mock_flash, mocker):
+        mocker.patch("servicex_app.web.edit_profile.db", db)
+
         assert user.name != "new name"
         with client.session_transaction() as sess:
             sess["sub"] = "some-new-user-id"
@@ -28,7 +30,7 @@ class TestEditProfile(WebTestBase):
                 "experiment": user.experiment,
             },
         )
-        assert db.session.commit.called_once()
+        db.session.commit.assert_called_once()
         assert user.name == "new name"
         mock_flash.assert_called_once()
         assert "Your profile has been saved!" in mock_flash.call_args[0][0]

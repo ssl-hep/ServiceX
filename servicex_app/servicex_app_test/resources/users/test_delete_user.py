@@ -10,7 +10,7 @@ class TestDeleteUser(WebTestBase):
         resp: Response = client.delete(f"users/{user.id}")
         assert resp.status_code == 200
         assert resp.json == resp_json
-        assert user.delete_from_db.called_once()
+        user.delete_from_db.assert_called_once()
 
     def test_delete_user_missing(self, client):
         fake_user_id = 12345
