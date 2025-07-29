@@ -702,16 +702,16 @@ files = [
 
 [[package]]
 name = "xrootd"
-version = "5.7.0"
+version = "5.8.4"
 description = "eXtended ROOT daemon"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "xrootd-5.7.0.tar.gz", hash = "sha256:453bda26b2492580f90d374974905a5446bfffa749952337ca21cd25c19ef24c"},
+    {file = "xrootd-5.8.4.tar.gz", hash = "sha256:2d1d597c2ce5200a20eb85f12012759fbbfc6912815e07956015f20904b81eb6"},
 ]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "5c58c2b226b02293fbfffe8f59ee48af4ee0e1390a171ae1f1995cf492ae7fe9"
+content-hash = "a14b1546c04cd2e8da3987aa23e94d0d837b95bffcdf5c4afc6be2905370bd81"
