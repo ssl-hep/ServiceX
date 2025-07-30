@@ -38,6 +38,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/opt/servicex/src
 
 ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
+ENV X509_USER_PROXY=/etc/grid-security-ro/x509up
+ENV X509_CERT_DIR=/etc/grid-security/certificates
 
 
 ENTRYPOINT [ "scripts/start_celery_worker.sh"]
