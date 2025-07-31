@@ -35,7 +35,7 @@ from flask_sqlalchemy import SQLAlchemy
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
-
+from servicex_app.celery.server_tasks import add_files_to_processing_queue
 
 class DatasetManager:
     def __init__(self, dataset: Dataset, logger: Logger, db: SQLAlchemy):
@@ -177,8 +177,8 @@ class DatasetManager:
         self, request: TransformRequest, lookup_result_processor: LookupResultProcessor
     ) -> None:
         request.files = len(self.dataset.files)
-        lookup_result_processor.add_files_to_processing_queue(
-            request, files=[file for file in self.dataset.files]
+        add_files_to_processing_queue.delay(
+            request.to_json(), files=[file.to_json() for file in self.dataset.files]
         )
 
     def add_files(
@@ -192,7 +192,7 @@ class DatasetManager:
 
         for request in requests:
             request.files += len(files)
-            lookup_result_processor.add_files_to_processing_queue(
-                request, files=[file for file in files]
+            add_files_to_processing_queue.delay(
+                request.to_json(), files=[file.to_json() for file in files]
             )
             request.save_to_db()
