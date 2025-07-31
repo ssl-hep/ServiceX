@@ -31,8 +31,7 @@ from celery.utils.log import get_task_logger
 from ..celery_task_router import route_task
 import os
 
-app = Celery("servicex.celery",
-             broker=os.environ["RABBIT_MQ_URL"])
+app = Celery("servicex.celery", broker=os.environ["RABBIT_MQ_URL"])
 app.conf.task_routes = (route_task,)
 
 ADVERTISED_ENDPOINT = f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
@@ -47,6 +46,7 @@ def celery_task_name(request_id):
 @app.task
 def add_files_to_processing_queue(request, files):
     from ..models import TransformStatus
+
     if TransformStatus.status_from_string(request["status"]).is_complete:
         logger.debug(
             "Rejecting file addition request, request is canceled",

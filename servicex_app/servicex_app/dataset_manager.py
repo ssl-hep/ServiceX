@@ -37,6 +37,7 @@ from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
 from servicex_app.celery.server_tasks import add_files_to_processing_queue
 
+
 class DatasetManager:
     def __init__(self, dataset: Dataset, logger: Logger, db: SQLAlchemy):
         self.dataset = dataset
