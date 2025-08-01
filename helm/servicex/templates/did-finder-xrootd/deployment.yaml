@@ -39,4 +39,17 @@ spec:
           - name: BROKER_URL
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
         {{- end }}
+        {{ if not .Values.noCerts}}
+        volumeMounts:
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+        {{- end }}
+      {{ if not .Values.noCerts}}
+      volumes:
+        - name: x509-secret
+          secret:
+            defaultMode: 292
+            secretName: x509-proxy
+      {{- end }}
 {{ end }}
