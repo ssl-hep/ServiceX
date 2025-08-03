@@ -220,7 +220,11 @@ class TransformerManager:
             env = env + [env_var_instance_name]
 
         # provide each pod with an environment var holding cache prefix path
-        if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
+        if (
+            "TRANSFORMER_CACHE_PREFIX" in current_app.config
+            or "TRANSFORMER_CACHE_VPS_SITE" in current_app.config
+        ):
+            TransformerManager.validate_caches()
             env += [
                 client.V1EnvVar(
                     "CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"]
@@ -409,6 +413,31 @@ class TransformerManager:
                     )
                     return False
         return False
+
+    @staticmethod
+    def validate_caches():
+        import time
+        import urllib3
+
+        if not (thissite := current_app.config.get("TRANSFORMER_CACHE_VPS_SITE", None)):
+            return
+
+        lastchecktime = current_app.config.get("TRANSFORMER_CACHE_VPS_LASTCHECK", 0)
+        ttl = current_app.config.get("TRANSFORMER_CACHE_VPS_INTERVAL", 30 * 60)
+        if (now := time.time()) - lastchecktime > ttl:
+            current_app.config["TRANSFORMER_CACHE_VPS_LASTCHECK"] = now
+            vps_server = current_app.config["TRANSFORMER_CACHE_VPS_LIVENESS_URL"]
+            try:
+                sitedata = urllib3.request("GET", vps_server).json()
+                if thissite not in sitedata:
+                    current_app.logger.error(f"{thissite} is not in VPS liveness data")
+                servers = sorted(
+                    [_["address"] for _ in sitedata[thissite].values() if _["live"]]
+                )
+                current_app.logger.info(f"Live xCache servers are {servers}")
+                current_app.config["TRANSFORMER_CACHE_PREFIX"] = ",".join(servers)
+            except Exception as e:
+                current_app.logger.error(f"Exception retrieving site data: {e}")
 
     @staticmethod
     def create_hpa_object(request_id, max_workers):

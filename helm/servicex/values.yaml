@@ -201,6 +201,12 @@ transformer:
   # comma-separated list of values.
   # Do not put root:// in these values.
   cachePrefix: null
+  # Alternatively, provide the virtual placement service site name to look up
+  # xCache servers from
+  cacheVPSSite: null
+  cacheVPSCheckInterval: 1800
+  cacheVPSLivenessURL: https://vps.cern.ch/liveness
+
 
   autoscaler:
     cpuScaleThreshold: 30
