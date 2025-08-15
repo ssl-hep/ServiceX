@@ -13,7 +13,7 @@ ENV  POETRY_VERSION=2.1.1
 RUN apt-get update && \
     apt-get install cmake osg-ca-certs --no-install-recommends --assume-yes
 
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
