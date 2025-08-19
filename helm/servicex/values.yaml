@@ -4,7 +4,7 @@ app:
   adminEmail: admin@example.com
   auth: false
   authExpires: 21600
-  checksImage: ncsa/checks:latest
+  checksImage: ncsa/checks:main
   defaultDIDFinderScheme: null
   oauthMetadataURL: null
   oauthClientID: null
