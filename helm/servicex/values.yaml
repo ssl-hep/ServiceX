@@ -148,7 +148,8 @@ minio:
     repository: bitnamilegacy/minio
   volumePermissions:
     image:
-      repository: bitnamilegacy/bitnami-shell-archived
+      repository: bitnamilegacy/os-shell
+      tag: 12-debian-12-r51
   auth:
     rootPassword: leftfoot1
     rootUser: miniouser
@@ -172,7 +173,9 @@ postgresql:
     repository: bitnamilegacy/postgresql
   volumePermissions:
     image:
-      repository: bitnamilegacy/bitnami-shell-archived
+      repository: bitnamilegacy/os-shell
+      tag: 12-debian-12-r51
+
   global:
     postgresql:
       auth:
@@ -195,7 +198,9 @@ rabbitmq:
   volumePermissions:
     enabled: true
     image:
-      repository: bitnamilegacy/bitnami-shell-archived
+      repository: bitnamilegacy/os-shell
+      tag: 12-debian-12-r51
+
   extraConfiguration: |-
     consumer_timeout = 3600000
 
