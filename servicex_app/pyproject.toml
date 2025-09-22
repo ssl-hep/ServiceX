@@ -41,7 +41,7 @@ gunicorn = "^23.0.0"
 requests-toolbelt = "^1.0.0"
 urllib3 = "2.5.0"
 requests = "^2.32"
-authlib = "^1.4.1"
+authlib = "^1.6.4"
 flask-moment = "^1.0.6"
 
 [tool.poetry.group.test]
