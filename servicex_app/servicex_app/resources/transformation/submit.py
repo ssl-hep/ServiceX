@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import uuid
+import re
 from datetime import datetime, timezone
 from typing import Optional, List
 
@@ -39,7 +40,63 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
 
+def validate_custom_image_tag(image_tag: str, config: dict, codegen_name: str) -> tuple[str, str]:
+    """
+    Validate custom image tag for TopCP transformations.
+
+    :param image_tag: The custom image tag provided by user
+    :param config: Flask application configuration
+    :param codegen_name: The code generator name (e.g., 'topcp')
+    :returns: tuple of (validated_image_name, validated_tag)
+    :raises: BadRequest if validation fails
+    """
+    if not image_tag or not image_tag.strip():
+        return None, None
+
+    # Only validate for TopCP requests
+    if codegen_name != 'topcp':
+        return None, None
+
+    # Get validation configuration (with defaults)
+    allowed_repos = config.get('TOPCP_ALLOWED_REPOSITORIES', [
+        'sslhep/servicex_science_image_topcp',
+        'registry.gitlab.com/topcp-project/toolkit'
+    ])
+    tag_pattern = config.get('TOPCP_IMAGE_TAG_PATTERN', r'^v?\d+\.\d+\.\d+[-_]v?\d+\.\d+$')
+    default_base_image = config.get('TOPCP_DEFAULT_BASE_IMAGE', 'sslhep/servicex_science_image_topcp')
+
+    # Validate tag format
+    if not re.match(tag_pattern, image_tag):
+        raise BadRequest(f"Invalid TopCP image tag format: {image_tag}. Expected format: v2.20.0_v0.2")
+
+    # For now, use the default base image with the custom tag
+    # In the future, this could be extended to allow custom repositories
+    validated_image = default_base_image
+    validated_tag = image_tag
+
+    return validated_image, validated_tag
+
+
 class SubmitTransformationRequest(ServiceXResource):
+
+    def _extract_custom_image_tag(self, selection: str, codegen_name: str) -> Optional[str]:
+        """
+        Extract custom image tag from TopCP selection query.
+
+        :param selection: The query selection string
+        :param codegen_name: The code generator name
+        :returns: Custom image tag if present and valid, None otherwise
+        """
+        if codegen_name != 'topcp':
+            return None
+
+        try:
+            import json
+            query = json.loads(selection)
+            return query.get('image_tag')
+        except (json.JSONDecodeError, AttributeError):
+            # Invalid JSON or non-dict selection
+            return None
     @classmethod
     def make_api(
         cls,
@@ -212,6 +269,9 @@ class SubmitTransformationRequest(ServiceXResource):
                 files=0,
             )
 
+            # Extract custom image tag from TopCP queries before code generation
+            custom_image_tag = self._extract_custom_image_tag(request_rec.selection, user_codegen_name)
+
             # The first thing to do is make sure the requested selection is correct,
             # and can generate the requested code
             (
@@ -223,7 +283,29 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_rec, namespace, user_codegen_name
             )
 
-            request_rec.image = codegen_transformer_image
+            # Handle custom image tag for TopCP
+            if custom_image_tag:
+                try:
+                    validated_image, validated_tag = validate_custom_image_tag(
+                        custom_image_tag, config, user_codegen_name
+                    )
+                    if validated_image and validated_tag:
+                        # Override the default science container image
+                        request_rec.image = f"{validated_image}:{validated_tag}"
+                        current_app.logger.info(
+                            f"Using custom TopCP image: {request_rec.image}",
+                            extra={"requestId": request_id}
+                        )
+                    else:
+                        request_rec.image = codegen_transformer_image
+                except BadRequest as e:
+                    current_app.logger.error(
+                        f"Invalid custom image tag: {str(e)}",
+                        extra={"requestId": request_id}
+                    )
+                    return {"message": str(e)}, 400
+            else:
+                request_rec.image = codegen_transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:

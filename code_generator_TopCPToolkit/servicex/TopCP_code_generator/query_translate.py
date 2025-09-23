@@ -36,6 +36,12 @@ options = {
         "ifTrue": ["--no-filter"],
         "ifFalse": None,
     },
+    "image_tag": {
+        "properType": str,
+        "properTypeString": "string",
+        "default": "2.17.0-25.2.45",
+        "optional": True,
+    },
 }
 
 
@@ -52,9 +58,12 @@ def generate_files_from_query(query, query_file_path):
         "customConfig",
     ]
 
-    # ensure all keys are specified
+    # ensure all required keys are specified
     for key in options:
         if key not in jquery:
+            # Skip optional parameters
+            if options[key].get("optional", False):
+                continue
             raise ValueError(
                 key + " must be specified. May be type None or ",
                 options[key]["properTypeString"],

@@ -53,7 +53,7 @@ class CodeGenAdapter:
         :param namespace: Namespace in which to place resulting ConfigMap.
         :param user_codegen_name: Name provided by user for selecting the codegen URL
                from config dictionary
-        :returns a tuple of (config map name, default transformer image)
+        :returns a tuple of (config map name, default transformer image, language, command)
         """
         from io import BytesIO
         from zipfile import ZipFile
