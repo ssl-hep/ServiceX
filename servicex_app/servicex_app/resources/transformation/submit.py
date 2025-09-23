@@ -58,15 +58,16 @@ def validate_custom_image_tag(image_tag: str, config: dict, codegen_name: str) -
         return None, None
 
     # Get validation configuration (with defaults)
-    tag_pattern = config.get('TOPCP_IMAGE_TAG_PATTERN',
-                             r'^v?\d+\.\d+\.\d+[-_]v?\d+\.\d+$')
-    default_base_image = config.get('TOPCP_DEFAULT_BASE_IMAGE',
-                                    'sslhep/servicex_science_image_topcp')
+    allowed_repos = config.get('TOPCP_ALLOWED_REPOSITORIES', [
+        'sslhep/servicex_science_image_topcp',
+        'registry.gitlab.com/topcp-project/toolkit'
+    ])
+    tag_pattern = config.get('TOPCP_IMAGE_TAG_PATTERN', r'^v?\d+\.\d+\.\d+[-_]v?\d+\.\d+$')
+    default_base_image = config.get('TOPCP_DEFAULT_BASE_IMAGE', 'sslhep/servicex_science_image_topcp')
 
     # Validate tag format
     if not re.match(tag_pattern, image_tag):
-        raise BadRequest(f"Invalid TopCP image tag format: {image_tag}. "
-                         f"Expected format: v2.20.0_v0.2")
+        raise BadRequest(f"Invalid TopCP image tag format: {image_tag}. Expected format: v2.20.0_v0.2")
 
     # For now, use the default base image with the custom tag
     # In the future, this could be extended to allow custom repositories
@@ -96,7 +97,6 @@ class SubmitTransformationRequest(ServiceXResource):
         except (json.JSONDecodeError, AttributeError):
             # Invalid JSON or non-dict selection
             return None
-
     @classmethod
     def make_api(
         cls,
@@ -270,8 +270,7 @@ class SubmitTransformationRequest(ServiceXResource):
             )
 
             # Extract custom image tag from TopCP queries before code generation
-            custom_image_tag = self._extract_custom_image_tag(
-                request_rec.selection, user_codegen_name)
+            custom_image_tag = self._extract_custom_image_tag(request_rec.selection, user_codegen_name)
 
             # The first thing to do is make sure the requested selection is correct,
             # and can generate the requested code

@@ -4,9 +4,7 @@ import json
 import unittest
 from werkzeug.exceptions import BadRequest
 
-from servicex_app.resources.transformation.submit import (
-    validate_custom_image_tag, SubmitTransformationRequest
-)
+from servicex_app.resources.transformation.submit import validate_custom_image_tag, SubmitTransformationRequest
 
 
 class TestCustomImageValidation(unittest.TestCase):
