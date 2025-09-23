@@ -87,7 +87,7 @@ def generate_files_from_query(query, query_file_path):
             )
 
         # check for reco.yaml, parton.yaml and particle.yaml files
-        if isinstance(jquery[key], str):
+        if isinstance(jquery[key], str) and "fileName" in options[key]:
             with open(
                 os.path.join(query_file_path, options[key]["fileName"]), "w"
             ) as file:

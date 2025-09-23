@@ -60,13 +60,6 @@ def validate_custom_image_tag(
         return None, None
 
     # Get validation configuration (with defaults)
-    allowed_repos = config.get(
-        "TOPCP_ALLOWED_REPOSITORIES",
-        [
-            "sslhep/servicex_science_image_topcp",
-            "registry.gitlab.com/topcp-project/toolkit",
-        ],
-    )
     tag_pattern = config.get(
         "TOPCP_IMAGE_TAG_PATTERN", r"^v?\d+\.\d+\.\d+[-_]v?\d+\.\d+$"
     )
