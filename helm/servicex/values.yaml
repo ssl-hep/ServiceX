@@ -152,8 +152,7 @@ logging:
 minio:
   volumePermissions:
     image:
-#      repository: bitnami/bitnami-shell-archived
-      repository: bitnami/os-shell
+      repository: bitnami/bitnami-shell-archived
   auth:
     rootPassword: leftfoot1
     rootUser: miniouser
@@ -175,8 +174,7 @@ postgres:
 postgresql:
   volumePermissions:
     image:
-#      repository: bitnami/bitnami-shell-archived
-      repository: bitnami/os-shell
+      repository: bitnami/bitnami-shell-archived
   global:
     postgresql:
       auth:
@@ -197,8 +195,7 @@ rabbitmq:
   volumePermissions:
     enabled: true
     image:
-#      repository: bitnami/bitnami-shell-archived
-      repository: bitnami/os-shell
+      repository: bitnami/bitnami-shell-archived
   extraConfiguration: |-
     consumer_timeout = 3600000
 
