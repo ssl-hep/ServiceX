@@ -14,6 +14,7 @@ class TestCustomImageTag(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_custom_image_tag_in_query_validation(self):
@@ -25,7 +26,7 @@ class TestCustomImageTag(unittest.TestCase):
             "max_events": -1,
             "no_systematics": False,
             "no_filter": False,
-            "image_tag": "v2.20.0_v0.2"
+            "image_tag": "v2.20.0_v0.2",
         }
 
         # This should not raise an exception
@@ -39,7 +40,7 @@ class TestCustomImageTag(unittest.TestCase):
             "particle": None,
             "max_events": -1,
             "no_systematics": False,
-            "no_filter": False
+            "no_filter": False,
         }
 
         # This should not raise an exception
@@ -54,7 +55,7 @@ class TestCustomImageTag(unittest.TestCase):
             "max_events": -1,
             "no_systematics": False,
             "no_filter": False,
-            "image_tag": None
+            "image_tag": None,
         }
 
         # This should not raise an exception
@@ -69,7 +70,7 @@ class TestCustomImageTag(unittest.TestCase):
             "max_events": -1,
             "no_systematics": False,
             "no_filter": False,
-            "image_tag": "v2.20.0_v0.2"
+            "image_tag": "v2.20.0_v0.2",
         }
 
         generate_files_from_query(json.dumps(query), self.temp_dir)
@@ -78,7 +79,7 @@ class TestCustomImageTag(unittest.TestCase):
         reco_file = os.path.join(self.temp_dir, "reco.yaml")
         self.assertTrue(os.path.exists(reco_file))
 
-        with open(reco_file, 'r') as f:
+        with open(reco_file, "r") as f:
             content = f.read()
             self.assertEqual(content, "reco_config_content")
 
@@ -87,5 +88,5 @@ class TestCustomImageTag(unittest.TestCase):
         self.assertTrue(os.path.exists(transformer_file))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
