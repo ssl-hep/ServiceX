@@ -60,6 +60,13 @@ def validate_custom_image_tag(
         return None, None
 
     # Get validation configuration (with defaults)
+    allowed_repos = config.get(
+        "TOPCP_ALLOWED_REPOSITORIES",
+        [
+            "sslhep/servicex_science_image_topcp",
+            "registry.gitlab.com/topcp-project/toolkit",
+        ],
+    )
     tag_pattern = config.get(
         "TOPCP_IMAGE_TAG_PATTERN", r"^v?\d+\.\d+\.\d+[-_]v?\d+\.\d+$"
     )
@@ -73,8 +80,13 @@ def validate_custom_image_tag(
             f"Invalid TopCP image tag format: {image_tag}. Expected format: v2.20.0_v0.2"
         )
 
-    # For now, use the default base image with the custom tag
-    # In the future, this could be extended to allow custom repositories
+    # Validate that the default base image is in the allowed repositories
+    if default_base_image not in allowed_repos:
+        raise BadRequest(
+            f"Default base image {default_base_image} is not in allowed repositories: "
+            f"{allowed_repos}"
+        )
+
     validated_image = default_base_image
     validated_tag = image_tag
 

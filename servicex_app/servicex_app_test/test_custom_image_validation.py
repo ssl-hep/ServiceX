@@ -72,6 +72,32 @@ class TestCustomImageValidation(unittest.TestCase):
         self.assertEqual(image, "sslhep/servicex_science_image_topcp")
         self.assertEqual(tag, "v2.20.0_v0.2")
 
+    def test_repository_validation_success(self):
+        """Test that repository validation passes when default image is in allowed repos."""
+        config = {
+            "TOPCP_ALLOWED_REPOSITORIES": [
+                "sslhep/servicex_science_image_topcp",
+                "registry.gitlab.com/topcp-project/toolkit",
+            ],
+            "TOPCP_DEFAULT_BASE_IMAGE": "sslhep/servicex_science_image_topcp",
+        }
+
+        image, tag = validate_custom_image_tag("v2.20.0_v0.2", config, "topcp")
+        self.assertEqual(image, "sslhep/servicex_science_image_topcp")
+        self.assertEqual(tag, "v2.20.0_v0.2")
+
+    def test_repository_validation_failure(self):
+        """Test that repository validation fails when default image is not in allowed repos."""
+        config = {
+            "TOPCP_ALLOWED_REPOSITORIES": [
+                "registry.gitlab.com/topcp-project/toolkit",
+            ],
+            "TOPCP_DEFAULT_BASE_IMAGE": "sslhep/servicex_science_image_topcp",
+        }
+
+        with self.assertRaises(BadRequest):
+            validate_custom_image_tag("v2.20.0_v0.2", config, "topcp")
+
 
 class TestImageTagExtraction(unittest.TestCase):
 
