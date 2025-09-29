@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
       - name: Pull flux_river_configs
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
@@ -43,7 +43,7 @@ jobs:
       - name: Set version in helm values.yaml
         # Update the tags for images in the helm Chart.yaml and values.yaml to match
         # The deployed docker image tag
-        uses: mikefarah/yq@v4.47.1
+        uses: mikefarah/yq@v4.47.2
         with:
           cmd: |
             # Update the version of the helm chart
@@ -77,7 +77,7 @@ jobs:
           helm repo index ../ssl-helm-charts --url https://ssl-hep.github.io/ssl-helm-charts/
 
       - name: Pushes to ssl-helm-packages repository
-        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        uses: cpina/github-action-push-to-another-repository@v1.7.3
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
@@ -88,14 +88,14 @@ jobs:
           user-email: 'bengal1@illinois.edu'
 
       - name: Set version in flux_river_config for the production environment
-        uses: mikefarah/yq@v4.47.1
+        uses: mikefarah/yq@v4.47.2
         with:
           cmd: |
             # Update the chart version to pick up
             yq -i '.spec.chart.spec.version = strenv(RELEASE_VERSION) | .spec.chart.spec.version style="double" ' flux_river_configs/servicex-prod/values.yaml
 
       - name: Pushes to flux-river-configs repository
-        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        uses: cpina/github-action-push-to-another-repository@v1.7.3
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
@@ -107,7 +107,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2.3.2
+        uses: softprops/action-gh-release@v2.3.3
         with:
           tag_name: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
