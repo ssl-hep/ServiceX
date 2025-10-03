@@ -83,6 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
+        platform: [linux/amd64, linux/arm64]
     steps:
       - uses: actions/checkout@v5.0.0
       - name: Extract tag name
@@ -119,7 +120,7 @@ jobs:
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
           file: ${{ matrix.app.dockerfile }}
-          platforms: linux/amd64,linux/arm64
+          platforms: platform
       - name: Build
         uses: docker/build-push-action@v6.18.0
         if: ${{ github.secret_source != 'Actions' }}
@@ -128,4 +129,4 @@ jobs:
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           file: ${{ matrix.app.dockerfile }}
-          platforms: linux/amd64,linux/arm64
+          platforms: platform
