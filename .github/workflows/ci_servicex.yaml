@@ -117,6 +117,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6.18.0
         if: ${{ github.secret_source == 'Actions' }}
+        id: build_and_push
         with:
           context: ${{ matrix.app.dir_name }}
           # push: true
@@ -140,7 +141,7 @@ jobs:
         if: ${{ github.secret_source == 'Actions' }}
         run: |
           mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.build.outputs.digest }}"
+          digest="${{ steps.build_and_push.outputs.digest }}"
           touch "${{ runner.temp }}/digests/${digest#sha256:}"
       - name: Upload digest
         if: ${{ github.secret_source == 'Actions' }}
