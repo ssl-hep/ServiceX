@@ -55,11 +55,12 @@ class FilesetError(ServiceXResource):
                 "Dataset lookup error received for unknown dataset",
                 extra={
                     "dataset_id": dataset_id,
+                    "elapsed-time": summary["elapsed-time"],
                     "error-type": summary["error-type"],
-                    "message": summary["message"],
+                    "_message": summary["message"],
                 },
             )
-            return
+            return '', 422
 
         current_app.logger.info(
             "Error in file lookup",
@@ -67,7 +68,7 @@ class FilesetError(ServiceXResource):
                 "dataset_id": dataset_id,
                 "elapsed-time": summary["elapsed-time"],
                 "error-type": summary["error-type"],
-                "message": summary["message"],
+                "_message": summary["message"],
             },
         )
 
@@ -92,7 +93,7 @@ class FilesetError(ServiceXResource):
                     "dataset_id": dataset_id,
                     "elapsed-time": summary["elapsed-time"],
                     "error-type": summary["error-type"],
-                    "message": summary["message"],
+                    "_message": summary["message"],
                     "requestId": running_request.request_id,
                 },
             )
@@ -110,7 +111,7 @@ class FilesetError(ServiceXResource):
                     "dataset_id": dataset_id,
                     "elapsed-time": summary["elapsed-time"],
                     "error-type": summary["error-type"],
-                    "message": summary["message"],
+                    "_message": summary["message"],
                     "requestId": pending_transform.request_id,
                 },
             )
