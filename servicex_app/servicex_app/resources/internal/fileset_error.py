@@ -60,7 +60,7 @@ class FilesetError(ServiceXResource):
                     "_message": summary["message"],
                 },
             )
-            return '', 422
+            return "", 422
 
         current_app.logger.info(
             "Error in file lookup",

@@ -57,8 +57,7 @@ class TestFilesetError(ResourceTestBase):
         mock_find_by_id = mocker.patch.object(Dataset, "find_by_id", return_value=dm)
         return mock_find_by_id
 
-    @mark.parametrize("error",
-                      ["does_not_exist", "bad_name", "internal_failure"])
+    @mark.parametrize("error", ["does_not_exist", "bad_name", "internal_failure"])
     def test_put_fileset_error(self, mocker, mock_find_dataset_by_id, error):
         dataset = mock_find_dataset_by_id.return_value
 
@@ -81,16 +80,14 @@ class TestFilesetError(ResourceTestBase):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
 
-        client = self._test_client(lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transformer_manager)
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
 
         response = client.put(
             "/servicex/internal/transformation/1234/error",
-            json={
-                "elapsed-time": 0,
-                "error-type": error,
-                "message": "honk"
-            },
+            json={"elapsed-time": 0, "error-type": error, "message": "honk"},
         )
         assert response.status_code == 200
         mock_find_dataset_by_id.assert_called_once_with(1234)
@@ -119,21 +116,21 @@ class TestFilesetError(ResourceTestBase):
             return_value=[lookup_request],
         )
 
-        mock_find_dataset_by_id = mocker.patch.object(Dataset, "find_by_id", return_value=None)
+        mock_find_dataset_by_id = mocker.patch.object(
+            Dataset, "find_by_id", return_value=None
+        )
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
 
-        client = self._test_client(lookup_result_processor=mock_processor,
-                                   transformation_manager=mock_transformer_manager)
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
 
         response = client.put(
             "/servicex/internal/transformation/1234/error",
-            json={
-                "elapsed-time": 0,
-                "error-type": "bad_dataset",
-                "message": "honk"
-            },
+            json={"elapsed-time": 0, "error-type": "bad_dataset", "message": "honk"},
         )
         assert response.status_code == 422
         mock_find_dataset_by_id.assert_called_once_with(1234)
