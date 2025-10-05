@@ -231,7 +231,8 @@ class TransformerManager:
             if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
                 env += [
                     client.V1EnvVar(
-                        "CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"]
+                        "CACHE_PREFIX",
+                        value=current_app.config["TRANSFORMER_CACHE_PREFIX"],
                     )
                 ]
 

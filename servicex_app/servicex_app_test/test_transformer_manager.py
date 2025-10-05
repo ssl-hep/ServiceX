@@ -896,7 +896,7 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
             "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should be overwritten
             "TRANSFORMER_CACHE_VPS_SITE": "MWT2",
-            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy"
+            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy",
         }
 
         transformer = TransformerManager("external-kubernetes")
@@ -906,8 +906,9 @@ class TestTransformerManager(ResourceTestBase):
             extra_config=additional_config, transformation_manager=transformer
         )
 
-        request_func_mock = mocker.patch('urllib3.request')
-        request_func_mock.return_value.json.return_value = json.loads('''
+        request_func_mock = mocker.patch("urllib3.request")
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -935,7 +936,8 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}''')
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -957,7 +959,10 @@ class TestTransformerManager(ResourceTestBase):
 
             env = container.env
             request_func_mock.assert_called_with("GET", "https://dummy")
-            assert _env_value(env, "CACHE_PREFIX") == "1.1.1.1:1094,1.1.1.2:1094,1.1.1.3:1094"
+            assert (
+                _env_value(env, "CACHE_PREFIX")
+                == "1.1.1.1:1094,1.1.1.2:1094,1.1.1.3:1094"
+            )
 
     def test_cache_vps_configuration_bad_site(self, mocker):
         import kubernetes
@@ -986,7 +991,7 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
             "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should NOT be overwritten
             "TRANSFORMER_CACHE_VPS_SITE": "MWT3",
-            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy"
+            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy",
         }
 
         transformer = TransformerManager("external-kubernetes")
@@ -996,8 +1001,9 @@ class TestTransformerManager(ResourceTestBase):
             extra_config=additional_config, transformation_manager=transformer
         )
 
-        request_func_mock = mocker.patch('urllib3.request')
-        request_func_mock.return_value.json.return_value = json.loads('''
+        request_func_mock = mocker.patch("urllib3.request")
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -1025,7 +1031,8 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}''')
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
