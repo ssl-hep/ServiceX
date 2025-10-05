@@ -32,6 +32,8 @@ from flask import current_app
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 from typing import Optional
+import time
+import urllib3
 
 from servicex_app.models import TransformRequest, TransformStatus
 
@@ -225,7 +227,7 @@ class TransformerManager:
             or "TRANSFORMER_CACHE_VPS_SITE" in current_app.config
         ):
             TransformerManager.validate_caches()
-            env += [
+        env += [
                 client.V1EnvVar(
                     "CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"]
                 )
@@ -416,9 +418,6 @@ class TransformerManager:
 
     @staticmethod
     def validate_caches():
-        import time
-        import urllib3
-
         if not (thissite := current_app.config.get("TRANSFORMER_CACHE_VPS_SITE", None)):
             return
 
