@@ -388,6 +388,64 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, "MINIO_ACCESS_KEY") == "itsame"
             assert _env_value(env, "MINIO_SECRET_KEY") == "shhh"
 
+    def test_launch_transformer_jobs_with_object_store_and_xcache(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        my_config = {
+            "OBJECT_STORE_ENABLED": True,
+            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
+            "MINIO_ACCESS_KEY": "itsame",
+            "MINIO_SECRET_KEY": "shhh",
+            "TRANSFORMER_CPU_LIMIT": 1,
+            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
+            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
+            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
+            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
+            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
+            "TRANSFORMER_CACHE_PREFIX": "root://dummy",
+        }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=my_config, transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="parquet",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+            args = container.args
+            assert _arg_value(args, "--result-destination") == "object-store"
+            assert _arg_value(args, "--result-format") == "parquet"
+
+            env = container.env
+            assert _env_value(env, "MINIO_URL") == "rolling-snail-minio:9000"
+            assert _env_value(env, "MINIO_ACCESS_KEY") == "itsame"
+            assert _env_value(env, "MINIO_SECRET_KEY") == "shhh"
+            assert _env_value(env, "CACHE_PREFIX") == "root://dummy"
+
     def test_launch_transformer_jobs_with_secure_object_store(self, mocker):
         import kubernetes
 
@@ -810,3 +868,183 @@ class TestTransformerManager(ResourceTestBase):
 
         with client.application.app_context():
             mock_exit.assert_called_with(-1)
+
+    def test_cache_vps_configuration(self, mocker):
+        import kubernetes
+        import json
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        additional_config = {
+            "OBJECT_STORE_ENABLED": True,
+            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
+            "MINIO_ACCESS_KEY": "itsame",
+            "MINIO_SECRET_KEY": "shhh",
+            "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
+            "TRANSFORMER_CPU_LIMIT": 1,
+            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
+            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
+            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
+            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
+            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
+            "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should be overwritten
+            "TRANSFORMER_CACHE_VPS_SITE": "MWT2",
+            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy"
+        }
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=additional_config, transformation_manager=transformer
+        )
+
+        request_func_mock = mocker.patch('urllib3.request')
+        request_func_mock.return_value.json.return_value = json.loads('''
+{
+  "MWT2": {
+    "xcache-uc-1": {
+      "site": "MWT2",
+      "id": "xcache-uc-1",
+      "address": "1.1.1.1:1094",
+      "size": "34365115224",
+      "timestamp": 1759633484503,
+      "live": true
+    },
+    "xcache-uc-2": {
+      "site": "MWT2",
+      "id": "xcache-uc-2",
+      "address": "1.1.1.2:1094",
+      "size": "35927165916",
+      "timestamp": 1759633466503,
+      "live": true
+    },
+    "xcache-uc-3": {
+      "site": "MWT2",
+      "id": "xcache-uc-3",
+      "address": "1.1.1.3:1094",
+      "size": "185222398084",
+      "timestamp": 1759633472603,
+      "live": true
+    }
+  }
+}''')
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+
+            env = container.env
+            request_func_mock.assert_called_with("GET", "https://dummy")
+            assert _env_value(env, "CACHE_PREFIX") == "1.1.1.1:1094,1.1.1.2:1094,1.1.1.3:1094"
+
+    def test_cache_vps_configuration_bad_site(self, mocker):
+        import kubernetes
+        import json
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        additional_config = {
+            "OBJECT_STORE_ENABLED": True,
+            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
+            "MINIO_ACCESS_KEY": "itsame",
+            "MINIO_SECRET_KEY": "shhh",
+            "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
+            "TRANSFORMER_CPU_LIMIT": 1,
+            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
+            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
+            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
+            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
+            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
+            "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should NOT be overwritten
+            "TRANSFORMER_CACHE_VPS_SITE": "MWT3",
+            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy"
+        }
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=additional_config, transformation_manager=transformer
+        )
+
+        request_func_mock = mocker.patch('urllib3.request')
+        request_func_mock.return_value.json.return_value = json.loads('''
+{
+  "MWT2": {
+    "xcache-uc-1": {
+      "site": "MWT2",
+      "id": "xcache-uc-1",
+      "address": "1.1.1.1:1094",
+      "size": "34365115224",
+      "timestamp": 1759633484503,
+      "live": true
+    },
+    "xcache-uc-2": {
+      "site": "MWT2",
+      "id": "xcache-uc-2",
+      "address": "1.1.1.2:1094",
+      "size": "35927165916",
+      "timestamp": 1759633466503,
+      "live": true
+    },
+    "xcache-uc-3": {
+      "site": "MWT2",
+      "id": "xcache-uc-3",
+      "address": "1.1.1.3:1094",
+      "size": "185222398084",
+      "timestamp": 1759633472603,
+      "live": true
+    }
+  }
+}''')
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+
+            env = container.env
+            request_func_mock.assert_called_with("GET", "https://dummy")
+            assert _env_value(env, "CACHE_PREFIX") == "root://dummy"

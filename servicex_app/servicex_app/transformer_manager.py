@@ -227,11 +227,13 @@ class TransformerManager:
             or "TRANSFORMER_CACHE_VPS_SITE" in current_app.config
         ):
             TransformerManager.validate_caches()
-        env += [
-                client.V1EnvVar(
-                    "CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"]
-                )
-            ]
+            # do a check again since the VPS configuration might fail
+            if "TRANSFORMER_CACHE_PREFIX" in current_app.config:
+                env += [
+                    client.V1EnvVar(
+                        "CACHE_PREFIX", value=current_app.config["TRANSFORMER_CACHE_PREFIX"]
+                    )
+                ]
 
         if result_destination == "object-store":
             env = env + [
@@ -430,6 +432,7 @@ class TransformerManager:
                 sitedata = urllib3.request("GET", vps_server).json()
                 if thissite not in sitedata:
                     current_app.logger.error(f"{thissite} is not in VPS liveness data")
+                    return
                 servers = sorted(
                     [_["address"] for _ in sitedata[thissite].values() if _["live"]]
                 )
