@@ -9,7 +9,7 @@
     "dir_name": "code_generator_python",
     "image_name": "servicex_code_gen_python",
     "test_required": true,
-    "qemu_required": false
+    "qemu_required": true
   },
   {
     "dir_name": "did_finder_cernopendata",
@@ -45,7 +45,7 @@
     "image_name": "servicex_sidecar_transformer",
     "dir_name": "transformer_sidecar",
     "test_required": true,
-    "qemu_required": false
+    "qemu_required": true
   },
   {
     "dir_name": "x509_secrets",
