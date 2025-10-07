@@ -4,6 +4,9 @@ from subprocess import PIPE, Popen, STDOUT
 from typing import Any, Dict, Generator
 
 from servicex_did_finder_lib import DIDFinderApp
+from servicex_did_finder_lib.exceptions import (BadDatasetNameException, 
+                                                NoSuchDatasetException, 
+                                                LookupFailureException)
 
 __log = logging.getLogger(__name__)
 
@@ -41,7 +44,7 @@ def find_files(
     """
 
     if not did_name.isnumeric():
-        raise Exception(
+        raise BadDatasetNameException(
             "CERNOpenData can only work with dataset numbers as names (e.g. 1507)"
         )
 
@@ -70,14 +73,21 @@ def find_files(
         # Next, sort out the errors (if there are any)
         p.wait()
         if p.returncode != 0:
-            raise Exception(
-                f"CERN Open Data Lookup failed with error code {p.returncode}. "
-                "All returned output:"
-                "\n\t" + "\n\t".join(all_lines)
-            )
+            if p.returncode == 2:
+                raise NoSuchDatasetException(
+                    f"CERN Open Data Lookup failed with error code 2 - no files found. "
+                    "All returned output:"
+                    "\n\t" + "\n\t".join(all_lines)
+                )
+            else:
+                raise LookupFailureException(
+                    f"CERN Open Data Lookup failed with error code {p.returncode}. "
+                    "All returned output:"
+                    "\n\t" + "\n\t".join(all_lines)
+                )
 
         if non_root_uri:
-            raise Exception(
+            raise LookupFailureException(
                 "CMSOpenData: Opendata record returned a strange url"
                 "\n\t" + "\n\t".join(all_lines)
             )

@@ -4,6 +4,8 @@ from typing import Any, Dict, Generator
 from XRootD import client as xrd
 
 from servicex_did_finder_lib import DIDFinderApp
+from servicex_did_finder_lib.exceptions import (NoSuchDatasetException, 
+                                                LookupFailureException)
 
 __log = logging.getLogger(__name__)
 
@@ -40,9 +42,12 @@ def find_files(
         extra={"dataset_id": info["dataset-id"], "dataset": did_name},
     )
 
-    urls = xrd.glob(cache_prefix + did_name)
+    try:
+        urls = xrd.glob(cache_prefix + did_name)
+    except Exception as e:
+        raise LookupFailureException(f"Failure searching for {did_name}: {e}")
     if len(urls) == 0:
-        raise RuntimeError(
+        raise NoSuchDatasetException(
             f"No files found matching {did_name} for dataset "
             f"{info['dataset-id']} - are you sure it is correct?"
         )

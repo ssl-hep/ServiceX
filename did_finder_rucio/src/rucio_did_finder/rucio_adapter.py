@@ -32,6 +32,10 @@ import requests
 import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
 from rucio.client.scopeclient import ScopeClient
+from servicex_did_finder_lib.exceptions import (BadDatasetNameException, 
+                                                NoSuchDatasetException, 
+                                                LookupFailureException)
+
 
 
 class RucioAdapter:
@@ -85,7 +89,10 @@ class RucioAdapter:
             return d
 
         if not self.all_scopes:
-            uns_scopes = ScopeClient().list_scopes()
+            try:
+                uns_scopes = ScopeClient().list_scopes()
+            except Exception as e:
+                raise LookupFailureException(f"Failure listing scopes looking up {did}: {e}")
             self.all_scopes = sorted(uns_scopes, key=len, reverse=True)
 
         for sc in self.all_scopes:
@@ -94,7 +101,7 @@ class RucioAdapter:
                 return d
 
         self.logger.error(f"Scope of the dataset {did} could not be determined.")
-        return None
+        raise BadDatasetNameException(f"Scope of the dataset {did} could not be determined.")
 
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
@@ -121,7 +128,9 @@ class RucioAdapter:
             return datasets
         except DataIdentifierNotFound:
             self.logger.warning(f"{did} not found")
-            return None
+            raise NoSuchDatasetException(f"{did} not found")
+        except Exception as e:
+            raise LookupFailureException(f"Problem in lookup of {did}: {e}")
 
     @staticmethod
     def get_paths(replicas):
@@ -156,16 +165,19 @@ class RucioAdapter:
             return
         no_replica_files = 0
         for ds in datasets:
-            reps = self.replica_client.list_replicas(
-                [{"scope": ds[0], "name": ds[1]}],
-                schemes=["root", "http", "https"],
-                metalink=True,
-                sort="geoip",
-                rse_expression="istape=False\\type=SPECIAL",
-                ignore_availability=False,
-                client_location=self.client_location(),
-            )
-            d = xmltodict.parse(reps)
+            try:
+                reps = self.replica_client.list_replicas(
+                    [{"scope": ds[0], "name": ds[1]}],
+                    schemes=["root", "http", "https"],
+                    metalink=True,
+                    sort="geoip",
+                    rse_expression="istape=False\\type=SPECIAL",
+                    ignore_availability=False,
+                    client_location=self.client_location(),
+                )
+                d = xmltodict.parse(reps)
+            except Exception as e:
+                raise LookupFailureException(f"Lookup failed for {ds[0]}:{ds[1]} for did: {e}")
 
             g_files = []
             if "file" in d["metalink"]:
@@ -197,7 +209,7 @@ class RucioAdapter:
             yield g_files
 
         if no_replica_files > 0:
-            raise ValueError(
+            raise LookupFailureException(
                 f"Dataset {did} is missing replicas for {no_replica_files} "
                 "of its files."
             )
