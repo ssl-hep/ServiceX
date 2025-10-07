@@ -4,9 +4,11 @@ from subprocess import PIPE, Popen, STDOUT
 from typing import Any, Dict, Generator
 
 from servicex_did_finder_lib import DIDFinderApp
-from servicex_did_finder_lib.exceptions import (BadDatasetNameException, 
-                                                NoSuchDatasetException, 
-                                                LookupFailureException)
+from servicex_did_finder_lib.exceptions import (
+    BadDatasetNameException,
+    NoSuchDatasetException,
+    LookupFailureException,
+)
 
 __log = logging.getLogger(__name__)
 

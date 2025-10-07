@@ -4,8 +4,10 @@ from typing import Any, Dict, Generator
 from XRootD import client as xrd
 
 from servicex_did_finder_lib import DIDFinderApp
-from servicex_did_finder_lib.exceptions import (NoSuchDatasetException, 
-                                                LookupFailureException)
+from servicex_did_finder_lib.exceptions import (
+    NoSuchDatasetException,
+    LookupFailureException,
+)
 
 __log = logging.getLogger(__name__)
 

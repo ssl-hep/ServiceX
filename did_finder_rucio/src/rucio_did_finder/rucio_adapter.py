@@ -32,10 +32,11 @@ import requests
 import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
 from rucio.client.scopeclient import ScopeClient
-from servicex_did_finder_lib.exceptions import (BadDatasetNameException, 
-                                                NoSuchDatasetException, 
-                                                LookupFailureException)
-
+from servicex_did_finder_lib.exceptions import (
+    BadDatasetNameException,
+    NoSuchDatasetException,
+    LookupFailureException,
+)
 
 
 class RucioAdapter:
@@ -92,7 +93,9 @@ class RucioAdapter:
             try:
                 uns_scopes = ScopeClient().list_scopes()
             except Exception as e:
-                raise LookupFailureException(f"Failure listing scopes looking up {did}: {e}")
+                raise LookupFailureException(
+                    f"Failure listing scopes looking up {did}: {e}"
+                )
             self.all_scopes = sorted(uns_scopes, key=len, reverse=True)
 
         for sc in self.all_scopes:
@@ -101,7 +104,9 @@ class RucioAdapter:
                 return d
 
         self.logger.error(f"Scope of the dataset {did} could not be determined.")
-        raise BadDatasetNameException(f"Scope of the dataset {did} could not be determined.")
+        raise BadDatasetNameException(
+            f"Scope of the dataset {did} could not be determined."
+        )
 
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
@@ -177,7 +182,9 @@ class RucioAdapter:
                 )
                 d = xmltodict.parse(reps)
             except Exception as e:
-                raise LookupFailureException(f"Lookup failed for {ds[0]}:{ds[1]} for did: {e}")
+                raise LookupFailureException(
+                    f"Lookup failed for {ds[0]}:{ds[1]} for did: {e}"
+                )
 
             g_files = []
             if "file" in d["metalink"]:
