@@ -1,6 +1,9 @@
 import pytest
 from servicex_did_finder_xrootd.celery import find_files
-from servicex_did_finder_lib.exceptions import NoSuchDatasetException, LookupFailureException
+from servicex_did_finder_lib.exceptions import (
+    NoSuchDatasetException,
+    LookupFailureException,
+)
 from unittest.mock import patch
 
 
@@ -36,7 +39,7 @@ def test_exception_no_files():
 
 
 def test_exception_io():
-    patch('XRootD.client.glob', side_effect=Exception)
+    patch("XRootD.client.glob", side_effect=Exception)
     with pytest.raises(LookupFailureException):
         find_files(
             (
