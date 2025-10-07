@@ -1,5 +1,7 @@
 import pytest
 from servicex_did_finder_xrootd.celery import find_files
+from servicex_did_finder_lib.exceptions import NoSuchDatasetException, LookupFailureException
+from unittest.mock import patch
 
 
 def test_working_call():
@@ -29,5 +31,17 @@ def test_exception_no_files():
         ),
         {"dataset-id": "112233"},
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(NoSuchDatasetException):
         [f for f in iter]
+
+
+def test_exception_io():
+    patch('XRootD.client.glob', side_effect=Exception)
+    with pytest.raises(LookupFailureException):
+        find_files(
+            (
+                "root://eospublic.cern.ch//eos/opendata/atlas/"
+                "OutreachDatasets/2020-01-22/4lep/MC/dummy*"
+            ),
+            {"dataset-id": "112233"},
+        )
