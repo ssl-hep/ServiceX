@@ -77,7 +77,7 @@ def find_files(
         if p.returncode != 0:
             if p.returncode == 2:
                 raise NoSuchDatasetException(
-                    f"CERN Open Data Lookup failed with error code 2 - no files found. "
+                    "CERN Open Data Lookup failed with error code 2 - no files found. "
                     "All returned output:"
                     "\n\t" + "\n\t".join(all_lines)
                 )
