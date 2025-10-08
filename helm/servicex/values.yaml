@@ -104,15 +104,14 @@ codeGen:
   topcp:
     enabled: true
     image: sslhep/servicex_code_gen_topcp
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_topcp
     defaultScienceContainerTag: 2.17.0-25.2.45
-    # Configuration for custom image tag validation
     allowedRepositories:
-      - "sslhep/servicex_science_image_topcp"
-      - "registry.gitlab.com/topcp-project/toolkit"
-    imageTagPattern: "^v?\\d+\\.\\d+\\.\\d+[-_]v?\\d+\\.\\d+$"
+      - "sslhep"
+      - "mattshirley"
+    imageTagPattern: ".*"
     defaultBaseImage: "sslhep/servicex_science_image_topcp"
 
 didFinder:
@@ -152,7 +151,8 @@ logging:
 minio:
   volumePermissions:
     image:
-      repository: bitnami/bitnami-shell-archived
+#      repository: bitnami/bitnami-shell-archived
+      repository: bitnami/os-shell
   auth:
     rootPassword: leftfoot1
     rootUser: miniouser
@@ -174,7 +174,8 @@ postgres:
 postgresql:
   volumePermissions:
     image:
-      repository: bitnami/bitnami-shell-archived
+#      repository: bitnami/bitnami-shell-archived
+      repository: bitnami/os-shell
   global:
     postgresql:
       auth:
@@ -195,7 +196,8 @@ rabbitmq:
   volumePermissions:
     enabled: true
     image:
-      repository: bitnami/bitnami-shell-archived
+#      repository: bitnami/bitnami-shell-archived
+      repository: bitnami/os-shell
   extraConfiguration: |-
     consumer_timeout = 3600000
 
@@ -218,8 +220,8 @@ transformer:
 
   sidecarImage: sslhep/servicex_sidecar_transformer
   sidecarTag: develop
-  sidecarPullPolicy: Always
-  scienceContainerPullPolicy: Always
+  sidecarPullPolicy: IfNotPresent
+  scienceContainerPullPolicy: IfNotPresent
 
   language: python
   exec:           # replace me

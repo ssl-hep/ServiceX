@@ -36,10 +36,10 @@ options = {
         "ifTrue": ["--no-filter"],
         "ifFalse": None,
     },
-    "image_tag": {
+    "docker_image": {
         "properType": str,
         "properTypeString": "string",
-        "default": "2.17.0-25.2.45",
+        "default": "sslhep/servicex_science_image_topcp:2.17.0-25.2.45",
         "optional": True,
     },
 }
@@ -47,6 +47,15 @@ options = {
 
 def generate_files_from_query(query, query_file_path):
     jquery = json.loads(query)
+
+    # transformer_image = jquery.get("docker_image", "sslhep/servicex_science_image_topcp:2.17.0-25.2.45")
+    # metadata = {
+    #     "transformer_image": transformer_image
+    # }
+    # with open(
+    #     os.path.join(query_file_path, "image_metadata.json"), "w"
+    # ) as metadata_file:
+    #     json.dump(metadata, metadata_file)
 
     runTopCommand = [
         "runTop_el.py",
@@ -70,7 +79,10 @@ def generate_files_from_query(query, query_file_path):
             )
 
     for key in jquery:
-        # ensure only aviable options are allowed
+        if key == "docker_image":
+            continue
+
+        # ensure only available options are allowed
         if key not in options:
             raise KeyError(
                 key + " is not implemented. Available keys: " + str(options.keys())

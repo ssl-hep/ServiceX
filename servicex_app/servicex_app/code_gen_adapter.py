@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from typing import Optional
+
 import requests
 from requests_toolbelt.multipart import decoder
 
@@ -43,7 +45,11 @@ class CodeGenAdapter:
         return result
 
     def generate_code_for_selection(
-        self, request_record: TransformRequest, namespace: str, user_codegen_name: str
+        self,
+        request_record: TransformRequest,
+        namespace: str,
+        user_codegen_name: str,
+        custom_image: Optional[str] = None,
     ) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
@@ -68,6 +74,8 @@ class CodeGenAdapter:
         if not post_url:
             raise ValueError(f"{user_codegen_name}, code generator unavailable for use")
 
+        print("generate_code_for_selection")
+        print(request_record.selection)
         result = self.post_request(
             post_url + "/servicex/generated-code",
             post_obj={

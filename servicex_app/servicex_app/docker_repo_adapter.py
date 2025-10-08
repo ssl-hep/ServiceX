@@ -64,3 +64,85 @@ class DockerRepoAdapter:
             f"last updated {r.json()['last_updated']}"
         )
         return True
+
+    @servicex_retry()
+    def get_image_manifest(self, repo: str, image: str, tag: str) -> requests.Response:
+        """Get Docker image manifest from registry API v2."""
+        # Try Docker Hub v2 API first for manifest
+        query = f"https://registry-1.docker.io/v2/{repo}/{image}/manifests/{tag}"
+        headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
+        try:
+            r = requests.get(query, headers=headers, timeout=REQUEST_TIMEOUT)
+            if r.status_code == 200:
+                return r
+        except Exception:
+            pass
+
+        # Fall back to Docker Hub v1 API for basic info
+        query = f"{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}"
+        r = requests.get(query, timeout=REQUEST_TIMEOUT)
+        return r
+
+    def get_image_info(self, tagged_image: str) -> dict:
+        """
+        Get detailed information about a Docker image including layers and configuration.
+
+        :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest"
+        :return: Dictionary containing image metadata, layers, config, etc.
+        """
+        search_result = re.search("(.+)/(.+):(.+)", tagged_image)
+        if not search_result or len(search_result.groups()) != 3:
+            current_app.logger.warning(f"Invalid image format: {tagged_image}")
+            return None
+
+        (repo, image, tag) = search_result.groups()
+
+        try:
+            # Get manifest/detailed info
+            r = self.get_image_manifest(repo, image, tag)
+
+            if r.status_code != 200:
+                current_app.logger.warning(
+                    f"Failed to get image info for {tagged_image}: {r.status_code}"
+                )
+                return None
+
+            manifest_data = r.json()
+
+            # Extract relevant information depending on API version
+            image_info = {
+                "digest": manifest_data.get("digest"),
+                "layers": [],
+                "config": {},
+                "history": [],
+            }
+
+            # Handle Docker Registry v2 manifest format
+            if "layers" in manifest_data:
+                image_info["layers"] = [
+                    layer.get("digest", "") for layer in manifest_data["layers"]
+                ]
+
+            # Handle config blob reference
+            if "config" in manifest_data:
+                config_digest = manifest_data["config"].get("digest")
+                if config_digest:
+                    # For full implementation, we'd fetch the config blob here
+                    # For now, store the reference
+                    image_info["config"] = {"digest": config_digest}
+
+            # Handle Docker Hub v1 API response format
+            if "last_updated" in manifest_data:
+                image_info["last_updated"] = manifest_data["last_updated"]
+
+            # Add some basic metadata
+            image_info["tag_info"] = manifest_data
+
+            current_app.logger.debug(f"Retrieved image info for {tagged_image}")
+            return image_info
+
+        except Exception as e:
+            current_app.logger.warning(
+                f"Error retrieving image info for {tagged_image}: {str(e)}"
+            )
+            return None
