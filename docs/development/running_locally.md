@@ -85,17 +85,19 @@ Install Overmind following the documentation at: https://github.com/DarthSim/ove
 
 **Note:** When installing Overmind via gem, you may need to use the `--user-install` argument. If you enable this option, Overmind will be installed in your home directory. You will need to locate it and make sure it is available in your PATH.
 
-### Set Environment Variables
+### Configure and start Overmind
 
 Navigate to your ServiceX checkout (where the `Procfile` is located). You can now start `overmind` by setting and the required environment variables:
 - `LOCAL_DIR`: Path to your ServiceX directory
 - `CHART_DIR`: Path to your helm chart directory (you can use the `helm` charts in the base ServiceX repository)
 - `VALUES_FILE`: Path to your helm values file (can be absolute or relative to `$CHART_DIR`)
 
-Example command:
+Example command to start Overmind:
 ```bash
 VALUES_FILE=local-values.yaml LOCAL_DIR=/Users/mattshirley/work/ServiceX/ CHART_DIR=$LOCAL_DIR/helm/servicex overmind start
 ```
+
+Kill the Overmind process with Ctrl+C and uninstall the helm deployment: `helm uninstall servicex`.
 
 ### Create Convenience Aliases (Optional)
 
