@@ -21,7 +21,7 @@ app:
 
 ## Setup Instructions
 
-### 1. Setup CERN Grid Certificate
+### Setup CERN Grid Certificate
 
 1. Go to your CERN grid account: https://ca.cern.ch/ca/
 2. Click **New Grid User certificate** and walk through the flow to create a cert
@@ -37,18 +37,9 @@ app:
    servicex --namespace default init --cert-dir ~/.globus
    ```
 
-### 2. Download SSL Helm Charts
+### Add Helm Values File
 
-1. Go to https://github.com/ssl-hep/ssl-helm-charts/tree/gh-pages
-2. Find the most recent version
-3. Download and unzip the .tgz file locally. Example:
-   ```bash
-   tar -xzf servicex-1.7.1-rc.1.tgz
-   ```
-
-### 3. Add Helm Values File
-
-Create a file in the servicex helm chart directory called `local-values.yaml`:
+Create a file in the servicex helm chart directory (`helm/servicex`) called `local-values.yaml`:
 
 ```yaml
 app:
@@ -70,7 +61,7 @@ x509Secrets:
   vomsOrg: atlas
 ```
 
-### 4. Add Helm Chart Repository
+### Add Helm Chart Repository
 
 Add the SSL HEP helm chart repository:
 
@@ -79,7 +70,7 @@ helm repo add ssl-hep https://ssl-hep.github.io/ssl-helm-charts/
 helm repo update
 ```
 
-### 5. Install Overmind
+### Install Overmind
 
 Install Overmind following the documentation at: https://github.com/DarthSim/overmind
 
@@ -88,13 +79,13 @@ Install Overmind following the documentation at: https://github.com/DarthSim/ove
   - macOS: `brew install tmux`
   - Ubuntu: `sudo apt install tmux`
 - Install ruby:
-  - `brew install ruby` (macOS)
-  - `sudo apt install ruby` (Ubuntu) or your OS equivalent
+  - macOS: `brew install ruby`
+  - Ubuntu: `sudo apt install ruby`
 - Install Overmind: `gem install overmind`
 
 **Note:** When installing Overmind via gem, you may need to use the `--user-install` argument. If you enable this option, Overmind will be installed in your home directory. You will need to locate it and make sure it is available in your PATH.
 
-### 6. Set Environment Variables
+### Set Environment Variables
 
 Navigate to your ServiceX checkout (where the `Procfile` is located). You can now start `overmind` by setting and the required environment variables:
 - `LOCAL_DIR`: Path to your ServiceX directory
@@ -106,7 +97,7 @@ Example command:
 VALUES_FILE=local-values.yaml LOCAL_DIR=/Users/mattshirley/work/ServiceX/ CHART_DIR=$LOCAL_DIR/helm/servicex overmind start
 ```
 
-### 7. Create Convenience Aliases (Optional)
+### Create Convenience Aliases (Optional)
 
 Adding aliases for these start up commands makes it very simple to start and stop the `servicex` helm installation.
 
@@ -132,7 +123,7 @@ source ~/.bashrc
 - Start ServiceX: `servicex-start`
 - Upgrade ServiceX: `servicex-upgrade`
 - Stop ServiceX: Kill the overmind process (this will also uninstall the `servicex` helm deployment)
-- Note: Minikube will continue running after stopping ServiceX
+  - Note: Minikube will continue running after stopping ServiceX
 
 Overmind will start up its processes, spit some noise onto the screen (including the servicex helm installation message) for twenty or thirty seconds. Eventually it will quiet down and only output port forwarding connections.
 ![overmind_output.png](overmind_output.png)
