@@ -103,12 +103,13 @@ Kill the Overmind process with Ctrl+C and uninstall the helm deployment: `helm u
 
 Adding aliases for these start up commands makes it very simple to start and stop the `servicex` helm installation.
 
-To do this, adapt the following commands to your local directory structure. Add `alias` definitions for each command to your `~/.bashrc` file:
+To do this, open your `~/.bashrc` and add the three environment variables previously discussed along with the following `alias` commands:
 
 ```bash
 LOCAL_DIR=/Users/mattshirley/work/ServiceX/
 CHART_DIR=$LOCAL_DIR/helm/servicex
 VALUES_FILE=local-values.yaml
+
 alias servicex-up='cd $CHART_DIR && overmind start'
 alias servicex-down='helm delete servicex'
 alias servicex-start='servicex-up; servicex-down;'

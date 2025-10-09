@@ -13,6 +13,7 @@ nav:
     - 'Developer Guide':
         - Architecture: development/architecture.md
         - Contributing: development/contributing.md
+        - Developing Locally: development/running_locally.md
 plugins:
     - mkdocs-jupyter
 theme:
