@@ -33,7 +33,6 @@ from typing import Any, Dict, Generator
 from servicex_did_finder_lib import DIDFinderApp
 from servicex_did_finder_lib.exceptions import (
     BadDatasetNameException,
-    NoSuchDatasetException,
     LookupFailureException,
 )
 
