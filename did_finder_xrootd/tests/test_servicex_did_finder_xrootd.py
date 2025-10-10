@@ -27,7 +27,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
 from servicex_did_finder_xrootd.celery import find_files
-from servicex_did_finder_lib.exceptions import NoSuchDatasetException, LookupFailureException
+from servicex_did_finder_lib.exceptions import (
+    NoSuchDatasetException,
+    LookupFailureException,
+)
 
 
 def test_working_call():

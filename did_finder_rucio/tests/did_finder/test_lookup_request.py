@@ -68,7 +68,9 @@ class TestLookupRequest:
             for i in range(10)
         ]
 
-        mock_rucio.list_files_for_did.return_value = iter([rucio_file_list1, rucio_file_list2])
+        mock_rucio.list_files_for_did.return_value = iter(
+            [rucio_file_list1, rucio_file_list2]
+        )
 
         request = LookupRequest("my-did", mock_rucio)
 
@@ -80,7 +82,10 @@ class TestLookupRequest:
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
 
-        mocker.patch("rucio_did_finder.rucio_adapter.RucioAdapter.list_datasets_for_did", return_value=["abc:def"])
+        mocker.patch(
+            "rucio_did_finder.rucio_adapter.RucioAdapter.list_datasets_for_did",
+            return_value=["abc:def"],
+        )
         mock_replica_client.list_replicas.return_value = """<?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
  <file name="ghi">
@@ -91,37 +96,45 @@ class TestLookupRequest:
  </file>
 </metalink>"""
 
-        request = LookupRequest("my-did", RucioAdapter(mock_did_client, mock_replica_client))
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
 
         with pytest.raises(LookupFailureException):
             [_ for _ in request.lookup_files()]
 
     def test_lookup_files_no_dataset(self, mocker):
-        mock_scope_client = mocker.patch('rucio_did_finder.rucio_adapter.ScopeClient')
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
         mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_did_client.get_did.side_effect = DataIdentifierNotFound
         mock_replica_client = mocker.MagicMock(ReplicaClient)
 
-        request = LookupRequest("my-did", RucioAdapter(mock_did_client, mock_replica_client))
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
 
         with pytest.raises(BadDatasetNameException):
             [_ for _ in request.lookup_files()]
 
     def test_rucio_scope_problem(self, mocker):
-        mock_scope_client = mocker.patch('rucio_did_finder.rucio_adapter.ScopeClient')
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
         mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
-        request = LookupRequest("my-did", RucioAdapter(mock_did_client, mock_replica_client))
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
         with pytest.raises(BadDatasetNameException):
             [_ for _ in request.lookup_files()]
 
     def test_rucio_no_dataset(self, mocker):
-        mock_scope_client = mocker.patch('rucio_did_finder.rucio_adapter.ScopeClient')
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
         mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
-        request = LookupRequest("my-did", RucioAdapter(mock_did_client, mock_replica_client))
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
         with pytest.raises(BadDatasetNameException):
             [_ for _ in request.lookup_files()]
