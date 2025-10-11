@@ -62,7 +62,7 @@ def add_files_to_processing_queue(request, files):
         return
 
     tasks = group(
-        current_app.signature(
+        [current_app.signature(
             "transformer_sidecar.transform_file",
             kwargs={
                 "request_id": request["request_id"],
@@ -74,8 +74,7 @@ def add_files_to_processing_queue(request, files):
                 "result_destination": request["result-destination"],
                 "result_format": request["result-format"],
             },
-        )
-        for file_record in files
+        ) for file_record in files]
     )
     tasks.apply_async()
 

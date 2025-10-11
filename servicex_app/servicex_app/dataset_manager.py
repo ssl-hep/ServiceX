@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2022-5, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -175,11 +175,12 @@ class DatasetManager:
         self.dataset.lookup_status = DatasetStatus.looking
 
     def publish_files(
-        self, request: TransformRequest, lookup_result_processor: LookupResultProcessor
+        self, request: TransformRequest,
+        lookup_result_processor: LookupResultProcessor
     ) -> None:
         request.files = len(self.dataset.files)
-        add_files_to_processing_queue.delay(
-            request.to_json(), files=[file.to_json() for file in self.dataset.files]
+        lookup_result_processor.add_files_to_processing_queue(
+                request, files=[file for file in self.dataset.files]
         )
 
     def add_files(
@@ -193,7 +194,7 @@ class DatasetManager:
 
         for request in requests:
             request.files += len(files)
-            add_files_to_processing_queue.delay(
-                request.to_json(), files=[file.to_json() for file in files]
+            lookup_result_processor.add_files_to_processing_queue(
+                request, files=[file for file in files]
             )
             request.save_to_db()
