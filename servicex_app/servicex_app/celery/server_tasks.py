@@ -26,15 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from celery import Celery
+from celery import group, shared_task, current_app
 from celery.utils.log import get_task_logger
-from ..celery_task_router import route_task
 import os
-
-app = Celery("servicex.celery", broker=os.environ["RABBIT_MQ_URL"])
-app.conf.task_routes = (route_task,)
-
-ADVERTISED_ENDPOINT = f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
 
 logger = get_task_logger(__name__)
 
@@ -43,7 +37,7 @@ def celery_task_name(request_id):
     return f"transformer-{request_id}.transform_file"
 
 
-@app.task
+@shared_task
 def add_files_to_processing_queue(request, files):
     from ..models import TransformStatus
 
@@ -53,10 +47,11 @@ def add_files_to_processing_queue(request, files):
             extra={"task_id": celery_task_name(request["request_id"])},
         )
         return
-    for file_record in files:
-        app.send_task(
-            "transformer_sidecar.transform_file",
-            kwargs={
+    transform_file_sig = current_app.signature("transformer_sidecar.transform_file")
+
+    ADVERTISED_ENDPOINT = f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
+
+    tasks = group(transform_file_sig(**{
                 "request_id": request["request_id"],
                 "file_id": file_record["id"],
                 "paths": file_record["paths"].split(","),
@@ -65,18 +60,14 @@ def add_files_to_processing_queue(request, files):
                 + request["request_id"],
                 "result_destination": request["result-destination"],
                 "result_format": request["result-format"],
-            },
+            }) for file_record in files
         )
-
-        logger.info(
-            "Added file to processing queue",
-            extra={
-                "paths": file_record["paths"].split(","),
-                "task_id": celery_task_name(request["request_id"]),
-            },
-        )
+    tasks.apply_async()
 
     logger.info(
         "Added files to processing queue",
-        extra={"num_files": len(files), "requestId": request["request_id"]},
+        extra={"num_files": len(files),
+               "paths": [_["paths"] for _ in files],
+               "task_id": celery_task_name(request["request_id"]),
+               "requestId": request["request_id"]},
     )
