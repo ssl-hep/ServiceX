@@ -28,6 +28,9 @@
 
 from celery import group, shared_task, current_app
 from celery.utils.log import get_task_logger
+from celery.signals import celeryd_after_setup
+from ..celery_task_router import route_task
+from functools import lru_cache
 import os
 
 logger = get_task_logger(__name__)
@@ -35,6 +38,16 @@ logger = get_task_logger(__name__)
 
 def celery_task_name(request_id):
     return f"transformer-{request_id}.transform_file"
+
+
+@lru_cache
+def advertised_endpoint():
+    return f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
+
+
+@celeryd_after_setup.connect
+def setup_routing(sender, instance, **kwargs):
+    instance.app.conf.task_routes = (route_task,)
 
 
 @shared_task
@@ -47,23 +60,20 @@ def add_files_to_processing_queue(request, files):
             extra={"task_id": celery_task_name(request["request_id"])},
         )
         return
-    transform_file_sig = current_app.signature("transformer_sidecar.transform_file")
-
-    ADVERTISED_ENDPOINT = f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
 
     tasks = group(
-        transform_file_sig(
-            **{
-                "request_id": request["request_id"],
-                "file_id": file_record["id"],
-                "paths": file_record["paths"].split(","),
-                "service_endpoint": ADVERTISED_ENDPOINT
-                + "servicex/internal/transformation/"
-                + request["request_id"],
-                "result_destination": request["result-destination"],
-                "result_format": request["result-format"],
-            }
-        )
+        current_app.signature("transformer_sidecar.transform_file",
+                              kwargs={
+                                    "request_id": request["request_id"],
+                                    "file_id": file_record["id"],
+                                    "paths": file_record["paths"].split(","),
+                                    "service_endpoint": advertised_endpoint()
+                                    + "servicex/internal/transformation/"
+                                    + request["request_id"],
+                                    "result_destination": request["result-destination"],
+                                    "result_format": request["result-format"],
+                                    }
+                              )
         for file_record in files
     )
     tasks.apply_async()
