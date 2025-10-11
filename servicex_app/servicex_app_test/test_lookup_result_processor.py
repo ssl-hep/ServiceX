@@ -29,6 +29,7 @@ from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app_test.resource_test_base import ResourceTestBase
 from servicex_app.celery.server_tasks import add_files_to_processing_queue
 
+
 class TestLookupResultProcessor(ResourceTestBase):
 
     def test_add_files_to_processing_queue(self, mocker, celery_worker):
@@ -39,20 +40,22 @@ class TestLookupResultProcessor(ResourceTestBase):
 
         client = self._test_client()
         with client.application.app_context():
-            call = mocker.patch('servicex_app.celery.server_tasks.add_files_to_processing_queue.delay')
+            call = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue.delay"
+            )
             processor.add_files_to_processing_queue(
                 request, [self._generate_datafile()]
             )
             call.assert_called_once()
 
     def test_add_files_to_processing_queue_low_level(self, mocker, celery_worker):
-        mocker.patch.dict('os.environ', {'INSTANCE_NAME': 'servicex'})
+        mocker.patch.dict("os.environ", {"INSTANCE_NAME": "servicex"})
         request = self._generate_transform_request()
         request.result_destination = "object-store"
 
         client = self._test_client()
         with client.application.app_context():
-            task = mocker.patch('celery.Signature.apply_async')
+            task = mocker.patch("celery.Signature.apply_async")
             add_files_to_processing_queue(
                 request.to_json(), [self._generate_datafile().to_json()]
             )

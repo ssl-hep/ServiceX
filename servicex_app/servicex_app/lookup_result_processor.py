@@ -33,9 +33,9 @@ from typing import List, Optional
 
 
 class LookupResultProcessor:
-    def add_files_to_processing_queue(self, 
-                                      request: TransformRequest, 
-                                      files: Optional[List[DatasetFile]] = None):
+    def add_files_to_processing_queue(
+        self, request: TransformRequest, files: Optional[List[DatasetFile]] = None
+    ):
         if files is None:
             files = request.all_files
         if request.status.is_complete:

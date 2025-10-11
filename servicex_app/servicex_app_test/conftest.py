@@ -9,8 +9,8 @@ def mock_jwt_extended(mocker):
     mocker.patch("servicex_app.decorators.verify_jwt_in_request")
 
 
-@fixture(scope='session')
+@fixture(scope="session")
 def celery_config():
     return {
-        'broker_url': 'memory://localhost/',
+        "broker_url": "memory://localhost/",
     }

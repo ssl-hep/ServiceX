@@ -32,7 +32,13 @@ from pytest import fixture
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
-from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus, TransformStatus
+from servicex_app.models import (
+    Dataset,
+    DatasetFile,
+    TransformRequest,
+    DatasetStatus,
+    TransformStatus,
+)
 from servicex_app.models import db
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -315,7 +321,9 @@ class TestDatasetManager(ResourceTestBase):
 
     def test_publish_files(self, mocker, client, celery_worker):
         with client.application.app_context():
-            mock_publisher = mocker.patch('servicex_app.celery.server_tasks.add_files_to_processing_queue')
+            mock_publisher = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue"
+            )
             file_list = [
                 "root://eospublic.cern.ch/1.root",
                 "root://eospublic.cern.ch/2.root",
@@ -332,16 +340,20 @@ class TestDatasetManager(ResourceTestBase):
                 file_list, logger=client.application.logger, db=db
             )
             d.publish_files(
-                request=transform_request, lookup_result_processor=LookupResultProcessor()
+                request=transform_request,
+                lookup_result_processor=LookupResultProcessor(),
             )
             assert transform_request.files == 2
             mock_publisher.delay.assert_called_with(
-                transform_request.to_json(), files=[_.to_json() for _ in d.dataset.files]
+                transform_request.to_json(),
+                files=[_.to_json() for _ in d.dataset.files],
             )
 
     def test_add_files(self, mocker, client, celery_worker):
         with client.application.app_context():
-            mock_publisher = mocker.patch('servicex_app.celery.server_tasks.add_files_to_processing_queue')
+            mock_publisher = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue"
+            )
 
             file_list = [
                 "root://eospublic.cern.ch/1.root",
@@ -365,13 +377,13 @@ class TestDatasetManager(ResourceTestBase):
             second_request.did_id = d.id
 
             newfiles = [
-                    DatasetFile(
-                        paths="root://eospublic.cern.ch/3.root",
-                        adler32="xxx",
-                        file_events=0,
-                        file_size=0,
-                    )
-                ]
+                DatasetFile(
+                    paths="root://eospublic.cern.ch/3.root",
+                    adler32="xxx",
+                    file_events=0,
+                    file_size=0,
+                )
+            ]
 
             d.add_files(
                 files=newfiles,
