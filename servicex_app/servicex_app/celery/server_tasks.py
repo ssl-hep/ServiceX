@@ -51,7 +51,9 @@ def add_files_to_processing_queue(request, files):
 
     ADVERTISED_ENDPOINT = f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
 
-    tasks = group(transform_file_sig(**{
+    tasks = group(
+        transform_file_sig(
+            **{
                 "request_id": request["request_id"],
                 "file_id": file_record["id"],
                 "paths": file_record["paths"].split(","),
@@ -60,14 +62,18 @@ def add_files_to_processing_queue(request, files):
                 + request["request_id"],
                 "result_destination": request["result-destination"],
                 "result_format": request["result-format"],
-            }) for file_record in files
+            }
         )
+        for file_record in files
+    )
     tasks.apply_async()
 
     logger.info(
         "Added files to processing queue",
-        extra={"num_files": len(files),
-               "paths": [_["paths"] for _ in files],
-               "task_id": celery_task_name(request["request_id"]),
-               "requestId": request["request_id"]},
+        extra={
+            "num_files": len(files),
+            "paths": [_["paths"] for _ in files],
+            "task_id": celery_task_name(request["request_id"]),
+            "requestId": request["request_id"],
+        },
     )
