@@ -49,6 +49,7 @@ def add_routes(
 
     from servicex_app.resources.internal.add_file_to_dataset import AddFileToDataset
     from servicex_app.resources.internal.fileset_complete import FilesetComplete
+    from servicex_app.resources.internal.fileset_error import FilesetError
     from servicex_app.resources.internal.transform_status import (
         TransformationStatusInternal,
     )
@@ -181,6 +182,12 @@ def add_routes(
     api.add_resource(
         FilesetComplete,
         "/servicex/internal/transformation/<string:dataset_id>/complete",
+    )
+
+    FilesetError.make_api(lookup_result_processor, transformer_manager)
+    api.add_resource(
+        FilesetError,
+        "/servicex/internal/transformation/<string:dataset_id>/error",
     )
 
     TransformerFileComplete.make_api(transformer_manager)

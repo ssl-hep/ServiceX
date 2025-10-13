@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.13-trixie
 
 LABEL maintainer="Peter Onyisi <ponyisi@utexas.edu>"
 
@@ -11,9 +11,9 @@ RUN useradd -g 0 -ms /bin/bash celery
 ENV  POETRY_VERSION=2.1.1
 
 RUN apt-get update && \
-    apt-get install cmake --no-install-recommends --assume-yes
+    apt-get install cmake osg-ca-certs --no-install-recommends --assume-yes
 
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
@@ -39,6 +39,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/opt/servicex/src
 
 ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
+ENV X509_USER_PROXY=/etc/grid-security-ro/x509up
+ENV X509_CERT_DIR=/etc/grid-security/certificates
 
 
 ENTRYPOINT [ "scripts/start_celery_worker.sh"]

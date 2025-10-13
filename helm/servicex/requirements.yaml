@@ -1,12 +1,12 @@
 dependencies:
   - name: rabbitmq
-    version: 11.4.*
+    version: 11.16.2
     repository: https://charts.bitnami.com/bitnami/
   - name: minio
-    version: 11.10.*
+    version: 11.10.26
     repository: https://charts.bitnami.com/bitnami/
     condition: objectStore.internal, objectStore.enabled
   - name: postgresql
-    version: 11.6.*
+    version: 11.9.13
     repository: https://charts.bitnami.com/bitnami/
     condition: postgres.enabled

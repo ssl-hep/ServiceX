@@ -157,6 +157,7 @@ class TransformStatus(Enum):
     complete = ("Complete", True)
     fatal = ("Fatal", True)
     canceled = ("Canceled", True)
+    bad_dataset = ("Bad Dataset", True)
 
     def __init__(self, string_name, is_complete):
         self.string_name = string_name
@@ -411,6 +412,9 @@ class DatasetStatus(str, Enum):
     created = "created"
     looking = "looking"
     complete = "complete"
+    does_not_exist = "does_not_exist"
+    bad_name = "bad_name"
+    internal_failure = "internal_failure"
 
 
 class Dataset(db.Model):
