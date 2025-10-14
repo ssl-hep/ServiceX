@@ -1,4 +1,4 @@
-# Copyright (c) 2022, IRIS-HEP
+# Copyright (c) 2022-5, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,13 @@ from pytest import fixture
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
-from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
+from servicex_app.models import (
+    Dataset,
+    DatasetFile,
+    TransformRequest,
+    DatasetStatus,
+    TransformStatus,
+)
 from servicex_app.models import db
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -313,9 +319,11 @@ class TestDatasetManager(ResourceTestBase):
             args=["my-did?files=1", 1, "http://hit-me/here"],
         )
 
-    def test_publish_files(self, mocker, client):
+    def test_publish_files(self, mocker, client, celery_worker):
         with client.application.app_context():
-            mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
+            mock_publisher = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue"
+            )
             file_list = [
                 "root://eospublic.cern.ch/1.root",
                 "root://eospublic.cern.ch/2.root",
@@ -323,21 +331,30 @@ class TestDatasetManager(ResourceTestBase):
             transform_request = TransformRequest()
             transform_request.request_id = "462-33"
             transform_request.selection = "test-string"
+            transform_request.status = TransformStatus.lookup
+            transform_request.files_completed = 0
+            transform_request.files_failed = 0
+            transform_request.submit_time = datetime.fromtimestamp(0)
 
             d = DatasetManager.from_file_list(
                 file_list, logger=client.application.logger, db=db
             )
             d.publish_files(
-                request=transform_request, lookup_result_processor=mock_processor
+                request=transform_request,
+                lookup_result_processor=LookupResultProcessor(),
             )
             assert transform_request.files == 2
-            mock_processor.add_files_to_processing_queue.assert_called_with(
-                transform_request, files=d.dataset.files
+            mock_publisher.delay.assert_called_with(
+                transform_request.to_json(),
+                files=[_.to_json() for _ in d.dataset.files],
             )
 
-    def test_add_files(self, mocker, client):
+    def test_add_files(self, mocker, client, celery_worker):
         with client.application.app_context():
-            mock_processor = mocker.MagicMock(spec=LookupResultProcessor)
+            mock_publisher = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue"
+            )
+
             file_list = [
                 "root://eospublic.cern.ch/1.root",
                 "root://eospublic.cern.ch/2.root",
@@ -359,18 +376,26 @@ class TestDatasetManager(ResourceTestBase):
             first_request.did_id = d.id
             second_request.did_id = d.id
 
+            newfiles = [
+                DatasetFile(
+                    paths="root://eospublic.cern.ch/3.root",
+                    adler32="xxx",
+                    file_events=0,
+                    file_size=0,
+                )
+            ]
+
             d.add_files(
-                files=[
-                    DatasetFile(
-                        paths="root://eospublic.cern.ch/3.root",
-                        adler32="xxx",
-                        file_events=0,
-                        file_size=0,
-                    )
-                ],
+                files=newfiles,
                 requests=[first_request, second_request],
-                lookup_result_processor=mock_processor,
+                lookup_result_processor=LookupResultProcessor(),
             )
 
             assert first_request.files == 3
             assert second_request.files == 3
+            mock_publisher.delay.assert_any_call(
+                first_request.to_json(), files=[_.to_json() for _ in newfiles]
+            )
+            mock_publisher.delay.assert_any_call(
+                second_request.to_json(), files=[_.to_json() for _ in newfiles]
+            )

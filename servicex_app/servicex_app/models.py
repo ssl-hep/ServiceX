@@ -163,6 +163,13 @@ class TransformStatus(Enum):
         self.string_name = string_name
         self.is_complete = is_complete
 
+    @classmethod
+    def status_from_string(cls, string_name: str):
+        for typ in cls:
+            if typ.value[0] == string_name:
+                return typ
+        raise RuntimeError(f"No TransformStatus corresponding to {string_name}")
+
 
 class TransformRequest(db.Model):
     __tablename__ = "requests"
