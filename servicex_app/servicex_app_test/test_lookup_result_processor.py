@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-25, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

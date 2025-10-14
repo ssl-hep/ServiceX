@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-25, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,19 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import pytest
+
 from rucio_did_finder.lookup_request import LookupRequest
 from rucio_did_finder.rucio_adapter import RucioAdapter
+
+from servicex_did_finder_lib.exceptions import (
+    BadDatasetNameException,
+    LookupFailureException,
+)
+
+from rucio.client.didclient import DIDClient
+from rucio.client.replicaclient import ReplicaClient
+from rucio.common.exception import DataIdentifierNotFound
 
 
 class TestLookupRequest:
@@ -36,30 +47,94 @@ class TestLookupRequest:
         assert request.rucio_adapter == mock_rucio
         assert request.did == "my-did"
 
-        def test_lookup_files(self, mocker):
-            "Good lookup, chunk size is same as file size"
-            mock_rucio = mocker.MagicMock(RucioAdapter)
-            rucio_file_list = [
-                {
-                    "scope": "my-scope",
-                    "name": "file" + str(i),
-                    "bytes": 31400,
-                    "events": 5000,
-                }
-                for i in range(10)
-            ]
+    def test_lookup_files(self, mocker):
+        mock_rucio = mocker.MagicMock(RucioAdapter)
+        rucio_file_list1 = [
+            {
+                "paths": ["root://file1" + str(i)],
+                "file_size": 31400,
+                "file_events": 5000,
+                "adler32": 21231,
+            }
+            for i in range(10)
+        ]
+        rucio_file_list2 = [
+            {
+                "paths": ["root://file2" + str(i)],
+                "file_size": 31400,
+                "file_events": 5000,
+                "adler32": 21231,
+            }
+            for i in range(10)
+        ]
 
-            mock_rucio.list_files_for_did.return_value = rucio_file_list
+        mock_rucio.list_files_for_did.return_value = iter(
+            [rucio_file_list1, rucio_file_list2]
+        )
 
-            mock_rucio.find_replicas.return_value = [
-                {
-                    "adler32": 21231,
-                    "bytes": 1122233344,
-                }
-            ]
+        request = LookupRequest("my-did", mock_rucio)
 
-            request = LookupRequest("my-did", mock_rucio)
+        assert len(sum([_ for _ in request.lookup_files()], [])) == 20
 
-            assert len(request.lookup_files()) == 10
+        mock_rucio.list_files_for_did.assert_called_with("my-did")
 
-            mock_rucio.list_files_for_did.assert_called_with("my-did")
+    def test_lookup_files_no_replica(self, mocker):
+        mock_did_client = mocker.MagicMock(DIDClient)
+        mock_replica_client = mocker.MagicMock(ReplicaClient)
+
+        mocker.patch(
+            "rucio_did_finder.rucio_adapter.RucioAdapter.list_datasets_for_did",
+            return_value=["abc:def"],
+        )
+        mock_replica_client.list_replicas.return_value = """<?xml version="1.0" encoding="UTF-8"?>
+<metalink xmlns="urn:ietf:params:xml:ns:metalink">
+ <file name="ghi">
+ <identity>abc:ghi</identity>
+ <hash type="adler32">430cf1b4</hash>
+ <size>19969184</size>
+ <glfn name="/atlas/rucio/ghi"></glfn>
+ </file>
+</metalink>"""
+
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
+
+        with pytest.raises(LookupFailureException):
+            [_ for _ in request.lookup_files()]
+
+    def test_lookup_files_no_dataset(self, mocker):
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
+        mock_scope_client.list_scopes.return_value = ["abc"]
+        mock_did_client = mocker.MagicMock(DIDClient)
+        mock_did_client.get_did.side_effect = DataIdentifierNotFound
+        mock_replica_client = mocker.MagicMock(ReplicaClient)
+
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
+
+        with pytest.raises(BadDatasetNameException):
+            [_ for _ in request.lookup_files()]
+
+    def test_rucio_scope_problem(self, mocker):
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
+        mock_scope_client.list_scopes.return_value = ["abc"]
+        mock_did_client = mocker.MagicMock(DIDClient)
+        mock_replica_client = mocker.MagicMock(ReplicaClient)
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
+        with pytest.raises(BadDatasetNameException):
+            [_ for _ in request.lookup_files()]
+
+    def test_rucio_no_dataset(self, mocker):
+        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
+        mock_scope_client.list_scopes.return_value = ["abc"]
+        mock_did_client = mocker.MagicMock(DIDClient)
+        mock_replica_client = mocker.MagicMock(ReplicaClient)
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
+        with pytest.raises(BadDatasetNameException):
+            [_ for _ in request.lookup_files()]
