@@ -7,9 +7,6 @@ metadata:
   name: x509-secrets
 spec:
   schedule: "0 */6 * * *"
-  selector:
-    matchLabels:
-      app: x509-secrets
   template:
     metadata:
       labels:
