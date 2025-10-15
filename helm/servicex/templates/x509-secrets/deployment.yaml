@@ -1,12 +1,12 @@
 {{- if not .Values.noCerts }}
 
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: CronJob
 metadata:
   name: x509-secrets
 spec:
-  replicas: 1
+  schedule: "0 */6 * * *"
   selector:
     matchLabels:
       app: x509-secrets

@@ -52,6 +52,13 @@ parser.add_argument(
     required=True,
 )
 
+parser.add_argument(
+    "--loop",
+    help="Run forever, updating every six hours",
+    dest="loop",
+    action="store_true",
+)
+
 args = parser.parse_args()
 
 if args.secret:
@@ -112,6 +119,10 @@ while True:
             )
             print("Created Secret %s" % secret_name)
             secret_created = True
+
+    if not args.loop:
+        # exit after first pass through
+        sys.exit(0)
 
     time.sleep(6 * 60 * 60)
     os.system(myCmd % args.voms)
