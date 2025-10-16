@@ -229,8 +229,8 @@ transformer:
 
   sidecarImage: sslhep/servicex_sidecar_transformer
   sidecarTag: develop
-  sidecarPullPolicy: Always
-  scienceContainerPullPolicy: Always
+  sidecarPullPolicy: IfNotPresent
+  scienceContainerPullPolicy: IfNotPresent
 
   language: python
   exec:           # replace me
