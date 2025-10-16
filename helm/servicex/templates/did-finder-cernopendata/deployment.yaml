@@ -59,4 +59,10 @@ spec:
           - name: BROKER_URL
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
         {{- end }}
+        {{- if .Values.logging.logstash.enabled }}
+          - name: LOGSTASH_HOST
+            value: "{{ .Values.logging.logstash.host }}"
+          - name: LOGSTASH_PORT
+            value: "{{ .Values.logging.logstash.port }}"
+        {{- end }}
 {{ end }}

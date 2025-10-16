@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
+from . import initialize_logging
 import os
 
 from rucio.client.didclient import DIDClient
@@ -36,7 +36,7 @@ from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
-__log = logging.getLogger(__name__)
+initialize_logging()
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
 # Initialize the finder

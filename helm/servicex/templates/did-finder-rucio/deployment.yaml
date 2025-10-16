@@ -86,6 +86,12 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
+          {{- if .Values.logging.logstash.enabled }}
+          - name: LOGSTASH_HOST
+            value: "{{ .Values.logging.logstash.host }}"
+          - name: LOGSTASH_PORT
+            value: "{{ .Values.logging.logstash.port }}"
+          {{- end }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:
