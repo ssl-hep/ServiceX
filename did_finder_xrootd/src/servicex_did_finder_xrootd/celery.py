@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
-import logging
+from . import initialize_logging
 from typing import Any, Dict, Generator
 from XRootD import client as xrd
 
@@ -36,7 +36,7 @@ from servicex_did_finder_lib.exceptions import (
     LookupFailureException,
 )
 
-__log = logging.getLogger(__name__)
+__log = initialize_logging()
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
 app = DIDFinderApp("xrootd")
