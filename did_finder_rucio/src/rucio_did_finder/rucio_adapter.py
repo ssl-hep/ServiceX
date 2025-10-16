@@ -27,7 +27,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
-import logging
+from . import initialize_logging
 import requests
 import xmltodict
 from rucio.common.exception import DataIdentifierNotFound
@@ -46,8 +46,7 @@ class RucioAdapter:
         self.report_logical_files = report_logical_files
         self.all_scopes = []
         # set logging to a null handler
-        self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(logging.NullHandler())
+        self.logger = initialize_logging()
 
     def client_location(self):
         client_location = {}

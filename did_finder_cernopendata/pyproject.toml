@@ -10,6 +10,7 @@ packages = [{include = "did_finder_cernopendata", from = "src"}]
 python = "~3.10"
 cernopendata-client = "1.0.0"
 servicex-did-finder-lib = "^3.1.1"
+python-logstash = "^0.4.8"
 
 [tool.poetry.group.test]
 optional = true

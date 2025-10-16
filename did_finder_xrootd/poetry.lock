@@ -635,6 +635,17 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-logstash"
+version = "0.4.8"
+description = "Python logging handler for Logstash."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "python-logstash-0.4.8.tar.gz", hash = "sha256:d04e1ce11ecc107e4a4f3b807fc57d96811e964a554081b3bbb44732f74ef5f9"},
+]
+
+[[package]]
 name = "requests"
 version = "2.33.0"
 description = "Python HTTP for Humans."
@@ -786,4 +797,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "fe5e654c4b6a437f7fddc52786e3ad33ae31d3427c2bb8da196c8433951a22a7"
+content-hash = "9bf63cf3b6ad574f0431adb10d381c120e334682b4dbc1dfa81bb2d0cbb44eb4"
