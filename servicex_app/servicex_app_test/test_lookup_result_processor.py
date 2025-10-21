@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-25, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,34 +27,36 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app_test.resource_test_base import ResourceTestBase
+from servicex_app.celery.server_tasks import add_files_to_processing_queue
 
 
 class TestLookupResultProcessor(ResourceTestBase):
 
-    def test_add_files_to_processing_queue(self, mocker, mock_celery_app):
-        processor = LookupResultProcessor(
-            mock_celery_app, "http://cern.analysis.ch:5000/"
-        )
+    def test_add_files_to_processing_queue(self, mocker, celery_worker):
+        processor = LookupResultProcessor()
 
         request = self._generate_transform_request()
         request.result_destination = "object-store"
 
         client = self._test_client()
         with client.application.app_context():
+            call = mocker.patch(
+                "servicex_app.celery.server_tasks.add_files_to_processing_queue.delay"
+            )
             processor.add_files_to_processing_queue(
                 request, [self._generate_datafile()]
             )
+            call.assert_called_once()
 
-            mock_celery_app.send_task.assert_called_once()
+    def test_add_files_to_processing_queue_low_level(self, mocker, celery_worker):
+        mocker.patch.dict("os.environ", {"INSTANCE_NAME": "servicex"})
+        request = self._generate_transform_request()
+        request.result_destination = "object-store"
 
-            mock_celery_app.send_task.assert_called_with(
-                "transformer_sidecar.transform_file",
-                kwargs={
-                    "request_id": "BR549",
-                    "file_id": 123456789,
-                    "paths": ["/path1", "/path2"],
-                    "service_endpoint": "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",  # noqa: E501
-                    "result_destination": "object-store",
-                    "result_format": "arrow",
-                },
+        client = self._test_client()
+        with client.application.app_context():
+            task = mocker.patch("celery.Signature.apply_async")
+            add_files_to_processing_queue(
+                request.to_json(), [self._generate_datafile().to_json()]
             )
+            task.assert_called_once()

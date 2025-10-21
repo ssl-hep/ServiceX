@@ -157,10 +157,18 @@ class TransformStatus(Enum):
     complete = ("Complete", True)
     fatal = ("Fatal", True)
     canceled = ("Canceled", True)
+    bad_dataset = ("Bad Dataset", True)
 
     def __init__(self, string_name, is_complete):
         self.string_name = string_name
         self.is_complete = is_complete
+
+    @classmethod
+    def status_from_string(cls, string_name: str):
+        for typ in cls:
+            if typ.value[0] == string_name:
+                return typ
+        raise RuntimeError(f"No TransformStatus corresponding to {string_name}")
 
 
 class TransformRequest(db.Model):
@@ -404,6 +412,9 @@ class DatasetStatus(str, Enum):
     created = "created"
     looking = "looking"
     complete = "complete"
+    does_not_exist = "does_not_exist"
+    bad_name = "bad_name"
+    internal_failure = "internal_failure"
 
 
 class Dataset(db.Model):

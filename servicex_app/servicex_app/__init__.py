@@ -310,9 +310,7 @@ def create_app(
             code_gen_service = provided_code_gen_service
 
         if not provided_lookup_result_processor:
-            lookup_result_processor = LookupResultProcessor(
-                celery_app, "http://" + app.config["ADVERTISED_HOSTNAME"] + "/"
-            )
+            lookup_result_processor = LookupResultProcessor()
         else:
             lookup_result_processor = provided_lookup_result_processor
 

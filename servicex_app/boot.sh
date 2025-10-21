@@ -20,5 +20,10 @@ else
   FLASK_APP=servicex_app/app.py flask db upgrade;
 fi
 [ -d "/default_users" ] && python3 servicex/cli/create_default_users.py
+
+celery --broker="$RABBIT_MQ_URL" -A servicex_app.celery.server_tasks worker \
+                  --loglevel=info \
+                  --concurrency=5 &
+
 exec gunicorn -b [::]:5000 $RELOAD --workers=5 --threads=1 --timeout 120 --log-level=warning --access-logfile /tmp/gunicorn.log --error-logfile - "servicex_app:create_app()"
 # to log requests to stdout  --access-logfile -
