@@ -74,8 +74,6 @@ class CodeGenAdapter:
         if not post_url:
             raise ValueError(f"{user_codegen_name}, code generator unavailable for use")
 
-        print("generate_code_for_selection")
-        print(request_record.selection)
         result = self.post_request(
             post_url + "/servicex/generated-code",
             post_obj={

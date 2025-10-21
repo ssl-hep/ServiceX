@@ -186,9 +186,6 @@ data:
     {{- if .Values.codeGen.topcp.enabled }}
     # TopCP custom image configuration
     TOPCP_ALLOWED_REPOSITORIES = {{ .Values.codeGen.topcp.allowedRepositories | toJson }}
-    TOPCP_IMAGE_TAG_PATTERN = '{{ .Values.codeGen.topcp.imageTagPattern }}'
-    TOPCP_DEFAULT_BASE_IMAGE = '{{ .Values.codeGen.topcp.defaultBaseImage }}'
-    TOPCP_DEFAULT_BASE_TAG = '{{ .Values.codeGen.topcp.defaultBaseTag }}'
     {{- end }}
 
     {{- $didFinders := list }}

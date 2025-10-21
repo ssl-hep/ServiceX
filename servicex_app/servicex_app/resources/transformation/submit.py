@@ -165,9 +165,6 @@ class SubmitTransformationRequest(ServiceXResource):
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
 
-            print("CODEGEN!!!")
-            print(config["CODE_GEN_IMAGES"])
-            print(user_codegen_name)
             code_gen_image_name = config["CODE_GEN_IMAGES"].get(user_codegen_name, None)
             namespace = config["TRANSFORMER_NAMESPACE"]
 
@@ -195,9 +192,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 self.object_store.create_bucket(request_id)
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
-
-            print("SELECTION!!!")
-            print(args["selection"])
 
             request_rec = TransformRequest(
                 request_id=str(request_id),
@@ -233,9 +227,6 @@ class SubmitTransformationRequest(ServiceXResource):
             ) = self.code_gen_service.generate_code_for_selection(
                 request_rec, namespace, user_codegen_name
             )
-
-            print("TEST!!")
-            print(codegen_transformer_image)
 
             if custom_docker_image:
                 request_rec.image = custom_docker_image
