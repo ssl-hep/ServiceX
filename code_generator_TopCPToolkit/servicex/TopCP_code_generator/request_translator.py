@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
-import json
 import shutil
 from . import query_translate
 from servicex_codegen.code_generator import (
@@ -74,15 +73,3 @@ class TopCPTranslator(CodeGenerator):
         )
 
         return GeneratedFileResult(_hash, query_file_path)
-        # Check if custom transformer image was specified
-        # image_metadata_path = os.path.join(query_file_path, "image_metadata.json")
-        # transformer_image = "sslhep/servicex_science_image_topcp:2.17.0-25.2.45"
-        # if os.path.exists(image_metadata_path):
-        #     with open(image_metadata_path, "r") as f:
-        #         metadata = json.load(f)
-        #     transformer_image = metadata.get("transformer_image", transformer_image)
-        #
-        # generated_file = GeneratedFileResult(_hash, query_file_path)
-        # generated_file.image = transformer_image
-        #
-        # return generated_file

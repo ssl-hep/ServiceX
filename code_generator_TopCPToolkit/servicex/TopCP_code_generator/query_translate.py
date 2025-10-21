@@ -48,15 +48,6 @@ options = {
 def generate_files_from_query(query, query_file_path):
     jquery = json.loads(query)
 
-    # transformer_image = jquery.get("docker_image", "sslhep/servicex_science_image_topcp:2.17.0-25.2.45")
-    # metadata = {
-    #     "transformer_image": transformer_image
-    # }
-    # with open(
-    #     os.path.join(query_file_path, "image_metadata.json"), "w"
-    # ) as metadata_file:
-    #     json.dump(metadata, metadata_file)
-
     runTopCommand = [
         "runTop_el.py",
         "-i",

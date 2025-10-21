@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 import subprocess
 import shutil
-import generated_transformer
 
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 

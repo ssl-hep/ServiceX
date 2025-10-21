@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import uuid
-import re
 import json
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -39,6 +38,7 @@ from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+
 
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
@@ -100,7 +100,6 @@ class SubmitTransformationRequest(ServiceXResource):
         request_id: str,
         config: dict,
     ) -> DatasetManager:
-
         # did xor file_list
         if bool(did) == bool(file_list):
             raise BadRequest("Must provide did or file-list but not both")
@@ -152,7 +151,6 @@ class SubmitTransformationRequest(ServiceXResource):
             uuid.uuid4()
         )  # make sure we have a request id for all messages
         try:
-
             try:
                 args = self.parser.parse_args()
             except BadRequest as bad_request:
@@ -218,7 +216,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 code_gen_image=code_gen_image_name,
                 files=0,
             )
-
 
             selection = json.loads(args["selection"])
             custom_docker_image = None
