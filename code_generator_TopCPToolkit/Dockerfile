@@ -26,11 +26,11 @@ RUN chmod 777 -R servicex
 COPY app.conf .
 RUN chmod 755 app.conf
 
-RUN chmod 755 /home/servicex/servicex/boot.sh
+RUN chmod 755 /home/servicex/boot.sh
 
 USER servicex
 
 ENV CODEGEN_CONFIG_FILE="/home/servicex/app.conf"
 
 EXPOSE 5000
-ENTRYPOINT ["/home/servicex/servicex/boot.sh"]
+ENTRYPOINT ["/home/servicex/boot.sh"]

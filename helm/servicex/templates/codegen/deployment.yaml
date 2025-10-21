@@ -37,7 +37,7 @@ spec:
           - containerPort: 5000
         volumeMounts:
           - name: host-topcp-volume
-            mountPath: /home/servicex/servicex
+            mountPath: /home/servicex
 
       volumes:
         - name: host-topcp-volume
