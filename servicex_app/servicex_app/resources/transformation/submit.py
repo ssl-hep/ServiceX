@@ -211,11 +211,14 @@ class SubmitTransformationRequest(ServiceXResource):
                 files=0,
             )
 
-            selection = json.loads(args["selection"])
+            print(f"selection: {args.get('selection')}")
             custom_docker_image = None
-            if "docker_image" in selection:
-                custom_docker_image = selection["docker_image"]
-                del selection["docker_image"]
+            try:
+                selection = json.loads(args["selection"])
+                if "docker_image" in selection:
+                    custom_docker_image = selection["docker_image"]
+            except json.decoder.JSONDecodeError:
+                pass
 
             # The first thing to do is make sure the requested selection is correct,
             # and can generate the requested code
