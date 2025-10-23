@@ -53,6 +53,8 @@ spec:
           value: "{{ .Values.app.logLevel | upper }}"
         - name: RABBIT_MQ_URL
           value: 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
+        - name: TRANSFORMER_RABBIT_MQ_URL
+          value: "amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"
@@ -107,8 +109,6 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: rabbitmq-password
-        - name: TRANSFORMER_RABBIT_MQ_URL
-          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
         - name: PG_PASS
           valueFrom:
             secretKeyRef:
