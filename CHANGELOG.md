@@ -15,14 +15,14 @@ October, 27, 2025
 - Ability to download list of available xCache servers
 - Better handling of missing datasets
 ### Changed
-- Now use the celery bulk task interface to schedule file transforms 
+- Now use the celery bulk task interface to schedule file transforms
 - Bitnami charts use the legacy docker images now that the main images are closed source
 - Improve DID finder error reporting
 - Default transformer pull policy is now `IfNotPresent`
 - The RABBIT_MQ_URL is set in the helm chart
 
 ### Fixed
-- Tests that were not correctly asserting anything 
+- Tests that were not correctly asserting anything
 - Updated OSG Certificates to xrootd did finder
 
 ### Removed
