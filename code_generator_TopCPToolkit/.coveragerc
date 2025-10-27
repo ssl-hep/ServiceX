@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = src/
+source = servicex/
 
 [report]
 exclude_lines =
