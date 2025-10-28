@@ -39,7 +39,6 @@ options = {
     "docker_image": {
         "properType": str,
         "properTypeString": "string",
-        "default": "sslhep/servicex_science_image_topcp:2.17.0-25.2.45",
         "optional": True,
     },
 }
@@ -70,9 +69,6 @@ def generate_files_from_query(query, query_file_path):
             )
 
     for key in jquery:
-        if key == "docker_image":
-            continue
-
         # ensure only available options are allowed
         if key not in options:
             raise KeyError(

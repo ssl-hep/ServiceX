@@ -35,14 +35,18 @@ spec:
         imagePullPolicy: {{ .pullPolicy }}
         ports:
           - containerPort: 5000
+        {{- if eq $codeGenName "topcp" }}
         volumeMounts:
           - name: host-topcp-volume
             mountPath: /home/servicex
+        {{- end }}
 
+      {{- if eq $codeGenName "topcp" }}
       volumes:
         - name: host-topcp-volume
           hostPath:
             path: /mnt/topcp
             type: DirectoryOrCreate
+      {{- end }}
 {{- end }}
 {{- end }}

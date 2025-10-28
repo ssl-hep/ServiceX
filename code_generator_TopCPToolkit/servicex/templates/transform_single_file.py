@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 import subprocess
 import shutil
+import generated_transformer
 
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
@@ -32,6 +33,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             os.path.join(config_loc, "particle.yaml"),
         )
 
+    generated_transformer.runTop_el()
     subprocess.run(["mv", "output.root", output_path])
 
 
