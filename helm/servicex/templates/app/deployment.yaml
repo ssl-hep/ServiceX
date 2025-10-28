@@ -51,10 +51,17 @@ spec:
           value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
           value: "{{ .Values.app.logLevel | upper }}"
+      {{- if .Values.secrets }}
         - name: RABBIT_MQ_URL
-          value: 'amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F'
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F"
+        - name: TRANSFORMER_RABBIT_MQ_URL
+          value: "amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
+      {{- else }}
+        - name: RABBIT_MQ_URL
+          value: "amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F"
         - name: TRANSFORMER_RABBIT_MQ_URL
           value: "amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F?heartbeat=9000"
+      {{- end }}
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"
