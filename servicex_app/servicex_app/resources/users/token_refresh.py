@@ -26,15 +26,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from flask import current_app
 from flask_jwt_extended import create_access_token, decode_token, get_jwt, jwt_required
 from flask_restful import Resource
 from servicex_app.models import UserModel
 
 
 class TokenRefresh(Resource):
-    @jwt_required(refresh=True)
+    @jwt_required(refresh=True, optional=True)
     def post(self):
+        if not current_app.config.get("ENABLE_AUTH"):
+            return {"message": "Authentication is disabled on this instance"}, 200
+
         claims = get_jwt()
+        if not claims:
+            return {"message": "Missing refresh token"}, 401
+
         user = UserModel.find_by_email(claims["sub"])
         decoded = decode_token(user.refresh_token)
         if not claims["jti"] == decoded["jti"]:
