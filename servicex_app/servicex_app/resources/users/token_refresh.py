@@ -52,4 +52,7 @@ class TokenRefresh(Resource):
             return {"message": "Invalid or outdated refresh token"}, 401
         current_user = user.email
         access_token = create_access_token(identity=current_user)
-        return {"access_token": access_token}, 200
+        return {
+            "access_token": access_token,
+            "auth_disabled": False
+        }, 200
