@@ -49,7 +49,7 @@ class TestTokenRefresh(ResourceTestBase):
 
             mocker.patch(
                 "servicex_app.resources.users.token_refresh.UserModel.find_by_email",
-                return_value=test_user
+                return_value=test_user,
             )
 
             headers = {"Authorization": f"Bearer {refresh_token}"}
@@ -76,11 +76,13 @@ class TestTokenRefresh(ResourceTestBase):
 
             mocker.patch(
                 "servicex_app.resources.users.token_refresh.UserModel.find_by_email",
-                return_value=test_user
+                return_value=test_user,
             )
 
             headers = {"Authorization": f"Bearer {old_refresh_token}"}
             response: Response = client.post("/token/refresh", headers=headers)
 
             assert response.status_code == 401
-            assert "Invalid or outdated refresh token" in response.json.get("message", "")
+            assert "Invalid or outdated refresh token" in response.json.get(
+                "message", ""
+            )
