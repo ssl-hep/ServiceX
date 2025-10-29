@@ -21,9 +21,10 @@ class TestTokenRefresh(ResourceTestBase):
         response: Response = client.post("/token/refresh")
 
         assert response.status_code == 200
-        assert response.json == {
-            "message": "Authentication is disabled on this instance"
-        }
+        assert "access_token" in response.json
+        assert response.json["access_token"] == "authentication_disabled"
+        assert "auth_disabled" in response.json
+        assert response.json["auth_disabled"] is True
 
     def test_token_refresh_with_auth_enabled_requires_token(self):
         """Test that token refresh requires a valid token when auth is enabled."""
@@ -57,6 +58,9 @@ class TestTokenRefresh(ResourceTestBase):
 
             assert response.status_code == 200
             assert "access_token" in response.json
+            assert response.json["access_token"] != "authentication_disabled"
+            assert "auth_disabled" in response.json
+            assert response.json["auth_disabled"] is False
 
     def test_token_refresh_with_mismatched_jti(self, mocker):
         """Test that token refresh fails when JTI doesn't match stored token."""
