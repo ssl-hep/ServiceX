@@ -37,7 +37,7 @@ spec:
           - containerPort: 5000
         {{- if eq $codeGenName "topcp" }}
         {{- if eq $.Values.app.environment "dev" }}
-        {{- if $.Values.app.reload }}
+        {{- if $.Values.app.mountLocal }}
         volumeMounts:
           - name: host-topcp-volume
             mountPath: /home/servicex
@@ -47,7 +47,7 @@ spec:
 
       {{- if eq $codeGenName "topcp" }}
       {{- if eq $.Values.app.environment "dev" }}
-      {{- if $.Values.app.reload }}
+      {{- if $.Values.app.mountLocal }}
       volumes:
         - name: host-topcp-volume
           hostPath:
