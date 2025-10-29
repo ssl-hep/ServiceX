@@ -39,7 +39,7 @@ class TokenRefresh(Resource):
             return {
                 "message": "Authentication is disabled on this instance",
                 "access_token": "authentication_disabled",
-                "auth_disabled": True
+                "auth_disabled": True,
             }, 200
 
         claims = get_jwt()
