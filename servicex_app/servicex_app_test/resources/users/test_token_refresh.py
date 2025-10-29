@@ -1,5 +1,3 @@
-import jwt
-from datetime import datetime, timedelta
 from flask.wrappers import Response
 from flask_jwt_extended import create_refresh_token
 
