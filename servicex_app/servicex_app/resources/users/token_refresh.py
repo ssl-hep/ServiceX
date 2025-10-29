@@ -36,7 +36,11 @@ class TokenRefresh(Resource):
     @jwt_required(refresh=True, optional=True)
     def post(self):
         if not current_app.config.get("ENABLE_AUTH"):
-            return {"message": "Authentication is disabled on this instance"}, 200
+            return {
+                "message": "Authentication is disabled on this instance",
+                "access_token": "authentication_disabled",
+                "auth_disabled": True
+            }, 200
 
         claims = get_jwt()
         if not claims:
@@ -48,4 +52,4 @@ class TokenRefresh(Resource):
             return {"message": "Invalid or outdated refresh token"}, 401
         current_user = user.email
         access_token = create_access_token(identity=current_user)
-        return {"access_token": access_token}
+        return {"access_token": access_token}, 200
