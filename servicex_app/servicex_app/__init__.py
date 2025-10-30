@@ -196,8 +196,8 @@ def create_app(
     Bootstrap5(app)
     CORS(app)
 
+    app.config["JWT_DECODE_ALGORITHMS"] = ["HS256", "RS256"]
     JWTManager(app)
-
     # setup logging
 
     logstash_host = os.environ.get("LOGSTASH_HOST")
