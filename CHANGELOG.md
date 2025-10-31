@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### 1.7.3
+October, 27, 2025
+
+### Added
+- Better documentation for local development
+- Ability to set the compression algorithm in the helm chart
+- Pre-commit
+- Ability to download list of available xCache servers
+- Better handling of missing datasets
+### Changed
+- Now use the celery bulk task interface to schedule file transforms
+- Bitnami charts use the legacy docker images now that the main images are closed source
+- Improve DID finder error reporting
+- Default transformer pull policy is now `IfNotPresent`
+- The RABBIT_MQ_URL is set in the helm chart
+
+### Fixed
+- Tests that were not correctly asserting anything
+- Updated OSG Certificates to xrootd did finder
+
+### Removed
+- `minio.apiIngress.enabled` from values.yaml
+- CMS MiniAOD code gen as default
+
+### 1.7.2
+_Never Released_
+
 ### 1.7.1
 July 8, 2025
 ### Added
