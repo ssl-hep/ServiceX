@@ -65,7 +65,7 @@ def validate_custom_docker_image(image_name: str) -> bool:
             f"Custom Docker image '{image_name}' not allowed."
         )
 
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         raise BadRequest(
             "TopCP allowed images are improperly configured."
         )
