@@ -25,17 +25,22 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+import os
 from datetime import datetime, timezone
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
+import pytest
 from celery import Celery
 from pytest import fixture
+from werkzeug.exceptions import BadRequest
 
 from servicex_app import LookupResultProcessor
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.models import Dataset
 from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
+from servicex_app.resources.transformation.submit import validate_custom_docker_image
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -588,3 +593,199 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.title == title
+
+
+class TestValidateCustomDockerImage:
+    """Tests for the validate_custom_docker_image function"""
+
+    def test_validate_with_matching_prefix(self):
+        """Test validation succeeds when image matches an allowed prefix"""
+        with patch.dict(
+            os.environ,
+            {"TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:"]'},
+        ):
+            result = validate_custom_docker_image(
+                "sslhep/servicex_science_image_topcp:2.17.0"
+            )
+            assert result is True
+
+    def test_validate_with_multiple_prefixes(self):
+        """Test validation with multiple allowed prefixes"""
+        with patch.dict(
+            os.environ,
+            {
+                "TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+            },
+        ):
+            assert (
+                validate_custom_docker_image(
+                    "sslhep/servicex_science_image_topcp:latest"
+                )
+                is True
+            )
+            assert (
+                validate_custom_docker_image("docker.io/ssl-hep/custom:v1") is True
+            )
+
+    def test_validate_with_no_matching_prefix(self):
+        """Test validation fails when image doesn't match any allowed prefix"""
+        with patch.dict(
+            os.environ,
+            {"TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:"]'},
+        ):
+            with pytest.raises(BadRequest, match="not allowed"):
+                validate_custom_docker_image("unauthorized/image:latest")
+
+    def test_validate_with_no_env_variable(self):
+        """Test validation fails when TOPCP_ALLOWED_IMAGES is not set"""
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(BadRequest, match="Custom Docker images are not allowed"):
+                validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_invalid_json(self):
+        """Test validation fails with invalid JSON in env variable"""
+        with patch.dict(os.environ, {"TOPCP_ALLOWED_IMAGES": "not-valid-json"}):
+            with pytest.raises(BadRequest, match="improperly configured"):
+                validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_non_list_json(self):
+        """Test validation fails when JSON is not a list"""
+        with patch.dict(os.environ, {"TOPCP_ALLOWED_IMAGES": '{"key": "value"}'}):
+            with pytest.raises(BadRequest, match="improperly configured"):
+                validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_empty_list(self):
+        """Test validation fails when allowed list is empty"""
+        with patch.dict(os.environ, {"TOPCP_ALLOWED_IMAGES": "[]"}):
+            with pytest.raises(BadRequest, match="not allowed"):
+                validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+
+class TestSubmitTransformationRequestCustomImage(ResourceTestBase):
+    """Tests for custom Docker image feature in transformation requests"""
+
+    @staticmethod
+    def _generate_transformation_request(**kwargs):
+        request = {
+            "did": "123-45-678",
+            "selection": "test-string",
+            "result-destination": "object-store",
+            "result-format": "root-file",
+            "workers": 10,
+            "codegen": "topcp",
+        }
+        request.update(kwargs)
+        return request
+
+    @fixture
+    def mock_dataset_manager_from_did(self, mocker):
+        dm = mocker.Mock()
+        dm.dataset = Dataset(
+            name="rucio://123-45-678",
+            did_finder="rucio",
+            lookup_status=DatasetStatus.looking,
+            last_used=datetime.now(tz=timezone.utc),
+            last_updated=datetime.fromtimestamp(0),
+        )
+        dm.name = "rucio://123-45-678"
+        dm.id = 42
+        mock_from_did = mocker.patch.object(DatasetManager, "from_did", return_value=dm)
+        return mock_from_did
+
+    @fixture
+    def mock_codegen(self, mocker):
+        mock_code_gen = mocker.MagicMock(CodeGenAdapter)
+        mock_code_gen.generate_code_for_selection.return_value = (
+            "my-cm",
+            "sslhep/servicex_science_image_topcp:2.17.0",
+            "bash",
+            "echo",
+        )
+        return mock_code_gen
+
+    def test_submit_topcp_with_custom_docker_image(
+        self, mock_dataset_manager_from_did, mock_codegen, mock_app_version
+    ):
+        """Test submitting a TopCP transformation with a valid custom docker image"""
+        extra_config = {
+            "CODE_GEN_IMAGES": {"topcp": "sslhep/servicex_code_gen_topcp:develop"}
+        }
+        with patch.dict(
+            os.environ,
+            {"TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:"]'},
+        ):
+            client = self._test_client(code_gen_service=mock_codegen, extra_config=extra_config)
+            with client.application.app_context():
+                selection_dict = {"docker_image": "sslhep/servicex_science_image_topcp:custom"}
+                request = self._generate_transformation_request(
+                    selection=json.dumps(selection_dict)
+                )
+
+                response = client.post(
+                    "/servicex/transformation", json=request, headers=self.fake_header()
+                )
+                assert response.status_code == 200
+                request_id = response.json["request_id"]
+
+                saved_obj = TransformRequest.lookup(request_id)
+                assert saved_obj
+                assert saved_obj.image == "sslhep/servicex_science_image_topcp:custom"
+
+    def test_submit_topcp_with_invalid_custom_docker_image(
+        self, mock_dataset_manager_from_did, mock_codegen
+    ):
+        """Test submitting a TopCP transformation with an invalid custom docker image returns 400"""
+        extra_config = {
+            "CODE_GEN_IMAGES": {"topcp": "sslhep/servicex_code_gen_topcp:develop"}
+        }
+        with patch.dict(
+            os.environ,
+            {"TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:"]'},
+        ):
+            client = self._test_client(code_gen_service=mock_codegen, extra_config=extra_config)
+            with client.application.app_context():
+                selection_dict = {"docker_image": "unauthorized/image:latest"}
+                request = self._generate_transformation_request(
+                    selection=json.dumps(selection_dict)
+                )
+
+                response = client.post(
+                    "/servicex/transformation", json=request, headers=self.fake_header()
+                )
+                assert response.status_code == 400
+
+    def test_submit_topcp_with_non_json_selection(
+        self, mock_dataset_manager_from_did, mock_codegen, mock_app_version
+    ):
+        """Test submitting a TopCP transformation with non-JSON selection string"""
+        extra_config = {
+            "CODE_GEN_IMAGES": {"topcp": "sslhep/servicex_code_gen_topcp:develop"}
+        }
+        client = self._test_client(code_gen_service=mock_codegen, extra_config=extra_config)
+        with client.application.app_context():
+            request = self._generate_transformation_request(selection="not-json-string")
+
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 400
+
+    def test_submit_custom_topcp_without_env_var(
+        self, mock_dataset_manager_from_did, mock_codegen
+    ):
+        """Test submitting TopCP with custom image when TOPCP_ALLOWED_IMAGES is not set"""
+        extra_config = {
+            "CODE_GEN_IMAGES": {"topcp": "sslhep/servicex_code_gen_topcp:develop"}
+        }
+        with patch.dict(os.environ, {}, clear=True):
+            client = self._test_client(code_gen_service=mock_codegen, extra_config=extra_config)
+            with client.application.app_context():
+                selection_dict = {"docker_image": "sslhep/servicex_science_image_topcp:custom"}
+                request = self._generate_transformation_request(
+                    selection=json.dumps(selection_dict)
+                )
+
+                response = client.post(
+                    "/servicex/transformation", json=request, headers=self.fake_header()
+                )
+                assert response.status_code == 400

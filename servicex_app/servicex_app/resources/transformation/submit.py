@@ -38,7 +38,7 @@ from servicex_app.decorators import auth_required
 from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, HTTPException
 
 
 def validate_custom_docker_image(image_name: str) -> bool:
@@ -251,14 +251,9 @@ class SubmitTransformationRequest(ServiceXResource):
                     selection = json.loads(args["selection"])
                     if "docker_image" in selection:
                         custom_docker_image = selection["docker_image"]
-                        try:
-                            validate_custom_docker_image(custom_docker_image)
-                        except BadRequest as e:
-                            current_app.logger.error(
-                                str(e), extra={"requestId": request_id}
-                            )
+                        validate_custom_docker_image(custom_docker_image)
                 except json.decoder.JSONDecodeError:
-                    pass
+                    raise BadRequest("Malformed JSON submitted")
 
             if custom_docker_image:
                 request_rec.image = custom_docker_image
@@ -310,6 +305,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 "Transformation request submitted!", extra={"requestId": request_id}
             )
             return {"request_id": str(request_id)}
+        except HTTPException:
+            raise
         except Exception as eek:
             current_app.logger.exception(
                 "Got exception while submitting transformation request",
