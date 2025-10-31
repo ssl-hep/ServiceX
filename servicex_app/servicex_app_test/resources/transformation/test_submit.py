@@ -614,8 +614,7 @@ class TestValidateCustomDockerImage:
         with patch.dict(
             os.environ,
             {
-                "TOPCP_ALLOWED_IMAGES":
-                    '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+                "TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
             },
         ):
             assert (
