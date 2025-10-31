@@ -13,10 +13,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     with open("input.txt", "w") as f:
         f.write(file_path)
 
-    # Get CONFIG_LOC with a sensible default (current working directory)
-    config_loc = os.environ.get("CONFIG_LOC", os.getcwd())
-
     # move reco.yaml, parton.yaml and particle.yaml if they exist to CONFIG_LOC location
+    config_loc = os.environ.get("CONFIG_LOC", os.getcwd())
     if os.path.exists("/generated/reco.yaml"):
         shutil.copyfile(
             "/generated/reco.yaml",

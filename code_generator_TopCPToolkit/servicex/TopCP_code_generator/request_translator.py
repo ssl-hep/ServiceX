@@ -63,10 +63,8 @@ class TopCPTranslator(CodeGenerator):
             "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
         )
 
-        # Generate query files first to create any metadata
         query_translate.generate_files_from_query(query, query_file_path)
 
-        # Copy capabilities file
         shutil.copyfile(
             capabilities_path,
             os.path.join(query_file_path, "transformer_capabilities.json"),

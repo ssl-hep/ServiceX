@@ -108,8 +108,8 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_topcp
     defaultScienceContainerTag: 2.17.0-25.2.45
-    allowedRepositories:
-      - "sslhep"
+    allowedImages:
+      - "sslhep/servicex_science_image_topcp:"
     defaultBaseImage: "sslhep/servicex_science_image_topcp"
 
 didFinder:

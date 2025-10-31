@@ -185,7 +185,7 @@ data:
 
     {{- if .Values.codeGen.topcp.enabled }}
     # TopCP custom image configuration
-    TOPCP_ALLOWED_REPOSITORIES = {{ .Values.codeGen.topcp.allowedRepositories | toJson }}
+    TOPCP_ALLOWED_IMAGES = {{ .Values.codeGen.topcp.allowedImages | toJson }}
     {{- end }}
 
     {{- $didFinders := list }}

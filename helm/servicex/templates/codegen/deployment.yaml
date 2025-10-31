@@ -19,6 +19,11 @@ spec:
       containers:
       - name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
         image: {{ .image }}:{{ .tag }}
+        {{- if eq $.Values.app.environment "dev" }}
+        {{- if $.Values.app.reload }}
+        command: [ "./boot.sh", "web_service", "--reload" ]
+        {{- end }}
+        {{- end }}
         env:
         - name: INSTANCE_NAME
           value: {{ $.Release.Name }}

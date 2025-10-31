@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import uuid
 import json
+import os
 from datetime import datetime, timezone
 from typing import Optional, List
 
@@ -38,6 +39,36 @@ from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+
+
+def validate_custom_docker_image(image_name: str) -> bool:
+    allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
+
+    if not allowed_images_json:
+        raise BadRequest(
+            "Custom Docker images are not allowed."
+        )
+
+    try:
+        allowed_prefixes = json.loads(allowed_images_json)
+
+        if not isinstance(allowed_prefixes, list):
+            raise BadRequest(
+                "TopCP allowed images are improperly configured."
+            )
+
+        for prefix in allowed_prefixes:
+            if image_name.startswith(prefix):
+                return True
+
+        raise BadRequest(
+            f"Custom Docker image '{image_name}' not allowed."
+        )
+
+    except json.JSONDecodeError as e:
+        raise BadRequest(
+            "TopCP allowed images are improperly configured."
+        )
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -211,15 +242,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 files=0,
             )
 
-            print(f"selection: {args.get('selection')}")
-            custom_docker_image = None
-            try:
-                selection = json.loads(args["selection"])
-                if "docker_image" in selection:
-                    custom_docker_image = selection["docker_image"]
-            except json.decoder.JSONDecodeError:
-                pass
-
             # The first thing to do is make sure the requested selection is correct,
             # and can generate the requested code
             (
@@ -230,6 +252,21 @@ class SubmitTransformationRequest(ServiceXResource):
             ) = self.code_gen_service.generate_code_for_selection(
                 request_rec, namespace, user_codegen_name
             )
+
+            custom_docker_image = None
+            if user_codegen_name == "topcp":
+                try:
+                    selection = json.loads(args["selection"])
+                    if "docker_image" in selection:
+                        custom_docker_image = selection["docker_image"]
+                        try:
+                            validate_custom_docker_image(custom_docker_image)
+                        except BadRequest as e:
+                            current_app.logger.error(
+                                str(e), extra={"requestId": request_id}
+                            )
+                except json.decoder.JSONDecodeError:
+                    pass
 
             if custom_docker_image:
                 request_rec.image = custom_docker_image
