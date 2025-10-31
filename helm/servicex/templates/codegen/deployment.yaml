@@ -20,8 +20,10 @@ spec:
       - name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
         image: {{ .image }}:{{ .tag }}
         {{- if eq $.Values.app.environment "dev" }}
+        {{- if eq $codeGenName "topcp" }}
         {{- if $.Values.app.reload }}
-        command: [ "./boot.sh", "web_service", "--reload" ]
+        command: [ "./servicex/boot.sh", "web_service", "--reload" ]
+        {{- end }}
         {{- end }}
         {{- end }}
         env:
