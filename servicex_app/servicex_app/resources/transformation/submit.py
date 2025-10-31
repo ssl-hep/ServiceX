@@ -60,9 +60,7 @@ def validate_custom_docker_image(image_name: str) -> bool:
         raise BadRequest(f"Custom Docker image '{image_name}' not allowed.")
 
     except json.JSONDecodeError:
-        raise BadRequest(
-            "TopCP allowed images are improperly configured."
-        )
+        raise BadRequest("TopCP allowed images are improperly configured.")
 
 
 class SubmitTransformationRequest(ServiceXResource):
