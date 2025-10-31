@@ -45,30 +45,22 @@ def validate_custom_docker_image(image_name: str) -> bool:
     allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
 
     if not allowed_images_json:
-        raise BadRequest(
-            "Custom Docker images are not allowed."
-        )
+        raise BadRequest("Custom Docker images are not allowed.")
 
     try:
         allowed_prefixes = json.loads(allowed_images_json)
 
         if not isinstance(allowed_prefixes, list):
-            raise BadRequest(
-                "TopCP allowed images are improperly configured."
-            )
+            raise BadRequest("TopCP allowed images are improperly configured.")
 
         for prefix in allowed_prefixes:
             if image_name.startswith(prefix):
                 return True
 
-        raise BadRequest(
-            f"Custom Docker image '{image_name}' not allowed."
-        )
+        raise BadRequest(f"Custom Docker image '{image_name}' not allowed.")
 
     except json.JSONDecodeError as e:
-        raise BadRequest(
-            "TopCP allowed images are improperly configured."
-        )
+        raise BadRequest("TopCP allowed images are improperly configured.")
 
 
 class SubmitTransformationRequest(ServiceXResource):
