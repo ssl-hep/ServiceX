@@ -46,7 +46,6 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestSubmitTransformationRequest(ResourceTestBase):
-
     @staticmethod
     def _generate_transformation_request(**kwargs):
         request = {
@@ -437,7 +436,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             code_gen_service=mock_codegen,
         )
         with client.application.app_context():
-
             request = self._generate_transformation_request()
             response = client.post(
                 "/servicex/transformation", json=request, headers=self.fake_header()
@@ -565,7 +563,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             extra_config={"ENABLE_AUTH": True}, code_gen_service=mock_codegen
         )
         with client.application.app_context():
-
             response = client.post(
                 "/servicex/transformation",
                 json=self._generate_transformation_request(),
@@ -614,7 +611,8 @@ class TestValidateCustomDockerImage:
         with patch.dict(
             os.environ,
             {
-                "TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+                "TOPCP_ALLOWED_IMAGES": """["sslhep/servicex_science_image_topcp:",
+                "docker.io/ssl-hep/"]"""
             },
         ):
             assert (
