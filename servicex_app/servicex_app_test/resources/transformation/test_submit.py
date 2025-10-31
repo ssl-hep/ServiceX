@@ -614,7 +614,8 @@ class TestValidateCustomDockerImage:
         with patch.dict(
             os.environ,
             {
-                "TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+                "TOPCP_ALLOWED_IMAGES":
+                    '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
             },
         ):
             assert (
@@ -734,7 +735,7 @@ class TestSubmitTransformationRequestCustomImage(ResourceTestBase):
     def test_submit_topcp_with_invalid_custom_docker_image(
         self, mock_dataset_manager_from_did, mock_codegen
     ):
-        """Test submitting a TopCP transformation with an invalid custom docker image returns 400"""
+        """Submitting a TopCP transformation with an invalid custom docker image fails"""
         extra_config = {
             "CODE_GEN_IMAGES": {"topcp": "sslhep/servicex_code_gen_topcp:develop"}
         }
