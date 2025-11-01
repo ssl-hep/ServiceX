@@ -1,4 +1,4 @@
-FROM cernopendata/cernopendata-client:0.3.0
+FROM cernopendata/cernopendata-client:1.0.0
 
 LABEL maintainer="Gordon Watts <gwatts@uw.edu>"
 

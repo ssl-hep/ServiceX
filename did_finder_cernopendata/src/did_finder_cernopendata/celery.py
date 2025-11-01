@@ -76,7 +76,7 @@ def find_files(
             "CERNOpenData can only work with dataset numbers as names (e.g. 1507)"
         )
 
-    cmd = f"cernopendata-client get-file-locations --recid {did_name}".split(" ")
+    cmd = f"cernopendata-client get-file-locations --protocol xrootd --recid {did_name}".split(" ")
 
     with Popen(
         cmd, stdout=PIPE, stderr=STDOUT, bufsize=1, universal_newlines=True
