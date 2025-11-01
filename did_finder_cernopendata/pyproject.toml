@@ -8,6 +8,7 @@ packages = [{include = "did_finder_cernopendata", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"
+cernopendata-client = "1.0.0"
 servicex-did-finder-lib = "^3.1.1"
 
 [tool.poetry.group.test]
