@@ -21,10 +21,12 @@ else
 fi
 [ -d "/default_users" ] && python3 servicex/cli/create_default_users.py
 
-celery --config servicex_app.celery.celeryconfig \
-       --broker="$RABBIT_MQ_URL" -A servicex_app.celery.server_tasks worker \
-       --loglevel=info \
-       --concurrency=5 &
+while true; do
+  celery --config servicex_app.celery.celeryconfig \
+         --broker="$RABBIT_MQ_URL" -A servicex_app.celery.server_tasks worker \
+         --loglevel=info \
+         --concurrency=5 ;
+done &
 
 exec gunicorn -b [::]:5000 $RELOAD --workers=5 --threads=1 --timeout 120 --log-level=warning --access-logfile /tmp/gunicorn.log --error-logfile - "servicex_app:create_app()"
 # to log requests to stdout  --access-logfile -
