@@ -214,12 +214,12 @@ def create_app(
 
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter(
-        "%(levelname)s " + f"{instance} servicex_app " + "%(message)s"
+        "%(asctime)s %(levelname)s " + f"{instance} servicex_app " + "%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(level)
     app.logger.addHandler(stream_handler)
-
     if logstash_host and logstash_port:
         logstash_handler = logstash.TCPLogstashHandler(
             logstash_host, logstash_port, version=1
