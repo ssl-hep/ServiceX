@@ -170,13 +170,15 @@ class RucioAdapter:
             return
         no_replica_files = 0
         for ds in datasets:
+            nfiles = 0
             try:
+                nfiles = len(list(self.did_client.list_files(ds[0], ds[1])))
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
                     schemes=["root", "http", "https"],
                     metalink=True,
                     sort="geoip",
-                    rse_expression="istape=False\\type=SPECIAL",
+                    rse_expression="istape=False",
                     ignore_availability=False,
                     client_location=self.client_location(),
                 )
@@ -197,7 +199,6 @@ class RucioAdapter:
                     # Path is either a list of replicas or a single logical name
                     if "url" not in f:
                         self.logger.error(f"File {f['identity']} has no replicas.")
-                        no_replica_files += 1
                         continue
                     path = (
                         self.get_paths(f["url"])
@@ -213,6 +214,7 @@ class RucioAdapter:
                             "paths": path,
                         }
                     )
+            no_replica_files += (nfiles - len(g_files))
             yield g_files
 
         if no_replica_files > 0:
