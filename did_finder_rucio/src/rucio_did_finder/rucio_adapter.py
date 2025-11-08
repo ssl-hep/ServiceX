@@ -214,7 +214,7 @@ class RucioAdapter:
                             "paths": path,
                         }
                     )
-            no_replica_files += (nfiles - len(g_files))
+            no_replica_files += nfiles - len(g_files)
             yield g_files
 
         if no_replica_files > 0:
