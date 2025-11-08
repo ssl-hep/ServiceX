@@ -86,6 +86,7 @@ class TestLookupRequest:
             "rucio_did_finder.rucio_adapter.RucioAdapter.list_datasets_for_did",
             return_value=["abc:def"],
         )
+        mock_did_client.list_files.return_value = ["ghi"]
         mock_replica_client.list_replicas.return_value = """<?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
  <file name="ghi">
