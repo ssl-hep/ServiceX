@@ -32,6 +32,7 @@ import shutil
 import sys
 import time
 import timeit
+import re
 from argparse import Namespace
 from hashlib import sha1, sha256
 from pathlib import Path
@@ -133,6 +134,9 @@ def transform_file(
 
     # Prioritize the replicas
     _file_paths = prioritize_replicas(paths)
+
+    # Change davs to https
+    _file_paths = change_davs_to_https(paths)
 
     # adding cache prefix
     _file_paths = prepend_xcache(_file_paths)
@@ -514,6 +518,10 @@ def prioritize_replicas(replicas: list[str]) -> list[str]:
     http_replicas = [replica for replica in replicas if replica.startswith("http")]
     root_replicas = [replica for replica in replicas if not replica.startswith("http")]
     return root_replicas + http_replicas
+
+
+def change_davs_to_https(replicas: list[str]) -> list[str]:
+    return [re.sub("^davs", "https", _) for _ in replicas]
 
 
 def get_process_info():

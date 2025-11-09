@@ -173,7 +173,7 @@ class RucioAdapter:
             try:
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
-                    schemes=["root", "http", "https"],
+                    schemes=["davs", "root", "http", "https"],
                     metalink=True,
                     sort="geoip",
                     rse_expression="istape=False\\type=SPECIAL",
