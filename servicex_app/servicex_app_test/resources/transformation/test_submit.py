@@ -609,7 +609,9 @@ class TestValidateCustomDockerImage(ResourceTestBase):
     def test_validate_with_multiple_prefixes(self):
         """Test validation with multiple allowed prefixes"""
         extra_config = {
-            "TOPCP_ALLOWED_IMAGES": '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+            "TOPCP_ALLOWED_IMAGES": (
+                '["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]'
+            )
         }
         client = self._test_client(extra_config=extra_config)
         with client.application.app_context():
