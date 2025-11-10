@@ -249,8 +249,6 @@ class SubmitTransformationRequest(ServiceXResource):
                     if "docker_image" in selection:
                         custom_docker_image = selection["docker_image"]
                         validate_custom_docker_image(custom_docker_image)
-                        print("test!!")
-                        print(custom_docker_image)
                 except json.decoder.JSONDecodeError:
                     raise BadRequest("Malformed JSON submitted")
 
