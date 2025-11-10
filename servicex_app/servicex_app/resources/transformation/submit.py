@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import uuid
 import json
-import os
 from datetime import datetime, timezone
 from typing import Optional, List
 
