@@ -42,17 +42,15 @@ from werkzeug.exceptions import BadRequest, HTTPException
 
 
 def validate_custom_docker_image(image_name: str) -> bool:
-    allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
+    allowed_images_json = current_app.config.get("TOPCP_ALLOWED_IMAGES")
 
     if not allowed_images_json:
         raise BadRequest("Custom Docker images are not allowed.")
 
     try:
         allowed_prefixes = json.loads(allowed_images_json)
-
         if not isinstance(allowed_prefixes, list):
             raise BadRequest("TopCP allowed images are improperly configured.")
-
         for prefix in allowed_prefixes:
             if image_name.startswith(prefix):
                 return True
@@ -252,6 +250,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     if "docker_image" in selection:
                         custom_docker_image = selection["docker_image"]
                         validate_custom_docker_image(custom_docker_image)
+                        print("test!!")
+                        print(custom_docker_image)
                 except json.decoder.JSONDecodeError:
                     raise BadRequest("Malformed JSON submitted")
 
