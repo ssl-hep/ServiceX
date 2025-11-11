@@ -17,6 +17,9 @@ RUN poetry config virtualenvs.create false && \
 
 RUN pip install gunicorn
 
+COPY boot.sh ./
+RUN chmod 755 boot.sh
+
 COPY transformer_capabilities.json ./
 RUN chmod 644 transformer_capabilities.json
 
@@ -26,11 +29,9 @@ RUN chmod 777 -R servicex
 COPY app.conf .
 RUN chmod 755 app.conf
 
-RUN chmod 755 /home/servicex/servicex/boot.sh
-
 USER servicex
 
 ENV CODEGEN_CONFIG_FILE="/home/servicex/app.conf"
 
 EXPOSE 5000
-ENTRYPOINT ["/home/servicex/servicex/boot.sh"]
+ENTRYPOINT ["./boot.sh"]

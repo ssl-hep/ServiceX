@@ -19,13 +19,6 @@ spec:
       containers:
       - name: {{ $.Release.Name }}-code-gen-{{ $codeGenName }}
         image: {{ .image }}:{{ .tag }}
-        {{- if eq $.Values.app.environment "dev" }}
-        {{- if eq $codeGenName "topcp" }}
-        {{- if $.Values.app.reload }}
-        command: [ "./servicex/boot.sh", "web_service", "--reload" ]
-        {{- end }}
-        {{- end }}
-        {{- end }}
         env:
         - name: INSTANCE_NAME
           value: {{ $.Release.Name }}
@@ -42,26 +35,5 @@ spec:
         imagePullPolicy: {{ .pullPolicy }}
         ports:
           - containerPort: 5000
-        {{- if eq $codeGenName "topcp" }}
-        {{- if eq $.Values.app.environment "dev" }}
-        {{- if $.Values.app.mountLocal }}
-        volumeMounts:
-          - name: host-topcp-volume
-            mountPath: /home/servicex
-        {{- end }}
-        {{- end }}
-        {{- end }}
-
-      {{- if eq $codeGenName "topcp" }}
-      {{- if eq $.Values.app.environment "dev" }}
-      {{- if $.Values.app.mountLocal }}
-      volumes:
-        - name: host-topcp-volume
-          hostPath:
-            path: /mnt/topcp
-            type: DirectoryOrCreate
-      {{- end }}
-      {{- end }}
-      {{- end }}
 {{- end }}
 {{- end }}
