@@ -38,7 +38,6 @@ from servicex_codegen.code_generator import (
 
 def validate_custom_docker_image(image_name: str) -> bool:
     allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
-    print(allowed_images_json)
 
     if not allowed_images_json:
         raise GenerateCodeException("Custom Docker images are not allowed.")
