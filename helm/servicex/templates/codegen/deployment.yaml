@@ -22,6 +22,10 @@ spec:
         env:
         - name: INSTANCE_NAME
           value: {{ $.Release.Name }}
+        {{- if eq $codeGenName "topcp" }}
+        - name: TOPCP_ALLOWED_IMAGES
+          value: {{ $.Values.codeGen.topcp.allowedImages | toJson | quote }}
+        {{- end }}
         - name: TRANSFORMER_SCIENCE_IMAGE
           value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
         {{- $compressionAlgorithm := .compressionAlgorithm | default "ZSTD" }}

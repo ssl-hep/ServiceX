@@ -40,26 +40,6 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest, HTTPException
 
 
-def validate_custom_docker_image(image_name: str) -> bool:
-    allowed_images_json = current_app.config.get("TOPCP_ALLOWED_IMAGES")
-
-    if not allowed_images_json:
-        raise BadRequest("Custom Docker images are not allowed.")
-
-    try:
-        allowed_prefixes = json.loads(allowed_images_json)
-        if not isinstance(allowed_prefixes, list):
-            raise BadRequest("TopCP allowed images are improperly configured.")
-        for prefix in allowed_prefixes:
-            if image_name.startswith(prefix):
-                return True
-
-        raise BadRequest(f"Custom Docker image '{image_name}' not allowed.")
-
-    except json.JSONDecodeError:
-        raise BadRequest("TopCP allowed images are improperly configured.")
-
-
 class SubmitTransformationRequest(ServiceXResource):
     @classmethod
     def make_api(
@@ -241,21 +221,7 @@ class SubmitTransformationRequest(ServiceXResource):
             ) = self.code_gen_service.generate_code_for_selection(
                 request_rec, namespace, user_codegen_name
             )
-
-            custom_docker_image = None
-            if user_codegen_name == "topcp":
-                try:
-                    selection = json.loads(args["selection"])
-                    if "docker_image" in selection:
-                        custom_docker_image = selection["docker_image"]
-                        validate_custom_docker_image(custom_docker_image)
-                except json.decoder.JSONDecodeError:
-                    raise BadRequest("Malformed JSON submitted")
-
-            if custom_docker_image:
-                request_rec.image = custom_docker_image
-            else:
-                request_rec.image = codegen_transformer_image
+            request_rec.image = codegen_transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:

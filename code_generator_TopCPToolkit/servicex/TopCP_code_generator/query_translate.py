@@ -1,4 +1,3 @@
-import json
 import os
 
 options = {
@@ -44,9 +43,7 @@ options = {
 }
 
 
-def generate_files_from_query(query, query_file_path):
-    jquery = json.loads(query)
-
+def generate_files_from_query(jquery: dict, query_file_path):
     runTopCommand = [
         "runTop_el.py",
         "-i",
