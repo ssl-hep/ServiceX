@@ -88,6 +88,110 @@ def test_generate_code():
             translator.generate_code(query, tmpdirname)
 
 
+def test_generate_code_with_custom_docker_image():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+    os.environ["TOPCP_ALLOWED_IMAGES"] = '["sslhep/custom_image:"]'
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        query = (
+            '{"reco": "CommonServices:\\n  systematicsHistogram: \'listOfSystematics\'\\n\\n'
+            "PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n"
+            "    runGRL: False\\n\\nElectrons:\\n  - containerName: 'AnaElectrons'\\n"
+            "    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n"
+            "      - selectionName: 'loose'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'NonIso'\\n        noEffSF: True\\n"
+            "      - selectionName: 'tight'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'Tight_VarRad'\\n        noEffSF: True\\n"
+            "    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n"
+            "        useClusterEta: True\\n\\n"
+            "# After configuring each container, many variables will be saved automatically.\\n"
+            "Output:\\n  treeName: 'reco'\\n  vars: []\\n  metVars: []\\n  containers:\\n"
+            "      # Format should follow: '<suffix>:<output container>'\\n"
+            "      el_: 'AnaElectrons'\\n      '': 'EventInfo'\\n  commands:\\n"
+            "    # Turn output branches on and off with 'enable' and 'disable'\\n\\n"
+            'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
+            '"no_systematics": true, "no_filter": false, '
+            '"docker_image": "sslhep/custom_image:test"}'
+        )
+
+        expected_hash = "f30db9cc91520d3fc08cffd95b072634"
+        result = translator.generate_code(query, tmpdirname)
+
+        # is the generated code at least syntactically valid Python?
+        try:
+            exec(
+                open(os.path.join(result.output_dir, "generated_transformer.py")).read()
+            )
+        except SyntaxError:
+            pytest.fail("Generated Python is not valid code")
+
+        assert result.hash == expected_hash
+        assert result.image == "sslhep/custom_image:test"
+        assert result.output_dir == os.path.join(tmpdirname, expected_hash)
+
+
+def test_generate_code_fails_with_unknown_selection_key():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        query = (
+            '{"reco": "CommonServices:\\n  systematicsHistogram: \'listOfSystematics\'\\n\\n'
+            "PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n"
+            "    runGRL: False\\n\\nElectrons:\\n  - containerName: 'AnaElectrons'\\n"
+            "    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n"
+            "      - selectionName: 'loose'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'NonIso'\\n        noEffSF: True\\n"
+            "      - selectionName: 'tight'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'Tight_VarRad'\\n        noEffSF: True\\n"
+            "    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n"
+            "        useClusterEta: True\\n\\n"
+            "# After configuring each container, many variables will be saved automatically.\\n"
+            "Output:\\n  treeName: 'reco'\\n  vars: []\\n  metVars: []\\n  containers:\\n"
+            "      # Format should follow: '<suffix>:<output container>'\\n"
+            "      el_: 'AnaElectrons'\\n      '': 'EventInfo'\\n  commands:\\n"
+            "    # Turn output branches on and off with 'enable' and 'disable'\\n\\n"
+            'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
+            '"no_systematics": true, "no_filter": false, "unknown_key": "unknown_value"}'
+        )
+
+        with pytest.raises(KeyError):
+            translator.generate_code(query, tmpdirname)
+
+
+def test_generate_code_fails_with_missing_required_selection_key():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        query = (
+            '{"reco": "CommonServices:\\n  systematicsHistogram: \'listOfSystematics\'\\n\\n'
+            "PileupReweighting: {}\\n\\nEventCleaning:\\n    runEventCleaning: False\\n"
+            "    runGRL: False\\n\\nElectrons:\\n  - containerName: 'AnaElectrons'\\n"
+            "    crackVeto: True\\n    IFFClassification: {}\\n    WorkingPoint:\\n"
+            "      - selectionName: 'loose'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'NonIso'\\n        noEffSF: True\\n"
+            "      - selectionName: 'tight'\\n        identificationWP: 'TightLH'\\n"
+            "        isolationWP: 'Tight_VarRad'\\n        noEffSF: True\\n"
+            "    PtEtaSelection:\\n        minPt: 25000.0\\n        maxEta: 2.47\\n"
+            "        useClusterEta: True\\n\\n"
+            "# After configuring each container, many variables will be saved automatically.\\n"
+            "Output:\\n  treeName: 'reco'\\n  vars: []\\n  metVars: []\\n  containers:\\n"
+            "      # Format should follow: '<suffix>:<output container>'\\n"
+            "      el_: 'AnaElectrons'\\n      '': 'EventInfo'\\n  commands:\\n"
+            "    # Turn output branches on and off with 'enable' and 'disable'\\n\\n"
+            'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
+            '"no_systematics": true}'
+        )
+
+        with pytest.raises(ValueError):
+            translator.generate_code(query, tmpdirname)
+
+
 def test_app():
     import servicex.TopCP_code_generator
 
