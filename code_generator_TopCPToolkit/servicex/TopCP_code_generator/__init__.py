@@ -35,10 +35,12 @@ from servicex.TopCP_code_generator.request_translator import TopCPTranslator
 
 def create_app(test_config=None, provided_translator=None):
     allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
-    allowed_images = json.loads(allowed_images_json)
-    assert isinstance(allowed_images, list)
-    for item in allowed_images:
-        assert isinstance(item, str)
+
+    if allowed_images_json:
+        allowed_images = json.loads(allowed_images_json)
+        assert isinstance(allowed_images, list)
+        for item in allowed_images:
+            assert isinstance(item, str)
 
     return servicex_codegen.create_app(
         test_config,
