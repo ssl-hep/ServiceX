@@ -45,11 +45,7 @@ class CodeGenAdapter:
         return result
 
     def generate_code_for_selection(
-        self,
-        request_record: TransformRequest,
-        namespace: str,
-        user_codegen_name: str,
-        custom_image: Optional[str] = None,
+        self, request_record: TransformRequest, namespace: str, user_codegen_name: str
     ) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
