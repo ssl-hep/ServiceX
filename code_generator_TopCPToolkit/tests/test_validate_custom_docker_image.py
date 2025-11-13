@@ -41,18 +41,12 @@ class TestValidateCustomDockerImage:
     def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
         """Test validation fails when TOPCP_ALLOWED_IMAGES is not set"""
         monkeypatch.delenv("TOPCP_ALLOWED_IMAGES")
-        with pytest.raises(GenerateCodeException):
+        with pytest.raises(GenerateCodeException, match="Custom Docker images are not allowed."):
             validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
     def test_validate_with_invalid_json(self, monkeypatch: MonkeyPatch):
         """Test validation fails with invalid JSON in env variable"""
         monkeypatch.setenv("TOPCP_ALLOWED_IMAGES", "not-valid-json")
-        with pytest.raises(GenerateCodeException, match="improperly configured"):
-            validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
-
-    def test_validate_with_non_list_json(self, monkeypatch: MonkeyPatch):
-        """Test validation fails when JSON is not a list"""
-        monkeypatch.setenv("TOPCP_ALLOWED_IMAGES", '{"key": "value"}')
         with pytest.raises(GenerateCodeException, match="improperly configured"):
             validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 

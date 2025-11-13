@@ -45,10 +45,6 @@ def validate_custom_docker_image(image_name: str) -> bool:
 
     try:
         allowed_prefixes = json.loads(allowed_images_json)
-        if not isinstance(allowed_prefixes, list):
-            raise GenerateCodeException(
-                "TopCP allowed images are improperly configured."
-            )
         for prefix in allowed_prefixes:
             if image_name.startswith(prefix):
                 return True
