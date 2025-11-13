@@ -36,6 +36,7 @@ from servicex_codegen.code_generator import (
     GenerateCodeException,
 )
 
+
 def validate_custom_docker_image(image_name: str) -> bool:
     allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
 
@@ -45,7 +46,9 @@ def validate_custom_docker_image(image_name: str) -> bool:
     try:
         allowed_prefixes = json.loads(allowed_images_json)
         if not isinstance(allowed_prefixes, list):
-            raise GenerateCodeException("TopCP allowed images are improperly configured.")
+            raise GenerateCodeException(
+                "TopCP allowed images are improperly configured."
+            )
         for prefix in allowed_prefixes:
             if image_name.startswith(prefix):
                 return True
@@ -54,6 +57,7 @@ def validate_custom_docker_image(image_name: str) -> bool:
 
     except json.JSONDecodeError:
         raise GenerateCodeException("TopCP allowed images are improperly configured.")
+
 
 class TopCPTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
