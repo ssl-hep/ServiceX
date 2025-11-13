@@ -36,7 +36,7 @@ from servicex_app.decorators import auth_required
 from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
-from werkzeug.exceptions import BadRequest, HTTPException
+from werkzeug.exceptions import BadRequest
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -99,6 +99,7 @@ class SubmitTransformationRequest(ServiceXResource):
         request_id: str,
         config: dict,
     ) -> DatasetManager:
+
         # did xor file_list
         if bool(did) == bool(file_list):
             raise BadRequest("Must provide did or file-list but not both")
@@ -150,6 +151,7 @@ class SubmitTransformationRequest(ServiceXResource):
             uuid.uuid4()
         )  # make sure we have a request id for all messages
         try:
+
             try:
                 args = self.parser.parse_args()
             except BadRequest as bad_request:
@@ -220,6 +222,7 @@ class SubmitTransformationRequest(ServiceXResource):
             ) = self.code_gen_service.generate_code_for_selection(
                 request_rec, namespace, user_codegen_name
             )
+
             request_rec.image = codegen_transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
@@ -267,8 +270,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 "Transformation request submitted!", extra={"requestId": request_id}
             )
             return {"request_id": str(request_id)}
-        except HTTPException:
-            raise
         except Exception as eek:
             current_app.logger.exception(
                 "Got exception while submitting transformation request",
