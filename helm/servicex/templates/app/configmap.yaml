@@ -183,11 +183,6 @@ data:
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
     {{- end }}
 
-    {{- if .Values.codeGen.topcp.enabled }}
-    # TopCP custom image configuration
-    TOPCP_ALLOWED_IMAGES = {{ .Values.codeGen.topcp.allowedImages | toJson | quote }}
-    {{- end }}
-
     {{- $didFinders := list }}
     {{- if .Values.didFinder.CERNOpenData.enabled }}
       {{- $didFinders = append $didFinders "cernopendata" }}
