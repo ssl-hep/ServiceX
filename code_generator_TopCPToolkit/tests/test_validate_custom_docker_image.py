@@ -38,9 +38,8 @@ class TestValidateCustomDockerImage:
         with pytest.raises(GenerateCodeException, match="not allowed"):
             validate_custom_docker_image("unauthorized/image:latest")
 
-    def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
+    def test_validate_with_no_env_variable(self):
         """Test validation fails when TOPCP_ALLOWED_IMAGES is not set"""
-        monkeypatch.delenv("TOPCP_ALLOWED_IMAGES")
         with pytest.raises(
             GenerateCodeException, match="Custom Docker images are not allowed"
         ):

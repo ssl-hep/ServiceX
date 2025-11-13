@@ -25,14 +25,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
 from datetime import datetime, timezone
 from unittest.mock import ANY
 
-import pytest
 from celery import Celery
 from pytest import fixture
-from werkzeug.exceptions import BadRequest
 
 from servicex_app import LookupResultProcessor
 from servicex_app.code_gen_adapter import CodeGenAdapter
