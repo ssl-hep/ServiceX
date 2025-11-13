@@ -136,7 +136,7 @@ def transform_file(
     _file_paths = prioritize_replicas(paths)
 
     # Change davs to https
-    _file_paths = change_davs_to_https(paths)
+    _file_paths = change_davs_to_https(_file_paths)
 
     # adding cache prefix
     _file_paths = prepend_xcache(_file_paths)
