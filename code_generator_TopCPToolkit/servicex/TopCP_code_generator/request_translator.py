@@ -95,9 +95,7 @@ class TopCPTranslator(CodeGenerator):
 
         if "docker_image" in jquery:
             docker_image = jquery["docker_image"]
-
             validate_custom_docker_image(docker_image)
-
             results.image = docker_image
 
         return results
