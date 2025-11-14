@@ -521,6 +521,15 @@ def prioritize_replicas(replicas: list[str]) -> list[str]:
 
 
 def change_davs_to_https(replicas: list[str]) -> list[str]:
+    """
+    Converts all replica URLs in the provided list that start with "davs" to use "https" instead.
+
+    Args:
+        replicas (list[str]): A list of replica URLs or paths.
+
+    Returns:
+        list[str]: A list of replica URLs with "davs" replaced by "https" at the start of each string.
+    """
     return [re.sub("^davs", "https", _) for _ in replicas]
 
 
