@@ -37,6 +37,7 @@ from sqlalchemy import DateTime, func
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import text
 
 from servicex_app.mailgun_adaptor import MailgunAdaptor
 
@@ -321,6 +322,66 @@ class TransformRequest(db.Model):
     @property
     def results(self) -> List["TransformationResult"]:
         return TransformationResult.query.filter_by(request_id=self.request_id).all()
+
+    @classmethod
+    def total_cache_size(cls) -> int:
+        total_bytes_sum = db.session.query(
+            func.sum(TransformationResult.total_bytes)
+        ).scalar()
+        if total_bytes_sum is None:
+            return 0
+        else:
+            return total_bytes_sum
+
+    @classmethod
+    def latest_request_to_accumulated_cache_size(
+        cls, threshold: int
+    ) -> Optional[datetime]:
+        """
+        This query finds the first request where the cumulative total of bytes
+        (summed across all requests up to that point) reaches or exceeds a specified
+        threshold.
+
+        The inner query:
+            - Takes each request from the `requests` table
+            - Uses a **window function** (`SUM() OVER`) to calculate a running total of
+              `total_bytes`
+            - Orders by `submit_time` ascending, so it accumulates bytes chronologically
+            - Creates a `cumulative_bytes` column that shows the total bytes processed up
+              to and including each request
+
+        The outer query:
+            - Filters the inner query to only include requests where `cumulative_bytes`
+              exceeds the specified threshold
+            - Selects the `submit_time` of the first such request
+            - Returns the first such request, or None if no such request exists
+
+        Returns:
+            DateTime: The `submit_time` of the first request where the cumulative total of
+                      bytes exceeds the threshold, or None if no such request exists.
+        """
+        with db.engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    """
+                SELECT request_id, submit_time, cumulative_bytes
+                FROM (
+                    SELECT
+                        request_id,
+                        submit_time,
+                        total_bytes,
+                        SUM(total_bytes) OVER (ORDER BY submit_time ASC) AS cumulative_bytes
+                    FROM requests
+                ) subquery
+                WHERE cumulative_bytes >= :threshold
+                ORDER BY submit_time ASC
+                LIMIT 1;
+                """
+                ),
+                {"threshold": threshold},
+            )
+            row = result.fetchone()
+            return row[1] if row else None
 
     def truncate_results(self):
         TransformationResult.query.filter_by(request_id=self.request_id).delete()

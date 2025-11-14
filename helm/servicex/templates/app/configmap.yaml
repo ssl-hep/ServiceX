@@ -165,6 +165,10 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
+    {{ if .Values.dataLifecycle.enabled}}
+    MAX_DESIRED_TRANSFORM_CACHE_SIZE = "{{.Values.dataLifecycle.maxDesiredCacheSize}}"
+    {{ end }}
+
     {{ if .Values.codeGen }}
     {{- $code_gen_service_urls := list }}
     {{- $code_gen_images := list }}

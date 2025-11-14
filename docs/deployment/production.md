@@ -384,3 +384,24 @@ NAME                                     CPU(cores)   MEMORY(bytes)
 servicex-code-gen-844f449cc5-d7q7b       1m           140Mi
 servicex-did-finder-56dfdbb85-pfrn7      1m           28Mi
 ```
+
+## Data Lifecycle Service
+A Kubernetes Cron job can be deployed to the cluster to handle periodic data lifecycle operations to clear out old
+transforms and their results.
+
+The lifecycle manager is enabled by setting `dataLifecycle.enabled` to true. The schedule for the job to run is
+specified with a cron-style string in `dataLifecycle.schedule`. See the
+[K8s cron documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax))
+for instructions creating this schedule string.
+
+Each time the operation runs it will delete transforms that are older than the retention policy set in
+`dataLifecycle.retention`. This is specified in the time delta strings as used by the `date` command. Complete
+documentation on this can be found in the
+[date reference](https://www.geeksforgeeks.org/date-command-linux-examples/#4-how-to-display-past-dates). The
+default is _7 days ago_.
+
+Even with the retention policy, it's possible that the cache will grow beyond allocated storage. You can also
+specify `dataLifecycle.maxDesiredCacheSize` as a maximum size you want to keep the cache at. When the lifecycle
+runs it will keep going beyond the retention date to delete as many transforms as needed to get the system back
+down below this threshold. It deletes the oldest transforms first. This is specified as a string with units of
+`Mb`, `Gb`, or `Tb` in the string.

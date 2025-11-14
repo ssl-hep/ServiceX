@@ -26,18 +26,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime
-from unittest.mock import patch, ANY
+from unittest.mock import ANY
 
 from pytest import fixture, mark
 
 from servicex_app.models import (
     Dataset,
-    TransformationResult,
-    TransformRequest,
     DatasetFile,
+    TransformRequest,
+    TransformationResult,
 )
-from servicex_app_test.resource_test_base import ResourceTestBase
 from servicex_app.resources.internal.data_lifecycle_ops import DataLifecycleOps
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestDataLifecycleOps(ResourceTestBase):
@@ -228,16 +228,56 @@ class TestDataLifecycleOps(ResourceTestBase):
 
         assert len(db_session.query(DatasetFile).all()) == 1
 
-    @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",  # noqa: E501
-        return_value=["expired"],
+    @fixture
+    def mock_delete_expired(self, mocker):
+        mock = mocker.patch(f"{self.module}.DataLifecycleOps.delete_expired_transforms")
+        mock.return_value = ("expired",)
+        yield mock
+
+    @fixture
+    def mock_orphaned(self, mocker):
+        mock = mocker.patch(f"{self.module}.DataLifecycleOps.delete_orphaned_datasets")
+        mock.return_value = ("orphaned",)
+        yield mock
+
+    @fixture
+    def mock_transform_request(self, mocker):
+        mock = mocker.patch(f"{self.module}.TransformRequest")
+        yield mock
+
+    @mark.parametrize(
+        "max_cache_size, cache_size, reduce_by",
+        [
+            ("5000", 7000, 7000 - 5000),
+            ("5Mb", 7 * 1024**2, 7 * 1024**2 - 5 * 1024**2),
+            ("5Gb", 7 * 1024**3, 7 * 1024**3 - 5 * 1024**3),
+            ("5Tb", 7 * 1024**4, 7 * 1024**4 - 5 * 1024**4),
+            ("5Pb", 7 * 1024**5, 7 * 1024**5 - 5 * 1024**5),
+        ],
     )
-    @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",  # noqa: E501
-        return_value=["orphaned"],
-    )
-    def test_post(self, mock_orphaned, mock_delete_expired, mocker):
-        client = self._test_client()
+    def test_post(
+        self,
+        mock_transform_request,
+        mock_orphaned,
+        mock_delete_expired,
+        max_cache_size,
+        cache_size,
+        reduce_by,
+    ):
+        client = self._test_client(
+            extra_config={"MAX_DESIRED_TRANSFORM_CACHE_SIZE": max_cache_size}
+        )
+        mock_transform_request.total_cache_size.side_effect = [
+            cache_size,
+            cache_size - reduce_by,
+        ]
+
+        # In this test we don't want to delete transforms based on reducing the size of the
+        # cache. We will delete transforms on by the cutoff timestamp.
+        mock_transform_request.latest_request_to_accumulated_cache_size.return_value = (
+            datetime.fromisoformat("2021-01-04T14:30:00")
+        )
+
         with client.application.app_context():
             response = client.post(
                 "/servicex/internal/data-lifecycle",
@@ -246,8 +286,11 @@ class TestDataLifecycleOps(ResourceTestBase):
 
         assert response.status_code == 200
         assert response.json == {
+            "cutoff_timestamp": "2021-01-01T00:00:00",
             "deleted_transforms": ["expired"],
             "deleted_datasets": ["orphaned"],
+            "total_bytes_after": cache_size - reduce_by,
+            "total_bytes_before": cache_size,
         }
         mock_delete_expired.assert_called_with(
             session=ANY,
@@ -257,16 +300,156 @@ class TestDataLifecycleOps(ResourceTestBase):
 
         mock_orphaned.assert_called_with(ANY)
 
-    @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_expired_transforms",  # noqa: E501
-        return_value=[],
-    )
-    @patch(
-        "servicex_app.resources.internal.data_lifecycle_ops.DataLifecycleOps.delete_orphaned_datasets",  # noqa: E501
-        return_value=[],
-    )
-    def test_post_no_op(self, mock_orphaned, mock_delete_expired, mocker):
-        client = self._test_client()
+    def test_post_reduce_cache(
+        self, mock_transform_request, mock_orphaned, mock_delete_expired
+    ):
+        client = self._test_client(
+            extra_config={"MAX_DESIRED_TRANSFORM_CACHE_SIZE": "5000"}
+        )
+        mock_transform_request.total_cache_size.side_effect = [7000, 5000]
+
+        # In this test we want to delete transforms based on reducing the size of the
+        # cache, going earlier in time from the cutoff timestamp.
+        cache_reduce_timestamp = "2021-01-01T14:30:00"
+        mock_transform_request.latest_request_to_accumulated_cache_size.return_value = (
+            datetime.fromisoformat(cache_reduce_timestamp)
+        )
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle",
+                query_string={"cutoff_timestamp": "2021-02-01T00:00:00"},
+            )
+
+        assert response.status_code == 200
+        mock_transform_request.latest_request_to_accumulated_cache_size.assert_called_with(
+            2000
+        )
+
+        assert response.json == {
+            "cutoff_timestamp": cache_reduce_timestamp,
+            "deleted_transforms": ["expired"],
+            "deleted_datasets": ["orphaned"],
+            "total_bytes_after": 5000,
+            "total_bytes_before": 7000,
+        }
+        mock_delete_expired.assert_called_with(
+            session=ANY,
+            object_store=None,
+            cutoff_timestamp=datetime.fromisoformat(cache_reduce_timestamp),
+        )
+
+        mock_orphaned.assert_called_with(ANY)
+
+    def test_small_cache(
+        self, mock_transform_request, mock_orphaned, mock_delete_expired
+    ):
+        client = self._test_client(
+            extra_config={"MAX_DESIRED_TRANSFORM_CACHE_SIZE": "5000"}
+        )
+
+        # In this test, the current size of the cache is smaller than the threshold.
+        mock_transform_request.total_cache_size.side_effect = [4000, 4000]
+
+        cutoff_timestamp = "2021-02-01T00:00:00"
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle",
+                query_string={"cutoff_timestamp": cutoff_timestamp},
+            )
+        assert response.status_code == 200
+        # We don't need to worry about final cache size since we are below the threshold
+        # We will only delete based on the cutoff timestamp.
+        mock_transform_request.latest_request_to_accumulated_cache_size.assert_not_called()
+        assert response.json == {
+            "cutoff_timestamp": cutoff_timestamp,
+            "deleted_transforms": ["expired"],
+            "deleted_datasets": ["orphaned"],
+            "total_bytes_after": 4000,
+            "total_bytes_before": 4000,
+        }
+
+        mock_delete_expired.assert_called_with(
+            session=ANY,
+            object_store=None,
+            cutoff_timestamp=datetime.fromisoformat(cutoff_timestamp),
+        )
+
+        mock_orphaned.assert_called_with(ANY)
+
+    def test_no_cache(self, mock_transform_request, mock_orphaned, mock_delete_expired):
+        client = self._test_client(
+            extra_config={"MAX_DESIRED_TRANSFORM_CACHE_SIZE": "5000"}
+        )
+        mock_transform_request.total_cache_size.side_effect = [0, 0]
+
+        cutoff_timestamp = "2021-02-01T00:00:00"
+        mock_transform_request.latest_request_to_accumulated_cache_size.return_value = (
+            None
+        )
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle",
+                query_string={"cutoff_timestamp": cutoff_timestamp},
+            )
+        assert response.status_code == 200
+        mock_transform_request.latest_request_to_accumulated_cache_size.assert_not_called()
+        assert response.json == {
+            "cutoff_timestamp": cutoff_timestamp,
+            "deleted_transforms": ["expired"],
+            "deleted_datasets": ["orphaned"],
+            "total_bytes_after": 0,
+            "total_bytes_before": 0,
+        }
+
+        mock_delete_expired.assert_called_with(
+            session=ANY,
+            object_store=None,
+            cutoff_timestamp=datetime.fromisoformat(cutoff_timestamp),
+        )
+
+        mock_orphaned.assert_called_with(ANY)
+
+    def test_no_config_value(
+        self, mock_transform_request, mock_orphaned, mock_delete_expired
+    ):
+        client = self._test_client(
+            extra_config={}
+        )  # No MAX_DESIRED_TRANSFORM_CACHE_SIZE
+
+        mock_transform_request.total_cache_size.side_effect = [0, 0]
+
+        cutoff_timestamp = "2021-02-01T00:00:00"
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle",
+                query_string={"cutoff_timestamp": cutoff_timestamp},
+            )
+        assert response.status_code == 200
+        mock_transform_request.latest_request_to_accumulated_cache_size.assert_not_called()
+
+    def test_post_no_op(
+        self, mock_orphaned, mock_delete_expired, mock_transform_request
+    ):
+        """
+        In this test, no transforms are expired and no datasets are orphaned.
+        """
+        client = self._test_client(
+            extra_config={"MAX_DESIRED_TRANSFORM_CACHE_SIZE": "5000"}
+        )
+        mock_transform_request.total_cache_size.side_effect = [7000, 7000]
+
+        mock_orphaned.return_value = []
+        mock_delete_expired.return_value = []
+
+        cache_reduce_timestamp = "2021-01-01T14:30:00"
+        mock_transform_request.latest_request_to_accumulated_cache_size.return_value = (
+            datetime.fromisoformat(cache_reduce_timestamp)
+        )
+
         with client.application.app_context():
             response = client.post(
                 "/servicex/internal/data-lifecycle",
@@ -274,7 +457,14 @@ class TestDataLifecycleOps(ResourceTestBase):
             )
 
         assert response.status_code == 200
-        assert response.json == {"deleted_transforms": [], "deleted_datasets": []}
+        assert response.json == {
+            "cutoff_timestamp": "2021-01-01T00:00:00",
+            "deleted_datasets": [],
+            "deleted_transforms": [],
+            "total_bytes_after": 7000,
+            "total_bytes_before": 7000,
+        }
+
         mock_delete_expired.assert_called_with(
             session=ANY,
             object_store=None,
