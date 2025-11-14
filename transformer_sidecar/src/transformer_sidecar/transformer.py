@@ -132,11 +132,11 @@ def transform_file(
     if convert_root_to_parquet:
         result_format = "root"
 
-    # Prioritize the replicas
-    _file_paths = prioritize_replicas(paths)
-
     # Change davs to https
-    _file_paths = change_davs_to_https(_file_paths)
+    _file_paths = change_davs_to_https(paths)
+
+    # Prioritize the replicas
+    _file_paths = prioritize_replicas(_file_paths)
 
     # adding cache prefix
     _file_paths = prepend_xcache(_file_paths)
@@ -522,13 +522,15 @@ def prioritize_replicas(replicas: list[str]) -> list[str]:
 
 def change_davs_to_https(replicas: list[str]) -> list[str]:
     """
-    Converts all replica URLs in the provided list that start with "davs" to use "https" instead.
+    Converts all replica URLs in the provided list that start with "davs" to use
+    "https" instead.
 
     Args:
         replicas (list[str]): A list of replica URLs or paths.
 
     Returns:
-        list[str]: A list of replica URLs with "davs" replaced by "https" at the start of each string.
+        list[str]: A list of replica URLs with "davs" replaced by "https" at the
+        start of each string.
     """
     return [re.sub("^davs", "https", _) for _ in replicas]
 
