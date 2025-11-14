@@ -178,7 +178,7 @@ class RucioAdapter:
                     schemes=["root", "http", "https"],
                     metalink=True,
                     sort="geoip",
-                    rse_expression="istape=False",
+                    rse_expression=r"istape=False&(*\type=SPECIAL|cloud=CERN)",
                     ignore_availability=False,
                     client_location=self.client_location(),
                 )
