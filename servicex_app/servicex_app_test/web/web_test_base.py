@@ -123,11 +123,8 @@ class WebTestBase:
     @staticmethod
     def _oauth_tokens():
         return {
-            "access_token": "globus-auth-access-token",
-            "expires_at_seconds": 1596734412,
-            "resource_server": "auth.globus.org",
-            "scope": "email profile openid",
-            "token_type": "Bearer",
+            "access_token": "opaque",
+            "id_token": "opaque"
         }
 
     @staticmethod

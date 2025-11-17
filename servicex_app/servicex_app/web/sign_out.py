@@ -16,7 +16,8 @@ def sign_out():
         scope=oauth.oauth.client_kwargs["scope"],
     )
     oauth.oauth.load_server_metadata()
-    for ty in ("access_token", "refresh_token"):
+    id_token = session["tokens"].get("id_token")
+    for ty in ("access_token",):
         if ty in session["tokens"]:
             client.revoke_token(
                 oauth.oauth.server_metadata["revocation_endpoint"],
@@ -30,9 +31,9 @@ def sign_out():
         ga_logout_url = "".join(
             [
                 oauth.oauth.server_metadata["end_session_endpoint"],
-                f"?client={current_app.config['OAUTH_CLIENT_ID']}",
-                f"&redirect_uri={redirect_uri}",
-                "&redirect_name=ServiceX Portal",
+                f"?client_id={current_app.config['OAUTH_CLIENT_ID']}",
+                f"&id_token_hint={id_token}" if id_token else "",
+                f"&post_logout_redirect_uri={redirect_uri}",
             ]
         )
         return redirect(ga_logout_url)

@@ -26,7 +26,8 @@ def auth_callback():
     tokens = oauth.oauth.authorize_access_token()
     id_token = tokens["userinfo"]
 
-    session_tokens = {"access_token": tokens["access_token"]}
+    session_tokens = {"access_token": tokens["access_token"],
+                      "id_token": tokens["id_token"]}
 
     session.update(
         tokens=session_tokens,
