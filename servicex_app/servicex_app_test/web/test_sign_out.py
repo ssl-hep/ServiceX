@@ -12,9 +12,7 @@ class TestSignOut(WebTestBase):
             sess["tokens"] = oauth_tokens
         response: Response = client.get(url_for("sign_out"))
         relevant_tokens = [
-            _[1]
-            for _ in oauth_tokens.items()
-            if _[0] in ("access_token",)
+            _[1] for _ in oauth_tokens.items() if _[0] in ("access_token",)
         ]
         calls = [
             mocker.call(
