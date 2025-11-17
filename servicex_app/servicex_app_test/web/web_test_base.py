@@ -122,10 +122,7 @@ class WebTestBase:
 
     @staticmethod
     def _oauth_tokens():
-        return {
-            "access_token": "opaque",
-            "id_token": "opaque"
-        }
+        return {"access_token": "opaque", "id_token": "opaque"}
 
     @staticmethod
     def _globus_metadata():
