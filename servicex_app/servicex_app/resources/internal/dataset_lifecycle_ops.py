@@ -41,7 +41,7 @@ class DatasetLifecycleOps(ServiceXResource):
         """
         now = datetime.now()
         try:
-            age = float(request.args.get("age", 24))
+            age = float(request.get_json().get("age", 24))
         except Exception:
             return {"message": "Invalid age parameter"}, 422
         delta = timedelta(hours=age)
