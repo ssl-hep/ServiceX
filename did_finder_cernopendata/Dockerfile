@@ -1,4 +1,4 @@
-FROM cernopendata/cernopendata-client:0.3.0
+FROM python:3.10
 
 LABEL maintainer="Gordon Watts <gwatts@uw.edu>"
 
@@ -11,12 +11,6 @@ WORKDIR /opt/servicex
 RUN useradd -g 0 -ms /bin/bash celery
 
 ENV  POETRY_VERSION=2.1.1
-
-# There is a bug in poetry with no virtual env where it can delete this package
-# during install. If we delete it before installing poetry it will
-# recognize it as its own and handle it correctly
-# See: https://github.com/python-poetry/poetry/issues/5977
-RUN pip uninstall -y certifi
 
 RUN pip install poetry==$POETRY_VERSION
 

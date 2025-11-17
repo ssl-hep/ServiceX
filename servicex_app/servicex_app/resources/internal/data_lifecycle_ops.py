@@ -101,13 +101,67 @@ class DataLifecycleOps(ServiceXResource):
 
         return deleted_datasets
 
+    @property
+    def max_desired_cache_size(self):
+        value = current_app.config.get("MAX_DESIRED_TRANSFORM_CACHE_SIZE")
+        if not value:
+            return None
+        value = value.strip().lower()
+        if value.endswith("pb"):
+            return int(float(value[:-2]) * 1024**5)
+        elif value.endswith("tb"):
+            return int(float(value[:-2]) * 1024**4)
+        elif value.endswith("gb"):
+            return int(float(value[:-2]) * 1024**3)
+        elif value.endswith("mb"):
+            return int(float(value[:-2]) * 1024**2)
+        else:
+            return int(value)
+
     def post(self):
         """
-        Delete all data older than the given timestamp
+        Clear out old transform requests by timestamp and extends the date range to
+        bring the total cache size down to the desired size.
+
+        Also deletes orphaned datasets.
+
+        Request Args:
+            cutoff_timestamp: ISO formatted datetime string.
         """
 
-        # Start by deleting all the expired transforms
-        cutoff_timestamp = datetime.fromisoformat(request.args["cutoff_timestamp"])
+        with db.session.begin():
+            cutoff_timestamp = datetime.fromisoformat(request.args["cutoff_timestamp"])
+
+            # See how many bytes are currently in the cache
+            total_bytes = TransformRequest.total_cache_size()
+
+            # How much do we need to delete to bring the cache size down to the desired size?
+            # Note, the desired size may be less than the current cache size. Don't go negative!
+            if self.max_desired_cache_size is None:
+                bytes_to_delete = 0
+            else:
+                bytes_to_delete = max(total_bytes - self.max_desired_cache_size, 0)
+
+            # Find the last request needed to bring the cache size down to the desired size
+            if bytes_to_delete:
+                cache_size_timestamp = (
+                    TransformRequest.latest_request_to_accumulated_cache_size(
+                        bytes_to_delete
+                    )
+                )
+            else:
+                cache_size_timestamp = None
+
+            # Extend the time range to include requests needed to bring the
+            # cache size down to the desired size
+            if cache_size_timestamp:
+                cutoff_timestamp = min(cutoff_timestamp, cache_size_timestamp)
+
+        current_app.logger.info(
+            f"Data lifecycle ops request using {cutoff_timestamp.isoformat()} Timestamp "
+            f"to reduce by {bytes_to_delete}"
+        )
+
         deleted_log = self.delete_expired_transforms(
             session=db.session,
             object_store=self.object_store,
@@ -121,7 +175,7 @@ class DataLifecycleOps(ServiceXResource):
         else:
             current_app.logger.info("No expired transforms found")
 
-        # Now lets see if there are any orphaned datasets and delete them
+        # Now let's see if there are any orphaned datasets and delete them
         deleted_datasets = self.delete_orphaned_datasets(db.session)
 
         if deleted_datasets:
@@ -131,4 +185,17 @@ class DataLifecycleOps(ServiceXResource):
         else:
             current_app.logger.info("No orphaned datasets found")
 
-        return {"deleted_transforms": deleted_log, "deleted_datasets": deleted_datasets}
+        with db.session.begin():
+            after_cache_size = TransformRequest.total_cache_size()
+
+        current_app.logger.info(
+            f"Total bytes before delete: {total_bytes}, after delete: {after_cache_size}"
+        )
+
+        return {
+            "total_bytes_before": int(total_bytes),
+            "total_bytes_after": int(after_cache_size),
+            "cutoff_timestamp": cutoff_timestamp.isoformat(),
+            "deleted_transforms": deleted_log,
+            "deleted_datasets": deleted_datasets,
+        }
