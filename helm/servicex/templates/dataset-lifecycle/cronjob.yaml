@@ -19,6 +19,6 @@ spec:
             env:
               - name: LIFETIME
                 value: {{ .Values.datasetLifecycle.cacheLifetime }}
-            command:
-            - curl --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$LIFETIME"
+            args:
+            - --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$(LIFETIME)"
           restartPolicy: OnFailure
