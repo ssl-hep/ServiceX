@@ -14,7 +14,7 @@ class TestSignOut(WebTestBase):
         relevant_tokens = [
             _[1]
             for _ in oauth_tokens.items()
-            if _[0] in ("access_token", "refresh_token")
+            if _[0] in ("access_token",)
         ]
         calls = [
             mocker.call(
@@ -28,9 +28,9 @@ class TestSignOut(WebTestBase):
         ga_logout_url = "".join(
             [
                 "https://auth.globus.org/v2/web/logout",
-                f"?client={client.application.config['OAUTH_CLIENT_ID']}",
-                f"&redirect_uri={url_for('home', _external=True)}",
-                f"&redirect_name={quote('ServiceX Portal')}",
+                f"?client_id={client.application.config['OAUTH_CLIENT_ID']}",
+                "&id_token_hint=opaque"
+                f"&post_logout_redirect_uri={url_for('home', _external=True)}",
             ]
         )
         assert response.status_code == 302
