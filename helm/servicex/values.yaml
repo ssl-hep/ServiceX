@@ -261,7 +261,7 @@ dataLifecycle:
   # See https://www.geeksforgeeks.org/date-command-linux-examples/#4-how-to-display-past-dates
   # for examples
   retention: "7 days ago"
-  
+
   # The cleanup service will go beyond the retention date to keep the server side cache size below
   # this threshold. Specify this as a string with Mb, Gb, Tb or Pb units in the string
   maxDesiredCacheSize: "1Tb"
@@ -277,4 +277,3 @@ datasetLifecycle:
 
   # How long to keep datasets in the cache, in hours
   age: 24
-
