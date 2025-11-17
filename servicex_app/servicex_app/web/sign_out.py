@@ -18,7 +18,7 @@ def sign_out():
     oauth.oauth.load_server_metadata()
     id_token = session["tokens"].get("id_token")
     for ty in ("access_token",):
-        if ty in session["tokens"]:
+        if ty in session["tokens"]:  # pragma: no branch
             client.revoke_token(
                 oauth.oauth.server_metadata["revocation_endpoint"],
                 token=session["tokens"][ty],
