@@ -48,7 +48,9 @@ class DatasetLifecycleOps(ServiceXResource):
         datasets = (
             get_all_datasets()
         )  # by default this will only give non-stale datasets
-        todelete = [_.id for _ in datasets if _.last_updated and (now - _.last_updated) > delta]
+        todelete = [
+            _.id for _ in datasets if _.last_updated and (now - _.last_updated) > delta
+        ]
         current_app.logger.info(
             f"Obsoletion called for datasets older than {delta}. "
             f"Obsoleting {len(todelete)} datasets."
