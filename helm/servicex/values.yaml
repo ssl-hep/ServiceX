@@ -261,3 +261,15 @@ dataLifecycle:
   # See https://www.geeksforgeeks.org/date-command-linux-examples/#4-how-to-display-past-dates
   # for examples
   retention: "7 days ago"
+
+# This obsoletes the dataset cache for datasets older than "cacheLifetime" hours.
+# Does not touch transforms or output files.
+datasetLifecycle:
+  # image should support curl
+  image: curlimages/curl
+  tag: "8.17.0"
+  pullPolicy: Always
+  schedule: "0 * * * *"
+
+  # How long to keep datasets in the cache, in hours
+  age: 24

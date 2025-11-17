@@ -1,4 +1,4 @@
-# Copyright (c) 2024-25, IRIS-HEP
+# Copyright (c) 2025, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,32 +25,31 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask_restful import reqparse
+from datetime import datetime, timedelta
 
-from servicex_app.decorators import auth_required
-from servicex_app.models import Dataset
+from flask import request, current_app
+
 from servicex_app.resources.servicex_resource import ServiceXResource
-
-from typing import List
-
-parser = reqparse.RequestParser()
-parser.add_argument("did-finder", type=str, location="args", required=False)
-parser.add_argument("show-deleted", type=bool, location="args", required=False)
+from ..datasets.get_all import get_all_datasets
+from ..datasets.delete_dataset import delete_dataset
 
 
-def get_all_datasets(args={}) -> List[Dataset]:
-    show_deleted = args["show-deleted"] if "show-deleted" in args else False
-    if "did-finder" in args and args["did-finder"]:
-        did_finder = args["did-finder"]
-        datasets = Dataset.get_by_did_finder(did_finder, show_deleted)
-    else:
-        datasets = Dataset.get_all(show_deleted)
+class DatasetLifecycleOps(ServiceXResource):
+    def post(self):
+        """
+        Obsolete cached datasets older than N hours
+        """
+        now = datetime.now()
+        try:
+            age = float(request.args.get('age', 24))
+        except Exception:
+            return {"message": "Invalid age parameter"}, 422
+        delta = timedelta(hours=age)
+        datasets = get_all_datasets()  # by default this will only give non-stale datasets
+        todelete = [_.id for _ in datasets if (now-_.last_updated) > delta]
+        current_app.logger.info(f"Obsoletion called for datasets older than {delta}. "
+                                f"Obsoleting {len(todelete)} datasets.")
+        for dataset_id in todelete:
+            delete_dataset(dataset_id)
 
-    return datasets
-
-
-class AllDatasets(ServiceXResource):
-    @auth_required
-    def get(self):
-        args = parser.parse_args()
-        return {"datasets": [dataset.to_json() for dataset in get_all_datasets(args)]}
+        return {"message": "Success"}, 200

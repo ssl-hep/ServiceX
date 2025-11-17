@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-dataset-lifecycle-job
+spec:
+  schedule: {{ .Values.datasetLifecycle.schedule | default  "0 * * * *" | quote  }}
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}-dataset-lifecycle-job
+        spec:
+          containers:
+          - name: {{ .Release.Name }}-dataset-lifecycle-job
+            image: {{ .Values.datasetLifecycle.image }}:{{ .Values.datasetLifecycle.tag }}
+            imagePullPolicy: {{ .Values.datasetLifecycle.pullPolicy }}
+            env:
+              - name: LIFETIME
+                value: {{ .Values.datasetLifecycle.cacheLifetime }}
+            command:
+            - curl --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$LIFETIME"
+          restartPolicy: OnFailure
