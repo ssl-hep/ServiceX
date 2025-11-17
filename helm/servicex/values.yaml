@@ -276,4 +276,4 @@ datasetLifecycle:
   schedule: "0 * * * *"
 
   # How long to keep datasets in the cache, in hours
-  age: 24
+  cacheLifetime: 24
