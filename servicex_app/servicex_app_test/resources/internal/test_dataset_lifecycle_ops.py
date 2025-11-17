@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from pytest import fixture
@@ -43,8 +43,8 @@ class TestDatasetLifecycle(ResourceTestBase):
         ) as dsfunc:
             dsfunc.return_value = [
                 Dataset(
-                    last_used=datetime(2022, 1, 1),
-                    last_updated=datetime(2022, 1, 1),
+                    last_used=datetime(2022, 1, 1, tzinfo=timezone.utc),
+                    last_updated=datetime(2022, 1, 1, tzinfo=timezone.utc),
                     id=1,
                     name="not-orphaned",
                     events=100,
@@ -54,8 +54,8 @@ class TestDatasetLifecycle(ResourceTestBase):
                     did_finder="rucio",
                 ),
                 Dataset(
-                    last_used=datetime.now(),
-                    last_updated=datetime.now(),
+                    last_used=datetime.now(timezone.utc),
+                    last_updated=datetime.now(timezone.utc),
                     id=2,
                     name="orphaned",
                     events=100,

@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import request, current_app
 
@@ -39,7 +39,7 @@ class DatasetLifecycleOps(ServiceXResource):
         """
         Obsolete cached datasets older than N hours
         """
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         try:
             age = float(request.get_json().get("age", 24))
         except Exception:
