@@ -29,7 +29,7 @@ from typing import Optional
 
 import pkg_resources
 from flask import current_app
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 from flask_restful import Resource
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
@@ -57,7 +57,10 @@ class ServiceXResource(Resource):
         """
         user = None
         if current_app.config.get("ENABLE_AUTH"):
-            user = UserModel.find_by_email(get_jwt_identity())
+            # since jwt is optional, attach user only when jwt available
+            user_jwt = get_jwt()
+            if user_jwt:
+                user = UserModel.find_by_email(get_jwt_identity())
         return user
 
     @classmethod
