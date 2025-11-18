@@ -32,18 +32,11 @@ def jwt_required_if_auth_enabled(*dargs, **dkwargs):
         # @jwt_required_if_auth_enabled
         if dargs and callable(dargs[0]) and len(dargs) == 1 and not dkwargs:
             func = dargs[0]
-
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-            return wrapper
+            return func
 
         # @jwt_required_if_auth_enabled(...)
         def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-            return wrapper
+            return func
 
         return decorator
 
