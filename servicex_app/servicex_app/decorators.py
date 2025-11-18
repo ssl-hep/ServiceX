@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from typing import Callable
 
@@ -16,7 +17,40 @@ from flask_jwt_extended.exceptions import NoAuthorizationError
 from servicex_app.models import UserModel, db
 
 
-@jwt_required()
+def jwt_required_if_auth_enabled(*dargs, **dkwargs):
+    """
+    Wrapper around flask_jwt_extended.jwt_required that is a no-op
+    when IS_AUTH_ENABLED != 'True'.
+    Supports:
+        @jwt_required_if_auth_enabled
+        @jwt_required_if_auth_enabled()
+        @jwt_required_if_auth_enabled(optional=True)
+    """
+    auth_enabled = os.environ.get("IS_AUTH_ENABLED", "False") == "True"
+
+    if not auth_enabled:
+        # @jwt_required_if_auth_enabled
+        if dargs and callable(dargs[0]) and len(dargs) == 1 and not dkwargs:
+            func = dargs[0]
+
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        # @jwt_required_if_auth_enabled(...)
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        return decorator
+
+    return jwt_required(*dargs, **dkwargs)
+
+
+@jwt_required_if_auth_enabled
 def get_jwt_user():
     user = UserModel.find_by_email(get_jwt_identity())
 

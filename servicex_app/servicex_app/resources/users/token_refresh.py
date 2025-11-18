@@ -27,13 +27,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from flask import current_app
-from flask_jwt_extended import create_access_token, decode_token, get_jwt, jwt_required
+from flask_jwt_extended import create_access_token, decode_token, get_jwt
 from flask_restful import Resource
 from servicex_app.models import UserModel
 
+from servicex_app.decorators import jwt_required_if_auth_enabled
+
 
 class TokenRefresh(Resource):
-    @jwt_required(refresh=True, optional=True)
+    @jwt_required_if_auth_enabled(refresh=True, optional=True)
     def post(self):
         if not current_app.config.get("ENABLE_AUTH"):
             return {
