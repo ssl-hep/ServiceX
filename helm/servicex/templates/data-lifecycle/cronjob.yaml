@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-data-lifecycle-job
 spec:
-  schedule: {{ .Values.dataLifecycle.schedule | default  "* */8 * * *" | quote  }}
+  schedule: {{ .Values.dataLifecycle.schedule | default  "0 */8 * * *" | quote  }}
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
