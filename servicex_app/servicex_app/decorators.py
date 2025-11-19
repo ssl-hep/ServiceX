@@ -20,27 +20,35 @@ from servicex_app.models import UserModel, db
 def jwt_required_if_auth_enabled(*dargs, **dkwargs):
     """
     Wrapper around flask_jwt_extended.jwt_required that is a no-op
-    when IS_AUTH_ENABLED != 'True'.
+    when auth is disabled.
+
     Supports:
         @jwt_required_if_auth_enabled
         @jwt_required_if_auth_enabled()
         @jwt_required_if_auth_enabled(optional=True)
     """
-    auth_enabled = os.environ.get("IS_AUTH_ENABLED", "False") == "True"
 
-    if not auth_enabled:
-        # @jwt_required_if_auth_enabled
-        if dargs and callable(dargs[0]) and len(dargs) == 1 and not dkwargs:
-            func = dargs[0]
-            return func
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            auth_enabled = current_app.config.get("ENABLE_AUTH", False)
 
-        # @jwt_required_if_auth_enabled(...)
-        def decorator(func):
-            return func
+            if not auth_enabled:
+                return func(*args, **kwargs)
 
-        return decorator
+            wrapped = jwt_required(*dargs, **dkwargs)(func)
+            return wrapped(*args, **kwargs)
 
-    return jwt_required(*dargs, **dkwargs)
+        return wrapper
+
+    # @jwt_required_if_auth_enabled
+    if dargs and callable(dargs[0]) and not dkwargs:
+        func = dargs[0]
+        dargs = ()
+        return decorate(func)
+
+    # @jwt_required_if_auth_enabled(...)
+    return decorate
 
 
 @jwt_required_if_auth_enabled

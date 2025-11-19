@@ -47,8 +47,6 @@ spec:
           value: "/opt/servicex/app.conf"
         - name: FLASK_APP
           value: "/home/servicex/servicex/app.py"
-        - name: IS_AUTH_ENABLED
-          value: '{{- ternary "True" "False" .Values.app.auth }}'
         - name: INSTANCE_NAME
           value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
