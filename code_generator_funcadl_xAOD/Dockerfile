@@ -5,7 +5,7 @@ ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 ENV  POETRY_VERSION=2.1.1
 RUN pip install poetry==$POETRY_VERSION
 
-RUN useradd -ms /bin/bash servicex
+RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 
 WORKDIR /home/servicex
 RUN mkdir ./xaod_code_generator
