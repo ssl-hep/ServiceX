@@ -50,7 +50,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
-    @jwt_required_if_auth_enabled(optional=True)
+    @jwt_required_if_auth_enabled
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
@@ -60,10 +60,6 @@ class ServiceXResource(Resource):
         user = None
         if current_app.config.get("ENABLE_AUTH"):
             user = UserModel.find_by_email(get_jwt_identity())
-            # since jwt is optional, attach user only when jwt available
-            user_jwt = get_jwt()
-            if user_jwt:
-                user = UserModel.find_by_email(get_jwt_identity())
         return user
 
     @classmethod

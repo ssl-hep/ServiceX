@@ -35,7 +35,7 @@ from servicex_app.decorators import jwt_required_if_auth_enabled
 
 
 class TokenRefresh(Resource):
-    @jwt_required_if_auth_enabled(refresh=True, optional=True)
+    @jwt_required_if_auth_enabled(refresh=True)
     def post(self):
         if not current_app.config.get("ENABLE_AUTH"):
             return {
@@ -45,8 +45,6 @@ class TokenRefresh(Resource):
             }, 200
 
         claims = get_jwt()
-        if not claims:
-            return {"message": "Missing refresh token"}, 401
 
         user = UserModel.find_by_email(claims["sub"])
         decoded = decode_token(user.refresh_token)
