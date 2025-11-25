@@ -29,7 +29,7 @@ from typing import Optional
 
 import pkg_resources
 from flask import current_app
-from flask_jwt_extended import get_jwt_identity, get_jwt
+from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
