@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v6.0.0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6.0.0
+        uses: actions/setup-python@v6.1.0
         with:
           python-version: ${{ matrix.python-version }}
         if: ${{ matrix.app.test_required }}
