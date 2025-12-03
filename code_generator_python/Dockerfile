@@ -1,6 +1,6 @@
 FROM python:3.10
 
-RUN useradd -ms /bin/bash servicex
+RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 
 WORKDIR /home/servicex
 RUN mkdir ./python_code_generator
