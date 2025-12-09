@@ -175,7 +175,7 @@ class RucioAdapter:
                 nfiles = len(list(self.did_client.list_files(ds[0], ds[1])))
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
-                    schemes=["root", "http", "https"],
+                    schemes=["davs", "root", "http", "https"],
                     metalink=True,
                     sort="geoip",
                     rse_expression=r"istape=False&(*\type=SPECIAL|cloud=CERN)",
