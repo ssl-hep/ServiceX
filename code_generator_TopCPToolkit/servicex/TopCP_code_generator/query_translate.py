@@ -35,7 +35,12 @@ options = {
         "ifTrue": ["--no-filter"],
         "ifFalse": None,
     },
-    "docker_image": {
+    "image": {
+        "properType": str,
+        "properTypeString": "string",
+        "optional": True,
+    },
+    "registry": {
         "properType": str,
         "properTypeString": "string",
         "optional": True,

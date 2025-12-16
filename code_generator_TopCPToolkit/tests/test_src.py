@@ -113,7 +113,7 @@ def test_generate_code_with_custom_docker_image():
             "    # Turn output branches on and off with 'enable' and 'disable'\\n\\n"
             'AddConfigBlocks: []\\n", "parton": null, "particle": null, "max_events": 100, '
             '"no_systematics": true, "no_filter": false, '
-            '"docker_image": "sslhep/custom_image:test"}'
+            '"image": "sslhep/custom_image:test"}'
         )
 
         expected_hash = "f30db9cc91520d3fc08cffd95b072634"

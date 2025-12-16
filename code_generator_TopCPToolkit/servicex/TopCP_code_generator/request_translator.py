@@ -93,9 +93,13 @@ class TopCPTranslator(CodeGenerator):
 
         results = GeneratedFileResult(_hash, query_file_path)
 
-        if "docker_image" in jquery:
-            docker_image = jquery["docker_image"]
-            validate_custom_docker_image(docker_image)
-            results.image = docker_image
+        if "image" in jquery:
+            image = jquery["image"]
+            validate_custom_docker_image(image)
+
+            if "registry" in jquery:
+                image = f"{jquery['registry']}/{image}"
+
+            results.image = image
 
         return results
