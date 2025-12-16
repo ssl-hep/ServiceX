@@ -85,9 +85,7 @@ class TestDockerRepoAdapter:
         mock_repos_response = mocker.Mock()
         mock_repos_response.status_code = 200
         mock_repos_response.json = mocker.Mock(
-            return_value=[
-                {"id": 123, "path": "atlas/myimage"}
-            ]
+            return_value=[{"id": 123, "path": "atlas/myimage"}]
         )
 
         # Mock the tag response
@@ -111,7 +109,9 @@ class TestDockerRepoAdapter:
         mocker.patch("servicex_app.docker_repo_adapter.current_app", new=mock_app)
 
         docker = DockerRepoAdapter()
-        result = docker.check_image_exists("gitlab-registry.cern.ch/atlas/myimage:latest")
+        result = docker.check_image_exists(
+            "gitlab-registry.cern.ch/atlas/myimage:latest"
+        )
         assert result
 
     def test_check_image_exists_gitlab_cern_not_found(self, mocker):
@@ -125,7 +125,9 @@ class TestDockerRepoAdapter:
         mocker.patch.object(requests, "get", return_value=mock_repos_response)
 
         docker = DockerRepoAdapter()
-        result = docker.check_image_exists("gitlab-registry.cern.ch/atlas/myimage:latest")
+        result = docker.check_image_exists(
+            "gitlab-registry.cern.ch/atlas/myimage:latest"
+        )
         assert not result
 
     def test_check_image_exists_gitlab_cern_tag_not_found(self, mocker):
@@ -135,9 +137,7 @@ class TestDockerRepoAdapter:
         mock_repos_response = mocker.Mock()
         mock_repos_response.status_code = 200
         mock_repos_response.json = mocker.Mock(
-            return_value=[
-                {"id": 123, "path": "atlas/myimage"}
-            ]
+            return_value=[{"id": 123, "path": "atlas/myimage"}]
         )
 
         # Mock the tag response as 404
@@ -154,7 +154,9 @@ class TestDockerRepoAdapter:
         mocker.patch.object(requests, "get", side_effect=mock_get)
 
         docker = DockerRepoAdapter()
-        result = docker.check_image_exists("gitlab-registry.cern.ch/atlas/myimage:notfound")
+        result = docker.check_image_exists(
+            "gitlab-registry.cern.ch/atlas/myimage:notfound"
+        )
         assert not result
 
     def test_get_image_by_tag_invalid_registry(self, mocker):
@@ -169,7 +171,9 @@ class TestDockerRepoAdapter:
 
     def test_parse_docker_registry_with_domain(self, mocker):
         docker = DockerRepoAdapter()
-        registry = docker._parse_docker_registry("registry.example.com/myrepo/myimage:latest")
+        registry = docker._parse_docker_registry(
+            "registry.example.com/myrepo/myimage:latest"
+        )
         assert registry == "registry.example.com"
 
     def test_parse_docker_registry_docker_io(self, mocker):
