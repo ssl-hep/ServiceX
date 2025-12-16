@@ -23,7 +23,10 @@ class TestValidateCustomDockerImage:
         """Test validation with multiple allowed prefixes"""
         monkeypatch.setenv(
             "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/custom:", "sslhep/servicex_science_image:"]}}',
+            (
+                '{"docker.io": {"allowedImagePrefixes": '
+                '["sslhep/custom:", "sslhep/servicex_science_image:"]}}'
+            ),
         )
         assert (
             validate_custom_docker_image("sslhep/servicex_science_image:latest") is True
