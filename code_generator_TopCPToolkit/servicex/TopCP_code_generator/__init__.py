@@ -34,13 +34,17 @@ from servicex.TopCP_code_generator.request_translator import TopCPTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
-    allowed_images_json = os.environ.get("TOPCP_ALLOWED_IMAGES")
+    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
 
-    if allowed_images_json:
-        allowed_images = json.loads(allowed_images_json)
-        assert isinstance(allowed_images, list)
-        for item in allowed_images:
-            assert isinstance(item, str)
+    if allowed_docker_registries_json:
+        allowed_docker_registries = json.loads(allowed_docker_registries_json)
+
+        assert isinstance(allowed_docker_registries, dict)
+
+        for registry, options in allowed_docker_registries.items():
+            assert isinstance(options["allowedImagePrefixes"], list)
+            for prefix in options["allowedImagePrefixes"]:
+                assert isinstance(prefix, str)
 
     return servicex_codegen.create_app(
         test_config,

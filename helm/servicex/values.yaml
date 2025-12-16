@@ -33,6 +33,13 @@ app:
   tokenExpires: false
   validateTransformerImage: true
   sqlalchemyEngineOptions: null
+  allowedDockerRegistries:
+    "docker.io":
+      allowedImagePrefixes:
+        - "sslhep/servicex_science_image_topcp:"
+    "gitlab-registry.cern.ch":
+      allowedImagePrefixes:
+        - "kchoi/"
 
 codeGen:
   uproot-raw:
@@ -108,8 +115,6 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_topcp
     defaultScienceContainerTag: 2.17.0-25.2.45
-    allowedImages:
-      - "sslhep/servicex_science_image_topcp:"
 
 didFinder:
   CERNOpenData:

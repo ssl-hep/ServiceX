@@ -23,8 +23,8 @@ spec:
         - name: INSTANCE_NAME
           value: {{ $.Release.Name }}
         {{- if eq $codeGenName "topcp" }}
-        - name: TOPCP_ALLOWED_IMAGES
-          value: {{ $.Values.codeGen.topcp.allowedImages | toJson | quote }}
+        - name: ALLOWED_DOCKER_REGISTRIES
+          value: {{ $.Values.app.allowedDockerRegistries | toJson | quote }}
         {{- end }}
         - name: TRANSFORMER_SCIENCE_IMAGE
           value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
