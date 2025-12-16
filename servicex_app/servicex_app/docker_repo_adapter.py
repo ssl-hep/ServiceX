@@ -33,9 +33,12 @@ from flask import current_app
 
 from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
+
 class DockerRepoAdapter:
     @servicex_retry()
-    def get_image_by_tag(self, repo: str, image: str, tag: str, registry: str) -> requests.Response:
+    def get_image_by_tag(
+        self, repo: str, image: str, tag: str, registry: str
+    ) -> requests.Response:
         if registry == "docker.io":
             return self._dockerhub_get_image_by_tag(repo, image, tag)
 
@@ -44,15 +47,21 @@ class DockerRepoAdapter:
 
         raise ValueError(f"Invalid registry: {registry}")
 
-    def _dockerhub_get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
+    def _dockerhub_get_image_by_tag(
+        self, repo: str, image: str, tag: str
+    ) -> requests.Response:
         query = f"https://hub.docker.com/v2/repositories/{repo}/{image}/tags/{tag}"
         return requests.get(query, timeout=REQUEST_TIMEOUT)
 
-    def _cern_gitlab_get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
+    def _cern_gitlab_get_image_by_tag(
+        self, repo: str, image: str, tag: str
+    ) -> requests.Response:
         project_name = f"{repo}/{image}"
         project_id = quote(project_name, safe="")
 
-        repositories_query = f"https://gitlab.cern.ch/api/v4/projects/{project_id}/registry/repositories"
+        repositories_query = (
+            f"https://gitlab.cern.ch/api/v4/projects/{project_id}/registry/repositories"
+        )
         repositories_request = requests.get(repositories_query, timeout=REQUEST_TIMEOUT)
         repositories = repositories_request.json()
 
