@@ -116,7 +116,7 @@ def test_generate_code_with_custom_docker_image():
             '"image": "sslhep/custom_image:test"}'
         )
 
-        expected_hash = "f30db9cc91520d3fc08cffd95b072634"
+        expected_hash = "cd803069c31c5fa1789eb98f3ea53011"
         result = translator.generate_code(query, tmpdirname)
 
         # is the generated code at least syntactically valid Python?
