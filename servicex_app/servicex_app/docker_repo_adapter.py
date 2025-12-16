@@ -74,7 +74,10 @@ class DockerRepoAdapter:
         if repository_id is None:
             raise ValueError(f"repository {project_name} not found")
 
-        query = f"https://gitlab.cern.ch/api/v4/projects/{project_id}/registry/repositories/{repository_id}/tags/{tag}"
+        query = (
+            "https://gitlab.cern.ch/api/v4/"
+            f"projects/{project_id}/registry/repositories/{repository_id}/tags/{tag}"
+        )
         return requests.get(query, timeout=REQUEST_TIMEOUT)
 
     def check_image_exists(self, tagged_image: str) -> bool:
