@@ -49,7 +49,7 @@ def validate_custom_docker_image(image_name: str, registry_name: str = "docker.i
         if registry_name not in allowed_docker_registries:
             raise GenerateCodeException(f"Docker registry '{registry_name}' is not supported")
 
-        prefixes = allowed_docker_registries[registry_name]
+        prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
 
         for prefix in prefixes:
             if image_name.startswith(prefix):
@@ -105,7 +105,7 @@ class TopCPTranslator(CodeGenerator):
 
             validate_custom_docker_image(image, registry)
 
-            if registry:
+            if registry != "docker.io":
                 results.image = f"{jquery['registry']}/{image}"
             else:
                 results.image = image

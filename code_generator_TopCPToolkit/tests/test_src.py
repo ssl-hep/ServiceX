@@ -91,7 +91,7 @@ def test_generate_code():
 def test_generate_code_with_custom_docker_image():
     os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
     os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
-    os.environ["TOPCP_ALLOWED_IMAGES"] = '["sslhep/custom_image:"]'
+    os.environ["ALLOWED_DOCKER_REGISTRIES"] = '{"docker.io": {"allowedImagePrefixes": ["sslhep/custom_image:"]}}'
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         translator = TopCPTranslator()
