@@ -37,7 +37,9 @@ from servicex_codegen.code_generator import (
 )
 
 
-def validate_custom_docker_image(image_name: str, registry_name: str = "docker.io") -> bool:
+def validate_custom_docker_image(
+    image_name: str, registry_name: str = "docker.io"
+) -> bool:
     allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
 
     if not allowed_docker_registries_json:
@@ -47,7 +49,9 @@ def validate_custom_docker_image(image_name: str, registry_name: str = "docker.i
         allowed_docker_registries: dict = json.loads(allowed_docker_registries_json)
 
         if registry_name not in allowed_docker_registries:
-            raise GenerateCodeException(f"Docker registry '{registry_name}' is not supported")
+            raise GenerateCodeException(
+                f"Docker registry '{registry_name}' is not supported"
+            )
 
         prefixes = allowed_docker_registries[registry_name]
 

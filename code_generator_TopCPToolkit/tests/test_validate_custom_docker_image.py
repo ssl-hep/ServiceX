@@ -12,7 +12,7 @@ class TestValidateCustomDockerImage:
     def test_validate_with_matching_prefix(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv(
             "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": ["sslhep/servicex_science_image_topcp:"]}'
+            '{"docker.io": ["sslhep/servicex_science_image_topcp:"]}',
         )
         result = validate_custom_docker_image(
             "sslhep/servicex_science_image_topcp:2.17.0"
@@ -23,7 +23,7 @@ class TestValidateCustomDockerImage:
         """Test validation with multiple allowed prefixes"""
         monkeypatch.setenv(
             "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": ["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]}'
+            '{"docker.io": ["sslhep/servicex_science_image_topcp:", "docker.io/ssl-hep/"]}',
         )
         assert (
             validate_custom_docker_image("sslhep/servicex_science_image_topcp:latest")
@@ -35,7 +35,7 @@ class TestValidateCustomDockerImage:
         """Test validation fails when image doesn't match any allowed prefix"""
         monkeypatch.setenv(
             "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": ["sslhep/servicex_science_image_topcp:"]}'
+            '{"docker.io": ["sslhep/servicex_science_image_topcp:"]}',
         )
         with pytest.raises(GenerateCodeException, match="not allowed"):
             validate_custom_docker_image("unauthorized/image:latest")
