@@ -25,7 +25,7 @@ class TestTransformationResults(ResourceTestBase):
         mock_code_gen = mocker.MagicMock(CodeGenAdapter)
         mock_code_gen.generate_code_for_selection.return_value = (
             "my-cm",
-            "ssl-hep/func_adl:latest",
+            "sslhep/func_adl:latest",
             "bash",
             "echo",
         )

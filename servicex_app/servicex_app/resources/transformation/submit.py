@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -37,6 +39,37 @@ from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+
+
+def _validate_custom_docker_image(
+        image_name: str,
+        registry_name: str = "docker.io"
+) -> bool:
+    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
+
+    if image_name.startswith(registry_name + "/"):
+        image_name = image_name.lstrip(registry_name + "/")
+
+    try:
+        allowed_docker_registries: dict = json.loads(allowed_docker_registries_json)
+        assert isinstance(allowed_docker_registries, dict)
+    except (json.JSONDecodeError, TypeError, AssertionError):
+        raise ValueError("ALLOWED_DOCKER_REGISTRIES is improperly configured")
+
+    if registry_name not in allowed_docker_registries:
+        raise ValueError(
+            f"Docker registry '{registry_name}' is not supported"
+        )
+
+    prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
+
+    for prefix in prefixes:
+        if image_name.startswith(prefix):
+            return True
+
+    raise ValueError(
+        f"Custom Docker image '{image_name}' not allowed for registry {registry_name}"
+    )
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -223,7 +256,24 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_rec, namespace, user_codegen_name
             )
 
-            request_rec.image = codegen_transformer_image
+            try:
+                jquery = json.loads(args["selection"])
+            except json.decoder.JSONDecodeError:
+                jquery = {}
+
+            registry = jquery.get("registry", "docker.io")
+
+            transformer_image = codegen_transformer_image
+            if "image" in jquery:
+                image = jquery["image"]
+                if registry != "docker.io":
+                    transformer_image = f"{jquery['registry']}/{image}"
+                else:
+                    transformer_image = image
+
+            _validate_custom_docker_image(transformer_image, registry)
+
+            request_rec.image = transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:

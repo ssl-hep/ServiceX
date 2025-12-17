@@ -36,7 +36,7 @@ app:
   allowedDockerRegistries:
     "docker.io":
       allowedImagePrefixes:
-        - "sslhep/servicex_science_image_topcp:"
+        - "sslhep/"
     "gitlab-registry.cern.ch":
       allowedImagePrefixes:
         - "kchoi/"

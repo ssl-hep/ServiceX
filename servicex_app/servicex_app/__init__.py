@@ -28,6 +28,7 @@
 import logging
 import os
 import sys
+import json
 from celery import Celery
 from distutils.util import strtobool
 
@@ -161,6 +162,21 @@ def create_app(
     provided_docker_repo_adapter=None,
     provided_celery_app=None,
 ):
+    # validate ALLOWED_DOCKER_REGISTRIES
+    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
+
+    if allowed_docker_registries_json:
+        allowed_docker_registries = json.loads(allowed_docker_registries_json)
+
+        assert isinstance(allowed_docker_registries, dict)
+
+        for registry, options in allowed_docker_registries.items():
+            assert isinstance(options["allowedImagePrefixes"], list)
+            for prefix in options["allowedImagePrefixes"]:
+                assert isinstance(prefix, str)
+    else:
+        raise ValueError("ALLOWED_DOCKER_REGISTRIES must be configured")
+
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 

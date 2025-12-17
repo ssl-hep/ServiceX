@@ -27,25 +27,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
-import json
 import servicex_codegen
 from servicex.TopCP_code_generator.request_translator import TopCPTranslator
 
 
 def create_app(test_config=None, provided_translator=None):
-    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
-
-    if allowed_docker_registries_json:
-        allowed_docker_registries = json.loads(allowed_docker_registries_json)
-
-        assert isinstance(allowed_docker_registries, dict)
-
-        for registry, options in allowed_docker_registries.items():
-            assert isinstance(options["allowedImagePrefixes"], list)
-            for prefix in options["allowedImagePrefixes"]:
-                assert isinstance(prefix, str)
-
     return servicex_codegen.create_app(
         test_config,
         provided_translator=(

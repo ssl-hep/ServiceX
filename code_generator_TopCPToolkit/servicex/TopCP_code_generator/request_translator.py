@@ -37,34 +37,6 @@ from servicex_codegen.code_generator import (
 )
 
 
-def validate_custom_docker_image(
-    image_name: str, registry_name: str = "docker.io"
-) -> bool:
-    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
-
-    if not allowed_docker_registries_json:
-        raise GenerateCodeException("Custom Docker images are not allowed.")
-
-    try:
-        allowed_docker_registries: dict = json.loads(allowed_docker_registries_json)
-
-        if registry_name not in allowed_docker_registries:
-            raise GenerateCodeException(
-                f"Docker registry '{registry_name}' is not supported"
-            )
-
-        prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
-
-        for prefix in prefixes:
-            if image_name.startswith(prefix):
-                return True
-
-        raise GenerateCodeException(f"Custom Docker image '{image_name}' not allowed.")
-
-    except json.JSONDecodeError:
-        raise GenerateCodeException("TopCP allowed images are improperly configured.")
-
-
 class TopCPTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
@@ -102,16 +74,5 @@ class TopCPTranslator(CodeGenerator):
         )
 
         results = GeneratedFileResult(_hash, query_file_path)
-
-        if "image" in jquery:
-            image = jquery["image"]
-            registry = jquery.get("registry", "docker.io")
-
-            validate_custom_docker_image(image, registry)
-
-            if registry != "docker.io":
-                results.image = f"{jquery['registry']}/{image}"
-            else:
-                results.image = image
 
         return results

@@ -30,7 +30,10 @@ from unittest.mock import ANY
 
 from celery import Celery
 from pytest import fixture
+import pytest
+from pytest import MonkeyPatch
 
+from servicex_app.resources.transformation.submit import _validate_custom_docker_image
 from servicex_app import LookupResultProcessor
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.dataset_manager import DatasetManager
@@ -100,7 +103,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_code_gen = mocker.MagicMock(CodeGenAdapter)
         mock_code_gen.generate_code_for_selection.return_value = (
             "my-cm",
-            "ssl-hep/func_adl:latest",
+            "sslhep/func_adl:latest",
             "bash",
             "echo",
         )
@@ -343,9 +346,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     ):
         mock_code_gen_service.generate_code_for_selection.return_value = (
             "my-cm",
+            "sslhep/func_adl:latest",
             "scala",
             "echo",
-            "ssl-hep/func_adl:latest",
         )
 
         client = self._test_client(
@@ -521,7 +524,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.image == "ssl-hep/func_adl:latest"
+            assert saved_obj.image == "sslhep/func_adl:latest"
 
     def test_submit_transformation_provided_image_ignored(
         self, mocker, mock_codegen, mock_dataset_manager_from_did
@@ -545,7 +548,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.image == "ssl-hep/func_adl:latest"
+            assert saved_obj.image == "sslhep/func_adl:latest"
 
     def test_submit_transformation_auth_enabled(
         self,
@@ -585,3 +588,60 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.title == title
+
+
+class TestValidateCustomDockerImage:
+    """Tests for the validate_custom_docker_image function"""
+
+    def test_validate_with_matching_prefix(self, monkeypatch: MonkeyPatch):
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+        )
+        result = _validate_custom_docker_image(
+            "sslhep/servicex_science_image_topcp:2.17.0"
+        )
+        assert result is True
+
+    def test_validate_with_multiple_prefixes(self, monkeypatch: MonkeyPatch):
+        """Test validation with multiple allowed prefixes"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            (
+                '{"docker.io": {"allowedImagePrefixes": '
+                '["sslhep/custom:", "sslhep/servicex_science_image:"]}}'
+            ),
+        )
+        assert (
+            _validate_custom_docker_image("sslhep/servicex_science_image:latest") is True
+        )
+        assert _validate_custom_docker_image("sslhep/custom:v1") is True
+
+    def test_validate_with_no_matching_prefix(self, monkeypatch: MonkeyPatch):
+        """Test validation fails when image doesn't match any allowed prefix"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+        )
+        with pytest.raises(ValueError, match="not allowed"):
+            _validate_custom_docker_image("unauthorized/image:latest")
+
+    def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
+        """Test validation fails when ALLOWED_DOCKER_REGISTRIES is not set"""
+        monkeypatch.delenv("ALLOWED_DOCKER_REGISTRIES")
+        with pytest.raises(
+            ValueError, match="improperly configured"
+        ):
+            _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_invalid_json(self, monkeypatch: MonkeyPatch):
+        """Test validation fails with invalid JSON in env variable"""
+        monkeypatch.setenv("ALLOWED_DOCKER_REGISTRIES", "not-valid-json")
+        with pytest.raises(ValueError, match="improperly configured"):
+            _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_empty_list(self, monkeypatch: MonkeyPatch):
+        """Test validation fails when allowed list is empty"""
+        monkeypatch.setenv("ALLOWED_DOCKER_REGISTRIES", "[]")
+        with pytest.raises(ValueError, match="improperly configured"):
+            _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
