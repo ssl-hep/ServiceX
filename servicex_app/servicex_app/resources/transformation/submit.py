@@ -42,8 +42,7 @@ from werkzeug.exceptions import BadRequest
 
 
 def _validate_custom_docker_image(
-        image_name: str,
-        registry_name: str = "docker.io"
+    image_name: str, registry_name: str = "docker.io"
 ) -> bool:
     allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
 
@@ -57,9 +56,7 @@ def _validate_custom_docker_image(
         raise ValueError("ALLOWED_DOCKER_REGISTRIES is improperly configured")
 
     if registry_name not in allowed_docker_registries:
-        raise ValueError(
-            f"Docker registry '{registry_name}' is not supported"
-        )
+        raise ValueError(f"Docker registry '{registry_name}' is not supported")
 
     prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
 

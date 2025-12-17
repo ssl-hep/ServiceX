@@ -613,7 +613,8 @@ class TestValidateCustomDockerImage:
             ),
         )
         assert (
-            _validate_custom_docker_image("sslhep/servicex_science_image:latest") is True
+            _validate_custom_docker_image("sslhep/servicex_science_image:latest")
+            is True
         )
         assert _validate_custom_docker_image("sslhep/custom:v1") is True
 
@@ -629,9 +630,7 @@ class TestValidateCustomDockerImage:
     def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
         """Test validation fails when ALLOWED_DOCKER_REGISTRIES is not set"""
         monkeypatch.delenv("ALLOWED_DOCKER_REGISTRIES")
-        with pytest.raises(
-            ValueError, match="improperly configured"
-        ):
+        with pytest.raises(ValueError, match="improperly configured"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
     def test_validate_with_invalid_json(self, monkeypatch: MonkeyPatch):
