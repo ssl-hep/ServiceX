@@ -187,3 +187,45 @@ class TestDockerRepoAdapter:
             "registry.example.com/myrepo/myimage@sha256:abc123"
         )
         assert registry == "registry.example.com"
+
+    def test_check_image_exists_gitlab_cern_multiple_repos(self, mocker):
+        """Test CERN GitLab with multiple repositories, only one matching"""
+        import requests
+        from unittest.mock import MagicMock
+
+        # Mock the repository listing response with multiple repos
+        mock_repos_response = mocker.Mock()
+        mock_repos_response.status_code = 200
+        mock_repos_response.json = mocker.Mock(
+            return_value=[
+                {"id": 100, "path": "atlas/otherimage"},
+                {"id": 123, "path": "atlas/myimage"},
+                {"id": 200, "path": "atlas/anotherimage"},
+            ]
+        )
+
+        # Mock the tag response
+        mock_tag_response = mocker.Mock()
+        mock_tag_response.status_code = 200
+        mock_tag_response.json = mocker.Mock(
+            return_value={"last_updated": "2024-01-15T10:30:00.000000Z"}
+        )
+
+        # Set up mock to return different responses for different URLs
+        def mock_get(url, timeout=None):
+            if "registry/repositories" in url and "/tags/" not in url:
+                return mock_repos_response
+            else:
+                return mock_tag_response
+
+        mocker.patch.object(requests, "get", side_effect=mock_get)
+
+        # Mock the Flask logger at the module level with a new mock object
+        mock_app = MagicMock()
+        mocker.patch("servicex_app.docker_repo_adapter.current_app", new=mock_app)
+
+        docker = DockerRepoAdapter()
+        result = docker.check_image_exists(
+            "gitlab-registry.cern.ch/atlas/myimage:latest"
+        )
+        assert result

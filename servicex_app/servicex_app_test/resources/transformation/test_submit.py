@@ -589,6 +589,46 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.title == title
 
+    def test_submit_transformation_with_custom_image_docker_io(
+        self, mocker, mock_dataset_manager_from_did, mock_codegen
+    ):
+        """Test custom docker image with docker.io registry in selection"""
+        client = self._test_client(code_gen_service=mock_codegen)
+        with client.application.app_context():
+            request = self._generate_transformation_request(
+                selection='{"image": "sslhep/servicex_science_image_topcp:2.17.0", "registry": "docker.io"}'
+            )
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            request_id = response.json["request_id"]
+            saved_obj = TransformRequest.lookup(request_id)
+            assert saved_obj
+            assert saved_obj.image == "sslhep/servicex_science_image_topcp:2.17.0"
+
+    def test_submit_transformation_with_custom_image_with_registry_prefix(
+        self, mocker, mock_dataset_manager_from_did, mock_codegen
+    ):
+        """Test custom docker image with registry prefix that gets conditionally formatted"""
+        client = self._test_client(code_gen_service=mock_codegen)
+        with client.application.app_context():
+            # Test the condition where registry != "docker.io"
+            # This simulates the else branch but with a mock that will accept it
+            mock_validate = mocker.patch(
+                "servicex_app.resources.transformation.submit._validate_custom_docker_image"
+            )
+            request = self._generate_transformation_request(
+                selection='{"image": "atlas/myimage:latest", "registry": "my-registry.io"}'
+            )
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            # Since we're mocking validation, this should proceed
+            assert response.status_code == 200
+            # Verify that the image was formatted with the registry prefix
+            mock_validate.assert_called_once_with("my-registry.io/atlas/myimage:latest", "my-registry.io")
+
 
 class TestValidateCustomDockerImage:
     """Tests for the validate_custom_docker_image function"""
@@ -629,7 +669,7 @@ class TestValidateCustomDockerImage:
 
     def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
         """Test validation fails when ALLOWED_DOCKER_REGISTRIES is not set"""
-        monkeypatch.delenv("ALLOWED_DOCKER_REGISTRIES")
+        monkeypatch.delenv("ALLOWED_DOCKER_REGISTRIES", raising=False)
         with pytest.raises(ValueError, match="improperly configured"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
@@ -644,3 +684,25 @@ class TestValidateCustomDockerImage:
         monkeypatch.setenv("ALLOWED_DOCKER_REGISTRIES", "[]")
         with pytest.raises(ValueError, match="improperly configured"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
+
+    def test_validate_with_registry_prefix_in_image(self, monkeypatch: MonkeyPatch):
+        """Test validation strips registry prefix from image name"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+        )
+        result = _validate_custom_docker_image(
+            "docker.io/sslhep/servicex_science_image_topcp:2.17.0"
+        )
+        assert result is True
+
+    def test_validate_with_unsupported_registry(self, monkeypatch: MonkeyPatch):
+        """Test validation fails when registry is not in allowed list"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}',
+        )
+        with pytest.raises(ValueError, match="not supported"):
+            _validate_custom_docker_image(
+                "myregistry/image:latest", "unsupported-registry.com"
+            )
