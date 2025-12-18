@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 from datetime import datetime
 from unittest.mock import MagicMock
 
@@ -101,6 +102,10 @@ class ResourceTestBase:
         docker_repo_adapter=None,
         celery_app=MagicMock(Celery),
     ) -> FlaskClient:
+        os.environ["ALLOWED_DOCKER_REGISTRIES"] = (
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}'
+        )
+
         config = ResourceTestBase._app_config()
         config["TRANSFORMER_MANAGER_ENABLED"] = False
         config["TRANSFORMER_MANAGER_MODE"] = "external"
