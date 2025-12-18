@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy import text
 
 import pytest
-from pytest import fixture, MonkeyPatch
+from pytest import fixture
 
 import servicex_app
 from servicex_app.models import TransformationResult, TransformRequest, UserModel
@@ -91,11 +91,7 @@ class TestTransformRequest:
         request.files = None
         assert request.files_remaining is None
 
-    def test_total_cache_size(self, app_context, mocker, monkeypatch: MonkeyPatch):
-        monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
-        )
+    def test_total_cache_size(self, app_context, mocker):
         with patch("servicex_app.models.db") as mock_db:
             q = mocker.MagicMock()
             q.scalar.return_value = 1000
