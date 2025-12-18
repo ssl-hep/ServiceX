@@ -88,7 +88,6 @@ class ResourceTestBase:
                 "python": "sslhep/servicex_code_gen_python:develop",
                 "uproot": "sslhep/servicex_code_gen_func_adl_uproot:develop",
             },
-            "ALLOWED_DOCKER_REGISTRIES": '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}'
         }
 
     @staticmethod
@@ -110,7 +109,6 @@ class ResourceTestBase:
 
         if extra_config is not None:
             config.update(extra_config)
-
         if docker_repo_adapter is None:
             docker_repo_adapter = MagicMock(DockerRepoAdapter)
             docker_repo_adapter.check_image_exists.return_value = True

@@ -22,10 +22,6 @@ spec:
         env:
         - name: INSTANCE_NAME
           value: {{ $.Release.Name }}
-        {{- if eq $codeGenName "topcp" }}
-        - name: ALLOWED_DOCKER_REGISTRIES
-          value: {{ $.Values.app.allowedDockerRegistries | toJson | quote }}
-        {{- end }}
         - name: TRANSFORMER_SCIENCE_IMAGE
           value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
         {{- $compressionAlgorithm := .compressionAlgorithm | default "ZSTD" }}
