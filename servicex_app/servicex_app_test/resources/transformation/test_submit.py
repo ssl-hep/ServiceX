@@ -627,7 +627,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             # Since we're mocking validation, this should proceed
             assert response.status_code == 200
             # Verify that the image was formatted with the registry prefix
-            mock_validate.assert_called_once_with("my-registry.io/atlas/myimage:latest", "my-registry.io")
+            mock_validate.assert_called_once_with(
+                "my-registry.io/atlas/myimage:latest", "my-registry.io"
+            )
 
 
 class TestValidateCustomDockerImage:
