@@ -596,7 +596,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(code_gen_service=mock_codegen)
         with client.application.app_context():
             request = self._generate_transformation_request(
-                selection='{"image": "sslhep/servicex_science_image_topcp:2.17.0", "registry": "docker.io"}'
+                selection=(
+                    '{"image": "sslhep/servicex_science_image_topcp:2.17.0"'
+                    ', "registry": "docker.io"}'
+                )
             )
             response = client.post(
                 "/servicex/transformation", json=request, headers=self.fake_header()
