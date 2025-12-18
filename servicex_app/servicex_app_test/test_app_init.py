@@ -8,6 +8,9 @@ class TestAppInit:
         os.environ["APP_CONFIG_FILE"] = str(
             os.path.join(os.path.dirname(__file__), "test.config")
         )
+        os.environ["ALLOWED_DOCKER_REGISTRIES"] = (
+            '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}'
+        )
         app = servicex_app.create_app()
         assert app.config["FOO"] == "bar"
         assert app.config["SECRET_VALUE"] == "blah"
