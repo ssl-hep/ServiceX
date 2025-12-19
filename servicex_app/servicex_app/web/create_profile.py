@@ -47,21 +47,12 @@ def create_profile():
             if new_user.email == current_app.config.get("JWT_ADMIN"):
                 new_user.admin = True
                 new_user.pending = False
+            new_user.save_to_db()
+            session["user_id"] = new_user.id
+            session["admin"] = new_user.admin
+            webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
+            msg_segments = ["Profile created!"]
             try:
-                check_user_email = UserModel.find_by_email(form.email.data)
-                if check_user_email and not check_user_email.refresh_token:
-                    UserModel.update_refresh_token_by_email(
-                        check_user_email.email,
-                        create_refresh_token(identity=sub),
-                        False,
-                    )
-                    new_user.pending = False
-                else:
-                    new_user.save_to_db()
-                session["user_id"] = new_user.id
-                session["admin"] = new_user.admin
-                webhook_url = current_app.config.get("SIGNUP_WEBHOOK_URL")
-                msg_segments = ["Profile created!"]
                 if webhook_url and new_user.pending:
                     res = post_signup(webhook_url, signup(new_user.email))
                     res.raise_for_status()

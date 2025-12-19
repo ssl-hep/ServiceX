@@ -1,4 +1,5 @@
 from flask import current_app
+from flask_jwt_extended import create_refresh_token
 from servicex_app.models import UserModel
 
 
@@ -7,20 +8,21 @@ def check_user_exists(sub):
 
 
 def add_user(sub, email, name, institution, refresh_token):
+    if not refresh_token:
+        refresh_token = create_refresh_token(identity=email)
+
     new_user = UserModel(
         sub=sub,
         email=email,
         name=name,
         institution=institution,
         refresh_token=refresh_token,
+        pending=False,
     )
 
     if new_user.email == current_app.config.get("JWT_ADMIN"):
         new_user.admin = True
-    if refresh_token:
-        new_user.pending = False
-    else:
-        new_user.pending = True
+
     try:
         if not check_user_exists(new_user.sub):
             new_user.save_to_db()
