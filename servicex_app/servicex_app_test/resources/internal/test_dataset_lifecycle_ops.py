@@ -39,7 +39,7 @@ class TestDatasetLifecycle(ResourceTestBase):
     @fixture
     def fake_dataset_list(self):
         with patch(
-            "servicex_app.resources.internal.dataset_lifecycle_ops.get_all_datasets"
+            "servicex_app.models.Dataset.get_all"
         ) as dsfunc:
             dsfunc.return_value = [
                 Dataset(
@@ -77,7 +77,7 @@ class TestDatasetLifecycle(ResourceTestBase):
     def test_deletion(self, fake_dataset_list, client):
         with client.application.app_context():
             with patch(
-                "servicex_app.resources.internal.dataset_lifecycle_ops.delete_dataset"
+                "servicex_app.models.Dataset.delete_dataset"
             ) as deletion_obj:
                 response = client.post(
                     "/servicex/internal/dataset-lifecycle", json={"age": 24}

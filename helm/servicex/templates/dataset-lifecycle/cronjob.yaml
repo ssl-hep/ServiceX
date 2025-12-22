@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-dataset-lifecycle-job
 spec:
-  schedule: {{ .Values.datasetLifecycle.schedule | default  "0 * * * *" | quote  }}
+  schedule: {{ .Values.scheduledTasks.datasetLifecycle.schedule | default  "0 * * * *" | quote  }}
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
@@ -14,11 +14,12 @@ spec:
         spec:
           containers:
           - name: {{ .Release.Name }}-dataset-lifecycle-job
-            image: {{ .Values.datasetLifecycle.image }}:{{ .Values.datasetLifecycle.tag }}
-            imagePullPolicy: {{ .Values.datasetLifecycle.pullPolicy }}
+            image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}
+            imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
             env:
               - name: LIFETIME
-                value: {{ .Values.datasetLifecycle.cacheLifetime }}
-            args:
+                value: {{ .Values.scheduledTasks.datasetLifecycle.cacheLifetime }}
+            command:
+            - /usr/bin/curl
             - --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$(LIFETIME)"
           restartPolicy: OnFailure

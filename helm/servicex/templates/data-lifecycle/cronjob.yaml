@@ -1,10 +1,10 @@
-{{- if .Values.dataLifecycle.enabled -}}
+{{- if .Values.scheduledTasks.dataLifecycle.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ .Release.Name }}-data-lifecycle-job
 spec:
-  schedule: {{ .Values.dataLifecycle.schedule | default  "* */8 * * *" | quote  }}
+  schedule: {{ .Values.scheduledTasks.dataLifecycle.schedule | default  "* */8 * * *" | quote  }}
   concurrencyPolicy: "Forbid"
   jobTemplate:
     spec:
@@ -15,11 +15,11 @@ spec:
         spec:
           containers:
           - name: {{ .Release.Name }}-data-lifecycle-job
-            image: {{ .Values.dataLifecycle.image }}:{{ .Values.dataLifecycle.tag }}
-            imagePullPolicy: {{ .Values.dataLifecycle.pullPolicy }}
+            image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}
+            imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
             env:
               - name: RETENTION_PERIOD
-                value: {{ .Values.dataLifecycle.retention }}
+                value: {{ .Values.scheduledTasks.dataLifecycle.retention }}
 
             command:
             - /bin/sh
