@@ -16,7 +16,41 @@ from flask_jwt_extended.exceptions import NoAuthorizationError
 from servicex_app.models import UserModel, db
 
 
-@jwt_required()
+def jwt_required_if_auth_enabled(*dargs, **dkwargs):
+    """
+    Wrapper around flask_jwt_extended.jwt_required that is a no-op
+    when auth is disabled.
+
+    Supports:
+        @jwt_required_if_auth_enabled
+        @jwt_required_if_auth_enabled()
+        @jwt_required_if_auth_enabled(optional=True)
+    """
+
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            auth_enabled = current_app.config.get("ENABLE_AUTH", False)
+
+            if not auth_enabled:
+                return func(*args, **kwargs)
+
+            wrapped = jwt_required(*dargs, **dkwargs)(func)
+            return wrapped(*args, **kwargs)
+
+        return wrapper
+
+    # @jwt_required_if_auth_enabled
+    if dargs and callable(dargs[0]) and not dkwargs:
+        func = dargs[0]
+        dargs = ()
+        return decorate(func)
+
+    # @jwt_required_if_auth_enabled(...)
+    return decorate
+
+
+@jwt_required_if_auth_enabled
 def get_jwt_user():
     user = UserModel.find_by_email(get_jwt_identity())
 

@@ -84,6 +84,7 @@ class AstAODTranslator(CodeGenerator):
             )  # noqa: E501
         a = body[0].value
 
+        self._exe.reset()
         self._exe.write_cpp_files(self._exe.apply_ast_transformations(a), path)
 
         # Transfer the templated pilot bash script

@@ -29,11 +29,13 @@ from typing import Optional
 
 import pkg_resources
 from flask import current_app
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
 from servicex_app.transformer_manager import TransformerManager
+
+from servicex_app.decorators import jwt_required_if_auth_enabled
 
 
 class ServiceXResource(Resource):
@@ -48,7 +50,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
-    @jwt_required(optional=True)
+    @jwt_required_if_auth_enabled
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
