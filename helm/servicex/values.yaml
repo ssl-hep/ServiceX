@@ -41,7 +41,7 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.2
+    defaultScienceContainerTag: 5.6.9
     compressionAlgorithm: ZSTD
     compressionLevel: 5
 
@@ -51,7 +51,7 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.2
+    defaultScienceContainerTag: 5.6.9
 
   python:
     enabled: true
@@ -59,7 +59,7 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.2
+    defaultScienceContainerTag: 5.6.9
 
   rdataframe:
     enabled: true
