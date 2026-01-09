@@ -26,7 +26,10 @@ def auth_callback():
     tokens = oauth.oauth.authorize_access_token()
     id_token = tokens["userinfo"]
 
-    session_tokens = {"access_token": tokens["access_token"]}
+    session_tokens = {
+        "access_token": tokens["access_token"],
+        "id_token": tokens["id_token"],
+    }
 
     session.update(
         tokens=session_tokens,
@@ -47,5 +50,6 @@ def auth_callback():
         if user:
             session["user_id"] = user.id
             session["admin"] = user.admin
+            session["email"] = identity
             return redirect(url_for("user-dashboard"))
     return redirect(url_for("create_profile"))

@@ -537,6 +537,21 @@ class Dataset(db.Model):
         else:
             return cls.query.filter_by(stale=False)
 
+    @classmethod
+    def delete_dataset(cls, dataset_id) -> Optional[bool]:
+        dataset = cls.find_by_id(dataset_id)
+
+        if not dataset:
+            return None
+
+        if dataset.stale:
+            return False
+
+        dataset.stale = True
+        dataset.save_to_db()
+
+        return True
+
 
 class DatasetFile(db.Model):
     __tablename__ = "files"

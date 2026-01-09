@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: Pull flux_river_configs
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           repository: ssl-hep/flux_river_configs
           ref: main
           path: flux_river_configs
           token: ${{ secrets.API_TOKEN_GITHUB }}
       - name: Pull ssl-helm-charts
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           repository: ssl-hep/ssl-helm-charts
           ref: gh-pages
@@ -43,7 +43,7 @@ jobs:
       - name: Set version in helm values.yaml
         # Update the tags for images in the helm Chart.yaml and values.yaml to match
         # The deployed docker image tag
-        uses: mikefarah/yq@v4.49.1
+        uses: mikefarah/yq@v4.50.1
         with:
           cmd: |
             # Update the version of the helm chart
@@ -88,7 +88,7 @@ jobs:
           user-email: 'bengal1@illinois.edu'
 
       - name: Set version in flux_river_config for the production environment
-        uses: mikefarah/yq@v4.49.1
+        uses: mikefarah/yq@v4.50.1
         with:
           cmd: |
             # Update the chart version to pick up
@@ -107,7 +107,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2.5.0
         with:
           tag_name: ${{ github.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -165,8 +165,8 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
-    {{ if .Values.dataLifecycle.enabled}}
-    MAX_DESIRED_TRANSFORM_CACHE_SIZE = "{{.Values.dataLifecycle.maxDesiredCacheSize}}"
+    {{ if .Values.scheduledTasks.dataLifecycle.enabled}}
+    MAX_DESIRED_TRANSFORM_CACHE_SIZE = "{{.Values.scheduledTasks.dataLifecycle.maxDesiredCacheSize}}"
     {{ end }}
 
     {{ if .Values.codeGen }}

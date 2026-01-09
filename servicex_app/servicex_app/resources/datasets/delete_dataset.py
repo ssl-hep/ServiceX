@@ -1,4 +1,4 @@
-# Copyright (c) 2024, IRIS-HEP
+# Copyright (c) 2024-25, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,15 +33,11 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 class DeleteDataset(ServiceXResource):
     @auth_required
     def delete(self, dataset_id):
-        dataset = Dataset.find_by_id(dataset_id)
-
-        if not dataset:
+        result = Dataset.delete_dataset(dataset_id)
+        if result is None:
             return {"message": f"Dataset {dataset_id} not found"}, 404
 
-        if dataset.stale:
+        if not result:  # result is false
             return {"message": f"Dataset {dataset_id} has already been deleted"}, 400
 
-        dataset.stale = True
-        dataset.save_to_db()
-
-        return {"dataset-id": dataset_id, "stale": True}
+        return {"dataset-id": dataset_id, "stale": True}, 200
