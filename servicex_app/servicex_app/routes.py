@@ -1,4 +1,4 @@
-# Copyright (c) 2019, IRIS-HEP
+# Copyright (c) 2019-2025, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ from servicex_app.resources.datasets.get_all import AllDatasets
 from servicex_app.resources.datasets.get_one import OneDataset
 from servicex_app.resources.transformation.delete import DeleteTransform
 from servicex_app.resources.internal.data_lifecycle_ops import DataLifecycleOps
+from servicex_app.resources.internal.dataset_lifecycle_ops import DatasetLifecycleOps
 
 
 def add_routes(
@@ -198,3 +199,5 @@ def add_routes(
 
     DataLifecycleOps.make_api(object_store)
     api.add_resource(DataLifecycleOps, "/servicex/internal/data-lifecycle")
+
+    api.add_resource(DatasetLifecycleOps, "/servicex/internal/dataset-lifecycle")
