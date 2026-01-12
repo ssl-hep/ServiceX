@@ -39,9 +39,7 @@ class DockerRepoAdapter:
         """
         try:
             result = subprocess.run(
-                ["crane", "digest", tagged_image],
-                capture_output=True,
-                timeout=30
+                ["crane", "digest", tagged_image], capture_output=True, timeout=30
             )
             if result.returncode == 0:
                 current_app.logger.info(f"Requested Image: {tagged_image} exists")
@@ -52,7 +50,5 @@ class DockerRepoAdapter:
                 )
                 return False
         except Exception as e:
-            current_app.logger.error(
-                f"Error checking image {tagged_image}: {str(e)}"
-            )
+            current_app.logger.error(f"Error checking image {tagged_image}: {str(e)}")
             return False
