@@ -36,7 +36,9 @@ def mock_subprocess_success(mocker):
     """Mock subprocess.run to return success (returncode=0)."""
     mock_result = MagicMock()
     mock_result.returncode = 0
-    return mocker.patch("servicex_app.docker_repo_adapter.subprocess.run", return_value=mock_result)
+    return mocker.patch(
+        "servicex_app.docker_repo_adapter.subprocess.run", return_value=mock_result
+    )
 
 
 @pytest.fixture
@@ -44,7 +46,9 @@ def mock_subprocess_failure(mocker):
     """Mock subprocess.run to return failure (returncode=1)."""
     mock_result = MagicMock()
     mock_result.returncode = 1
-    return mocker.patch("servicex_app.docker_repo_adapter.subprocess.run", return_value=mock_result)
+    return mocker.patch(
+        "servicex_app.docker_repo_adapter.subprocess.run", return_value=mock_result
+    )
 
 
 @pytest.fixture(autouse=True)
