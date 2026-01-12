@@ -18,7 +18,7 @@ spec:
             imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
             env:
               - name: LIFETIME
-                value: {{ .Values.scheduledTasks.datasetLifecycle.cacheLifetime }}
+                value: "{{ .Values.scheduledTasks.datasetLifecycle.cacheLifetime }}"
             command:
             - /usr/bin/curl
             - --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$(LIFETIME)"
