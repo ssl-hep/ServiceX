@@ -662,9 +662,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 "/servicex/transformation", json=request, headers=self.fake_header()
             )
             assert response.status_code == 200
-            mock_validate.assert_called_once_with(
-                f"{registry}/{image}"
-            )
+            mock_validate.assert_called_once_with(f"{registry}/{image}")
 
 
 class TestValidateCustomDockerImage:
