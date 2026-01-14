@@ -739,3 +739,48 @@ class TestValidateCustomDockerImage:
         )
         with pytest.raises(ValueError, match="not supported"):
             _validate_custom_docker_image("unsupported-registry.com/image:latest")
+
+    def test_validate_with_port_in_registry(self, monkeypatch: MonkeyPatch):
+        """Test validation with registry that has a port number (2+ slashes)"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"localhost:5000": {"allowedImagePrefixes": ["myapp/"]}}',
+        )
+        result = _validate_custom_docker_image("localhost:5000/myapp/service:v1")
+        assert result is True
+
+    def test_validate_with_registry_and_port_single_slash(self, monkeypatch: MonkeyPatch):
+        """Test validation with registry:port and exactly 1 slash"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"localhost:5000": {"allowedImagePrefixes": ["app"]}}',
+        )
+        result = _validate_custom_docker_image("localhost:5000/app:v1")
+        assert result is True
+
+    def test_validate_with_dotted_registry_single_slash(self, monkeypatch: MonkeyPatch):
+        """Test validation with dotted registry and exactly 1 slash"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"registry.io": {"allowedImagePrefixes": ["myimage"]}}',
+        )
+        result = _validate_custom_docker_image("registry.io/myimage:latest")
+        assert result is True
+
+    def test_validate_image_with_no_slashes(self, monkeypatch: MonkeyPatch):
+        """Test validation with simple image name (no slashes)"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"docker.io": {"allowedImagePrefixes": ["nginx", "alpine"]}}',
+        )
+        result = _validate_custom_docker_image("nginx:latest")
+        assert result is True
+
+    def test_validate_three_component_image(self, monkeypatch: MonkeyPatch):
+        """Test validation with three-component image (registry/namespace/repo:tag)"""
+        monkeypatch.setenv(
+            "ALLOWED_DOCKER_REGISTRIES",
+            '{"gcr.io": {"allowedImagePrefixes": ["myproject/"]}}',
+        )
+        result = _validate_custom_docker_image("gcr.io/myproject/app:v1.0")
+        assert result is True

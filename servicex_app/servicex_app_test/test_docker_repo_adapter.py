@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import subprocess
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -86,4 +88,24 @@ class TestDockerRepoAdapter:
     def test_get_image_by_tag_invalid_registry(self, mock_subprocess_failure):
         docker = DockerRepoAdapter()
         result = docker.check_image_exists("invalid.registry.com/foo/bar:baz")
+        assert not result
+
+    def test_check_image_exists_exception(self, mocker):
+        """Test that exceptions during subprocess call are handled gracefully"""
+        docker = DockerRepoAdapter()
+        mocker.patch(
+            "servicex_app.docker_repo_adapter.subprocess.run",
+            side_effect=TimeoutError("Command timed out")
+        )
+        result = docker.check_image_exists("timeout/image:tag")
+        assert not result
+
+    def test_check_image_exists_subprocess_timeout_exception(self, mocker):
+        """Test that subprocess timeout exceptions are handled"""
+        docker = DockerRepoAdapter()
+        mocker.patch(
+            "servicex_app.docker_repo_adapter.subprocess.run",
+            side_effect=subprocess.TimeoutExpired("crane", 30)
+        )
+        result = docker.check_image_exists("slow/image:tag")
         assert not result
