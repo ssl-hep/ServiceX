@@ -32,6 +32,7 @@ from celery import Celery
 from pytest import fixture
 import pytest
 from pytest import MonkeyPatch
+import json
 
 from servicex_app.resources.transformation.submit import _validate_custom_docker_image
 from servicex_app import LookupResultProcessor
@@ -590,16 +591,31 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.title == title
 
     def test_submit_transformation_with_custom_image_docker_io(
-        self, mocker, mock_dataset_manager_from_did, mock_codegen
+        self, mocker, mock_dataset_manager_from_did
     ):
         """Test custom docker image with docker.io registry in selection"""
-        client = self._test_client(code_gen_service=mock_codegen)
+        image = "sslhep/servicex_science_image_topcp:2.17.0"
+        registry = "docker.io"
+
+        mock_code_gen = mocker.MagicMock(CodeGenAdapter)
+
+        def _side_effect(request_rec, namespace, codegen_name):
+            selection = json.loads(request_rec.selection)
+            selection_image = selection["image"]
+            selection_registry = selection["registry"]
+
+            return (
+                "my-code-gen",
+                f"{selection_registry}/{selection_image}",
+                "bash",
+                "echo",
+            )
+
+        mock_code_gen.generate_code_for_selection.side_effect = _side_effect
+        client = self._test_client(code_gen_service=mock_code_gen)
         with client.application.app_context():
             request = self._generate_transformation_request(
-                selection=(
-                    '{"image": "sslhep/servicex_science_image_topcp:2.17.0"'
-                    ', "registry": "docker.io"}'
-                )
+                selection=json.dumps({"image": image, "registry": registry}),
             )
             response = client.post(
                 "/servicex/transformation", json=request, headers=self.fake_header()
@@ -608,30 +624,46 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json["request_id"]
             saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.image == "sslhep/servicex_science_image_topcp:2.17.0"
+            assert saved_obj.image == f"{registry}/{image}"
 
     def test_submit_transformation_with_custom_image_with_registry_prefix(
-        self, mocker, mock_dataset_manager_from_did, mock_codegen
+        self, mocker, mock_dataset_manager_from_did
     ):
         """Test custom docker image with registry prefix that gets conditionally formatted"""
-        client = self._test_client(code_gen_service=mock_codegen)
+        image = "atlas/myimage:latest"
+        registry = "my-registry.io"
+
+        mock_code_gen = mocker.MagicMock(CodeGenAdapter)
+
+        def _side_effect(request_rec, namespace, codegen_name):
+            selection = json.loads(request_rec.selection)
+            selection_image = selection["image"]
+            selection_registry = selection["registry"]
+
+            return (
+                "my-code-gen",
+                f"{selection_registry}/{selection_image}",
+                "bash",
+                "echo",
+            )
+
+        mock_code_gen.generate_code_for_selection.side_effect = _side_effect
+        client = self._test_client(code_gen_service=mock_code_gen)
+
         with client.application.app_context():
             # Test the condition where registry != "docker.io"
-            # This simulates the else branch but with a mock that will accept it
             mock_validate = mocker.patch(
                 "servicex_app.resources.transformation.submit._validate_custom_docker_image"
             )
             request = self._generate_transformation_request(
-                selection='{"image": "atlas/myimage:latest", "registry": "my-registry.io"}'
+                selection=json.dumps({"image": image, "registry": registry}),
             )
             response = client.post(
                 "/servicex/transformation", json=request, headers=self.fake_header()
             )
-            # Since we're mocking validation, this should proceed
             assert response.status_code == 200
-            # Verify that the image was formatted with the registry prefix
             mock_validate.assert_called_once_with(
-                "my-registry.io/atlas/myimage:latest", "my-registry.io"
+                f"{registry}/{image}"
             )
 
 
@@ -708,6 +740,4 @@ class TestValidateCustomDockerImage:
             '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}',
         )
         with pytest.raises(ValueError, match="not supported"):
-            _validate_custom_docker_image(
-                "myregistry/image:latest", "unsupported-registry.com"
-            )
+            _validate_custom_docker_image("unsupported-registry.com/image:latest")

@@ -41,13 +41,29 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
 
-def _validate_custom_docker_image(
-    image_name: str, registry_name: str = "docker.io"
-) -> bool:
+def _validate_custom_docker_image(image_name: str) -> bool:
     allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
 
-    if image_name.startswith(registry_name + "/"):
-        image_name = image_name.lstrip(registry_name + "/")
+    slash_count = image_name.count("/")
+
+    if slash_count >= 2:
+        # e.g., registry/repository/image:tag
+        parts = image_name.split("/", 1)
+        registry_name = parts[0]
+        image_name_without_registry = parts[1]
+    elif slash_count == 1:
+        first_component = image_name.split("/", 1)[0]
+        if "." in first_component or ":" in first_component:
+            # e.g., "registry.io/image:tag"
+            registry_name = first_component
+            image_name_without_registry = image_name.split("/", 1)[1]
+        else:
+            # e.g., "sslhep/image:tag"
+            registry_name = "docker.io"
+            image_name_without_registry = image_name
+    else:
+        registry_name = "docker.io"
+        image_name_without_registry = image_name
 
     try:
         allowed_docker_registries: dict = json.loads(allowed_docker_registries_json)
@@ -61,11 +77,11 @@ def _validate_custom_docker_image(
     prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
 
     for prefix in prefixes:
-        if image_name.startswith(prefix):
+        if image_name_without_registry.startswith(prefix):
             return True
 
     raise ValueError(
-        f"Custom Docker image '{image_name}' not allowed for registry {registry_name}"
+        f"Custom Docker image '{image_name_without_registry}' not allowed for registry {registry_name}"
     )
 
 
@@ -253,24 +269,9 @@ class SubmitTransformationRequest(ServiceXResource):
                 request_rec, namespace, user_codegen_name
             )
 
-            try:
-                jquery = json.loads(args["selection"])
-            except json.decoder.JSONDecodeError:
-                jquery = {}
+            _validate_custom_docker_image(codegen_transformer_image)
 
-            registry = jquery.get("registry", "docker.io")
-
-            transformer_image = codegen_transformer_image
-            if "image" in jquery:
-                image = jquery["image"]
-                if registry != "docker.io":
-                    transformer_image = f"{jquery['registry']}/{image}"
-                else:
-                    transformer_image = image
-
-            _validate_custom_docker_image(transformer_image, registry)
-
-            request_rec.image = transformer_image
+            request_rec.image = codegen_transformer_image
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:
