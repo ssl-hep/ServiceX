@@ -95,7 +95,7 @@ class TestDockerRepoAdapter:
         docker = DockerRepoAdapter()
         mocker.patch(
             "servicex_app.docker_repo_adapter.subprocess.run",
-            side_effect=TimeoutError("Command timed out")
+            side_effect=TimeoutError("Command timed out"),
         )
         result = docker.check_image_exists("timeout/image:tag")
         assert not result
@@ -105,7 +105,7 @@ class TestDockerRepoAdapter:
         docker = DockerRepoAdapter()
         mocker.patch(
             "servicex_app.docker_repo_adapter.subprocess.run",
-            side_effect=subprocess.TimeoutExpired("crane", 30)
+            side_effect=subprocess.TimeoutExpired("crane", 30),
         )
         result = docker.check_image_exists("slow/image:tag")
         assert not result
