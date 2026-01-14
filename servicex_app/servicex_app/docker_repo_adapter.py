@@ -25,13 +25,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import functools
 import subprocess
 
 from flask import current_app
 
 
 class DockerRepoAdapter:
-    def check_image_exists(self, tagged_image: str) -> bool:
+    @staticmethod
+    @functools.cache
+    def check_image_exists(tagged_image: str) -> bool:
         """
         Checks that the given Docker image exists using crane.
         :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".

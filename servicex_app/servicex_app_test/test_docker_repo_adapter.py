@@ -60,6 +60,11 @@ def mock_current_app(mocker):
 
 
 class TestDockerRepoAdapter:
+    @pytest.fixture(autouse=True)
+    def clear_cache(self):
+        """Clear the cache before each test to ensure test isolation."""
+        DockerRepoAdapter.check_image_exists.cache_clear()
+
     def test_check_image_exists(self, mock_subprocess_success):
         docker = DockerRepoAdapter()
         result = docker.check_image_exists("foo/bar:baz")

@@ -81,7 +81,8 @@ def _validate_custom_docker_image(image_name: str) -> bool:
             return True
 
     raise ValueError(
-        f"Custom Docker image '{image_name_without_registry}' not allowed for registry {registry_name}"
+        f"Custom Docker image '{image_name_without_registry}'"
+        f"not allowed for registry {registry_name}"
     )
 
 
