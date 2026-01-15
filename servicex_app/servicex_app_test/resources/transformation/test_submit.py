@@ -751,7 +751,9 @@ class TestValidateCustomDockerImage:
         result = _validate_custom_docker_image("localhost:5000/myapp/service:v1")
         assert result is True
 
-    def test_validate_with_registry_and_port_single_slash(self, monkeypatch: MonkeyPatch):
+    def test_validate_with_registry_and_port_single_slash(
+        self, monkeypatch: MonkeyPatch
+    ):
         """Test validation with registry:port and exactly 1 slash"""
         monkeypatch.setenv(
             "ALLOWED_IMAGE_PREFIXES",
