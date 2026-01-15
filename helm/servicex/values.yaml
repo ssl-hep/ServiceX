@@ -33,13 +33,10 @@ app:
   tokenExpires: false
   validateTransformerImage: true
   sqlalchemyEngineOptions: null
-  allowedDockerRegistries:
-    "docker.io":
-      allowedImagePrefixes:
-        - "sslhep/"
-    "gitlab-registry.cern.ch":
-      allowedImagePrefixes:
-        - "kchoi/"
+  allowedImagePrefixes:
+    - "docker.io/sslhep"
+    - "sslhep/"
+    - "gitlab-registry.cern.ch/"
 
 codeGen:
   uproot-raw:

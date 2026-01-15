@@ -162,20 +162,18 @@ def create_app(
     provided_docker_repo_adapter=None,
     provided_celery_app=None,
 ):
-    # validate ALLOWED_DOCKER_REGISTRIES
-    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
+    # validate ALLOWED_IMAGE_PREFIXES
+    allowed_image_prefixes_json = os.environ.get("ALLOWED_IMAGE_PREFIXES")
 
-    if allowed_docker_registries_json:
-        allowed_docker_registries = json.loads(allowed_docker_registries_json)
+    if allowed_image_prefixes_json:
+        allowed_image_prefixes = json.loads(allowed_image_prefixes_json)
 
-        assert isinstance(allowed_docker_registries, dict)
+        assert isinstance(allowed_image_prefixes, list)
 
-        for registry, options in allowed_docker_registries.items():
-            assert isinstance(options["allowedImagePrefixes"], list)
-            for prefix in options["allowedImagePrefixes"]:
-                assert isinstance(prefix, str)
+        for prefix in allowed_image_prefixes:
+            assert isinstance(prefix, str)
     else:
-        raise ValueError("ALLOWED_DOCKER_REGISTRIES must be configured")
+        raise ValueError("ALLOWED_IMAGE_PREFIXES must be configured")
 
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)

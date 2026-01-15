@@ -51,8 +51,8 @@ spec:
           value: "{{ .Release.Name }}"
         - name: LOG_LEVEL
           value: "{{ .Values.app.logLevel | upper }}"
-        - name: ALLOWED_DOCKER_REGISTRIES
-          value: {{ .Values.app.allowedDockerRegistries | toJson | quote }}
+        - name: ALLOWED_IMAGE_PREFIXES
+          value: {{ .Values.app.allowedImagePrefixes | toJson | quote }}
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"

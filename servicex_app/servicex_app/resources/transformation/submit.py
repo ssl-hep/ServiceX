@@ -42,47 +42,20 @@ from werkzeug.exceptions import BadRequest
 
 
 def _validate_custom_docker_image(image_name: str) -> bool:
-    allowed_docker_registries_json = os.environ.get("ALLOWED_DOCKER_REGISTRIES")
-
-    slash_count = image_name.count("/")
-
-    if slash_count >= 2:
-        # e.g., registry/repository/image:tag
-        parts = image_name.split("/", 1)
-        registry_name = parts[0]
-        image_name_without_registry = parts[1]
-    elif slash_count == 1:
-        first_component = image_name.split("/", 1)[0]
-        if "." in first_component or ":" in first_component:
-            # e.g., "registry.io/image:tag"
-            registry_name = first_component
-            image_name_without_registry = image_name.split("/", 1)[1]
-        else:
-            # e.g., "sslhep/image:tag"
-            registry_name = "docker.io"
-            image_name_without_registry = image_name
-    else:
-        registry_name = "docker.io"
-        image_name_without_registry = image_name
+    allowed_image_prefixes_json = os.environ.get("ALLOWED_IMAGE_PREFIXES")
 
     try:
-        allowed_docker_registries: dict = json.loads(allowed_docker_registries_json)
-        assert isinstance(allowed_docker_registries, dict)
+        allowed_image_prefixes: list = json.loads(allowed_image_prefixes_json)
+        assert isinstance(allowed_image_prefixes, list)
     except (json.JSONDecodeError, TypeError, AssertionError):
-        raise ValueError("ALLOWED_DOCKER_REGISTRIES is improperly configured")
+        raise ValueError("ALLOWED_IMAGE_PREFIXES is improperly configured")
 
-    if registry_name not in allowed_docker_registries:
-        raise ValueError(f"Docker registry '{registry_name}' is not supported")
-
-    prefixes = allowed_docker_registries[registry_name]["allowedImagePrefixes"]
-
-    for prefix in prefixes:
-        if image_name_without_registry.startswith(prefix):
+    for prefix in allowed_image_prefixes:
+        if image_name.startswith(prefix):
             return True
 
     raise ValueError(
-        f"Custom Docker image '{image_name_without_registry}'"
-        f"not allowed for registry {registry_name}"
+        f"Custom Docker image '{image_name}' does not match any allowed prefix"
     )
 
 

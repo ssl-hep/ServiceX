@@ -101,10 +101,9 @@ class ResourceTestBase:
         lookup_result_processor=MagicMock(LookupResultProcessor),
         docker_repo_adapter=None,
         celery_app=MagicMock(Celery),
+        allowed_image_prefixes='["sslhep/"]',
     ) -> FlaskClient:
-        os.environ["ALLOWED_DOCKER_REGISTRIES"] = (
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}'
-        )
+        os.environ["ALLOWED_IMAGE_PREFIXES"] = allowed_image_prefixes
 
         config = ResourceTestBase._app_config()
         config["TRANSFORMER_MANAGER_ENABLED"] = False

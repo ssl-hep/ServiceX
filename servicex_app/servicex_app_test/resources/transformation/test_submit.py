@@ -612,7 +612,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             )
 
         mock_code_gen.generate_code_for_selection.side_effect = _side_effect
-        client = self._test_client(code_gen_service=mock_code_gen)
+
+        # Need to allow docker.io/sslhep/ prefix since the code generator returns that
+        client = self._test_client(
+            code_gen_service=mock_code_gen,
+            allowed_image_prefixes='["sslhep/", "docker.io/sslhep/"]'
+        )
         with client.application.app_context():
             request = self._generate_transformation_request(
                 selection=json.dumps({"image": image, "registry": registry}),
@@ -670,8 +675,8 @@ class TestValidateCustomDockerImage:
 
     def test_validate_with_matching_prefix(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["sslhep/servicex_science_image_topcp:"]',
         )
         result = _validate_custom_docker_image(
             "sslhep/servicex_science_image_topcp:2.17.0"
@@ -681,11 +686,8 @@ class TestValidateCustomDockerImage:
     def test_validate_with_multiple_prefixes(self, monkeypatch: MonkeyPatch):
         """Test validation with multiple allowed prefixes"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            (
-                '{"docker.io": {"allowedImagePrefixes": '
-                '["sslhep/custom:", "sslhep/servicex_science_image:"]}}'
-            ),
+            "ALLOWED_IMAGE_PREFIXES",
+            '["sslhep/custom:", "sslhep/servicex_science_image:"]',
         )
         assert (
             _validate_custom_docker_image("sslhep/servicex_science_image:latest")
@@ -696,35 +698,35 @@ class TestValidateCustomDockerImage:
     def test_validate_with_no_matching_prefix(self, monkeypatch: MonkeyPatch):
         """Test validation fails when image doesn't match any allowed prefix"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["sslhep/servicex_science_image_topcp:"]',
         )
-        with pytest.raises(ValueError, match="not allowed"):
+        with pytest.raises(ValueError, match="does not match any allowed prefix"):
             _validate_custom_docker_image("unauthorized/image:latest")
 
     def test_validate_with_no_env_variable(self, monkeypatch: MonkeyPatch):
-        """Test validation fails when ALLOWED_DOCKER_REGISTRIES is not set"""
-        monkeypatch.delenv("ALLOWED_DOCKER_REGISTRIES", raising=False)
+        """Test validation fails when ALLOWED_IMAGE_PREFIXES is not set"""
+        monkeypatch.delenv("ALLOWED_IMAGE_PREFIXES", raising=False)
         with pytest.raises(ValueError, match="improperly configured"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
     def test_validate_with_invalid_json(self, monkeypatch: MonkeyPatch):
         """Test validation fails with invalid JSON in env variable"""
-        monkeypatch.setenv("ALLOWED_DOCKER_REGISTRIES", "not-valid-json")
+        monkeypatch.setenv("ALLOWED_IMAGE_PREFIXES", "not-valid-json")
         with pytest.raises(ValueError, match="improperly configured"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
     def test_validate_with_empty_list(self, monkeypatch: MonkeyPatch):
         """Test validation fails when allowed list is empty"""
-        monkeypatch.setenv("ALLOWED_DOCKER_REGISTRIES", "[]")
-        with pytest.raises(ValueError, match="improperly configured"):
+        monkeypatch.setenv("ALLOWED_IMAGE_PREFIXES", "[]")
+        with pytest.raises(ValueError, match="does not match any allowed prefix"):
             _validate_custom_docker_image("sslhep/servicex_science_image_topcp:2.17.0")
 
     def test_validate_with_registry_prefix_in_image(self, monkeypatch: MonkeyPatch):
-        """Test validation strips registry prefix from image name"""
+        """Test validation with registry prefix in allowed prefix"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/servicex_science_image_topcp:"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["docker.io/sslhep/servicex_science_image_topcp:"]',
         )
         result = _validate_custom_docker_image(
             "docker.io/sslhep/servicex_science_image_topcp:2.17.0"
@@ -732,19 +734,19 @@ class TestValidateCustomDockerImage:
         assert result is True
 
     def test_validate_with_unsupported_registry(self, monkeypatch: MonkeyPatch):
-        """Test validation fails when registry is not in allowed list"""
+        """Test validation fails when image doesn't match allowed prefixes"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["sslhep/"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["sslhep/"]',
         )
-        with pytest.raises(ValueError, match="not supported"):
+        with pytest.raises(ValueError, match="does not match any allowed prefix"):
             _validate_custom_docker_image("unsupported-registry.com/image:latest")
 
     def test_validate_with_port_in_registry(self, monkeypatch: MonkeyPatch):
-        """Test validation with registry that has a port number (2+ slashes)"""
+        """Test validation with registry that has a port number"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"localhost:5000": {"allowedImagePrefixes": ["myapp/"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["localhost:5000/myapp/"]',
         )
         result = _validate_custom_docker_image("localhost:5000/myapp/service:v1")
         assert result is True
@@ -752,8 +754,8 @@ class TestValidateCustomDockerImage:
     def test_validate_with_registry_and_port_single_slash(self, monkeypatch: MonkeyPatch):
         """Test validation with registry:port and exactly 1 slash"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"localhost:5000": {"allowedImagePrefixes": ["app"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["localhost:5000/app"]',
         )
         result = _validate_custom_docker_image("localhost:5000/app:v1")
         assert result is True
@@ -761,17 +763,17 @@ class TestValidateCustomDockerImage:
     def test_validate_with_dotted_registry_single_slash(self, monkeypatch: MonkeyPatch):
         """Test validation with dotted registry and exactly 1 slash"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"registry.io": {"allowedImagePrefixes": ["myimage"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["registry.io/myimage"]',
         )
         result = _validate_custom_docker_image("registry.io/myimage:latest")
         assert result is True
 
     def test_validate_image_with_no_slashes(self, monkeypatch: MonkeyPatch):
-        """Test validation with simple image name (no slashes)"""
+        """Test validation with simple image name (no slashes, implicit docker.io)"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"docker.io": {"allowedImagePrefixes": ["nginx", "alpine"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["nginx", "alpine"]',
         )
         result = _validate_custom_docker_image("nginx:latest")
         assert result is True
@@ -779,8 +781,17 @@ class TestValidateCustomDockerImage:
     def test_validate_three_component_image(self, monkeypatch: MonkeyPatch):
         """Test validation with three-component image (registry/namespace/repo:tag)"""
         monkeypatch.setenv(
-            "ALLOWED_DOCKER_REGISTRIES",
-            '{"gcr.io": {"allowedImagePrefixes": ["myproject/"]}}',
+            "ALLOWED_IMAGE_PREFIXES",
+            '["gcr.io/myproject/"]',
         )
         result = _validate_custom_docker_image("gcr.io/myproject/app:v1.0")
+        assert result is True
+
+    def test_validate_gitlab_registry(self, monkeypatch: MonkeyPatch):
+        """Test validation with gitlab-registry.cern.ch prefix"""
+        monkeypatch.setenv(
+            "ALLOWED_IMAGE_PREFIXES",
+            '["sslhep/", "gitlab-registry.cern.ch/"]',
+        )
+        result = _validate_custom_docker_image("gitlab-registry.cern.ch/user/app:latest")
         assert result is True
