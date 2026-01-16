@@ -76,9 +76,6 @@ class TopCPTranslator(CodeGenerator):
         results = GeneratedFileResult(_hash, query_file_path)
 
         if jquery.get("image"):
-            image = jquery["image"]
-            if jquery.get("registry"):
-                image = f"{jquery['registry']}/{image}"
-            results.image = image
+            results.image = jquery["image"]
 
         return results

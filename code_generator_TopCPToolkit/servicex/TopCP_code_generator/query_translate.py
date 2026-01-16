@@ -40,11 +40,6 @@ options = {
         "properTypeString": "string",
         "optional": True,
     },
-    "registry": {
-        "properType": str,
-        "properTypeString": "string",
-        "optional": True,
-    },
 }
 
 
