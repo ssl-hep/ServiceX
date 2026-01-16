@@ -614,7 +614,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         # Need to allow docker.io/sslhep/ prefix since the code generator returns that
         client = self._test_client(
             code_gen_service=mock_code_gen,
-            allowed_image_prefixes='["sslhep/", "docker.io/sslhep/"]'
+            allowed_image_prefixes='["sslhep/", "docker.io/sslhep/"]',
         )
         with client.application.app_context():
             request = self._generate_transformation_request(
@@ -755,5 +755,7 @@ class TestValidateCustomDockerImage:
             "ALLOWED_IMAGE_PREFIXES",
             '["sslhep/", "gitlab-registry.cern.ch/"]',
         )
-        result = _validate_custom_docker_image("gitlab-registry.cern.ch/user/app:latest")
+        result = _validate_custom_docker_image(
+            "gitlab-registry.cern.ch/user/app:latest"
+        )
         assert result is True
