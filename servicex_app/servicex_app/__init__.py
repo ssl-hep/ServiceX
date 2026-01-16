@@ -28,6 +28,7 @@
 import logging
 import os
 import sys
+import json
 from celery import Celery
 from distutils.util import strtobool
 
@@ -161,6 +162,19 @@ def create_app(
     provided_docker_repo_adapter=None,
     provided_celery_app=None,
 ):
+    # validate ALLOWED_IMAGE_PREFIXES
+    allowed_image_prefixes_json = os.environ.get("ALLOWED_IMAGE_PREFIXES")
+
+    if allowed_image_prefixes_json:
+        allowed_image_prefixes = json.loads(allowed_image_prefixes_json)
+
+        assert isinstance(allowed_image_prefixes, list)
+
+        for prefix in allowed_image_prefixes:
+            assert isinstance(prefix, str)
+    else:
+        raise ValueError("ALLOWED_IMAGE_PREFIXES must be configured")
+
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 

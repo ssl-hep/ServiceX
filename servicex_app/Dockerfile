@@ -1,4 +1,8 @@
+FROM gcr.io/go-containerregistry/crane:latest AS crane
+
 FROM python:3.10
+
+COPY --from=crane /ko-app/crane /usr/local/bin/crane
 
 RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 

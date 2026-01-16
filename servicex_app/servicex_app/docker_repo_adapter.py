@@ -25,42 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import re
+import functools
+import subprocess
 
-import requests
 from flask import current_app
-
-from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 
 
 class DockerRepoAdapter:
-    def __init__(self, registry_endpoint="https://hub.docker.com"):
-        self.registry_endpoint = registry_endpoint
-
-    @servicex_retry()
-    def get_image_by_tag(self, repo: str, image: str, tag: str) -> requests.Response:
-        query = f"{self.registry_endpoint}/v2/repositories/{repo}/{image}/tags/{tag}"
-        r = requests.get(query, timeout=REQUEST_TIMEOUT)
-        return r
-
-    def check_image_exists(self, tagged_image: str) -> bool:
+    @staticmethod
+    @functools.cache
+    def check_image_exists(tagged_image: str) -> bool:
         """
-        Checks that the given Docker image
+        Checks that the given Docker image exists using crane.
         :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".
         :return: Whether or not the image exists in the registry.
         """
-        search_result = re.search("(.+)/(.+):(.+)", tagged_image)
-        if not search_result or len(search_result.groups()) != 3:
+        try:
+            result = subprocess.run(
+                ["crane", "digest", tagged_image], capture_output=True, timeout=30
+            )
+            if result.returncode == 0:
+                current_app.logger.info(f"Requested Image: {tagged_image} exists")
+                return True
+            else:
+                current_app.logger.warning(
+                    f"Image {tagged_image} does not exist or is not accessible"
+                )
+                return False
+        except Exception as e:
+            current_app.logger.error(f"Error checking image {tagged_image}: {str(e)}")
             return False
-
-        (repo, image, tag) = search_result.groups()
-        r = self.get_image_by_tag(repo, image, tag)
-
-        if r.status_code == 404:
-            return False
-
-        current_app.logger.info(
-            f"Requested Image: {tagged_image} exists, "
-            f"last updated {r.json()['last_updated']}"
-        )
-        return True

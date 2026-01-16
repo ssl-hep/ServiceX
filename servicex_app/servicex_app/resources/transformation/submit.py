@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
@@ -37,6 +39,24 @@ from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+
+
+def _validate_custom_docker_image(image_name: str) -> bool:
+    allowed_image_prefixes_json = os.environ.get("ALLOWED_IMAGE_PREFIXES")
+
+    try:
+        allowed_image_prefixes: list = json.loads(allowed_image_prefixes_json)
+        assert isinstance(allowed_image_prefixes, list)
+    except (json.JSONDecodeError, TypeError, AssertionError):
+        raise ValueError("ALLOWED_IMAGE_PREFIXES is improperly configured")
+
+    for prefix in allowed_image_prefixes:
+        if image_name.startswith(prefix):
+            return True
+
+    raise ValueError(
+        f"Custom Docker image '{image_name}' does not match any allowed prefix"
+    )
 
 
 class SubmitTransformationRequest(ServiceXResource):
@@ -222,6 +242,8 @@ class SubmitTransformationRequest(ServiceXResource):
             ) = self.code_gen_service.generate_code_for_selection(
                 request_rec, namespace, user_codegen_name
             )
+
+            _validate_custom_docker_image(codegen_transformer_image)
 
             request_rec.image = codegen_transformer_image
 

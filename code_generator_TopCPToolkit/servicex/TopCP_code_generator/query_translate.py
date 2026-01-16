@@ -1,4 +1,3 @@
-import json
 import os
 
 options = {
@@ -36,12 +35,15 @@ options = {
         "ifTrue": ["--no-filter"],
         "ifFalse": None,
     },
+    "image": {
+        "properType": str,
+        "properTypeString": "string",
+        "optional": True,
+    },
 }
 
 
-def generate_files_from_query(query, query_file_path):
-    jquery = json.loads(query)
-
+def generate_files_from_query(jquery: dict, query_file_path):
     runTopCommand = [
         "runTop_el.py",
         "-i",
@@ -52,16 +54,19 @@ def generate_files_from_query(query, query_file_path):
         "customConfig",
     ]
 
-    # ensure all keys are specified
+    # ensure all required keys are specified
     for key in options:
         if key not in jquery:
+            # Skip optional parameters
+            if options[key].get("optional", False):
+                continue
             raise ValueError(
                 key + " must be specified. May be type None or ",
                 options[key]["properTypeString"],
             )
 
     for key in jquery:
-        # ensure only aviable options are allowed
+        # ensure only available options are allowed
         if key not in options:
             raise KeyError(
                 key + " is not implemented. Available keys: " + str(options.keys())
@@ -78,7 +83,7 @@ def generate_files_from_query(query, query_file_path):
             )
 
         # check for reco.yaml, parton.yaml and particle.yaml files
-        if isinstance(jquery[key], str):
+        if isinstance(jquery[key], str) and "fileName" in options[key]:
             with open(
                 os.path.join(query_file_path, options[key]["fileName"]), "w"
             ) as file:

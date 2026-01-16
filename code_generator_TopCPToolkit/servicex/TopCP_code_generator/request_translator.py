@@ -26,7 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import json
 import shutil
+
 from . import query_translate
 from servicex_codegen.code_generator import (
     CodeGenerator,
@@ -62,11 +64,18 @@ class TopCPTranslator(CodeGenerator):
         capabilities_path = os.environ.get(
             "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
         )
+
+        jquery = json.loads(query)
+        query_translate.generate_files_from_query(jquery, query_file_path)
+
         shutil.copyfile(
             capabilities_path,
             os.path.join(query_file_path, "transformer_capabilities.json"),
         )
 
-        query_translate.generate_files_from_query(query, query_file_path)
+        results = GeneratedFileResult(_hash, query_file_path)
 
-        return GeneratedFileResult(_hash, query_file_path)
+        if jquery.get("image"):
+            results.image = jquery["image"]
+
+        return results

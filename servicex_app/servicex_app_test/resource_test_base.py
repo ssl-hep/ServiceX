@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 from datetime import datetime
 from unittest.mock import MagicMock
 
@@ -100,7 +101,10 @@ class ResourceTestBase:
         lookup_result_processor=MagicMock(LookupResultProcessor),
         docker_repo_adapter=None,
         celery_app=MagicMock(Celery),
+        allowed_image_prefixes='["sslhep/"]',
     ) -> FlaskClient:
+        os.environ["ALLOWED_IMAGE_PREFIXES"] = allowed_image_prefixes
+
         config = ResourceTestBase._app_config()
         config["TRANSFORMER_MANAGER_ENABLED"] = False
         config["TRANSFORMER_MANAGER_MODE"] = "external"
@@ -155,7 +159,7 @@ class ResourceTestBase:
         transform_request.workflow_name = "func_adl"
         transform_request.did = "123-456-789"
         transform_request.did_id = 1234
-        transform_request.image = "ssl-hep/foo:latest"
+        transform_request.image = "sslhep/foo:latest"
         transform_request.result_format = "arrow"
         transform_request.result_destination = "object-store"
         transform_request.total_events = 10000

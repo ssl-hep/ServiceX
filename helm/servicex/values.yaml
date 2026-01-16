@@ -33,6 +33,10 @@ app:
   tokenExpires: false
   validateTransformerImage: true
   sqlalchemyEngineOptions: null
+  allowedImagePrefixes:
+    - "docker.io/sslhep"
+    - "sslhep/"
+    - "gitlab-registry.cern.ch/"
 
 codeGen:
   uproot-raw:
@@ -175,7 +179,6 @@ postgresql:
     image:
       repository: bitnamilegacy/os-shell
       tag: 12-debian-12-r51
-
   global:
     postgresql:
       auth:
@@ -200,7 +203,6 @@ rabbitmq:
     image:
       repository: bitnamilegacy/os-shell
       tag: 12-debian-12-r51
-
   extraConfiguration: |-
     consumer_timeout = 3600000
 

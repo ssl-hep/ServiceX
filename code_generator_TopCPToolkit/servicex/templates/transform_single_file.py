@@ -12,21 +12,23 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     # create input.txt file for event loop and insert file_path as only line
     with open("input.txt", "w") as f:
         f.write(file_path)
-    # move reco.yaml, parton.yaml and particle.yaml if they exit to CONFIG_LOC loacation
+
+    # move reco.yaml, parton.yaml and particle.yaml if they exist to CONFIG_LOC location
+    config_loc = os.environ.get("CONFIG_LOC", os.getcwd())
     if os.path.exists("/generated/reco.yaml"):
         shutil.copyfile(
             "/generated/reco.yaml",
-            os.path.join(os.environ.get("CONFIG_LOC"), "reco.yaml"),
+            os.path.join(config_loc, "reco.yaml"),
         )
     if os.path.exists("/generated/parton.yaml"):
         shutil.copyfile(
             "/generated/parton.yaml",
-            os.path.join(os.environ.get("CONFIG_LOC"), "parton.yaml"),
+            os.path.join(config_loc, "parton.yaml"),
         )
     if os.path.exists("/generated/particle.yaml"):
         shutil.copyfile(
             "/generated/particle.yaml",
-            os.path.join(os.environ.get("CONFIG_LOC"), "particle.yaml"),
+            os.path.join(config_loc, "particle.yaml"),
         )
 
     generated_transformer.runTop_el()
