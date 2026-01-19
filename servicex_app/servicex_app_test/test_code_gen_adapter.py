@@ -83,7 +83,7 @@ class TestCodeGenAdapter:
         mocker.patch("io.BytesIO")
 
         code_gen = CodeGenAdapter(self.code_gen_service_urls, mock_transformer_manager)
-        (config_map, transformer_image, transformer_language, transformer_command) = (
+        config_map, transformer_image, transformer_language, transformer_command = (
             code_gen.generate_code_for_selection(
                 self._generate_test_request(), "servicex", "uproot"
             )

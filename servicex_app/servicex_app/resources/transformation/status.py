@@ -32,7 +32,6 @@ from servicex_app.decorators import auth_required
 from servicex_app.models import TransformationResult, TransformRequest
 from servicex_app.resources.servicex_resource import ServiceXResource
 
-
 status_request_parser = reqparse.RequestParser()
 status_request_parser.add_argument(
     "details", type=bool, default=False, required=False, location="args"

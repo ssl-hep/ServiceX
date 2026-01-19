@@ -35,7 +35,6 @@ from retry.api import retry_call
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
-
 MAX_RETRIES = 3
 RETRY_DELAY = 2
 

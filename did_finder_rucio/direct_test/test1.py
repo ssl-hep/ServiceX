@@ -21,7 +21,6 @@ from rucio.client.replicaclient import ReplicaClient
 from servicex.did_finder.rucio_adapter import RucioAdapter
 from servicex.did_finder.lookup_request import LookupRequest
 
-
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 

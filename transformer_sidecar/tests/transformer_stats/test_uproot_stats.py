@@ -55,11 +55,9 @@ def test_uproot_stats():
 def test_bad_property():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
-        fp.write(
-            """
+        fp.write("""
 ValueError: key "lep_ptttt" does not exist (not in record)
-        """
-        )
+        """)
         fp.close()
         uproot_stats = UprootStats(test_logfile_path)
         assert uproot_stats.total_events == 0
@@ -74,14 +72,12 @@ ValueError: key "lep_ptttt" does not exist (not in record)
 def test_field_not_found():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
-        fp.write(
-            """
+        fp.write("""
             raise FieldNotFoundError(
 awkward.errors.FieldNotFoundError: no field 'AnalysisElectronsAuXXXxDyn.pt' in record with 1265 fields
 
 This error occurred while attempting to slice
-        """
-        )
+        """)
         fp.close()
         uproot_stats = UprootStats(test_logfile_path)
         assert uproot_stats.total_events == 0

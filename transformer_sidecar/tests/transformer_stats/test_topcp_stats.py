@@ -55,8 +55,7 @@ def test_topcp_stats():
 def test_eventloop_error():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
-        fp.write(
-            """
+        fp.write("""
 Py:CPAlgTextCfg      INFO Configuring AddConfigBlocks
 >>> Configuring algorithms based on YAML file
 Traceback (most recent call last):
@@ -77,8 +76,7 @@ Traceback (most recent call last):
   File "/TopCPToolkit/build/x86_64-el9-gcc13-opt/bin/runTop_el.py", line 106, in check_output
     raise FileNotFoundError(
 FileNotFoundError: The file '/tmp/out/data-ANALYSIS/output.root' was not successfully created, aborting.
-        """
-        )
+        """)
         fp.close()
         topcp_stats = TopCPStats(test_logfile_path)
         print(f"    error: {topcp_stats.error_info}")
@@ -91,8 +89,7 @@ FileNotFoundError: The file '/tmp/out/data-ANALYSIS/output.root' was not success
 def test_configuration_error():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
-        fp.write(
-            """
+        fp.write("""
     BPhyLS                   INFO    Initialising the BPhysLS algorithm for the TopCPToolkit
 BPhyVertex               INFO    Initialising the BPhysLS algorithm for the TopCPToolkit
 Package.EventLoop        INFO    Processing events 0-68772 in file file:///data/user.kchoi.40735634.EXT0._000023.DAOD_BPHY28.pool.root
@@ -102,8 +99,7 @@ Package.EventLoop        ERROR   /build1/atnight/localbuilds/nightlies/AnalysisB
 BatchInputModule         ERROR   /build1/atnight/localbuilds/nightlies/AnalysisBase/main/athena/PhysicsAnalysis/D3PDTools/EventLoop/Root/BatchInputModule.cxx:56 (StatusCode EL::Detail::BatchInputModule::processInputs(EL::Detail::ModuleData&, EL::Detail::IInputModuleActions&)): Failed to call "actions.processEvents (eventRange)"
 Package.EventLoop        ERROR   /build1/atnight/localbuilds/nightlies/AnalysisBase/main/athena/PhysicsAnalysis/D3PDTools/EventLoop/Root/Worker.cxx:445 (StatusCode EL::Worker::processInputs()): Failed to call "module->processInputs (*this, *this)"
 Package.EventLoop        ERROR
-        """
-        )
+        """)
         fp.close()
         topcp_stats = TopCPStats(test_logfile_path)
         print(f"    error: {topcp_stats.error_info}")
