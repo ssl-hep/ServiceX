@@ -362,8 +362,7 @@ class TransformRequest(db.Model):
         """
         with db.engine.connect() as conn:
             result = conn.execute(
-                text(
-                    """
+                text("""
                 SELECT request_id, submit_time, cumulative_bytes
                 FROM (
                     SELECT
@@ -376,8 +375,7 @@ class TransformRequest(db.Model):
                 WHERE cumulative_bytes >= :threshold
                 ORDER BY submit_time ASC
                 LIMIT 1;
-                """
-                ),
+                """),
                 {"threshold": threshold},
             )
             row = result.fetchone()

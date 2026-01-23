@@ -38,7 +38,6 @@ import geoip2.database
 import geoip2.errors
 from collections import namedtuple
 
-
 Replica_distance = namedtuple("Replica_distance", "replica distance")
 logger = logging.getLogger("ReplicaDistanceService")
 

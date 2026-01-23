@@ -55,8 +55,7 @@ def test_aod_stats():
 def test_bad_property():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
-        fp.write(
-            """
+        fp.write("""
 Building CXX object analysis/CMakeFiles/analysisLib.dir/Root/query.cxx.o
 /home/atlas/rel/source/analysis/Root/query.cxx: In member function 'virtual StatusCode query::execute()':
 /home/atlas/rel/source/analysis/Root/query.cxx:168:46: error: 'const class xAOD::Electron_v1' has no member named 'pttt'; did you mean 'pt'?
@@ -66,8 +65,7 @@ Building CXX object analysis/CMakeFiles/analysisLib.dir/Root/query.cxx.o
 make[2]: *** [analysis/CMakeFiles/analysisLib.dir/Root/query.cxx.o] Error 1
 make[1]: *** [analysis/CMakeFiles/analysisLib.dir/all] Error 2
 make: *** [all] Error 2
-        """
-        )
+        """)
         fp.close()
         aod_stats = AODStats(test_logfile_path)
         assert (
