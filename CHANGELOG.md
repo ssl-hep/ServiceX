@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### 1.8.0
+January 23, 2026
+
+### Added
+- New minikube mount for TopCP Toolkit (minikube-mount-topcp)
+- Support for optional image parameter in TopCP query options to allow custom image specification
+
+### Changed
+- Updated uproot science image to uproot 5.6.9
+
+### Fixed
+- User permissions in all code generator Dockerfiles - added servicex user to group 0 and set proper home directory permissions (0750) for container security
+- funcadl_xAOD AST translator now calls self._exe.reset() before writing C++ files to ensure clean state
+- Quoting of integers in cron job parameters
+
+
 ### 1.7.5
 November 17, 2025
 
