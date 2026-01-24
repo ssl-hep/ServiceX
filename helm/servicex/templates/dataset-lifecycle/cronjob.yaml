@@ -21,5 +21,7 @@ spec:
                 value: {{ .Values.scheduledTasks.datasetLifecycle.cacheLifetime | quote }}
             command:
             - /usr/bin/curl
-            - --request POST "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle?age=$(LIFETIME)"
+            - --json
+            - '{"age": $(LIFETIME)}'
+            - "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/dataset-lifecycle"
           restartPolicy: OnFailure
