@@ -41,8 +41,8 @@ class TestDatasetLifecycle(ResourceTestBase):
         with patch("servicex_app.models.Dataset.get_all") as dsfunc:
             dsfunc.return_value = [
                 Dataset(
-                    last_used=datetime(2022, 1, 1, tzinfo=timezone.utc),
-                    last_updated=datetime(2022, 1, 1, tzinfo=timezone.utc),
+                    last_used=datetime(2022, 1, 1),
+                    last_updated=datetime(2022, 1, 1),
                     id=1,
                     name="not-orphaned",
                     events=100,
@@ -52,8 +52,8 @@ class TestDatasetLifecycle(ResourceTestBase):
                     did_finder="rucio",
                 ),
                 Dataset(
-                    last_used=datetime.now(timezone.utc),
-                    last_updated=datetime.now(timezone.utc),
+                    last_used=datetime.now(),
+                    last_updated=datetime.now(),
                     id=2,
                     name="orphaned",
                     events=100,

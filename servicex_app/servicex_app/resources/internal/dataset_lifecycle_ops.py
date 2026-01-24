@@ -38,7 +38,7 @@ class DatasetLifecycleOps(ServiceXResource):
         """
         Obsolete cached datasets older than N hours
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         try:
             age = float(request.get_json().get("age", 24))
         except Exception:
