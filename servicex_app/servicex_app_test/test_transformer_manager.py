@@ -745,6 +745,7 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock(side_effect=Exception())
 
         client = self._test_client(transformation_manager=transformer)
         client.application.logger = mocker.MagicMock()
@@ -761,7 +762,10 @@ class TestTransformerManager(ResourceTestBase):
             mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
                 name="transformer-1234", namespace="my-ns"
             )
-        assert client.application.logger.exception.call_count == 3
+            transformer.celery_app.control.cancel_consumer.assert_called_with(
+                "transformer-1234"
+            )
+        assert client.application.logger.exception.call_count == 4
 
         # now check quiet mode
         client.application.logger.exception.reset_mock()
