@@ -745,7 +745,9 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
-        transformer.celery_app.control.cancel_consumer = mocker.MagicMock(side_effect=Exception())
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock(
+            side_effect=Exception()
+        )
 
         client = self._test_client(transformation_manager=transformer)
         client.application.logger = mocker.MagicMock()
