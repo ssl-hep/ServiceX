@@ -718,6 +718,61 @@ class TestTransformerManager(ResourceTestBase):
                 name="transformer-1234", namespace="my-ns"
             )
 
+    def test_shutdown_transformer_jobs_exceptions(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_deployment.side_effect = kubernetes.client.rest.ApiException()
+
+        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
+        mock_core_api.delete_namespaced_config_map.side_effect = kubernetes.client.rest.ApiException()
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = kubernetes.client.rest.ApiException()
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(transformation_manager=transformer)
+        client.application.logger = mocker.MagicMock()
+
+        # default mode with exceptions
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns")
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+            mock_core_api.delete_namespaced_config_map.assert_called_with(
+                name="1234-generated-source", namespace="my-ns"
+            )
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+        assert client.application.logger.exception.call_count == 3
+
+        # now check quiet mode
+        client.application.logger.exception.reset_mock()
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns", True)
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name="transformer-1234", namespace="my-ns",
+            )
+            mock_core_api.delete_namespaced_config_map.assert_called_with(
+                name="1234-generated-source", namespace="my-ns", 
+            )
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+        client.application.logger.exception.assert_not_called()
+
+
     def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
 

@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import call
 
 from pytest import fixture, raises
 
@@ -38,35 +38,6 @@ from kubernetes.client import models
 
 
 class TestKubernetesCleanup(ResourceTestBase):
-    @fixture
-    def fake_dataset_list(self):
-        with patch("servicex_app.models.Dataset.get_all") as dsfunc:
-            dsfunc.return_value = [
-                Dataset(
-                    last_used=datetime(2022, 1, 1, tzinfo=timezone.utc),
-                    last_updated=datetime(2022, 1, 1, tzinfo=timezone.utc),
-                    id=1,
-                    name="not-orphaned",
-                    events=100,
-                    size=1000,
-                    n_files=1,
-                    lookup_status="complete",
-                    did_finder="rucio",
-                ),
-                Dataset(
-                    last_used=datetime.now(timezone.utc),
-                    last_updated=datetime.now(timezone.utc),
-                    id=2,
-                    name="orphaned",
-                    events=100,
-                    size=1000,
-                    n_files=1,
-                    lookup_status="complete",
-                    did_finder="rucio",
-                ),
-            ]
-            yield dsfunc
-
     def test_cleanup(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
         mock_transformer_manager.get_all_transformer_deployments.return_value = [
@@ -78,6 +49,7 @@ class TestKubernetesCleanup(ResourceTestBase):
                     ),
                 )
             ),
+            # Next is too new, will not call
             models.V1Deployment(
                 metadata=models.V1ObjectMeta(
                     name="jkl", creation_timestamp=datetime.now(timezone.utc)
@@ -92,7 +64,23 @@ class TestKubernetesCleanup(ResourceTestBase):
                         2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
                     ),
                 )
-            )
+            ),
+            # Next is too new, will not call
+            models.V1ConfigMap(
+                metadata=models.V1ObjectMeta(
+                    name="mno",
+                    creation_timestamp=datetime.now(timezone.utc)
+                )
+            ),
+            # Next is a repeat transform ID, will not call
+            models.V1ConfigMap(
+                metadata=models.V1ObjectMeta(
+                    name="abc",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            ),
         ]
         mock_transformer_manager.get_all_transformer_hpas.return_value = [
             models.V1HorizontalPodAutoscaler(
@@ -102,7 +90,23 @@ class TestKubernetesCleanup(ResourceTestBase):
                         2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
                     ),
                 )
-            )
+            ),
+            # Next is too new, will not call
+            models.V1HorizontalPodAutoscaler(
+                metadata=models.V1ObjectMeta(
+                    name="pqr",
+                    creation_timestamp=datetime.now(timezone.utc)
+                )
+            ),
+            # Next is a repeat transform ID, will not call
+            models.V1HorizontalPodAutoscaler(
+                metadata=models.V1ObjectMeta(
+                    name="def",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            ),
         ]
 
         client = self._test_client(
@@ -120,20 +124,12 @@ class TestKubernetesCleanup(ResourceTestBase):
         mock_transformer_manager.get_all_transformer_deployments.assert_called_once()
         mock_transformer_manager.get_all_transformer_configmaps.assert_called_once()
         mock_transformer_manager.get_all_transformer_hpas.assert_called_once()
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
-            "abc", "my-ws", True
-        )
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
-            "def", "my-ws", True
-        )
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
-            "ghi", "my-ws", True
-        )
-        with raises(AssertionError):
-            # it should NOT call for the "new" transformer
-            mock_transformer_manager.shutdown_transformer_job.assert_any_call(
-                "jkl", "my-ws", True
-            )
+        mock_transformer_manager.shutdown_transformer_job.assert_has_calls([
+            call("abc", "my-ws", True),
+            call("def", "my-ws", True),
+            call("ghi", "my-ws", True),
+        ])
+        assert mock_transformer_manager.shutdown_transformer_job.call_count == 3
 
     def test_error(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
