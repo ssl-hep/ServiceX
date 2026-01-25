@@ -28,10 +28,6 @@
 from datetime import datetime, timezone
 from unittest.mock import call
 
-from pytest import fixture, raises
-
-from servicex_app.models import Dataset
-
 from servicex_app_test.resource_test_base import ResourceTestBase
 from servicex_app import TransformerManager
 from kubernetes.client import models
