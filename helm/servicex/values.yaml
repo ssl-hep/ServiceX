@@ -258,7 +258,7 @@ scheduledTasks:
   # This cleans up the output object store caches and archives associated transforms.
   dataLifecycle:
     enabled: false
-    schedule: "* */8 * * *"
+    schedule: "0 */8 * * *"
 
     # We will archive any transforms older than this. Use the gnu date command
     # --date argument.
