@@ -69,26 +69,41 @@ class TestKubernetesCleanup(ResourceTestBase):
 
     def test_cleanup(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.get_all_transformer_deployments.return_value = (
-            [
-                models.V1Deployment(metadata=models.V1ObjectMeta(name="abc",
-                                    creation_timestamp=datetime(2000,1,1,0,0,0, tzinfo=timezone.utc))),
-                models.V1Deployment(metadata=models.V1ObjectMeta(name="jkl",
-                                    creation_timestamp=datetime.now(timezone.utc)))]
-
-        )
-        mock_transformer_manager.get_all_transformer_configmaps.return_value = (
-            [
-                models.V1ConfigMap(metadata=models.V1ObjectMeta(name="def",
-                                    creation_timestamp=datetime(2000,1,1,0,0,0, tzinfo=timezone.utc)))]
-
-        )
-        mock_transformer_manager.get_all_transformer_hpas.return_value = (
-            [
-                models.V1HorizontalPodAutoscaler(metadata=models.V1ObjectMeta(name="ghi",
-                                    creation_timestamp=datetime(2000,1,1,0,0,0, tzinfo=timezone.utc)))]
-
-        )
+        mock_transformer_manager.get_all_transformer_deployments.return_value = [
+            models.V1Deployment(
+                metadata=models.V1ObjectMeta(
+                    name="abc",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            ),
+            models.V1Deployment(
+                metadata=models.V1ObjectMeta(
+                    name="jkl", creation_timestamp=datetime.now(timezone.utc)
+                )
+            ),
+        ]
+        mock_transformer_manager.get_all_transformer_configmaps.return_value = [
+            models.V1ConfigMap(
+                metadata=models.V1ObjectMeta(
+                    name="def",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            )
+        ]
+        mock_transformer_manager.get_all_transformer_hpas.return_value = [
+            models.V1HorizontalPodAutoscaler(
+                metadata=models.V1ObjectMeta(
+                    name="ghi",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            )
+        ]
 
         client = self._test_client(
             transformation_manager=mock_transformer_manager,
@@ -105,21 +120,33 @@ class TestKubernetesCleanup(ResourceTestBase):
         mock_transformer_manager.get_all_transformer_deployments.assert_called_once()
         mock_transformer_manager.get_all_transformer_configmaps.assert_called_once()
         mock_transformer_manager.get_all_transformer_hpas.assert_called_once()
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call("abc", "my-ws", True)
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call("def", "my-ws", True)
-        mock_transformer_manager.shutdown_transformer_job.assert_any_call("ghi", "my-ws", True)
+        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+            "abc", "my-ws", True
+        )
+        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+            "def", "my-ws", True
+        )
+        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+            "ghi", "my-ws", True
+        )
         with raises(AssertionError):
             # it should NOT call for the "new" transformer
-            mock_transformer_manager.shutdown_transformer_job.assert_any_call("jkl", "my-ws", True)
+            mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+                "jkl", "my-ws", True
+            )
 
     def test_error(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.get_all_transformer_deployments.return_value = (
-            [
-                models.V1Deployment(metadata=models.V1ObjectMeta(name="abc",
-                                    creation_timestamp=datetime(2000,1,1,0,0,0, tzinfo=timezone.utc)))]
-
-        )
+        mock_transformer_manager.get_all_transformer_deployments.return_value = [
+            models.V1Deployment(
+                metadata=models.V1ObjectMeta(
+                    name="abc",
+                    creation_timestamp=datetime(
+                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                )
+            )
+        ]
         mock_transformer_manager.shutdown_transformer_job.side_effect = Exception()
 
         client = self._test_client(

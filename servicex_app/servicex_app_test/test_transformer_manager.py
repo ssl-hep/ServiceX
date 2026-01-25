@@ -1063,7 +1063,9 @@ class TestTransformerManager(ResourceTestBase):
         mock_deployment_list.items = [mock_deployment, mock_deployment_2]
 
         transformer_manager = TransformerManager("external-kubernetes")
-        transformer_manager.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
 
         client = self._test_client(
             extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
@@ -1085,7 +1087,9 @@ class TestTransformerManager(ResourceTestBase):
         mock_configmap_list.items = [mock_configmap, mock_configmap_2]
 
         transformer_manager = TransformerManager("external-kubernetes")
-        transformer_manager.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
 
         client = self._test_client(
             extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
@@ -1107,7 +1111,9 @@ class TestTransformerManager(ResourceTestBase):
         mock_hpa_list.items = [mock_hpa, mock_hpa_2]
 
         transformer_manager = TransformerManager("external-kubernetes")
-        transformer_manager.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
 
         client = self._test_client(
             extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
