@@ -68,8 +68,7 @@ class TestKubernetesCleanup(ResourceTestBase):
             # Next is too new, will not call
             models.V1ConfigMap(
                 metadata=models.V1ObjectMeta(
-                    name="mno",
-                    creation_timestamp=datetime.now(timezone.utc)
+                    name="mno", creation_timestamp=datetime.now(timezone.utc)
                 )
             ),
             # Next is a repeat transform ID, will not call
@@ -94,8 +93,7 @@ class TestKubernetesCleanup(ResourceTestBase):
             # Next is too new, will not call
             models.V1HorizontalPodAutoscaler(
                 metadata=models.V1ObjectMeta(
-                    name="pqr",
-                    creation_timestamp=datetime.now(timezone.utc)
+                    name="pqr", creation_timestamp=datetime.now(timezone.utc)
                 )
             ),
             # Next is a repeat transform ID, will not call
@@ -124,11 +122,13 @@ class TestKubernetesCleanup(ResourceTestBase):
         mock_transformer_manager.get_all_transformer_deployments.assert_called_once()
         mock_transformer_manager.get_all_transformer_configmaps.assert_called_once()
         mock_transformer_manager.get_all_transformer_hpas.assert_called_once()
-        mock_transformer_manager.shutdown_transformer_job.assert_has_calls([
-            call("abc", "my-ws", True),
-            call("def", "my-ws", True),
-            call("ghi", "my-ws", True),
-        ])
+        mock_transformer_manager.shutdown_transformer_job.assert_has_calls(
+            [
+                call("abc", "my-ws", True),
+                call("def", "my-ws", True),
+                call("ghi", "my-ws", True),
+            ]
+        )
         assert mock_transformer_manager.shutdown_transformer_job.call_count == 3
 
     def test_error(self, mocker):
