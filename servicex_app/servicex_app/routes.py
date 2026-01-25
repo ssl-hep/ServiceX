@@ -207,5 +207,5 @@ def add_routes(
 
     CleanupKubernetesResources.make_api(transformer_manager)
     api.add_resource(
-        CleanupKubernetesResources, "/servicex/internal/cleanup-kubernetes"
+        CleanupKubernetesResources, "/servicex/internal/kubernetes-cleanup"
     )
