@@ -62,7 +62,9 @@ class CleanupKubernetesResources(ServiceXResource):
                 if age > delta:
                     id = deployment.metadata.name.replace("transformer-", "")
                     logging_message.append(f"Shutting down {id}, age {age}")
-                    self.transformer_manager.shutdown_transformer_job(id, namespace, True)
+                    self.transformer_manager.shutdown_transformer_job(
+                        id, namespace, True
+                    )
                     deleted.add(id)
             for map in configmaps:
                 age = now - map.metadata.creation_timestamp
@@ -70,7 +72,9 @@ class CleanupKubernetesResources(ServiceXResource):
                     id = map.metadata.name.replace("-generated-source", "")
                     if id not in deleted:
                         logging_message.append(f"Shutting down {id}, age {age}")
-                        self.transformer_manager.shutdown_transformer_job(id, namespace, True)
+                        self.transformer_manager.shutdown_transformer_job(
+                            id, namespace, True
+                        )
                         deleted.add(id)
             for hpa in hpas:
                 age = now - hpa.metadata.creation_timestamp
@@ -78,10 +82,12 @@ class CleanupKubernetesResources(ServiceXResource):
                     id = hpa.metadata.name.replace("transformer-", "")
                     if id not in deleted:
                         logging_message.append(f"Shutting down {id}, age {age}")
-                        self.transformer_manager.shutdown_transformer_job(id, namespace, True)
+                        self.transformer_manager.shutdown_transformer_job(
+                            id, namespace, True
+                        )
                         deleted.add(id)
         except Exception as e:
             logging_message.append(str(e))
-            current_app.logger.warning('\n'.join(logging_message))
+            current_app.logger.warning("\n".join(logging_message))
         else:
-            current_app.logger.info('\n'.join(logging_message))
+            current_app.logger.info("\n".join(logging_message))

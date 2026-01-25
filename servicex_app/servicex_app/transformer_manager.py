@@ -532,7 +532,8 @@ class TransformerManager:
         except ApiException:
             if not quiet_errors:
                 current_app.logger.exception(
-                    "Exception during Job HPA Shut Down", extra={"requestId": request_id}
+                    "Exception during Job HPA Shut Down",
+                    extra={"requestId": request_id},
                 )
 
         try:
@@ -588,14 +589,15 @@ class TransformerManager:
         return deployment.status
 
     @staticmethod
-    def get_all_transformer_deployments(
-    ) -> list[client.models.V1Deployment]:
+    def get_all_transformer_deployments() -> list[client.models.V1Deployment]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         rv: list[client.models.V1Deployment]
         deployments: client.V1DeploymentList
         deployments = api.list_namespaced_deployment(namespace)
-        rv = [_ for _ in deployments.items if _.metadata.name.startswith('transformer-')]
+        rv = [
+            _ for _ in deployments.items if _.metadata.name.startswith("transformer-")
+        ]
         return rv
 
     @staticmethod
@@ -627,7 +629,9 @@ class TransformerManager:
         rv: list[client.models.V1ConfigMap]
         configmaps: client.V1ConfigMapList
         configmaps = api.list_namespaced_config_map(namespace)
-        rv = [_ for _ in configmaps.items if _.metadata.name.endswith('-generated-source')]
+        rv = [
+            _ for _ in configmaps.items if _.metadata.name.endswith("-generated-source")
+        ]
         return rv
 
     @staticmethod
@@ -637,5 +641,5 @@ class TransformerManager:
         rv: list[client.models.V1HorizontalPodAutoscaler]
         hpas: client.V1HorizontalPodAutoscalerList
         hpas = api.list_namespaced_horizontal_pod_autoscaler(namespace)
-        rv = [_ for _ in hpas.items if _.metadata.name.startswith('transformer-')]
+        rv = [_ for _ in hpas.items if _.metadata.name.startswith("transformer-")]
         return rv
