@@ -24,6 +24,10 @@ spec:
       - name: {{ .Release.Name }}-did-finder-xrootd
         image: {{ .Values.didFinder.xrootd.image }}:{{ .Values.didFinder.xrootd.tag }}
         imagePullPolicy: {{ .Values.didFinder.CERNOpenData.pullPolicy }}
+        {{- if .Values.didFinder.xrootd.resources }}
+        resources:
+{{ toYaml .Values.didFinder.xrootd.resources | indent 10 }}
+        {{- end }}
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}

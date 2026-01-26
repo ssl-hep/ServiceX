@@ -21,6 +21,10 @@ spec:
       - name: did-finder
         image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
+        {{- if .Values.didFinder.rucio.resources }}
+        resources:
+{{ toYaml .Values.didFinder.rucio.resources | indent 10 }}
+        {{- end }}
         env:
           {{- if .Values.secrets }}
           - name: RMQ_PASS

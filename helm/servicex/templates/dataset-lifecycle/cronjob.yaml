@@ -16,6 +16,10 @@ spec:
           - name: {{ .Release.Name }}-dataset-lifecycle-job
             image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}
             imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
+            {{- if .Values.scheduledTasks.resources }}
+            resources:
+{{ toYaml .Values.scheduledTasks.resources | indent 14 }}
+            {{- end }}
             env:
               - name: LIFETIME
                 value: {{ .Values.scheduledTasks.datasetLifecycle.cacheLifetime | quote }}
