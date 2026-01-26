@@ -33,6 +33,10 @@ spec:
         tty: true
         stdin: true
         imagePullPolicy: {{ .pullPolicy }}
+        {{- if .resources }}
+        resources:
+{{ toYaml .resources | indent 10 }}
+        {{- end }}
         ports:
           - containerPort: 5000
 {{- end }}

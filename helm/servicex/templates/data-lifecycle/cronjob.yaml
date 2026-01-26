@@ -17,6 +17,10 @@ spec:
           - name: {{ .Release.Name }}-data-lifecycle-job
             image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}
             imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
+            {{- if .Values.scheduledTasks.resources }}
+            resources:
+{{ toYaml .Values.scheduledTasks.resources | indent 14 }}
+            {{- end }}
             env:
               - name: RETENTION_PERIOD
                 value: {{ .Values.scheduledTasks.dataLifecycle.retention }}

@@ -12,6 +12,13 @@ app:
   allowAllAfterAuth: false
   defaultUsers:
   image: sslhep/servicex_app
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
   ingress:
     class: nginx
     defaultBackend: default-http-backend
@@ -48,6 +55,13 @@ codeGen:
     defaultScienceContainerTag: 5.6.9
     compressionAlgorithm: ZSTD
     compressionLevel: 5
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   uproot:
     enabled: true
@@ -56,6 +70,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: 5.6.9
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   python:
     enabled: true
@@ -64,6 +85,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
     defaultScienceContainerTag: 5.6.9
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   rdataframe:
     enabled: true
@@ -72,6 +100,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_root
     defaultScienceContainerTag: 6.36.00
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   atlasr21:
     enabled: true
@@ -80,6 +115,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
     defaultScienceContainerTag: 21.2.231
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   atlasr22:
     enabled: true
@@ -88,6 +130,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
     defaultScienceContainerTag: 22.2.107
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   atlasr25:
     enabled: true
@@ -96,6 +145,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
     defaultScienceContainerTag: 25.2.41
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   cmssw-5-3-32:
     enabled: false
@@ -104,6 +160,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_func_adl_cms_aod_transformer
     defaultScienceContainerTag: cmssw-5-3-32
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
   topcp:
     enabled: true
@@ -112,6 +175,13 @@ codeGen:
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_topcp
     defaultScienceContainerTag: 2.17.0-25.2.45
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
 didFinder:
   CERNOpenData:
@@ -119,11 +189,25 @@ didFinder:
     image: sslhep/servicex-did-finder-cernopendata
     pullPolicy: Always
     tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
   xrootd:
     enabled: true
     image: sslhep/servicex-did-finder-xrootd
     pullPolicy: Always
     tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
   rucio:
     auth_host: https://atlas-rucio-auth.cern.ch:443
     enabled: true
@@ -137,6 +221,13 @@ didFinder:
     replicaSorterEnabled: false
     geoIPURL: null
     geoIPEdition: null
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
 
 gridAccount: <your account>
 logging:
@@ -248,12 +339,26 @@ x509Secrets:
   pullPolicy: Always
   tag: develop
   vomsOrg: atlas
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
 scheduledTasks:
   # image should support curl, gnu date
   image: python
   tag: "3.10"
   pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
 
   # This cleans up the output object store caches and archives associated transforms.
   dataLifecycle:
