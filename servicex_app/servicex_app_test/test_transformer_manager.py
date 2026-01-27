@@ -118,6 +118,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_SECRET_KEY": "shhh",
             "TRANSFORMER_CPU_LIMIT": 4,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_MIN_REPLICAS": 3,
             "TRANSFORMER_MAX_REPLICAS": 17,
@@ -193,6 +195,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_AUTOSCALE_ENABLED": False,
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -222,6 +226,15 @@ class TestTransformerManager(ResourceTestBase):
             assert called_deployment.spec.replicas == 17
             mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_not_called()
 
+            # Verify resource limits and requests are set
+            container = called_deployment.spec.template.spec.containers[0]
+            limits = container.resources.limits
+            assert limits["cpu"] == 1
+            assert limits["memory"] == "2Gi"
+            requests = container.resources.requests
+            assert requests["cpu"] == "500m"
+            assert requests["memory"] == "512Mi"
+
     def test_launch_transformer_with_hostpath(self, mocker):
         import kubernetes
 
@@ -241,6 +254,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -297,6 +312,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_SECRET_KEY": "shhh",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -350,6 +367,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_SECRET_KEY": "shhh",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -406,6 +425,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_SECRET_KEY": "shhh",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -465,6 +486,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_ENCRYPT": "True",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -518,6 +541,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_AUTOSCALE_ENABLED": False,
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
             "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
@@ -581,6 +606,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_AUTOSCALE_ENABLED": False,
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
             "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
@@ -649,6 +676,8 @@ class TestTransformerManager(ResourceTestBase):
             "MINIO_SECRET_KEY": "shhh",
             "TRANSFORMER_CPU_LIMIT": 4,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_MIN_REPLICAS": 3,
             "TRANSFORMER_MAX_REPLICAS": 17,
@@ -957,6 +986,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
@@ -1050,6 +1081,8 @@ class TestTransformerManager(ResourceTestBase):
             "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
             "TRANSFORMER_CPU_LIMIT": 1,
             "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+            "TRANSFORMER_CPU_REQUEST": "500m",
+            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
             "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
             "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
             "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",

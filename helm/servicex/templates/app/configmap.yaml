@@ -102,6 +102,8 @@ data:
     TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
     TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
     TRANSFORMER_MEMORY_LIMIT = "{{ .Values.transformer.memoryLimit }}"
+    TRANSFORMER_CPU_REQUEST = "{{ .Values.transformer.cpuRequest }}"
+    TRANSFORMER_MEMORY_REQUEST = "{{ .Values.transformer.memoryRequest }}"
     TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}
     TRANSFORMER_MIN_REPLICAS = {{ .Values.transformer.autoscaler.minReplicas }}
     TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}

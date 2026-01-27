@@ -305,6 +305,10 @@ class TransformerManager:
             limits={
                 "cpu": current_app.config["TRANSFORMER_CPU_LIMIT"],
                 "memory": current_app.config["TRANSFORMER_MEMORY_LIMIT"],
+            },
+            requests={
+                "cpu": current_app.config["TRANSFORMER_CPU_REQUEST"],
+                "memory": current_app.config["TRANSFORMER_MEMORY_REQUEST"],
             }
         )
 
