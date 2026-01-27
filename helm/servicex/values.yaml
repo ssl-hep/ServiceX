@@ -319,6 +319,8 @@ transformer:
     minReplicas: 1
   cpuLimit: 1
   memoryLimit: 2Gi
+  cpuRequest: 500m
+  memoryRequest: 512Mi
 
   sidecarImage: sslhep/servicex_sidecar_transformer
   sidecarTag: develop
