@@ -44,6 +44,29 @@ def _env_value(env_list, env_name):
     return [x for x in env_list if x.name == env_name][0].value
 
 
+# Base configuration shared across most transformer manager tests
+BASE_TRANSFORMER_CONFIG = {
+    "OBJECT_STORE_ENABLED": True,
+    "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
+    "MINIO_ACCESS_KEY": "itsame",
+    "MINIO_SECRET_KEY": "shhh",
+    "TRANSFORMER_CPU_LIMIT": 1,
+    "TRANSFORMER_MEMORY_LIMIT": "2Gi",
+    "TRANSFORMER_CPU_REQUEST": "500m",
+    "TRANSFORMER_MEMORY_REQUEST": "512Mi",
+    "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
+    "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
+    "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
+    "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
+    "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
+}
+
+
+def make_config(**overrides):
+    """Create a config dict based on BASE_TRANSFORMER_CONFIG with overrides."""
+    return {**BASE_TRANSFORMER_CONFIG, **overrides}
+
+
 class TestTransformerManager(ResourceTestBase):
 
     @pytest.fixture
@@ -111,20 +134,11 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        cfg = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_CPU_LIMIT": 4,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_MIN_REPLICAS": 3,
-            "TRANSFORMER_MAX_REPLICAS": 17,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-        }
+        cfg = make_config(
+            TRANSFORMER_CPU_LIMIT=4,
+            TRANSFORMER_MIN_REPLICAS=3,
+            TRANSFORMER_MAX_REPLICAS=17,
+        )
 
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
         client = self._test_client(transformation_manager=transformer, extra_config=cfg)
@@ -187,22 +201,7 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        cfg = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_AUTOSCALE_ENABLED": False,
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
+        cfg = make_config(TRANSFORMER_AUTOSCALE_ENABLED=False)
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(extra_config=cfg, transformation_manager=transformer)
@@ -246,28 +245,12 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
 
-        additional_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
-
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=additional_config, transformation_manager=transformer
+            extra_config=make_config(TRANSFORMER_LOCAL_PATH="/tmp/foo"),
+            transformation_manager=transformer,
         )
 
         with client.application.app_context():
@@ -305,24 +288,11 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        cfg = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
-        client = self._test_client(extra_config=cfg, transformation_manager=transformer)
+        client = self._test_client(
+            extra_config=make_config(), transformation_manager=transformer
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -360,25 +330,10 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        my_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=my_config, transformation_manager=transformer
+            extra_config=make_config(), transformation_manager=transformer
         )
 
         with client.application.app_context():
@@ -418,26 +373,11 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        my_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-            "TRANSFORMER_CACHE_PREFIX": "root://dummy",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=my_config, transformation_manager=transformer
+            extra_config=make_config(TRANSFORMER_CACHE_PREFIX="root://dummy"),
+            transformation_manager=transformer,
         )
 
         with client.application.app_context():
@@ -478,26 +418,11 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        my_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "MINIO_ENCRYPT": "True",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=my_config, transformation_manager=transformer
+            extra_config=make_config(MINIO_ENCRYPT="True"),
+            transformation_manager=transformer,
         )
 
         with client.application.app_context():
@@ -534,24 +459,16 @@ class TestTransformerManager(ResourceTestBase):
         mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
 
         transformer = TransformerManager("external-kubernetes")
-        my_config = {
-            "OBJECT_STORE_ENABLED": False,
-            "TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM": "my-pvc",
-            "TRANSFORMER_PERSISTENCE_SUBDIR": "output-data",
-            "TRANSFORMER_AUTOSCALE_ENABLED": False,
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=my_config, transformation_manager=transformer
+            extra_config=make_config(
+                OBJECT_STORE_ENABLED=False,
+                TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM="my-pvc",
+                TRANSFORMER_PERSISTENCE_SUBDIR="output-data",
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+            ),
+            transformation_manager=transformer,
         )
 
         with client.application.app_context():
@@ -599,24 +516,16 @@ class TestTransformerManager(ResourceTestBase):
         mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
 
         transformer = TransformerManager("external-kubernetes")
-        my_config = {
-            "OBJECT_STORE_ENABLED": False,
-            "TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM": None,
-            "TRANSFORMER_PERSISTENCE_SUBDIR": "output-data",
-            "TRANSFORMER_AUTOSCALE_ENABLED": False,
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=my_config, transformation_manager=transformer
+            extra_config=make_config(
+                OBJECT_STORE_ENABLED=False,
+                TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM=None,
+                TRANSFORMER_PERSISTENCE_SUBDIR="output-data",
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+            ),
+            transformation_manager=transformer,
         )
 
         with client.application.app_context():
@@ -669,27 +578,17 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         transformer = TransformerManager("external-kubernetes")
-        cfg = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_CPU_LIMIT": 4,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_MIN_REPLICAS": 3,
-            "TRANSFORMER_MAX_REPLICAS": 17,
-            "TRANSFORMER_X509_SECRET": None,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-        }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
-        client = self._test_client(transformation_manager=transformer, extra_config=cfg)
+        client = self._test_client(
+            transformation_manager=transformer,
+            extra_config=make_config(
+                TRANSFORMER_CPU_LIMIT=4,
+                TRANSFORMER_MIN_REPLICAS=3,
+                TRANSFORMER_MAX_REPLICAS=17,
+                TRANSFORMER_X509_SECRET=None,
+            ),
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -978,31 +877,17 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
 
-        additional_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-            "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should be overwritten
-            "TRANSFORMER_CACHE_VPS_SITE": "MWT2",
-            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy",
-        }
-
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=additional_config, transformation_manager=transformer
+            extra_config=make_config(
+                TRANSFORMER_LOCAL_PATH="/tmp/foo",
+                TRANSFORMER_CACHE_PREFIX="root://dummy",  # this should be overwritten
+                TRANSFORMER_CACHE_VPS_SITE="MWT2",
+                TRANSFORMER_CACHE_VPS_LIVENESS_URL="https://dummy",
+            ),
+            transformation_manager=transformer,
         )
 
         request_func_mock = mocker.patch("urllib3.request")
@@ -1073,31 +958,17 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
 
-        additional_config = {
-            "OBJECT_STORE_ENABLED": True,
-            "MINIO_URL_TRANSFORMER": "rolling-snail-minio:9000",
-            "MINIO_ACCESS_KEY": "itsame",
-            "MINIO_SECRET_KEY": "shhh",
-            "TRANSFORMER_LOCAL_PATH": "/tmp/foo",
-            "TRANSFORMER_CPU_LIMIT": 1,
-            "TRANSFORMER_MEMORY_LIMIT": "2Gi",
-            "TRANSFORMER_CPU_REQUEST": "500m",
-            "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-            "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
-            "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
-            "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
-            "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
-            "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
-            "TRANSFORMER_CACHE_PREFIX": "root://dummy",  # this should NOT be overwritten
-            "TRANSFORMER_CACHE_VPS_SITE": "MWT3",
-            "TRANSFORMER_CACHE_VPS_LIVENESS_URL": "https://dummy",
-        }
-
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
-            extra_config=additional_config, transformation_manager=transformer
+            extra_config=make_config(
+                TRANSFORMER_LOCAL_PATH="/tmp/foo",
+                TRANSFORMER_CACHE_PREFIX="root://dummy",  # this should NOT be overwritten
+                TRANSFORMER_CACHE_VPS_SITE="MWT3",
+                TRANSFORMER_CACHE_VPS_LIVENESS_URL="https://dummy",
+            ),
+            transformation_manager=transformer,
         )
 
         request_func_mock = mocker.patch("urllib3.request")
