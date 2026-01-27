@@ -309,7 +309,7 @@ class TransformerManager:
             requests={
                 "cpu": current_app.config["TRANSFORMER_CPU_REQUEST"],
                 "memory": current_app.config["TRANSFORMER_MEMORY_REQUEST"],
-            }
+            },
         )
 
         # Configure Pod template container
