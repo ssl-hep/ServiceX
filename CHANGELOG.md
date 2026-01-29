@@ -9,6 +9,7 @@ January 26, 2026
 
 ### Fixed
 - The stale dataset delete job needs to know that the database is timezone unaware and compute the cutoff times accordingly
+- Prevent name collision for x509-secrets-init Job when one is left dangling
 
 ### 1.8.0
 January 23, 2026
