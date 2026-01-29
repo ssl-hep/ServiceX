@@ -6,10 +6,23 @@ app:
   authExpires: 21600
   checksImage: ncsa/checks:main
   defaultDIDFinderScheme: null
+  # OAuth/OIDC Provider Configuration
+  # Provider type: globus, keycloak, auth0, okta, azure_ad, cognito, google, generic
+  oauthProvider: null
   oauthMetadataURL: null
   oauthClientID: null
   oauthClientSecret: null
   allowAllAfterAuth: false
+
+  # Claim mapping overrides (optional - uses provider defaults if not set)
+  # Use dot notation for nested claims (e.g., "realm_access.roles")
+  oauthRolesClaim: null
+  oauthGroupsClaim: null
+  oauthOrganizationClaim: null
+
+  # Role-based access control
+  # Admin role from SSO provider (in addition to database admin flag)
+  oauthAdminRole: null
   defaultUsers:
   image: sslhep/servicex_app
   ingress:
