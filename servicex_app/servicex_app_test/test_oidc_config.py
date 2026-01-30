@@ -1,4 +1,5 @@
 """Tests for OIDC provider configuration and claim mapping."""
+
 import pytest
 
 from servicex_app.oidc_config import (
@@ -192,7 +193,11 @@ class TestProviderMappings:
         mapping_lower = get_claim_mapping("globus")
         mapping_upper = get_claim_mapping("GLOBUS")
         mapping_mixed = get_claim_mapping("Globus")
-        assert mapping_lower.organization == mapping_upper.organization == mapping_mixed.organization
+        assert (
+            mapping_lower.organization
+            == mapping_upper.organization
+            == mapping_mixed.organization
+        )
 
     def test_claim_override(self):
         """Test that claim overrides work."""

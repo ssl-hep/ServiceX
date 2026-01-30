@@ -15,6 +15,7 @@ Supported providers:
 - Google Identity Platform
 - Generic OIDC (minimal standard claims)
 """
+
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -185,9 +186,7 @@ def get_claim_mapping(
     Returns:
         OIDCClaimMapping configured for the provider
     """
-    base_mapping = PROVIDER_MAPPINGS.get(
-        provider.lower(), PROVIDER_MAPPINGS["generic"]
-    )
+    base_mapping = PROVIDER_MAPPINGS.get(provider.lower(), PROVIDER_MAPPINGS["generic"])
 
     if not overrides:
         return base_mapping

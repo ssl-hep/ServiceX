@@ -15,6 +15,7 @@ This module adds:
 - Normalized user info extraction
 - Session management helpers
 """
+
 from typing import Any, Dict, List, Optional
 
 from flask import current_app, session
