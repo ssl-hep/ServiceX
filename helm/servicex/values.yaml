@@ -19,6 +19,10 @@ app:
     limits:
       cpu: 1
       memory: 1Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
   ingress:
     class: nginx
     defaultBackend: default-http-backend
@@ -62,6 +66,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   uproot:
     enabled: true
@@ -77,6 +85,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   python:
     enabled: true
@@ -92,6 +104,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   rdataframe:
     enabled: true
@@ -107,6 +123,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   atlasr21:
     enabled: true
@@ -122,6 +142,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   atlasr22:
     enabled: true
@@ -137,6 +161,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   atlasr25:
     enabled: true
@@ -152,6 +180,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   cmssw-5-3-32:
     enabled: false
@@ -167,6 +199,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
   topcp:
     enabled: true
@@ -182,6 +218,10 @@ codeGen:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
 didFinder:
   CERNOpenData:
@@ -196,6 +236,10 @@ didFinder:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
   xrootd:
     enabled: true
     image: sslhep/servicex-did-finder-xrootd
@@ -208,6 +252,10 @@ didFinder:
       limits:
         cpu: 500m
         memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
   rucio:
     auth_host: https://atlas-rucio-auth.cern.ch:443
     enabled: true
@@ -228,6 +276,10 @@ didFinder:
       limits:
         cpu: 500m
         memory: 1Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
 
 gridAccount: <your account>
 logging:
@@ -348,6 +400,10 @@ x509Secrets:
     limits:
       cpu: 200m
       memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
 
 scheduledTasks:
   # image should support curl, gnu date
@@ -361,6 +417,10 @@ scheduledTasks:
     limits:
       cpu: 200m
       memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
 
   # This cleans up the output object store caches and archives associated transforms.
   dataLifecycle:
