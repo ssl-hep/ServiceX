@@ -387,6 +387,10 @@ transformer:
     existingClaim: null
     subdir: null
   priorityClassName: null
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6
