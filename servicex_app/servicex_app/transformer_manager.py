@@ -339,14 +339,35 @@ class TransformerManager:
         )
 
         # Create and Configure a spec section
+        pod_annotations = current_app.config.get("TRANSFORMER_POD_ANNOTATIONS", {})
+        node_selector = current_app.config.get("TRANSFORMER_NODE_SELECTOR", {})
+        tolerations_config = current_app.config.get("TRANSFORMER_TOLERATIONS", [])
+        affinity_config = current_app.config.get("TRANSFORMER_AFFINITY", {})
+
+        # Convert tolerations from config dicts to V1Toleration objects
+        tolerations = None
+        if tolerations_config:
+            tolerations = [client.V1Toleration(**t) for t in tolerations_config]
+
+        # Convert affinity from config dict to V1Affinity object
+        affinity = None
+        if affinity_config:
+            affinity = client.V1Affinity(**affinity_config)
+
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels={"app": "transformer-" + request_id}),
+            metadata=client.V1ObjectMeta(
+                labels={"app": "transformer-" + request_id},
+                annotations=pod_annotations if pod_annotations else None,
+            ),
             spec=client.V1PodSpec(
                 restart_policy="Always",
                 termination_grace_period_seconds=TransformerManager.POD_TERMINATION_GRACE_PERIOD,
                 priority_class_name=current_app.config.get(
                     "TRANSFORMER_PRIORITY_CLASS", None
                 ),
+                node_selector=node_selector if node_selector else None,
+                tolerations=tolerations,
+                affinity=affinity,
                 containers=[
                     sidecar,
                     science_container,

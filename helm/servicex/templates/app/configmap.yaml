@@ -129,6 +129,11 @@ data:
     TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = "{{ .Values.transformer.persistence.existingClaim }}"
     TRANSFORMER_PERSISTENCE_SUBDIR = "{{ .Values.transformer.persistence.subdir}}"
 
+    TRANSFORMER_NODE_SELECTOR = {{ .Values.transformer.nodeSelector | toJson }}
+    TRANSFORMER_TOLERATIONS = {{ .Values.transformer.tolerations | toJson }}
+    TRANSFORMER_AFFINITY = {{ .Values.transformer.affinity | toJson }}
+    TRANSFORMER_POD_ANNOTATIONS = {{ .Values.transformer.podAnnotations | toJson }}
+
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
