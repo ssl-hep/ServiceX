@@ -13,7 +13,6 @@ Authlib handles:
 This module adds:
 - Provider-specific claim path mapping
 - Normalized user info extraction
-- Role/group checking utilities
 - Session management helpers
 """
 from typing import Any, Dict, List, Optional
@@ -58,8 +57,6 @@ def get_provider_mapping() -> OIDCClaimMapping:
         "OAUTH_SUB_CLAIM": "sub",
         "OAUTH_ORGANIZATION_CLAIM": "organization",
         "OAUTH_INSTITUTION_CLAIM": "institution",
-        "OAUTH_GROUPS_CLAIM": "groups",
-        "OAUTH_ROLES_CLAIM": "roles",
         "OAUTH_IDENTITY_SET_CLAIM": "identity_set",
         "OAUTH_GIVEN_NAME_CLAIM": "given_name",
         "OAUTH_FAMILY_NAME_CLAIM": "family_name",
@@ -92,8 +89,6 @@ def extract_user_info(userinfo: Dict[str, Any]) -> Dict[str, Any]:
         - sub: str
         - organization: str
         - identity_set: List[str]
-        - roles: List[str]
-        - groups: List[str]
 
     Raises:
         ClaimExtractionError: If required claims are missing
@@ -114,8 +109,6 @@ def extract_user_info(userinfo: Dict[str, Any]) -> Dict[str, Any]:
         "sub": sub,
         "organization": mapping.extract_organization(userinfo),
         "identity_set": mapping.extract_identity_set(userinfo),
-        "roles": mapping.extract_roles(userinfo),
-        "groups": mapping.extract_groups(userinfo),
     }
 
 
@@ -154,8 +147,6 @@ def store_session_tokens(
         institution=user_info["organization"],
         sub=user_info["sub"],
         identity_set=user_info["identity_set"],
-        roles=user_info["roles"],
-        groups=user_info["groups"],
     )
 
     return user_info
@@ -177,8 +168,6 @@ def get_session_user_info() -> Optional[Dict[str, Any]]:
         "sub": session.get("sub"),
         "organization": session.get("institution"),
         "identity_set": session.get("identity_set", []),
-        "roles": session.get("roles", []),
-        "groups": session.get("groups", []),
     }
 
 
@@ -196,89 +185,6 @@ def get_session_tokens() -> Optional[Dict[str, str]]:
     return session.get("tokens")
 
 
-def has_role(required_role: str) -> bool:
-    """
-    Check if current user has a specific role.
-
-    Args:
-        required_role: The role name to check for
-
-    Returns:
-        True if user has the role, False otherwise
-    """
-    user_info = get_session_user_info()
-    if not user_info:
-        return False
-    return required_role in user_info.get("roles", [])
-
-
-def has_any_role(*required_roles: str) -> bool:
-    """
-    Check if current user has any of the required roles.
-
-    Args:
-        *required_roles: Role names (any one is sufficient)
-
-    Returns:
-        True if user has at least one of the roles
-    """
-    user_info = get_session_user_info()
-    if not user_info:
-        return False
-    user_roles = set(user_info.get("roles", []))
-    return bool(user_roles.intersection(required_roles))
-
-
-def has_all_roles(*required_roles: str) -> bool:
-    """
-    Check if current user has all of the required roles.
-
-    Args:
-        *required_roles: Role names (all are required)
-
-    Returns:
-        True if user has all of the specified roles
-    """
-    user_info = get_session_user_info()
-    if not user_info:
-        return False
-    user_roles = set(user_info.get("roles", []))
-    return all(role in user_roles for role in required_roles)
-
-
-def is_in_group(required_group: str) -> bool:
-    """
-    Check if current user is in a specific group.
-
-    Args:
-        required_group: The group name to check for
-
-    Returns:
-        True if user is in the group, False otherwise
-    """
-    user_info = get_session_user_info()
-    if not user_info:
-        return False
-    return required_group in user_info.get("groups", [])
-
-
-def is_in_any_group(*required_groups: str) -> bool:
-    """
-    Check if current user is in any of the required groups.
-
-    Args:
-        *required_groups: Group names (any one is sufficient)
-
-    Returns:
-        True if user is in at least one of the groups
-    """
-    user_info = get_session_user_info()
-    if not user_info:
-        return False
-    user_groups = set(user_info.get("groups", []))
-    return bool(user_groups.intersection(required_groups))
-
-
 def clear_session() -> None:
     """
     Clear all SSO-related data from session.
@@ -293,8 +199,6 @@ def clear_session() -> None:
         "institution",
         "sub",
         "identity_set",
-        "roles",
-        "groups",
         "user_id",
         "admin",
     ]

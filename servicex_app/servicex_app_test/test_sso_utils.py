@@ -28,44 +28,6 @@ class TestExtractUserInfo:
         assert user_info["name"] == "Test User"
         assert user_info["sub"] == "user-123"
         assert user_info["organization"] == ""
-        assert user_info["roles"] == []
-        assert user_info["groups"] == []
-
-    @patch("servicex_app.sso_utils.get_provider_mapping")
-    def test_extract_user_info_with_roles(self, mock_mapping):
-        """Test extraction with roles."""
-        from servicex_app.sso_utils import extract_user_info
-
-        mock_mapping.return_value = OIDCClaimMapping(roles="roles")
-
-        userinfo = {
-            "sub": "user-123",
-            "email": "user@example.com",
-            "name": "Test User",
-            "roles": ["admin", "user"],
-        }
-
-        user_info = extract_user_info(userinfo)
-
-        assert user_info["roles"] == ["admin", "user"]
-
-    @patch("servicex_app.sso_utils.get_provider_mapping")
-    def test_extract_user_info_with_groups(self, mock_mapping):
-        """Test extraction with groups."""
-        from servicex_app.sso_utils import extract_user_info
-
-        mock_mapping.return_value = OIDCClaimMapping(groups="groups")
-
-        userinfo = {
-            "sub": "user-123",
-            "email": "user@example.com",
-            "name": "Test User",
-            "groups": ["/scientists", "/admins"],
-        }
-
-        user_info = extract_user_info(userinfo)
-
-        assert user_info["groups"] == ["/scientists", "/admins"]
 
     @patch("servicex_app.sso_utils.get_provider_mapping")
     def test_extract_user_info_with_organization(self, mock_mapping):
@@ -109,25 +71,6 @@ class TestExtractUserInfo:
         assert "secondary@example.com" in user_info["identity_set"]
 
     @patch("servicex_app.sso_utils.get_provider_mapping")
-    def test_extract_user_info_keycloak_roles(self, mock_mapping):
-        """Test extraction with Keycloak nested roles."""
-        from servicex_app.sso_utils import extract_user_info
-
-        mock_mapping.return_value = OIDCClaimMapping(roles="realm_access.roles")
-
-        userinfo = {
-            "sub": "user-123",
-            "email": "user@example.com",
-            "name": "Test User",
-            "realm_access": {"roles": ["servicex-admin", "offline_access"]},
-        }
-
-        user_info = extract_user_info(userinfo)
-
-        assert "servicex-admin" in user_info["roles"]
-        assert "offline_access" in user_info["roles"]
-
-    @patch("servicex_app.sso_utils.get_provider_mapping")
     def test_extract_user_info_missing_email_raises(self, mock_mapping):
         """Test that missing email raises error."""
         from servicex_app.sso_utils import ClaimExtractionError, extract_user_info
@@ -169,150 +112,6 @@ class TestExtractUserInfo:
         assert user_info["name"] == "user@example.com"
 
 
-class TestRoleChecks:
-    """Tests for role checking functions."""
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_role_true(self, mock_user_info):
-        """Test has_role returns True when user has role."""
-        from servicex_app.sso_utils import has_role
-
-        mock_user_info.return_value = {"roles": ["admin", "user"]}
-        assert has_role("admin") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_role_false(self, mock_user_info):
-        """Test has_role returns False when user lacks role."""
-        from servicex_app.sso_utils import has_role
-
-        mock_user_info.return_value = {"roles": ["user"]}
-        assert has_role("admin") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_role_no_session(self, mock_user_info):
-        """Test has_role returns False when not authenticated."""
-        from servicex_app.sso_utils import has_role
-
-        mock_user_info.return_value = None
-        assert has_role("admin") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_role_empty_roles(self, mock_user_info):
-        """Test has_role returns False when roles list is empty."""
-        from servicex_app.sso_utils import has_role
-
-        mock_user_info.return_value = {"roles": []}
-        assert has_role("admin") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_any_role_one_match(self, mock_user_info):
-        """Test has_any_role with one matching role."""
-        from servicex_app.sso_utils import has_any_role
-
-        mock_user_info.return_value = {"roles": ["editor"]}
-        assert has_any_role("admin", "editor", "viewer") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_any_role_multiple_matches(self, mock_user_info):
-        """Test has_any_role with multiple matching roles."""
-        from servicex_app.sso_utils import has_any_role
-
-        mock_user_info.return_value = {"roles": ["admin", "editor"]}
-        assert has_any_role("admin", "editor", "viewer") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_any_role_no_match(self, mock_user_info):
-        """Test has_any_role with no matching roles."""
-        from servicex_app.sso_utils import has_any_role
-
-        mock_user_info.return_value = {"roles": ["editor"]}
-        assert has_any_role("admin", "superuser") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_any_role_no_session(self, mock_user_info):
-        """Test has_any_role returns False when not authenticated."""
-        from servicex_app.sso_utils import has_any_role
-
-        mock_user_info.return_value = None
-        assert has_any_role("admin") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_all_roles_success(self, mock_user_info):
-        """Test has_all_roles when user has all roles."""
-        from servicex_app.sso_utils import has_all_roles
-
-        mock_user_info.return_value = {"roles": ["admin", "user", "editor"]}
-        assert has_all_roles("admin", "user") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_all_roles_missing_one(self, mock_user_info):
-        """Test has_all_roles when user is missing one role."""
-        from servicex_app.sso_utils import has_all_roles
-
-        mock_user_info.return_value = {"roles": ["admin", "user"]}
-        assert has_all_roles("admin", "superuser") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_has_all_roles_no_session(self, mock_user_info):
-        """Test has_all_roles returns False when not authenticated."""
-        from servicex_app.sso_utils import has_all_roles
-
-        mock_user_info.return_value = None
-        assert has_all_roles("admin") is False
-
-
-class TestGroupChecks:
-    """Tests for group checking functions."""
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_group_true(self, mock_user_info):
-        """Test is_in_group returns True when user is in group."""
-        from servicex_app.sso_utils import is_in_group
-
-        mock_user_info.return_value = {"groups": ["/scientists", "/admins"]}
-        assert is_in_group("/scientists") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_group_false(self, mock_user_info):
-        """Test is_in_group returns False when user is not in group."""
-        from servicex_app.sso_utils import is_in_group
-
-        mock_user_info.return_value = {"groups": ["/scientists"]}
-        assert is_in_group("/admins") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_group_no_session(self, mock_user_info):
-        """Test is_in_group returns False when not authenticated."""
-        from servicex_app.sso_utils import is_in_group
-
-        mock_user_info.return_value = None
-        assert is_in_group("/scientists") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_any_group_one_match(self, mock_user_info):
-        """Test is_in_any_group with one matching group."""
-        from servicex_app.sso_utils import is_in_any_group
-
-        mock_user_info.return_value = {"groups": ["/scientists"]}
-        assert is_in_any_group("/admins", "/scientists") is True
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_any_group_no_match(self, mock_user_info):
-        """Test is_in_any_group with no matching groups."""
-        from servicex_app.sso_utils import is_in_any_group
-
-        mock_user_info.return_value = {"groups": ["/users"]}
-        assert is_in_any_group("/admins", "/scientists") is False
-
-    @patch("servicex_app.sso_utils.get_session_user_info")
-    def test_is_in_any_group_no_session(self, mock_user_info):
-        """Test is_in_any_group returns False when not authenticated."""
-        from servicex_app.sso_utils import is_in_any_group
-
-        mock_user_info.return_value = None
-        assert is_in_any_group("/admins") is False
-
-
 class TestSessionFunctions:
     """Tests for session management functions."""
 
@@ -333,8 +132,6 @@ class TestSessionFunctions:
             "sub": "user-123",
             "institution": "ACME Corp",
             "identity_set": ["user@example.com"],
-            "roles": ["admin"],
-            "groups": ["/scientists"],
         },
     )
     def test_get_session_user_info_authenticated(self):
@@ -349,8 +146,6 @@ class TestSessionFunctions:
         assert result["sub"] == "user-123"
         assert result["organization"] == "ACME Corp"
         assert result["identity_set"] == ["user@example.com"]
-        assert result["roles"] == ["admin"]
-        assert result["groups"] == ["/scientists"]
 
     @patch("servicex_app.sso_utils.session", {"is_authenticated": False})
     def test_get_session_tokens_not_authenticated(self):
@@ -423,8 +218,6 @@ class TestClearSession:
             "institution": "ACME",
             "sub": "user-123",
             "identity_set": ["user@example.com"],
-            "roles": ["admin"],
-            "groups": ["/scientists"],
             "user_id": 1,
             "admin": True,
             "unrelated_key": "should remain",
@@ -441,8 +234,6 @@ class TestClearSession:
             assert "institution" not in mock_session
             assert "sub" not in mock_session
             assert "identity_set" not in mock_session
-            assert "roles" not in mock_session
-            assert "groups" not in mock_session
             assert "user_id" not in mock_session
             assert "admin" not in mock_session
 
@@ -507,59 +298,6 @@ class TestStoreSessionTokens:
 
         assert session["tokens"]["refresh_token"] == "refresh-789"
 
-    @patch("servicex_app.sso_utils.get_provider_mapping")
-    @patch("servicex_app.sso_utils.session", {})
-    def test_store_session_tokens_with_roles_and_groups(self, mock_mapping):
-        """Test storing tokens with roles and groups."""
-        from servicex_app.sso_utils import session, store_session_tokens
-
-        mock_mapping.return_value = OIDCClaimMapping(roles="roles", groups="groups")
-
-        tokens = {
-            "access_token": "access-123",
-            "id_token": "id-456",
-        }
-        userinfo = {
-            "sub": "user-123",
-            "email": "user@example.com",
-            "name": "Test User",
-            "roles": ["admin", "user"],
-            "groups": ["/scientists"],
-        }
-
-        store_session_tokens(tokens, userinfo)
-
-        assert session["roles"] == ["admin", "user"]
-        assert session["groups"] == ["/scientists"]
-
-    @patch("servicex_app.sso_utils.get_provider_mapping")
-    @patch("servicex_app.sso_utils.session", {})
-    def test_store_session_tokens_keycloak_style(self, mock_mapping):
-        """Test storing tokens with Keycloak-style nested claims."""
-        from servicex_app.sso_utils import session, store_session_tokens
-
-        mock_mapping.return_value = OIDCClaimMapping(
-            roles="realm_access.roles", groups="groups"
-        )
-
-        tokens = {
-            "access_token": "access-123",
-            "id_token": "id-456",
-        }
-        userinfo = {
-            "sub": "user-123",
-            "email": "user@example.com",
-            "name": "Test User",
-            "realm_access": {"roles": ["servicex-admin", "offline_access"]},
-            "groups": ["/atlas", "/cms"],
-        }
-
-        store_session_tokens(tokens, userinfo)
-
-        assert "servicex-admin" in session["roles"]
-        assert "offline_access" in session["roles"]
-        assert "/atlas" in session["groups"]
-
 
 class TestGetProviderMapping:
     """Tests for get_provider_mapping function."""
@@ -578,19 +316,6 @@ class TestGetProviderMapping:
             assert mapping.name == "name"
             assert mapping.sub == "sub"
 
-    def test_get_provider_mapping_keycloak(self):
-        """Test get_provider_mapping with Keycloak provider."""
-        mock_app = MagicMock()
-        mock_app.config = {"OAUTH_PROVIDER": "keycloak"}
-
-        with patch("servicex_app.sso_utils.current_app", mock_app):
-            from servicex_app.sso_utils import get_provider_mapping
-
-            mapping = get_provider_mapping()
-
-            assert mapping.roles == "realm_access.roles"
-            assert mapping.groups == "groups"
-
     def test_get_provider_mapping_globus(self):
         """Test get_provider_mapping with Globus provider."""
         mock_app = MagicMock()
@@ -608,8 +333,7 @@ class TestGetProviderMapping:
         """Test get_provider_mapping with config overrides."""
         mock_app = MagicMock()
         mock_app.config = {
-            "OAUTH_PROVIDER": "keycloak",
-            "OAUTH_ROLES_CLAIM": "custom:roles",
+            "OAUTH_PROVIDER": "generic",
             "OAUTH_ORGANIZATION_CLAIM": "custom:org",
         }
 
@@ -618,7 +342,4 @@ class TestGetProviderMapping:
 
             mapping = get_provider_mapping()
 
-            assert mapping.roles == "custom:roles"
             assert mapping.organization == "custom:org"
-            # Other Keycloak defaults should still apply
-            assert mapping.groups == "groups"

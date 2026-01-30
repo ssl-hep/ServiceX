@@ -15,14 +15,7 @@ app:
   allowAllAfterAuth: false
 
   # Claim mapping overrides (optional - uses provider defaults if not set)
-  # Use dot notation for nested claims (e.g., "realm_access.roles")
-  oauthRolesClaim: null
-  oauthGroupsClaim: null
   oauthOrganizationClaim: null
-
-  # Role-based access control
-  # Admin role from SSO provider (in addition to database admin flag)
-  oauthAdminRole: null
   defaultUsers:
   image: sslhep/servicex_app
   ingress:

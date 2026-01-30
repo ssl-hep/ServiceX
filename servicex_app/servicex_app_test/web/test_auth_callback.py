@@ -36,6 +36,27 @@ class TestAuthCallback(WebTestBase):
             return_value=self.userinfo
         )
 
+        # Mock store_session_tokens to populate mock_session
+        def mock_store_session_tokens(tokens, userinfo):
+            mock_session["is_authenticated"] = True
+            mock_session["name"] = userinfo.get("name", "")
+            mock_session["email"] = userinfo.get("email", "")
+            mock_session["sub"] = userinfo.get("sub", "")
+            return {
+                "email": userinfo.get("email", ""),
+                "name": userinfo.get("name", ""),
+                "sub": userinfo.get("sub", ""),
+                "identity_set": [userinfo.get("email", "")],
+                "roles": [],
+                "groups": [],
+                "organization": userinfo.get("organization", ""),
+            }
+
+        mocker.patch(
+            "servicex_app.web.auth_callback.store_session_tokens",
+            side_effect=mock_store_session_tokens,
+        )
+
         response: Response = client.get(
             url_for("auth_callback"), query_string={"code": "oauth-code"}
         )
@@ -60,6 +81,27 @@ class TestAuthCallback(WebTestBase):
         mock_oauth.oauth = mocker.Mock()
         mock_oauth.oauth.authorize_access_token = mocker.Mock(
             return_value=self.userinfo
+        )
+
+        # Mock store_session_tokens to populate mock_session
+        def mock_store_session_tokens(tokens, userinfo):
+            mock_session["is_authenticated"] = True
+            mock_session["name"] = userinfo.get("name", "")
+            mock_session["email"] = userinfo.get("email", "")
+            mock_session["sub"] = userinfo.get("sub", "")
+            return {
+                "email": userinfo.get("email", ""),
+                "name": userinfo.get("name", ""),
+                "sub": userinfo.get("sub", ""),
+                "identity_set": [userinfo.get("email", "")],
+                "roles": [],
+                "groups": [],
+                "organization": userinfo.get("organization", ""),
+            }
+
+        mocker.patch(
+            "servicex_app.web.auth_callback.store_session_tokens",
+            side_effect=mock_store_session_tokens,
         )
 
         response: Response = client.get(

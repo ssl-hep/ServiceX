@@ -10,11 +10,62 @@ DOCS_BASE_URL = 'https://servicex-frontend.readthedocs.io/en/stable/'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
-# OAuth configuration
+# =============================================================================
+# OAuth/OIDC SSO Configuration
+# =============================================================================
+# ServiceX supports multiple OIDC providers through configuration only.
+# Set the provider type and the appropriate metadata URL for your provider.
+#
+# Supported providers: globus, keycloak, auth0, okta, azure_ad, cognito, google, generic
+# =============================================================================
+
+# Provider type (determines default claim mappings)
+OAUTH_PROVIDER='globus'
+
+# OIDC Discovery URL (provider-specific examples below)
 OAUTH_METADATA_URL='https://auth.globus.org/.well-known/openid-configuration'
-OAUTH_CLIENT_ID='globus-client-id'
-OAUTH_CLIENT_SECRET='globus-client-secret'
+
+# Your OAuth application credentials
+OAUTH_CLIENT_ID='your-client-id'
+OAUTH_CLIENT_SECRET='your-client-secret'
+
+# Auto-approve users after successful authentication (skip pending approval)
 OAUTH_ALLOW_ALL_AFTER_AUTH=False
+
+# Claim mapping overrides (optional - uses provider defaults if not set)
+# OAUTH_ORGANIZATION_CLAIM='organization'  # Path to organization in token
+
+# -----------------------------------------------------------------------------
+# Provider-Specific Examples
+# -----------------------------------------------------------------------------
+#
+# --- Globus ---
+# OAUTH_PROVIDER='globus'
+# OAUTH_METADATA_URL='https://auth.globus.org/.well-known/openid-configuration'
+#
+# --- Keycloak ---
+# OAUTH_PROVIDER='keycloak'
+# OAUTH_METADATA_URL='https://your-keycloak.example.com/realms/your-realm/.well-known/openid-configuration'
+#
+# --- Auth0 ---
+# OAUTH_PROVIDER='auth0'
+# OAUTH_METADATA_URL='https://your-tenant.auth0.com/.well-known/openid-configuration'
+#
+# --- Okta ---
+# OAUTH_PROVIDER='okta'
+# OAUTH_METADATA_URL='https://your-org.okta.com/.well-known/openid-configuration'
+#
+# --- Azure AD / Entra ID ---
+# OAUTH_PROVIDER='azure_ad'
+# OAUTH_METADATA_URL='https://login.microsoftonline.com/your-tenant-id/v2.0/.well-known/openid-configuration'
+#
+# --- AWS Cognito ---
+# OAUTH_PROVIDER='cognito'
+# OAUTH_METADATA_URL='https://cognito-idp.your-region.amazonaws.com/your-pool-id/.well-known/openid-configuration'
+#
+# --- Google Identity Platform ---
+# OAUTH_PROVIDER='google'
+# OAUTH_METADATA_URL='https://accounts.google.com/.well-known/openid-configuration'
 
 # JWT admin email address
 JWT_ADMIN='admin@example.com'

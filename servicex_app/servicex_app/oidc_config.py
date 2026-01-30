@@ -7,15 +7,15 @@ abstraction layer for SSO integration.
 
 Supported providers:
 - Globus (with identity_set support)
-- Keycloak (with realm_access.roles)
-- Auth0 (with custom namespaced claims)
-- Okta (with groups-based roles)
-- Azure AD / Entra ID (with roles claim)
-- AWS Cognito (with cognito:groups)
-- Google Identity Platform (with hosted domain)
+- Keycloak
+- Auth0
+- Okta
+- Azure AD / Entra ID
+- AWS Cognito
+- Google Identity Platform
 - Generic OIDC (minimal standard claims)
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 
@@ -27,7 +27,7 @@ class OIDCClaimMapping:
     Claim paths use dot notation for nested claims:
     - "email" -> token["email"]
     - "realm_access.roles" -> token["realm_access"]["roles"]
-    - "https://example.com/roles" -> token["https://example.com/roles"]
+    - "https://example.com/claim" -> token["https://example.com/claim"]
     """
 
     # Standard OIDC claims (path in token)
@@ -38,8 +38,6 @@ class OIDCClaimMapping:
     # Optional/Provider-specific claims
     organization: Optional[str] = None
     institution: Optional[str] = None
-    groups: Optional[str] = None
-    roles: Optional[str] = None
 
     # Multi-identity support (e.g., Globus identity_set)
     identity_set: Optional[str] = None
@@ -54,15 +52,15 @@ class OIDCClaimMapping:
 
         Args:
             token: The decoded token dictionary
-            claim_path: Dot-separated path to the claim (e.g., "realm_access.roles")
+            claim_path: Dot-separated path to the claim (e.g., "org.name")
 
         Returns:
             The claim value, or None if not found
 
         Examples:
             - "email" -> token["email"]
-            - "realm_access.roles" -> token["realm_access"]["roles"]
-            - "https://example.com/roles" -> token["https://example.com/roles"]
+            - "org.name" -> token["org"]["name"]
+            - "https://example.com/claim" -> token["https://example.com/claim"]
         """
         if not claim_path:
             return None
@@ -126,38 +124,6 @@ class OIDCClaimMapping:
                 return str(inst)
         return ""
 
-    def extract_roles(self, token: Dict[str, Any]) -> List[str]:
-        """
-        Extract roles from token.
-
-        Handles both list and single-value role claims.
-        """
-        if not self.roles:
-            return []
-
-        roles = self.get_claim_value(token, self.roles)
-        if isinstance(roles, list):
-            return [str(r) for r in roles]
-        if isinstance(roles, str):
-            return [roles]
-        return []
-
-    def extract_groups(self, token: Dict[str, Any]) -> List[str]:
-        """
-        Extract groups from token.
-
-        Handles both list and single-value group claims.
-        """
-        if not self.groups:
-            return []
-
-        groups = self.get_claim_value(token, self.groups)
-        if isinstance(groups, list):
-            return [str(g) for g in groups]
-        if isinstance(groups, str):
-            return [groups]
-        return []
-
     def extract_identity_set(self, token: Dict[str, Any]) -> List[str]:
         """
         Extract all linked identities (emails).
@@ -197,16 +163,6 @@ PROVIDER_MAPPINGS: Dict[str, OIDCClaimMapping] = {
         organization="organization",
         identity_set="identity_set",
     ),
-    # "keycloak": OIDCClaimMapping(
-    #     email="email",
-    #     name="name",
-    #     sub="sub",
-    #     organization="organization",  # Requires mapper in Keycloak
-    #     roles="realm_access.roles",
-    #     groups="groups",
-    #     given_name="given_name",
-    #     family_name="family_name",
-    # ),
     "generic": OIDCClaimMapping(
         email="email",
         name="name",
@@ -224,7 +180,7 @@ def get_claim_mapping(
     Args:
         provider: Provider name (globus, keycloak, auth0, okta,
                   azure_ad, cognito, google, generic)
-        overrides: Dict of claim path overrides (e.g., {"roles": "custom:roles"})
+        overrides: Dict of claim path overrides
 
     Returns:
         OIDCClaimMapping configured for the provider
@@ -243,8 +199,6 @@ def get_claim_mapping(
         "sub": overrides.get("sub", base_mapping.sub),
         "organization": overrides.get("organization", base_mapping.organization),
         "institution": overrides.get("institution", base_mapping.institution),
-        "groups": overrides.get("groups", base_mapping.groups),
-        "roles": overrides.get("roles", base_mapping.roles),
         "identity_set": overrides.get("identity_set", base_mapping.identity_set),
         "given_name": overrides.get("given_name", base_mapping.given_name),
         "family_name": overrides.get("family_name", base_mapping.family_name),

@@ -43,19 +43,8 @@ data:
     {{ end }}
 
     # Claim mapping overrides (optional - uses provider defaults if not set)
-    {{ if .Values.app.oauthRolesClaim }}
-    OAUTH_ROLES_CLAIM = '{{ .Values.app.oauthRolesClaim }}'
-    {{ end }}
-    {{ if .Values.app.oauthGroupsClaim }}
-    OAUTH_GROUPS_CLAIM = '{{ .Values.app.oauthGroupsClaim }}'
-    {{ end }}
     {{ if .Values.app.oauthOrganizationClaim }}
     OAUTH_ORGANIZATION_CLAIM = '{{ .Values.app.oauthOrganizationClaim }}'
-    {{ end }}
-
-    # Role-based access control
-    {{ if .Values.app.oauthAdminRole }}
-    OAUTH_ADMIN_ROLE = '{{ .Values.app.oauthAdminRole }}'
     {{ end }}
 
     # Specify an email address for the first admin user
