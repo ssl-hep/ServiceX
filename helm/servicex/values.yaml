@@ -277,3 +277,11 @@ scheduledTasks:
 
     # How long to keep datasets in the cache, in hours
     cacheLifetime: 24
+
+  # This cleans up lingering Kubernetes resources from unclean shutdowns of transformers.
+  kubernetesCleanup:
+    enabled: true
+    schedule: "0 0 * * *"
+
+    # Delete transforms older than this value, in hours
+    maxAge: 168

@@ -1,0 +1,29 @@
+{{- if .Values.scheduledTasks.kubernetesCleanup.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-kubernetes-cleanup-job
+spec:
+  schedule: {{ .Values.scheduledTasks.kubernetesCleanup.schedule | default  "0 0 * * *" | quote  }}
+  concurrencyPolicy: "Forbid"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}-kubernetes-cleanup-job
+        spec:
+          containers:
+          - name: {{ .Release.Name }}-kubernetes-cleanup-job
+            image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}
+            imagePullPolicy: {{ .Values.scheduledTasks.pullPolicy }}
+            env:
+              - name: MAXAGE
+                value: {{ .Values.scheduledTasks.kubernetesCleanup.maxAge | quote }}
+            command:
+            - /usr/bin/curl
+            - --json
+            - '{"maxAge": $(MAXAGE)}'
+            - "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/kubernetes-cleanup"
+          restartPolicy: OnFailure
+{{- end }}

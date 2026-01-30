@@ -718,6 +718,74 @@ class TestTransformerManager(ResourceTestBase):
                 name="transformer-1234", namespace="my-ns"
             )
 
+    def test_shutdown_transformer_jobs_exceptions(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_deployment.side_effect = (
+            kubernetes.client.rest.ApiException()
+        )
+
+        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
+        mock_core_api.delete_namespaced_config_map.side_effect = (
+            kubernetes.client.rest.ApiException()
+        )
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
+            kubernetes.client.rest.ApiException()
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock(
+            side_effect=Exception()
+        )
+
+        client = self._test_client(transformation_manager=transformer)
+        client.application.logger = mocker.MagicMock()
+
+        # default mode with exceptions
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns")
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+            mock_core_api.delete_namespaced_config_map.assert_called_with(
+                name="1234-generated-source", namespace="my-ns"
+            )
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+            transformer.celery_app.control.cancel_consumer.assert_called_with(
+                "transformer-1234"
+            )
+        assert client.application.logger.exception.call_count == 4
+
+        # now check quiet mode
+        client.application.logger.exception.reset_mock()
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns", True)
+            mock_api.delete_namespaced_deployment.assert_called_with(
+                name="transformer-1234",
+                namespace="my-ns",
+            )
+            mock_core_api.delete_namespaced_config_map.assert_called_with(
+                name="1234-generated-source",
+                namespace="my-ns",
+            )
+            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
+                name="transformer-1234", namespace="my-ns"
+            )
+        client.application.logger.exception.assert_not_called()
+
     def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
 
@@ -1051,3 +1119,75 @@ class TestTransformerManager(ResourceTestBase):
             env = container.env
             request_func_mock.assert_called_with("GET", "https://dummy")
             assert _env_value(env, "CACHE_PREFIX") == "root://dummy"
+
+    def test_get_all_deployments(self, mocker, mock_kubernetes):
+        mock_api = mock_kubernetes.client.AppsV1Api.return_value
+        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
+        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
+        mock_deployment = mocker.MagicMock(name="mock_deployment")
+        mock_deployment.metadata.name = "transformer-abc"
+        mock_deployment_2 = mocker.MagicMock(name="mock_deployment_2")
+        mock_deployment_2.metadata.name = "servicex-internal-abc"
+        mock_deployment_list.items = [mock_deployment, mock_deployment_2]
+
+        transformer_manager = TransformerManager("external-kubernetes")
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
+
+        client = self._test_client(
+            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
+            transformation_manager=transformer_manager,
+        )
+
+        with client.application.app_context():
+            deployments = transformer_manager.get_all_transformer_deployments()
+            assert deployments == [mock_deployment]
+
+    def test_get_all_configmaps(self, mocker, mock_kubernetes):
+        mock_api = mock_kubernetes.client.CoreV1Api.return_value
+        mock_configmap_list = mocker.MagicMock(name="mock_deployment_list")
+        mock_api.list_namespaced_config_map.return_value = mock_configmap_list
+        mock_configmap = mocker.MagicMock(name="mock_deployment")
+        mock_configmap.metadata.name = "abc-generated-source"
+        mock_configmap_2 = mocker.MagicMock(name="mock_deployment")
+        mock_configmap_2.metadata.name = "servicex-config"
+        mock_configmap_list.items = [mock_configmap, mock_configmap_2]
+
+        transformer_manager = TransformerManager("external-kubernetes")
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
+
+        client = self._test_client(
+            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
+            transformation_manager=transformer_manager,
+        )
+
+        with client.application.app_context():
+            configmaps = transformer_manager.get_all_transformer_configmaps()
+            assert configmaps == [mock_configmap]
+
+    def test_get_all_hpas(self, mocker, mock_kubernetes):
+        mock_api = mock_kubernetes.client.AutoscalingV1Api.return_value
+        mock_hpa_list = mocker.MagicMock(name="mock_deployment_list")
+        mock_api.list_namespaced_horizontal_pod_autoscaler.return_value = mock_hpa_list
+        mock_hpa = mocker.MagicMock(name="mock_deployment")
+        mock_hpa.metadata.name = "transformer-abc"
+        mock_hpa_2 = mocker.MagicMock(name="mock_deployment")
+        mock_hpa_2.metadata.name = "mysterious_hpa"
+        mock_hpa_list.items = [mock_hpa, mock_hpa_2]
+
+        transformer_manager = TransformerManager("external-kubernetes")
+        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
+            return_value=True
+        )
+
+        client = self._test_client(
+            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
+            transformation_manager=transformer_manager,
+        )
+
+        with client.application.app_context():
+            hpas = transformer_manager.get_all_transformer_hpas()
+            assert hpas == [mock_hpa]

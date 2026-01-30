@@ -520,7 +520,9 @@ class TransformerManager:
             self._create_hpa(autoscaler_api, hpa, namespace)
 
     @classmethod
-    def shutdown_transformer_job(cls, request_id, namespace):
+    def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
+        # quiet_errors is intended to be used for reaper jobs where components of the transform
+        # may be missing
         try:
             if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
                 autoscaler_api = kubernetes.client.AutoscalingV1Api()
@@ -528,9 +530,11 @@ class TransformerManager:
                     name="transformer-" + request_id, namespace=namespace
                 )
         except ApiException:
-            current_app.logger.exception(
-                "Exception during Job HPA Shut Down", extra={"requestId": request_id}
-            )
+            if not quiet_errors:
+                current_app.logger.exception(
+                    "Exception during Job HPA Shut Down",
+                    extra={"requestId": request_id},
+                )
 
         try:
             api_core = client.CoreV1Api()
@@ -539,10 +543,11 @@ class TransformerManager:
                 name=configmap_name, namespace=namespace
             )
         except ApiException:
-            current_app.logger.exception(
-                "Exception during Job ConfigMap cleanup",
-                extra={"requestId": request_id},
-            )
+            if not quiet_errors:
+                current_app.logger.exception(
+                    "Exception during Job ConfigMap cleanup",
+                    extra={"requestId": request_id},
+                )
 
         try:
             api_v1 = client.AppsV1Api()
@@ -550,10 +555,11 @@ class TransformerManager:
                 name="transformer-" + request_id, namespace=namespace
             )
         except ApiException:
-            current_app.logger.exception(
-                "Exception during Job Deployment Shut Down",
-                extra={"requestId": request_id},
-            )
+            if not quiet_errors:
+                current_app.logger.exception(
+                    "Exception during Job Deployment Shut Down",
+                    extra={"requestId": request_id},
+                )
 
         # delete RabbitMQ queue
         try:
@@ -562,10 +568,11 @@ class TransformerManager:
             )
             cls.celery_app.control.cancel_consumer(f"transformer-{request_id}")
         except Exception as e:
-            current_app.logger.exception(
-                "Exception during Celery queue cancellation",
-                extra={"requestId": request_id, "exception": e},
-            )
+            if not quiet_errors:
+                current_app.logger.exception(
+                    "Exception during Celery queue cancellation",
+                    extra={"requestId": request_id, "exception": e},
+                )
 
     @staticmethod
     def get_deployment_status(
@@ -580,6 +587,18 @@ class TransformerManager:
             return None
         deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
         return deployment.status
+
+    @staticmethod
+    def get_all_transformer_deployments() -> list[client.models.V1Deployment]:
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        api = client.AppsV1Api()
+        rv: list[client.models.V1Deployment]
+        deployments: client.V1DeploymentList
+        deployments = api.list_namespaced_deployment(namespace)
+        rv = [
+            _ for _ in deployments.items if _.metadata.name.startswith("transformer-")
+        ]
+        return rv
 
     @staticmethod
     def create_configmap_from_zip(zipfile, request_id, namespace):
@@ -602,3 +621,25 @@ class TransformerManager:
         api_instance = client.CoreV1Api()
         api_instance.create_namespaced_config_map(namespace=namespace, body=configmap)
         return configmap_name
+
+    @staticmethod
+    def get_all_transformer_configmaps() -> list[client.models.V1ConfigMap]:
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        api = client.CoreV1Api()
+        rv: list[client.models.V1ConfigMap]
+        configmaps: client.V1ConfigMapList
+        configmaps = api.list_namespaced_config_map(namespace)
+        rv = [
+            _ for _ in configmaps.items if _.metadata.name.endswith("-generated-source")
+        ]
+        return rv
+
+    @staticmethod
+    def get_all_transformer_hpas() -> list[client.models.V1HorizontalPodAutoscaler]:
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        api = client.AutoscalingV1Api()
+        rv: list[client.models.V1HorizontalPodAutoscaler]
+        hpas: client.V1HorizontalPodAutoscalerList
+        hpas = api.list_namespaced_horizontal_pod_autoscaler(namespace)
+        rv = [_ for _ in hpas.items if _.metadata.name.startswith("transformer-")]
+        return rv

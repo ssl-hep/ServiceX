@@ -57,6 +57,9 @@ def add_routes(
     from servicex_app.resources.internal.transformer_file_complete import (
         TransformerFileComplete,
     )
+    from servicex_app.resources.internal.kubernetes_resource_cleanup import (
+        CleanupKubernetesResources,
+    )
 
     from servicex_app.resources.transformation.submit import SubmitTransformationRequest
     from servicex_app.resources.transformation.status import TransformationStatus
@@ -201,3 +204,8 @@ def add_routes(
     api.add_resource(DataLifecycleOps, "/servicex/internal/data-lifecycle")
 
     api.add_resource(DatasetLifecycleOps, "/servicex/internal/dataset-lifecycle")
+
+    CleanupKubernetesResources.make_api(transformer_manager)
+    api.add_resource(
+        CleanupKubernetesResources, "/servicex/internal/kubernetes-cleanup"
+    )
