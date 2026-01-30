@@ -13,7 +13,23 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-did-finder-cernopendata
+      {{- with .Values.didFinder.CERNOpenData.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.didFinder.CERNOpenData.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.CERNOpenData.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.CERNOpenData.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: check-url
           image: {{ .Values.app.checksImage }}

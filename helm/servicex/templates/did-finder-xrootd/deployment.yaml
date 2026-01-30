@@ -13,7 +13,23 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-did-finder-xrootd
+      {{- with .Values.didFinder.xrootd.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.didFinder.xrootd.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.xrootd.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.xrootd.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: check-url
           image: {{ .Values.app.checksImage }}
