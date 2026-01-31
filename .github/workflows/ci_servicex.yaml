@@ -45,8 +45,8 @@ jobs:
         uses: actions/setup-python@v6.2.0
         with:
           python-version: |
-            "3.14"
-            "3.10"
+            3.14
+            3.10
         if: ${{ matrix.app.test_required }}
 
       - name: Install poetry
