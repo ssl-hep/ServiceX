@@ -15,6 +15,11 @@
     "test_required": true
   },
   {
+    "dir_name": "did_finder_atlasopenmagic",
+    "image_name": "servicex-did-finder-atlasopenmagic",
+    "test_required": true
+  },
+  {
     "dir_name": "did_finder_rucio",
     "image_name": "servicex-did-finder",
     "test_required": true

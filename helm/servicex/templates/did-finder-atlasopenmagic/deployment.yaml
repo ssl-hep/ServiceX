@@ -1,0 +1,42 @@
+---
+{{ if .Values.didFinder.atlasopenmagic.enabled}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-atlasopenmagic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-atlasopenmagic
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-atlasopenmagic
+    spec:
+      initContainers:
+        - name: check-url
+          image: {{ .Values.app.checksImage }}
+          env:
+          - name: URL
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
+      containers:
+      - name: {{ .Release.Name }}-did-finder-atlasopenmagic
+        image: {{ .Values.didFinder.atlasopenmagic.image }}:{{ .Values.didFinder.atlasopenmagic.tag }}
+        imagePullPolicy: {{ .Values.didFinder.atlasopenmagic.pullPolicy }}
+        env:
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: BROKER_URL
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+        {{- else }}
+          - name: BROKER_URL
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
+        {{- end }}
+{{ end }}

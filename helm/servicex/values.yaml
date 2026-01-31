@@ -196,6 +196,18 @@ didFinder:
       limits:
         cpu: 500m
         memory: 512Mi
+  atlasopenmagic:
+    enabled: true
+    image: sslhep/servicex-did-finder-atlasopenmagic
+    pullPolicy: Always
+    tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
   xrootd:
     enabled: true
     image: sslhep/servicex-did-finder-xrootd
