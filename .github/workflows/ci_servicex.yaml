@@ -35,17 +35,18 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
-        python-version: ["3.10"]
         app: "${{fromJson(needs.build-matrix.outputs.matrix)}}"
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v6.0.2
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python versions
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: |
+            "3.14"
+            "3.10"
         if: ${{ matrix.app.test_required }}
 
       - name: Install poetry
