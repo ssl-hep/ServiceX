@@ -38,9 +38,7 @@ from servicex_did_finder_lib.exceptions import (
 
 
 def test_working_call():
-    for did, nfiles in [("2024r-pp/700901", 11),
-                        ("2020e-13tev/data/3lep", 4)
-                        ]:
+    for did, nfiles in [("2024r-pp/700901", 11), ("2020e-13tev/data/3lep", 4)]:
         iter = find_files(did, {"request-id": "112233"})
         files = [f for f in iter]
         assert len(files) == nfiles

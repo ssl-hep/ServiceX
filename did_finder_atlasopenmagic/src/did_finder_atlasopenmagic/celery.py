@@ -71,16 +71,14 @@ def find_files(
 
     match did_name.split("/"):
         case [release, did]:
-            skim = 'noskim'
+            skim = "noskim"
         case [release, did, skim]:
             pass
 
     try:
         atom.set_release(release)
     except ValueError as e:
-        raise NoSuchDatasetException(
-            f"Invalid release. Error: {e}"
-        )
+        raise NoSuchDatasetException(f"Invalid release. Error: {e}")
 
     if did not in atom.available_datasets():
         raise NoSuchDatasetException(
@@ -88,9 +86,7 @@ def find_files(
         )
 
     if skim != "noskim" and skim not in atom.available_skims():
-        raise NoSuchDatasetException(
-            f"Skim {skim} not found for release {release}"
-        )
+        raise NoSuchDatasetException(f"Skim {skim} not found for release {release}")
 
     try:
         for url in atom.get_urls(key=did, skim=skim, protocol="root"):
@@ -98,9 +94,7 @@ def find_files(
                 "paths": [url],
                 "adler32": 0,  # No clue
                 "file_size": 0,  # Size in bytes if known
-                "file_events": 0  # Number of events if known
+                "file_events": 0,  # Number of events if known
             }
     except Exception as e:
-        raise LookupFailureException(
-            f"Lookup failure: {e}"
-        )
+        raise LookupFailureException(f"Lookup failure: {e}")
