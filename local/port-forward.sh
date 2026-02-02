@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Default values
 K8S_NAMESPACE="default"
-HELM_NAME="servicex"
+HELM_NAME="${HELM_INSTALLATION_NAME:-servicex}"
 SERVICE_TYPE=""
 
 # Parse arguments

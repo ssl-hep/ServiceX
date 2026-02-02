@@ -109,11 +109,12 @@ To do this, open your `~/.bashrc` and add the three environment variables previo
 LOCAL_DIR=/Users/mattshirley/work/ServiceX/
 CHART_DIR=$LOCAL_DIR/helm/servicex
 VALUES_FILE=local-values.yaml
+# HELM_INSTALLATION_NAME=servicex-local # this is optional, will default to servicex
 
 alias servicex-up='cd $CHART_DIR && overmind start'
-alias servicex-down='helm delete servicex'
+alias servicex-down='helm delete "${HELM_INSTALLATION_NAME:-servicex}"'
 alias servicex-start='servicex-up; servicex-down;'
-alias servicex-upgrade='cd $CHART_DIR && helm upgrade -f $VALUES_FILE servicex .'
+alias servicex-upgrade='cd $CHART_DIR && helm upgrade -f $VALUES_FILE "${HELM_INSTALLATION_NAME:-servicex}" .'
 ```
 
 After adding the aliases, refresh your `.bashrc` file:
