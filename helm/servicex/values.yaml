@@ -174,7 +174,7 @@ codeGen:
     pullPolicy: Always
     tag: develop
     defaultScienceContainerImage: sslhep/servicex_science_image_topcp
-    defaultScienceContainerTag: 25.2.74-v2.23.0
+    defaultScienceContainerTag: 25.2.66-v2.22.0
     resources:
       requests:
         cpu: 100m
