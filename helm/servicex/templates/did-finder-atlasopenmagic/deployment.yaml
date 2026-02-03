@@ -24,6 +24,11 @@ spec:
       - name: {{ .Release.Name }}-did-finder-atlasopenmagic
         image: {{ .Values.didFinder.atlasopenmagic.image }}:{{ .Values.didFinder.atlasopenmagic.tag }}
         imagePullPolicy: {{ .Values.didFinder.atlasopenmagic.pullPolicy }}
+        {{- if .Values.didFinder.CERNOpenData.resources }}
+        resources:
+{{ toYaml .Values.didFinder.CERNOpenData.resources | indent 10 }}
+        {{- end }}
+
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
