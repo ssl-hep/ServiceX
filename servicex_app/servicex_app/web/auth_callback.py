@@ -1,15 +1,16 @@
 from flask import flash, request, redirect, url_for, session
 
 from servicex_app.models import UserModel
+from servicex_app.sso_utils import store_session_tokens
 from .utils import load_oauth_client
 
 
 def auth_callback():
     """Handles the interaction with OIDC Auth."""
     if "error" in request.args:
+        error_desc = request.args.get("error_description", request.args["error"])
         flash(
-            "You could not be logged into the portal: "
-            + request.args.get("error_description"),
+            "You could not be logged into the portal: " + error_desc,
             request.args["error"],
         )
         return redirect("/")
@@ -24,26 +25,11 @@ def auth_callback():
 
     # Otherwise, we're coming back from OIDC with a code
     tokens = oauth.oauth.authorize_access_token()
-    id_token = tokens["userinfo"]
+    userinfo = tokens["userinfo"]
 
-    session_tokens = {
-        "access_token": tokens["access_token"],
-        "id_token": tokens["id_token"],
-    }
-
-    session.update(
-        tokens=session_tokens,
-        is_authenticated=True,
-        name=id_token.get("name", ""),
-        email=id_token.get("email", ""),
-        institution=id_token.get("organization", ""),
-        sub=id_token.get("sub"),
-    )
-
-    if "identity_set" in id_token:
-        identity_set = {_["email"] for _ in id_token["identity_set"]}
-    else:
-        identity_set = [id_token["email"]]
+    # Use SSO utilities to extract user info and store in session
+    user_info = store_session_tokens(tokens, userinfo)
+    identity_set = user_info["identity_set"]
 
     for identity in identity_set:
         user = UserModel.find_by_email(identity)
