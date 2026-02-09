@@ -17,7 +17,23 @@ spec:
     metadata:
       labels:
         app: x509-secrets
+      {{- with .Values.x509Secrets.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.x509Secrets.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.x509Secrets.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.x509Secrets.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ template "servicex.fullname" . }}
       restartPolicy: OnFailure
 

@@ -13,7 +13,23 @@ spec:
         metadata:
           labels:
             app: x509-secrets
+          {{- with .Values.x509Secrets.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         spec:
+          {{- with .Values.x509Secrets.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.x509Secrets.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.x509Secrets.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           serviceAccountName: {{ template "servicex.fullname" . }}
           restartPolicy: OnFailure
           # Before launching the main container, copy the certs and set their permissions accordingly

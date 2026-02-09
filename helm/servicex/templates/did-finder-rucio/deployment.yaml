@@ -16,7 +16,23 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-did-finder-rucio
+      {{- with .Values.didFinder.rucio.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.didFinder.rucio.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.rucio.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.rucio.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: did-finder
         image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}

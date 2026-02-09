@@ -12,7 +12,23 @@ spec:
         metadata:
           labels:
             app: {{ .Release.Name }}-data-lifecycle-job
+          {{- with .Values.scheduledTasks.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         spec:
+          {{- with .Values.scheduledTasks.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduledTasks.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduledTasks.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
           - name: {{ .Release.Name }}-data-lifecycle-job
             image: {{ .Values.scheduledTasks.image }}:{{ .Values.scheduledTasks.tag }}

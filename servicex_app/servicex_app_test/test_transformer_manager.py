@@ -1095,3 +1095,154 @@ class TestTransformerManager(ResourceTestBase):
         with client.application.app_context():
             hpas = transformer_manager.get_all_transformer_hpas()
             assert hpas == [mock_hpa]
+
+    def test_launch_transformer_with_pod_scheduling_options(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        node_selector = {"disktype": "ssd", "region": "us-west"}
+        tolerations = [
+            {
+                "key": "dedicated",
+                "operator": "Equal",
+                "value": "servicex",
+                "effect": "NoSchedule",
+            },
+            {
+                "key": "gpu",
+                "operator": "Exists",
+                "effect": "NoExecute",
+                "toleration_seconds": 3600,
+            },
+        ]
+        affinity = {
+            "node_affinity": {
+                "required_during_scheduling_ignored_during_execution": {
+                    "node_selector_terms": [
+                        {
+                            "match_expressions": [
+                                {
+                                    "key": "topology.kubernetes.io/zone",
+                                    "operator": "In",
+                                    "values": ["us-west-1a", "us-west-1b"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+        pod_annotations = {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "8080",
+        }
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_NODE_SELECTOR=node_selector,
+                TRANSFORMER_TOLERATIONS=tolerations,
+                TRANSFORMER_AFFINITY=affinity,
+                TRANSFORMER_POD_ANNOTATIONS=pod_annotations,
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_deployment = mock_kubernetes.mock_calls[1][2]["body"]
+            template = called_deployment.spec.template
+
+            # Verify pod annotations
+            assert template.metadata.annotations == pod_annotations
+
+            # Verify node selector
+            assert template.spec.node_selector == node_selector
+
+            # Verify tolerations
+            assert len(template.spec.tolerations) == 2
+            assert template.spec.tolerations[0].key == "dedicated"
+            assert template.spec.tolerations[0].operator == "Equal"
+            assert template.spec.tolerations[0].value == "servicex"
+            assert template.spec.tolerations[0].effect == "NoSchedule"
+            assert template.spec.tolerations[1].key == "gpu"
+            assert template.spec.tolerations[1].operator == "Exists"
+            assert template.spec.tolerations[1].effect == "NoExecute"
+            assert template.spec.tolerations[1].toleration_seconds == 3600
+
+            # Verify affinity
+            assert template.spec.affinity is not None
+            assert template.spec.affinity.node_affinity is not None
+
+    def test_launch_transformer_with_empty_pod_scheduling_options(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        # Test with empty/default values
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_NODE_SELECTOR={},
+                TRANSFORMER_TOLERATIONS=[],
+                TRANSFORMER_AFFINITY={},
+                TRANSFORMER_POD_ANNOTATIONS={},
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_deployment = mock_kubernetes.mock_calls[1][2]["body"]
+            template = called_deployment.spec.template
+
+            # Verify empty values result in None (not empty dicts/lists)
+            assert template.metadata.annotations is None
+            assert template.spec.node_selector is None
+            assert template.spec.tolerations is None
+            assert template.spec.affinity is None
