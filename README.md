@@ -16,12 +16,7 @@ ServiceX is an on-demand service that delivers data straight from the grid to hi
 
 ## Getting Started
 
-Check out our [quick start guide](https://servicex-frontend.readthedocs.io/en/stable/)
-for instructions on how to obtain credentials,
-install the [ServiceX Python library](https://pypi.org/project/servicex/),
-and make your first ServiceX transformation request.
-
-[![Documentation Status](https://readthedocs.org/projects/servicex-frontend/badge/?version=stable)](https://servicex-frontend.readthedocs.io/en/stable/)
+To use ServiceX and the ServiceX client you can find more information at [tryservicex.org](https://tryservicex.org/).
 
 ## Self-Hosting
 
@@ -29,12 +24,12 @@ The [Scalable Systems Laboratory](https://iris-hep.org/ssl.html) (SSL) at IRIS-H
 
 In addition, ServiceX is an open-source project, and you are welcome to host your own deployment.
 Instructions on how to configure and deploy ServiceX can be found in our
-[deployment guide](https://servicex.readthedocs.io/en/latest/deployment/basic/).
+[deployment guide](https://github.com/ssl-hep/ServiceX/blob/develop/docs/deployment.md).
 
 ## Contributing
 
 The ServiceX team welcomes community contributions. If you'd like to get involved, please check out our
-[contributor guide](https://servicex.readthedocs.io/en/latest/development/contributing/).
+[contributor guide](https://github.com/ssl-hep/ServiceX/blob/develop/docs/contribution.md) and [development guide](https://github.com/ssl-hep/ServiceX/blob/develop/docs/development.md).
 
 ## License
 
