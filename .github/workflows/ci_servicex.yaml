@@ -112,7 +112,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         if: ${{ github.secret_source == 'Actions' }}
         with:
           context: ${{ matrix.app.dir_name }}
@@ -123,7 +123,7 @@ jobs:
           file: ${{ matrix.app.dockerfile }}
           platforms: linux/amd64,linux/arm64
       - name: Build
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         if: ${{ github.secret_source != 'Actions' }}
         with:
           context: ${{ matrix.app.dir_name }}
