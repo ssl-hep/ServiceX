@@ -61,6 +61,10 @@
     <dd class="col-sm-9">{{ req.failure_description }} s</dd>
     {% endif %}
 
+      <dt class="col-sm-3"><a href="{{ create_kibana_link(req.request_id, "ERROR") }}" target="_blank">
+          <img src="{{ url_for('static', filename='logs.svg') }}" height="25" alt="Get Logs" />
+          See Logs</a></dt>
+
   </dl>
 </div>
 {% endblock %}

@@ -90,6 +90,7 @@ class WebTestBase:
             "DID_RUCIO_FINDER_TAG": "develop",
             "DID_CERNOPENDATA_FINDER_TAG": "develop",
             "APP_IMAGE_TAG": "develop",
+            "LOGS_URL": "http://kibana.example.com",
         }
 
     @staticmethod
