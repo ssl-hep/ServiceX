@@ -10,7 +10,7 @@ import urllib.parse
 from urllib.parse import urlunparse
 
 
-def add_request_id_filter(url: str, request_id: str, log_level: str) -> str:
+def filter_kibana_url(url: str, request_id: str, log_level: str) -> str:
     """
     Add a filter to a Kibana dashboard URL to show only results for a given request ID
     with an ERROR level or higher.

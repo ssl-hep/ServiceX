@@ -379,12 +379,12 @@ def create_app(
 
             import humanize
 
-            from servicex_app.web import create_kibana_link_parameters
+            from servicex_app.web import create_kibana_link
 
             return dict(
                 datetime=datetime,
                 humanize=humanize,
-                create_kibana_link=create_kibana_link_parameters,
+                create_kibana_link=create_kibana_link,
             )
 
     return app
