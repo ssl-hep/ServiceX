@@ -21,7 +21,7 @@
     {% for req in pagination.items %}
     <tr>
       <th scope="row" style="word-break: break-all">
-        <a href="{{ create_kibana_link(req.id) }}" target="_blank">
+        <a href="{{ create_kibana_link(req.request_id, "ERROR") }}" target="_blank">
         <img src="{{ url_for('static', filename='logs.svg') }}" height="25" alt="Get Logs" />
         </a>
         <a href="/transformation-request/{{ req.id }}">{{ req.title or "Untitled" }}</a>
