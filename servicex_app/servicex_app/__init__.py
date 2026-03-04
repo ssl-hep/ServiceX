@@ -261,6 +261,7 @@ def create_app(
     app.add_template_filter(b64decode)
 
     from servicex_app.web.admin import init_admin
+
     init_admin(app)
 
     with app.app_context():

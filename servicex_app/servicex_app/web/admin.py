@@ -44,14 +44,30 @@ class SecureAdminIndexView(AdminIndexView):
 
 
 class UserModelView(ModelView):
-    column_list = ["name", "email", "institution", "experiment", "admin", "pending",
-                   "created_at", "updated_at"]
+    column_list = [
+        "name",
+        "email",
+        "institution",
+        "experiment",
+        "admin",
+        "pending",
+        "created_at",
+        "updated_at",
+    ]
     column_searchable_list = ["name", "email", "institution"]
     column_filters = ["admin", "pending", "institution", "experiment"]
     column_editable_list = ["admin", "pending"]
     column_default_sort = ("created_at", True)
 
-    form_columns = ["name", "email", "institution", "experiment", "sub", "admin", "pending"]
+    form_columns = [
+        "name",
+        "email",
+        "institution",
+        "experiment",
+        "sub",
+        "admin",
+        "pending",
+    ]
 
     can_create = False
 
