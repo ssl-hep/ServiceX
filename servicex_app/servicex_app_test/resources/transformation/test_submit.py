@@ -143,7 +143,11 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post("/servicex/transformation", json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_bad_did_scheme(self, client):
+    def test_submit_transformation_bad_did_scheme(self, mock_codegen):
+        client = self._test_client(
+            code_gen_service=mock_codegen,
+        )
+
         request = self._generate_transformation_request(did="foobar://my-did")
         response = client.post("/servicex/transformation", json=request)
         assert response.status_code == 400
@@ -456,14 +460,16 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             )
             assert response.status_code == 500
 
-    def test_submit_transformation_missing_dataset_source(self, client):
+    def test_submit_transformation_missing_dataset_source(self, mock_codegen):
+        client = self._test_client(code_gen_service=mock_codegen)
         request = self._generate_transformation_request()
         request["did"] = None
         request["file-list"] = []
         response = client.post("/servicex/transformation", json=request)
         assert response.status_code == 400
 
-    def test_submit_transformation_duplicate_dataset_source(self, client):
+    def test_submit_transformation_duplicate_dataset_source(self, mock_codegen):
+        client = self._test_client(code_gen_service=mock_codegen)
         request = self._generate_transformation_request()
         request["did"] = "This did"
         request["file-list"] = ["file1.root", "file2.root"]
@@ -598,8 +604,8 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_code_gen = mocker.MagicMock(CodeGenAdapter)
 
-        def _side_effect(request_rec, namespace, codegen_name):
-            selection = json.loads(request_rec.selection)
+        def _side_effect(selection_string, request_id, namespace, user_codegen_name):
+            selection = json.loads(selection_string)
             selection_image = selection["image"]
 
             return (
