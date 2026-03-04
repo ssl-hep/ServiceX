@@ -27,8 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
 from requests_toolbelt.multipart import decoder
-
-from servicex_app.models import TransformRequest
 from servicex_app.reliable_requests import REQUEST_TIMEOUT, servicex_retry
 
 
@@ -43,13 +41,18 @@ class CodeGenAdapter:
         return result
 
     def generate_code_for_selection(
-        self, request_record: TransformRequest, namespace: str, user_codegen_name: str
+        self,
+        selection_string: str,
+        request_id: str,
+        namespace: str,
+        user_codegen_name: str,
     ) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
         Places the results in a ConfigMap resource in the
         Starts a transformation request, deploys transformers, and updates record.
-        :param request_record: A TransformationRequest.
+        :param selection_string: String representing the selection criteria.
+        :param request_id: ID of the request.
         :param namespace: Namespace in which to place resulting ConfigMap.
         :param user_codegen_name: Name provided by user for selecting the codegen URL
                from config dictionary
@@ -71,7 +74,7 @@ class CodeGenAdapter:
         result = self.post_request(
             post_url + "/servicex/generated-code",
             post_obj={
-                "code": request_record.selection,
+                "code": selection_string,
             },
         )
 
@@ -93,7 +96,7 @@ class CodeGenAdapter:
 
         return (
             self.transformer_manager.create_configmap_from_zip(
-                zipfile, request_record.request_id, namespace
+                zipfile, request_id, namespace
             ),
             transformer_image,
             transformer_language,
