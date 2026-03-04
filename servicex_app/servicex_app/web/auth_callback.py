@@ -1,3 +1,4 @@
+from authlib.integrations.base_client.errors import MismatchingStateError
 from flask import flash, request, redirect, url_for, session
 
 from servicex_app.models import UserModel
@@ -23,7 +24,11 @@ def auth_callback():
         return oauth.oauth.authorize_redirect(redirect_uri)
 
     # Otherwise, we're coming back from OIDC with a code
-    tokens = oauth.oauth.authorize_access_token()
+    try:
+        tokens = oauth.oauth.authorize_access_token()
+    except MismatchingStateError:
+        # Session state was lost (e.g. server restarted mid-flow). Restart OAuth.
+        return oauth.oauth.authorize_redirect(redirect_uri)
     id_token = tokens["userinfo"]
 
     session_tokens = {
@@ -51,5 +56,6 @@ def auth_callback():
             session["user_id"] = user.id
             session["admin"] = user.admin
             session["email"] = identity
-            return redirect(url_for("user-dashboard"))
+            next_url = session.pop("next", None)
+            return redirect(next_url or url_for("user-dashboard"))
     return redirect(url_for("create_profile"))

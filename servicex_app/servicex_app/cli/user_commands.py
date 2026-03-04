@@ -30,9 +30,12 @@ def add_user(sub, email, name, institution, refresh_token):
         print(str(ex))
 
 
-def list_users() -> None:
+def list_users(email_filter=None) -> None:
     users = UserModel.query.all()
-    print("Sub, Email, Name, Institution, Pending?")
+    if email_filter:
+        users = UserModel.query.filter(UserModel.email.ilike(f"%{email_filter}%"))
+
+    print("Sub, Email, Name, Institution, Admin, Pending?")
     for user in users:
         print(
             ", ".join(
@@ -41,6 +44,7 @@ def list_users() -> None:
                     user.email,
                     user.name,
                     user.institution,
+                    str(user.admin),
                     "Pending" if user.pending else "Approved",
                 ]
             )

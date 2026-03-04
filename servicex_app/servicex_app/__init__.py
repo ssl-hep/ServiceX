@@ -197,8 +197,9 @@ def create_app(
         )
 
     @user_cli.command("list")
-    def list_users_command():
-        list_users()
+    @click.option("--email-filter", default=None, help="Filter users by email")
+    def list_users_command(email_filter):
+        list_users(email_filter)
 
     @user_cli.command("approve")
     @click.argument("sub")
@@ -258,6 +259,9 @@ def create_app(
         return base64.b64decode(text).decode()
 
     app.add_template_filter(b64decode)
+
+    from servicex_app.web.admin import init_admin
+    init_admin(app)
 
     with app.app_context():
         db.init_app(app)
