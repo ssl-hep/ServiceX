@@ -19,7 +19,7 @@
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 # DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# FOR ANY DIresultT, INDIresultT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 # DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
@@ -30,6 +30,7 @@ import time
 from datetime import datetime, timezone
 from functools import wraps
 from logging import Logger
+from typing import Optional
 
 from flask import current_app, request
 from sqlalchemy.exc import IntegrityError
@@ -109,18 +110,16 @@ class TransformerFileComplete(ServiceXResource):
         try:
             session = db.session
 
-            try:
-                # Add the transformation result to the database and verify that
-                # we've not processed this file already
-                self.save_transform_result(request_id, info, session)
-            except IntegrityError:
-                logger.warning("Ignoring duplicate result report", extra=log_extra)
-                return "Ignoring duplicate result report", 200
+            # Add the transformation result to the database and check if
+            # we've processed this file already (return value will be True if so)
+            if orig_counts := self.save_transform_result(request_id, info, session):
+                logger.warning("Duplicate result report", extra=(log_extra |
+                               {"new_info": info, "old_info": orig_counts}))
 
             # Lookup the transformation request and increment either the successful
             # or failed file count
             transform_req = self.record_file_complete(
-                session, current_app.logger, request_id, info, log_extra
+                session, current_app.logger, request_id, info, log_extra, orig_counts
             )
 
             if transform_req is None:
@@ -165,6 +164,7 @@ class TransformerFileComplete(ServiceXResource):
         request_id: str,
         info: dict[str, str],
         log_extra: dict[str, str],
+        orig_counts: Optional[dict[str, str]]
     ) -> TransformRequest | None:
 
         with session.begin():
@@ -180,6 +180,19 @@ class TransformerFileComplete(ServiceXResource):
                 msg = f"Request not found with id: '{request_id}'"
                 logger.error(msg, extra=log_extra)
                 return None
+
+            if orig_counts:
+                # undo previous statistics accumulation
+                if orig_counts["status"] == "success":
+                    transform_req.files_completed -= 1
+                    if transform_req.total_events is None:
+                        logger.warning("Previous successful file registration, "
+                                       "but no total events in transform")
+                    else:
+                        transform_req.total_events -= orig_counts["total-events"]
+                        transform_req.total_bytes -= orig_counts["total-bytes"]
+                else:
+                    transform_req.files_failed -= 1
 
             if info["status"] == "success":
                 transform_req.files_completed += 1
@@ -198,18 +211,38 @@ class TransformerFileComplete(ServiceXResource):
     @file_complete_ops_retry
     def save_transform_result(request_id: str, info: dict[str, str], session: Session):
         with session.begin():
-            rec = TransformationResult(
-                file_id=info["file-id"],
-                request_id=request_id,
-                file_path=info["file-path"],
-                transform_status=info["status"],
-                transform_time=info["total-time"],
-                total_bytes=info["total-bytes"],
-                total_events=info["total-events"],
-                avg_rate=info["avg-rate"],
-                s3_object_name=info["s3-object-name"],
+            orig_counts = None
+            result = (
+                session.query(TransformationResult)
+                .filter_by(request_id=request_id, file_id=info["file_id"])
+                .with_for_update()
+                .one_or_none()
             )
-            session.add(rec)
+            if result:
+                orig_counts = {"status": result.transform_status,
+                               "total-events": result.total_events,
+                               "total-bytes": result.total_bytes}
+                result.file_path = info["file-path"]
+                result.transform_status = info["status"]
+                result.transform_time = info["total-time"]
+                result.total_bytes = info["total-bytes"]
+                result.total_events = info["total-events"]
+                result.avg_rate = info["avg-rate"]
+                result.s3_object_name = info["s3-object-name"]
+            else:
+                result = TransformationResult(
+                    file_id=info["file-id"],
+                    request_id=request_id,
+                    file_path=info["file-path"],
+                    transform_status=info["status"],
+                    transform_time=info["total-time"],
+                    total_bytes=info["total-bytes"],
+                    total_events=info["total-events"],
+                    avg_rate=info["avg-rate"],
+                    s3_object_name=info["s3-object-name"],
+                )
+            session.add(result)
+        return orig_counts
 
     @staticmethod
     @file_complete_ops_retry
