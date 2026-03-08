@@ -216,9 +216,9 @@ class TransformerFileComplete(ServiceXResource):
     def save_transform_result(request_id: str, info: dict[str, str], session: Session):
         with session.begin():
             orig_counts = None
-            result = (
+            result: TransformationResult = (
                 session.query(TransformationResult)
-                .filter_by(request_id=request_id, file_id=info["file_id"])
+                .filter_by(request_id=request_id, file_id=info["file-id"])
                 .with_for_update()
                 .one_or_none()
             )

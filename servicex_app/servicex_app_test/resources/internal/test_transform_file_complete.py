@@ -28,7 +28,6 @@
 
 import psycopg2
 import pytest
-from sqlalchemy.exc import IntegrityError
 
 from servicex_app.models import TransformationResult, TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
@@ -60,13 +59,30 @@ class TestTransformFileComplete(ResourceTestBase):
         return fake_request
 
     @pytest.fixture
-    def mock_transform_request_lookup(self, mocker, db_session, fake_transform_request):
-        db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
+    def trqmock(self, mocker, fake_transform_request):
+        rv = mocker.Mock()
+        rv.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
             fake_transform_request
         )
-        return (
-            db_session.query.return_value.filter_by.return_value.with_for_update.return_value.one_or_none  # noqa: E501
+        return rv
+
+    @pytest.fixture
+    def othermock(self, mocker):
+        rv = mocker.Mock()
+        rv.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
+            None
         )
+        return rv
+
+    @pytest.fixture
+    def mock_transform_request_lookup(self, db_session, trqmock, othermock):
+        def switcher(cls):
+            if cls == TransformRequest:
+                return trqmock
+            else:
+                return othermock
+        db_session.query.side_effect = switcher
+        return trqmock.filter_by.return_value.with_for_update.return_value.one_or_none
 
     @pytest.fixture
     def test_client(self, mock_transformer_manager):
@@ -86,10 +102,24 @@ class TestTransformFileComplete(ResourceTestBase):
             "s3-object-name": "file://s3-object-name",
         }
 
+    @pytest.fixture
+    def fake_transformation_result(self):
+        return TransformationResult(
+            file_path="/foo/bar.root",
+            file_id=42,
+            transform_status="success",
+            transform_time=100,
+            total_events=10000,
+            total_bytes=325684,
+            avg_rate=30.2,
+            s3_object_name="file://s3-object-name",
+        )
+
     def test_put_transform_file_complete_files_remaining(
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
@@ -103,7 +133,7 @@ class TestTransformFileComplete(ResourceTestBase):
         )
         assert response.status_code == 200
         assert fake_transform_request.finish_time is None
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 1
         assert fake_transform_request.files_failed == 2
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
@@ -114,6 +144,7 @@ class TestTransformFileComplete(ResourceTestBase):
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
@@ -129,7 +160,7 @@ class TestTransformFileComplete(ResourceTestBase):
         )
         assert response.status_code == 200
         assert fake_transform_request.finish_time is None
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 1
         assert fake_transform_request.files_failed == 2
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
@@ -140,6 +171,7 @@ class TestTransformFileComplete(ResourceTestBase):
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
@@ -154,7 +186,7 @@ class TestTransformFileComplete(ResourceTestBase):
         )
 
         assert response.status_code == 200
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 8
         assert fake_transform_request.files_failed == 2
 
@@ -175,26 +207,24 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker,
         mock_transformer_manager,
         db_session,
+        trqmock,
+        othermock,
         mock_transform_request_lookup,
         fake_transform_request,
+        fake_transformation_result,
         file_complete_response,
         test_client,
     ):
         fake_transform_request.files_completed = 6
         fake_transform_request.files_failed = 2
-        db_session.add.side_effect = [
-            None,
-            IntegrityError(
-                "duplicate key value violates unique constraint",
-                params=["request_id"],
-                orig=Exception(),
-            ),
-        ]
 
         response1 = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
             json=file_complete_response,
         )
+
+        othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = \
+            fake_transformation_result
 
         response2 = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
@@ -204,7 +234,7 @@ class TestTransformFileComplete(ResourceTestBase):
         assert response1.status_code == 200
         assert response2.status_code == 200
 
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 7
         assert fake_transform_request.files_failed == 2
 
@@ -220,19 +250,20 @@ class TestTransformFileComplete(ResourceTestBase):
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
         test_client,
     ):
-        mock_transform_request_lookup.return_value = None
+        trqmock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = None
         response = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
             json=file_complete_response,
         )
 
         assert response.status_code == 404
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_database_error_request_read(
@@ -240,12 +271,13 @@ class TestTransformFileComplete(ResourceTestBase):
         mocker,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
         test_client,
     ):
-        mock_transform_request_lookup.side_effect = [
+        trqmock.filter_by.return_value.with_for_update.return_value.one_or_none.side_effect = [
             psycopg2.OperationalError("server closed the connection unexpectedly"),
             fake_transform_request,
         ]
@@ -259,7 +291,7 @@ class TestTransformFileComplete(ResourceTestBase):
 
         # Verify that we retried after the database error
         assert mock_transform_request_lookup.call_count == 2
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
 
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
@@ -267,6 +299,7 @@ class TestTransformFileComplete(ResourceTestBase):
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
@@ -286,7 +319,7 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.finish_time is None
 
         # Verify that we retried after the database error
-        db_session.query.return_value.filter_by.assert_called_with(request_id="1234")
+        trqmock.filter_by.assert_called_with(request_id="1234")
 
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
