@@ -113,8 +113,10 @@ class TransformerFileComplete(ServiceXResource):
             # Add the transformation result to the database and check if
             # we've processed this file already (return value will be True if so)
             if orig_counts := self.save_transform_result(request_id, info, session):
-                logger.warning("Duplicate result report", extra=(log_extra |
-                               {"new_info": info, "old_info": orig_counts}))
+                logger.warning(
+                    "Duplicate result report",
+                    extra=(log_extra | {"new_info": info, "old_info": orig_counts}),
+                )
 
             # Lookup the transformation request and increment either the successful
             # or failed file count
@@ -164,7 +166,7 @@ class TransformerFileComplete(ServiceXResource):
         request_id: str,
         info: dict[str, str],
         log_extra: dict[str, str],
-        orig_counts: Optional[dict[str, str]]
+        orig_counts: Optional[dict[str, str]],
     ) -> TransformRequest | None:
 
         with session.begin():
@@ -186,8 +188,10 @@ class TransformerFileComplete(ServiceXResource):
                 if orig_counts["status"] == "success":
                     transform_req.files_completed -= 1
                     if transform_req.total_events is None:
-                        logger.warning("Previous successful file registration, "
-                                       "but no total events in transform")
+                        logger.warning(
+                            "Previous successful file registration, "
+                            "but no total events in transform"
+                        )
                     else:
                         transform_req.total_events -= orig_counts["total-events"]
                         transform_req.total_bytes -= orig_counts["total-bytes"]
@@ -219,9 +223,11 @@ class TransformerFileComplete(ServiceXResource):
                 .one_or_none()
             )
             if result:
-                orig_counts = {"status": result.transform_status,
-                               "total-events": result.total_events,
-                               "total-bytes": result.total_bytes}
+                orig_counts = {
+                    "status": result.transform_status,
+                    "total-events": result.total_events,
+                    "total-bytes": result.total_bytes,
+                }
                 result.file_path = info["file-path"]
                 result.transform_status = info["status"]
                 result.transform_time = info["total-time"]
