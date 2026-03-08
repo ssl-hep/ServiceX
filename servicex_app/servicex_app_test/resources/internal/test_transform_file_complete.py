@@ -81,6 +81,7 @@ class TestTransformFileComplete(ResourceTestBase):
                 return trqmock
             else:
                 return othermock
+
         db_session.query.side_effect = switcher
         return trqmock.filter_by.return_value.with_for_update.return_value.one_or_none
 
@@ -223,8 +224,9 @@ class TestTransformFileComplete(ResourceTestBase):
             json=file_complete_response,
         )
 
-        othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = \
+        othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
             fake_transformation_result
+        )
 
         response2 = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
@@ -256,7 +258,9 @@ class TestTransformFileComplete(ResourceTestBase):
         file_complete_response,
         test_client,
     ):
-        trqmock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = None
+        trqmock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
+            None
+        )
         response = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
             json=file_complete_response,
