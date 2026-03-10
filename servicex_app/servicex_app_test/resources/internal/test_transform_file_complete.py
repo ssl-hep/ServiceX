@@ -189,8 +189,13 @@ class TestTransformFileComplete(ResourceTestBase):
         trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 1
         assert fake_transform_request.files_failed == 0
-        assert fake_transform_request.total_bytes == file_complete_response["total-bytes"]
-        assert fake_transform_request.total_events == file_complete_response["total-events"]
+        assert (
+            fake_transform_request.total_bytes == file_complete_response["total-bytes"]
+        )
+        assert (
+            fake_transform_request.total_events
+            == file_complete_response["total-events"]
+        )
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
         db_session.add.assert_called_once()
         assert db_session.add.call_args[0][0].file_id == 42
@@ -279,8 +284,9 @@ class TestTransformFileComplete(ResourceTestBase):
             json=file_complete_response,
         )
 
-        assert fake_transform_request.total_bytes == (orig_total_bytes 
-                                                      + file_complete_response["total-bytes"])
+        assert fake_transform_request.total_bytes == (
+            orig_total_bytes + file_complete_response["total-bytes"]
+        )
 
         fake_transformation_result.total_bytes = file_complete_response["total-bytes"]
 
@@ -302,8 +308,9 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.files_completed == 7
         assert fake_transform_request.files_failed == 2
 
-        assert fake_transform_request.total_bytes == (orig_total_bytes 
-                                                      + file_complete_response["total-bytes"])
+        assert fake_transform_request.total_bytes == (
+            orig_total_bytes + file_complete_response["total-bytes"]
+        )
 
         assert db_session.add.call_count == 2
         assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
@@ -378,7 +385,9 @@ class TestTransformFileComplete(ResourceTestBase):
         trqmock.filter_by.assert_called_with(request_id="1234")
         assert fake_transform_request.files_completed == 6
         assert fake_transform_request.files_failed == 2
-        assert fake_transform_request.total_bytes == file_complete_response["total-bytes"]
+        assert (
+            fake_transform_request.total_bytes == file_complete_response["total-bytes"]
+        )
 
         assert db_session.add.call_count == 1
         assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
