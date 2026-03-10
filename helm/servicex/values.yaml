@@ -55,8 +55,8 @@ codeGen:
     image: sslhep/servicex_code_gen_raw_uproot
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     compressionAlgorithm: ZSTD
     compressionLevel: 5
     resources:
@@ -76,8 +76,8 @@ codeGen:
     image: sslhep/servicex_code_gen_func_adl_uproot
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
@@ -95,8 +95,8 @@ codeGen:
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
@@ -114,8 +114,8 @@ codeGen:
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_science_image_root
-    defaultScienceContainerTag: 6.36.00
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
