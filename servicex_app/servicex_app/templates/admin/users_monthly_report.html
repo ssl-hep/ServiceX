@@ -1,0 +1,9 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h2>Users Monthly Report</h2>
+<p class="text-muted">Generates a CSV of all users who have submitted at least one transform in the last 30 days.</p>
+<form method="POST" action="{{ url_for('usersmonthlyreport.generate') }}">
+  <button type="submit" class="btn btn-primary">Generate Report</button>
+</form>
+{% endblock %}
