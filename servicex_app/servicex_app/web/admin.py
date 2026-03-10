@@ -44,10 +44,14 @@ class SecureAdminIndexView(AdminIndexView):
             try:
                 list_url = url_for(f"{view.endpoint}.{view._default_view}")
                 entry = {"name": view.name, "url": list_url, "endpoint": view.endpoint}
-                (model_views if isinstance(view, ModelView) else other_views).append(entry)
+                (model_views if isinstance(view, ModelView) else other_views).append(
+                    entry
+                )
             except Exception:
                 pass
-        return self.render("admin/index.html", model_views=model_views, other_views=other_views)
+        return self.render(
+            "admin/index.html", model_views=model_views, other_views=other_views
+        )
 
     def is_accessible(self):
         return _is_admin()
@@ -106,7 +110,9 @@ class UsersMonthlyReportView(BaseView):
             return redirect(url_for("sign_in"))
         cutoff = datetime.utcnow() - timedelta(days=30)
         results = (
-            db.session.query(UserModel, func.count(TransformRequest.id).label("transform_count"))
+            db.session.query(
+                UserModel, func.count(TransformRequest.id).label("transform_count")
+            )
             .join(TransformRequest, TransformRequest.submitted_by == UserModel.id)
             .filter(TransformRequest.submit_time >= cutoff)
             .group_by(UserModel.id)
@@ -114,13 +120,19 @@ class UsersMonthlyReportView(BaseView):
         )
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"])
+        writer.writerow(
+            ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
+        )
         for user, count in results:
-            writer.writerow([user.name, user.email, user.institution, user.experiment, count])
+            writer.writerow(
+                [user.name, user.email, user.institution, user.experiment, count]
+            )
         return Response(
             output.getvalue(),
             mimetype="text/csv",
-            headers={"Content-Disposition": "attachment; filename=users_monthly_report.csv"},
+            headers={
+                "Content-Disposition": "attachment; filename=users_monthly_report.csv"
+            },
         )
 
     def is_accessible(self):
@@ -139,5 +151,9 @@ def init_admin(app):
         template_mode="bootstrap4",
     )
     admin.add_view(UserModelView(UserModel, db.session, name="Users"))
-    admin.add_view(UsersMonthlyReportView(name="Users Monthly Report", endpoint="usersmonthlyreport"))
+    admin.add_view(
+        UsersMonthlyReportView(
+            name="Users Monthly Report", endpoint="usersmonthlyreport"
+        )
+    )
     return admin
