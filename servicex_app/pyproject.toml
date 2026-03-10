@@ -41,7 +41,7 @@ gunicorn = "^23.0.0"
 requests-toolbelt = "^1.0.0"
 urllib3 = "^2.6.3"
 requests = "^2.32"
-authlib = "^1.6.6"
+authlib = "^1.6.7"
 flask-moment = "^1.0.6"
 flask-admin = "~1.6.1"
 
