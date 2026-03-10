@@ -141,6 +141,60 @@ class TestTransformFileComplete(ResourceTestBase):
         db_session.add.assert_called_once()
         assert db_session.add.call_args[0][0].file_id == 42
 
+    def test_put_transform_file_complete_failed_files_remaining(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.files_completed = 0
+        fake_transform_request.files_failed = 2
+        file_complete_response["status"] = "failed"
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+        assert response.status_code == 200
+        assert fake_transform_request.finish_time is None
+        trqmock.filter_by.assert_called_with(request_id="1234")
+        assert fake_transform_request.files_completed == 0
+        assert fake_transform_request.files_failed == 3
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+        db_session.add.assert_called_once()
+        assert db_session.add.call_args[0][0].file_id == 42
+
+    def test_put_transform_file_complete_first_file_files_remaining(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.files_completed = 0
+        fake_transform_request.files_failed = 0
+        fake_transform_request.total_bytes = None
+        fake_transform_request.total_events = None
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+        assert response.status_code == 200
+        trqmock.filter_by.assert_called_with(request_id="1234")
+        assert fake_transform_request.files_completed == 1
+        assert fake_transform_request.files_failed == 0
+        assert fake_transform_request.total_bytes == file_complete_response["total-bytes"]
+        assert fake_transform_request.total_events == file_complete_response["total-events"]
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+        db_session.add.assert_called_once()
+        assert db_session.add.call_args[0][0].file_id == 42
+
     def test_put_transform_file_complete_unknown_files_remaining(
         self,
         mock_transformer_manager,
@@ -219,14 +273,22 @@ class TestTransformFileComplete(ResourceTestBase):
         fake_transform_request.files_completed = 6
         fake_transform_request.files_failed = 2
 
+        orig_total_bytes = fake_transform_request.total_bytes
         response1 = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
             json=file_complete_response,
         )
 
+        assert fake_transform_request.total_bytes == (orig_total_bytes 
+                                                      + file_complete_response["total-bytes"])
+
+        fake_transformation_result.total_bytes = file_complete_response["total-bytes"]
+
         othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
             fake_transformation_result
         )
+
+        file_complete_response["total-bytes"] += 1000
 
         response2 = test_client.put(
             "/servicex/internal/transformation/1234/file-complete",
@@ -240,13 +302,87 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.files_completed == 7
         assert fake_transform_request.files_failed == 2
 
+        assert fake_transform_request.total_bytes == (orig_total_bytes 
+                                                      + file_complete_response["total-bytes"])
+
         assert db_session.add.call_count == 2
         assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
         assert db_session.add.mock_calls[0][1][0].file_id == 42
 
-        assert db_session.add.call_count == 2
-        assert db_session.add.mock_calls[0][1][0].file_id == 42
         assert db_session.add.mock_calls[1][1][0].file_id == 42
+
+    def test_put_transform_file_complete_duplicate_report_previous_failure(
+        self,
+        mocker,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        othermock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        fake_transformation_result,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.files_completed = 6
+        fake_transform_request.files_failed = 2
+
+        fake_transformation_result.transform_status = "failure"
+        othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
+            fake_transformation_result
+        )
+
+        response1 = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response1.status_code == 200
+
+        trqmock.filter_by.assert_called_with(request_id="1234")
+        assert fake_transform_request.files_completed == 7
+        assert fake_transform_request.files_failed == 1
+
+        assert db_session.add.call_count == 1
+        assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
+
+    def test_put_transform_file_complete_duplicate_report_weird_transform_state(
+        self,
+        mocker,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        othermock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        fake_transformation_result,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.files_completed = 6
+        fake_transform_request.files_failed = 2
+        fake_transform_request.total_events = None
+
+        othermock.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (
+            fake_transformation_result
+        )
+
+        response1 = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response1.status_code == 200
+
+        trqmock.filter_by.assert_called_with(request_id="1234")
+        assert fake_transform_request.files_completed == 6
+        assert fake_transform_request.files_failed == 2
+        assert fake_transform_request.total_bytes == file_complete_response["total-bytes"]
+
+        assert db_session.add.call_count == 1
+        assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
+        assert db_session.add.mock_calls[0][1][0].file_id == 42
 
     def test_put_transform_file_complete_unknown_request_id(
         self,
