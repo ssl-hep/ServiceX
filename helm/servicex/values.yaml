@@ -240,6 +240,22 @@ didFinder:
     tolerations: []
     affinity: {}
     podAnnotations: {}
+  atlasopenmagic:
+    enabled: true
+    image: sslhep/servicex-did-finder-atlasopenmagic
+    pullPolicy: Always
+    tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
   xrootd:
     enabled: true
     image: sslhep/servicex-did-finder-xrootd
