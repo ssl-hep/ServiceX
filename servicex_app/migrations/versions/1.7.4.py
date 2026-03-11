@@ -1,9 +1,9 @@
-"""add index to UserModel.sub
+"""
+add index to UserModel.sub
 
-Revision ID: 3f4e545c7a88
+Revision ID: v1_7_4
 Revises: v1_7_3
 Create Date: 2026-03-04 20:52:15.921295
-
 """
 
 from alembic import op
