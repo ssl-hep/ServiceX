@@ -275,6 +275,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     transformer_command=transformer_command,
                     generated_code_cm=generated_code_cm,
                     files=0,
+                    files_completed=0,
+                    files_failed=0,
                 )
 
                 session.add(request_rec)
