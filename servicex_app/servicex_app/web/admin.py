@@ -14,29 +14,42 @@ from sqlalchemy import func
 from servicex_app.decorators import get_jwt_user
 from servicex_app.models import TransformRequest, UserModel, db
 
-# flask-admin 1.6.x validators use tuple field_flags; wtforms 3.x expects dicts.
 Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
 
 
-def _is_admin():
-    if not current_app.config.get("ENABLE_AUTH"):
-        return True
-    if session.get("is_authenticated") and session.get("admin"):
-        return True
-    try:
-        verify_jwt_in_request(locations=["headers"])
-        user = get_jwt_user()
-        return user is not None and user.admin
-    except (NoAuthorizationError, Exception):
-        return False
+class AdminAuthMixin:
+    def is_accessible(self):
+        return self._is_admin()
+
+    def inaccessible_callback(self, name, **kwargs):
+        session["next"] = request.url
+        return redirect(url_for("sign_in"))
+
+    def _is_admin(self):
+        if not current_app.config.get("ENABLE_AUTH"):
+            return True
+        if session.get("is_authenticated") and session.get("admin"):
+            return True
+        try:
+            verify_jwt_in_request(locations=["headers"])
+            user = get_jwt_user()
+            return user is not None and user.admin
+        except (NoAuthorizationError, Exception):
+            return False
 
 
-class SecureAdminIndexView(AdminIndexView):
+class TemplateMixin
+    template = None
+
     @expose("/")
     def index(self):
-        if not _is_admin():
-            return redirect(url_for("sign_in"))
+        return self.render(self.template)
+
+
+class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
+    @expose("/")
+    def index(self):
         model_views, other_views = [], []
         for view in self.admin._views:
             if view is self:
@@ -53,15 +66,8 @@ class SecureAdminIndexView(AdminIndexView):
             "admin/index.html", model_views=model_views, other_views=other_views
         )
 
-    def is_accessible(self):
-        return _is_admin()
 
-    def inaccessible_callback(self, name, **kwargs):
-        session["next"] = request.url
-        return redirect(url_for("sign_in"))
-
-
-class UserModelView(ModelView):
+class UserModelView(AdminAuthMixin, ModelView):
     column_list = [
         "name",
         "email",
@@ -89,25 +95,14 @@ class UserModelView(ModelView):
 
     can_create = False
 
-    def is_accessible(self):
-        return _is_admin()
 
-    def inaccessible_callback(self, name, **kwargs):
-        session["next"] = request.url
-        return redirect(url_for("sign_in"))
-
-
-class UsersMonthlyReportView(BaseView):
+class UsersMonthlyReportView(AdminAuthMixin, BaseView):
     @expose("/")
     def index(self):
-        if not _is_admin():
-            return redirect(url_for("sign_in"))
         return self.render("admin/users_monthly_report.html")
 
     @expose("/generate", methods=["POST"])
     def generate(self):
-        if not _is_admin():
-            return redirect(url_for("sign_in"))
         cutoff = datetime.utcnow() - timedelta(days=30)
         results = (
             db.session.query(
@@ -135,20 +130,12 @@ class UsersMonthlyReportView(BaseView):
             },
         )
 
-    def is_accessible(self):
-        return _is_admin()
-
-    def inaccessible_callback(self, name, **kwargs):
-        session["next"] = request.url
-        return redirect(url_for("sign_in"))
-
 
 def init_admin(app):
     admin = Admin(
         app,
         name="ServiceX Admin",
         index_view=SecureAdminIndexView(),
-        template_mode="bootstrap4",
     )
     admin.add_view(UserModelView(UserModel, db.session, name="Users"))
     admin.add_view(
