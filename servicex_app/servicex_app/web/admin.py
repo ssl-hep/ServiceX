@@ -2,7 +2,9 @@ import csv
 import io
 from datetime import datetime, timedelta
 
+import click
 from flask import Response, current_app, redirect, request, session, url_for
+from typing import TextIO
 from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.validators import Unique
@@ -39,12 +41,32 @@ class AdminAuthMixin:
             return False
 
 
-class TemplateMixin
+class TemplateMixin:
     template = None
 
     @expose("/")
     def index(self):
         return self.render(self.template)
+
+
+class ReportView(AdminAuthMixin, TemplateMixin, BaseView):
+    report_name = None
+    filename = "report.csv"
+    mimetype = "text/csv"
+
+    @classmethod
+    def generate_output(cls, output: TextIO):
+        raise NotImplementedError
+
+    @expose("/generate", methods=["POST"])
+    def generate(self):
+        output = io.StringIO()
+        self.generate_output(output)
+        return Response(
+            output.getvalue(),
+            mimetype=self.mimetype,
+            headers={"Content-Disposition": f"attachment; filename={self.filename}"},
+        )
 
 
 class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
@@ -96,13 +118,13 @@ class UserModelView(AdminAuthMixin, ModelView):
     can_create = False
 
 
-class UsersMonthlyReportView(AdminAuthMixin, BaseView):
-    @expose("/")
-    def index(self):
-        return self.render("admin/users_monthly_report.html")
+class UsersMonthlyReportView(ReportView):
+    template = "admin/users_monthly_report.html"
+    report_name = "users-monthly"
+    filename = "users_monthly_report.csv"
 
-    @expose("/generate", methods=["POST"])
-    def generate(self):
+    @classmethod
+    def generate_output(cls, output: TextIO):
         cutoff = datetime.utcnow() - timedelta(days=30)
         results = (
             db.session.query(
@@ -113,7 +135,6 @@ class UsersMonthlyReportView(AdminAuthMixin, BaseView):
             .group_by(UserModel.id)
             .all()
         )
-        output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(
             ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
@@ -122,13 +143,6 @@ class UsersMonthlyReportView(AdminAuthMixin, BaseView):
             writer.writerow(
                 [user.name, user.email, user.institution, user.experiment, count]
             )
-        return Response(
-            output.getvalue(),
-            mimetype="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=users_monthly_report.csv"
-            },
-        )
 
 
 def init_admin(app):
@@ -143,4 +157,18 @@ def init_admin(app):
             name="Users Monthly Report", endpoint="usersmonthlyreport"
         )
     )
+
+    reports_group = click.Group("reports")
+    app.cli.add_command(reports_group)
+    for cls in ReportView.__subclasses__():
+        if cls.report_name:
+            @reports_group.command(cls.report_name)
+            def cmd(cls=cls):
+                try:
+                    output = io.StringIO()
+                    cls.generate_output(output)
+                    click.echo(output.getvalue())
+                except Exception as e:
+                    raise click.ClickException(str(e)) from e
+
     return admin
