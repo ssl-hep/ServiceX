@@ -162,6 +162,7 @@ def init_admin(app):
     app.cli.add_command(reports_group)
     for cls in ReportView.__subclasses__():
         if cls.report_name:
+
             @reports_group.command(cls.report_name)
             def cmd(cls=cls):
                 try:
