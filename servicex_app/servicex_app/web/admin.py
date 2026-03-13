@@ -30,7 +30,7 @@ class AdminAuthMixin:
 
     def _is_admin(self):
         if not current_app.config.get("ENABLE_AUTH"):
-            return True
+            return False
         if session.get("is_authenticated") and session.get("admin"):
             return True
         try:
