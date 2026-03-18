@@ -155,9 +155,13 @@ class UserModelView(AdminAuthMixin, ModelView):
 class UsersMonthlyReportView(CsvReportView):
     report_name = "users-monthly"
     filename = "users_monthly_report.csv"
-    description = "CSV of all users who have submitted at least one transform in the last N days."
+    description = (
+        "CSV of all users who have submitted at least one transform in the last N days."
+    )
     params = [
-        click.Option(["--days"], default=30, type=int, help="Number of days to look back"),
+        click.Option(
+            ["--days"], default=30, type=int, help="Number of days to look back"
+        ),
     ]
 
     @classmethod
@@ -173,7 +177,13 @@ class UsersMonthlyReportView(CsvReportView):
             .all()
         )
         writer.writerow(
-            ["Name", "Email", "Institution", "Experiment", f"Transforms (Last {days} Days)"]
+            [
+                "Name",
+                "Email",
+                "Institution",
+                "Experiment",
+                f"Transforms (Last {days} Days)",
+            ]
         )
         for user, count in results:
             writer.writerow(
