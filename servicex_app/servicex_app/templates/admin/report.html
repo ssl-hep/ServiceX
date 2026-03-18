@@ -1,0 +1,46 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h2>{{ title }}</h2>
+{% if description %}<p class="text-muted">{{ description }}</p>{% endif %}
+<form method="POST" action="{{ generate_url }}">
+  {% for param in params %}
+  <div class="mb-3">
+    <label class="form-label">{{ param.name | replace('-', ' ') | title }}</label>
+
+    {% if param.type.name == 'choice' %}
+      <select class="form-select w-auto" name="{{ param.name }}">
+        {% for choice in param.type.choices %}
+        <option value="{{ choice }}" {{ 'selected' if choice == param.default }}>{{ choice }}</option>
+        {% endfor %}
+      </select>
+
+    {% elif param.type.name == 'boolean' %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="{{ param.name }}" value="true"
+               {{ 'checked' if param.default }}>
+      </div>
+
+    {% elif param.type.name in ('integer', 'float') %}
+      <input class="form-control w-auto" type="number" name="{{ param.name }}"
+             value="{{ param.default }}"
+             {{ 'step="any"' if param.type.name == 'float' }}>
+
+    {% elif param.type.name == 'datetime' %}
+      <input class="form-control w-auto" type="datetime-local" name="{{ param.name }}"
+             value="{{ param.default }}">
+
+    {% else %}
+      <input class="form-control w-auto" type="text" name="{{ param.name }}"
+             value="{{ param.default or '' }}">
+    {% endif %}
+
+    {% if param.help %}
+    <div class="form-text">{{ param.help }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <button type="submit" class="btn btn-primary">Generate Report</button>
+</form>
+{% endblock %}

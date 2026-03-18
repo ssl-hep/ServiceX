@@ -51,31 +51,56 @@ class TemplateMixin:
 
 class ReportView(AdminAuthMixin, TemplateMixin, BaseView):
     report_name = None
-    filename = "report.csv"
-    mimetype = "text/csv"
+    template = "admin/report.html"
+    description = None
     params = []
 
     @classmethod
-    def generate_output(cls, output: TextIO, **kwargs):
+    def write_output(cls, output: TextIO, **kwargs):
         raise NotImplementedError
 
     @expose("/")
     def index(self):
-        return self.render(self.template, params=self.params)
+        return self.render(
+            self.template,
+            params=self.params,
+            title=self.name,
+            description=self.description,
+            generate_url=url_for(f"{self.endpoint}.generate_download"),
+        )
+
+    @classmethod
+    def _get_params_as_kwargs(cls):
+        return {
+            p.name: p.type.convert(request.form.get(p.name, p.default), p, None)
+            for p in cls.params
+        }
 
     @expose("/generate", methods=["POST"])
     def generate_download(self):
-        kwargs = {
-            p.name: p.type.convert(request.form.get(p.name, p.default), p, None)
-            for p in self.params
-        }
+        kwargs = self._get_params_as_kwargs()
         output = io.StringIO()
-        self.generate_output(output, **kwargs)
+        self.write_output(output, **kwargs)
         return Response(
             output.getvalue(),
             mimetype=self.mimetype,
             headers={"Content-Disposition": f"attachment; filename={self.filename}"},
         )
+
+
+class CsvReportView(ReportView):
+    filename = "report.csv"
+    mimetype = "text/csv"
+
+    @classmethod
+    def write_csv(cls, writer: csv.writer, **kwargs) -> None:
+        raise NotImplementedError
+
+    @classmethod
+    def write_output(cls, output: TextIO, **kwargs) -> None:
+        kwargs = cls._get_params_as_kwargs()
+        writer = csv.writer(output)
+        cls.write_csv(writer, **kwargs)
 
 
 class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
@@ -127,16 +152,16 @@ class UserModelView(AdminAuthMixin, ModelView):
     can_create = False
 
 
-class UsersMonthlyReportView(ReportView):
-    template = "admin/users_monthly_report.html"
+class UsersMonthlyReportView(CsvReportView):
     report_name = "users-monthly"
     filename = "users_monthly_report.csv"
+    description = "CSV of all users who have submitted at least one transform in the last N days."
     params = [
         click.Option(["--days"], default=30, type=int, help="Number of days to look back"),
     ]
 
     @classmethod
-    def generate_output(cls, output: TextIO, days: int = 30) -> TextIO:
+    def write_csv(cls, writer: csv.writer, days: int = 30) -> None:
         cutoff = datetime.utcnow() - timedelta(days=days)
         results = (
             db.session.query(
@@ -147,7 +172,6 @@ class UsersMonthlyReportView(ReportView):
             .group_by(UserModel.id)
             .all()
         )
-        writer = csv.writer(output)
         writer.writerow(
             ["Name", "Email", "Institution", "Experiment", f"Transforms (Last {days} Days)"]
         )
@@ -155,7 +179,6 @@ class UsersMonthlyReportView(ReportView):
             writer.writerow(
                 [user.name, user.email, user.institution, user.experiment, count]
             )
-        return output
 
 
 def init_admin(app):
@@ -180,7 +203,7 @@ def init_admin(app):
             def cmd(cls=_cls, **kwargs):
                 try:
                     output = io.StringIO()
-                    output = cls.generate_output(output, **kwargs)
+                    output = cls.write_output(output, **kwargs)
                     click.echo(output.getvalue())
                 except Exception as e:
                     raise click.ClickException(str(e)) from e
