@@ -53,15 +53,24 @@ class ReportView(AdminAuthMixin, TemplateMixin, BaseView):
     report_name = None
     filename = "report.csv"
     mimetype = "text/csv"
+    params = []
 
     @classmethod
-    def generate_output(cls, output: TextIO):
+    def generate_output(cls, output: TextIO, **kwargs):
         raise NotImplementedError
 
+    @expose("/")
+    def index(self):
+        return self.render(self.template, params=self.params)
+
     @expose("/generate", methods=["POST"])
-    def generate(self):
+    def generate_download(self):
+        kwargs = {
+            p.name: p.type.convert(request.form.get(p.name, p.default), p, None)
+            for p in self.params
+        }
         output = io.StringIO()
-        self.generate_output(output)
+        self.generate_output(output, **kwargs)
         return Response(
             output.getvalue(),
             mimetype=self.mimetype,
@@ -122,10 +131,13 @@ class UsersMonthlyReportView(ReportView):
     template = "admin/users_monthly_report.html"
     report_name = "users-monthly"
     filename = "users_monthly_report.csv"
+    params = [
+        click.Option(["--days"], default=30, type=int, help="Number of days to look back"),
+    ]
 
     @classmethod
-    def generate_output(cls, output: TextIO):
-        cutoff = datetime.utcnow() - timedelta(days=30)
+    def generate_output(cls, output: TextIO, days: int = 30) -> TextIO:
+        cutoff = datetime.utcnow() - timedelta(days=days)
         results = (
             db.session.query(
                 UserModel, func.count(TransformRequest.id).label("transform_count")
@@ -137,12 +149,13 @@ class UsersMonthlyReportView(ReportView):
         )
         writer = csv.writer(output)
         writer.writerow(
-            ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
+            ["Name", "Email", "Institution", "Experiment", f"Transforms (Last {days} Days)"]
         )
         for user, count in results:
             writer.writerow(
                 [user.name, user.email, user.institution, user.experiment, count]
             )
+        return output
 
 
 def init_admin(app):
@@ -160,14 +173,14 @@ def init_admin(app):
 
     reports_group = click.Group("reports")
     app.cli.add_command(reports_group)
-    for cls in ReportView.__subclasses__():
-        if cls.report_name:
+    for _cls in ReportView.__subclasses__():
+        if _cls.report_name:
 
-            @reports_group.command(cls.report_name)
-            def cmd(cls=cls):
+            @reports_group.command(_cls.report_name, params=_cls.params)
+            def cmd(cls=_cls, **kwargs):
                 try:
                     output = io.StringIO()
-                    cls.generate_output(output)
+                    output = cls.generate_output(output, **kwargs)
                     click.echo(output.getvalue())
                 except Exception as e:
                     raise click.ClickException(str(e)) from e
