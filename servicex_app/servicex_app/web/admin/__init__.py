@@ -26,7 +26,7 @@ class AdminAuthMixin:
         except (NoAuthorizationError, Exception):
             return False
 
-from servicex_app.web.admin.admin import init_admin  # noqa: E402
 
+from servicex_app.web.admin.admin import init_admin  # noqa: E402
 
 __all__ = ["AdminAuthMixin", "init_admin"]
