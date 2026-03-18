@@ -33,6 +33,7 @@ from typing import Optional, List
 
 from flask import current_app
 from flask_restful import reqparse
+
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.decorators import auth_required
 from servicex_app.did_parser import DIDParser
@@ -135,15 +136,15 @@ class SubmitTransformationRequest(ServiceXResource):
             return DatasetManager.from_did(
                 parsed_did,
                 logger=current_app.logger,
-                extras={"requestId": request_id},
                 db=db,
+                extras={"requestId": request_id},
             )
         else:  # no dataset, only a list of files given
             return DatasetManager.from_file_list(
                 file_list,
                 logger=current_app.logger,
-                extras={"requestId": request_id},
                 db=db,
+                extras={"requestId": request_id},
             )
 
     def _setup_rabbit_queues(self, request_id: str):
@@ -167,11 +168,12 @@ class SubmitTransformationRequest(ServiceXResource):
 
     @auth_required
     def post(self):
+        # The general strategy is to do as much as possible before starting the DB
+        # transaction, so we don't hold the lock too long.
         request_id = str(
             uuid.uuid4()
         )  # make sure we have a request id for all messages
         try:
-
             try:
                 args = self.parser.parse_args()
             except BadRequest as bad_request:
@@ -180,7 +182,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {"message": msg}, 400
 
             config = current_app.config
-            user = self.get_requesting_user()
 
             did = args.get("did")
             file_list = args.get("file-list")
@@ -194,18 +195,33 @@ class SubmitTransformationRequest(ServiceXResource):
                 current_app.logger.error(msg, extra={"requestId": request_id})
                 return {"message": msg}, 500
 
-            try:
-                dataset_manager = self._initialize_dataset_manager(
-                    did, file_list, request_id, config
-                )
-            except BadRequest as bad_request:
-                current_app.logger.error(
-                    str(bad_request), extra={"requestId": request_id}
-                )
-                return {"message": str(bad_request)}, 400
+            # The first thing to do is make sure the requested selection is correct
+            # and can generate the requested code.
+            (
+                generated_code_cm,
+                codegen_transformer_image,
+                transformer_language,
+                transformer_command,
+            ) = self.code_gen_service.generate_code_for_selection(
+                selection_string=args["selection"],
+                request_id=request_id,
+                namespace=namespace,
+                user_codegen_name=user_codegen_name,
+            )
+
+            _validate_custom_docker_image(codegen_transformer_image)
+
+            # Check to make sure the transformer docker image actually exists (if enabled)
+            if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:
+                if not self.docker_repo_adapter.check_image_exists(
+                    codegen_transformer_image
+                ):
+                    msg = f"Requested transformer docker image doesn't exist: {codegen_transformer_image}"  # noqa: E501
+                    current_app.logger.error(msg, extra={"requestId": request_id})
+                    return {"message": msg}, 500
 
             # If the user has requested an object store destination, now is the time
-            # to creat a bucket named after the request id
+            # to create a bucket named after the request id
             if (
                 self.object_store
                 and args["result-destination"] == TransformRequest.OBJECT_STORE_DEST
@@ -214,72 +230,80 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            request_rec = TransformRequest(
-                request_id=str(request_id),
-                title=args.get("title"),
-                did=dataset_manager.name,
-                did_id=dataset_manager.id,
-                submit_time=datetime.now(tz=timezone.utc),
-                submitted_by=user.id if user is not None else None,
-                selection=args["selection"],
-                tree_name=args["tree-name"],
-                result_destination=args["result-destination"],
-                result_format=args["result-format"],
-                workers=args["workers"],
-                status=TransformStatus.submitted,
-                app_version=self._get_app_version(),
-                code_gen_image=code_gen_image_name,
-                files=0,
-            )
+            # Transaction 1: persist the Dataset record and obtain a committed DB ID.
+            # This must commit before the TransformRequest is created so that the
+            # auto-increment dataset.id is assigned by the database.
+            session = db.session
+            with session.begin():
+                try:
+                    dataset_manager = self._initialize_dataset_manager(
+                        did, file_list, request_id, config
+                    )
+                except BadRequest as bad_request:
+                    current_app.logger.error(
+                        str(bad_request), extra={"requestId": request_id}
+                    )
+                    return {"message": str(bad_request)}, 400
 
-            # The first thing to do is make sure the requested selection is correct,
-            # and can generate the requested code
-            (
-                request_rec.generated_code_cm,
-                codegen_transformer_image,
-                request_rec.transformer_language,
-                request_rec.transformer_command,
-            ) = self.code_gen_service.generate_code_for_selection(
-                request_rec, namespace, user_codegen_name
-            )
+            # Do NOT access any SQLAlchemy model attributes between the two begin()
+            # blocks — that would trigger SQLAlchemy's autobegin and cause the next
+            # session.begin() to raise InvalidRequestError.
 
-            _validate_custom_docker_image(codegen_transformer_image)
+            # Transaction 2: create the TransformRequest referencing the now-persisted
+            # Dataset ID.  Expired attributes on dataset_manager.dataset are lazy-loaded
+            # within this transaction.
+            with session.begin():
+                user = self.get_requesting_user()
 
-            request_rec.image = codegen_transformer_image
-
-            # Check to make sure the transformer docker image actually exists (if enabled)
-            if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:
-                if not self.docker_repo_adapter.check_image_exists(request_rec.image):
-                    msg = f"Requested transformer docker image doesn't exist: {request_rec.image}"
-                    current_app.logger.error(msg, extra={"requestId": request_id})
-                    return {"message": msg}, 500
-
-            request_rec.save_to_db()
-            dataset_manager.refresh()
-
-            # If this request has a fresh DID then submit the lookup request to the DID Finder
-            if dataset_manager.is_lookup_required:
-                dataset_manager.submit_lookup_request(
-                    self._generate_advertised_endpoint(
-                        "servicex/internal/transformation/"
-                    ),
-                    self.celery_app,
+                request_rec = TransformRequest(
+                    request_id=str(request_id),
+                    title=args.get("title"),
+                    did=dataset_manager.name,
+                    did_id=dataset_manager.id,
+                    submit_time=datetime.now(tz=timezone.utc),
+                    submitted_by=user.id if user is not None else None,
+                    selection=args["selection"],
+                    tree_name=args["tree-name"],
+                    result_destination=args["result-destination"],
+                    result_format=args["result-format"],
+                    workers=args["workers"],
+                    status=TransformStatus.submitted,
+                    app_version=self._get_app_version(),
+                    code_gen_image=code_gen_image_name,
+                    image=codegen_transformer_image,
+                    transformer_language=transformer_language,
+                    transformer_command=transformer_command,
+                    generated_code_cm=generated_code_cm,
+                    files=0,
+                    files_completed=0,
+                    files_failed=0,
                 )
-                request_rec.status = TransformStatus.lookup
-            elif dataset_manager.is_complete:
-                current_app.logger.info(
-                    "dataset already complete", extra={"requestId": str(request_id)}
-                )
-                dataset_manager.publish_files(request_rec, self.lookup_result_processor)
-                request_rec.status = TransformStatus.running
-            else:
-                current_app.logger.info(
-                    "another request received for dataset that is still being looked up ",
-                    extra={"requestId": str(request_id)},
-                )
-                request_rec.status = TransformStatus.pending_lookup
 
-            db.session.commit()
+                session.add(request_rec)
+
+                # If this request has a fresh DID then submit the lookup request to the DID Finder
+                if dataset_manager.is_lookup_required:
+                    dataset_manager.submit_lookup_request(
+                        self._generate_advertised_endpoint(
+                            "servicex/internal/transformation/"
+                        ),
+                        self.celery_app,
+                    )
+                    request_rec.status = TransformStatus.lookup
+                elif dataset_manager.is_complete:
+                    current_app.logger.info(
+                        "dataset already complete", extra={"requestId": str(request_id)}
+                    )
+                    dataset_manager.publish_files(
+                        request_rec, self.lookup_result_processor
+                    )
+                    request_rec.status = TransformStatus.running
+                else:
+                    current_app.logger.info(
+                        "another request received for dataset that is still being looked up ",
+                        extra={"requestId": str(request_id)},
+                    )
+                    request_rec.status = TransformStatus.pending_lookup
 
             # start transformers independently of the state of dataset.
             if current_app.config["TRANSFORMER_MANAGER_ENABLED"]:

@@ -64,7 +64,7 @@ class DatasetManager:
                 lookup_status=DatasetStatus.created,
                 did_finder=did.scheme,
             )
-            dataset.save_to_db()
+
             logger.info(
                 f"Created new dataset: {dataset.name}, id is {dataset.id}", extra=extras
             )
@@ -74,8 +74,7 @@ class DatasetManager:
                 extra=extras,
             )
             dataset.last_used = datetime.now(tz=timezone.utc)
-            dataset.save_to_db()
-
+        db.session.add(dataset)
         return cls(dataset, logger, db)
 
     @classmethod
@@ -107,7 +106,6 @@ class DatasetManager:
                 ],
             )
 
-            dataset.save_to_db()
             logger.info(
                 f"Created new dataset for file list. Dataset Id is {dataset.id}",
                 extra=extras,
@@ -118,8 +116,8 @@ class DatasetManager:
                 extra=extras,
             )
             dataset.last_used = datetime.now(tz=timezone.utc)
-            dataset.save_to_db()
 
+        db.session.add(dataset)
         return cls(dataset, logger, db)
 
     @classmethod

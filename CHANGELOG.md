@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### 1.8.2
+March 10, 2026
+
+### Added
+- Add atlasopenmagic DID finder (#1292)
+- Accept multiple result reports from transformers and update size of result file to match the final uploaded value (#1331)
+- Add Kibana log link to the requests table dashboard — clickable icon links directly to a pre-filtered Kibana query for each request
+- Add log link to the transformation detail web page
+- Add support for configurable pod annotations, node selectors, affinities, and tolerations in Helm charts
+- Add support for configurable pod scheduling options when transformer workers are launched
+- Add helm installation name and k8s namespace to local/port-forward.sh (#1280)
+
+### Changed
+
+- Switch to combined ROOT+uproot image where relevant
+- Update the default Kibana URL to make it easier to programmatically manipulate the query and add requestId
+- Update TopCP docker image tag (#1294)
+- Clean up Transformer manager tests — reduced duplicate config code using shared fixtures (#1283 cleanup)
+
+### Fixed
+
+- Fix transaction leak in transformation submit endpoint (#1317) — all external I/O (code generation, Docker image validation, object-store bucket creation) now occurs before any database transaction is opened, eliminating unnecessary lock contention and prolonged connection pool checkout
+- Add cleanups for lingering Kubernetes resources (#1283)
+
+
 ### 1.8.1
 January 26, 2026
 

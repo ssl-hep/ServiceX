@@ -15,10 +15,10 @@ app:
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 2Gi
     limits:
       cpu: 1
-      memory: 1Gi
+      memory: 2.5Gi
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -55,8 +55,8 @@ codeGen:
     image: sslhep/servicex_code_gen_raw_uproot
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     compressionAlgorithm: ZSTD
     compressionLevel: 5
     resources:
@@ -76,8 +76,8 @@ codeGen:
     image: sslhep/servicex_code_gen_func_adl_uproot
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
@@ -95,8 +95,8 @@ codeGen:
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-    defaultScienceContainerTag: 5.6.9
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
@@ -114,8 +114,8 @@ codeGen:
     image: sslhep/servicex_code_gen_python
     pullPolicy: Always
     tag: develop
-    defaultScienceContainerImage: sslhep/servicex_science_image_root
-    defaultScienceContainerTag: 6.36.00
+    defaultScienceContainerImage: sslhep/servicex_science_image_combined_root
+    defaultScienceContainerTag: 5.6.9-6.36.06
     resources:
       requests:
         cpu: 100m
@@ -240,6 +240,22 @@ didFinder:
     tolerations: []
     affinity: {}
     podAnnotations: {}
+  atlasopenmagic:
+    enabled: true
+    image: sslhep/servicex-did-finder-atlasopenmagic
+    pullPolicy: Always
+    tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
   xrootd:
     enabled: true
     image: sslhep/servicex-did-finder-xrootd
@@ -289,7 +305,8 @@ logging:
     port: 5959
     protocol: TCP
     monitor: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/c2cc1f30-4a5b-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-time-filter=true"
-    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!(('%24state'%3A(store%3AglobalState)%2Cmeta%3A(alias%3A!n%2Cdisabled%3A!f%2Cindex%3A'923eaa00-45b9-11ed-afcf-d91dad577662'%2Ckey%3Ainstance%2Cnegate%3A!f%2Cparams%3A(query%3Aservicex)%2Ctype%3Aphrase)%2Cquery%3A(term%3A(instance%3A{{ .Release.Name }}))))%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-query-input=true&show-time-filter=true&hide-filter-bar=true"
+    # This URL format is tied to a parser in servicex_app/servicex_app/web/kibana_url_filter.py
+    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h%2Fh,to:now))&_a=(filters:!((query:(match_phrase:(instance:{{.Release.Name}})))),index:'923eaa00-45b9-11ed-afcf-d91dad577662')"
 minio:
   image:
     repository: bitnamilegacy/minio
