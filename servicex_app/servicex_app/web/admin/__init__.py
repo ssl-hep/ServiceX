@@ -26,15 +26,7 @@ class AdminAuthMixin:
         except (NoAuthorizationError, Exception):
             return False
 
-
-class TemplateMixin:
-    template = None
-
-    @expose("/")
-    def index(self):
-        return self.render(self.template)
-
-
 from servicex_app.web.admin.admin import init_admin  # noqa: E402
 
-__all__ = ["AdminAuthMixin", "TemplateMixin", "init_admin"]
+
+__all__ = ["AdminAuthMixin", "init_admin"]

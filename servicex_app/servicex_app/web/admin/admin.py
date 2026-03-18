@@ -8,11 +8,10 @@ from flask_admin.contrib.sqla.validators import Unique
 from flask_admin.form.validators import FieldListInputRequired
 
 from servicex_app.models import UserModel, db
-from servicex_app.web.admin import AdminAuthMixin, TemplateMixin
+from servicex_app.web.admin import AdminAuthMixin
 from servicex_app.web.admin.reports import ReportView
 from servicex_app.web.admin.reports.user_transformations import UsersMonthlyReportView  # noqa: F401
 
-# flask-admin 1.6.x validators use tuple field_flags; wtforms 3.x expects dicts.
 Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
 
