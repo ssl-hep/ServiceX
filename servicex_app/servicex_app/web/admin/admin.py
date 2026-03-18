@@ -10,7 +10,9 @@ from flask_admin.form.validators import FieldListInputRequired
 from servicex_app.models import UserModel, db
 from servicex_app.web.admin import AdminAuthMixin
 from servicex_app.web.admin.reports import ReportView
-from servicex_app.web.admin.reports.user_transformations import UsersMonthlyReportView  # noqa: F401
+from servicex_app.web.admin.reports.user_transformations import (
+    UsersMonthlyReportView,
+)  # noqa: F401
 
 Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
@@ -88,6 +90,7 @@ def init_admin(app):
     app.cli.add_command(reports_group)
     for _cls in _all_report_subclasses(ReportView):
         if _cls.report_name:
+
             @reports_group.command(_cls.report_name, params=_cls.params)
             def cmd(cls=_cls, **kwargs):
                 try:
