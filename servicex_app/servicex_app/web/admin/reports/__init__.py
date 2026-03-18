@@ -5,10 +5,10 @@ from typing import TextIO
 from flask import Response, request, url_for
 from flask_admin import BaseView, expose
 
-from servicex_app.web.admin import AdminAuthMixin, TemplateMixin
+from servicex_app.web.admin import AdminAuthMixin
 
 
-class ReportView(AdminAuthMixin, TemplateMixin, BaseView):
+class ReportView(AdminAuthMixin, BaseView):
     report_name = None
     template = "admin/report.html"
     description = None
