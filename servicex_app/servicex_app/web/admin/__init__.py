@@ -1,5 +1,4 @@
 from flask import current_app, redirect, request, session, url_for
-from flask_admin import expose
 from flask_jwt_extended import verify_jwt_in_request
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
