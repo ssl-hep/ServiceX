@@ -54,8 +54,13 @@ class TestUsersMonthlyReportView:
 
         return _setup
 
-    def _make_mock_user(self, name="Jane Doe", email="jane@example.com",
-                        institution="UChicago", experiment="ATLAS"):
+    def _make_mock_user(
+        self,
+        name="Jane Doe",
+        email="jane@example.com",
+        institution="UChicago",
+        experiment="ATLAS",
+    ):
         user = MagicMock()
         user.name = name
         user.email = email
@@ -71,7 +76,10 @@ class TestUsersMonthlyReportView:
         output.seek(0)
         rows = list(csv.reader(output))
         assert rows[0] == [
-            "Name", "Email", "Institution", "Experiment",
+            "Name",
+            "Email",
+            "Institution",
+            "Experiment",
             "Transforms (Last 30 Days)",
         ]
 
