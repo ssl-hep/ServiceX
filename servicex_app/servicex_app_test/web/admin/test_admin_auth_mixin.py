@@ -58,9 +58,7 @@ class TestAdminAuthMixin(WebTestBase):
         with auth_client.application.test_request_context():
             assert mixin._is_admin() is False
 
-    def test_is_admin_false_on_no_authorization_error(
-        self, auth_client, mixin, mocker
-    ):
+    def test_is_admin_false_on_no_authorization_error(self, auth_client, mixin, mocker):
         mocker.patch(
             "servicex_app.web.admin.verify_jwt_in_request",
             side_effect=NoAuthorizationError("no token"),
