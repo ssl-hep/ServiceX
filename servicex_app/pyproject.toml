@@ -42,7 +42,6 @@ urllib3 = "^2.6.3"
 requests = "^2.32"
 authlib = "^1.6.9"
 flask-moment = "^1.0.6"
-pre-commit = "^2.20.0"
 
 [tool.poetry.group.test]
 optional = true
@@ -56,8 +55,8 @@ pytest-celery = "^1.2.1"
 coverage = "^6.5.0"
 
 
-#[tool.poetry.group.dev.dependencies]
-#pre-commit = "^2.20.0"
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^2.20.0"
 
 [build-system]
 requires = ["poetry-core"]
