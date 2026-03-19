@@ -43,7 +43,7 @@ urllib3 = "^2.6.3"
 requests = "^2.32"
 authlib = "^1.6.9"
 flask-moment = "^1.0.6"
-setuptools = "^73"
+setuptools = "^81"
 
 [tool.poetry.group.test]
 optional = true
