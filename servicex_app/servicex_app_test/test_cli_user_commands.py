@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock
 
-import pytest
-
 from servicex_app.cli.user_commands import list_users
 
 
