@@ -45,7 +45,7 @@ class CodeGenAdapter:
         selection_string: str,
         request_id: str,
         namespace: str,
-        user_codegen_name: str,
+        user_codegen_name: str
     ) -> tuple[str, str, str, str]:
         """
         Generates the C++ code for a request's selection string.
