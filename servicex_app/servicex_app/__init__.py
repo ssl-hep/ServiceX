@@ -260,10 +260,6 @@ def create_app(
 
     app.add_template_filter(b64decode)
 
-    from servicex_app.web.admin import init_admin
-
-    init_admin(app)
-
     with app.app_context():
         db.init_app(app)
 
@@ -271,6 +267,10 @@ def create_app(
             db.create_all()
 
         migrate.init_app(app, db)
+
+        from servicex_app.web.admin import init_admin
+
+        init_admin(app)
         moment.init_app(app)
 
         # Validate did-finder scheme
