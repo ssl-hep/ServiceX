@@ -28,6 +28,7 @@
 
 from importlib.metadata import PackageNotFoundError
 
+
 class TestServiceXResource:
     def test_get_app_version_no_servicex_app(self, mocker):
         mock_get_distribution = mocker.patch(
