@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional
 
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
@@ -69,9 +69,8 @@ class ServiceXResource(Resource):
         :return: The version number, or the string "develop" if servicex_app not installed
         """
         try:
-            app_version = pkg_resources.get_distribution("servicex_app").version
-            return app_version
-        except pkg_resources.DistributionNotFound:
+            return version("servicex_app")
+        except PackageNotFoundError:
             return "develop"
 
     @classmethod
