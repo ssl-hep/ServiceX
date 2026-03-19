@@ -16,7 +16,7 @@ COPY README.rst README.rst
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi --without dev
+    poetry install --no-root --no-interaction --no-ansi
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex_app/ ./servicex_app
