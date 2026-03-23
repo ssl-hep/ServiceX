@@ -25,14 +25,15 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pkg_resources
+
+from importlib.metadata import PackageNotFoundError
 
 
 class TestServiceXResource:
     def test_get_app_version_no_servicex_app(self, mocker):
         mock_get_distribution = mocker.patch(
-            "servicex_app.resources.servicex_resource.pkg_resources.get_distribution",
-            side_effect=pkg_resources.DistributionNotFound(None, None),
+            "servicex_app.resources.servicex_resource.version",
+            side_effect=PackageNotFoundError(None, None),
         )
 
         from servicex_app.resources.servicex_resource import ServiceXResource
