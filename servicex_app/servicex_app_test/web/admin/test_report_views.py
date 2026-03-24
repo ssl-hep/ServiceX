@@ -6,7 +6,9 @@ import pytest
 
 from servicex_app.web.admin.admin import _all_report_subclasses
 from servicex_app.web.admin.reports import CsvReportView, ReportView
-from servicex_app.web.admin.reports.user_transformations import UsersTransformationCountReportView
+from servicex_app.web.admin.reports.user_transformations import (
+    UsersTransformationCountReportView,
+)
 
 
 class TestCsvReportView:
