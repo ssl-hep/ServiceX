@@ -54,6 +54,7 @@ class LogExtraVisitor(ast.NodeVisitor):
         self.allowed_keys = allowed_keys
         self.require_extras = require_extras
         self.errors: list[str] = []
+        self.warnings: list[str] = []
 
     def visit_Call(self, node: ast.Call):
         if isinstance(node.func, ast.Attribute) and node.func.attr in LOG_METHODS:
@@ -65,7 +66,12 @@ class LogExtraVisitor(ast.NodeVisitor):
                     )
             else:
                 keys = _extract_literal_keys(extra_kw.value)
-                if keys is not None:
+                if keys is None:
+                    self.warnings.append(
+                        f"{self.filepath}:{extra_kw.value.lineno}: "
+                        f"extra= value is not a literal dict — skipping schema validation"
+                    )
+                else:
                     for key, lineno in keys:
                         if key not in self.allowed_keys:
                             self.errors.append(
@@ -74,16 +80,19 @@ class LogExtraVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def check_file(filepath: str, allowed_keys: frozenset, require_extras: bool) -> list[str]:
+def check_file(
+    filepath: str, allowed_keys: frozenset, require_extras: bool
+) -> tuple[list[str], list[str]]:
+    """Return (errors, warnings) for the given file."""
     source = Path(filepath).read_text(encoding="utf-8")
     try:
         tree = ast.parse(source, filename=filepath)
     except SyntaxError as exc:
         print(f"check-log-extras: syntax error in {filepath}: {exc}", file=sys.stderr)
-        return []
+        return [], []
     visitor = LogExtraVisitor(filepath, allowed_keys, require_extras)
     visitor.visit(tree)
-    return visitor.errors
+    return visitor.errors, visitor.warnings
 
 
 def main():
@@ -103,8 +112,14 @@ def main():
 
     allowed_keys = load_schema(args.schema)
     all_errors: list[str] = []
+    all_warnings: list[str] = []
     for filepath in args.files:
-        all_errors.extend(check_file(filepath, allowed_keys, args.require_extras))
+        errors, warnings = check_file(filepath, allowed_keys, args.require_extras)
+        all_errors.extend(errors)
+        all_warnings.extend(warnings)
+
+    for warning in all_warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
 
     for err in all_errors:
         print(err)
