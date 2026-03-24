@@ -56,9 +56,9 @@ class FilesetError(ServiceXResource):
                 "Dataset lookup error received for unknown dataset",
                 extra={
                     "dataset_id": dataset_id,
-                    "elapsed-time": summary["elapsed-time"],
-                    "error-type": summary["error-type"],
-                    "_message": summary["message"],
+                    "elapsed": summary["elapsed-time"],
+                    "error_type": summary["error-type"],
+                    "error": summary["message"],
                 },
             )
             return "", 422
@@ -67,9 +67,9 @@ class FilesetError(ServiceXResource):
             "Error in file lookup",
             extra={
                 "dataset_id": dataset_id,
-                "elapsed-time": summary["elapsed-time"],
-                "error-type": summary["error-type"],
-                "_message": summary["message"],
+                "elapsed": summary["elapsed-time"],
+                "error_type": summary["error-type"],
+                "error": summary["message"],
             },
         )
 
@@ -93,10 +93,10 @@ class FilesetError(ServiceXResource):
                 "Shutting down transformer because of dataset lookup problem",
                 extra={
                     "dataset_id": dataset_id,
-                    "elapsed-time": summary["elapsed-time"],
-                    "error-type": summary["error-type"],
-                    "_message": summary["message"],
-                    "requestId": t_request.request_id,
+                    "elapsed": summary["elapsed-time"],
+                    "error_type": summary["error-type"],
+                    "error": summary["message"],
+                    "request_id": t_request.request_id,
                 },
             )
 

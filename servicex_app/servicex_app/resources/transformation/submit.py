@@ -137,14 +137,14 @@ class SubmitTransformationRequest(ServiceXResource):
                 parsed_did,
                 logger=current_app.logger,
                 db=db,
-                extras={"requestId": request_id},
+                extras={"request_id": request_id},
             )
         else:  # no dataset, only a list of files given
             return DatasetManager.from_file_list(
                 file_list,
                 logger=current_app.logger,
                 db=db,
-                extras={"requestId": request_id},
+                extras={"request_id": request_id},
             )
 
     def _setup_rabbit_queues(self, request_id: str):
@@ -178,7 +178,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 args = self.parser.parse_args()
             except BadRequest as bad_request:
                 msg = f"The json request was malformed: {str(bad_request)}"
-                current_app.logger.error(msg, extra={"requestId": request_id})
+                current_app.logger.error(msg, extra={"request_id": request_id})
                 return {"message": msg}, 400
 
             config = current_app.config
@@ -192,7 +192,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
             if not code_gen_image_name:
                 msg = f"Invalid Codegen Image Passed in Request: {user_codegen_name}"
-                current_app.logger.error(msg, extra={"requestId": request_id})
+                current_app.logger.error(msg, extra={"request_id": request_id})
                 return {"message": msg}, 500
 
             # The first thing to do is make sure the requested selection is correct
@@ -217,7 +217,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     codegen_transformer_image
                 ):
                     msg = f"Requested transformer docker image doesn't exist: {codegen_transformer_image}"  # noqa: E501
-                    current_app.logger.error(msg, extra={"requestId": request_id})
+                    current_app.logger.error(msg, extra={"request_id": request_id})
                     return {"message": msg}, 500
 
             # If the user has requested an object store destination, now is the time
@@ -241,7 +241,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                 except BadRequest as bad_request:
                     current_app.logger.error(
-                        str(bad_request), extra={"requestId": request_id}
+                        str(bad_request), extra={"request_id": request_id}
                     )
                     return {"message": str(bad_request)}, 400
 
@@ -292,7 +292,8 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec.status = TransformStatus.lookup
                 elif dataset_manager.is_complete:
                     current_app.logger.info(
-                        "dataset already complete", extra={"requestId": str(request_id)}
+                        "dataset already complete",
+                        extra={"request_id": str(request_id)},
                     )
                     dataset_manager.publish_files(
                         request_rec, self.lookup_result_processor
@@ -301,7 +302,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 else:
                     current_app.logger.info(
                         "another request received for dataset that is still being looked up ",
-                        extra={"requestId": str(request_id)},
+                        extra={"request_id": str(request_id)},
                     )
                     request_rec.status = TransformStatus.pending_lookup
 
@@ -313,12 +314,12 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
 
             current_app.logger.info(
-                "Transformation request submitted!", extra={"requestId": request_id}
+                "Transformation request submitted!", extra={"request_id": request_id}
             )
             return {"request_id": str(request_id)}
         except Exception as eek:
             current_app.logger.exception(
                 "Got exception while submitting transformation request",
-                extra={"requestId": request_id},
+                extra={"request_id": request_id},
             )
             return {"message": f"Something went wrong ({str(eek)})"}, 500

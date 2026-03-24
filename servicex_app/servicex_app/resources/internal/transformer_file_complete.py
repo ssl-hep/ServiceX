@@ -101,9 +101,9 @@ class TransformerFileComplete(ServiceXResource):
         info = request.get_json()
         logger = current_app.logger
         log_extra = {
-            "requestId": request_id,
-            "file-id": info["file-id"],
-            "s3-object-name": info["s3-object-name"],
+            "request_id": request_id,
+            "file_id": info["file-id"],
+            "object_name": info["s3-object-name"],
         }
 
         logger.info("FileComplete", extra={**log_extra, "metric": info})
@@ -114,8 +114,8 @@ class TransformerFileComplete(ServiceXResource):
             # we've processed this file already (return value will be True if so)
             if orig_counts := self.save_transform_result(request_id, info, session):
                 logger.warning(
-                    "Duplicate result report",
-                    extra=(log_extra | {"new_info": info, "old_info": orig_counts}),
+                    f"Duplicate result report - new_info: {info}, old_info: {orig_counts}",
+                    extra=log_extra,
                 )
 
             # Lookup the transformation request and increment either the successful
@@ -148,7 +148,7 @@ class TransformerFileComplete(ServiceXResource):
                     "files_remaining": transform_req.files_remaining,
                     "files_completed": transform_req.files_completed,
                     "files_failed": transform_req.files_failed,
-                    "report_processed_time": (time.time() - start_time),
+                    "elapsed": (time.time() - start_time),
                 },
             )
             return "Ok", 200
@@ -264,7 +264,7 @@ class TransformerFileComplete(ServiceXResource):
 
         logger.info(
             "Request completed. Shutting down transformers",
-            extra={"requestId": transform_req.request_id},
+            extra={"request_id": transform_req.request_id},
         )
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         transformer_manager.shutdown_transformer_job(

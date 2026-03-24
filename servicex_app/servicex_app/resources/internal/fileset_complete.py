@@ -53,7 +53,7 @@ class FilesetComplete(ServiceXResource):
 
         current_app.logger.info(
             "Completed fileset for datasetID",
-            extra={"dataset_id": dataset_id, "elapsed-time": summary["elapsed-time"]},
+            extra={"dataset_id": dataset_id, "elapsed": summary["elapsed-time"]},
         )
         dataset.n_files = summary["files"]
         dataset.events = summary["total-events"]
