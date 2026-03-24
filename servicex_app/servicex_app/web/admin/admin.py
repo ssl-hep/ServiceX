@@ -10,9 +10,9 @@ from flask_admin.form.validators import FieldListInputRequired
 from servicex_app.models import UserModel, db
 from servicex_app.web.admin import AdminAuthMixin
 from servicex_app.web.admin.reports import ReportView
-from servicex_app.web.admin.reports.user_transformations import (
-    UsersMonthlyReportView,
-)  # noqa: F401
+from servicex_app.web.admin.reports.user_transformations import (  # noqa: F401
+    UsersTransformationCountReportView,
+)
 
 Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
@@ -21,7 +21,9 @@ FieldListInputRequired.field_flags = {"required": True}
 class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
     @expose("/")
     def index(self):
-        model_views, other_views = [], []
+        from flask import current_app
+
+        model_views, other_views, report_views = [], [], []
         for view in self.admin._views:
             if view is self:
                 continue
@@ -33,8 +35,21 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
                 )
             except Exception:
                 pass
+        for admin_instance in current_app.extensions.get("admin", []):
+            if admin_instance.endpoint == "reports":
+                for view in admin_instance._views:
+                    try:
+                        list_url = url_for(f"{view.endpoint}.{view._default_view}")
+                        report_views.append(
+                            {"name": view.name, "url": list_url, "endpoint": view.endpoint}
+                        )
+                    except Exception:
+                        pass
         return self.render(
-            "admin/index.html", model_views=model_views, other_views=other_views
+            "admin/index.html",
+            model_views=model_views,
+            other_views=other_views,
+            report_views=report_views,
         )
 
 
@@ -80,11 +95,21 @@ def init_admin(app):
         index_view=SecureAdminIndexView(),
     )
     admin.add_view(UserModelView(UserModel, db.session, name="Users"))
-    admin.add_view(
-        UsersMonthlyReportView(
-            name="Users Monthly Report", endpoint="usersmonthlyreport"
-        )
+
+    report_admin = Admin(
+        app,
+        name="ServiceX Reports",
+        url="/report",
+        endpoint="reports",
     )
+    for cls in _all_report_subclasses(ReportView):
+        if cls.report_name:
+            report_admin.add_view(
+                cls(
+                    name=cls.report_name,
+                    endpoint=cls.report_name.replace("-", ""),
+                )
+            )
 
     reports_group = click.Group("reports")
     app.cli.add_command(reports_group)
@@ -100,4 +125,4 @@ def init_admin(app):
                 except Exception as e:
                     raise click.ClickException(str(e)) from e
 
-    return admin
+    return admin, report_admin

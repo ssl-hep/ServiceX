@@ -8,9 +8,9 @@ from servicex_app.models import TransformRequest, UserModel, db
 from servicex_app.web.admin.reports import CsvReportView
 
 
-class UsersMonthlyReportView(CsvReportView):
-    report_name = "users-monthly"
-    filename = "users_monthly_report.csv"
+class UsersTransformationCountReportView(CsvReportView):
+    report_name = "users-transformations-count"
+    filename = "users_transformation_count.csv"
     description = (
         "CSV of all users who have submitted at least one transform in the last N days."
     )
@@ -21,7 +21,7 @@ class UsersMonthlyReportView(CsvReportView):
     ]
 
     @classmethod
-    def write_csv(cls, writer: csv.writer, days: int = 30) -> None:
+    def write_csv(cls, writer: csv.writer, days: int = 30) -> csv:
         cutoff = datetime.utcnow() - timedelta(days=days)
         results = (
             db.session.query(

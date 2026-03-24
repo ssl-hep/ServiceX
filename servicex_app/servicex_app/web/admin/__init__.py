@@ -11,7 +11,7 @@ class AdminAuthMixin:
 
     def inaccessible_callback(self, name, **kwargs):
         session["next"] = request.url
-        return redirect(url_for("sign_in"))
+        return redirect(url_for("home"))
 
     def _is_admin(self):
         if not current_app.config.get("ENABLE_AUTH"):

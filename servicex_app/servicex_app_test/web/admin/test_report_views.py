@@ -6,7 +6,7 @@ import pytest
 
 from servicex_app.web.admin.admin import _all_report_subclasses
 from servicex_app.web.admin.reports import CsvReportView, ReportView
-from servicex_app.web.admin.reports.user_transformations import UsersMonthlyReportView
+from servicex_app.web.admin.reports.user_transformations import UsersTransformationCountReportView
 
 
 class TestCsvReportView:
@@ -37,7 +37,7 @@ class TestCsvReportView:
         assert rows[1] == ["val_1", "val_2"]
 
 
-class TestUsersMonthlyReportView:
+class TestUsersTransformationCountReportView:
     @pytest.fixture
     def mock_db_query(self, mocker):
         def _setup(results):
@@ -72,7 +72,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_csv(writer, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
         assert rows[0] == [
@@ -87,7 +87,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer, days=60)
+        UsersTransformationCountReportView.write_csv(writer, days=60)
         output.seek(0)
         rows = list(csv.reader(output))
         assert "60 Days" in rows[0][-1]
@@ -96,7 +96,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer)
+        UsersTransformationCountReportView.write_csv(writer)
         output.seek(0)
         rows = list(csv.reader(output))
         assert "30 Days" in rows[0][-1]
@@ -106,7 +106,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([(user, 5)])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_csv(writer, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
         assert rows[1] == ["Jane Doe", "jane@example.com", "UChicago", "ATLAS", "5"]
@@ -117,7 +117,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([(user1, 3), (user2, 7)])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_csv(writer, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
         assert len(rows) == 3  # header + 2 users
@@ -128,7 +128,7 @@ class TestUsersMonthlyReportView:
         mock_db_query([])
         output = io.StringIO()
         writer = csv.writer(output)
-        UsersMonthlyReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_csv(writer, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
         assert len(rows) == 1
@@ -141,12 +141,12 @@ class TestAllReportSubclasses:
 
     def test_includes_indirect_subclass(self):
         subclasses = list(_all_report_subclasses(ReportView))
-        assert UsersMonthlyReportView in subclasses
+        assert UsersTransformationCountReportView in subclasses
 
     def test_empty_for_leaf_class(self):
-        subclasses = list(_all_report_subclasses(UsersMonthlyReportView))
+        subclasses = list(_all_report_subclasses(UsersTransformationCountReportView))
         assert subclasses == []
 
     def test_includes_grandchild_via_csv_report_view(self):
         csv_subclasses = list(_all_report_subclasses(CsvReportView))
-        assert UsersMonthlyReportView in csv_subclasses
+        assert UsersTransformationCountReportView in csv_subclasses
