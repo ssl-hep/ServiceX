@@ -15,6 +15,17 @@ repos:
     rev: "7.3.0"
     hooks:
       - id: flake8
+  - repo: local
+    hooks:
+      - id: check-log-extras
+        name: Validate logging extra= keys against schema
+        language: python
+        entry: python hooks/check_log_extras.py
+        types: [python]
+        args:
+          - --schema=logging_schema.json
+          # To also require extra= on every log call, uncomment:
+          # - --require-extras
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 26.3.1
     hooks:
