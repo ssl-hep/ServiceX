@@ -79,7 +79,7 @@ class TransformerManager:
 
         current_app.logger.info(
             f"Launching {request_rec.workers} transformers.",
-            extra={"requestId": request_rec.request_id},
+            extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(
@@ -630,7 +630,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Celery queue cancellation",
-                    extra={"requestId": request_id, "exception": e},
+                    extra={"request_id": request_id},
                 )
 
     @staticmethod

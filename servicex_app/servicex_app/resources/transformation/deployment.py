@@ -19,7 +19,7 @@ class DeploymentStatus(ServiceXResource):
         status = self.transformer_manager.get_deployment_status(request_id)
         if status is None:
             msg = f"Deployment not found: '{request_id}'"
-            current_app.logger.error(msg, extra={"requestId": request_id})
+            current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
         current_app.logger.debug(
             f"Transformation deployment request: {status.to_dict()}"
