@@ -200,7 +200,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             )
 
             mock_dataset_manager_from_did.assert_called_with(
-                ANY, db=ANY, extras={"requestId": request_id}, logger=ANY
+                ANY, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
             assert (
                 mock_dataset_manager_from_did.call_args[0][0].full_did
@@ -239,7 +239,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 assert saved_obj
 
             mock_dataset_manager_from_did.assert_called_with(
-                ANY, db=ANY, extras={"requestId": request_id}, logger=ANY
+                ANY, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
 
             assert (
@@ -286,7 +286,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.did_id == 42
 
             mock_dataset_manager_from_did.assert_called_with(
-                ANY, db=ANY, extras={"requestId": request_id}, logger=ANY
+                ANY, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
             assert (
                 mock_dataset_manager_from_did.call_args[0][0].full_did
@@ -332,7 +332,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj.status == TransformStatus.pending_lookup
 
             mock_dataset_manager_from_did.assert_called_with(
-                ANY, db=ANY, extras={"requestId": request_id}, logger=ANY
+                ANY, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
             assert (
                 mock_dataset_manager_from_did.call_args[0][0].full_did
@@ -370,7 +370,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json["request_id"]
 
             mock_dataset_manager_from_did.assert_called_with(
-                ANY, db=ANY, extras={"requestId": request_id}, logger=ANY
+                ANY, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
             assert (
                 mock_dataset_manager_from_did.call_args[0][0].full_did
@@ -418,7 +418,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             request_id = response.json["request_id"]
             submitted_request = TransformRequest.lookup(request_id)
             mock_dataset_manager_from_files.assert_called_with(
-                file_list, db=ANY, extras={"requestId": request_id}, logger=ANY
+                file_list, db=ANY, extras={"request_id": request_id}, logger=ANY
             )
 
             mock_transform_manager.start_transformers.assert_called_with(

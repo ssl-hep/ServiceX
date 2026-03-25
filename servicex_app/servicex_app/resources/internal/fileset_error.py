@@ -58,7 +58,7 @@ class FilesetError(ServiceXResource):
                     "dataset_id": dataset_id,
                     "elapsed": summary["elapsed-time"],
                     "error_type": summary["error-type"],
-                    "error": summary["message"],
+                    "error_message": summary["message"],
                 },
             )
             return "", 422
@@ -69,7 +69,7 @@ class FilesetError(ServiceXResource):
                 "dataset_id": dataset_id,
                 "elapsed": summary["elapsed-time"],
                 "error_type": summary["error-type"],
-                "error": summary["message"],
+                "error_message": summary["message"],
             },
         )
 
@@ -95,7 +95,7 @@ class FilesetError(ServiceXResource):
                     "dataset_id": dataset_id,
                     "elapsed": summary["elapsed-time"],
                     "error_type": summary["error-type"],
-                    "error": summary["message"],
+                    "error_message": summary["message"],
                     "request_id": t_request.request_id,
                 },
             )

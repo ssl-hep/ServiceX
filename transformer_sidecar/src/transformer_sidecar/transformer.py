@@ -81,7 +81,7 @@ request_id: str = ""
 MAX_PATH_LEN = 255
 
 PLACE = {
-    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "host": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
     "pod": os.getenv("POD_NAME", "unknown"),
 }
@@ -119,13 +119,12 @@ def transform_file(
     We will examine this log file to see if the transform succeeded or failed
     """
 
-    log_extra = {"requestId": request_id, "file-id": file_id, "place": PLACE}
+    log_extra = {"request_id": request_id, "file_id": file_id, "place": PLACE}
 
     transform_request = {
         "file-id": file_id,
         "request-id": request_id,
         "status": "unknown",
-        "error": None,
     }
 
     # If we are converting root to another format here, then the transformer
@@ -145,13 +144,7 @@ def transform_file(
 
     logger.info(
         "got transform request.",
-        extra={
-            **log_extra,
-            "paths": _file_paths,
-            "result-destination": result_destination,
-            "result-format": result_format,
-            "service-endpoint": service_endpoint,
-        },
+        extra={**log_extra, "replicas": _file_paths, "result_path": result_destination},
     )
     servicex = ServiceXAdapter(service_endpoint)
 
@@ -175,7 +168,7 @@ def transform_file(
                 "trying to transform file",
                 extra={
                     **log_extra,
-                    "file-path": _file_path,
+                    "input_path": _file_path,
                 },
             )
 
@@ -240,12 +233,7 @@ def transform_file(
                     servicex.put_file_complete(rec)
 
                 transform_success = True
-                ts = {
-                    **log_extra,
-                    "file-size": transformer_stats.file_size,
-                    "total-events": transformer_stats.total_events,
-                }
-                logger.info("Transformer stats.", extra=ts)
+                logger.info("Transformer stats.", extra=log_extra)
                 science_container.confirm()
                 break
 
@@ -256,7 +244,7 @@ def transform_file(
         if not transform_success:
             hf = {
                 **log_extra,
-                "file-path": _file_paths[0],
+                "input_path": _file_paths[0],
                 "log_body": transformer_stats.log_body,
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
@@ -325,7 +313,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
 
     logger.info(
         "Converting ROOT to Parquet.",
-        extra={"requestId": request_id, "source_path": source_path},
+        extra={"request_id": request_id, "input_path": str(source_path)},
     )
     try:
         with open(source_path, "rb") as datafile:
@@ -411,10 +399,10 @@ def upload_file(
     logger.info(
         "Uploading file to object store.",
         extra={
-            "requestId": request_id,
-            "file-id": rec.file_id,
+            "request_id": request_id,
+            "file_id": rec.file_id,
             "place": PLACE,
-            "objectName": object_name,
+            "object_name": object_name,
         },
     )
     t0 = time.time()
@@ -423,10 +411,10 @@ def upload_file(
         logger.info(
             "File uploaded to object store.",
             extra={
-                "requestId": request_id,
-                "file-id": rec.file_id,
+                "request_id": request_id,
+                "file_id": rec.file_id,
                 "place": PLACE,
-                "objectName": object_name,
+                "object_name": object_name,
                 "elapsed": time.time() - t0,
             },
         )
@@ -437,10 +425,10 @@ def upload_file(
         logger.error(
             f"Error uploading file to object store: {e}",
             extra={
-                "requestId": request_id,
+                "request_id": request_id,
                 "place": PLACE,
-                "file-id": rec.file_id,
-                "objectName": object_name,
+                "file_id": rec.file_id,
+                "object_name": object_name,
             },
         )
         rec.status = "failure"
@@ -685,7 +673,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     logger.debug(
         "Shutting down transformer",
-        extra={"requestId": request_id, "place": PLACE},
+        extra={"request_id": request_id, "place": PLACE},
     )
     science_container.close()
 

@@ -574,7 +574,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job HPA Shut Down",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         try:
@@ -595,7 +595,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job Deployment Shut Down",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         try:
@@ -617,7 +617,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job ConfigMap cleanup",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         # delete RabbitMQ queue
@@ -626,7 +626,7 @@ class TransformerManager:
                 f"Stopping workers connected to transformer-{request_id}"
             )
             cls.celery_app.control.cancel_consumer(f"transformer-{request_id}")
-        except Exception as e:
+        except Exception:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Celery queue cancellation",
