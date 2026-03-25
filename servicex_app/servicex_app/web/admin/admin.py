@@ -41,7 +41,11 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
                     try:
                         list_url = url_for(f"{view.endpoint}.{view._default_view}")
                         report_views.append(
-                            {"name": view.name, "url": list_url, "endpoint": view.endpoint}
+                            {
+                                "name": view.name,
+                                "url": list_url,
+                                "endpoint": view.endpoint,
+                            }
                         )
                     except Exception:
                         pass
