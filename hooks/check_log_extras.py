@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Pre-commit hook: validate logging extra= keys against logging_schema.json."""
+
 import argparse
 import ast
 import json
@@ -7,20 +8,35 @@ import sys
 from pathlib import Path
 
 LOG_METHODS = frozenset(
-    {"debug", "info", "warning", "warn", "error", "critical", "exception", "fatal", "log"}
+    {
+        "debug",
+        "info",
+        "warning",
+        "warn",
+        "error",
+        "critical",
+        "exception",
+        "fatal",
+        "log",
+    }
 )
 
 
 def load_schema(schema_path: str) -> frozenset:
     path = Path(schema_path)
     if not path.exists():
-        print(f"check-log-extras: schema file not found: {schema_path}", file=sys.stderr)
+        print(
+            f"check-log-extras: schema file not found: {schema_path}", file=sys.stderr
+        )
         sys.exit(1)
     try:
         data = json.loads(path.read_text())
         return frozenset(data["properties"].keys())
     except (json.JSONDecodeError, KeyError) as exc:
-        print(f"check-log-extras: invalid schema file {schema_path}: {exc}", file=sys.stderr)
+        print(
+            f"check-log-extras: invalid schema file {schema_path}: {exc}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
 
@@ -96,7 +112,9 @@ def check_file(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate logging extra= keys against schema.")
+    parser = argparse.ArgumentParser(
+        description="Validate logging extra= keys against schema."
+    )
     parser.add_argument(
         "--schema",
         default="logging_schema.json",

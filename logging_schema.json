@@ -4,19 +4,12 @@
   "properties": {
     "request_id": {
       "type": "string",
-      "description": "Core context — whenever available"
+      "description": "ServiceX request ID"
     },
-    "dataset_id": {
-      "type": "integer",
-      "description": "Core context — dataset record ID"
-    },
-    "file_id": {
-      "type": "integer",
-      "description": "Core context — file record ID"
-    },
+
     "place": {
       "type": "object",
-      "description": "Core context",
+      "description": "Location where the microservice is running.",
       "properties": {
         "host": { "type": "string" },
         "site": { "type": "string" },
@@ -24,7 +17,41 @@
       },
       "additionalProperties": false
     },
-    "file_path": {
+
+    "dataset_name": {
+      "type": "string",
+      "description": "Dataset-related - dataset name"
+    },
+    "dataset_id": {
+      "type": "integer",
+      "description": "Core context — dataset record ID"
+    },
+    "dataset_size": {
+      "type": "integer",
+      "description": "Dataset-related — dataset size in bytes"
+    },
+    "average_replicas": {
+      "type": "number",
+      "description": "Dataset-related — average number of replicas for files in dataset"
+    },
+    "lookup_duration": {
+      "type": "number",
+      "description": "Dataset-related — duration of lookup operation in seconds"
+    },
+    "file_id": {
+      "type": "integer",
+      "description": "Core context — file record ID"
+    },
+    "replicas": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Dataset-related — list of replica locations"
+    },
+    "result_path": {
+      "type": "string",
+      "description": "File-related — output path where file will be written"
+    },
+    "input_path": {
       "type": "string",
       "description": "File-related — input path being processed"
     },
@@ -60,13 +87,17 @@
       "type": "integer",
       "description": "Completion events — failed file counter"
     },
-    "error": {
+    "error_message": {
       "type": "string",
       "description": "Error/exception logs — message or repr"
     },
     "error_type": {
       "type": "string",
       "description": "Error/exception logs — error-category code"
+    },
+    "retry_status": {
+      "type": "string",
+      "description": "Error/exception logs — retry status from tenactiy"
     },
     "log_body": {
       "type": "string",
@@ -78,7 +109,7 @@
     },
     "num_files": {
       "type": "integer",
-      "description": "Queue context — number of files in a batch"
+      "description": "Number of files submitted for processing"
     },
     "metric": {
       "type": "object",

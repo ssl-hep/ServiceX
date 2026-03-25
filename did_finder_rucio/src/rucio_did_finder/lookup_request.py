@@ -93,11 +93,13 @@ class LookupRequest:
         if n_files:
             avg_replicas = float(total_paths) / n_files
 
-        metric = {
-            "dataset_id": self.dataset_id,
-            "n_files": n_files,
-            "size": ds_size,
-            "avg_replicas": avg_replicas,
-            "lookup_duration": (lookup_finish - lookup_start).total_seconds(),
-        }
-        self.logger.info("Lookup finished. ", extra=metric)
+        self.logger.info(
+            "Lookup finished. ",
+            extra={
+                "dataset_id": self.dataset_id,
+                "num_files": n_files,
+                "dataset_size": ds_size,
+                "average_replicas": avg_replicas,
+                "lookup_duration": (lookup_finish - lookup_start).total_seconds(),
+            },
+        )
