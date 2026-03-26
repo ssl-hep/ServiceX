@@ -571,6 +571,25 @@ class TransformerManager:
                 )
 
         try:
+            api_v1 = client.AppsV1Api()
+            try:
+                for attempt in Retrying(wait=wait_random_exponential(max=60),
+                                        stop=stop_after_attempt(3),
+                                        retry=retry_if_exception_type(ApiException)):
+                    with attempt:
+                        api_v1.delete_namespaced_deployment(
+                            name="transformer-" + request_id, namespace=namespace
+                        )
+            except RetryError as e:
+                e.reraise()
+        except ApiException as e:
+            if not quiet_errors:
+                current_app.logger.exception(
+                    "Exception during Job Deployment Shut Down",
+                    extra={"requestId": request_id, "status_code": e.status},
+                )
+
+        try:
             api_core = client.CoreV1Api()
             configmap_name = "{}-generated-source".format(request_id)
             try:
@@ -587,25 +606,6 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job ConfigMap cleanup",
-                    extra={"requestId": request_id, "status_code": e.status},
-                )
-
-        try:
-            api_v1 = client.AppsV1Api()
-            try:
-                for attempt in Retrying(wait=wait_random_exponential(max=60),
-                                        stop=stop_after_attempt(3),
-                                        retry=retry_if_exception_type(ApiException)):
-                    with attempt:
-                        api_v1.delete_namespaced_deployment(
-                            name="transformer-" + request_id, namespace=namespace
-                        )
-            except RetryError as e:
-                e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job Deployment Shut Down",
                     extra={"requestId": request_id, "status_code": e.status},
                 )
 
