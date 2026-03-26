@@ -49,8 +49,13 @@ class TestSecureAdminIndexView(WebTestBase):
     ):
         mocker.patch.dict(
             admin_client.application.extensions,
-            {"admin": [ext for ext in admin_client.application.extensions.get("admin", [])
-                       if ext.endpoint != "reports"]},
+            {
+                "admin": [
+                    ext
+                    for ext in admin_client.application.extensions.get("admin", [])
+                    if ext.endpoint != "reports"
+                ]
+            },
         )
         admin_client.get("/admin/")
         contexts = [ctx for _, ctx in captured if "report_views" in ctx]
