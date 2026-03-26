@@ -10,8 +10,8 @@ from flask_admin.form.validators import FieldListInputRequired
 from servicex_app.models import UserModel, db
 from servicex_app.web.admin import AdminAuthMixin
 from servicex_app.web.admin.reports import ReportView
-from servicex_app.web.admin.reports.user_transformations import (  # noqa: F401
-    UsersTransformationCountReportView,
+from servicex_app.web.admin.reports.user_transformation_count import (  # noqa: F401
+    UserTransformationCountReportView,
 )
 
 Unique.field_flags = {"unique": True}
@@ -124,7 +124,7 @@ def init_admin(app):
             def cmd(cls=_cls, **kwargs):
                 try:
                     output = io.StringIO()
-                    cls.write_output(output, **kwargs)
+                    cls().write_output(output, **kwargs)
                     click.echo(output.getvalue())
                 except Exception as e:
                     raise click.ClickException(str(e)) from e

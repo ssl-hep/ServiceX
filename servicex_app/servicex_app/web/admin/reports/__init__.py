@@ -19,8 +19,7 @@ class ReportView(AdminAuthMixin, BaseView):
     mimetype = "application/octet-stream"
     params = []
 
-    @classmethod
-    def write_output(cls, output: TextIO, **kwargs):
+    def write_output(self, output: TextIO, **kwargs):
         raise NotImplementedError
 
     @expose("/")
@@ -52,16 +51,14 @@ class SqlCsvReportView(ReportView):
     filename = "report.csv"
     mimetype = "text/csv"
 
-    @classmethod
-    def get_query(cls, **kwargs) -> Select:
+    def get_query(self, **kwargs) -> Select:
         raise NotImplementedError
 
-    @classmethod
-    def write_output(cls, output: TextIO, **kwargs) -> None:
+    def write_output(self, output: TextIO, **kwargs) -> None:
         from servicex_app.models import db
 
         writer = csv.writer(output)
-        results: CursorResult = db.session.execute(cls.get_query(**kwargs))
+        results: CursorResult = db.session.execute(self.get_query(**kwargs))
         writer.writerow(results.keys())
         for row in results:
             writer.writerow(row)

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import click
 from sqlalchemy import Select, func, select
 
-from servicex_app.models import TransformRequest, UserModel, db
+from servicex_app.models import TransformRequest, UserModel
 from servicex_app.web.admin.reports import SqlCsvReportView
 
 
@@ -13,14 +13,13 @@ class UserTransformationCountReportView(SqlCsvReportView):
     description = (
         "CSV of all users who have submitted at least one transform in the last N days."
     )
-    params = [
+    params = [\
         click.Option(
             ["--days"], default=30, type=int, help="Number of days to look back"
         ),
     ]
 
-    @classmethod
-    def get_query(cls, days: int = 30) -> Select:
+    def get_query(self, days: int = 30) -> Select:
         cutoff = datetime.utcnow() - timedelta(days=days)
         return (
             select(

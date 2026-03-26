@@ -42,7 +42,7 @@ class TestSecureAdminIndexView(WebTestBase):
         contexts = [ctx for _, ctx in captured if "report_views" in ctx]
         assert contexts
         report_view_names = [v["name"] for v in contexts[0]["report_views"]]
-        assert "users-transformations-count" in report_view_names
+        assert "user-transformation-count" in report_view_names
 
     def test_index_report_views_empty_when_no_reports_admin(
         self, admin_client, captured, mocker
