@@ -139,7 +139,10 @@ class TestDecorators(WebTestBase):
         with client.application.app_context():
             response: Response = client.get("users")
             assert response.status_code == 401
-            assert response.json["message"] == "Not Authorized: This resource is restricted to administrators."
+            assert (
+                response.json["message"]
+                == "Not Authorized: This resource is restricted to administrators."
+            )
 
     def test_admin_decorator_integration_not_authorized(self, user):
         user.admin = False
