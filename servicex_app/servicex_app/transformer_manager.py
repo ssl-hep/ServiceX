@@ -34,8 +34,13 @@ from kubernetes.client.rest import ApiException
 from typing import Optional
 import time
 import urllib3
-from tenacity import (Retrying, RetryError, stop_after_attempt, wait_random_exponential,
-                      retry_if_exception_type)
+from tenacity import (
+    Retrying,
+    RetryError,
+    stop_after_attempt,
+    wait_random_exponential,
+    retry_if_exception_type,
+)
 
 from servicex_app.models import TransformRequest, TransformStatus
 
@@ -554,9 +559,11 @@ class TransformerManager:
             if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
                 autoscaler_api = kubernetes.client.AutoscalingV1Api()
                 try:
-                    for attempt in Retrying(wait=wait_random_exponential(max=60),
-                                            stop=stop_after_attempt(3),
-                                            retry=retry_if_exception_type(ApiException)):
+                    for attempt in Retrying(
+                        wait=wait_random_exponential(max=60),
+                        stop=stop_after_attempt(3),
+                        retry=retry_if_exception_type(ApiException),
+                    ):
                         with attempt:
                             autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
                                 name="transformer-" + request_id, namespace=namespace
@@ -573,9 +580,11 @@ class TransformerManager:
         try:
             api_v1 = client.AppsV1Api()
             try:
-                for attempt in Retrying(wait=wait_random_exponential(max=60),
-                                        stop=stop_after_attempt(3),
-                                        retry=retry_if_exception_type(ApiException)):
+                for attempt in Retrying(
+                    wait=wait_random_exponential(max=60),
+                    stop=stop_after_attempt(3),
+                    retry=retry_if_exception_type(ApiException),
+                ):
                     with attempt:
                         api_v1.delete_namespaced_deployment(
                             name="transformer-" + request_id, namespace=namespace
@@ -593,9 +602,11 @@ class TransformerManager:
             api_core = client.CoreV1Api()
             configmap_name = "{}-generated-source".format(request_id)
             try:
-                for attempt in Retrying(wait=wait_random_exponential(max=60),
-                                        stop=stop_after_attempt(3),
-                                        retry=retry_if_exception_type(ApiException)):
+                for attempt in Retrying(
+                    wait=wait_random_exponential(max=60),
+                    stop=stop_after_attempt(3),
+                    retry=retry_if_exception_type(ApiException),
+                ):
                     with attempt:
                         api_core.delete_namespaced_config_map(
                             name=configmap_name, namespace=namespace
