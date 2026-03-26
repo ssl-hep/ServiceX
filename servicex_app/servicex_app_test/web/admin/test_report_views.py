@@ -9,6 +9,7 @@ from servicex_app.web.admin.reports import CsvReportView, ReportView
 from servicex_app.web.admin.reports.user_transformations import (
     UsersTransformationCountReportView,
 )
+from servicex_app_test.web.web_test_base import WebTestBase
 
 
 class TestCsvReportView:
@@ -134,6 +135,30 @@ class TestUsersTransformationCountReportView:
         output.seek(0)
         rows = list(csv.reader(output))
         assert len(rows) == 1
+
+
+class TestReportViewHttp(WebTestBase):
+    @pytest.fixture
+    def admin_client(self):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["admin"] = True
+        return client
+
+    def test_report_index_renders_for_admin(self, admin_client):
+        response = admin_client.get("/report/userstransformationscount/")
+        assert response.status_code == 200
+
+    def test_generate_download_returns_csv(self, admin_client, mocker):
+        mocker.patch.object(UsersTransformationCountReportView, "write_csv")
+        response = admin_client.post(
+            "/report/userstransformationscount/generate",
+            data={"days": "30"},
+        )
+        assert response.status_code == 200
+        assert "text/csv" in response.content_type
+        assert "attachment" in response.headers.get("Content-Disposition", "")
 
 
 class TestAllReportSubclasses:
