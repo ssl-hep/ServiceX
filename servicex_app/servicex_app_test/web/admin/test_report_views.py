@@ -3,37 +3,58 @@ import io
 from unittest.mock import MagicMock
 
 import pytest
+from sqlalchemy import Select
 
 from servicex_app.web.admin.admin import _all_report_subclasses
-from servicex_app.web.admin.reports import CsvReportView, ReportView
+from servicex_app.web.admin.reports import SqlCsvReportView, ReportView
 from servicex_app.web.admin.reports.user_transformations import (
     UsersTransformationCountReportView,
 )
 from servicex_app_test.web.web_test_base import WebTestBase
 
 
-class TestCsvReportView:
-    def test_write_output_delegates_to_write_csv(self, mocker):
-        mock_write_csv = mocker.patch.object(CsvReportView, "write_csv")
-        output = io.StringIO()
-        CsvReportView.write_output(output)
-        mock_write_csv.assert_called_once()
+def _mock_result(keys, rows):
+    """Build a mock SQLAlchemy CursorResult with .keys() and iteration."""
+    result = MagicMock()
+    result.keys.return_value = keys
+    result.__iter__ = MagicMock(return_value=iter(rows))
+    return result
 
-    def test_write_output_passes_kwargs_to_write_csv(self, mocker):
-        mock_write_csv = mocker.patch.object(CsvReportView, "write_csv")
-        output = io.StringIO()
-        CsvReportView.write_output(output, days=60)
-        _, kwargs = mock_write_csv.call_args
+
+class TestSqlCsvReportView:
+    @pytest.fixture
+    def mock_db_execute(self, mocker):
+        def _setup(keys, rows):
+            result = _mock_result(keys, rows)
+            mock_db = mocker.patch("servicex_app.models.db")
+            mock_db.session.execute.return_value = result
+            return result
+
+        return _setup
+
+    def test_write_output_delegates_to_get_query(self, mocker, mock_db_execute):
+        mock_db_execute([], [])
+        mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
+        SqlCsvReportView.write_output(io.StringIO())
+        SqlCsvReportView.get_query.assert_called_once()
+
+    def test_write_output_passes_kwargs_to_get_query(self, mocker, mock_db_execute):
+        mock_db_execute([], [])
+        mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
+        SqlCsvReportView.write_output(io.StringIO(), days=60)
+        _, kwargs = SqlCsvReportView.get_query.call_args
         assert kwargs == {"days": 60}
 
-    def test_write_output_produces_valid_csv(self, mocker):
-        def fake_write_csv(writer, **kwargs):
-            writer.writerow(["col_a", "col_b"])
-            writer.writerow(["val_1", "val_2"])
-
-        mocker.patch.object(CsvReportView, "write_csv", side_effect=fake_write_csv)
+    def test_write_output_uses_result_keys_as_header(self, mock_db_execute):
+        mock_db_execute(["col_a", "col_b"], [("val_1", "val_2")])
         output = io.StringIO()
-        CsvReportView.write_output(output)
+
+        class ConcreteView(SqlCsvReportView):
+            @classmethod
+            def get_query(cls, **kwargs):
+                return MagicMock()
+
+        ConcreteView.write_output(output)
         output.seek(0)
         rows = list(csv.reader(output))
         assert rows[0] == ["col_a", "col_b"]
@@ -42,96 +63,48 @@ class TestCsvReportView:
 
 class TestUsersTransformationCountReportView:
     @pytest.fixture
-    def mock_db_query(self, mocker):
-        def _setup(results):
-            mock_chain = MagicMock()
-            mock_chain.join.return_value = mock_chain
-            mock_chain.filter.return_value = mock_chain
-            mock_chain.group_by.return_value = mock_chain
-            mock_chain.all.return_value = results
-            mocker.patch(
-                "servicex_app.web.admin.reports.user_transformations.db.session.query",
-                return_value=mock_chain,
-            )
-            return mock_chain
+    def mock_db_execute(self, mocker):
+        def _setup(keys, rows):
+            result = _mock_result(keys, rows)
+            mock_db = mocker.patch("servicex_app.models.db")
+            mock_db.session.execute.return_value = result
+            return result
 
         return _setup
 
-    def _make_mock_user(
-        self,
-        name="Jane Doe",
-        email="jane@example.com",
-        institution="UChicago",
-        experiment="ATLAS",
-    ):
-        user = MagicMock()
-        user.name = name
-        user.email = email
-        user.institution = institution
-        user.experiment = experiment
-        return user
+    def test_get_query_returns_select(self):
+        query = UsersTransformationCountReportView.get_query(days=30)
+        assert isinstance(query, Select)
 
-    def test_write_csv_outputs_header_row(self, mock_db_query):
-        mock_db_query([])
+    def test_get_query_column_labels(self):
+        query = UsersTransformationCountReportView.get_query(days=30)
+        keys = list(query.exported_columns.keys())
+        assert keys == ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
+
+    def test_get_query_label_reflects_days_parameter(self):
+        query = UsersTransformationCountReportView.get_query(days=60)
+        keys = list(query.exported_columns.keys())
+        assert keys[-1] == "Transforms (Last 60 Days)"
+
+    def test_write_output_produces_valid_csv(self, mock_db_execute):
+        mock_db_execute(
+            ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"],
+            [("Jane Doe", "jane@example.com", "UChicago", "ATLAS", 5)],
+        )
         output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_output(output, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
-        assert rows[0] == [
-            "Name",
-            "Email",
-            "Institution",
-            "Experiment",
-            "Transforms (Last 30 Days)",
-        ]
-
-    def test_write_csv_header_reflects_days_parameter(self, mock_db_query):
-        mock_db_query([])
-        output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer, days=60)
-        output.seek(0)
-        rows = list(csv.reader(output))
-        assert "60 Days" in rows[0][-1]
-
-    def test_write_csv_default_days_is_30(self, mock_db_query):
-        mock_db_query([])
-        output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer)
-        output.seek(0)
-        rows = list(csv.reader(output))
-        assert "30 Days" in rows[0][-1]
-
-    def test_write_csv_outputs_user_rows(self, mock_db_query):
-        user = self._make_mock_user()
-        mock_db_query([(user, 5)])
-        output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer, days=30)
-        output.seek(0)
-        rows = list(csv.reader(output))
+        assert rows[0] == ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
         assert rows[1] == ["Jane Doe", "jane@example.com", "UChicago", "ATLAS", "5"]
 
-    def test_write_csv_outputs_multiple_user_rows(self, mock_db_query):
-        user1 = self._make_mock_user(name="Alice", email="alice@example.com")
-        user2 = self._make_mock_user(name="Bob", email="bob@example.com")
-        mock_db_query([(user1, 3), (user2, 7)])
+    def test_write_output_empty_result_has_only_header(self, mock_db_execute):
+        mock_db_execute(
+            ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"],
+            [],
+        )
         output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer, days=30)
-        output.seek(0)
-        rows = list(csv.reader(output))
-        assert len(rows) == 3  # header + 2 users
-        assert rows[1][0] == "Alice"
-        assert rows[2][0] == "Bob"
-
-    def test_write_csv_empty_result_has_only_header(self, mock_db_query):
-        mock_db_query([])
-        output = io.StringIO()
-        writer = csv.writer(output)
-        UsersTransformationCountReportView.write_csv(writer, days=30)
+        UsersTransformationCountReportView.write_output(output, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
         assert len(rows) == 1
@@ -151,7 +124,8 @@ class TestReportViewHttp(WebTestBase):
         assert response.status_code == 200
 
     def test_generate_download_returns_csv(self, admin_client, mocker):
-        mocker.patch.object(UsersTransformationCountReportView, "write_csv")
+        mock_db = mocker.patch("servicex_app.models.db")
+        mock_db.session.execute.return_value = _mock_result(["Name"], [])
         response = admin_client.post(
             "/report/userstransformationscount/generate",
             data={"days": "30"},
@@ -164,7 +138,7 @@ class TestReportViewHttp(WebTestBase):
 class TestAllReportSubclasses:
     def test_includes_direct_subclass(self):
         subclasses = list(_all_report_subclasses(ReportView))
-        assert CsvReportView in subclasses
+        assert SqlCsvReportView in subclasses
 
     def test_includes_indirect_subclass(self):
         subclasses = list(_all_report_subclasses(ReportView))
@@ -174,6 +148,6 @@ class TestAllReportSubclasses:
         subclasses = list(_all_report_subclasses(UsersTransformationCountReportView))
         assert subclasses == []
 
-    def test_includes_grandchild_via_csv_report_view(self):
-        csv_subclasses = list(_all_report_subclasses(CsvReportView))
+    def test_includes_grandchild_via_sql_csv_report_view(self):
+        csv_subclasses = list(_all_report_subclasses(SqlCsvReportView))
         assert UsersTransformationCountReportView in csv_subclasses

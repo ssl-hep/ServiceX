@@ -2,6 +2,9 @@ import csv
 import io
 from typing import TextIO
 
+from sqlalchemy import Select
+from sqlalchemy.engine import CursorResult
+
 from flask import Response, request, url_for
 from flask_admin import BaseView, expose
 
@@ -45,15 +48,20 @@ class ReportView(AdminAuthMixin, BaseView):
         )
 
 
-class CsvReportView(ReportView):
+class SqlCsvReportView(ReportView):
     filename = "report.csv"
     mimetype = "text/csv"
 
     @classmethod
-    def write_csv(cls, writer: csv.writer, **kwargs) -> None:
+    def get_query(cls, **kwargs) -> Select:
         raise NotImplementedError
 
     @classmethod
     def write_output(cls, output: TextIO, **kwargs) -> None:
+        from servicex_app.models import db
+
         writer = csv.writer(output)
-        cls.write_csv(writer, **kwargs)
+        results: CursorResult = db.session.execute(cls.get_query(**kwargs))
+        writer.writerow(results.keys())
+        for row in results:
+            writer.writerow(row)
