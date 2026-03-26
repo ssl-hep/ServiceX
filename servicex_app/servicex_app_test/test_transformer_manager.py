@@ -714,6 +714,46 @@ class TestTransformerManager(ResourceTestBase):
             )
         client.application.logger.exception.assert_not_called()
 
+    def test_shutdown_transformer_jobs_exceptions_once(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_deployment.side_effect = (
+            kubernetes.client.rest.ApiException(), None
+        )
+
+        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
+        mock_core_api.delete_namespaced_config_map.side_effect = (
+            kubernetes.client.rest.ApiException(), None
+        )
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
+            kubernetes.client.rest.ApiException(), None
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock()
+
+        client = self._test_client(transformation_manager=transformer)
+        client.application.logger = mocker.MagicMock()
+
+        # default mode with exceptions
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns")
+            assert mock_api.delete_namespaced_deployment.call_count == 2
+            assert mock_core_api.delete_namespaced_config_map.call_count == 2
+            assert mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.call_count == 2
+            assert client.application.logger.exception.call_count == 0
+
     def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
 
