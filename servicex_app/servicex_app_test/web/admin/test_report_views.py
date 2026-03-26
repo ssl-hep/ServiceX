@@ -79,7 +79,13 @@ class TestUsersTransformationCountReportView:
     def test_get_query_column_labels(self):
         query = UsersTransformationCountReportView.get_query(days=30)
         keys = list(query.exported_columns.keys())
-        assert keys == ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
+        assert keys == [
+            "Name",
+            "Email",
+            "Institution",
+            "Experiment",
+            "Transforms (Last 30 Days)",
+        ]
 
     def test_get_query_label_reflects_days_parameter(self):
         query = UsersTransformationCountReportView.get_query(days=60)
@@ -95,7 +101,13 @@ class TestUsersTransformationCountReportView:
         UsersTransformationCountReportView.write_output(output, days=30)
         output.seek(0)
         rows = list(csv.reader(output))
-        assert rows[0] == ["Name", "Email", "Institution", "Experiment", "Transforms (Last 30 Days)"]
+        assert rows[0] == [
+            "Name",
+            "Email",
+            "Institution",
+            "Experiment",
+            "Transforms (Last 30 Days)",
+        ]
         assert rows[1] == ["Jane Doe", "jane@example.com", "UChicago", "ATLAS", "5"]
 
     def test_write_output_empty_result_has_only_header(self, mock_db_execute):
