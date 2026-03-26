@@ -13,7 +13,7 @@ class UserTransformationCountReportView(SqlCsvReportView):
     description = (
         "CSV of all users who have submitted at least one transform in the last N days."
     )
-    params = [\
+    params = [
         click.Option(
             ["--days"], default=30, type=int, help="Number of days to look back"
         ),
