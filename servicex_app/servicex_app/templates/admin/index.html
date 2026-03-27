@@ -10,17 +10,15 @@
 <table class="table table-striped table-sm">
   <thead>
     <tr>
-      <th>View</th>
-      <th>Endpoint</th>
-      <th>URL</th>
+      <th>Name</th>
+      <th>Description</th>
     </tr>
   </thead>
   <tbody>
     {% for view in views %}
     <tr>
-      <td>{{ view.name }}</td>
-      <td>{{ view.endpoint }}</td>
-      <td><a href="{{ view.url }}">{{ view.url }}</a></td>
+      <td><a href="{{ view.url }}">{{ view.name }}</a></td>
+      <td>{{ view.description }}</td>
     </tr>
     {% endfor %}
   </tbody>

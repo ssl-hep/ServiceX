@@ -18,6 +18,12 @@ Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
 
 
+class AdminModelView(ModelView):
+    extra_css = ["/static/admin.css"]
+    model_name: str | None = None
+    description: str | None = None
+
+
 class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
     report_views = []
 
@@ -28,15 +34,30 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
             if view is self:
                 continue
             list_url = url_for(f"{view.endpoint}.{view._default_view}")
-            entry = {"name": view.name, "url": list_url, "endpoint": view.endpoint}
+            entry = {
+                "name": view.endpoint,
+                "url": list_url,
+                "description": view.endpoint
+            }
+
             if isinstance(view, ModelView):
-                model_views.append(entry)
+                entry["name"] = view.model.__name__
+
+            if isinstance(view, AdminModelView):
+                entry["name"] = view.model_name
+                entry["description"] = view.description
+
+            model_views.append(entry)
 
         for view in self.report_views:
-            if view is self:
+            if view is self or not isinstance(view, ReportView):
                 continue
-            list_url = url_for(f"{view.endpoint}.{view._default_view}")
-            entry = {"name": view.name, "url": list_url, "endpoint": view.endpoint}
+            url = url_for(f"{view.endpoint}.{view._default_view}")
+            entry = {
+                "name": view.report_name,
+                "url": url,
+                "description": view.description
+            }
             if isinstance(view, ReportView):
                 _report_views.append(entry)
 
@@ -47,8 +68,9 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
         )
 
 
-class UserModelView(AdminAuthMixin, ModelView):
-    extra_css = ["/static/admin.css"]
+class UserModelView(AdminAuthMixin, AdminModelView):
+    model_name = 'User'
+    description = 'ServiceX users'
     column_list = [
         "name",
         "email",
@@ -75,6 +97,7 @@ class UserModelView(AdminAuthMixin, ModelView):
     ]
 
     can_create = False
+
 
 def all_subclasses(cls):
     for sub in cls.__subclasses__():
