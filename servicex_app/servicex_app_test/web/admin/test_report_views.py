@@ -5,12 +5,12 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy import Select
 
-from servicex_app.web.admin.admin import _all_report_subclasses
 from servicex_app.web.admin.reports import SqlCsvReportView, ReportView
 from servicex_app.web.admin.reports.user_transformation_count import (
     UserTransformationCountReportView,
 )
 from servicex_app_test.web.web_test_base import WebTestBase
+from servicex_app.web.admin.admin import all_subclasses
 
 
 def _mock_result(keys, rows):
@@ -148,17 +148,17 @@ class TestReportViewHttp(WebTestBase):
 
 class TestAllReportSubclasses:
     def test_includes_direct_subclass(self):
-        subclasses = list(_all_report_subclasses(ReportView))
+        subclasses = all_subclasses(ReportView)
         assert SqlCsvReportView in subclasses
 
     def test_includes_indirect_subclass(self):
-        subclasses = list(_all_report_subclasses(ReportView))
+        subclasses = all_subclasses(ReportView)
         assert UserTransformationCountReportView in subclasses
 
     def test_empty_for_leaf_class(self):
-        subclasses = list(_all_report_subclasses(UserTransformationCountReportView))
+        subclasses = all_subclasses(ReportView)
         assert subclasses == []
 
     def test_includes_grandchild_via_sql_csv_report_view(self):
-        csv_subclasses = list(_all_report_subclasses(SqlCsvReportView))
+        csv_subclasses = all_subclasses(SqlCsvReportView)
         assert UserTransformationCountReportView in csv_subclasses

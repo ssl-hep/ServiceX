@@ -8,7 +8,8 @@ from servicex_app.web.admin.reports import SqlCsvReportView
 
 
 class UserTransformationCountReportView(SqlCsvReportView):
-    report_name = "user-transformation-count"
+    name = "User Transformation Count"
+    endpoint = "user-transformation-count"
     filename = "user_transformation_count.csv"
     description = (
         "CSV of all users who have submitted at least one transform in the last N days."

@@ -53,7 +53,7 @@ class TestSecureAdminIndexView(WebTestBase):
                 "admin": [
                     ext
                     for ext in admin_client.application.extensions.get("admin", [])
-                    if ext.endpoint != "reports"
+                    if ext.endpoints != "reports"
                 ]
             },
         )

@@ -22,16 +22,11 @@
 {% endmacro %}
 
 {% block body %}
-<h2>ServiceX Admin</h2>
+<a href="{{ url_for('home') }}">Return to ServiceX</a>
 
 {% if model_views %}
 <h4 class="mt-4">Model Views</h4>
 {{ view_table(model_views) }}
-{% endif %}
-
-{% if other_views %}
-<h4 class="mt-4">Other Views</h4>
-{{ view_table(other_views) }}
 {% endif %}
 
 {% if report_views %}

@@ -12,12 +12,18 @@ from servicex_app.web.admin import AdminAuthMixin
 
 
 class ReportView(AdminAuthMixin, BaseView):
-    report_name = None
+    name = None
     template = "admin/report.html"
     description = None
     filename = "report.txt"
     mimetype = "application/octet-stream"
     params = []
+    abstract = True
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if 'abstract' not in cls.__dict__:
+            cls.abstract = False
 
     def write_output(self, output: TextIO, **kwargs):
         raise NotImplementedError
@@ -50,6 +56,7 @@ class ReportView(AdminAuthMixin, BaseView):
 class SqlCsvReportView(ReportView):
     filename = "report.csv"
     mimetype = "text/csv"
+    abstract = True
 
     def get_query(self, **kwargs) -> Select:
         raise NotImplementedError
