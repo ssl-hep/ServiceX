@@ -48,6 +48,7 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
 
 
 class UserModelView(AdminAuthMixin, ModelView):
+    extra_css = ["/static/admin.css"]
     column_list = [
         "name",
         "email",

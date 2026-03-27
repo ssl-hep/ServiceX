@@ -12,13 +12,14 @@ from servicex_app.web.admin import AdminAuthMixin
 
 
 class ReportView(AdminAuthMixin, BaseView):
-    name = None
+    report_name: str | None = None
     template = "admin/report.html"
     description = None
     filename = "report.txt"
     mimetype = "application/octet-stream"
     params = []
     abstract = True
+    extra_css = ["/static/admin.css"]
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -33,7 +34,7 @@ class ReportView(AdminAuthMixin, BaseView):
         return self.render(
             self.template,
             params=self.params,
-            title=self.name,
+            title=self.report_name,
             description=self.description,
             generate_url=url_for(f"{self.endpoint}.generate_download"),
         )

@@ -1,5 +1,11 @@
 {% extends 'admin/master.html' %}
 
+{% block head_tail %}
+<style>
+  nav.navbar { background-color: #00008b !important; }
+</style>
+{% endblock %}
+
 {% macro view_table(views) %}
 <table class="table table-striped table-sm">
   <thead>
