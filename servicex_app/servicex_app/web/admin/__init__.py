@@ -5,6 +5,7 @@ from servicex_app.decorators import is_admin_user
 
 class AdminAuthMixin:
     endpoint: str | None = None
+
     def is_accessible(self):
         if not current_app.config.get("ENABLE_AUTH"):
             return False
