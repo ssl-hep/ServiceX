@@ -10,7 +10,6 @@ class AdminAuthMixin:
         return is_admin_user()
 
     def inaccessible_callback(self, name, **kwargs):
-        session["next"] = request.url
         return redirect(url_for("home"))
 
 

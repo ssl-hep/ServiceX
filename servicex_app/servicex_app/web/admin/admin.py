@@ -18,12 +18,6 @@ Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
 
 
-class AdminModelView(ModelView):
-    extra_css = ["/static/admin.css"]
-    model_name: str | None = None
-    description: str | None = None
-
-
 class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
     report_views = []
 
@@ -68,7 +62,13 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
         )
 
 
-class UserModelView(AdminAuthMixin, AdminModelView):
+class AdminModelView(AdminAuthMixin, ModelView):
+    extra_css = ["/static/admin.css"]
+    model_name: str | None = None
+    description: str | None = None
+
+
+class UserModelView(AdminModelView):
     model_name = 'User'
     description = 'ServiceX users'
     column_list = [

@@ -69,10 +69,3 @@ class TestAdminAuthMixin(WebTestBase):
         )
         with auth_client.application.test_request_context():
             assert mixin.is_accessible() is False
-
-    def test_inaccessible_callback_redirects_and_sets_next(self, client):
-        # With ENABLE_AUTH=False, is_accessible() returns False → inaccessible_callback
-        response = client.get("/admin/")
-        assert response.status_code == 302
-        with client.session_transaction() as sess:
-            assert sess.get("next") is not None
