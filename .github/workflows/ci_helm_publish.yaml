@@ -43,7 +43,7 @@ jobs:
       - name: Set version in helm values.yaml
         # Update the tags for images in the helm Chart.yaml and values.yaml to match
         # The deployed docker image tag
-        uses: mikefarah/yq@v4.52.4
+        uses: mikefarah/yq@v4.52.5
         with:
           cmd: |
             # Update the version of the helm chart
@@ -64,7 +64,7 @@ jobs:
                 for i in $CODEGENS; do yq -i  '.codeGen.[$i].tag=strenv(DOCKER_TAG) | .codeGen.[$i].tag style="double"' helm/servicex/values.yaml; done
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
         with:
           version: v3.9.2
 
@@ -88,7 +88,7 @@ jobs:
           user-email: 'bengal1@illinois.edu'
 
       - name: Set version in flux_river_config for the production environment
-        uses: mikefarah/yq@v4.52.4
+        uses: mikefarah/yq@v4.52.5
         with:
           cmd: |
             # Update the chart version to pick up
