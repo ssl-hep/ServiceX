@@ -129,7 +129,7 @@ def init_admin(app):
         if _cls.abstract:
             continue
 
-        report_admin.add_view(_cls())
+        report_admin.add_view(_cls(endpoint=_cls.endpoint))
 
         @reports_group.command(_cls.endpoint, params=_cls.params)
         def cmd(cls=_cls, **kwargs):
