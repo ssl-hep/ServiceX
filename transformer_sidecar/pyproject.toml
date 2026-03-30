@@ -15,7 +15,7 @@ retry = "^0.9.2"
 minio = "^7.1.12"
 python-logstash = "^0.4.8"
 
-uproot = "^5.6.0"
+uproot = "^5.7.0"
 fsspec = {extras = ["arrow"], version = "^2023.6.0"}
 tenacity = "^9.0.0"
 
@@ -28,6 +28,7 @@ pytest-mock = "^3.10.0"
 pytest = "^7.2.0"
 coverage = "^6.5.0"
 requests = "^2.33.0"
+pandas = "<3"
 
 [build-system]
 requires = ["poetry-core"]
