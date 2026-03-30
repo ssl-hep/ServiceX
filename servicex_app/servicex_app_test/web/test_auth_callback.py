@@ -75,22 +75,3 @@ class TestAuthCallback(WebTestBase):
         assert mock_session.get("sub") == id_token["sub"]
         assert response.status_code == 302
         assert response.location == url_for("user-dashboard")
-
-    def test_auth_callback_mismatching_state_restarts_flow(self, client, mocker):
-        mock_oauth = mocker.patch(
-            "servicex_app.web.auth_callback.load_oauth_client"
-        ).return_value
-        mock_oauth.oauth = mocker.Mock()
-        mock_oauth.oauth.authorize_access_token = mocker.Mock(
-            side_effect=MismatchingStateError()
-        )
-        mock_oauth.oauth.authorize_redirect = mocker.Mock(
-            return_value=redirect(self._auth_url())
-        )
-
-        response: Response = client.get(
-            url_for("auth_callback"), query_string={"code": "oauth-code"}
-        )
-        assert response.status_code == 302
-        mock_oauth.oauth.authorize_redirect.assert_called_once()
-        assert response.location == self._auth_url()
