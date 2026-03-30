@@ -69,6 +69,7 @@ object_store = None
 posix_path: str = ""
 startup_time = None
 convert_root_to_parquet: bool = False
+convert_root_to_rntuple: bool = False
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
@@ -127,10 +128,11 @@ def transform_file(
         "error": None,
     }
 
-    # If we are converting root to parquet here, then the transformer
-    # doesn't need to know about. Tell it to write root, and we'll take it from here
-    if convert_root_to_parquet:
-        result_format = "root"
+    # If we are converting root to another format here, then the transformer
+    # doesn't need to know about. Tell it to write root-file, and we'll take it from here
+    # At the moment root-file is the one thing we are sure everyone can write
+    if convert_root_to_parquet or convert_root_to_rntuple:
+        result_format = "root-file"
 
     # Change davs to https
     _file_paths = change_davs_to_https(paths)
@@ -325,13 +327,13 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         "Converting ROOT to Parquet.",
         extra={"requestId": request_id, "source_path": source_path},
     )
-    with open(source_path, "rb") as datafile:
-        data = uproot.open(datafile)
-        if len(data.keys(cycle=False)) != 1:
-            logger.error(f"Expected one tree found {data.keys()}")
-            return None
+    try:
+        with open(source_path, "rb") as datafile:
+            data = uproot.open(datafile)
+            if len(data.keys(cycle=False)) != 1:
+                logger.error(f"Expected one tree found {data.keys()}")
+                return None
 
-        try:
             tree_name = data.keys()[0]
             all_data = data[tree_name].arrays(library="ak")
 
@@ -343,11 +345,48 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             ak.to_parquet(all_data, temp_file.as_posix())
             temp_file.rename(parquet_file)
 
-        except Exception as e:
-            logger.error(f"Failed to convert ROOT to Parquet: {e}")
-            return None
+    except Exception as e:
+        logger.error(f"Failed to convert ROOT to Parquet: {e}")
+        return None
 
-        return parquet_file
+    return parquet_file
+
+
+def convert_to_rntuple(source_path: Path) -> Optional[Path]:
+    """
+    Convert a ROOT TTree file to RNTuple.  Returns the path to the output ROOT file if successful
+    """
+    import uproot
+
+    logger.info(
+        "Converting ROOT TTree to RNTuple.",
+        extra={"requestId": request_id, "source_path": source_path},
+    )
+
+    rntuple_file = source_path.with_suffix(".rntuple.root")
+
+    try:
+        with open(source_path, "rb") as datafile:
+            data = uproot.open(datafile)
+            with open(rntuple_file, "b+w") as wfile:
+                with uproot.recreate(wfile) as writer:
+                    for key in data.keys(cycle=False):
+                        obj = data[key]
+                        match obj.classname:
+                            case "TTree" | "ROOT::RNTuple":
+                                for all_data in obj.iterate(library="ak"):
+                                    if key not in writer:
+                                        writer.mkrntuple(key, all_data)
+                                    else:
+                                        writer[key].extend(all_data)
+                            case _:
+                                writer[key] = obj
+
+    except Exception as e:
+        logger.error(f"Failed to convert ROOT TTree to RNTuple: {e}")
+        return None
+
+    return rntuple_file
 
 
 def upload_file(
@@ -360,6 +399,9 @@ def upload_file(
     if convert_root_to_parquet:
         file_to_upload = convert_to_parquet(source_path)
         object_name = source_path.with_suffix(".parquet").name
+    elif convert_root_to_rntuple:
+        file_to_upload = convert_to_rntuple(source_path)
+        object_name = source_path.name
     else:
         file_to_upload = source_path
         object_name = source_path.name
@@ -442,7 +484,8 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, object_store, posix_path, science_container
+    global convert_root_to_parquet, convert_root_to_rntuple, startup_time
+    global object_store, posix_path, science_container
     global shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
@@ -471,6 +514,11 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     convert_root_to_parquet = (
         args.result_format == "parquet"
         and "parquet" not in transformer_capabilities["file-formats"]
+    )
+    # Same for rntuple
+    convert_root_to_rntuple = (
+        args.result_format == "root-rntuple"
+        and "root-rntuple" not in transformer_capabilities["file-formats"]
     )
 
     startup_time = get_process_info()

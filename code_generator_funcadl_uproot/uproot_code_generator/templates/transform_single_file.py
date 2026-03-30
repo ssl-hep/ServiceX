@@ -26,15 +26,20 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
 
         ttime = time.time()
 
-        if output_format == "root-file":
+        if output_format in ("root-file", "root-rntuple"):
             etime = time.time()
             with open(output_path, "b+w") as wfile:
                 with uproot.recreate(wfile) as writer:
-                    writer[default_tree_name] = (
-                        {field: awkward_array[field] for field in awkward_array.fields}
-                        if awkward_array.fields
-                        else awkward_array
-                    )
+                    if output_format == "root-file":
+                        writer.mktree(
+                            default_tree_name,
+                            {
+                                field: awkward_array[field]
+                                for field in awkward_array.fields
+                            },
+                        )
+                    else:  # root-rntuple
+                        writer.mkrntuple(default_tree_name, awkward_array)
             wtime = time.time()
 
         else:
