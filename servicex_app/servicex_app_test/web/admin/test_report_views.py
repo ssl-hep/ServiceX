@@ -131,14 +131,14 @@ class TestReportViewHttp(WebTestBase):
         return client
 
     def test_report_index_renders_for_admin(self, admin_client):
-        response = admin_client.get("/report/usertransformationcount/")
+        response = admin_client.get("/report/user-transformation-count/")
         assert response.status_code == 200
 
     def test_generate_download_returns_csv(self, admin_client, mocker):
         mock_db = mocker.patch("servicex_app.models.db")
         mock_db.session.execute.return_value = _mock_result(["Name"], [])
         response = admin_client.post(
-            "/report/usertransformationcount/generate",
+            "/report/user-transformation-count/generate",
             data={"days": "30"},
         )
         assert response.status_code == 200
@@ -156,8 +156,7 @@ class TestAllReportSubclasses:
         assert UserTransformationCountReportView in subclasses
 
     def test_empty_for_leaf_class(self):
-        subclasses = all_subclasses(ReportView)
-        assert subclasses == []
+        assert list(all_subclasses(UserTransformationCountReportView)) == []
 
     def test_includes_grandchild_via_sql_csv_report_view(self):
         csv_subclasses = all_subclasses(SqlCsvReportView)

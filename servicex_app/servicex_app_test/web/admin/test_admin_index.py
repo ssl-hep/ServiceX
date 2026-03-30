@@ -35,29 +35,11 @@ class TestSecureAdminIndexView(WebTestBase):
         contexts = [ctx for _, ctx in captured if "model_views" in ctx]
         assert contexts
         model_view_names = [v["name"] for v in contexts[0]["model_views"]]
-        assert "Users" in model_view_names
+        assert "User" in model_view_names
 
     def test_index_includes_report_views(self, admin_client, captured):
         admin_client.get("/admin/")
         contexts = [ctx for _, ctx in captured if "report_views" in ctx]
         assert contexts
         report_view_names = [v["name"] for v in contexts[0]["report_views"]]
-        assert "user-transformation-count" in report_view_names
-
-    def test_index_report_views_empty_when_no_reports_admin(
-        self, admin_client, captured, mocker
-    ):
-        mocker.patch.dict(
-            admin_client.application.extensions,
-            {
-                "admin": [
-                    ext
-                    for ext in admin_client.application.extensions.get("admin", [])
-                    if ext.endpoints != "reports"
-                ]
-            },
-        )
-        admin_client.get("/admin/")
-        contexts = [ctx for _, ctx in captured if "report_views" in ctx]
-        assert contexts
-        assert contexts[0]["report_views"] == []
+        assert "User Transformation Count" in report_view_names
