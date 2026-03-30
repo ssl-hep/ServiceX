@@ -1,5 +1,4 @@
-from authlib.integrations.base_client.errors import MismatchingStateError
-from flask import Response, redirect, url_for
+from flask import Response, url_for
 from .web_test_base import WebTestBase
 
 
