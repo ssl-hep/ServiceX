@@ -24,11 +24,7 @@ def auth_callback():
         return oauth.oauth.authorize_redirect(redirect_uri)
 
     # Otherwise, we're coming back from OIDC with a code
-    try:
-        tokens = oauth.oauth.authorize_access_token()
-    except MismatchingStateError:
-        # Session state was lost (e.g. server restarted mid-flow). Restart OAuth.
-        return oauth.oauth.authorize_redirect(redirect_uri)
+    tokens = oauth.oauth.authorize_access_token()
     id_token = tokens["userinfo"]
 
     session_tokens = {
@@ -56,6 +52,5 @@ def auth_callback():
             session["user_id"] = user.id
             session["admin"] = user.admin
             session["email"] = identity
-            next_url = session.pop("next", None)
-            return redirect(next_url or url_for("user-dashboard"))
+            return redirect(url_for("user-dashboard"))
     return redirect(url_for("create_profile"))
