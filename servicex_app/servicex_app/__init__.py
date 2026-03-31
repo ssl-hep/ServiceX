@@ -216,9 +216,9 @@ def create_app(
     def make_admin_command(sub):
         set_user_admin(sub, True)
 
-    @user_cli.command("remove-admin")
+    @user_cli.command("revoke-admin")
     @click.argument("sub")
-    def make_admin_command(sub):
+    def revoke_admin_command(sub):
         set_user_admin(sub, False)
 
     app.cli.add_command(user_cli)
