@@ -31,7 +31,7 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
             entry = {
                 "name": view.endpoint,
                 "url": list_url,
-                "description": view.endpoint
+                "description": view.endpoint,
             }
 
             if isinstance(view, ModelView):
@@ -50,7 +50,7 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
             entry = {
                 "name": view.report_name,
                 "url": url,
-                "description": view.description
+                "description": view.description,
             }
             if isinstance(view, ReportView):
                 _report_views.append(entry)
@@ -69,8 +69,8 @@ class AdminModelView(AdminAuthMixin, ModelView):
 
 
 class UserModelView(AdminModelView):
-    model_name = 'User'
-    description = 'ServiceX users'
+    model_name = "User"
+    description = "ServiceX users"
     column_list = [
         "name",
         "email",
