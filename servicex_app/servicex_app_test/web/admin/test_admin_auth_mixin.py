@@ -69,3 +69,8 @@ class TestAdminAuthMixin(WebTestBase):
         )
         with auth_client.application.test_request_context():
             assert mixin.is_accessible() is False
+
+    def test_inaccessible_callback_redirects_to_home(self, auth_client):
+        response = auth_client.get("/admin/")
+        assert response.status_code == 302
+        assert response.location == "/"

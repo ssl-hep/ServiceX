@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from servicex_app.cli.user_commands import list_users
+from servicex_app.cli.user_commands import list_users, set_user_admin
 
 
 def _make_user(
@@ -84,3 +84,43 @@ class TestListUsers:
         mock_model.query.all.return_value = []
         list_users()
         mock_model.query.filter.assert_not_called()
+
+
+class TestSetUserAdmin:
+    def test_grants_admin(self, mocker, capsys):
+        user = _make_user(admin=False)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_sub.return_value = user
+        set_user_admin("sub1", value=True)
+        assert user.admin is True
+        user.save_to_db.assert_called_once()
+        assert "made admin" in capsys.readouterr().out
+
+    def test_revokes_admin(self, mocker, capsys):
+        user = _make_user(admin=True)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_sub.return_value = user
+        set_user_admin("sub1", value=False)
+        assert user.admin is False
+        user.save_to_db.assert_called_once()
+        assert "revoked" in capsys.readouterr().out
+
+    def test_already_admin(self, mocker, capsys):
+        user = _make_user(admin=True)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_sub.return_value = user
+        set_user_admin("sub1", value=True)
+        user.save_to_db.assert_not_called()
+        assert "already admin" in capsys.readouterr().out
+
+    def test_already_not_admin(self, mocker, capsys):
+        user = _make_user(admin=False)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_sub.return_value = user
+        set_user_admin("sub1", value=False)
+        user.save_to_db.assert_not_called()
+        assert "already not admin" in capsys.readouterr().out
