@@ -43,7 +43,12 @@ from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
 from servicex_app.celery_task_router import route_task
-from servicex_app.cli.user_commands import add_user, list_users, approve_user
+from servicex_app.cli.user_commands import (
+    add_user,
+    list_users,
+    approve_user,
+    set_user_admin,
+)
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
@@ -205,6 +210,16 @@ def create_app(
     @click.argument("sub")
     def approve_user_command(sub):
         approve_user(sub)
+
+    @user_cli.command("make-admin")
+    @click.argument("sub")
+    def make_admin_command(sub):
+        set_user_admin(sub, True)
+
+    @user_cli.command("remove-admin")
+    @click.argument("sub")
+    def make_admin_command(sub):
+        set_user_admin(sub, False)
 
     app.cli.add_command(user_cli)
 

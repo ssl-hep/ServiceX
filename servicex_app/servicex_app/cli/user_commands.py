@@ -61,3 +61,23 @@ def approve_user(sub: str) -> None:
         print(f"User {sub} already approved")
     else:
         print(f"User {sub} not found")
+
+
+def set_user_admin(sub: str, value: bool = True) -> None:
+    user = UserModel.find_by_sub(sub)
+    if not user:
+        print(f"User {sub} not found")
+
+    if user.admin == value:
+        if user.admin:
+            print(f"User {sub} already admin")
+        else:
+            print(f"User {sub} already not admin")
+        return
+
+    user.admin = value
+    user.save_to_db()
+    if user.admin:
+        print(f"User {sub} made admin")
+    else:
+        print(f"User {sub} admin privileges revoked")
