@@ -23,7 +23,7 @@ class ReportView(AdminAuthMixin, BaseView):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if 'abstract' not in cls.__dict__:
+        if "abstract" not in cls.__dict__:
             cls.abstract = False
 
     def write_output(self, output: TextIO, **kwargs):
