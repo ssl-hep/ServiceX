@@ -122,7 +122,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 def is_admin_user() -> bool:
     """Return True if the current request is from an authenticated admin user."""
     if not current_app.config.get("ENABLE_AUTH"):
-        return True
+        return False
     if session.get("is_authenticated"):
         return bool(session.get("admin"))
     try:
@@ -138,6 +138,11 @@ def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
 
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
+        # allow routes when ENABLE_AUTH not True
+        # (this is the needed behavior, but different than is_admin_user() behavior)
+        if not current_app.config.get("ENABLE_AUTH"):
+            return fn(*args, **kwargs)
+
         if not is_admin_user():
             msg = "Not Authorized: This resource is restricted to administrators."
             return make_response({"message": msg}, 401)

@@ -7,8 +7,6 @@ class AdminAuthMixin:
     endpoint: str | None = None
 
     def is_accessible(self):
-        if not current_app.config.get("ENABLE_AUTH"):
-            return False
         return is_admin_user()
 
     def inaccessible_callback(self, name, **kwargs):
