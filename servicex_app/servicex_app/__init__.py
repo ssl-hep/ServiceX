@@ -42,6 +42,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
+from servicex_app.decorators import is_admin_user
 from servicex_app.celery_task_router import route_task
 from servicex_app.cli.user_commands import (
     add_user,
@@ -182,6 +183,8 @@ def create_app(
 
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+
+    app.jinja_env.globals["is_admin_user"] = is_admin_user
 
     """Flask CLI Plugin to manage users"""
     user_cli = AppGroup("user")

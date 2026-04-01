@@ -53,7 +53,7 @@
 
           <!-- Navbar Right Side -->
           <ul class="navbar-nav">
-            {% if config["ENABLE_AUTH"] and session.get("admin") %}
+            {% if is_admin_user() %}
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('admin.index') }}">Admin</a>
               </li>
