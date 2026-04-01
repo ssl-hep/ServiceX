@@ -1,4 +1,4 @@
-from flask import current_app, redirect, url_for
+from flask import redirect, url_for
 
 from servicex_app.decorators import is_admin_user
 
