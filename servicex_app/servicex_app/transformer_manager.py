@@ -502,9 +502,13 @@ class TransformerManager:
         request_id = job.metadata.name.removeprefix("transformer-")
         try:
             api_instance.create_namespaced_deployment(body=job, namespace=namespace)
-            current_app.logger.info("Request deployment created.", extra={"requestId": request_id})
+            current_app.logger.info(
+                "Request deployment created.", extra={"requestId": request_id}
+            )
         except ApiException as e:
-            current_app.logger.exception(f"Exception during HPA Creation: {e}", extra={"requestId": request_id})
+            current_app.logger.exception(
+                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+            )
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
@@ -515,7 +519,9 @@ class TransformerManager:
             )
             current_app.logger.info("HPA created.", extra={"requestId": request_id})
         except ApiException as e:
-            current_app.logger.exception(f"Exception during HPA Creation: {e}", extra={"requestId": request_id})
+            current_app.logger.exception(
+                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+            )
 
     def launch_transformer_jobs(
         self,
