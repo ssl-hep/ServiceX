@@ -98,6 +98,7 @@ class TestFilesetError(ResourceTestBase):
         mock_lookup_running.assert_called_once_with(1234)
         assert pending_request.status == TransformStatus.bad_dataset
         assert lookup_request.status == TransformStatus.bad_dataset
+        assert mock_transformer_manager.shutdown_transformer_job.call_count == 2
 
     def test_put_fileset_error_invalid_did(self, mocker):
         pending_request = TransformRequest()
