@@ -331,7 +331,10 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
             if len(data.keys(cycle=False)) != 1:
-                logger.error(f"Expected one tree found {data.keys()}", extra={"requestId": request_id})
+                logger.error(
+                    f"Expected one tree found {data.keys()}",
+                    extra={"requestId": request_id},
+                )
                 return None
             tree_name = data.keys()[0]
             all_data = data[tree_name].arrays(library="ak")
@@ -345,7 +348,9 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             temp_file.rename(parquet_file)
 
     except Exception as e:
-        logger.error(f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id})
+        logger.error(
+            f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id}
+        )
         return None
 
     return parquet_file
@@ -382,7 +387,10 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
                                 writer[key] = obj
 
     except Exception as e:
-        logger.error(f"Failed to convert ROOT TTree to RNTuple: {e}", extra={"requestId": request_id})
+        logger.error(
+            f"Failed to convert ROOT TTree to RNTuple: {e}",
+            extra={"requestId": request_id},
+        )
         return None
 
     return rntuple_file
@@ -533,7 +541,10 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     )
 
     science_container = ScienceContainerCommand(request_id=request_id)
-    logger.debug("Connected to science container", extra={"requestId": request_id, "place": PLACE})
+    logger.debug(
+        "Connected to science container",
+        extra={"requestId": request_id, "place": PLACE},
+    )
 
     app.worker_main(
         argv=[

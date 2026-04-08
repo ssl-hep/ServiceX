@@ -49,13 +49,19 @@ class ScienceContainerCommand:
 
     def synch(self):
         while True:
-            self.logger.debug("waiting for the GeT", extra={"requestId": self.request_id})
+            self.logger.debug(
+                "waiting for the GeT", extra={"requestId": self.request_id}
+            )
             req = self.conn.recv(4096)
             if not req:
-                self.logger.error("problem in getting GeT", extra={"requestId": self.request_id})
+                self.logger.error(
+                    "problem in getting GeT", extra={"requestId": self.request_id}
+                )
                 raise ScienceContainerException("problem in getting GeT")
             req1 = req.decode("utf8")
-            self.logger.debug(f"REQ >>>>>>>>>>>>>>>{req1}", extra={"requestId": self.request_id})
+            self.logger.debug(
+                f"REQ >>>>>>>>>>>>>>>{req1}", extra={"requestId": self.request_id}
+            )
             if req1.startswith("GeT"):
                 break
 
@@ -70,7 +76,9 @@ class ScienceContainerCommand:
         # if not req:
         #     break
         req2 = req.decode("utf8").strip()
-        self.logger.debug(f"STATUS RECEIVED: {req2}", extra={"requestId": self.request_id})
+        self.logger.debug(
+            f"STATUS RECEIVED: {req2}", extra={"requestId": self.request_id}
+        )
         return req2
 
     def confirm(self):
