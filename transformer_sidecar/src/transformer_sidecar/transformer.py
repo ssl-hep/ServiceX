@@ -370,7 +370,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
                                 writer[key] = obj
 
     except Exception as e:
-        logger.error(f"Failed to convert ROOT TTree to RNTuple: {e}")
+        logger.error(f"Failed to convert ROOT TTree to RNTuple: {e}", extra={"requestId": request_id})
         return None
 
     return rntuple_file
