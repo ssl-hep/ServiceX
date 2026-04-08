@@ -37,6 +37,7 @@ from servicex_app.models import (
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 from datetime import datetime, timezone
+import itertools
 
 
 class FilesetError(ServiceXResource):
@@ -76,16 +77,20 @@ class FilesetError(ServiceXResource):
         dataset.stale = True  # Repeat lookup if we try again
         db.session.commit()
 
-        # shut down related transformations. Nothing good can come of letting them
-        # continue to run
+        # shut down related running and pending transformations. Nothing good can
+        # come of letting them continue to run
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        for running_request in TransformRequest.lookup_running_by_dataset_id(
-            int(dataset_id)
-        ):
-            running_request.status = TransformStatus.bad_dataset
-            running_request.finish_time = datetime.now(tz=timezone.utc)
+        for t_request in itertools.chain(TransformRequest.lookup_running_by_dataset_id(
+                                            int(dataset_id)
+                                         ),
+                                         TransformRequest.lookup_pending_on_dataset(
+                                            int(dataset_id)
+                                         )
+                                         ):
+            t_request.status = TransformStatus.bad_dataset
+            t_request.finish_time = datetime.now(tz=timezone.utc)
             self.transformer_manager.shutdown_transformer_job(
-                running_request.request_id, namespace
+                t_request.request_id, namespace
             )
             current_app.logger.info(
                 "Shutting down transformer because of dataset lookup problem",
@@ -94,25 +99,7 @@ class FilesetError(ServiceXResource):
                     "elapsed-time": summary["elapsed-time"],
                     "error-type": summary["error-type"],
                     "_message": summary["message"],
-                    "requestId": running_request.request_id,
-                },
-            )
-
-        # Tell any other transform that was waiting for the lookup to complete
-        # not to expect to run
-        for pending_transform in TransformRequest.lookup_pending_on_dataset(
-            int(dataset_id)
-        ):
-            pending_transform.status = TransformStatus.bad_dataset
-            pending_transform.finish_time = datetime.now(tz=timezone.utc)
-            current_app.logger.info(
-                "Shutting down transformer because of dataset lookup problem",
-                extra={
-                    "dataset_id": dataset_id,
-                    "elapsed-time": summary["elapsed-time"],
-                    "error-type": summary["error-type"],
-                    "_message": summary["message"],
-                    "requestId": pending_transform.request_id,
+                    "requestId": t_request.request_id,
                 },
             )
 
