@@ -197,7 +197,10 @@ class TransformerManager:
             )
 
         # Compute Environment Vars
-        env = [client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc")]
+        env = [
+            client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc"),
+            client.V1EnvVar(name="REQUEST_ID", value=request_id),
+        ]
 
         # provide pods with level and logging server info
         env += [
@@ -499,7 +502,13 @@ class TransformerManager:
 
     @staticmethod
     def _create_job(api_instance, job, namespace):
-        request_id = job.metadata.name.removeprefix("transformer-")
+        env_vars = {
+            e.name: e.value
+            for container in job.spec.template.spec.containers
+            for e in (container.env or [])
+            if e.value is not None
+        }
+        request_id = env_vars.get("REQUEST_ID", "")
         try:
             api_instance.create_namespaced_deployment(body=job, namespace=namespace)
             current_app.logger.info("Request deployment created.", extra={"requestId": request_id})
@@ -507,8 +516,7 @@ class TransformerManager:
             current_app.logger.exception(f"Exception during HPA Creation: {e}", extra={"requestId": request_id})
 
     @staticmethod
-    def _create_hpa(api_instance, hpa, namespace):
-        request_id = hpa.metadata.name.removeprefix("transformer-")
+    def _create_hpa(api_instance, hpa, namespace, request_id):
         try:
             api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa, namespace=namespace
@@ -551,7 +559,7 @@ class TransformerManager:
         if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
             hpa = self.create_hpa_object(request_id, max_workers)
-            self._create_hpa(autoscaler_api, hpa, namespace)
+            self._create_hpa(autoscaler_api, hpa, namespace, request_id)
 
     @classmethod
     def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
