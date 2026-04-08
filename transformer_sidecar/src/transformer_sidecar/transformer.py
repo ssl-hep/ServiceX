@@ -331,9 +331,8 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
             if len(data.keys(cycle=False)) != 1:
-                logger.error(f"Expected one tree found {data.keys()}")
+                logger.error(f"Expected one tree found {data.keys()}", extra={"requestId": request_id})
                 return None
-
             tree_name = data.keys()[0]
             all_data = data[tree_name].arrays(library="ak")
 
@@ -346,7 +345,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             temp_file.rename(parquet_file)
 
     except Exception as e:
-        logger.error(f"Failed to convert ROOT to Parquet: {e}")
+        logger.error(f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id})
         return None
 
     return parquet_file
@@ -472,7 +471,7 @@ def read_capabilities_file() -> dict[str, str]:
     The capabilities file is mounted in the pod at startup. It's possible for
     the code to start before the file is available. We'll wait for it here.
     """
-    logger.debug("Waiting for capabilities file")
+    logger.debug("Waiting for capabilities file", extra={"requestId": request_id})
     capabilities_file_path = Path(
         os.path.join(shared_dir, "transformer_capabilities.json")
     )
@@ -525,6 +524,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     logger.info(
         "Startup finished.",
         extra={
+            "requestId": request_id,
             "user": startup_time.user,
             "sys": startup_time.system,
             "iowait": startup_time.iowait,
@@ -532,8 +532,8 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         },
     )
 
-    science_container = ScienceContainerCommand()
-    logger.debug("Connected to science container", extra={"place": PLACE})
+    science_container = ScienceContainerCommand(request_id=request_id)
+    logger.debug("Connected to science container", extra={"requestId": request_id, "place": PLACE})
 
     app.worker_main(
         argv=[
