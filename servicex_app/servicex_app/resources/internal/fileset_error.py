@@ -80,13 +80,10 @@ class FilesetError(ServiceXResource):
         # shut down related running and pending transformations. Nothing good can
         # come of letting them continue to run
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        for t_request in itertools.chain(TransformRequest.lookup_running_by_dataset_id(
-                                            int(dataset_id)
-                                         ),
-                                         TransformRequest.lookup_pending_on_dataset(
-                                            int(dataset_id)
-                                         )
-                                         ):
+        for t_request in itertools.chain(
+            TransformRequest.lookup_running_by_dataset_id(int(dataset_id)),
+            TransformRequest.lookup_pending_on_dataset(int(dataset_id)),
+        ):
             t_request.status = TransformStatus.bad_dataset
             t_request.finish_time = datetime.now(tz=timezone.utc)
             self.transformer_manager.shutdown_transformer_job(
