@@ -199,7 +199,6 @@ class TransformerManager:
         # Compute Environment Vars
         env = [
             client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc"),
-            client.V1EnvVar(name="REQUEST_ID", value=request_id),
         ]
 
         # provide pods with level and logging server info
@@ -501,14 +500,7 @@ class TransformerManager:
         return hpa
 
     @staticmethod
-    def _create_job(api_instance, job, namespace):
-        env_vars = {
-            e.name: e.value
-            for container in job.spec.template.spec.containers
-            for e in (container.env or [])
-            if e.value is not None
-        }
-        request_id = env_vars.get("REQUEST_ID", "")
+    def _create_job(api_instance, job, namespace, request_id):
         try:
             api_instance.create_namespaced_deployment(body=job, namespace=namespace)
             current_app.logger.info(
@@ -560,7 +552,7 @@ class TransformerManager:
             transformer_command,
         )
 
-        self._create_job(api_v1, job, namespace)
+        self._create_job(api_v1, job, namespace, request_id)
 
         if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
