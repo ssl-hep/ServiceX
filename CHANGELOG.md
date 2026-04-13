@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 1.8.3
+April 13, 2026
+
+### Added
+- Support for uproot 5.7.0 with RNTuple output format (`root-rntuple`) and translation
+
+### Fixed
+- Stop `pending_lookup` requests when a dataset error occurs (#1385) — previously only running requests were halted
+- Protect against race condition when a dataset is empty (#1371)
 
 ### 1.8.2
 March 10, 2026
