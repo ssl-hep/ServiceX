@@ -348,7 +348,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
 
     logger.info(
         "Converting ROOT TTree to RNTuple.",
-        extra={"requestId": request_id, "source_path": source_path},
+        extra={"request_id": request_id, "input_path": source_path},
     )
 
     rntuple_file = source_path.with_suffix(".rntuple.root")
