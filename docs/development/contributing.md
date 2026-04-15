@@ -49,6 +49,12 @@ ServiceX uses a slightly modified GitLab flow. Each repository has a main branch
     pip install pre-commit
     pre-commit install
     ```
+    - The pre-commit hook that validates `logging extra=` keys
+    (`hooks/check_log_extras.py`) has its own unit tests. They are discovered
+    automatically by `python -m pytest`, or you can run them in isolation with:
+    ```
+    python -m pytest hooks/
+    ```
 1. Develop your contribution:
     - Pull latest changes from upstream:
     ```
