@@ -765,13 +765,19 @@ files = [
 
 [[package]]
 name = "xrootd"
-version = "5.8.4"
+version = "5.9.2"
 description = "eXtended ROOT daemon"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "xrootd-5.8.4.tar.gz", hash = "sha256:2d1d597c2ce5200a20eb85f12012759fbbfc6912815e07956015f20904b81eb6"},
+    {file = "xrootd-5.9.2-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:be918d61d916e10d901a6be5b7b8077a7737b75710b0f210ae7237c4d9de915d"},
+    {file = "xrootd-5.9.2-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:a1b4ed5dd6b7bb4c99a19fcaba4ef33e8c9995e9005e2cad6e8f9fbbc1adce1f"},
+    {file = "xrootd-5.9.2-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:3dd5b1bbb51481e19d1039860503394320ddcb327b1ea67ea53e5355e25c2029"},
+    {file = "xrootd-5.9.2-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:806a83f9b923704c80011807e85a2610b2feab422bd80b29666227c840fe96f0"},
+    {file = "xrootd-5.9.2-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:5a21eadf471479c3a752d0cd6a1af7a240849d7379a3d3728c05b1353d732175"},
+    {file = "xrootd-5.9.2-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:50a809fd93652a2addcf6d9767c6e10aad8edb9029f6f20ab7856c8a0deeedd3"},
+    {file = "xrootd-5.9.2.tar.gz", hash = "sha256:4b062638b01d366cd68c42f5b2fc13e7d6c7990d0f7c120a47d18b87aeb54aa4"},
 ]
 
 [metadata]
