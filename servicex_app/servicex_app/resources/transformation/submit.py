@@ -282,6 +282,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 session.add(request_rec)
 
                 # If this request has a fresh DID then submit the lookup request to the DID Finder
+                dataset_manager.lock()  # refresh the dataset status, lock row
                 if dataset_manager.is_lookup_required:
                     dataset_manager.submit_lookup_request(
                         self._generate_advertised_endpoint(
