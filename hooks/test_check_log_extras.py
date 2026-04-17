@@ -6,8 +6,6 @@ directly, making it easy to see exactly what the hook accepts or rejects.
 
 import textwrap
 
-import pytest
-
 from check_log_extras import check_file
 
 # A small fixed set of allowed keys — tests don't depend on the real schema file.
