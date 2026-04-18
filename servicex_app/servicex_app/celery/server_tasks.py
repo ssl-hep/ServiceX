@@ -85,8 +85,7 @@ def add_files_to_processing_queue(request, files):
         "Added files to processing queue",
         extra={
             "num_files": len(files),
-            "paths": [_["paths"] for _ in files],
             "task_id": celery_task_name(request["request_id"]),
-            "requestId": request["request_id"],
+            "request_id": request["request_id"],
         },
     )

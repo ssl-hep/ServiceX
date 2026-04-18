@@ -16,6 +16,19 @@ files = [
 vine = ">=5.0.0,<6.0.0"
 
 [[package]]
+name = "backports-asyncio-runner"
+version = "1.2.0"
+description = "Backport of asyncio.Runner, a context manager that controls event loop life cycle."
+optional = false
+python-versions = "<3.11,>=3.8"
+groups = ["test"]
+markers = "python_version == \"3.10\""
+files = [
+    {file = "backports_asyncio_runner-1.2.0-py3-none-any.whl", hash = "sha256:0da0a936a8aeb554eccb426dc55af3ba63bcdc69fa1a600b5bb305413a4477b5"},
+    {file = "backports_asyncio_runner-1.2.0.tar.gz", hash = "sha256:a5aa7b2b7d8f8bfcaa2b57313f70792df84e32a2a746f585213373f900b42162"},
+]
+
+[[package]]
 name = "billiard"
 version = "4.2.1"
 description = "Python multiprocessing fork with improvements and bugfixes"
@@ -526,45 +539,63 @@ files = [
 ]
 
 [[package]]
-name = "pytest"
-version = "8.3.2"
-description = "pytest: simple powerful testing with Python"
+name = "pygments"
+version = "2.20.0"
+description = "Pygments is a syntax highlighting package written in Python."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["test"]
 files = [
-    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
-    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+    {file = "pygments-2.20.0-py3-none-any.whl", hash = "sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"},
+    {file = "pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f"},
+]
+
+[package.extras]
+windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pytest"
+version = "9.0.3"
+description = "pytest: simple powerful testing with Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["test"]
+files = [
+    {file = "pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9"},
+    {file = "pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c"},
 ]
 
 [package.dependencies]
-colorama = {version = "*", markers = "sys_platform == \"win32\""}
-exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
-iniconfig = "*"
-packaging = "*"
+colorama = {version = ">=0.4", markers = "sys_platform == \"win32\""}
+exceptiongroup = {version = ">=1", markers = "python_version < \"3.11\""}
+iniconfig = ">=1.0.1"
+packaging = ">=22"
 pluggy = ">=1.5,<2"
+pygments = ">=2.7.2"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "requests", "setuptools", "xmlschema"]
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.23.8"
+version = "1.3.0"
 description = "Pytest support for asyncio"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "pytest_asyncio-0.23.8-py3-none-any.whl", hash = "sha256:50265d892689a5faefb84df80819d1ecef566eb3549cf915dfb33569359d1ce2"},
-    {file = "pytest_asyncio-0.23.8.tar.gz", hash = "sha256:759b10b33a6dc61cce40a8bd5205e302978bbbcc00e279a8b61d9a6a3c82e4d3"},
+    {file = "pytest_asyncio-1.3.0-py3-none-any.whl", hash = "sha256:611e26147c7f77640e6d0a92a38ed17c3e9848063698d5c93d5aa7aa11cebff5"},
+    {file = "pytest_asyncio-1.3.0.tar.gz", hash = "sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5"},
 ]
 
 [package.dependencies]
-pytest = ">=7.0.0,<9"
+backports-asyncio-runner = {version = ">=1.1,<2", markers = "python_version < \"3.11\""}
+pytest = ">=8.2,<10"
+typing-extensions = {version = ">=4.12", markers = "python_version < \"3.13\""}
 
 [package.extras]
-docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1)"]
 testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
@@ -666,6 +697,19 @@ files = [
 ]
 
 [[package]]
+name = "typing-extensions"
+version = "4.15.0"
+description = "Backported and Experimental Type Hints for Python 3.9+"
+optional = false
+python-versions = ">=3.9"
+groups = ["test"]
+markers = "python_version < \"3.13\""
+files = [
+    {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
+    {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
+]
+
+[[package]]
 name = "tzdata"
 version = "2024.1"
 description = "Provider of IANA time zone data"
@@ -721,13 +765,19 @@ files = [
 
 [[package]]
 name = "xrootd"
-version = "5.8.4"
+version = "5.9.2"
 description = "eXtended ROOT daemon"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "xrootd-5.8.4.tar.gz", hash = "sha256:2d1d597c2ce5200a20eb85f12012759fbbfc6912815e07956015f20904b81eb6"},
+    {file = "xrootd-5.9.2-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:be918d61d916e10d901a6be5b7b8077a7737b75710b0f210ae7237c4d9de915d"},
+    {file = "xrootd-5.9.2-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:a1b4ed5dd6b7bb4c99a19fcaba4ef33e8c9995e9005e2cad6e8f9fbbc1adce1f"},
+    {file = "xrootd-5.9.2-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:3dd5b1bbb51481e19d1039860503394320ddcb327b1ea67ea53e5355e25c2029"},
+    {file = "xrootd-5.9.2-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:806a83f9b923704c80011807e85a2610b2feab422bd80b29666227c840fe96f0"},
+    {file = "xrootd-5.9.2-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:5a21eadf471479c3a752d0cd6a1af7a240849d7379a3d3728c05b1353d732175"},
+    {file = "xrootd-5.9.2-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:50a809fd93652a2addcf6d9767c6e10aad8edb9029f6f20ab7856c8a0deeedd3"},
+    {file = "xrootd-5.9.2.tar.gz", hash = "sha256:4b062638b01d366cd68c42f5b2fc13e7d6c7990d0f7c120a47d18b87aeb54aa4"},
 ]
 
 [metadata]

@@ -44,7 +44,7 @@ class TransformationStatus(ServiceXResource):
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.error(msg, extra={"requestId": request_id})
+            current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
 
         status_request = status_request_parser.parse_args()
@@ -73,6 +73,6 @@ class TransformationStatus(ServiceXResource):
             )
         current_app.logger.debug(
             "Transformation status",
-            extra={"requestId": request_id, "metric": result_dict},
+            extra={"request_id": request_id, "metric": result_dict},
         )
         return jsonify(result_dict)

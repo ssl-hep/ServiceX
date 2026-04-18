@@ -101,7 +101,7 @@ class ObjectStoreManager:
 
             self.logger.info(
                 "OSM > created object.",
-                extra={"requestId": bucket, "object": result.object_name},
+                extra={"request_id": bucket, "object_name": result.object_name},
             )
 
         except (RetryError, S3Error) as e:

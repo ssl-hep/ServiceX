@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "ServiceX request ID"
+    },
+
+    "place": {
+      "type": "object",
+      "description": "Location where the microservice is running.",
+      "properties": {
+        "host": { "type": "string" },
+        "site": { "type": "string" },
+        "pod":  { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "dataset_name": {
+      "type": "string",
+      "description": "Dataset-related - dataset name"
+    },
+    "dataset_id": {
+      "type": "integer",
+      "description": "Core context — dataset record ID"
+    },
+    "dataset_size": {
+      "type": "integer",
+      "description": "Dataset-related — dataset size in bytes"
+    },
+    "average_replicas": {
+      "type": "number",
+      "description": "Dataset-related — average number of replicas for files in dataset"
+    },
+    "lookup_duration": {
+      "type": "number",
+      "description": "Dataset-related — duration of lookup operation in seconds"
+    },
+    "file_id": {
+      "type": "integer",
+      "description": "Core context — file record ID"
+    },
+    "replicas": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Dataset-related — list of replica locations"
+    },
+    "result_path": {
+      "type": "string",
+      "description": "File-related — output path where file will be written"
+    },
+    "input_path": {
+      "type": "string",
+      "description": "File-related — input path being processed"
+    },
+    "object_name": {
+      "type": "string",
+      "description": "File-related — output object name in object store"
+    },
+    "elapsed": {
+      "type": "number",
+      "description": "Completion events — wall-clock seconds"
+    },
+    "user": {
+      "type": "number",
+      "description": "Completion events — CPU user time"
+    },
+    "sys": {
+      "type": "number",
+      "description": "Completion events — CPU system time"
+    },
+    "iowait": {
+      "type": "number",
+      "description": "Completion events — I/O wait time"
+    },
+    "files_remaining": {
+      "type": "integer",
+      "description": "Completion events — remaining file counter"
+    },
+    "files_completed": {
+      "type": "integer",
+      "description": "Completion events — completed file counter"
+    },
+    "files_failed": {
+      "type": "integer",
+      "description": "Completion events — failed file counter"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error/exception logs — message or repr"
+    },
+    "error_type": {
+      "type": "string",
+      "description": "Error/exception logs — error-category code"
+    },
+    "retry_status": {
+      "type": "string",
+      "description": "Error/exception logs — retry status from tenactiy"
+    },
+    "log_body": {
+      "type": "string",
+      "description": "Error/exception logs — captured science container output"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Queue context — Celery task name"
+    },
+    "num_files": {
+      "type": "integer",
+      "description": "Number of files submitted for processing"
+    },
+    "metric": {
+      "type": "object",
+      "description": "Status-update events — structured transformer-progress payload"
+    },
+    "deleted": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lifecycle events — deletion summary list"
+    }
+  },
+  "additionalProperties": false
+}

@@ -35,10 +35,11 @@ class ScienceContainerException(Exception):
 
 
 class ScienceContainerCommand:
-    def __init__(self):
+    def __init__(self, request_id: str = ""):
         handler = logging.NullHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
+        self.request_id = request_id
 
         # Open a socket to the science container
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,28 +49,36 @@ class ScienceContainerCommand:
 
     def synch(self):
         while True:
-            self.logger.debug("waiting for the GeT")
+            self.logger.debug(
+                "waiting for the GeT", extra={"requestId": self.request_id}
+            )
             req = self.conn.recv(4096)
             if not req:
-                self.logger.error("problem in getting GeT")
+                self.logger.error(
+                    "problem in getting GeT", extra={"requestId": self.request_id}
+                )
                 raise ScienceContainerException("problem in getting GeT")
             req1 = req.decode("utf8")
-            self.logger.debug(f"REQ >>>>>>>>>>>>>>>{req1}")
+            self.logger.debug(
+                f"REQ >>>>>>>>>>>>>>>{req1}", extra={"requestId": self.request_id}
+            )
             if req1.startswith("GeT"):
                 break
 
     def send(self, transform_request: dict):
         res = json.dumps(transform_request) + "\n"
-        self.logger.debug(f"sending: {res}")
+        self.logger.debug(f"sending: {res}", extra={"requestId": self.request_id})
         self.conn.send(res.encode())
 
     def await_response(self):
-        self.logger.debug("WAITING FOR STATUS...")
+        self.logger.debug("WAITING FOR STATUS...", extra={"requestId": self.request_id})
         req = self.conn.recv(4096)
         # if not req:
         #     break
         req2 = req.decode("utf8").strip()
-        self.logger.debug(f"STATUS RECEIVED: {req2}")
+        self.logger.debug(
+            f"STATUS RECEIVED: {req2}", extra={"requestId": self.request_id}
+        )
         return req2
 
     def confirm(self):

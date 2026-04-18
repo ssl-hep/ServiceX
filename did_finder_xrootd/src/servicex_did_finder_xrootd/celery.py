@@ -68,7 +68,7 @@ def find_files(
     """
     __log.info(
         "DID Lookup request received.",
-        extra={"dataset_id": info["dataset-id"], "dataset": did_name},
+        extra={"dataset_id": info["dataset-id"], "dataset_name": did_name},
     )
 
     try:

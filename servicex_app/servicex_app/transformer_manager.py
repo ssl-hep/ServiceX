@@ -79,7 +79,7 @@ class TransformerManager:
 
         current_app.logger.info(
             f"Launching {request_rec.workers} transformers.",
-            extra={"requestId": request_rec.request_id},
+            extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(
@@ -197,7 +197,9 @@ class TransformerManager:
             )
 
         # Compute Environment Vars
-        env = [client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc")]
+        env = [
+            client.V1EnvVar(name="BASH_ENV", value="/servicex/.bashrc"),
+        ]
 
         # provide pods with level and logging server info
         env += [
@@ -498,22 +500,28 @@ class TransformerManager:
         return hpa
 
     @staticmethod
-    def _create_job(api_instance, job, namespace):
+    def _create_job(api_instance, job, namespace, request_id):
         try:
             api_instance.create_namespaced_deployment(body=job, namespace=namespace)
-            current_app.logger.info("Request deployment created.")
+            current_app.logger.info(
+                "Request deployment created.", extra={"requestId": request_id}
+            )
         except ApiException as e:
-            current_app.logger.exception(f"Exception during HPA Creation: {e}")
+            current_app.logger.exception(
+                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+            )
 
     @staticmethod
-    def _create_hpa(api_instance, hpa, namespace):
+    def _create_hpa(api_instance, hpa, namespace, request_id):
         try:
             api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa, namespace=namespace
             )
-            current_app.logger.info("HPA created.")
+            current_app.logger.info("HPA created.", extra={"requestId": request_id})
         except ApiException as e:
-            current_app.logger.exception(f"Exception during HPA Creation: {e}")
+            current_app.logger.exception(
+                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+            )
 
     def launch_transformer_jobs(
         self,
@@ -544,12 +552,12 @@ class TransformerManager:
             transformer_command,
         )
 
-        self._create_job(api_v1, job, namespace)
+        self._create_job(api_v1, job, namespace, request_id)
 
         if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
             hpa = self.create_hpa_object(request_id, max_workers)
-            self._create_hpa(autoscaler_api, hpa, namespace)
+            self._create_hpa(autoscaler_api, hpa, namespace, request_id)
 
     @classmethod
     def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
@@ -574,7 +582,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job HPA Shut Down",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         try:
@@ -595,7 +603,7 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job Deployment Shut Down",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         try:
@@ -617,20 +625,21 @@ class TransformerManager:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Job ConfigMap cleanup",
-                    extra={"requestId": request_id, "status_code": e.status},
+                    extra={"request_id": request_id, "retry_status": e.status},
                 )
 
         # delete RabbitMQ queue
         try:
             current_app.logger.info(
-                f"Stopping workers connected to transformer-{request_id}"
+                f"Stopping workers connected to transformer-{request_id}",
+                extra={"requestId": request_id},
             )
             cls.celery_app.control.cancel_consumer(f"transformer-{request_id}")
-        except Exception as e:
+        except Exception:
             if not quiet_errors:
                 current_app.logger.exception(
                     "Exception during Celery queue cancellation",
-                    extra={"requestId": request_id, "exception": e},
+                    extra={"request_id": request_id},
                 )
 
     @staticmethod

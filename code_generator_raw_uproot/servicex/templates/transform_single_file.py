@@ -70,7 +70,7 @@ def root_write_table_data(output_format, writer, outtreename, data):
         if outtreename in writer:
             writer[outtreename].extend({field: data[field] for field in data.fields})
         else:
-            writer[outtreename] = {field: data[field] for field in data.fields}
+            writer.mktree(outtreename, {field: data[field] for field in data.fields})
     else:  # RNTuple
         if outtreename in writer:
             writer[outtreename].extend(data)
