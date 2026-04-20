@@ -22,6 +22,10 @@
       "type": "string",
       "description": "Dataset-related - dataset name"
     },
+    "requestId": {
+      "type": "string",
+      "description": "The active transformation's requestId"
+    },
     "dataset_id": {
       "type": "integer",
       "description": "Core context — dataset record ID"
