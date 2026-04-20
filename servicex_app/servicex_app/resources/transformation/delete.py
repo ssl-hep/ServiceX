@@ -45,12 +45,12 @@ class DeleteTransform(ServiceXResource):
             transform_req = TransformRequest.lookup(request_id)
             if not transform_req:
                 msg = f"Transformation request not found with id: {request_id}"
-                current_app.logger.warning(msg, extra={"requestId": request_id})
+                current_app.logger.warning(msg, extra={"request_id": request_id})
                 return {"message": msg}, 404
 
             if not transform_req.status.is_complete:
                 msg = f"Transform request with id {request_id} is still in progress."
-                current_app.logger.warning(msg, extra={"requestId": request_id})
+                current_app.logger.warning(msg, extra={"request_id": request_id})
                 return {"message": msg}, 400
 
             user = self.get_requesting_user()

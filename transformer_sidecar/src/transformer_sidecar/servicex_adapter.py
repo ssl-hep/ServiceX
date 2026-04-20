@@ -39,7 +39,7 @@ MAX_RETRIES = 3
 RETRY_DELAY = 2
 
 PLACE = {
-    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "host": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
 }
 
@@ -115,15 +115,15 @@ class ServiceXAdapter:
                 self.logger.info(
                     "Put file complete.",
                     extra={
-                        "requestId": rec.request_id,
-                        "file-id": rec.file_id,
+                        "request_id": rec.request_id,
+                        "file_id": rec.file_id,
                         "place": PLACE,
-                        "file_path": rec.file_path,
-                        "s3-object-name": rec.s3_object_name,
+                        "input_path": rec.file_path,
+                        "object_name": rec.s3_object_name,
                     },
                 )
             except requests.exceptions.ConnectionError:
                 self.logger.exception(
                     "Connection Error in put_file_complete",
-                    extra={"requestId": rec.request_id, "place": PLACE},
+                    extra={"request_id": rec.request_id, "place": PLACE},
                 )

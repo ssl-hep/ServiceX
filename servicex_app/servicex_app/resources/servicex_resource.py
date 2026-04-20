@@ -92,7 +92,7 @@ class ServiceXResource(Resource):
 
         current_app.logger.info(
             f"Lunching {request_rec.workers} transformers.",
-            extra={"requestId": request_rec.request_id},
+            extra={"request_id": request_rec.request_id},
         )
 
         transformer_manager.launch_transformer_jobs(

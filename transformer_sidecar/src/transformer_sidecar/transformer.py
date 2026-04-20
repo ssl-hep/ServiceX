@@ -69,6 +69,7 @@ object_store = None
 posix_path: str = ""
 startup_time = None
 convert_root_to_parquet: bool = False
+convert_root_to_rntuple: bool = False
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
@@ -80,7 +81,7 @@ request_id: str = ""
 MAX_PATH_LEN = 255
 
 PLACE = {
-    "host_name": os.getenv("HOST_NAME", "unknown"),
+    "host": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
     "pod": os.getenv("POD_NAME", "unknown"),
 }
@@ -118,19 +119,19 @@ def transform_file(
     We will examine this log file to see if the transform succeeded or failed
     """
 
-    log_extra = {"requestId": request_id, "file-id": file_id, "place": PLACE}
+    log_extra = {"request_id": request_id, "file_id": file_id, "place": PLACE}
 
     transform_request = {
         "file-id": file_id,
         "request-id": request_id,
         "status": "unknown",
-        "error": None,
     }
 
-    # If we are converting root to parquet here, then the transformer
-    # doesn't need to know about. Tell it to write root, and we'll take it from here
-    if convert_root_to_parquet:
-        result_format = "root"
+    # If we are converting root to another format here, then the transformer
+    # doesn't need to know about. Tell it to write root-file, and we'll take it from here
+    # At the moment root-file is the one thing we are sure everyone can write
+    if convert_root_to_parquet or convert_root_to_rntuple:
+        result_format = "root-file"
 
     # Change davs to https
     _file_paths = change_davs_to_https(paths)
@@ -143,13 +144,7 @@ def transform_file(
 
     logger.info(
         "got transform request.",
-        extra={
-            **log_extra,
-            "paths": _file_paths,
-            "result-destination": result_destination,
-            "result-format": result_format,
-            "service-endpoint": service_endpoint,
-        },
+        extra={**log_extra, "replicas": _file_paths, "result_path": result_destination},
     )
     servicex = ServiceXAdapter(service_endpoint)
 
@@ -173,7 +168,7 @@ def transform_file(
                 "trying to transform file",
                 extra={
                     **log_extra,
-                    "file-path": _file_path,
+                    "input_path": _file_path,
                 },
             )
 
@@ -238,12 +233,7 @@ def transform_file(
                     servicex.put_file_complete(rec)
 
                 transform_success = True
-                ts = {
-                    **log_extra,
-                    "file-size": transformer_stats.file_size,
-                    "total-events": transformer_stats.total_events,
-                }
-                logger.info("Transformer stats.", extra=ts)
+                logger.info("Transformer stats.", extra=log_extra)
                 science_container.confirm()
                 break
 
@@ -254,7 +244,7 @@ def transform_file(
         if not transform_success:
             hf = {
                 **log_extra,
-                "file-path": _file_paths[0],
+                "input_path": _file_paths[0],
                 "log_body": transformer_stats.log_body,
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
@@ -323,15 +313,17 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
 
     logger.info(
         "Converting ROOT to Parquet.",
-        extra={"requestId": request_id, "source_path": source_path},
+        extra={"request_id": request_id, "input_path": str(source_path)},
     )
-    with open(source_path, "rb") as datafile:
-        data = uproot.open(datafile)
-        if len(data.keys(cycle=False)) != 1:
-            logger.error(f"Expected one tree found {data.keys()}")
-            return None
-
-        try:
+    try:
+        with open(source_path, "rb") as datafile:
+            data = uproot.open(datafile)
+            if len(data.keys(cycle=False)) != 1:
+                logger.error(
+                    f"Expected one tree found {data.keys()}",
+                    extra={"requestId": request_id},
+                )
+                return None
             tree_name = data.keys()[0]
             all_data = data[tree_name].arrays(library="ak")
 
@@ -343,11 +335,53 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             ak.to_parquet(all_data, temp_file.as_posix())
             temp_file.rename(parquet_file)
 
-        except Exception as e:
-            logger.error(f"Failed to convert ROOT to Parquet: {e}")
-            return None
+    except Exception as e:
+        logger.error(
+            f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id}
+        )
+        return None
 
-        return parquet_file
+    return parquet_file
+
+
+def convert_to_rntuple(source_path: Path) -> Optional[Path]:
+    """
+    Convert a ROOT TTree file to RNTuple.  Returns the path to the output ROOT file if successful
+    """
+    import uproot
+
+    logger.info(
+        "Converting ROOT TTree to RNTuple.",
+        extra={"request_id": request_id, "input_path": source_path},
+    )
+
+    rntuple_file = source_path.with_suffix(".rntuple.root")
+
+    try:
+        with open(source_path, "rb") as datafile:
+            data = uproot.open(datafile)
+            with open(rntuple_file, "b+w") as wfile:
+                with uproot.recreate(wfile) as writer:
+                    for key in data.keys(cycle=False):
+                        obj = data[key]
+                        match obj.classname:
+                            case "TTree" | "ROOT::RNTuple":
+                                for all_data in obj.iterate(library="ak"):
+                                    if key not in writer:
+                                        writer.mkrntuple(key, all_data)
+                                    else:
+                                        writer[key].extend(all_data)
+                            case _:
+                                writer[key] = obj
+
+    except Exception as e:
+        logger.error(
+            f"Failed to convert ROOT TTree to RNTuple: {e}",
+            extra={"requestId": request_id},
+        )
+        return None
+
+    return rntuple_file
 
 
 def upload_file(
@@ -360,6 +394,9 @@ def upload_file(
     if convert_root_to_parquet:
         file_to_upload = convert_to_parquet(source_path)
         object_name = source_path.with_suffix(".parquet").name
+    elif convert_root_to_rntuple:
+        file_to_upload = convert_to_rntuple(source_path)
+        object_name = source_path.name
     else:
         file_to_upload = source_path
         object_name = source_path.name
@@ -369,10 +406,10 @@ def upload_file(
     logger.info(
         "Uploading file to object store.",
         extra={
-            "requestId": request_id,
-            "file-id": rec.file_id,
+            "request_id": request_id,
+            "file_id": rec.file_id,
             "place": PLACE,
-            "objectName": object_name,
+            "object_name": object_name,
         },
     )
     t0 = time.time()
@@ -381,10 +418,10 @@ def upload_file(
         logger.info(
             "File uploaded to object store.",
             extra={
-                "requestId": request_id,
-                "file-id": rec.file_id,
+                "request_id": request_id,
+                "file_id": rec.file_id,
                 "place": PLACE,
-                "objectName": object_name,
+                "object_name": object_name,
                 "elapsed": time.time() - t0,
             },
         )
@@ -395,10 +432,10 @@ def upload_file(
         logger.error(
             f"Error uploading file to object store: {e}",
             extra={
-                "requestId": request_id,
+                "request_id": request_id,
                 "place": PLACE,
-                "file-id": rec.file_id,
-                "objectName": object_name,
+                "file_id": rec.file_id,
+                "object_name": object_name,
             },
         )
         rec.status = "failure"
@@ -430,7 +467,7 @@ def read_capabilities_file() -> dict[str, str]:
     The capabilities file is mounted in the pod at startup. It's possible for
     the code to start before the file is available. We'll wait for it here.
     """
-    logger.debug("Waiting for capabilities file")
+    logger.debug("Waiting for capabilities file", extra={"requestId": request_id})
     capabilities_file_path = Path(
         os.path.join(shared_dir, "transformer_capabilities.json")
     )
@@ -442,7 +479,8 @@ def read_capabilities_file() -> dict[str, str]:
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
-    global convert_root_to_parquet, startup_time, object_store, posix_path, science_container
+    global convert_root_to_parquet, convert_root_to_rntuple, startup_time
+    global object_store, posix_path, science_container
     global shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
@@ -472,11 +510,17 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         args.result_format == "parquet"
         and "parquet" not in transformer_capabilities["file-formats"]
     )
+    # Same for rntuple
+    convert_root_to_rntuple = (
+        args.result_format == "root-rntuple"
+        and "root-rntuple" not in transformer_capabilities["file-formats"]
+    )
 
     startup_time = get_process_info()
     logger.info(
         "Startup finished.",
         extra={
+            "requestId": request_id,
             "user": startup_time.user,
             "sys": startup_time.system,
             "iowait": startup_time.iowait,
@@ -484,8 +528,11 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         },
     )
 
-    science_container = ScienceContainerCommand()
-    logger.debug("Connected to science container", extra={"place": PLACE})
+    science_container = ScienceContainerCommand(request_id=request_id)
+    logger.debug(
+        "Connected to science container",
+        extra={"requestId": request_id, "place": PLACE},
+    )
 
     app.worker_main(
         argv=[
@@ -637,7 +684,7 @@ if __name__ == "__main__":  # pragma: no cover
 
     logger.debug(
         "Shutting down transformer",
-        extra={"requestId": request_id, "place": PLACE},
+        extra={"request_id": request_id, "place": PLACE},
     )
     science_container.close()
 

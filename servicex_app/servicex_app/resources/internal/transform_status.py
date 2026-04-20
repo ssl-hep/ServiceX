@@ -19,7 +19,7 @@ class TransformationStatusInternal(ServiceXResource):
         if status["severity"] == "fatal":
             current_app.logger.error(
                 f"Fatal error reported from " f"{status['source']}: {status['info']}",
-                extra={"requestId": request_id},
+                extra={"request_id": request_id},
             )
 
             submitted_request = TransformRequest.lookup(request_id)
@@ -31,5 +31,5 @@ class TransformationStatusInternal(ServiceXResource):
         else:
             current_app.logger.info(
                 "Transformation Status Update",
-                extra={"requestId": request_id, "metric": status},
+                extra={"request_id": request_id, "metric": status},
             )
