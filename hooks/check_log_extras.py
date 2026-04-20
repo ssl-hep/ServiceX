@@ -18,6 +18,7 @@ LOG_METHODS = frozenset(
         "exception",
         "fatal",
         "log",
+        "requestId",
     }
 )
 
