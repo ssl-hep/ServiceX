@@ -71,7 +71,9 @@ class ScienceContainerCommand:
         self.conn.send(res.encode())
 
     def await_response(self):
-        self.logger.debug("WAITING FOR STATUS...", extra={"request_id": self.request_id})
+        self.logger.debug(
+            "WAITING FOR STATUS...", extra={"request_id": self.request_id}
+        )
         req = self.conn.recv(4096)
         # if not req:
         #     break
