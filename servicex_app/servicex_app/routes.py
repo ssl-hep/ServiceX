@@ -68,6 +68,7 @@ def add_routes(
     from servicex_app.resources.transformation.get_one import TransformationRequest
     from servicex_app.resources.transformation.deployment import DeploymentStatus
     from servicex_app.resources.transformation.results import TransformationResults
+    from servicex_app.resources.transformation.file_urls import FileURLGenerator
 
     from servicex_app.resources.users.all_users import AllUsers
     from servicex_app.resources.users.token_refresh import TokenRefresh
@@ -156,6 +157,7 @@ def add_routes(
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
+    api.add_resource(FileURLGenerator, prefix + "/file_urls")
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationResults, prefix + "/results")

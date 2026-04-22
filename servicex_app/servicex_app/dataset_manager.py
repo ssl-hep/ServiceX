@@ -160,6 +160,9 @@ class DatasetManager:
     def refresh(self):
         self.db.session.refresh(self.dataset)
 
+    def lock(self):
+        self.db.session.refresh(self.dataset, with_for_update=True)
+
     def submit_lookup_request(self, advertised_endpoint, celery_app: Celery):
         task_id = celery_app.send_task(
             f"{self.did.microservice_queue}.lookup_dataset",

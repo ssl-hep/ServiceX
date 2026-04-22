@@ -32,7 +32,7 @@ from typing import Optional, Union
 
 from func_adl_xAOD.atlas.xaod.executor import atlas_xaod_executor
 from func_adl_xAOD.cms.aod.executor import cms_aod_executor
-from func_adl_xAOD.common.executor import executor
+from func_adl_xAOD.common.executor import executor as func_adl_xAOD_executor
 from qastle import text_ast_to_python_ast
 
 from servicex_codegen.code_generator import (
@@ -43,7 +43,7 @@ from servicex_codegen.code_generator import (
 
 
 class AstAODTranslator(CodeGenerator):
-    def __init__(self, exe: Optional[Union[executor, str]] = None):
+    def __init__(self, exe: Optional[Union[func_adl_xAOD_executor, str]] = None):
         """
         Create the ast translator objects
 

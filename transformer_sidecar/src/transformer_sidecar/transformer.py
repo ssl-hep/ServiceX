@@ -215,27 +215,47 @@ def transform_file(
             )
             if science_container_response == "success.":
                 output_path = Path(transform_request["safeOutputFileName"])
-                rec = FileCompleteRecord(
-                    request_id=request_id,
-                    file_path=_file_path,
-                    s3_object_name="none",
-                    file_id=file_id,
-                    status="success",
-                    total_time=time.time() - total_time,
-                    total_events=transformer_stats.total_events,
-                    total_bytes=os.path.getsize(output_path),
-                )
-                if object_store:
-                    upload_file(
-                        Path(transform_request["safeOutputFileName"]), servicex, rec
-                    )
-                else:
-                    servicex.put_file_complete(rec)
 
-                transform_success = True
-                logger.info("Transformer stats.", extra=log_extra)
-                science_container.confirm()
-                break
+                # Now is the time to convert the file to parquet if that's what the user
+                # requested, but our particular transformer doesn't support it.
+                # Delete source if we did a conversion so it doesn't clutter the POSIX
+                # output if we use that.
+                if convert_root_to_parquet:
+                    object_name = output_path.with_suffix(".parquet").name
+                    if (file_to_upload := convert_to_parquet(output_path)) is not None:
+                        output_path.unlink()
+                elif convert_root_to_rntuple:
+                    object_name = output_path.name
+                    if (file_to_upload := convert_to_rntuple(output_path)) is not None:
+                        output_path.unlink()
+                else:
+                    file_to_upload = output_path
+                    object_name = output_path.name
+
+                if file_to_upload is not None:
+                    # only None if conversion has failed
+                    rec = FileCompleteRecord(
+                        request_id=request_id,
+                        file_path=_file_path,
+                        s3_object_name=object_name,
+                        file_id=file_id,
+                        status="success",
+                        total_time=time.time() - total_time,
+                        total_events=transformer_stats.total_events,
+                        total_bytes=file_to_upload.stat().st_size,
+                    )
+                    if object_store:
+                        upload_file(file_to_upload, servicex, rec)
+                    else:
+                        servicex.put_file_complete(rec)
+
+                    transform_success = True
+                    logger.info("Transformer stats.", extra=log_extra)
+                    science_container.confirm()
+                    break
+                else:
+                    transform_success = False
+                    transformer_stats.error_info = "Sidecar format conversion failed"
 
             science_container.confirm()
 
@@ -321,7 +341,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             if len(data.keys(cycle=False)) != 1:
                 logger.error(
                     f"Expected one tree found {data.keys()}",
-                    extra={"requestId": request_id},
+                    extra={"request_id": request_id},
                 )
                 return None
             tree_name = data.keys()[0]
@@ -337,7 +357,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
 
     except Exception as e:
         logger.error(
-            f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id}
+            f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
         )
         return None
 
@@ -377,7 +397,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
     except Exception as e:
         logger.error(
             f"Failed to convert ROOT TTree to RNTuple: {e}",
-            extra={"requestId": request_id},
+            extra={"request_id": request_id},
         )
         return None
 
@@ -388,20 +408,7 @@ def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
     object_store = ObjectStoreManager()
-
-    # Now is the time to convert the file to parquet if that's what the user
-    # requested, but our particular transformer doesn't support it.
-    if convert_root_to_parquet:
-        file_to_upload = convert_to_parquet(source_path)
-        object_name = source_path.with_suffix(".parquet").name
-    elif convert_root_to_rntuple:
-        file_to_upload = convert_to_rntuple(source_path)
-        object_name = source_path.name
-    else:
-        file_to_upload = source_path
-        object_name = source_path.name
-
-    rec.s3_object_name = object_name
+    object_name = rec.s3_object_name
 
     logger.info(
         "Uploading file to object store.",
@@ -414,7 +421,7 @@ def upload_file(
     )
     t0 = time.time()
     try:
-        object_store.upload_file(request_id, object_name, file_to_upload.as_posix())
+        object_store.upload_file(request_id, object_name, source_path.as_posix())
         logger.info(
             "File uploaded to object store.",
             extra={
@@ -467,7 +474,7 @@ def read_capabilities_file() -> dict[str, str]:
     The capabilities file is mounted in the pod at startup. It's possible for
     the code to start before the file is available. We'll wait for it here.
     """
-    logger.debug("Waiting for capabilities file", extra={"requestId": request_id})
+    logger.debug("Waiting for capabilities file", extra={"request_id": request_id})
     capabilities_file_path = Path(
         os.path.join(shared_dir, "transformer_capabilities.json")
     )
@@ -520,7 +527,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     logger.info(
         "Startup finished.",
         extra={
-            "requestId": request_id,
+            "request_id": request_id,
             "user": startup_time.user,
             "sys": startup_time.system,
             "iowait": startup_time.iowait,
@@ -531,7 +538,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     science_container = ScienceContainerCommand(request_id=request_id)
     logger.debug(
         "Connected to science container",
-        extra={"requestId": request_id, "place": PLACE},
+        extra={"request_id": request_id, "place": PLACE},
     )
 
     app.worker_main(

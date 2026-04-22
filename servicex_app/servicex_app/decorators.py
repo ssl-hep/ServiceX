@@ -119,29 +119,33 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     return inner
 
 
+def is_admin_user() -> bool:
+    """Return True if the current request is from an authenticated admin user."""
+    if not current_app.config.get("ENABLE_AUTH"):
+        return False
+    if session.get("is_authenticated"):
+        return bool(session.get("admin"))
+    try:
+        verify_jwt_in_request(locations=["headers"])
+        user = get_jwt_user()
+        return user is not None and user.admin
+    except (NoAuthorizationError, Exception):
+        return False
+
+
 def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """Mark an API resource as requiring administrator role."""
 
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
-        msg = "Not Authorized: This resource is restricted to administrators."
+        # allow routes when ENABLE_AUTH not True
+        # (this is the needed behavior, but different than is_admin_user() behavior)
         if not current_app.config.get("ENABLE_AUTH"):
             return fn(*args, **kwargs)
-        elif session.get("is_authenticated"):
-            if session.get("admin"):
-                return fn(*args, **kwargs)
-            else:
-                return make_response({"message": msg}, 401)
-        try:
-            verify_jwt_in_request(locations=["headers"])
-        except NoAuthorizationError as exc:
-            assert "NoAuthorizationError"
-            return make_response({"message": str(exc)}, 401)
 
-        user = get_jwt_user()
-        if not (user and user.admin):
+        if not is_admin_user():
+            msg = "Not Authorized: This resource is restricted to administrators."
             return make_response({"message": msg}, 401)
-
         return fn(*args, **kwargs)
 
     return inner

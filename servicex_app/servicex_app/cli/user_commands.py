@@ -30,9 +30,12 @@ def add_user(sub, email, name, institution, refresh_token):
         print(str(ex))
 
 
-def list_users() -> None:
+def list_users(email_filter=None) -> None:
     users = UserModel.query.all()
-    print("Sub, Email, Name, Institution, Pending?")
+    if email_filter:
+        users = UserModel.query.filter(UserModel.email.ilike(f"%{email_filter}%"))
+
+    print("Sub, Email, Name, Institution, Admin, Pending?")
     for user in users:
         print(
             ", ".join(
@@ -41,6 +44,7 @@ def list_users() -> None:
                     user.email,
                     user.name,
                     user.institution,
+                    str(user.admin),
                     "Pending" if user.pending else "Approved",
                 ]
             )
@@ -57,3 +61,23 @@ def approve_user(sub: str) -> None:
         print(f"User {sub} already approved")
     else:
         print(f"User {sub} not found")
+
+
+def set_user_admin(sub: str, value: bool = True) -> None:
+    user = UserModel.find_by_sub(sub)
+    if not user:
+        print(f"User {sub} not found")
+
+    if user.admin == value:
+        if user.admin:
+            print(f"User {sub} already admin")
+        else:
+            print(f"User {sub} already not admin")
+        return
+
+    user.admin = value
+    user.save_to_db()
+    if user.admin:
+        print(f"User {sub} made admin")
+    else:
+        print(f"User {sub} admin privileges revoked")

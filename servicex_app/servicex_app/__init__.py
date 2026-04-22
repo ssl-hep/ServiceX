@@ -42,8 +42,14 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 
+from servicex_app.decorators import is_admin_user
 from servicex_app.celery_task_router import route_task
-from servicex_app.cli.user_commands import add_user, list_users, approve_user
+from servicex_app.cli.user_commands import (
+    add_user,
+    list_users,
+    approve_user,
+    set_user_admin,
+)
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
@@ -178,6 +184,8 @@ def create_app(
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
+    app.jinja_env.globals["is_admin_user"] = is_admin_user
+
     """Flask CLI Plugin to manage users"""
     user_cli = AppGroup("user")
 
@@ -197,13 +205,24 @@ def create_app(
         )
 
     @user_cli.command("list")
-    def list_users_command():
-        list_users()
+    @click.option("--email-filter", default=None, help="Filter users by email")
+    def list_users_command(email_filter):
+        list_users(email_filter)
 
     @user_cli.command("approve")
     @click.argument("sub")
     def approve_user_command(sub):
         approve_user(sub)
+
+    @user_cli.command("make-admin")
+    @click.argument("sub")
+    def make_admin_command(sub):
+        set_user_admin(sub, True)
+
+    @user_cli.command("revoke-admin")
+    @click.argument("sub")
+    def revoke_admin_command(sub):
+        set_user_admin(sub, False)
 
     app.cli.add_command(user_cli)
 
@@ -266,6 +285,10 @@ def create_app(
             db.create_all()
 
         migrate.init_app(app, db)
+
+        from servicex_app.web.admin import init_admin
+
+        init_admin(app)
         moment.init_app(app)
 
         # Validate did-finder scheme

@@ -1,0 +1,41 @@
+{% extends 'admin/master.html' %}
+
+{% block head_tail %}
+<style>
+  nav.navbar { background-color: #00008b !important; }
+</style>
+{% endblock %}
+
+{% macro view_table(views) %}
+<table class="table table-striped table-sm">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for view in views %}
+    <tr>
+      <td><a href="{{ view.url }}">{{ view.name }}</a></td>
+      <td>{{ view.description }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% block body %}
+<a href="{{ url_for('home') }}">Return to ServiceX</a>
+
+{% if model_views %}
+<h4 class="mt-4">Model Views</h4>
+{{ view_table(model_views) }}
+{% endif %}
+
+{% if report_views %}
+<h4 class="mt-4">Reports</h4>
+{{ view_table(report_views) }}
+{% endif %}
+
+{% endblock %}
