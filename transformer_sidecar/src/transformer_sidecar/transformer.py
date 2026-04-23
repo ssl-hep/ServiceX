@@ -245,9 +245,7 @@ def transform_file(
                         total_bytes=file_to_upload.stat().st_size,
                     )
                     if object_store:
-                        upload_file(
-                            file_to_upload, servicex, rec
-                        )
+                        upload_file(file_to_upload, servicex, rec)
                     else:
                         servicex.put_file_complete(rec)
 
