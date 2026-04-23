@@ -54,8 +54,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                 with open(output_path, "b+w") as wfile:
                     with uproot.recreate(wfile) as writer:
                         for key in awkward_arrays.keys():
+                            total_events = awkward_arrays[key].__len__()
                             if output_format == "root-file":
-                                total_events = awkward_arrays[key].__len__()
                                 if awkward_arrays[key].fields and total_events:
                                     o_dict = {
                                         field: awkward_arrays[key][field]
