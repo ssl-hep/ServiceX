@@ -191,6 +191,7 @@ def test_transformer_root_to_parquet(
 
         def patch_convert(x):
             import shutil
+
             rv = x.with_suffix(".parquet")
             shutil.copy(x, rv)
             return rv
@@ -249,13 +250,14 @@ def test_transformer_root_to_rntuple(
 
         def patch_convert(x):
             import shutil
+
             rv = x.with_suffix(".rntuple.root")
             shutil.copy(x, rv)
             return rv
 
         mocker.patch(
             "transformer_sidecar.transformer.convert_to_rntuple",
-            side_effect=patch_convert
+            side_effect=patch_convert,
         )
 
         # Call the task
