@@ -278,6 +278,7 @@ def test_transformer_root_to_rntuple(
             == "success"
         )
 
+
 def test_transformer_root_to_parquet_failed(
     args,
     mock_celery,
