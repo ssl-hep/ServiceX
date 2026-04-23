@@ -221,13 +221,13 @@ def transform_file(
                 # Delete source if we did a conversion so it doesn't clutter the POSIX
                 # output if we use that.
                 if convert_root_to_parquet:
-                    file_to_upload = convert_to_parquet(output_path)
                     object_name = output_path.with_suffix(".parquet").name
-                    output_path.unlink()
+                    if (file_to_upload := convert_to_parquet(output_path)) is not None:
+                        output_path.unlink()
                 elif convert_root_to_rntuple:
-                    file_to_upload = convert_to_rntuple(output_path)
                     object_name = output_path.name
-                    output_path.unlink()
+                    if (file_to_upload := convert_to_rntuple(output_path)) is not None:
+                        output_path.unlink()
                 else:
                     file_to_upload = output_path
                     object_name = output_path.name
