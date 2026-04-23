@@ -56,7 +56,7 @@ class UserModel(db.Model):
     name = db.Column(db.String(120), nullable=False)
     pending = db.Column(db.Boolean, default=True)
     refresh_token = db.Column(db.Text, nullable=True, unique=True)
-    sub = db.Column(db.String(120), nullable=False, unique=True)
+    sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
     requests = db.relationship("TransformRequest", backref="user")
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
