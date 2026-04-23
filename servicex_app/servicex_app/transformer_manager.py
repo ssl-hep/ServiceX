@@ -504,11 +504,11 @@ class TransformerManager:
         try:
             api_instance.create_namespaced_deployment(body=job, namespace=namespace)
             current_app.logger.info(
-                "Request deployment created.", extra={"requestId": request_id}
+                "Request deployment created.", extra={"request_id": request_id}
             )
         except ApiException as e:
             current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
             )
 
     @staticmethod
@@ -517,10 +517,10 @@ class TransformerManager:
             api_instance.create_namespaced_horizontal_pod_autoscaler(
                 body=hpa, namespace=namespace
             )
-            current_app.logger.info("HPA created.", extra={"requestId": request_id})
+            current_app.logger.info("HPA created.", extra={"request_id": request_id})
         except ApiException as e:
             current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"requestId": request_id}
+                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
             )
 
     def launch_transformer_jobs(
@@ -632,7 +632,7 @@ class TransformerManager:
         try:
             current_app.logger.info(
                 f"Stopping workers connected to transformer-{request_id}",
-                extra={"requestId": request_id},
+                extra={"request_id": request_id},
             )
             cls.celery_app.control.cancel_consumer(f"transformer-{request_id}")
         except Exception:

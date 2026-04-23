@@ -321,7 +321,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             if len(data.keys(cycle=False)) != 1:
                 logger.error(
                     f"Expected one tree found {data.keys()}",
-                    extra={"requestId": request_id},
+                    extra={"request_id": request_id},
                 )
                 return None
             tree_name = data.keys()[0]
@@ -337,7 +337,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
 
     except Exception as e:
         logger.error(
-            f"Failed to convert ROOT to Parquet: {e}", extra={"requestId": request_id}
+            f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
         )
         return None
 
@@ -377,7 +377,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
     except Exception as e:
         logger.error(
             f"Failed to convert ROOT TTree to RNTuple: {e}",
-            extra={"requestId": request_id},
+            extra={"request_id": request_id},
         )
         return None
 
@@ -467,7 +467,7 @@ def read_capabilities_file() -> dict[str, str]:
     The capabilities file is mounted in the pod at startup. It's possible for
     the code to start before the file is available. We'll wait for it here.
     """
-    logger.debug("Waiting for capabilities file", extra={"requestId": request_id})
+    logger.debug("Waiting for capabilities file", extra={"request_id": request_id})
     capabilities_file_path = Path(
         os.path.join(shared_dir, "transformer_capabilities.json")
     )
@@ -520,7 +520,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     logger.info(
         "Startup finished.",
         extra={
-            "requestId": request_id,
+            "request_id": request_id,
             "user": startup_time.user,
             "sys": startup_time.system,
             "iowait": startup_time.iowait,
@@ -531,7 +531,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     science_container = ScienceContainerCommand(request_id=request_id)
     logger.debug(
         "Connected to science container",
-        extra={"requestId": request_id, "place": PLACE},
+        extra={"request_id": request_id, "place": PLACE},
     )
 
     app.worker_main(
