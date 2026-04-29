@@ -2,6 +2,7 @@ import os
 import pytest
 
 import servicex_app
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestAppInit:
@@ -29,3 +30,17 @@ class TestAppInit:
         monkeypatch.delenv("ALLOWED_IMAGE_PREFIXES", raising=False)
         with pytest.raises(ValueError, match="must be configured"):
             servicex_app.create_app()
+
+
+class TestLogClientVersion(ResourceTestBase):
+    def test_logs_client_version_when_header_present(self, mocker):
+        client = self._test_client()
+        mock_debug = mocker.patch.object(client.application.logger, "debug")
+        client.get("/", headers={"X-ServiceX-Client-Version": "3.0.1"})
+        mock_debug.assert_called_once_with("Client version: 3.0.1")
+
+    def test_no_log_when_header_absent(self, mocker):
+        client = self._test_client()
+        mock_debug = mocker.patch.object(client.application.logger, "debug")
+        client.get("/")
+        mock_debug.assert_not_called()
