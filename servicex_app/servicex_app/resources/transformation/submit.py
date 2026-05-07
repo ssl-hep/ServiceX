@@ -102,7 +102,7 @@ class SubmitTransformationRequest(ServiceXResource):
             type=str,
             default="unknown",
             location="json",
-            help="The client-version submitting the transformation."
+            help="The client-version submitting the transformation.",
         )
         cls.parser.add_argument("selection", help="Query string")
         cls.parser.add_argument("codegen")
@@ -326,7 +326,7 @@ class SubmitTransformationRequest(ServiceXResource):
             )
             current_app.logger.info(
                 f"Transformation submitted with client version: {client_version}",
-                extra={"request_id": request_id}
+                extra={"request_id": request_id},
             )
             return {"request_id": str(request_id)}
         except Exception as eek:
