@@ -641,7 +641,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(code_gen_service=mock_codegen)
         mock_info = mocker.patch.object(client.application.logger, "info")
         with client.application.app_context():
-            request = self._generate_transformation_request(**{"client-version": "3.0.1"})
+            request = self._generate_transformation_request(
+                **{"client-version": "3.0.1"}
+            )
             response = client.post(
                 "/servicex/transformation", json=request, headers=self.fake_header()
             )
