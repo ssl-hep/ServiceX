@@ -35,7 +35,7 @@ from distutils.util import strtobool
 import base64
 import click
 import logstash
-from flask import Flask, current_app, request
+from flask import Flask
 from flask.cli import AppGroup
 from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
@@ -386,11 +386,5 @@ def create_app(
                 humanize=humanize,
                 create_kibana_link=create_kibana_link,
             )
-
-    @app.before_request
-    def log_client_version():
-        client_version = request.headers.get("X-ServiceX-Client-Version")
-        if client_version:
-            current_app.logger.debug(f"Client version: {client_version}")
 
     return app

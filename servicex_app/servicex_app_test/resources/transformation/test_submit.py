@@ -635,6 +635,38 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             assert saved_obj
             assert saved_obj.image == image
 
+    def test_submit_transformation_logs_client_version(
+        self, mocker, mock_dataset_manager_from_did, mock_codegen
+    ):
+        client = self._test_client(code_gen_service=mock_codegen)
+        mock_info = mocker.patch.object(client.application.logger, "info")
+        with client.application.app_context():
+            request = self._generate_transformation_request(**{"client-version": "3.0.1"})
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            request_id = response.json["request_id"]
+            mock_info.assert_any_call(
+                "Client version: 3.0.1", extra={"request_id": request_id}
+            )
+
+    def test_submit_transformation_logs_unknown_client_version(
+        self, mocker, mock_dataset_manager_from_did, mock_codegen
+    ):
+        client = self._test_client(code_gen_service=mock_codegen)
+        mock_info = mocker.patch.object(client.application.logger, "info")
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            request_id = response.json["request_id"]
+            mock_info.assert_any_call(
+                "Client version: unknown", extra={"request_id": request_id}
+            )
+
 
 class TestValidateCustomDockerImage:
     """Tests for the validate_custom_docker_image function"""
