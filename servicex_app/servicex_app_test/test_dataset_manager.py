@@ -41,8 +41,6 @@ from servicex_app.models import (
 )
 from servicex_app.models import db
 from servicex_app_test.resource_test_base import ResourceTestBase
-from sqlalchemy import event
-from sqlalchemy.orm import Session
 
 
 def mock_dataset(status: str, mocker) -> Dataset:
