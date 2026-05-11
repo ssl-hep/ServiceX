@@ -55,16 +55,22 @@ class DatasetManager:
         extras: dict[str, str] = None,
         db: SQLAlchemy = None,
     ):
-        dataset = Dataset.find_by_name(did.full_did, with_lock=True)  # strictly speaking, unnecessary
+        dataset = Dataset.find_by_name(
+            did.full_did, with_lock=True
+        )  # strictly speaking, unnecessary
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
-            statement = insert(Dataset).values(
-                name=did.full_did,
-                last_used=dataset_timestamp,
-                last_updated=dataset_timestamp,
-                lookup_status=DatasetStatus.created,
-                did_finder=did.scheme,
-            ).on_conflict_do_nothing()
+            statement = (
+                insert(Dataset)
+                .values(
+                    name=did.full_did,
+                    last_used=dataset_timestamp,
+                    last_updated=dataset_timestamp,
+                    lookup_status=DatasetStatus.created,
+                    did_finder=did.scheme,
+                )
+                .on_conflict_do_nothing()
+            )
             db.session.execute(statement)
             dataset = Dataset.find_by_name(did.full_did, with_lock=True)
             if dataset is None:
@@ -99,17 +105,23 @@ class DatasetManager:
 
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
-            statement = insert(Dataset).values(
-                name=name,
-                last_used=dataset_timestamp,
-                last_updated=dataset_timestamp,
-                lookup_status=DatasetStatus.complete,
-                did_finder="user",
-                files=[
-                    DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
-                    for file in file_list
-                ],
-            ).on_conflict_do_nothing()
+            statement = (
+                insert(Dataset)
+                .values(
+                    name=name,
+                    last_used=dataset_timestamp,
+                    last_updated=dataset_timestamp,
+                    lookup_status=DatasetStatus.complete,
+                    did_finder="user",
+                    files=[
+                        DatasetFile(
+                            paths=file, adler32="xxx", file_events=0, file_size=0
+                        )
+                        for file in file_list
+                    ],
+                )
+                .on_conflict_do_nothing()
+            )
             db.session.execute(statement)
             dataset = Dataset.find_by_name(name, with_lock=True)
             if dataset is None:

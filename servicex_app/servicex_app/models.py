@@ -494,10 +494,9 @@ class Dataset(db.Model):
     transform_requests = relationship("TransformRequest", back_populates="dataset")
 
     __table_args__ = (
-        db.Index("ix_datasets_name", name,
-                 unique=True,
-                 postgresql_where=(stale.is_(False))
-                 ),
+        db.Index(
+            "ix_datasets_name", name, unique=True, postgresql_where=(stale.is_(False))
+        ),
     )
 
     def save_to_db(self):

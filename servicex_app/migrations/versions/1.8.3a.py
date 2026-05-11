@@ -17,12 +17,19 @@ depends_on = None
 
 def upgrade():
     op.drop_index(op.f("ix_datasets_name"), table_name="datasets")
-    op.create_index(op.f("ix_datasets_name"), "datasets", ["name"],
-                    unique=True,
-                    postgresql_where=text("stale IS FALSE"))
+    op.create_index(
+        op.f("ix_datasets_name"),
+        "datasets",
+        ["name"],
+        unique=True,
+        postgresql_where=text("stale IS FALSE"),
+    )
 
 
 def downgrade():
-    op.drop_index(op.f("ix_datasets_name"), table_name="datasets",
-                  postgresql_where=text("stale IS FALSE"))
-    op.create_index(op.f('ix_datasets_name'), 'datasets', ['name'], unique=False)
+    op.drop_index(
+        op.f("ix_datasets_name"),
+        table_name="datasets",
+        postgresql_where=text("stale IS FALSE"),
+    )
+    op.create_index(op.f("ix_datasets_name"), "datasets", ["name"], unique=False)
