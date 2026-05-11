@@ -32,6 +32,7 @@ from typing import List
 
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import insert
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import Dataset, DatasetFile, TransformRequest, DatasetStatus
@@ -54,19 +55,23 @@ class DatasetManager:
         extras: dict[str, str] = None,
         db: SQLAlchemy = None,
     ):
-        dataset = Dataset.find_by_name(did.full_did)
+        dataset = Dataset.find_by_name(did.full_did, with_lock=True)  # strictly speaking, unnecessary
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
-            dataset = Dataset(
+            statement = insert(Dataset).values(
                 name=did.full_did,
                 last_used=dataset_timestamp,
                 last_updated=dataset_timestamp,
                 lookup_status=DatasetStatus.created,
                 did_finder=did.scheme,
-            )
+            ).on_conflict_do_nothing()
+            db.session.execute(statement)
+            dataset = Dataset.find_by_name(did.full_did, with_lock=True)
+            if dataset is None:
+                raise RuntimeError(f"Dataset {did.full_did} should be created")
 
             logger.info(
-                f"Created new dataset: {dataset.name}, id is {dataset.id}", extra=extras
+                f"Upserted dataset: {dataset.name}, id is {dataset.id}", extra=extras
             )
         else:
             logger.info(
@@ -90,11 +95,11 @@ class DatasetManager:
         db: SQLAlchemy = None,
     ):
         name = cls.file_list_hash(file_list)
-        dataset = Dataset.find_by_name(name)
+        dataset = Dataset.find_by_name(name, with_lock=True)
 
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
-            dataset = Dataset(
+            statement = insert(Dataset).values(
                 name=name,
                 last_used=dataset_timestamp,
                 last_updated=dataset_timestamp,
@@ -104,10 +109,14 @@ class DatasetManager:
                     DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
                     for file in file_list
                 ],
-            )
+            ).on_conflict_do_nothing()
+            db.session.execute(statement)
+            dataset = Dataset.find_by_name(name, with_lock=True)
+            if dataset is None:
+                raise RuntimeError(f"Dataset {name} should be created")
 
             logger.info(
-                f"Created new dataset for file list. Dataset Id is {dataset.id}",
+                f"Upserted dataset for file list. Dataset Id is {dataset.id}",
                 extra=extras,
             )
         else:
@@ -159,9 +168,6 @@ class DatasetManager:
 
     def refresh(self):
         self.db.session.refresh(self.dataset)
-
-    def lock(self):
-        self.db.session.refresh(self.dataset, with_for_update=True)
 
     def submit_lookup_request(self, advertised_endpoint, celery_app: Celery):
         task_id = celery_app.send_task(

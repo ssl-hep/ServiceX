@@ -480,7 +480,7 @@ class Dataset(db.Model):
     __tablename__ = "datasets"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1024), unique=False, nullable=False, index=True)
+    name = db.Column(db.String(1024), unique=False, nullable=False)
     last_used = db.Column(db.DateTime, nullable=False)
     last_updated = db.Column(db.DateTime, nullable=True)
     did_finder = db.Column(db.String(64), nullable=False)
@@ -492,6 +492,13 @@ class Dataset(db.Model):
 
     files = relationship("DatasetFile", back_populates="dataset")
     transform_requests = relationship("TransformRequest", back_populates="dataset")
+
+    __table_args__ = (
+        db.Index("ix_datasets_name", name,
+                 unique=True,
+                 postgresql_where=(stale.is_(False))
+                 ),
+    )
 
     def save_to_db(self):
         db.session.add(self)
@@ -514,8 +521,11 @@ class Dataset(db.Model):
         return result_obj
 
     @classmethod
-    def find_by_name(cls, name) -> Optional["Dataset"]:
-        return cls.query.filter_by(name=name, stale=False).first()
+    def find_by_name(cls, name, with_lock=False) -> Optional["Dataset"]:
+        if with_lock:
+            return cls.query.filter_by(name=name, stale=False).with_for_update().first()
+        else:
+            return cls.query.filter_by(name=name, stale=False).first()
 
     @classmethod
     def find_by_id(cls, id) -> Optional["Dataset"]:

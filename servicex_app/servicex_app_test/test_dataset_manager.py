@@ -294,30 +294,6 @@ class TestDatasetManager(ResourceTestBase):
             dm.refresh()
             assert dm.dataset.lookup_status == DatasetStatus.complete
 
-    def test_lock(self, client):
-        def receive_orm_execute(state):
-            if state.is_select:
-                assert state.statement._for_update_arg is not None
-
-        with client.application.app_context():
-            with db.session.begin():
-                dm = DatasetManager.from_did(
-                    DIDParser("rucio://my-did?files=1"),
-                    logger=client.application.logger,
-                    db=db,
-                )
-
-            with db.session.begin():
-                try:
-                    event.listen(Session, "do_orm_execute", receive_orm_execute)
-                    # Before lock, we will NOT have a FOR UPDATE argument
-                    with pytest.raises(AssertionError):
-                        dm.dataset.id
-                    # the lock will issue SELECT with the FOR UPDATE
-                    dm.lock()
-                finally:
-                    event.remove(Session, "do_orm_execute", receive_orm_execute)
-
     def test_is_complete(self, client):
         with client.application.app_context():
             d = Dataset()
