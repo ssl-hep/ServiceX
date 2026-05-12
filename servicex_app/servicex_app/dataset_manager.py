@@ -52,11 +52,11 @@ class DatasetManager:
         cls,
         did: DIDParser,
         logger: Logger,
-        extras: dict[str, str] = None,
-        db: SQLAlchemy = None,
+        db: SQLAlchemy,
+        extras: dict[str, str] = {},
     ):
-        dataset = Dataset.find_by_name(
-            did.full_did, with_lock=True
+        dataset = Dataset.find_by_name_with_lock(
+            did.full_did
         )  # strictly speaking, unnecessary
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
@@ -72,9 +72,8 @@ class DatasetManager:
                 .on_conflict_do_nothing()
             )
             db.session.execute(statement)
-            dataset = Dataset.find_by_name(did.full_did, with_lock=True)
-            if dataset is None:
-                raise RuntimeError(f"Dataset {did.full_did} should be created")
+            dataset = Dataset.find_by_name_with_lock(did.full_did)
+            assert dataset is not None, "Dataset {did.full_did} should exist"
 
             logger.info(
                 f"Upserted dataset: {dataset.name}, id is {dataset.id}", extra=extras
@@ -97,11 +96,11 @@ class DatasetManager:
         cls,
         file_list: List[str],
         logger: Logger,
-        extras: dict[str, str] = None,
-        db: SQLAlchemy = None,
+        db: SQLAlchemy,
+        extras: dict[str, str] = {},
     ):
         name = cls.file_list_hash(file_list)
-        dataset = Dataset.find_by_name(name, with_lock=True)
+        dataset = Dataset.find_by_name_with_lock(name)
 
         if not dataset:
             dataset_timestamp = datetime.now(tz=timezone.utc)
@@ -117,9 +116,9 @@ class DatasetManager:
                 .on_conflict_do_nothing()
             )
             db.session.execute(statement)
-            dataset = Dataset.find_by_name(name, with_lock=True)
-            if dataset is None:
-                raise RuntimeError(f"Dataset {name} should be created")
+            dataset = Dataset.find_by_name_with_lock(name)
+            assert dataset is not None, f"Dataset {name} should exist"
+
             dataset.files = [
                 DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
                 for file in file_list

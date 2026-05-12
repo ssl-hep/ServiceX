@@ -520,11 +520,8 @@ class Dataset(db.Model):
         return result_obj
 
     @classmethod
-    def find_by_name(cls, name, with_lock=False) -> Optional["Dataset"]:
-        if with_lock:
-            return cls.query.filter_by(name=name, stale=False).with_for_update().first()
-        else:
-            return cls.query.filter_by(name=name, stale=False).first()
+    def find_by_name_with_lock(cls, name) -> Optional["Dataset"]:
+        return cls.query.filter_by(name=name, stale=False).with_for_update().first()
 
     @classmethod
     def find_by_id(cls, id) -> Optional["Dataset"]:
