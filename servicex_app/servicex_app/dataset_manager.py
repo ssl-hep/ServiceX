@@ -113,12 +113,6 @@ class DatasetManager:
                     last_updated=dataset_timestamp,
                     lookup_status=DatasetStatus.complete,
                     did_finder="user",
-                    files=[
-                        DatasetFile(
-                            paths=file, adler32="xxx", file_events=0, file_size=0
-                        )
-                        for file in file_list
-                    ],
                 )
                 .on_conflict_do_nothing()
             )
@@ -126,6 +120,12 @@ class DatasetManager:
             dataset = Dataset.find_by_name(name, with_lock=True)
             if dataset is None:
                 raise RuntimeError(f"Dataset {name} should be created")
+            dataset.files = [
+                        DatasetFile(
+                            paths=file, adler32="xxx", file_events=0, file_size=0
+                        )
+                        for file in file_list
+                    ]
 
             logger.info(
                 f"Upserted dataset for file list. Dataset Id is {dataset.id}",
