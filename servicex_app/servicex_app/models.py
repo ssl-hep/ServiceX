@@ -60,9 +60,7 @@ class UserModel(db.Model):
     requests = db.relationship("TransformRequest", backref="user")
     updated_at = db.Column(DateTime, default=datetime.utcnow)
 
-    __table_args__ = (
-        db.Index("ix_users_email", db.func.lower(email), unique=True),
-    )
+    __table_args__ = (db.Index("ix_users_email", db.func.lower(email), unique=True),)
 
     def save_to_db(self):
         db.session.add(self)
