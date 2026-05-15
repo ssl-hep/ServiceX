@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 1.8.4
+May 15, 2026
+
+### Added
+- Server-side logging of client version ID (#1412).
+- Basic admin page with reporting (#1323)
+- Added request ID to sidecar logging (#1386).
+- Standardized logging metadata. Introduced a schema and inforcement (#1372).
+
+### Fixed
+- Fixed a deadlock related to row locking (#1431).
+- Fixed some mismatches with Alembic (#1436).
+
+### Changed
+- Updated Uproot to 5.7.4 (#1435).
+- Implemented row locking to prevent multiple lookups for the same dataset (#1403).
+- Upgraded the Rucio DID finder to Python 3.11 (#1404).
+- Upgraded x509_secrets to Python 3.11 (#1405).
+
+
 ### 1.8.3
 April 13, 2026
 
