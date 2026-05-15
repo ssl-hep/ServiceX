@@ -97,6 +97,13 @@ class SubmitTransformationRequest(ServiceXResource):
             location="json",
             help="Static list of Root Files. Provide this or Dataset Identifier.",
         )
+        cls.parser.add_argument(
+            "client-version",
+            type=str,
+            default="unknown",
+            location="json",
+            help="The client-version submitting the transformation.",
+        )
         cls.parser.add_argument("selection", help="Query string")
         cls.parser.add_argument("codegen")
         cls.parser.add_argument("tree-name")
@@ -186,6 +193,7 @@ class SubmitTransformationRequest(ServiceXResource):
             did = args.get("did")
             file_list = args.get("file-list")
             user_codegen_name = args.get("codegen")
+            client_version = args.get("client-version")
 
             code_gen_image_name = config["CODE_GEN_IMAGES"].get(user_codegen_name, None)
             namespace = config["TRANSFORMER_NAMESPACE"]
@@ -312,6 +320,10 @@ class SubmitTransformationRequest(ServiceXResource):
 
             current_app.logger.info(
                 "Transformation request submitted!", extra={"request_id": request_id}
+            )
+            current_app.logger.info(
+                f"Transformation submitted with client version: {client_version}",
+                extra={"request_id": request_id},
             )
             return {"request_id": str(request_id)}
         except Exception as eek:
