@@ -230,11 +230,11 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            # Transaction 1: persist the Dataset record and obtain a committed DB ID.
-            # This must commit before the TransformRequest is created so that the
-            # auto-increment dataset.id is assigned by the database.
             session = db.session
             with session.begin():
+                # persist the Dataset record and obtain a committed DB ID.
+                # This is flushed before the TransformRequest is created so that the
+                # auto-increment dataset.id is assigned by the database.
                 try:
                     dataset_manager = self._initialize_dataset_manager(
                         did, file_list, request_id, config
@@ -244,15 +244,12 @@ class SubmitTransformationRequest(ServiceXResource):
                         str(bad_request), extra={"request_id": request_id}
                     )
                     return {"message": str(bad_request)}, 400
+                # Flush any new dataset ID
+                db.session.flush()
 
-            # Do NOT access any SQLAlchemy model attributes between the two begin()
-            # blocks — that would trigger SQLAlchemy's autobegin and cause the next
-            # session.begin() to raise InvalidRequestError.
-
-            # Transaction 2: create the TransformRequest referencing the now-persisted
-            # Dataset ID.  Expired attributes on dataset_manager.dataset are lazy-loaded
-            # within this transaction.
-            with session.begin():
+                # create the TransformRequest referencing the now-persisted
+                # Dataset ID.  Expired attributes on dataset_manager.dataset are lazy-loaded
+                # within this transaction.
                 user = self.get_requesting_user()
 
                 request_rec = TransformRequest(
@@ -282,7 +279,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 session.add(request_rec)
 
                 # If this request has a fresh DID then submit the lookup request to the DID Finder
-                dataset_manager.lock()  # refresh the dataset status, lock row
                 if dataset_manager.is_lookup_required:
                     dataset_manager.submit_lookup_request(
                         self._generate_advertised_endpoint(
