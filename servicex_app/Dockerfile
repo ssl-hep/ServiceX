@@ -25,8 +25,6 @@ ADD gai.conf /etc/gai.conf
 
 RUN chmod +x boot.sh
 
-#ENV FLASK_APP servicex
-
 USER servicex
 
 EXPOSE 5000

@@ -14,7 +14,7 @@ Returns a CSV of all users in the database with how many transformations have be
 The reporting module is also available from the flask admin CLI:
 
 ```commandline
-$ flask --app 'app:app' reports
+$ flask reports
 Usage: flask reports [OPTIONS] COMMAND [ARGS]...
 
 Options:
@@ -23,14 +23,14 @@ Options:
 Commands:
   user-transformation-count
 
-$ flask --app 'app:app' reports user-transformation-count --help
+$ flask reports user-transformation-count --help
 Usage: flask reports user-transformation-count [OPTIONS]
 
 Options:
   --days INTEGER  Number of days to look back
   --help          Show this message and exit.
 
-$ flask --app 'app:app' reports user-transformation-count
+$ flask reports user-transformation-count
 Name,Email,Institution,Experiment,Transforms (Last 30 Days)
 Test User,test@gmail.com,CERN,ATLAS,1
 ```
