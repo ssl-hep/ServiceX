@@ -39,6 +39,7 @@ import boto3
 
 class FileURLGenerator(ServiceXResource):
     def __init__(self):
+        super().__init__()
         if True:  # S3 backend
             # set up S3 client
             endpoint_url = (
