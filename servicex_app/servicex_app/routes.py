@@ -157,7 +157,7 @@ def add_routes(
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
-    api.add_resource(FileURLGenerator, prefix + "/file_urls")
+    api.add_resource(FileURLGenerator, prefix + "/file-urls")
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationResults, prefix + "/results")

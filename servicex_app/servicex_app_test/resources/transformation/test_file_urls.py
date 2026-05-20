@@ -59,7 +59,7 @@ class TestFileURLGenerator(ResourceTestBase):
 
                 mock_lookup.return_value = fake_transform_request
                 response = client.post(
-                    "/servicex/transformation/file_urls",
+                    "/servicex/transformation/file-urls",
                     json={"request_id": 1234, "file_list": ["abc"]},
                 )
             assert response.status_code == 200
@@ -83,7 +83,7 @@ class TestFileURLGenerator(ResourceTestBase):
         )
 
         response = client.post(
-            "/servicex/transformation/file_urls",
+            "/servicex/transformation/file-urls",
             json={"request_id": 1234, "file_list": ["abc"]},
         )
         assert response.status_code == 404
