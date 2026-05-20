@@ -77,7 +77,7 @@ class FileURLGenerator(ServiceXResource):
             return {"message": msg}, 404
 
         expirydelta = 365 * 24 * 60 * 60
-        expiry = int(datetime.datetime.now().timestamp() + 25)
+        expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
         if True:  # branch for S3...
             rv = {

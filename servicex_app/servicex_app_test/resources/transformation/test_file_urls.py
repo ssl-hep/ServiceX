@@ -69,7 +69,7 @@ class TestFileURLGenerator(ResourceTestBase):
                     "abc": [
                         "https://localhost:9999/1234/abc?AWSAccessKeyId=miniouser&Signature=MVA1GdmZAgIrArzgzZAdlohHZW8%3D&Expires=1810223820",  # noqa: E501
                         {},
-                        1778687845,
+                        1810223820,
                     ]
                 }
             }
