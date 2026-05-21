@@ -45,8 +45,8 @@ from tenacity import (
 
 from servicex_app.models import TransformRequest, TransformStatus
 
-UPPER_FOLLOWED_BY_LOWER_RE = re.compile('(.)([A-Z][a-z]+)')
-LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE = re.compile('([a-z0-9])([A-Z])')
+UPPER_FOLLOWED_BY_LOWER_RE = re.compile("(.)([A-Z][a-z]+)")
+LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE = re.compile("([a-z0-9])([A-Z])")
 
 
 def camel_to_snake_case(strin: str):
@@ -207,7 +207,9 @@ class TransformerManager:
             )
 
         if (cvmfs_volume := current_app.config["TRANSFORMER_CVMFS_VOLUME"]) is not None:
-            cvmfs_volume = {camel_to_snake_case(_1): _2 for _1, _2 in cvmfs_volume.items()}
+            cvmfs_volume = {
+                camel_to_snake_case(_1): _2 for _1, _2 in cvmfs_volume.items()
+            }
             cvmfs_volume["name"] = "cvmfs"
             cvmfs_volume_mount = {
                 "name": "cvmfs",
@@ -217,12 +219,8 @@ class TransformerManager:
             if "host_path" in cvmfs_volume:
                 cvmfs_volume_mount["mount_propagation"] = "HostToContainer"
 
-            volumes.append(
-                client.V1Volume(**cvmfs_volume)
-            )
-            volume_mounts.append(
-                client.V1VolumeMount(**cvmfs_volume_mount)
-            )
+            volumes.append(client.V1Volume(**cvmfs_volume))
+            volume_mounts.append(client.V1VolumeMount(**cvmfs_volume_mount))
 
         # Compute Environment Vars
         env = [
