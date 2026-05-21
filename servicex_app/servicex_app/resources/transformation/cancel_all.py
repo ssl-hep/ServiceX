@@ -45,16 +45,20 @@ class CancelAllTransform(ServiceXResource):
 
     @auth_required
     def get(self):
-        user = self.get_requesting_user()
-        user_id = user.id if user is not None else None
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        transform_reqs = TransformRequest.query.filter(
-            TransformRequest.submitted_by == user_id,
-            TransformRequest.status.in_(_ACTIVE_STATUSES),
-        ).all()
-
+        if current_app.config.get("ENABLE_AUTH"):
+            user = self.get_requesting_user()
+            user_id = user.id if user is not None else None
+            transform_reqs = TransformRequest.query.filter(
+                TransformRequest.submitted_by == user_id,
+                TransformRequest.status.in_(_ACTIVE_STATUSES),
+            ).all()
+        else:
+            transform_reqs = TransformRequest.query.filter(
+                TransformRequest.status.in_(_ACTIVE_STATUSES),
+            ).all()
         canceled_ids = []
         now = datetime.now(tz=timezone.utc)
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         for transform_req in transform_reqs:
             request_id = transform_req.request_id
             if transform_req.status in (TransformStatus.running, TransformStatus.lookup):

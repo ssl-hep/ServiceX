@@ -19,18 +19,11 @@ class TestCancelAllTransform(ResourceTestBase):
         return mocker.patch(f"{self.module}.TransformRequest")
 
     @pytest.fixture
-    def mock_user(self, mocker):
-        user = mocker.Mock()
-        user.id = 6
-        mocker.patch(
-            "servicex_app.resources.servicex_resource.ServiceXResource.get_requesting_user",
-            return_value=user,
+    def client(self, mock_jwt_extended, mock_requesting_user, mock_transform_manager):
+        return self._test_client(
+            transformation_manager=mock_transform_manager,
+            extra_config={"ENABLE_AUTH": True},
         )
-        return user
-
-    @pytest.fixture
-    def client(self, mock_user, mock_transform_manager):
-        return self._test_client(transformation_manager=mock_transform_manager)
 
     def _setup_query(self, mock_cls, transforms):
         mock_cls.query.filter.return_value.all.return_value = transforms
@@ -55,7 +48,10 @@ class TestCancelAllTransform(ResourceTestBase):
         fake.status = status
         self._setup_query(mock_transform_request_cls, [fake])
 
-        resp = client.get("/servicex/transformation/cancel-all")
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all", headers=self.fake_header()
+            )
 
         assert resp.status_code == 200
         assert fake.request_id in resp.json["canceled"]
@@ -79,7 +75,10 @@ class TestCancelAllTransform(ResourceTestBase):
         t2.status = TransformStatus.running
         self._setup_query(mock_transform_request_cls, [t1, t2])
 
-        resp = client.get("/servicex/transformation/cancel-all")
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all", headers=self.fake_header()
+            )
 
         assert resp.status_code == 200
         assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
@@ -94,7 +93,10 @@ class TestCancelAllTransform(ResourceTestBase):
     ):
         self._setup_query(mock_transform_request_cls, [])
 
-        resp = client.get("/servicex/transformation/cancel-all")
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all", headers=self.fake_header()
+            )
 
         assert resp.status_code == 200
         assert resp.json["canceled"] == []
@@ -110,7 +112,10 @@ class TestCancelAllTransform(ResourceTestBase):
         )
         self._setup_query(mock_transform_request_cls, [fake])
 
-        resp = client.get("/servicex/transformation/cancel-all")
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all", headers=self.fake_header()
+            )
 
         assert resp.status_code == 200
         assert fake.request_id in resp.json["canceled"]
@@ -131,10 +136,43 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [t1, t2])
         mock_error = mocker.patch.object(client.application.logger, "error")
 
-        resp = client.get("/servicex/transformation/cancel-all")
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all", headers=self.fake_header()
+            )
 
         assert resp.status_code == 200
         assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
         assert t1.status == TransformStatus.canceled
         assert t2.status == TransformStatus.canceled
         mock_error.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "extra_config,expected_filter_arg_count",
+        [
+            ({}, 1),
+            ({"ENABLE_AUTH": True}, 2),
+        ],
+    )
+    def test_query_filter_reflects_auth_config(
+        self,
+        mock_jwt_extended,
+        mock_requesting_user,
+        mock_transform_manager,
+        mock_transform_request_cls,
+        extra_config,
+        expected_filter_arg_count,
+    ):
+        client = self._test_client(
+            transformation_manager=mock_transform_manager,
+            extra_config=extra_config,
+        )
+        self._setup_query(mock_transform_request_cls, [])
+        with client.application.app_context():
+            client.get(
+                "/servicex/transformation/cancel-all",
+                headers=self.fake_header(),
+            )
+
+        call_args = mock_transform_request_cls.query.filter.call_args[0]
+        assert len(call_args) == expected_filter_arg_count
