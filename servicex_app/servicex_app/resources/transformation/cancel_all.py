@@ -53,9 +53,9 @@ class CancelAllTransform(ServiceXResource):
                 TransformRequest.status.in_(_ACTIVE_STATUSES),
             ).all()
         else:
-            transform_reqs = TransformRequest.query.filter(
-                TransformRequest.status.in_(_ACTIVE_STATUSES),
-            ).all()
+            return {
+                "message": "This is not available when auth is disabled"
+            }, 400
         canceled_ids = []
         now = datetime.now(tz=timezone.utc)
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]

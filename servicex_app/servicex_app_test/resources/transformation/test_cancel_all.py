@@ -147,25 +147,16 @@ class TestCancelAllTransform(ResourceTestBase):
         assert t2.status == TransformStatus.canceled
         mock_error.assert_called_once()
 
-    @pytest.mark.parametrize(
-        "extra_config,expected_filter_arg_count",
-        [
-            ({}, 1),
-            ({"ENABLE_AUTH": True}, 2),
-        ],
-    )
-    def test_query_filter_reflects_auth_config(
+    def test_auth_enabled(
         self,
         mock_jwt_extended,
         mock_requesting_user,
         mock_transform_manager,
         mock_transform_request_cls,
-        extra_config,
-        expected_filter_arg_count,
     ):
         client = self._test_client(
             transformation_manager=mock_transform_manager,
-            extra_config=extra_config,
+            extra_config={"ENABLE_AUTH": True},
         )
         self._setup_query(mock_transform_request_cls, [])
         with client.application.app_context():
@@ -175,4 +166,23 @@ class TestCancelAllTransform(ResourceTestBase):
             )
 
         call_args = mock_transform_request_cls.query.filter.call_args[0]
-        assert len(call_args) == expected_filter_arg_count
+        assert len(call_args) == 2
+
+    def test_auth_disabled(
+        self,
+        mock_jwt_extended,
+        mock_requesting_user,
+        mock_transform_manager,
+        mock_transform_request_cls,
+    ):
+        client = self._test_client(
+            transformation_manager=mock_transform_manager,
+            extra_config={"ENABLE_AUTH": False},
+        )
+        self._setup_query(mock_transform_request_cls, [])
+        with client.application.app_context():
+            response = client.get(
+                "/servicex/transformation/cancel-all",
+                headers=self.fake_header(),
+            )
+            assert response.status_code == 400

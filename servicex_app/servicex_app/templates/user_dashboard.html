@@ -11,12 +11,14 @@
       <h4 class="mb-3 col-auto">Transformation Requests</h4>
       <div class="col-auto d-flex gap-2 align-items-center">
         {{ sort_dropdown(dropdown_options, active_sort, active_order) }}
+        {% if config["ENABLE_AUTH"] %}
         <button
           onclick="if(confirm('Cancel all active transformations?')) fetch('/servicex/transformation/cancel-all').then(() => location.reload())"
           type="button"
           class="btn btn-danger btn-sm">
           Cancel All
         </button>
+        {% endif %}
       </div>
     </div>
     {{ requests_table(pagination, humanize) }}
