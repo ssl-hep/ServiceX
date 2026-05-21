@@ -408,6 +408,9 @@ transformer:
   tolerations: []
   affinity: {}
   podAnnotations: {}
+
+  cvmfsVolume: null
+
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6
