@@ -61,9 +61,14 @@ class CancelAllTransform(ServiceXResource):
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         for transform_req in transform_reqs:
             request_id = transform_req.request_id
-            if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
+            if transform_req.status in (
+                TransformStatus.running,
+                TransformStatus.lookup,
+            ):
                 try:
-                    self.transformer_manager.shutdown_transformer_job(request_id, namespace)
+                    self.transformer_manager.shutdown_transformer_job(
+                        request_id, namespace
+                    )
                 except kubernetes.client.exceptions.ApiException as exc:
                     if exc.status != 404:
                         current_app.logger.error(
@@ -76,4 +81,3 @@ class CancelAllTransform(ServiceXResource):
 
         db.session.commit()
         return {"canceled": canceled_ids}, 200
-
