@@ -1294,10 +1294,13 @@ class TestTransformerManager(ResourceTestBase):
             assert template.spec.tolerations is None
             assert template.spec.affinity is None
 
-    @pytest.mark.parametrize("volume", [{"hostPath": {"path": "/cvmfs"}},
-                                        {"persistentVolumeClaim": {"claimName": "cvmfs"}},
-                                        ]
-                             )
+    @pytest.mark.parametrize(
+        "volume",
+        [
+            {"hostPath": {"path": "/cvmfs"}},
+            {"persistentVolumeClaim": {"claimName": "cvmfs"}},
+        ],
+    )
     def test_launch_transformer_jobs_with_cvmfs(self, mocker, volume):
         import kubernetes
 
@@ -1340,8 +1343,16 @@ class TestTransformerManager(ResourceTestBase):
                 )
             )
             # check that one volume type exists
-            assert len([_ for _ in cvmfs_vol.to_dict().items() 
-                        if _[1] is not None and _[0] != "name"]) == 1
+            assert (
+                len(
+                    [
+                        _
+                        for _ in cvmfs_vol.to_dict().items()
+                        if _[1] is not None and _[0] != "name"
+                    ]
+                )
+                == 1
+            )
             # check that all the keys have been snake cased
             for key, subdict in cvmfs_vol.to_dict().items():
                 if key == "name":

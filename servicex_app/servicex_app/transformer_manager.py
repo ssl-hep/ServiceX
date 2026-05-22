@@ -59,8 +59,9 @@ def camel_to_snake_case_dict(dictin: dict):
     dictout = {}
     for key, value in dictin.items():
         keyout = camel_to_snake_case(key)
-        dictout[keyout] = (camel_to_snake_case_dict(value) if isinstance(value, dict)
-                           else value)
+        dictout[keyout] = (
+            camel_to_snake_case_dict(value) if isinstance(value, dict) else value
+        )
     return dictout
 
 
