@@ -27,7 +27,9 @@ class TestTransformCancel(ResourceTestBase):
         mock_transform_request_cls.lookup.return_value = fake
         return fake
 
-    def test_submitted(self, fake_transform, mock_transform_request_cls, mock_transform_manager):
+    def test_submitted(
+        self, fake_transform, mock_transform_request_cls, mock_transform_manager
+    ):
         fake_transform.status = TransformStatus.submitted
         client = self._test_client(transformation_manager=mock_transform_manager)
 
@@ -37,7 +39,9 @@ class TestTransformCancel(ResourceTestBase):
         assert fake_transform.finish_time is not None
         mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
 
-    def test_running(self, mock_transform_manager, fake_transform, mock_transform_request_cls):
+    def test_running(
+        self, mock_transform_manager, fake_transform, mock_transform_request_cls
+    ):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
@@ -47,7 +51,9 @@ class TestTransformCancel(ResourceTestBase):
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
-    def test_running_deployment_not_found(self, mock_transform_manager, fake_transform, mock_transform_request_cls):
+    def test_running_deployment_not_found(
+        self, mock_transform_manager, fake_transform, mock_transform_request_cls
+    ):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
@@ -57,7 +63,9 @@ class TestTransformCancel(ResourceTestBase):
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
-    def test_running_k8s_exception(self, mock_transform_manager, fake_transform, mock_transform_request_cls):
+    def test_running_k8s_exception(
+        self, mock_transform_manager, fake_transform, mock_transform_request_cls
+    ):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
         mock_transform_request_cls.shutdown_pod.side_effect = exc
