@@ -45,6 +45,8 @@ from tenacity import (
 
 from servicex_app.models import TransformRequest, TransformStatus
 
+# these regexes are defined to help translate camelCase to snake_case
+# due to mismatch of Kubernetes yaml syntax and Python API
 UPPER_FOLLOWED_BY_LOWER_RE = re.compile("(.)([A-Z][a-z]+)")
 LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE = re.compile("([a-z0-9])([A-Z])")
 
