@@ -35,47 +35,35 @@ from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.transformer_manager import TransformerManager
 
-_ACTIVE_STATUSES = [s for s in TransformStatus if not s.is_complete]
 
-
-class CancelAllTransform(ServiceXResource):
+class CancelAllTransforms(ServiceXResource):
     @classmethod
     def make_api(cls, transformer_manager: TransformerManager):
         cls.transformer_manager = transformer_manager
 
     @auth_required
     def get(self):
-        if current_app.config.get("ENABLE_AUTH"):
-            user = self.get_requesting_user()
-            user_id = user.id if user is not None else None
-            transform_reqs = TransformRequest.query.filter(
-                TransformRequest.submitted_by == user_id,
-                TransformRequest.status.in_(_ACTIVE_STATUSES),
-            ).all()
-        else:
+        if not current_app.config.get("ENABLE_AUTH"):
             return {"message": "This is not available when auth is disabled"}, 400
+
+        user = self.get_requesting_user()
+        if user is None:
+            return {"message": "No user found"}, 400
+
+        transform_reqs = TransformRequest.active_user_transformations(user)
+
         canceled_ids = []
         now = datetime.now(tz=timezone.utc)
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+
         for transform_req in transform_reqs:
-            request_id = transform_req.request_id
-            if transform_req.status in (
-                TransformStatus.running,
-                TransformStatus.lookup,
-            ):
-                try:
-                    self.transformer_manager.shutdown_transformer_job(
-                        request_id, namespace
-                    )
-                except kubernetes.client.exceptions.ApiException as exc:
-                    if exc.status != 404:
-                        current_app.logger.error(
-                            f"Got Kubernetes api exception: {exc.reason}",
-                            extra={"request_id": request_id},
-                        )
+            try:
+                TransformRequest.shutdown_pod(transform_req)
+            except kubernetes.client.exceptions.ApiException:
+                pass
+
             transform_req.status = TransformStatus.canceled
             transform_req.finish_time = now
-            canceled_ids.append(request_id)
+            canceled_ids.append(transform_req.request_id)
 
         db.session.commit()
         return {"canceled": canceled_ids}, 200

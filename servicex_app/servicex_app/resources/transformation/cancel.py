@@ -53,20 +53,10 @@ class CancelTransform(ServiceXResource):
             current_app.logger.warning(msg, extra={"request_id": request_id})
             return {"message": msg}, 400
 
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-
-        if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
-            try:
-                self.transformer_manager.shutdown_transformer_job(request_id, namespace)
-            except kubernetes.client.exceptions.ApiException as exc:
-                if exc.status == 404:
-                    pass
-                else:
-                    current_app.logger.error(
-                        f"Got Kubernetes api exception: {exc.reason}",
-                        extra={"request_id": request_id},
-                    )
-                    return {"message": exc.reason}, exc.status
+        try:
+            TransformRequest.shutdown_pod(transform_req)
+        except kubernetes.client.exceptions.ApiException as exc:
+            return {"message": exc.reason}, exc.status
 
         transform_req.status = TransformStatus.canceled
         transform_req.finish_time = datetime.now(tz=timezone.utc)

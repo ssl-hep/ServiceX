@@ -28,11 +28,13 @@
 from __future__ import annotations
 
 import hashlib
+import kubernetes
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
+from flask import current_app
 from sqlalchemy import DateTime, func
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -245,6 +247,32 @@ class TransformRequest(db.Model):
         if self.finish_time is not None:
             result_obj["finish-time"] = str(self.finish_time.strftime(iso_fmt))
         return result_obj
+
+    @classmethod
+    def active_user_transformations(cls, user: UserModel):
+        active_statuses = [s for s in TransformStatus if not s.is_complete]
+
+        return cls.query.filter(
+            cls.submitted_by == user.id,
+            cls.status.in_(active_statuses),
+        ).with_for_update().all()
+
+    @classmethod
+    def shutdown_pod(cls, transform_req: TransformRequest):
+        request_id = transform_req.request_id
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
+            try:
+                cls.transformer_manager.shutdown_transformer_job(request_id, namespace)
+            except kubernetes.client.exceptions.ApiException as exc:
+                if exc.status == 404:
+                    pass
+                else:
+                    current_app.logger.error(
+                        f"Got Kubernetes api exception: {exc.reason}",
+                        extra={"request_id": request_id},
+                    )
+                    raise exc
 
     @classmethod
     def return_json(cls, requests: Iterable["TransformRequest"]):

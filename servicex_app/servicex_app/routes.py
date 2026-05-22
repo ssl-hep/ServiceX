@@ -64,7 +64,7 @@ def add_routes(
     from servicex_app.resources.transformation.submit import SubmitTransformationRequest
     from servicex_app.resources.transformation.status import TransformationStatus
     from servicex_app.resources.transformation.cancel import CancelTransform
-    from servicex_app.resources.transformation.cancel_all import CancelAllTransform
+    from servicex_app.resources.transformation.cancel_all import CancelAllTransforms
     from servicex_app.resources.transformation.get_all import AllTransformationRequests
     from servicex_app.resources.transformation.get_one import TransformationRequest
     from servicex_app.resources.transformation.deployment import DeploymentStatus
@@ -158,8 +158,8 @@ def add_routes(
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
 
-    CancelAllTransform.make_api(transformer_manager)
-    api.add_resource(CancelAllTransform, prefix + "/cancel-all")
+    CancelAllTransforms.make_api(transformer_manager)
+    api.add_resource(CancelAllTransforms, prefix + "/cancel-all")
 
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
