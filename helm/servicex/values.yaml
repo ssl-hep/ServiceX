@@ -409,6 +409,7 @@ transformer:
   affinity: {}
   podAnnotations: {}
 
+  cvmfsAvailable: false
   cvmfsVolume: null
 
 x509Secrets:
