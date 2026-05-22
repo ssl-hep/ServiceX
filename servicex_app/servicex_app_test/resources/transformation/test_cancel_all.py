@@ -26,15 +26,11 @@ class TestCancelAllTransform(ResourceTestBase):
         )
 
     def _setup_query(self, mock_cls, transforms):
-        mock_cls.query.filter.return_value.all.return_value = transforms
+        mock_cls.active_user_transformations.return_value = transforms
 
     @pytest.mark.parametrize(
-        "status,expect_shutdown",
-        [
-            (TransformStatus.submitted, False),
-            (TransformStatus.running, True),
-            (TransformStatus.lookup, True),
-        ],
+        "status",
+        [TransformStatus.submitted, TransformStatus.running, TransformStatus.lookup],
     )
     def test_cancels_transform(
         self,
@@ -42,7 +38,6 @@ class TestCancelAllTransform(ResourceTestBase):
         mock_transform_manager,
         mock_transform_request_cls,
         status,
-        expect_shutdown,
     ):
         fake = self._generate_transform_request()
         fake.status = status
@@ -57,12 +52,7 @@ class TestCancelAllTransform(ResourceTestBase):
         assert fake.request_id in resp.json["canceled"]
         assert fake.status == TransformStatus.canceled
         assert fake.finish_time is not None
-        if expect_shutdown:
-            mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
-                fake.request_id, client.application.config["TRANSFORMER_NAMESPACE"]
-            )
-        else:
-            mock_transform_manager.shutdown_transformer_job.assert_not_called()
+        mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake)
 
     def test_cancels_multiple_transforms(
         self, client, mock_transform_manager, mock_transform_request_cls
@@ -84,9 +74,7 @@ class TestCancelAllTransform(ResourceTestBase):
         assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
         assert t1.status == TransformStatus.canceled
         assert t2.status == TransformStatus.canceled
-        mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
-            "bbb-222", client.application.config["TRANSFORMER_NAMESPACE"]
-        )
+        assert mock_transform_request_cls.shutdown_pod.call_count == 2
 
     def test_no_active_transforms(
         self, client, mock_transform_manager, mock_transform_request_cls
@@ -100,14 +88,14 @@ class TestCancelAllTransform(ResourceTestBase):
 
         assert resp.status_code == 200
         assert resp.json["canceled"] == []
-        mock_transform_manager.shutdown_transformer_job.assert_not_called()
+        mock_transform_request_cls.shutdown_pod.assert_not_called()
 
-    def test_k8s_404_still_cancels(
+    def test_k8s_error_still_cancels(
         self, client, mock_transform_manager, mock_transform_request_cls
     ):
         fake = self._generate_transform_request()
         fake.status = TransformStatus.running
-        mock_transform_manager.shutdown_transformer_job.side_effect = (
+        mock_transform_request_cls.shutdown_pod.side_effect = (
             k8s.client.exceptions.ApiException(status=404)
         )
         self._setup_query(mock_transform_request_cls, [fake])
@@ -121,8 +109,8 @@ class TestCancelAllTransform(ResourceTestBase):
         assert fake.request_id in resp.json["canceled"]
         assert fake.status == TransformStatus.canceled
 
-    def test_k8s_error_logs_and_continues(
-        self, mocker, client, mock_transform_manager, mock_transform_request_cls
+    def test_shutdown_error_continues_to_next_transform(
+        self, client, mock_transform_manager, mock_transform_request_cls
     ):
         t1 = self._generate_transform_request()
         t1.request_id = "aaa-111"
@@ -130,11 +118,10 @@ class TestCancelAllTransform(ResourceTestBase):
         t2 = self._generate_transform_request()
         t2.request_id = "bbb-222"
         t2.status = TransformStatus.submitted
-        mock_transform_manager.shutdown_transformer_job.side_effect = (
+        mock_transform_request_cls.shutdown_pod.side_effect = (
             k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
         )
         self._setup_query(mock_transform_request_cls, [t1, t2])
-        mock_error = mocker.patch.object(client.application.logger, "error")
 
         with client.application.app_context():
             resp = client.get(
@@ -145,9 +132,8 @@ class TestCancelAllTransform(ResourceTestBase):
         assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
         assert t1.status == TransformStatus.canceled
         assert t2.status == TransformStatus.canceled
-        mock_error.assert_called_once()
 
-    def test_auth_enabled(
+    def test_auth_enabled_queries_by_user(
         self,
         mock_jwt_extended,
         mock_requesting_user,
@@ -165,8 +151,9 @@ class TestCancelAllTransform(ResourceTestBase):
                 headers=self.fake_header(),
             )
 
-        call_args = mock_transform_request_cls.query.filter.call_args[0]
-        assert len(call_args) == 2
+        mock_transform_request_cls.active_user_transformations.assert_called_once_with(
+            mock_requesting_user
+        )
 
     def test_auth_disabled(
         self,
