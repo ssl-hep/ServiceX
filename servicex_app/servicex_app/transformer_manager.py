@@ -55,6 +55,15 @@ def camel_to_snake_case(strin: str):
     return strout
 
 
+def camel_to_snake_case_dict(dictin: dict):
+    dictout = {}
+    for key, value in dictin.items():
+        keyout = camel_to_snake_case(key)
+        dictout[keyout] = (camel_to_snake_case_dict(value) if isinstance(value, dict)
+                           else value)
+    return dictout
+
+
 class TransformerManager:
     POSIX_VOLUME_MOUNT = "/posix_volume"
 
@@ -207,9 +216,7 @@ class TransformerManager:
             )
 
         if (cvmfs_volume := current_app.config["TRANSFORMER_CVMFS_VOLUME"]) is not None:
-            cvmfs_volume = {
-                camel_to_snake_case(_1): _2 for _1, _2 in cvmfs_volume.items()
-            }
+            cvmfs_volume = camel_to_snake_case_dict(cvmfs_volume)
             cvmfs_volume["name"] = "cvmfs"
             cvmfs_volume_mount = {
                 "name": "cvmfs",
