@@ -182,7 +182,7 @@ def transform_file(
             # of the input file.
             result_extension = ".parquet" if result_format == "parquet" else ""
             hashed_file_name = hash_path(
-                _file_path.replace("/", ":") + result_extension
+                _file_path.replace("/", "_") + result_extension
             )
 
             # The transformer will write results here as they are generated. This
