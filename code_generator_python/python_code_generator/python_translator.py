@@ -31,6 +31,9 @@ import shutil
 
 from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult
 
+ALLOWED_COMPRESSION_ALGORITHMS = {"ZLIB", "LZMA", "LZ4", "ZSTD"}
+ALLOWED_COMPRESSION_LEVELS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
 
 class PythonTranslator(CodeGenerator):
 
@@ -38,6 +41,30 @@ class PythonTranslator(CodeGenerator):
     def generate_code(self, query, cache_path: str):
 
         src = base64.b64decode(query).decode("ascii")
+
+        compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM", "ZSTD")
+        try:
+            compression_level = int(os.environ.get("COMPRESSION_LEVEL", 5))
+        except ValueError:
+            raise RuntimeError(
+                f"Invalid compression level '{os.environ.get('COMPRESSION_LEVEL', 5)}'. "
+            )
+
+        if compression_algorithm not in ALLOWED_COMPRESSION_ALGORITHMS:
+            raise RuntimeError(
+                f"Invalid compression algorithm '{compression_algorithm}'. "
+            )
+
+        if compression_level not in ALLOWED_COMPRESSION_LEVELS:
+            raise RuntimeError(f"Invalid compression level '{compression_level}'. ")
+
+        src = f"""
+import os
+os.environ['COMPRESSION_ALGORITHM'] = '{compression_algorithm}'
+os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
+
+{src}
+"""
         hash = "no-hash"
         query_file_path = os.path.join(cache_path, hash)
 

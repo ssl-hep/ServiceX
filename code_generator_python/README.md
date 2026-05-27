@@ -49,3 +49,18 @@ if __name__ == "__main__":
     r = ds.get_data_pandas_df(encoded_selection)
     print(r)
 ```
+
+Output File Compression
+-----------------------
+For output files in ROOT formats (`root-file` or `root-rntuple`), the compression algorithm and level can be configured across all queries processed by this code generator. The compression parameters are set in the Helm chart configuration:
+
+```
+codeGen:
+  python:
+    compressionAlgorithm: ZSTD
+    compressionLevel: 5
+```
+
+**Supported compression algorithms:** `ZLIB`, `LZMA`, `LZ4`, `ZSTD`
+
+**Supported compression levels:** Integer values between 0 and 9.
