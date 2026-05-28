@@ -39,7 +39,7 @@ codeGen:
 
 **Supported compression algorithms:** `ZLIB`, `LZMA`, `LZ4`, `ZSTD`
 
-**Supported compression levels:** Integer values between 1 and 9.
+**Supported compression levels:** Integer values between 0 and 9.
 
 
 Usage
