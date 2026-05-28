@@ -10,7 +10,12 @@ import pytest
 from pytest import fixture
 
 import servicex_app
-from servicex_app.models import TransformationResult, TransformRequest, TransformStatus, UserModel
+from servicex_app.models import (
+    TransformationResult,
+    TransformRequest,
+    TransformStatus,
+    UserModel,
+)
 
 
 @pytest.fixture
@@ -177,7 +182,9 @@ class TestShutdownPod:
         req.status = status
         return req
 
-    def test_skips_shutdown_for_non_active_status(self, app_context, mock_transformer_manager):
+    def test_skips_shutdown_for_non_active_status(
+        self, app_context, mock_transformer_manager
+    ):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
         TransformRequest.shutdown_pod(self._make_req(TransformStatus.submitted))
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
@@ -203,7 +210,9 @@ class TestShutdownPod:
         )
         TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
 
-    def test_non_404_logs_and_reraises(self, app_context, mock_transformer_manager, mocker):
+    def test_non_404_logs_and_reraises(
+        self, app_context, mock_transformer_manager, mocker
+    ):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
         mock_error = mocker.patch.object(app_context.logger, "error")
         mock_transformer_manager.shutdown_transformer_job.side_effect = (
