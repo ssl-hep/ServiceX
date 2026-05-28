@@ -45,7 +45,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [fake])
 
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all", headers=self.fake_header()
             )
 
@@ -67,7 +67,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [t1, t2])
 
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all", headers=self.fake_header()
             )
 
@@ -83,7 +83,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [])
 
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all", headers=self.fake_header()
             )
 
@@ -102,7 +102,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [fake])
 
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all", headers=self.fake_header()
             )
 
@@ -125,7 +125,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(mock_transform_request_cls, [t1, t2])
 
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all", headers=self.fake_header()
             )
 
@@ -147,7 +147,7 @@ class TestCancelAllTransform(ResourceTestBase):
         )
         self._setup_query(mock_transform_request_cls, [])
         with client.application.app_context():
-            client.get(
+            client.post(
                 "/servicex/transformation/cancel-all",
                 headers=self.fake_header(),
             )
@@ -169,7 +169,7 @@ class TestCancelAllTransform(ResourceTestBase):
         )
         self._setup_query(mock_transform_request_cls, [])
         with client.application.app_context():
-            response = client.get(
+            response = client.post(
                 "/servicex/transformation/cancel-all",
                 headers=self.fake_header(),
             )
@@ -190,7 +190,7 @@ class TestCancelAllTransform(ResourceTestBase):
         )
         self._setup_query(mock_transform_request_cls, [])
         with client.application.app_context():
-            resp = client.get(
+            resp = client.post(
                 "/servicex/transformation/cancel-all",
                 headers=self.fake_header(),
             )

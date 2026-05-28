@@ -12,7 +12,7 @@
       <div class="col-auto d-flex gap-2 align-items-center">
         {% if config["ENABLE_AUTH"] %}
         <button
-          onclick="if(confirm('Cancel all active transformations?')) fetch('/servicex/transformation/cancel-all').then(() => location.reload())"
+          onclick="if(confirm('Cancel all active transformations?')) fetch('/servicex/transformation/cancel-all', {method: 'POST'}).then(() => location.reload())"
           type="button"
           class="btn btn-danger btn-sm">
           Cancel All

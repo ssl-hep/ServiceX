@@ -42,7 +42,7 @@ class CancelAllTransforms(ServiceXResource):
         cls.transformer_manager = transformer_manager
 
     @auth_required
-    def get(self):
+    def post(self):
         if not current_app.config.get("ENABLE_AUTH"):
             return {"message": "This is not available when auth is disabled"}, 400
 
