@@ -3,13 +3,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import kubernetes
 from sqlalchemy import text
 
 import pytest
 from pytest import fixture
 
 import servicex_app
-from servicex_app.models import TransformationResult, TransformRequest, UserModel
+from servicex_app.models import TransformationResult, TransformRequest, TransformStatus, UserModel
 
 
 @pytest.fixture
@@ -160,3 +161,54 @@ class TestTransformRequest:
             # Assert
             assert result is None
             mock_conn.execute.assert_called_once()
+
+
+class TestShutdownPod:
+    @pytest.fixture(autouse=True)
+    def mock_transformer_manager(self, mocker):
+        mgr = mocker.MagicMock()
+        TransformRequest.transformer_manager = mgr
+        yield mgr
+        del TransformRequest.transformer_manager
+
+    def _make_req(self, status):
+        req = TransformRequest()
+        req.request_id = "test-123"
+        req.status = status
+        return req
+
+    def test_skips_shutdown_for_non_active_status(self, app_context, mock_transformer_manager):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        TransformRequest.shutdown_pod(self._make_req(TransformStatus.submitted))
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_calls_shutdown_for_running(self, app_context, mock_transformer_manager):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
+            "test-123", "test-ns"
+        )
+
+    def test_calls_shutdown_for_lookup(self, app_context, mock_transformer_manager):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        TransformRequest.shutdown_pod(self._make_req(TransformStatus.lookup))
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
+            "test-123", "test-ns"
+        )
+
+    def test_404_swallowed(self, app_context, mock_transformer_manager):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        mock_transformer_manager.shutdown_transformer_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=404)
+        )
+        TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+
+    def test_non_404_logs_and_reraises(self, app_context, mock_transformer_manager, mocker):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        mock_error = mocker.patch.object(app_context.logger, "error")
+        mock_transformer_manager.shutdown_transformer_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=403, reason="Forbidden")
+        )
+        with pytest.raises(kubernetes.client.exceptions.ApiException):
+            TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+        mock_error.assert_called_once()

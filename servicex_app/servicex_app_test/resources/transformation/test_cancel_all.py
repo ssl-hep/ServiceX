@@ -4,6 +4,7 @@ import kubernetes as k8s
 import pytest
 
 from servicex_app.models import TransformStatus
+from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
@@ -173,3 +174,25 @@ class TestCancelAllTransform(ResourceTestBase):
                 headers=self.fake_header(),
             )
             assert response.status_code == 400
+
+    def test_no_user_found(
+        self,
+        mock_jwt_extended,
+        mock_requesting_user,
+        mock_transform_manager,
+        mock_transform_request_cls,
+        mocker,
+    ):
+        mocker.patch.object(ServiceXResource, "get_requesting_user", return_value=None)
+        client = self._test_client(
+            transformation_manager=mock_transform_manager,
+            extra_config={"ENABLE_AUTH": True},
+        )
+        self._setup_query(mock_transform_request_cls, [])
+        with client.application.app_context():
+            resp = client.get(
+                "/servicex/transformation/cancel-all",
+                headers=self.fake_header(),
+            )
+        assert resp.status_code == 400
+        assert resp.json["message"] == "No user found"
