@@ -33,7 +33,7 @@ class TestTransformCancel(ResourceTestBase):
         fake_transform.status = TransformStatus.submitted
         client = self._test_client(transformation_manager=mock_transform_manager)
 
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
@@ -45,7 +45,7 @@ class TestTransformCancel(ResourceTestBase):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
@@ -57,7 +57,7 @@ class TestTransformCancel(ResourceTestBase):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 200
         mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
@@ -71,7 +71,7 @@ class TestTransformCancel(ResourceTestBase):
         mock_transform_request_cls.shutdown_pod.side_effect = exc
         client = self._test_client(transformation_manager=mock_transform_manager)
 
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 403
         mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.running
@@ -83,11 +83,11 @@ class TestTransformCancel(ResourceTestBase):
     )
     def test_complete(self, client, fake_transform, status: TransformStatus):
         fake_transform.status = status
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 400
         assert "not in progress" in resp.json["message"]
 
     def test_404(self, client):
-        resp = client.post("/servicex/transformation/1234/cancel")
+        resp = client.get("/servicex/transformation/1234/cancel")
         assert resp.status_code == 404
         assert "Transformation request not found" in resp.json["message"]
