@@ -43,6 +43,13 @@ class CancelTransform(ServiceXResource):
 
     @auth_required
     def get(self, request_id: str):
+        return self._cancel_transform(request_id)
+
+    @auth_required
+    def post(self, request_id: str):
+        return self._cancel_transform(request_id)
+
+    def _cancel_transform(self, request_id: str):
         transform_req = TransformRequest.lookup(request_id)
         if not transform_req:
             msg = f"Transformation request not found with id: {request_id}"
