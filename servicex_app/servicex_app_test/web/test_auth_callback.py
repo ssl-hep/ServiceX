@@ -73,4 +73,4 @@ class TestAuthCallback(WebTestBase):
         assert mock_session.get("name") == id_token["name"]
         assert mock_session.get("sub") == id_token["sub"]
         assert response.status_code == 302
-        assert response.location == url_for("user-dashboard")
+        assert response.location == url_for("profile")
