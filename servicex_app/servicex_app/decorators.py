@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_request
-from flask_jwt_extended.exceptions import NoAuthorizationError, UserClaimsVerificationError
+from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from servicex_app.models import UserModel, db
 
