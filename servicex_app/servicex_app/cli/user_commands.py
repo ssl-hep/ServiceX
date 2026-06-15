@@ -81,6 +81,8 @@ def set_user_admin(email: str, value: bool = True) -> None:
     if user.admin:
         print(f"User {email} made admin")
         print()
-        print(f"Please instruct the user to log out and log back in for these changes to take effect!")
+        print(
+            f"Please instruct the user to log out and log back in for these changes to take effect!"
+        )
     else:
         print(f"User {email} admin privileges revoked")
