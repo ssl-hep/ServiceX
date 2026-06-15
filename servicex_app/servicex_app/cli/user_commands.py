@@ -51,33 +51,36 @@ def list_users(email_filter=None) -> None:
         )
 
 
-def approve_user(sub: str) -> None:
-    user = UserModel.find_by_sub(sub)
+def approve_user(email: str) -> None:
+    user = UserModel.find_by_email(email)
     if user and user.pending:
         user.pending = False
         user.save_to_db()
-        print(f"User {sub} approved")
+        print(f"User {email} approved")
     elif user and not user.pending:
-        print(f"User {sub} already approved")
+        print(f"User {email} already approved")
     else:
-        print(f"User {sub} not found")
+        print(f"User {email} not found")
 
 
-def set_user_admin(sub: str, value: bool = True) -> None:
-    user = UserModel.find_by_sub(sub)
+def set_user_admin(email: str, value: bool = True) -> None:
+    user = UserModel.find_by_email(email)
     if not user:
-        print(f"User {sub} not found")
+        print(f"User {email} not found")
+        return
 
     if user.admin == value:
         if user.admin:
-            print(f"User {sub} already admin")
+            print(f"User {email} already admin")
         else:
-            print(f"User {sub} already not admin")
+            print(f"User {email} already not admin")
         return
 
     user.admin = value
     user.save_to_db()
     if user.admin:
-        print(f"User {sub} made admin")
+        print(f"User {email} made admin")
+        print()
+        print(f"Please instruct the user to log out and log back in for these changes to take effect!")
     else:
-        print(f"User {sub} admin privileges revoked")
+        print(f"User {email} admin privileges revoked")

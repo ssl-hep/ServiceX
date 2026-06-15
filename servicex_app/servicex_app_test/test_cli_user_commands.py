@@ -91,8 +91,8 @@ class TestSetUserAdmin:
         user = _make_user(admin=False)
         mocker.patch(
             "servicex_app.cli.user_commands.UserModel"
-        ).find_by_sub.return_value = user
-        set_user_admin("sub1", value=True)
+        ).find_by_email.return_value = user
+        set_user_admin(user.email, value=True)
         assert user.admin is True
         user.save_to_db.assert_called_once()
         assert "made admin" in capsys.readouterr().out
@@ -101,8 +101,8 @@ class TestSetUserAdmin:
         user = _make_user(admin=True)
         mocker.patch(
             "servicex_app.cli.user_commands.UserModel"
-        ).find_by_sub.return_value = user
-        set_user_admin("sub1", value=False)
+        ).find_by_email.return_value = user
+        set_user_admin(user.email, value=False)
         assert user.admin is False
         user.save_to_db.assert_called_once()
         assert "revoked" in capsys.readouterr().out
@@ -111,8 +111,8 @@ class TestSetUserAdmin:
         user = _make_user(admin=True)
         mocker.patch(
             "servicex_app.cli.user_commands.UserModel"
-        ).find_by_sub.return_value = user
-        set_user_admin("sub1", value=True)
+        ).find_by_email.return_value = user
+        set_user_admin(user.email, value=True)
         user.save_to_db.assert_not_called()
         assert "already admin" in capsys.readouterr().out
 
@@ -120,7 +120,7 @@ class TestSetUserAdmin:
         user = _make_user(admin=False)
         mocker.patch(
             "servicex_app.cli.user_commands.UserModel"
-        ).find_by_sub.return_value = user
-        set_user_admin("sub1", value=False)
+        ).find_by_email.return_value = user
+        set_user_admin(user.email, value=False)
         user.save_to_db.assert_not_called()
         assert "already not admin" in capsys.readouterr().out

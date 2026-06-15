@@ -210,19 +210,19 @@ def create_app(
         list_users(email_filter)
 
     @user_cli.command("approve")
-    @click.argument("sub")
-    def approve_user_command(sub):
-        approve_user(sub)
+    @click.argument("email")
+    def approve_user_command(email):
+        approve_user(email)
 
     @user_cli.command("make-admin")
-    @click.argument("sub")
-    def make_admin_command(sub):
-        set_user_admin(sub, True)
+    @click.argument("email")
+    def make_admin_command(email):
+        set_user_admin(email, True)
 
     @user_cli.command("revoke-admin")
-    @click.argument("sub")
-    def revoke_admin_command(sub):
-        set_user_admin(sub, False)
+    @click.argument("email")
+    def revoke_admin_command(email):
+        set_user_admin(email, False)
 
     app.cli.add_command(user_cli)
 

@@ -1,13 +1,19 @@
-from flask import redirect, url_for
+from flask import redirect, url_for, session
 
-from servicex_app.decorators import is_admin_user
+from servicex_app.models import UserModel
 
 
 class AdminAuthMixin:
     endpoint: str | None = None
 
     def is_accessible(self):
-        return is_admin_user()
+        email = session.get("email")
+
+        if email is None:
+            return False
+
+        user = UserModel.find_by_email(email)
+        return user.admin
 
     def inaccessible_callback(self, name, **kwargs):
         return redirect(url_for("home"))
