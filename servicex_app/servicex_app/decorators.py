@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_request
-from flask_jwt_extended.exceptions import NoAuthorizationError
+from flask_jwt_extended.exceptions import NoAuthorizationError, UserClaimsVerificationError
 
 from servicex_app.models import UserModel, db
 
@@ -124,12 +124,13 @@ def is_admin_user() -> bool:
     if not current_app.config.get("ENABLE_AUTH"):
         return False
     if session.get("is_authenticated"):
-        return bool(session.get("admin"))
+        user = UserModel.find_by_email(session.get("email"))
+        return user is not None and user.admin
     try:
         verify_jwt_in_request(locations=["headers"])
         user = get_jwt_user()
         return user is not None and user.admin
-    except (NoAuthorizationError, Exception):
+    except NoAuthorizationError:
         return False
 
 

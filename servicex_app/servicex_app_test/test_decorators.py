@@ -163,12 +163,12 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_admin_decorator_integration_oauth_authorized(self, mocker, user):
+        user.admin = True
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         data = {"users": [{"id": 1234}]}
         mocker.patch("servicex_app.models.UserModel.return_all", return_value=data)
         with client.session_transaction() as sess:
             sess["is_authenticated"] = True
-            sess["admin"] = True
         with client.application.app_context():
             response: Response = client.get("users")
             assert response.status_code == 200
@@ -178,7 +178,6 @@ class TestDecorators(WebTestBase):
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.session_transaction() as sess:
             sess["is_authenticated"] = True
-            sess["admin"] = False
         with client.application.app_context():
             response: Response = client.get("users")
             assert response.status_code == 401
