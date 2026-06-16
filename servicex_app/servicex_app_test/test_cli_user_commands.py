@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from servicex_app.cli.user_commands import list_users, set_user_admin
+from servicex_app.cli.user_commands import approve_user, list_users, set_user_admin
 
 
 def _make_user(
@@ -124,3 +124,38 @@ class TestSetUserAdmin:
         set_user_admin(user.email, value=False)
         user.save_to_db.assert_not_called()
         assert "already not admin" in capsys.readouterr().out
+
+    def test_user_not_found(self, mocker, capsys):
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_email.return_value = None
+        set_user_admin("nobody@example.com", value=True)
+        assert "not found" in capsys.readouterr().out
+
+
+class TestApproveUser:
+    def test_approves_pending_user(self, mocker, capsys):
+        user = _make_user(pending=True)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_email.return_value = user
+        approve_user(user.email)
+        assert user.pending is False
+        user.save_to_db.assert_called_once()
+        assert "approved" in capsys.readouterr().out
+
+    def test_already_approved_skips_save(self, mocker, capsys):
+        user = _make_user(pending=False)
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_email.return_value = user
+        approve_user(user.email)
+        user.save_to_db.assert_not_called()
+        assert "already approved" in capsys.readouterr().out
+
+    def test_user_not_found(self, mocker, capsys):
+        mocker.patch(
+            "servicex_app.cli.user_commands.UserModel"
+        ).find_by_email.return_value = None
+        approve_user("nobody@example.com")
+        assert "not found" in capsys.readouterr().out
