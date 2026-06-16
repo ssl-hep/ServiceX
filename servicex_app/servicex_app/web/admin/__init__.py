@@ -13,6 +13,10 @@ class AdminAuthMixin:
             return False
 
         user = UserModel.find_by_email(email)
+
+        if user is None:
+            return False
+
         return user.admin
 
     def inaccessible_callback(self, name, **kwargs):
