@@ -17,7 +17,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.0
 
       - name: Read file contents
         working-directory: ./.github/workflows
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout to repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.0
 
       - name: Set up Python versions
         uses: actions/setup-python@v6.2.0
@@ -75,7 +75,7 @@ jobs:
           PYTHONPATH=src poetry run coverage xml
       - name: Report coverage with Codecov
         if: ${{ matrix.app.test_required }}
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
@@ -88,7 +88,7 @@ jobs:
       matrix:
         app: ${{fromJson(needs.build-matrix.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7.0.0
       - name: Extract tag name
         working-directory: ${{ matrix.app.dir_name }}
         shell: bash
@@ -104,17 +104,17 @@ jobs:
         run: |
           echo "${{ steps.extract_cache_name.outputs.cachetag }}"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4.0.0
+        uses: docker/setup-qemu-action@v4.1.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.0.0
+        uses: docker/setup-buildx-action@v4.1.0
       - name: Login to Docker Hub
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         if: ${{ github.secret_source == 'Actions' }}
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@v7.2.0
         if: ${{ github.secret_source == 'Actions' }}
         with:
           context: ${{ matrix.app.dir_name }}
@@ -125,7 +125,7 @@ jobs:
           file: ${{ matrix.app.dockerfile }}
           platforms: linux/amd64,linux/arm64
       - name: Build
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@v7.2.0
         if: ${{ github.secret_source != 'Actions' }}
         with:
           context: ${{ matrix.app.dir_name }}
