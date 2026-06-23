@@ -123,11 +123,12 @@ class TestUserTransformationCountReportView:
 
 class TestReportViewHttp(WebTestBase):
     @pytest.fixture
-    def admin_client(self):
+    def admin_client(self, user):
+        user.admin = True
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.session_transaction() as sess:
             sess["is_authenticated"] = True
-            sess["admin"] = True
+            sess["email"] = user.email
         return client
 
     def test_report_index_renders_for_admin(self, admin_client):
