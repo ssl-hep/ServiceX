@@ -43,10 +43,16 @@ class CancelTransform(ServiceXResource):
 
     @auth_required
     def get(self, request_id: str):
+        """
+        This is legacy functionality to support old clients
+        """
         return self._cancel_transform(request_id)
 
     @auth_required
     def post(self, request_id: str):
+        """
+        This is supported via the post_cancel_transform capability
+        """
         return self._cancel_transform(request_id)
 
     def _cancel_transform(self, request_id: str):
