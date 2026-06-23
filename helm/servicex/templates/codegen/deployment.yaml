@@ -46,6 +46,8 @@ spec:
           value: {{ $compressionAlgorithm }}
         - name: COMPRESSION_LEVEL
           value: "{{ $compressionLevel }}"
+        - name: CVMFS_AVAILABLE
+          value: {{ $.Values.transformer.cvmfsAvailable | ternary "1" "0" }}
         tty: true
         stdin: true
         imagePullPolicy: {{ .pullPolicy }}

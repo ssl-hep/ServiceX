@@ -59,6 +59,7 @@ BASE_TRANSFORMER_CONFIG = {
     "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
     "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
     "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
+    "TRANSFORMER_CVMFS_VOLUME": None,
 }
 
 
@@ -1292,3 +1293,74 @@ class TestTransformerManager(ResourceTestBase):
             assert template.spec.node_selector is None
             assert template.spec.tolerations is None
             assert template.spec.affinity is None
+
+    @pytest.mark.parametrize(
+        "volume",
+        [
+            {"hostPath": {"path": "/cvmfs"}},
+            {"persistentVolumeClaim": {"claimName": "cvmfs"}},
+        ],
+    )
+    def test_launch_transformer_jobs_with_cvmfs(self, mocker, volume):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_CVMFS_VOLUME=volume,
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="volume",
+                result_format="parquet",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+
+            cvmfs_vol = next(
+                filter(
+                    lambda v: v.name == "cvmfs",
+                    called_job.spec.template.spec.volumes,
+                )
+            )
+            # check that one volume type exists
+            assert (
+                len(
+                    [
+                        _
+                        for _ in cvmfs_vol.to_dict().items()
+                        if _[1] is not None and _[0] != "name"
+                    ]
+                )
+                == 1
+            )
+            # check that all the keys have been snake cased
+            for key, subdict in cvmfs_vol.to_dict().items():
+                if key == "name":
+                    continue
+                if subdict is not None:
+                    assert all(_.islower() for _ in subdict.keys())
+
+            cvmfs_vol_mount = next(
+                filter(lambda m: m.name == "cvmfs", container.volume_mounts)
+            )
+            assert cvmfs_vol_mount.mount_path == "/cvmfs"
