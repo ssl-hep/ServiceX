@@ -37,6 +37,6 @@ class Info(ServiceXResource):
             "capabilities": [
                 "poll_local_transformation_results",
                 "long_sample_titles_10240",
-                "post_cancel_transform"
+                "post_cancel_transform",
             ],
         }
