@@ -3,81 +3,83 @@
 {% from 'bootstrap5/pagination.html' import render_pagination %}
 
 {% macro requests_table(pagination, humanize) %}
-<table class="table table-sm table-bordered table-striped">
-  <caption>All times in timezone: <span class="tz"></span>.</caption>
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">Title</th>
-      {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
-      <th scope="col">Start time</th>
-      <th scope="col">Finish time</th>
-      <th scope="col">Status</th>
-      <th scope="col">Files completed</th>
-      <th scope="col">Workers</th>
-      <th scope="col">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for req in pagination.items %}
-    <tr>
-      <th scope="row" style="word-break: break-all">
-        <a href="{{ create_kibana_link(req.request_id, "ERROR") }}" target="_blank">
-        <img src="{{ url_for('static', filename='logs.svg') }}" height="25" alt="Get Logs" />
-        </a>
-        <a href="/transformation-request/{{ req.id }}">{{ req.title or "Untitled" }}</a>
-      </th>
+<div class="table-responsive">
+  <table class="table table-sm table-bordered table-striped">
+      <caption>All times in timezone: <span class="tz"></span>.</caption>
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Title</th>
+          {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
+          <th scope="col">Start time</th>
+          <th scope="col">Finish time</th>
+          <th scope="col">Status</th>
+          <th scope="col">Files completed</th>
+          <th scope="col">Workers</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in pagination.items %}
+        <tr>
+          <th scope="row" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <a href="{{ create_kibana_link(req.request_id, "ERROR") }}" target="_blank">
+            <img src="{{ url_for('static', filename='logs.svg') }}" height="25" alt="Get Logs" />
+            </a>
+            <a href="/transformation-request/{{ req.id }}" title="{{ req.title or 'Untitled' }}">{{ req.title or "Untitled" }}</a>
+          </th>
 
-      {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
-      <td>{{ moment(req.submit_time).format("YYYY-MM-DD HH:mm:ss") }}</td>
+          {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
+          <td>{{ moment(req.submit_time).format("YYYY-MM-DD HH:mm:ss") }}</td>
 
-      <td id="finish-time-{{ req.request_id }}">
-        {{ moment(req.finish_time).format("YYYY-MM-DD HH:mm:ss") if req.finish_time else "-" }}
-      </td>
+          <td id="finish-time-{{ req.request_id }}">
+            {{ moment(req.finish_time).format("YYYY-MM-DD HH:mm:ss") if req.finish_time else "-" }}
+          </td>
 
-      <td>
-        <div id="status-{{ req.request_id }}">
-          {{ req.status.string_name }}
-        </div>
-        {% if req.status.string_name == 'Running' %}
-        <div class="progress" id="progress-{{ req.request_id }}">
-          <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
-          </div>
-        </div>
-        {% endif %}
-      </td>
+          <td>
+            <div id="status-{{ req.request_id }}">
+              {{ req.status.string_name }}
+            </div>
+            {% if req.status.string_name == 'Running' %}
+            <div class="progress" id="progress-{{ req.request_id }}">
+              <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
+              </div>
+            </div>
+            {% endif %}
+          </td>
 
-      <td>
-        <div>
-          <a id="files-completed-{{ req.request_id }}"
-            href="/transformation-request/{{ req.id }}/results?status=success">
-            {{ humanize.intcomma(req.files_completed) }}
-          </a> of
-          <span id="files-total-{{ req.request_id }}">
-            {{ humanize.intcomma(req.files or "Unknown") }}
-          </span>
-        </div>
+          <td>
+            <div>
+              <a id="files-completed-{{ req.request_id }}"
+                href="/transformation-request/{{ req.id }}/results?status=success">
+                {{ humanize.intcomma(req.files_completed) }}
+              </a> of
+              <span id="files-total-{{ req.request_id }}">
+                {{ humanize.intcomma(req.files or "Unknown") }}
+              </span>
+            </div>
 
-        <div {% if not req.files_failed %}style="display: none" {% endif %}
-          id="files-failed-wrapper-{{ req.request_id }}">
-          (<a id="files-failed-{{ req.request_id }}"
-            href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
-        </div>
+            <div {% if not req.files_failed %}style="display: none" {% endif %}
+              id="files-failed-wrapper-{{ req.request_id }}">
+              (<a id="files-failed-{{ req.request_id }}"
+                href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
+            </div>
 
-      </td>
-      <td id="replicas-{{ req.request_id }}">-</td>
-      <td>
-        {% if not req.status.is_complete %}
-        <button id="cancel-{{ req.request_id }}"
-          onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
-          type="button" class="btn btn-danger btn-sm">
-          Cancel
-        </button>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+          </td>
+          <td id="replicas-{{ req.request_id }}">-</td>
+          <td>
+            {% if not req.status.is_complete %}
+            <button id="cancel-{{ req.request_id }}"
+              onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
+              type="button" class="btn btn-danger btn-sm">
+              Cancel
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
 {% if pagination.items %}
 {{ render_pagination(pagination, align='center') }}
 {% else %}
