@@ -331,6 +331,12 @@ def create_app(
 
             celery_app = Celery("ServiceX-App", broker=app.config["RABBIT_MQ_URL"])
             celery_app.conf.task_routes = (route_task,)
+            # Register as the process-wide default app so that @shared_task
+            # invocations (e.g. add_files_to_processing_queue.delay) resolve to
+            # this configured app from any thread — not just the thread that ran
+            # create_app. Without this, Flask request worker threads fall back to
+            # Celery's built-in default app and its default broker.
+            celery_app.set_default()
         else:
             celery_app = provided_celery_app
 
