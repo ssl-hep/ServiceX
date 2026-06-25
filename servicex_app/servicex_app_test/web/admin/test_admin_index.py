@@ -6,11 +6,12 @@ from servicex_app_test.web.web_test_base import WebTestBase
 
 class TestSecureAdminIndexView(WebTestBase):
     @pytest.fixture
-    def admin_client(self):
+    def admin_client(self, user):
+        user.admin = True
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.session_transaction() as sess:
             sess["is_authenticated"] = True
-            sess["admin"] = True
+            sess["email"] = user.email
         return client
 
     @pytest.fixture

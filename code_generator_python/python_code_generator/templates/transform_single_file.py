@@ -51,8 +51,14 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                     awkward_arrays = {default_tree_name: output}
                 elif isinstance(output, dict):
                     awkward_arrays = output
+                compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM")
+                compression_level = int(os.environ.get("COMPRESSION_LEVEL"))
+
                 with open(output_path, "b+w") as wfile:
-                    with uproot.recreate(wfile) as writer:
+                    compression_obj = getattr(uproot, compression_algorithm)(
+                        compression_level
+                    )
+                    with uproot.recreate(wfile, compression=compression_obj) as writer:
                         for key in awkward_arrays.keys():
                             total_events = awkward_arrays[key].__len__()
                             if output_format == "root-file":

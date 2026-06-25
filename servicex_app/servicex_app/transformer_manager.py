@@ -34,6 +34,7 @@ from kubernetes.client.rest import ApiException
 from typing import Optional
 import time
 import urllib3
+import re
 from tenacity import (
     Retrying,
     RetryError,
@@ -43,6 +44,27 @@ from tenacity import (
 )
 
 from servicex_app.models import TransformRequest, TransformStatus
+
+# these regexes are defined to help translate camelCase to snake_case
+# due to mismatch of Kubernetes yaml syntax and Python API
+UPPER_FOLLOWED_BY_LOWER_RE = re.compile("(.)([A-Z][a-z]+)")
+LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE = re.compile("([a-z0-9])([A-Z])")
+
+
+def camel_to_snake_case(strin: str):
+    strout = UPPER_FOLLOWED_BY_LOWER_RE.sub(r"\1_\2", strin)
+    strout = LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE.sub(r"\1_\2", strout).lower()
+    return strout
+
+
+def camel_to_snake_case_dict(dictin: dict):
+    dictout = {}
+    for key, value in dictin.items():
+        keyout = camel_to_snake_case(key)
+        dictout[keyout] = (
+            camel_to_snake_case_dict(value) if isinstance(value, dict) else value
+        )
+    return dictout
 
 
 class TransformerManager:
@@ -195,6 +217,20 @@ class TransformerManager:
             volume_mounts.append(
                 client.V1VolumeMount(mount_path="/data", name="rootfiles")
             )
+
+        if (cvmfs_volume := current_app.config["TRANSFORMER_CVMFS_VOLUME"]) is not None:
+            cvmfs_volume = camel_to_snake_case_dict(cvmfs_volume)
+            cvmfs_volume["name"] = "cvmfs"
+            cvmfs_volume_mount = {
+                "name": "cvmfs",
+                "mount_path": "/cvmfs",
+                "read_only": True,
+            }
+            if "host_path" in cvmfs_volume:
+                cvmfs_volume_mount["mount_propagation"] = "HostToContainer"
+
+            volumes.append(client.V1Volume(**cvmfs_volume))
+            volume_mounts.append(client.V1VolumeMount(**cvmfs_volume_mount))
 
         # Compute Environment Vars
         env = [
