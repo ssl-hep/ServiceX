@@ -67,7 +67,7 @@ class CancelTransform(ServiceXResource):
             return {"message": msg}, 400
 
         try:
-            TransformRequest.shutdown_pod(transform_req)
+            transform_req.shutdown_pod(self.transformer_manager)
         except kubernetes.client.exceptions.ApiException as exc:
             return {"message": exc.reason}, exc.status
 

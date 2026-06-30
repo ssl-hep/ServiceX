@@ -261,13 +261,12 @@ class TransformRequest(db.Model):
             .all()
         )
 
-    @classmethod
-    def shutdown_pod(cls, transform_req: TransformRequest):
-        request_id = transform_req.request_id
+    def shutdown_pod(self, transformer_manager: "TransformerManager"):
+        request_id = self.request_id
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        if transform_req.status in (TransformStatus.running, TransformStatus.lookup):
+        if self.status in (TransformStatus.running, TransformStatus.lookup):
             try:
-                cls.transformer_manager.shutdown_transformer_job(request_id, namespace)
+                transformer_manager.shutdown_transformer_job(request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
                 if exc.status == 404:
                     pass
