@@ -31,7 +31,7 @@ import hashlib
 import kubernetes
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
 from flask import current_app
@@ -42,6 +42,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import text
 
 from servicex_app.mailgun_adaptor import MailgunAdaptor
+
+if TYPE_CHECKING:
+    from servicex_app.transformer_manager import TransformerManager
 
 db = SQLAlchemy()
 max_string_size = 10485760
@@ -261,7 +264,7 @@ class TransformRequest(db.Model):
             .all()
         )
 
-    def shutdown_pod(self, transformer_manager: "TransformerManager"):
+    def shutdown_pod(self, transformer_manager: TransformerManager):
         request_id = self.request_id
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         if self.status in (TransformStatus.running, TransformStatus.lookup):
