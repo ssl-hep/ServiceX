@@ -23,21 +23,17 @@ class TestTransformCancel(ResourceTestBase):
         return mock_transform_manager
 
     @pytest.fixture
-    def mock_transform_request_cls(self, mocker):
-        return mocker.patch(f"{self.module}.TransformRequest")
-
-    @pytest.fixture
-    def fake_transform(self, mock_transform_request_cls, mocker) -> TransformRequest:
+    def fake_transform(self, mocker) -> TransformRequest:
         fake = self._generate_transform_request()
         fake.save_to_db = mocker.Mock()
-        mock_transform_request_cls.lookup.return_value = fake
+        fake.shutdown_pod = mocker.Mock()
+        mocker.patch(f"{self.module}.TransformRequest.lookup", return_value=fake)
         return fake
 
     def test_submitted(
         self,
         http_method,
         fake_transform,
-        mock_transform_request_cls,
         mock_transform_manager,
     ):
         fake_transform.status = TransformStatus.submitted
@@ -47,21 +43,20 @@ class TestTransformCancel(ResourceTestBase):
         assert resp.status_code == 200
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
-        mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
+        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
 
     def test_running(
         self,
         http_method,
         mock_transform_manager,
         fake_transform,
-        mock_transform_request_cls,
     ):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
+        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -70,14 +65,13 @@ class TestTransformCancel(ResourceTestBase):
         http_method,
         mock_transform_manager,
         fake_transform,
-        mock_transform_request_cls,
     ):
         fake_transform.status = TransformStatus.running
         client = self._test_client(transformation_manager=mock_transform_manager)
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
+        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -86,16 +80,15 @@ class TestTransformCancel(ResourceTestBase):
         http_method,
         mock_transform_manager,
         fake_transform,
-        mock_transform_request_cls,
     ):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        mock_transform_request_cls.shutdown_pod.side_effect = exc
+        fake_transform.shutdown_pod.side_effect = exc
         client = self._test_client(transformation_manager=mock_transform_manager)
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 403
-        mock_transform_request_cls.shutdown_pod.assert_called_once_with(fake_transform)
+        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
         assert fake_transform.status == TransformStatus.running
         assert fake_transform.finish_time is None
 
