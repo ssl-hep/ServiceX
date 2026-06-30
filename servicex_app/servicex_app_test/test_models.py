@@ -186,19 +186,22 @@ class TestShutdownPod:
         self, app_context, mock_transformer_manager
     ):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-        TransformRequest.shutdown_pod(self._make_req(TransformStatus.submitted))
+        req = self._make_req(TransformStatus.submitted)
+        req.shutdown_pod(mock_transformer_manager)
         mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_calls_shutdown_for_running(self, app_context, mock_transformer_manager):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-        TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+        req = self._make_req(TransformStatus.running)
+        req.shutdown_pod(mock_transformer_manager)
         mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
             "test-123", "test-ns"
         )
 
     def test_calls_shutdown_for_lookup(self, app_context, mock_transformer_manager):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-        TransformRequest.shutdown_pod(self._make_req(TransformStatus.lookup))
+        req = self._make_req(TransformStatus.lookup)
+        req.shutdown_pod(mock_transformer_manager)
         mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
             "test-123", "test-ns"
         )
@@ -208,7 +211,8 @@ class TestShutdownPod:
         mock_transformer_manager.shutdown_transformer_job.side_effect = (
             kubernetes.client.exceptions.ApiException(status=404)
         )
-        TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+        req = self._make_req(TransformStatus.running)
+        req.shutdown_pod(mock_transformer_manager)
 
     def test_non_404_logs_and_reraises(
         self, app_context, mock_transformer_manager, mocker
@@ -219,5 +223,6 @@ class TestShutdownPod:
             kubernetes.client.exceptions.ApiException(status=403, reason="Forbidden")
         )
         with pytest.raises(kubernetes.client.exceptions.ApiException):
-            TransformRequest.shutdown_pod(self._make_req(TransformStatus.running))
+            req = self._make_req(TransformStatus.running)
+            req.shutdown_pod(mock_transformer_manager)
         mock_error.assert_called_once()
