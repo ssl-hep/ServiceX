@@ -30,7 +30,6 @@ import os
 
 import logstash
 
-
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 

@@ -31,7 +31,6 @@ import os
 import logstash
 import functools
 
-
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 
