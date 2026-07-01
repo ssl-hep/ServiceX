@@ -113,15 +113,15 @@ def initialize_logging(log=None, **kwargs):
     :return: logger with correct formatting that outputs to console
     """
 
-    logging.basicConfig(level=logging.INFO, force=True)
-
     if log is None:
-        log = logging.getLogger()
+        log = logging.getLogger("rucio_did_finder")
 
     log.setLevel(logging.INFO)
+    log.propagate = False   # keep our records out of the root logger Celery hijacks
+
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter(
-        "%(levelname)s " + f"{instance} Rucio DID finder " + "%(message)s"
+        "%(levelname)s " + f"{instance} rucio_did_finder " + "%(message)s"
     )
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
@@ -139,6 +139,6 @@ def initialize_logging(log=None, **kwargs):
         logstash_handler.setLevel(log.level)
         log.addHandler(logstash_handler)
 
-    log.debug("Initialized logging")
+    log.info("Initialized logging")
 
     return log
