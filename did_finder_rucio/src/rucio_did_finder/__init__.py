@@ -35,6 +35,10 @@ instance = os.environ.get("INSTANCE_NAME", "Unknown")
 
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
+    def __init__(self, component_name=None, message_type='Logstash', tags=None, fqdn=False):
+        super().__init__(message_type, tags, fqdn)
+        self.component_name = component_name
+
 
     def format(self, record):
         message = {
@@ -45,7 +49,7 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             "tags": self.tags,
             "type": self.message_type,
             "instance": instance,
-            "component": "transformer sidecar",
+            "component": self.component_name,
             # Extra Fields
             "level": record.levelname,
         }
@@ -112,15 +116,15 @@ def initialize_logging(log=None, **kwargs):
     :return: logger with correct formatting that outputs to console
     """
 
-    logging.basicConfig(level=logging.INFO, force=True)
-
     if log is None:
-        log = logging.getLogger()
+        log = logging.getLogger("rucio_did_finder")
 
     log.setLevel(logging.INFO)
+    log.propagate = False  # keep our records out of the root logger Celery hijacks
+
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter(
-        "%(levelname)s " + f"{instance} Rucio DID finder " + "%(message)s"
+        "%(levelname)s " + f"{instance} rucio_did_finder " + "%(message)s"
     )
     stream_handler.setFormatter(stream_formatter)
     stream_handler.setLevel(log.level)
@@ -133,11 +137,11 @@ def initialize_logging(log=None, **kwargs):
         logstash_handler = logstash.TCPLogstashHandler(
             logstash_host, logstash_port, version=1
         )
-        logstash_formatter = LogstashFormatter("logstash", None, None)
+        logstash_formatter = LogstashFormatter(component_name="rucio_did_finder")
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(log.level)
         log.addHandler(logstash_handler)
 
-    log.debug("Initialized logging")
+    log.info("Initialized logging")
 
     return log
