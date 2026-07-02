@@ -11,6 +11,20 @@ instance = os.environ.get("INSTANCE_NAME", "Unknown")
 default_tree_name = "servicex"
 
 
+def root_write_table_data(output_format, writer, outtreename, data):
+    if output_format == "root-file":
+        tree_data = {field: data[field] for field in data.fields}
+        if outtreename in writer:
+            writer[outtreename].extend(tree_data)
+        else:
+            writer.mktree(outtreename, tree_data)
+    else:  # root-rntuple
+        if outtreename in writer:
+            writer[outtreename].extend(data)
+        else:
+            writer.mkrntuple(outtreename, data)
+
+
 def transform_single_file(file_path: str, output_path: Path, output_format: str):
     """
     Transform a single file and return some information about output
@@ -30,16 +44,9 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             etime = time.time()
             with open(output_path, "b+w") as wfile:
                 with uproot.recreate(wfile) as writer:
-                    if output_format == "root-file":
-                        writer.mktree(
-                            default_tree_name,
-                            {
-                                field: awkward_array[field]
-                                for field in awkward_array.fields
-                            },
-                        )
-                    else:  # root-rntuple
-                        writer.mkrntuple(default_tree_name, awkward_array)
+                    root_write_table_data(
+                        output_format, writer, default_tree_name, awkward_array
+                    )
             wtime = time.time()
 
         else:
@@ -61,7 +68,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         )
 
         print(
-            f"Transform stats: Total Events: {total_events}, resulting file size {output_size}"
+            f"Transform stats: Total Events: {total_events}, "
+            f"resulting file size {output_size}"
         )
     except Exception as error:
         mesg = f"Failed to transform input file {file_path}: {error}"
