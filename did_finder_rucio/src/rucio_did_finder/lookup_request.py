@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from . import initialize_logging
+from servicex_did_finder_lib.logstash_logging import initialize_logging
 from datetime import datetime
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from .replica_distance import ReplicaSorter
@@ -55,7 +55,7 @@ class LookupRequest:
         self.dataset_id = dataset_id
 
         # set logging to a null handler
-        self.logger = initialize_logging()
+        self.logger = initialize_logging(component_name="rucio_did_finder")
 
         self.location = location
         self.replica_sorter = replica_sorter
