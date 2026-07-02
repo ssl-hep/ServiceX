@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from . import initialize_logging
+from servicex_did_finder_lib.logstash_logging import initialize_logging
 import os
 
 from typing import List, Mapping, Optional, Tuple
@@ -39,7 +39,7 @@ import geoip2.errors
 from collections import namedtuple
 
 Replica_distance = namedtuple("Replica_distance", "replica distance")
-logger = initialize_logging()
+logger = initialize_logging(component_name="rucio_did_finder")
 
 
 def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float):

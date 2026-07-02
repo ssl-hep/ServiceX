@@ -9,7 +9,7 @@ packages = [{include = "did_finder_atlasopenmagic", from = "src"}]
 [tool.poetry.dependencies]
 python = "~3.14"
 atlasopenmagic = "1.8.0"
-servicex-did-finder-lib = ">=3.1.1"
+servicex-did-finder-lib = "^3.2.0-rc.1"
 
 [tool.poetry.group.test]
 optional = true
