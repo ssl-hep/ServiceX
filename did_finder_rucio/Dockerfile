@@ -1,4 +1,4 @@
-FROM sslhep/rucio-client:main
+FROM sslhep/rucio-client:multiarch
 
 LABEL maintainer="Ilija Vukotic <ivukotic@uchicago.edu>"
 
