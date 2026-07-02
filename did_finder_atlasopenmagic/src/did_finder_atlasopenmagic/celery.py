@@ -35,6 +35,9 @@ from servicex_did_finder_lib.exceptions import (
     NoSuchDatasetException,
     LookupFailureException,
 )
+from servicex_did_finder_lib.logstash_logging import initialize_logging
+
+initialize_logging(component_name="atom_did_finder")
 
 __log = logging.getLogger(__name__)
 
