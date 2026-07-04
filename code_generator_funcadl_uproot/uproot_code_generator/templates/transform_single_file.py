@@ -25,6 +25,15 @@ def root_write_table_data(output_format, writer, outtreename, data):
             writer.mkrntuple(outtreename, data)
 
 
+def parquet_write_table_data(output_path, awkward_array):
+    arrow = ak.to_arrow_table(awkward_array)
+    writer = pq.ParquetWriter(output_path, arrow.schema)
+    try:
+        writer.write_table(table=arrow)
+    finally:
+        writer.close()
+
+
 def transform_single_file(file_path: str, output_path: Path, output_format: str):
     """
     Transform a single file and return some information about output
@@ -49,16 +58,12 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
                     )
             wtime = time.time()
 
-        else:
-            arrow = ak.to_arrow_table(awkward_array)
-
+        elif output_format == "parquet":
             etime = time.time()
-
-            writer = pq.ParquetWriter(output_path, arrow.schema)
-            writer.write_table(table=arrow)
-            writer.close()
-
+            parquet_write_table_data(output_path, awkward_array)
             wtime = time.time()
+        else:
+            raise RuntimeError(f"Unsupported output format '{output_format}'")
 
         output_size = os.stat(output_path).st_size
         print(

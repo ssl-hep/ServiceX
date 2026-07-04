@@ -40,6 +40,22 @@ class FakeWriter:
         self.objects[key] = FakeWritable()
 
 
+class FakeArrowTable:
+    schema = "fake-schema"
+
+
+class FakeParquetWriter:
+    def __init__(self):
+        self.write_calls = []
+        self.closed = False
+
+    def write_table(self, table):
+        self.write_calls.append(table)
+
+    def close(self):
+        self.closed = True
+
+
 def load_transform_module(monkeypatch):
     generated_transformer = types.SimpleNamespace(run_query=lambda _: None)
     monkeypatch.setitem(sys.modules, "generated_transformer", generated_transformer)
@@ -107,3 +123,30 @@ def test_transform_writes_empty_rntuple(monkeypatch, tmp_path):
     assert total_events == 0
     assert output_size == 0
     assert fake_writer.mkrntuple_calls == [(module.default_tree_name, empty_array)]
+
+
+def test_parquet_writer_uses_arrow_table(monkeypatch, tmp_path):
+    module = load_transform_module(monkeypatch)
+    awkward_array = module.ak.Array({"x": [1, 2]})
+    fake_arrow = FakeArrowTable()
+    fake_writer = FakeParquetWriter()
+
+    monkeypatch.setattr(module.ak, "to_arrow_table", lambda array: fake_arrow)
+    monkeypatch.setattr(
+        module.pq, "ParquetWriter", lambda output_path, schema: fake_writer
+    )
+    monkeypatch.setattr(
+        module.os,
+        "stat",
+        lambda *_args, **_kwargs: types.SimpleNamespace(st_size=123),
+    )
+    module.generated_transformer.run_query = lambda _: awkward_array
+
+    total_events, output_size = module.transform_single_file(
+        "input.root", tmp_path / "output.parquet", "parquet"
+    )
+
+    assert total_events == 2
+    assert output_size == 123
+    assert fake_writer.write_calls == [fake_arrow]
+    assert fake_writer.closed is True
