@@ -309,6 +309,18 @@ logging:
     monitor: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/c2cc1f30-4a5b-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-time-filter=true"
     # This URL format is tied to a parser in servicex_app/servicex_app/web/kibana_url_filter.py
     logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h%2Fh,to:now))&_a=(filters:!((query:(match_phrase:(instance:{{.Release.Name}})))),index:'923eaa00-45b9-11ed-afcf-d91dad577662')"
+  # Vector sidecar that receives app logs over a localhost TCP socket and writes
+  # them to the Postgres `log_messages` table. Requires postgres.enabled=true.
+  vector:
+    enabled: false
+    image: timberio/vector
+    tag: 0.48.0-debian        # must be >= 0.44.0 (postgres sink)
+    port: 9000                # localhost TCP port: app -> vector sidecar
+    logLevel: warn            # vector's own internal log level
+    resources: {}
+    batch:
+      maxEvents: 1000
+      timeoutSecs: 5
 minio:
   image:
     repository: bitnamilegacy/minio

@@ -590,3 +590,26 @@ class DatasetFile(db.Model):
     @classmethod
     def get_by_id(cls, dataset_file_id):
         return cls.query.filter_by(id=dataset_file_id).one()
+
+
+class LogMessage(db.Model):
+    """
+    Application log records shipped to Postgres by the Vector sidecar. The app
+    never reads or writes this table via the ORM; the model exists so that
+    flask-migrate manages the schema. Columns match the JSON event fields
+    emitted by VectorFormatter, plus a UUID `id` minted by Vector's remap
+    transform (kept as a plain string PK so Vector's
+    `INSERT ... SELECT * FROM json_populate_recordset(...)` never has to
+    populate a serial column).
+    """
+
+    __tablename__ = "log_messages"
+
+    id = db.Column(db.String(36), primary_key=True)
+    timestamp = db.Column(DateTime(timezone=True))
+    level = db.Column(db.String(16))
+    logger = db.Column(db.String(255))
+    instance = db.Column(db.String(255))
+    component = db.Column(db.String(64))
+    message = db.Column(db.Text)
+    extra = db.Column(db.JSON)
