@@ -150,6 +150,7 @@ class VectorFormatter(logstash.formatter.LogstashFormatterBase):
     """
 
     def format(self, record):
+        extra = self.get_extra_fields(record)
         message = {
             "timestamp": self.format_timestamp(record.created),
             "level": record.levelname,
@@ -157,7 +158,9 @@ class VectorFormatter(logstash.formatter.LogstashFormatterBase):
             "instance": instance,
             "component": "servicex_app",
             "message": record.getMessage(),
-            "extra": self.get_extra_fields(record),
+            "request_id": extra.pop("request_id", None),
+            "dataset_id": extra.pop("dataset_id", None),
+            "extra": extra,
         }
 
         # If exception, add debug info

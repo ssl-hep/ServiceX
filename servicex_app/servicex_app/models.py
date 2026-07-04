@@ -612,4 +612,6 @@ class LogMessage(db.Model):
     instance = db.Column(db.String(255))
     component = db.Column(db.String(64))
     message = db.Column(db.Text)
+    request_id = db.Column(db.String(48))
+    dataset_id = db.Column(db.Integer)
     extra = db.Column(db.JSON)
