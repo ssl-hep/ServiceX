@@ -1,0 +1,36 @@
+{{- if .Values.logging.vector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-vector-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  vector.yaml: |
+    data_dir: /vector-data-dir
+    sources:
+      app_logs:
+        type: socket
+        mode: tcp
+        address: 0.0.0.0:${VECTOR_SOCKET_PORT}
+        decoding:
+          codec: json
+    transforms:
+      add_id:
+        type: remap
+        inputs: [app_logs]
+        source: |
+          .id = uuid_v4()
+    sinks:
+      postgres_logs:
+        type: postgres
+        inputs: [add_id]
+        endpoint: "postgres://${PG_USER}:${PG_PASS}@${PG_HOST}:${PG_PORT}/${PG_DB}"
+        table: log_messages
+        batch:
+          max_events: {{ .Values.logging.vector.batch.maxEvents }}
+          timeout_secs: {{ .Values.logging.vector.batch.timeoutSecs }}
+{{- end }}
