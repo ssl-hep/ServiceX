@@ -58,7 +58,7 @@ class SqlCsvReportView(ReportView):
     filename = "report.csv"
     mimetype = "text/csv"
     abstract = True
-    max_download_size: int | None = None # kilobytes
+    max_download_size: int | None = None  # kilobytes
 
     def get_query(self, **kwargs) -> Select:
         raise NotImplementedError
