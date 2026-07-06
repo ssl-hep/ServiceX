@@ -8,6 +8,7 @@ from servicex_app.web.admin.reports import SqlCsvReportView
 
 
 class UsageReportView(SqlCsvReportView):
+    max_download_size = 200 * 1024
     report_name = "Usage"
     endpoint = "usage-report"
     filename = "usage_report.csv"

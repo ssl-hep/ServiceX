@@ -26,7 +26,7 @@ class ReportView(AdminAuthMixin, BaseView):
         if "abstract" not in cls.__dict__:
             cls.abstract = False
 
-    def write_output(self, output: TextIO, **kwargs):
+    def write_output(self, output: io.StringIO, **kwargs):
         raise NotImplementedError
 
     @expose("/")
@@ -58,15 +58,27 @@ class SqlCsvReportView(ReportView):
     filename = "report.csv"
     mimetype = "text/csv"
     abstract = True
+    max_download_size: int | None = None # kilobytes
 
     def get_query(self, **kwargs) -> Select:
         raise NotImplementedError
 
-    def write_output(self, output: TextIO, **kwargs) -> None:
+    def write_output(self, output: io.StringIO, **kwargs) -> None:
         from servicex_app.models import db
 
         writer = csv.writer(output)
         results: CursorResult = db.session.execute(self.get_query(**kwargs))
         writer.writerow(results.keys())
+
+        limit = self.max_download_size * 1024 if self.max_download_size else None
+        written = len(output.getvalue().encode("utf-8")) if limit is not None else 0
+
         for row in results:
+            if limit is not None:
+                probe = io.StringIO()
+                csv.writer(probe).writerow(row)
+                row_bytes = len(probe.getvalue().encode("utf-8"))
+                if written + row_bytes > limit:
+                    break
+                written += row_bytes
             writer.writerow(row)
