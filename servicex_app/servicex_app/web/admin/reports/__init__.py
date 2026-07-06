@@ -1,6 +1,5 @@
 import csv
 import io
-from typing import TextIO
 
 from sqlalchemy import Select
 from sqlalchemy.engine import CursorResult
