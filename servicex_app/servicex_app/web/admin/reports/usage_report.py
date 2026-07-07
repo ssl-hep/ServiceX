@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta
-
-import click
 from sqlalchemy import Select, desc, select
 
 from servicex_app.models import TransformRequest, UserModel
@@ -13,16 +10,10 @@ class UsageReportView(SqlCsvReportView):
     endpoint = "usage-report"
     filename = "usage_report.csv"
     description = (
-        "CSV of all users who have submitted at least one transform in the last N days."
+        "List of transforms executed"
     )
-    params = [
-        click.Option(
-            ["--days"], default=30, type=int, help="Number of days to look back"
-        ),
-    ]
 
-    def get_query(self, days: int = 30) -> Select:
-        cutoff = datetime.utcnow() - timedelta(days=days)
+    def get_query(self) -> Select:
         return (
             select(
                 UserModel.name.label("Name"),
@@ -31,6 +22,5 @@ class UsageReportView(SqlCsvReportView):
                 UserModel.created_at.label("Run Time"),
             )
             .join(TransformRequest, TransformRequest.submitted_by == UserModel.id)
-            .filter(TransformRequest.submit_time >= cutoff)
             .order_by(desc(UserModel.created_at))
         )
