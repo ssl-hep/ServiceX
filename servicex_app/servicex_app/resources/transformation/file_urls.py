@@ -40,20 +40,20 @@ import boto3
 class FileURLGenerator(ServiceXResource):
     def __init__(self):
         super().__init__()
-        if True:  # S3 backend
-            # set up S3 client
-            endpoint_url = (
-                "https://"
-                if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
-                else "http://"
-            ) + current_app.config["MINIO_PUBLIC_URL"]
-            self.s3client = boto3.client(
-                "s3",
-                endpoint_url=endpoint_url,
-                aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
-                aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
-                use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
-            )
+        # Add branches for different backends when relevant
+        # set up S3 client
+        endpoint_url = (
+            "https://"
+            if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
+            else "http://"
+        ) + current_app.config["MINIO_PUBLIC_URL"]
+        self.s3client = boto3.client(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
+            aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
+            use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
+        )
 
     @auth_required
     def post(self):
@@ -80,18 +80,18 @@ class FileURLGenerator(ServiceXResource):
         expirydelta = 365 * 24 * 60 * 60
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
-        if True:  # branch for S3...
-            rv = {
-                f: (
-                    self.s3client.generate_presigned_url(
-                        "get_object",
-                        Params={"Bucket": request_id, "Key": f},
-                        ExpiresIn=expirydelta,
-                    ),
-                    {},
-                    expiry,
-                )
-                for f in args["file_list"]
-            }
+        # Add branches for other backends when relevant
+        rv = {
+            f: (
+                self.s3client.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": request_id, "Key": f},
+                    ExpiresIn=expirydelta,
+                ),
+                {},
+                expiry,
+            )
+            for f in args["file_list"]
+        }
 
         return {"uris": rv}
