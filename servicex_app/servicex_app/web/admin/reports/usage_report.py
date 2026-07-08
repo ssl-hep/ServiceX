@@ -9,9 +9,7 @@ class UsageReportView(SqlCsvReportView):
     report_name = "Usage"
     endpoint = "usage-report"
     filename = "usage_report.csv"
-    description = (
-        "List of transforms executed"
-    )
+    description = "List of transforms executed"
 
     def get_query(self) -> Select:
         return (
