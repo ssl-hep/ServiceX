@@ -49,7 +49,7 @@ class UserModel(db.Model):
     __tablename__ = "users"
     admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(DateTime, default=datetime.utcnow)
-    email = db.Column(db.String(320), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(320), nullable=False)
     experiment = db.Column(db.String(120))
     id = db.Column(db.Integer, primary_key=True)
     institution = db.Column(db.String(120))
@@ -59,6 +59,8 @@ class UserModel(db.Model):
     sub = db.Column(db.String(120), nullable=False, unique=True, index=True)
     requests = db.relationship("TransformRequest", backref="user")
     updated_at = db.Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.Index("ix_users_email", db.func.lower(email), unique=True),)
 
     def save_to_db(self):
         db.session.add(self)
@@ -179,7 +181,7 @@ class TransformRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
-    title = db.Column(db.String(512), nullable=True)
+    title = db.Column(db.String(10240), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
@@ -435,11 +437,13 @@ class TransformationResult(db.Model):
     total_events = db.Column(db.BigInteger, nullable=True)
     total_bytes = db.Column(db.BigInteger, nullable=True)
     avg_rate = db.Column(db.Float, nullable=True)
-    created_at = db.Column(DateTime, default=func.now())
+    created_at = db.Column(DateTime, default=func.now(), nullable=False)
     s3_object_name = db.Column(db.String(512), unique=False, nullable=True)
 
     __table_args__ = (
         db.UniqueConstraint("file_id", "request_id", name="uix_file_request"),
+        db.Index("ix_transform_result_created_at", "created_at", unique=False),
+        db.Index("ix_transform_result_request_id", "request_id"),
     )
 
     @classmethod
@@ -480,7 +484,7 @@ class Dataset(db.Model):
     __tablename__ = "datasets"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1024), unique=False, nullable=False, index=True)
+    name = db.Column(db.String(1024), unique=False, nullable=False)
     last_used = db.Column(db.DateTime, nullable=False)
     last_updated = db.Column(db.DateTime, nullable=True)
     did_finder = db.Column(db.String(64), nullable=False)
@@ -492,6 +496,12 @@ class Dataset(db.Model):
 
     files = relationship("DatasetFile", back_populates="dataset")
     transform_requests = relationship("TransformRequest", back_populates="dataset")
+
+    __table_args__ = (
+        db.Index(
+            "ix_datasets_name", name, unique=True, postgresql_where=(stale.is_(False))
+        ),
+    )
 
     def save_to_db(self):
         db.session.add(self)
@@ -514,8 +524,8 @@ class Dataset(db.Model):
         return result_obj
 
     @classmethod
-    def find_by_name(cls, name) -> Optional["Dataset"]:
-        return cls.query.filter_by(name=name, stale=False).first()
+    def find_by_name_with_lock(cls, name) -> Optional["Dataset"]:
+        return cls.query.filter_by(name=name, stale=False).with_for_update().first()
 
     @classmethod
     def find_by_id(cls, id) -> Optional["Dataset"]:

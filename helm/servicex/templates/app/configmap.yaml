@@ -134,6 +134,12 @@ data:
     TRANSFORMER_AFFINITY = {{ .Values.transformer.affinity | toJson }}
     TRANSFORMER_POD_ANNOTATIONS = {{ .Values.transformer.podAnnotations | toJson }}
 
+    {{- if .Values.transformer.cvmfsVolume }}
+    # This will be mounted into the transformer pod's /data directory
+    TRANSFORMER_CVMFS_VOLUME = {{ .Values.transformer.cvmfsVolume | toJson }}
+    {{- else }}
+    TRANSFORMER_CVMFS_VOLUME = None
+    {{- end }}
 
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
