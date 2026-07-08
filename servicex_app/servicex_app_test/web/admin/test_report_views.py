@@ -6,6 +6,7 @@ import pytest
 from sqlalchemy import Select
 
 from servicex_app.web.admin.reports import SqlCsvReportView, ReportView
+from servicex_app.web.admin.reports.usage_report import UsageReportView
 from servicex_app.web.admin.reports.user_transformation_count import (
     UserTransformationCountReportView,
 )
@@ -58,6 +59,48 @@ class TestSqlCsvReportView:
         rows = list(csv.reader(output))
         assert rows[0] == ["col_a", "col_b"]
         assert rows[1] == ["val_1", "val_2"]
+
+    def test_write_output_within_max_download_size_writes_all_rows(
+        self, mocker, mock_db_execute
+    ):
+        mock_db_execute(["a", "b"], [("x" * 100, "y" * 100)] * 3)
+        mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
+
+        class BoundedView(SqlCsvReportView):
+            max_download_size = 100  # 100 KB — well above the row total
+
+        output = io.StringIO()
+        BoundedView().write_output(output)
+        output.seek(0)
+        rows = list(csv.reader(output))
+        assert len(rows) == 4  # header + 3 data rows
+
+    def test_write_output_truncates_when_row_would_exceed_limit(
+        self, mocker, mock_db_execute
+    ):
+        mock_db_execute(["a", "b"], [("x" * 100, "y" * 100)] * 10)
+        mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
+
+        class BoundedView(SqlCsvReportView):
+            max_download_size = 1  # 1 KB — only a handful of rows fit
+
+        output = io.StringIO()
+        BoundedView().write_output(output)
+        output.seek(0)
+        rows = list(csv.reader(output))
+        assert 1 < len(rows) < 11  # some data rows written, but truncated
+        assert len(output.getvalue().encode("utf-8")) <= 1024
+
+
+class TestUsageReportView:
+    def test_get_query_returns_select(self):
+        query = UsageReportView().get_query()
+        assert isinstance(query, Select)
+
+    def test_get_query_column_labels(self):
+        query = UsageReportView().get_query()
+        keys = list(query.exported_columns.keys())
+        assert keys == ["Name", "Email", "Institution", "Run Time"]
 
 
 class TestUserTransformationCountReportView:
