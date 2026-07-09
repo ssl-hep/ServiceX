@@ -30,7 +30,6 @@ import os
 import sys
 import json
 from celery import Celery
-from distutils.util import strtobool
 
 import base64
 import click
@@ -137,6 +136,17 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             message.update(self.get_debug_fields(record))
 
         return self.serialize(message)
+
+
+def strtobool(value: str) -> bool:
+    """Replacement for distutils.util.strtobool (distutils was removed in
+    Python 3.12)."""
+    value = value.lower()
+    if value in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if value in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"invalid truth value {value!r}")
 
 
 def _override_config_with_environ(app):
@@ -376,7 +386,7 @@ def create_app(
             )
             sys.exit(-1)
 
-        api = Api(app, errors=Flask.errorhandler)
+        api = Api(app)
 
         # ensure the instance folder exists
         try:
