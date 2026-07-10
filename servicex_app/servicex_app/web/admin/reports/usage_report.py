@@ -17,8 +17,8 @@ class UsageReportView(SqlCsvReportView):
                 UserModel.name.label("Name"),
                 UserModel.email.label("Email"),
                 UserModel.institution.label("Institution"),
-                UserModel.created_at.label("Run Time"),
+                TransformRequest.submit_time.label("Run Time"),
             )
             .join(TransformRequest, TransformRequest.submitted_by == UserModel.id)
-            .order_by(desc(UserModel.created_at))
+            .order_by(desc(TransformRequest.submit_time))
         )
