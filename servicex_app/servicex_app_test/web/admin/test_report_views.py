@@ -66,11 +66,11 @@ class TestSqlCsvReportView:
         mock_db_execute(["a", "b"], [("x" * 100, "y" * 100)] * 3)
         mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
 
-        class BoundedView(SqlCsvReportView):
+        class AllRowsBoundedView(SqlCsvReportView):
             max_download_size = 100  # 100 KB — well above the row total
 
         output = io.StringIO()
-        BoundedView().write_output(output)
+        AllRowsBoundedView().write_output(output)
         output.seek(0)
         rows = list(csv.reader(output))
         assert len(rows) == 4  # header + 3 data rows
@@ -81,11 +81,11 @@ class TestSqlCsvReportView:
         mock_db_execute(["a", "b"], [("x" * 100, "y" * 100)] * 10)
         mocker.patch.object(SqlCsvReportView, "get_query", return_value=MagicMock())
 
-        class BoundedView(SqlCsvReportView):
+        class ExceedLimitBoundedView(SqlCsvReportView):
             max_download_size = 1  # 1 KB — only a handful of rows fit
 
         output = io.StringIO()
-        BoundedView().write_output(output)
+        ExceedLimitBoundedView().write_output(output)
         output.seek(0)
         rows = list(csv.reader(output))
         assert 1 < len(rows) < 11  # some data rows written, but truncated
