@@ -1383,6 +1383,7 @@ def app():
     # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
 
+
 @pytest.fixture
 def app_context(app):
     """Create an application context."""
