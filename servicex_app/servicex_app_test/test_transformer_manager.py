@@ -29,11 +29,13 @@ import base64
 import re
 import os
 import zipfile
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 
+import servicex_app
 from servicex_app.models import TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
@@ -1367,6 +1369,25 @@ class TestTransformerManager(ResourceTestBase):
                 filter(lambda m: m.name == "cvmfs", container.volume_mounts)
             )
             assert cvmfs_vol_mount.mount_path == "/cvmfs"
+
+
+@pytest.fixture
+def app():
+    """Create and configure a test Flask application."""
+    # Get the directory where the current file is located
+    current_dir = Path(__file__).parent
+
+    os.environ["APP_CONFIG_FILE"] = str(current_dir / "test.config")
+    app = servicex_app.create_app()
+    app.config["TESTING"] = True
+    # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    return app
+
+@pytest.fixture
+def app_context(app):
+    """Create an application context."""
+    with app.app_context():
+        yield app
 
 
 class TestShutdownPod:
