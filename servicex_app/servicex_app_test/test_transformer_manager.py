@@ -34,7 +34,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from models import TransformRequest, TransformStatus
+from servicex_app.models import TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
