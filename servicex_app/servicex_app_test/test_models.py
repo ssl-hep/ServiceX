@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import kubernetes
 from sqlalchemy import text
 
 import pytest
@@ -13,7 +12,6 @@ import servicex_app
 from servicex_app.models import (
     TransformationResult,
     TransformRequest,
-    TransformStatus,
     UserModel,
 )
 

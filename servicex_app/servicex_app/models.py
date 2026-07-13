@@ -28,13 +28,11 @@
 from __future__ import annotations
 
 import hashlib
-import kubernetes
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
-from flask import current_app
 from sqlalchemy import DateTime, func
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -43,8 +41,6 @@ from sqlalchemy import text
 
 from servicex_app.mailgun_adaptor import MailgunAdaptor
 
-if TYPE_CHECKING:
-    from servicex_app.transformer_manager import TransformerManager
 
 db = SQLAlchemy()
 max_string_size = 10485760
