@@ -747,3 +747,18 @@ class TransformerManager:
         hpas = api.list_namespaced_horizontal_pod_autoscaler(namespace)
         rv = [_ for _ in hpas.items if _.metadata.name.startswith("transformer-")]
         return rv
+
+    def shutdown_pod(self, request: TransformRequest):
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        if self.status in (TransformStatus.running, TransformStatus.lookup):
+            try:
+                self.shutdown_transformer_job(request.request_id, namespace)
+            except kubernetes.client.exceptions.ApiException as exc:
+                if exc.status == 404:
+                    pass
+                else:
+                    current_app.logger.error(
+                        f"Got Kubernetes api exception: {exc.reason}",
+                        extra={"request_id": request.request_id},
+                    )
+                    raise exc

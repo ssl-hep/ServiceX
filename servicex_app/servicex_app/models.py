@@ -264,22 +264,6 @@ class TransformRequest(db.Model):
             .all()
         )
 
-    def shutdown_pod(self, transformer_manager: TransformerManager):
-        request_id = self.request_id
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        if self.status in (TransformStatus.running, TransformStatus.lookup):
-            try:
-                transformer_manager.shutdown_transformer_job(request_id, namespace)
-            except kubernetes.client.exceptions.ApiException as exc:
-                if exc.status == 404:
-                    pass
-                else:
-                    current_app.logger.error(
-                        f"Got Kubernetes api exception: {exc.reason}",
-                        extra={"request_id": request_id},
-                    )
-                    raise exc
-
     @classmethod
     def return_json(cls, requests: Iterable["TransformRequest"]):
         return {"requests": [r.to_json() for r in requests]}

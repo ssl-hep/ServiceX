@@ -26,7 +26,6 @@ class TestTransformCancel(ResourceTestBase):
     def fake_transform(self, mocker) -> TransformRequest:
         fake = self._generate_transform_request()
         fake.save_to_db = mocker.Mock()
-        fake.shutdown_pod = mocker.Mock()
         mocker.patch(f"{self.module}.TransformRequest.lookup", return_value=fake)
         return fake
 
@@ -43,7 +42,7 @@ class TestTransformCancel(ResourceTestBase):
         assert resp.status_code == 200
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
-        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
+        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
 
     def test_running(
         self,
@@ -56,7 +55,7 @@ class TestTransformCancel(ResourceTestBase):
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
+        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -71,7 +70,7 @@ class TestTransformCancel(ResourceTestBase):
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
+        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -83,12 +82,12 @@ class TestTransformCancel(ResourceTestBase):
     ):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        fake_transform.shutdown_pod.side_effect = exc
+        mock_transform_manager.shutdown_pod.side_effect = exc
         client = self._test_client(transformation_manager=mock_transform_manager)
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 403
-        fake_transform.shutdown_pod.assert_called_once_with(mock_transform_manager)
+        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.running
         assert fake_transform.finish_time is None
 

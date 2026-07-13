@@ -30,8 +30,11 @@ import re
 import os
 import zipfile
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
+
+from models import TransformRequest, TransformStatus
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -1364,3 +1367,68 @@ class TestTransformerManager(ResourceTestBase):
                 filter(lambda m: m.name == "cvmfs", container.volume_mounts)
             )
             assert cvmfs_vol_mount.mount_path == "/cvmfs"
+
+
+class TestShutdownPod:
+    def _make_req(self, status):
+        req = TransformRequest()
+        req.request_id = "test-123"
+        req.status = status
+        return req
+
+    def test_skips_shutdown_for_non_active_status(
+        self, app_context
+    ):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        req = self._make_req(TransformStatus.submitted)
+        manager.shutdown_pod(req)
+        manager.shutdown_transformer_job.assert_not_called()
+
+    def test_calls_shutdown_for_running(self, app_context):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        req = self._make_req(TransformStatus.running)
+        manager.shutdown_pod(req)
+        manager.shutdown_transformer_job.assert_called_once_with(
+            "test-123", "test-ns"
+        )
+
+    def test_calls_shutdown_for_lookup(self, app_context):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        req = self._make_req(TransformStatus.lookup)
+        manager.shutdown_pod(req)
+        manager.shutdown_transformer_job.assert_called_once_with(
+            "test-123", "test-ns"
+        )
+
+    def test_404_swallowed(self, app_context):
+        import kubernetes
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        manager.shutdown_transformer_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=404)
+        )
+        req = self._make_req(TransformStatus.running)
+        manager.shutdown_pod(req)
+
+    def test_non_404_logs_and_reraises(
+        self, app_context, mocker
+    ):
+        import kubernetes
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        mock_error = mocker.patch.object(app_context.logger, "error")
+        manager.shutdown_transformer_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=403, reason="Forbidden")
+        )
+        with pytest.raises(kubernetes.client.exceptions.ApiException):
+            req = self._make_req(TransformStatus.running)
+            manager.shutdown_pod(req)
+        mock_error.assert_called_once()
