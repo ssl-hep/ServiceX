@@ -1401,11 +1401,9 @@ class TestShutdownPod:
     def test_skips_shutdown_for_non_active_status(
         self, app_context, mocker
     ):
-        import kubernetes
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch("servicex_app.transformer_manager.kubernetes.config.load_incluster_config")
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.submitted)
@@ -1413,11 +1411,9 @@ class TestShutdownPod:
         manager.shutdown_transformer_job.assert_not_called()
 
     def test_calls_shutdown_for_running(self, app_context, mocker):
-        import kubernetes
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch("servicex_app.transformer_manager.kubernetes.config.load_incluster_config")
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.running)
@@ -1427,11 +1423,9 @@ class TestShutdownPod:
         )
 
     def test_calls_shutdown_for_lookup(self, app_context, mocker):
-        import kubernetes
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch("servicex_app.transformer_manager.kubernetes.config.load_incluster_config")
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.lookup)
@@ -1444,8 +1438,7 @@ class TestShutdownPod:
         import kubernetes
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch("servicex_app.transformer_manager.kubernetes.config.load_incluster_config")
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         manager.shutdown_transformer_job.side_effect = (
@@ -1460,8 +1453,7 @@ class TestShutdownPod:
         import kubernetes
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch("servicex_app.transformer_manager.kubernetes.config.load_incluster_config")
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         mock_error = mocker.patch.object(app_context.logger, "error")
