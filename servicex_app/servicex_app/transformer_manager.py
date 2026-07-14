@@ -750,7 +750,7 @@ class TransformerManager:
 
     def shutdown_pod(self, request: TransformRequest):
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        if self.status in (TransformStatus.running, TransformStatus.lookup):
+        if request.status in (TransformStatus.running, TransformStatus.lookup):
             try:
                 self.shutdown_transformer_job(request.request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
