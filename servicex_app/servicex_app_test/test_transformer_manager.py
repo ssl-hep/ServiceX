@@ -1405,6 +1405,8 @@ class TestShutdownPod:
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "AppsV1Api")
+        
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.submitted)
@@ -1416,6 +1418,8 @@ class TestShutdownPod:
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "AppsV1Api")
+
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.running)
@@ -1429,6 +1433,8 @@ class TestShutdownPod:
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "AppsV1Api")
+
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.lookup)
@@ -1442,6 +1448,8 @@ class TestShutdownPod:
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "AppsV1Api")
+
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         manager.shutdown_transformer_job.side_effect = (
@@ -1457,6 +1465,8 @@ class TestShutdownPod:
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "AppsV1Api")
+
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         mock_error = mocker.patch.object(app_context.logger, "error")
