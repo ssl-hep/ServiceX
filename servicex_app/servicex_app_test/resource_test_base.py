@@ -71,6 +71,7 @@ class ResourceTestBase:
             "TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM": "my-claim",
             "OBJECT_STORE_ENABLED": False,
             "MINIO_URL": "localhost:9000",
+            "MINIO_PUBLIC_URL": "localhost:9999",
             "MINIO_ACCESS_KEY": "miniouser",
             "MINIO_SECRET_KEY": "leftfoot1",
             "ENABLE_AUTH": False,

@@ -38,5 +38,6 @@ class Info(ServiceXResource):
                 "poll_local_transformation_results",
                 "long_sample_titles_10240",
                 "post_cancel_transform",
+                "generate_file_urls",
             ],
         }
