@@ -41,7 +41,6 @@ from sqlalchemy import text
 
 from servicex_app.mailgun_adaptor import MailgunAdaptor
 
-
 db = SQLAlchemy()
 max_string_size = 10485760
 

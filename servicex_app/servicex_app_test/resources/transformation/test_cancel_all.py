@@ -44,7 +44,9 @@ class TestCancelAllTransform(ResourceTestBase):
     ):
         fake = self._generate_transform_request()
         fake.status = status
-        self._setup_query(mock_transform_request_cls, [fake], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [fake], mocker, mock_transform_manager
+        )
 
         with client.application.app_context():
             resp = client.post(
@@ -66,7 +68,9 @@ class TestCancelAllTransform(ResourceTestBase):
         t2 = self._generate_transform_request()
         t2.request_id = "bbb-222"
         t2.status = TransformStatus.running
-        self._setup_query(mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager
+        )
 
         with client.application.app_context():
             resp = client.post(
@@ -82,7 +86,9 @@ class TestCancelAllTransform(ResourceTestBase):
     def test_no_active_transforms(
         self, client, mock_transform_manager, mock_transform_request_cls, mocker
     ):
-        self._setup_query(mock_transform_request_cls, [], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [], mocker, mock_transform_manager
+        )
 
         with client.application.app_context():
             resp = client.post(
@@ -97,8 +103,12 @@ class TestCancelAllTransform(ResourceTestBase):
     ):
         fake = self._generate_transform_request()
         fake.status = TransformStatus.running
-        self._setup_query(mock_transform_request_cls, [fake], mocker, mock_transform_manager)
-        mock_transform_manager.shutdown_pod.side_effect = k8s.client.exceptions.ApiException(status=404)
+        self._setup_query(
+            mock_transform_request_cls, [fake], mocker, mock_transform_manager
+        )
+        mock_transform_manager.shutdown_pod.side_effect = (
+            k8s.client.exceptions.ApiException(status=404)
+        )
 
         with client.application.app_context():
             resp = client.post(
@@ -118,7 +128,9 @@ class TestCancelAllTransform(ResourceTestBase):
         t2 = self._generate_transform_request()
         t2.request_id = "bbb-222"
         t2.status = TransformStatus.submitted
-        self._setup_query(mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager
+        )
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
         mock_transform_manager.shutdown_pod.side_effect = exc
 
@@ -144,7 +156,9 @@ class TestCancelAllTransform(ResourceTestBase):
             transformation_manager=mock_transform_manager,
             extra_config={"ENABLE_AUTH": True},
         )
-        self._setup_query(mock_transform_request_cls, [], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [], mocker, mock_transform_manager
+        )
         with client.application.app_context():
             client.post(
                 "/servicex/transformation/cancel-all",
@@ -167,7 +181,9 @@ class TestCancelAllTransform(ResourceTestBase):
             transformation_manager=mock_transform_manager,
             extra_config={"ENABLE_AUTH": False},
         )
-        self._setup_query(mock_transform_request_cls, [], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [], mocker, mock_transform_manager
+        )
         with client.application.app_context():
             response = client.post(
                 "/servicex/transformation/cancel-all",
@@ -188,7 +204,9 @@ class TestCancelAllTransform(ResourceTestBase):
             transformation_manager=mock_transform_manager,
             extra_config={"ENABLE_AUTH": True},
         )
-        self._setup_query(mock_transform_request_cls, [], mocker, mock_transform_manager)
+        self._setup_query(
+            mock_transform_request_cls, [], mocker, mock_transform_manager
+        )
         with client.application.app_context():
             resp = client.post(
                 "/servicex/transformation/cancel-all",
