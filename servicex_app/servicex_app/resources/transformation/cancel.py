@@ -51,7 +51,7 @@ class CancelTransform(ServiceXResource):
     @auth_required
     def post(self, request_id: str):
         """
-        This is supported via the post_cancel_transform capability
+        This is supported via the cancel_transform_post_method capability
         """
         return self._cancel_transform(request_id)
 
