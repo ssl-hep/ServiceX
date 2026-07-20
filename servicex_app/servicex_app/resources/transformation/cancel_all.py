@@ -57,7 +57,7 @@ class CancelAllTransforms(ServiceXResource):
 
         for transform_req in transform_reqs:
             try:
-                self.transformer_manager.shutdown_pod(transform_req)
+                self.transformer_manager.cancel_transformation(transform_req)
             except kubernetes.client.exceptions.ApiException:
                 pass
 

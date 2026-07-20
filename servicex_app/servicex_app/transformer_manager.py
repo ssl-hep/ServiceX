@@ -748,7 +748,7 @@ class TransformerManager:
         rv = [_ for _ in hpas.items if _.metadata.name.startswith("transformer-")]
         return rv
 
-    def shutdown_pod(self, request: TransformRequest):
+    def cancel_transform(self, request: TransformRequest):
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         if request.status in (TransformStatus.running, TransformStatus.lookup):
             try:

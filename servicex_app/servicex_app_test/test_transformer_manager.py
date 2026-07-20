@@ -1407,7 +1407,7 @@ class TestShutdownPod:
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.submitted)
-        manager.shutdown_pod(req)
+        manager.cancel_transformation(req)
         manager.shutdown_transformer_job.assert_not_called()
 
     def test_calls_shutdown_for_running(self, app_context, mocker):
@@ -1419,7 +1419,7 @@ class TestShutdownPod:
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.running)
-        manager.shutdown_pod(req)
+        manager.cancel_transformation(req)
         manager.shutdown_transformer_job.assert_called_once_with("test-123", "test-ns")
 
     def test_calls_shutdown_for_lookup(self, app_context, mocker):
@@ -1431,7 +1431,7 @@ class TestShutdownPod:
         manager = TransformerManager("internal-kubernetes")
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.lookup)
-        manager.shutdown_pod(req)
+        manager.cancel_transformation(req)
         manager.shutdown_transformer_job.assert_called_once_with("test-123", "test-ns")
 
     def test_404_swallowed(self, app_context, mocker):
@@ -1448,7 +1448,7 @@ class TestShutdownPod:
             kubernetes.client.exceptions.ApiException(status=404)
         )
         req = self._make_req(TransformStatus.running)
-        manager.shutdown_pod(req)
+        manager.cancel_transformation(req)
 
     def test_non_404_logs_and_reraises(self, app_context, mocker):
         import kubernetes
@@ -1466,5 +1466,5 @@ class TestShutdownPod:
         )
         with pytest.raises(kubernetes.client.exceptions.ApiException):
             req = self._make_req(TransformStatus.running)
-            manager.shutdown_pod(req)
+            manager.cancel_transformation(req)
         mock_error.assert_called_once()

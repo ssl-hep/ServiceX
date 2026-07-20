@@ -27,7 +27,7 @@ class TestCancelAllTransform(ResourceTestBase):
         )
 
     def _setup_query(self, mock_cls, transforms, mocker, mock_transform_manager):
-        mock_transform_manager.shutdown_pod = mocker.Mock()
+        mock_transform_manager.cancel_transform = mocker.Mock()
         mock_cls.active_user_transformations.return_value = transforms
 
     @pytest.mark.parametrize(
@@ -57,7 +57,7 @@ class TestCancelAllTransform(ResourceTestBase):
         assert fake.request_id in resp.json["canceled"]
         assert fake.status == TransformStatus.canceled
         assert fake.finish_time is not None
-        mock_transform_manager.shutdown_pod.assert_called_once_with(fake)
+        mock_transform_manager.cancel_transform.assert_called_once_with(fake)
 
     def test_cancels_multiple_transforms(
         self, client, mock_transform_manager, mock_transform_request_cls, mocker
@@ -81,7 +81,7 @@ class TestCancelAllTransform(ResourceTestBase):
         assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
         assert t1.status == TransformStatus.canceled
         assert t2.status == TransformStatus.canceled
-        mock_transform_manager.shutdown_pod.assert_has_calls([call(t1), call(t2)])
+        mock_transform_manager.cancel_transform.assert_has_calls([call(t1), call(t2)])
 
     def test_no_active_transforms(
         self, client, mock_transform_manager, mock_transform_request_cls, mocker
@@ -106,7 +106,7 @@ class TestCancelAllTransform(ResourceTestBase):
         self._setup_query(
             mock_transform_request_cls, [fake], mocker, mock_transform_manager
         )
-        mock_transform_manager.shutdown_pod.side_effect = (
+        mock_transform_manager.cancel_transform.side_effect = (
             k8s.client.exceptions.ApiException(status=404)
         )
 
@@ -132,7 +132,7 @@ class TestCancelAllTransform(ResourceTestBase):
             mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager
         )
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        mock_transform_manager.shutdown_pod.side_effect = exc
+        mock_transform_manager.cancel_transform.side_effect = exc
 
         with client.application.app_context():
             resp = client.post(

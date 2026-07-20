@@ -42,7 +42,7 @@ class TestTransformCancel(ResourceTestBase):
         assert resp.status_code == 200
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
-        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
+        mock_transform_manager.cancel_transform.assert_called_once_with(fake_transform)
 
     def test_running(
         self,
@@ -55,7 +55,7 @@ class TestTransformCancel(ResourceTestBase):
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
+        mock_transform_manager.cancel_transform.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -70,7 +70,7 @@ class TestTransformCancel(ResourceTestBase):
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 200
-        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
+        mock_transform_manager.cancel_transform.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.canceled
         assert fake_transform.finish_time is not None
 
@@ -82,12 +82,12 @@ class TestTransformCancel(ResourceTestBase):
     ):
         fake_transform.status = TransformStatus.running
         exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        mock_transform_manager.shutdown_pod.side_effect = exc
+        mock_transform_manager.cancel_transform.side_effect = exc
         client = self._test_client(transformation_manager=mock_transform_manager)
 
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 403
-        mock_transform_manager.shutdown_pod.assert_called_once_with(fake_transform)
+        mock_transform_manager.cancel_transform.assert_called_once_with(fake_transform)
         assert fake_transform.status == TransformStatus.running
         assert fake_transform.finish_time is None
 
