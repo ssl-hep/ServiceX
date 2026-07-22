@@ -28,10 +28,10 @@
 from datetime import datetime, timezone
 
 import kubernetes
-from flask import current_app
+from flask import current_app, session
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest, db, TransformStatus
+from servicex_app.models import TransformRequest, db, TransformStatus, UserModel
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.transformer_manager import TransformerManager
 
@@ -46,7 +46,11 @@ class CancelAllTransforms(ServiceXResource):
         if not current_app.config.get("ENABLE_AUTH"):
             return {"message": "This is not available when auth is disabled"}, 400
 
-        user = self.get_requesting_user()
+        if session.get("is_authenticated"):
+            user = UserModel.find_by_email(session["email"])
+        else:
+            user = self.get_requesting_user()
+
         if user is None:
             return {"message": "No user found"}, 400
 
