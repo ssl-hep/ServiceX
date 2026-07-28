@@ -21,7 +21,5 @@ class DeploymentStatus(ServiceXResource):
             msg = f"Transformer Job not found: '{request_id}'"
             current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
-        current_app.logger.debug(
-            f"Transformer Job status: {status.to_dict()}"
-        )
+        current_app.logger.debug(f"Transformer Job status: {status.to_dict()}")
         return jsonify(status.to_dict())

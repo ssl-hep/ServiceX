@@ -98,7 +98,9 @@ class TransformerManager:
         generated_code_cm = request_rec.generated_code_cm
 
         if request_rec.status == TransformStatus.running:
-            replicas = min(max(1, request_rec.files), config["TRANSFORMER_MAX_REPLICAS"])
+            replicas = min(
+                max(1, request_rec.files), config["TRANSFORMER_MAX_REPLICAS"]
+            )
         else:
             replicas = config["TRANSFORMER_MAX_REPLICAS"]
 
