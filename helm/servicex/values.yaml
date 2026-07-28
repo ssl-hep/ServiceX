@@ -383,11 +383,8 @@ transformer:
   cacheVPSLivenessURL: https://vps.cern.ch/liveness
 
 
-  autoscaler:
-    cpuScaleThreshold: 30
-    enabled: true
-    maxReplicas: 20
-    minReplicas: 1
+  # Maximum number of transformer pods k8s will run in parallel
+  maxReplicas: 20
   cpuLimit: 1
   memoryLimit: 2Gi
   cpuRequest: 500m

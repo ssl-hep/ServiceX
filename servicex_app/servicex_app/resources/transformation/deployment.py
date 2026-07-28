@@ -13,15 +13,15 @@ class DeploymentStatus(ServiceXResource):
     @auth_required
     def get(self, request_id):
         """
-        Returns information about the transformer deployment for a given request.
+        Returns information about the transformer Job for a given request.
         :param request_id: UUID of transformation request.
         """
         status = self.transformer_manager.get_deployment_status(request_id)
         if status is None:
-            msg = f"Deployment not found: '{request_id}'"
+            msg = f"Transformer Job not found: '{request_id}'"
             current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
         current_app.logger.debug(
-            f"Transformation deployment request: {status.to_dict()}"
+            f"Transformer Job status: {status.to_dict()}"
         )
         return jsonify(status.to_dict())

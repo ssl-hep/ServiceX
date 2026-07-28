@@ -54,7 +54,6 @@ BASE_TRANSFORMER_CONFIG = {
     "TRANSFORMER_MEMORY_LIMIT": "2Gi",
     "TRANSFORMER_CPU_REQUEST": "500m",
     "TRANSFORMER_MEMORY_REQUEST": "512Mi",
-    "TRANSFORMER_CPU_SCALE_THRESHOLD": 30,
     "TRANSFORMER_SIDECAR_VOLUME_PATH": "/servicex/output",
     "TRANSFORMER_SIDECAR_IMAGE": "pondd/servicex_yt_transformer:sidecar",
     "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
@@ -91,7 +90,6 @@ class TestTransformerManager(ResourceTestBase):
                 .assert_called_with(image=submitted_request.image,
                                     request_id=submitted_request.request_id,
                                     workers=submitted_request.workers,
-                                    max_workers=submitted_request.files,
                                     generated_code_cm=submitted_request.generated_code_cm,
                                     rabbitmq_uri='amqp://trans.rabbit',
                                     namespace='my-ws',
@@ -117,18 +115,13 @@ class TestTransformerManager(ResourceTestBase):
             mock_kubernetes.config.load_incluster_config.assert_not_called()
             mock_kubernetes.config.load_kube_config.assert_not_called()
 
-    @pytest.mark.skip(reason="Needs to be updated to work with sidecar")
+    @pytest.mark.skip(reason="Needs to be updated to work with sidecar and V1Job")
     def test_launch_transformer_jobs(self, mocker):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_api = mocker.patch.object(kubernetes.client, "BatchV1Api")
         mock_core_api = mocker.patch.object(kubernetes.client, "CoreV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
 
         mock_core_api.list_namespaced_persistent_volume_claim = mocker.Mock(
             return_value=[]
@@ -137,7 +130,6 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager("external-kubernetes")
         cfg = make_config(
             TRANSFORMER_CPU_LIMIT=4,
-            TRANSFORMER_MIN_REPLICAS=3,
             TRANSFORMER_MAX_REPLICAS=17,
         )
 
@@ -149,7 +141,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -157,10 +148,12 @@ class TestTransformerManager(ResourceTestBase):
                 x509_secret="x509",
                 generated_code_cm=None,
             )
-            called_deployment = mock_api.mock_calls[1][2]["body"]
-            assert called_deployment.spec.replicas == cfg["TRANSFORMER_MIN_REPLICAS"]
-            assert len(called_deployment.spec.template.spec.containers) == 2
-            container = called_deployment.spec.template.spec.containers[0]
+            called_job = mock_api.return_value.create_namespaced_job.call_args.kwargs[
+                "body"
+            ]
+            assert called_job.spec.parallelism == 17
+            assert len(called_job.spec.template.spec.containers) == 2
+            container = called_job.spec.template.spec.containers[0]
             assert container.image == "sslhep/servicex-transformer:pytest"
             assert container.image_pull_policy == "Always"
             assert len(container.volume_mounts) == 2
@@ -178,73 +171,22 @@ class TestTransformerManager(ResourceTestBase):
             assert "cpu" in limits
             assert limits["cpu"] == 4
 
-            assert mock_api.mock_calls[1][2]["namespace"] == "my-ns"
-            mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_called()
-            autoscaling_spec = mock_autoscaling.mock_calls[0][2]["body"].spec
-            assert autoscaling_spec.min_replicas == 3
-            assert autoscaling_spec.max_replicas == 17
-            assert autoscaling_spec.scale_target_ref.name == "transformer-1234"
-            assert autoscaling_spec.target_cpu_utilization_percentage == 30
-
-            assert len(called_deployment.spec.template.spec.volumes) == 2
-            volume = called_deployment.spec.template.spec.volumes[1].secret
-            assert volume.secret_name == "x509"
-
-    def test_launch_transformer_jobs_no_autoscaler(self, mocker):
-        import kubernetes
-
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
-
-        transformer = TransformerManager("external-kubernetes")
-        cfg = make_config(TRANSFORMER_AUTOSCALE_ENABLED=False)
-        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
-
-        client = self._test_client(extra_config=cfg, transformation_manager=transformer)
-
-        with client.application.app_context():
-            transformer.launch_transformer_jobs(
-                image="sslhep/servicex-transformer:pytest",
-                request_id="1234",
-                workers=17,
-                max_workers=17,
-                rabbitmq_uri="ampq://test.com",
-                namespace="my-ns",
-                result_destination="object-store",
-                result_format="arrow",
-                x509_secret="x509",
-                generated_code_cm=None,
-                transformer_language="scala",
-                transformer_command="echo",
+            assert (
+                mock_api.return_value.create_namespaced_job.call_args.kwargs[
+                    "namespace"
+                ]
+                == "my-ns"
             )
-            called_deployment = mock_api.mock_calls[1][2]["body"]
-            assert called_deployment.spec.replicas == 17
-            mock_autoscaling.create_namespaced_horizontal_pod_autoscaler.assert_not_called()
 
-            # Verify resource limits and requests are set
-            container = called_deployment.spec.template.spec.containers[0]
-            limits = container.resources.limits
-            assert limits["cpu"] == 1
-            assert limits["memory"] == "2Gi"
-            requests = container.resources.requests
-            assert requests["cpu"] == "500m"
-            assert requests["memory"] == "512Mi"
+            assert len(called_job.spec.template.spec.volumes) == 2
+            volume = called_job.spec.template.spec.volumes[1].secret
+            assert volume.secret_name == "x509"
 
     def test_launch_transformer_with_hostpath(self, mocker):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -259,7 +201,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -270,7 +211,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_command="echo",
             )
 
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             assert container.volume_mounts[1].mount_path == "/etc/grid-security-ro"
             assert called_job.spec.template.spec.volumes[1].secret.secret_name == "x509"
@@ -282,11 +227,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -300,7 +241,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -310,7 +250,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             config_map_vol_mount = container.volume_mounts[2]
             assert config_map_vol_mount.name == "generated-code"
@@ -324,11 +268,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -342,7 +282,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -352,7 +291,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, "--result-destination") == "object-store"
@@ -367,11 +310,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -386,7 +325,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -396,7 +334,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, "--result-destination") == "object-store"
@@ -412,11 +354,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -431,7 +369,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -441,7 +378,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, "--result-destination") == "object-store"
@@ -457,7 +398,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -467,7 +408,6 @@ class TestTransformerManager(ResourceTestBase):
                 OBJECT_STORE_ENABLED=False,
                 TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM="my-pvc",
                 TRANSFORMER_PERSISTENCE_SUBDIR="output-data",
-                TRANSFORMER_AUTOSCALE_ENABLED=False,
             ),
             transformation_manager=transformer,
         )
@@ -477,7 +417,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="volume",
@@ -487,7 +426,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, "--result-destination") == "volume"
@@ -514,7 +457,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -524,7 +467,6 @@ class TestTransformerManager(ResourceTestBase):
                 OBJECT_STORE_ENABLED=False,
                 TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM=None,
                 TRANSFORMER_PERSISTENCE_SUBDIR="output-data",
-                TRANSFORMER_AUTOSCALE_ENABLED=False,
             ),
             transformation_manager=transformer,
         )
@@ -534,7 +476,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="volume",
@@ -544,7 +485,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
             args = container.args
             assert _arg_value(args, "--result-destination") == "volume"
@@ -571,12 +516,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_api = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -585,7 +525,6 @@ class TestTransformerManager(ResourceTestBase):
             transformation_manager=transformer,
             extra_config=make_config(
                 TRANSFORMER_CPU_LIMIT=4,
-                TRANSFORMER_MIN_REPLICAS=3,
                 TRANSFORMER_MAX_REPLICAS=17,
                 TRANSFORMER_X509_SECRET=None,
             ),
@@ -596,7 +535,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -606,11 +544,13 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_deployment = mock_api.mock_calls[1][2]["body"]
-            assert len(called_deployment.spec.template.spec.containers) == 2
-            container = called_deployment.spec.template.spec.containers[0]
+            called_job = mock_api.return_value.create_namespaced_job.call_args.kwargs[
+                "body"
+            ]
+            assert len(called_job.spec.template.spec.containers) == 2
+            container = called_job.spec.template.spec.containers[0]
             assert len(container.volume_mounts) == 1
-            assert len(called_deployment.spec.template.spec.volumes) == 1
+            assert len(called_job.spec.template.spec.volumes) == 1
             args = container.args
             assert not args[0].startswith("/servicex/proxy-exporter.sh & sleep 5 && ")
 
@@ -619,16 +559,11 @@ class TestTransformerManager(ResourceTestBase):
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
 
-        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
-        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api = mocker.MagicMock(kubernetes.client.BatchV1Api)
+        mocker.patch.object(kubernetes.client, "BatchV1Api", return_value=mock_api)
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -637,14 +572,13 @@ class TestTransformerManager(ResourceTestBase):
 
         with client.application.app_context():
             transformer.shutdown_transformer_job("1234", "my-ns")
-            mock_api.delete_namespaced_deployment.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
+            mock_api.delete_namespaced_job.assert_called_with(
+                name="transformer-1234",
+                namespace="my-ns",
+                propagation_policy="Background",
             )
             mock_core_api.delete_namespaced_config_map.assert_called_with(
                 name="1234-generated-source", namespace="my-ns"
-            )
-            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
             )
 
     def test_shutdown_transformer_jobs_exceptions(self, mocker):
@@ -652,23 +586,15 @@ class TestTransformerManager(ResourceTestBase):
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
 
-        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
-        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
-        mock_api.delete_namespaced_deployment.side_effect = (
+        mock_api = mocker.MagicMock(kubernetes.client.BatchV1Api)
+        mocker.patch.object(kubernetes.client, "BatchV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_job.side_effect = (
             kubernetes.client.rest.ApiException()
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException()
-        )
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
-        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
             kubernetes.client.rest.ApiException()
         )
 
@@ -684,34 +610,31 @@ class TestTransformerManager(ResourceTestBase):
         # default mode with exceptions
         with client.application.app_context():
             transformer.shutdown_transformer_job("1234", "my-ns")
-            mock_api.delete_namespaced_deployment.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
+            mock_api.delete_namespaced_job.assert_called_with(
+                name="transformer-1234",
+                namespace="my-ns",
+                propagation_policy="Background",
             )
             mock_core_api.delete_namespaced_config_map.assert_called_with(
                 name="1234-generated-source", namespace="my-ns"
             )
-            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
-            )
             transformer.celery_app.control.cancel_consumer.assert_called_with(
                 "transformer-1234"
             )
-        assert client.application.logger.exception.call_count == 4
+        assert client.application.logger.exception.call_count == 3
 
         # now check quiet mode
         client.application.logger.exception.reset_mock()
         with client.application.app_context():
             transformer.shutdown_transformer_job("1234", "my-ns", True)
-            mock_api.delete_namespaced_deployment.assert_called_with(
+            mock_api.delete_namespaced_job.assert_called_with(
                 name="transformer-1234",
                 namespace="my-ns",
+                propagation_policy="Background",
             )
             mock_core_api.delete_namespaced_config_map.assert_called_with(
                 name="1234-generated-source",
                 namespace="my-ns",
-            )
-            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
             )
         client.application.logger.exception.assert_not_called()
 
@@ -720,9 +643,9 @@ class TestTransformerManager(ResourceTestBase):
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
 
-        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
-        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
-        mock_api.delete_namespaced_deployment.side_effect = (
+        mock_api = mocker.MagicMock(kubernetes.client.BatchV1Api)
+        mocker.patch.object(kubernetes.client, "BatchV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_job.side_effect = (
             kubernetes.client.rest.ApiException(),
             None,
         )
@@ -730,15 +653,6 @@ class TestTransformerManager(ResourceTestBase):
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException(),
-            None,
-        )
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
-        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
             kubernetes.client.rest.ApiException(),
             None,
         )
@@ -753,47 +667,9 @@ class TestTransformerManager(ResourceTestBase):
         # default mode with exceptions
         with client.application.app_context():
             transformer.shutdown_transformer_job("1234", "my-ns")
-            assert mock_api.delete_namespaced_deployment.call_count == 2
+            assert mock_api.delete_namespaced_job.call_count == 2
             assert mock_core_api.delete_namespaced_config_map.call_count == 2
-            assert (
-                mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.call_count
-                == 2
-            )
             assert client.application.logger.exception.call_count == 0
-
-    def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
-        import kubernetes
-
-        mocker.patch.object(kubernetes.config, "load_kube_config")
-
-        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
-        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
-
-        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
-        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
-
-        transformer = TransformerManager("external-kubernetes")
-        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
-
-        client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
-            transformation_manager=transformer,
-        )
-
-        with client.application.app_context():
-            transformer.shutdown_transformer_job("1234", "my-ns")
-            mock_api.delete_namespaced_deployment.assert_called_with(
-                name="transformer-1234", namespace="my-ns"
-            )
-            mock_core_api.delete_namespaced_config_map.assert_called_with(
-                name="1234-generated-source", namespace="my-ns"
-            )
-            mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.assert_not_called()
 
     def test_create_configmap_from_zip(self, mocker):
         import kubernetes
@@ -826,11 +702,11 @@ class TestTransformerManager(ResourceTestBase):
         assert calls[1]["body"].metadata.name == "my-request-generated-source"
 
     def test_get_deployment_status(self, mocker, mock_kubernetes):
-        mock_api = mock_kubernetes.client.AppsV1Api.return_value
-        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
-        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
-        mock_deployment = mocker.MagicMock(name="mock_deployment")
-        mock_deployment_list.items = [mock_deployment]
+        mock_api = mock_kubernetes.client.BatchV1Api.return_value
+        mock_job_list = mocker.MagicMock(name="mock_job_list")
+        mock_api.list_namespaced_job.return_value = mock_job_list
+        mock_job = mocker.MagicMock(name="mock_job")
+        mock_job_list.items = [mock_job]
 
         transformer_manager = TransformerManager("external-kubernetes")
         transformer_manager.persistent_volume_claim_exists = mocker.Mock(
@@ -838,19 +714,18 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
             transformation_manager=transformer_manager,
         )
 
         with client.application.app_context():
             status = transformer_manager.get_deployment_status("1234")
-            assert status == mock_deployment.status
+            assert status == mock_job.status
 
     def test_get_deployment_status_404(self, mocker, mock_kubernetes):
-        mock_api = mock_kubernetes.client.AppsV1Api.return_value
-        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
-        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
-        mock_deployment_list.items = []
+        mock_api = mock_kubernetes.client.BatchV1Api.return_value
+        mock_job_list = mocker.MagicMock(name="mock_job_list")
+        mock_api.list_namespaced_job.return_value = mock_job_list
+        mock_job_list.items = []
 
         transformer_manager = TransformerManager("external-kubernetes")
         transformer_manager.persistent_volume_claim_exists = mocker.Mock(
@@ -858,7 +733,6 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
             transformation_manager=transformer_manager,
         )
 
@@ -917,12 +791,7 @@ class TestTransformerManager(ResourceTestBase):
         import json
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -938,7 +807,8 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads("""
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -966,14 +836,14 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}""")
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -983,7 +853,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
 
             env = container.env
@@ -998,12 +872,7 @@ class TestTransformerManager(ResourceTestBase):
         import json
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -1019,7 +888,8 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads("""
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -1047,14 +917,14 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}""")
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -1064,22 +934,26 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
 
             env = container.env
             request_func_mock.assert_called_with("GET", "https://dummy")
             assert _env_value(env, "CACHE_PREFIX") == "root://dummy"
 
-    def test_get_all_deployments(self, mocker, mock_kubernetes):
-        mock_api = mock_kubernetes.client.AppsV1Api.return_value
-        mock_deployment_list = mocker.MagicMock(name="mock_deployment_list")
-        mock_api.list_namespaced_deployment.return_value = mock_deployment_list
-        mock_deployment = mocker.MagicMock(name="mock_deployment")
-        mock_deployment.metadata.name = "transformer-abc"
-        mock_deployment_2 = mocker.MagicMock(name="mock_deployment_2")
-        mock_deployment_2.metadata.name = "servicex-internal-abc"
-        mock_deployment_list.items = [mock_deployment, mock_deployment_2]
+    def test_get_all_transformer_jobs(self, mocker, mock_kubernetes):
+        mock_api = mock_kubernetes.client.BatchV1Api.return_value
+        mock_job_list = mocker.MagicMock(name="mock_job_list")
+        mock_api.list_namespaced_job.return_value = mock_job_list
+        mock_job = mocker.MagicMock(name="mock_job")
+        mock_job.metadata.name = "transformer-abc"
+        mock_job_2 = mocker.MagicMock(name="mock_job_2")
+        mock_job_2.metadata.name = "servicex-internal-abc"
+        mock_job_list.items = [mock_job, mock_job_2]
 
         transformer_manager = TransformerManager("external-kubernetes")
         transformer_manager.persistent_volume_claim_exists = mocker.Mock(
@@ -1087,13 +961,12 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
             transformation_manager=transformer_manager,
         )
 
         with client.application.app_context():
-            deployments = transformer_manager.get_all_transformer_deployments()
-            assert deployments == [mock_deployment]
+            jobs = transformer_manager.get_all_transformer_jobs()
+            assert jobs == [mock_job]
 
     def test_get_all_configmaps(self, mocker, mock_kubernetes):
         mock_api = mock_kubernetes.client.CoreV1Api.return_value
@@ -1111,7 +984,6 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
             transformation_manager=transformer_manager,
         )
 
@@ -1119,40 +991,11 @@ class TestTransformerManager(ResourceTestBase):
             configmaps = transformer_manager.get_all_transformer_configmaps()
             assert configmaps == [mock_configmap]
 
-    def test_get_all_hpas(self, mocker, mock_kubernetes):
-        mock_api = mock_kubernetes.client.AutoscalingV1Api.return_value
-        mock_hpa_list = mocker.MagicMock(name="mock_deployment_list")
-        mock_api.list_namespaced_horizontal_pod_autoscaler.return_value = mock_hpa_list
-        mock_hpa = mocker.MagicMock(name="mock_deployment")
-        mock_hpa.metadata.name = "transformer-abc"
-        mock_hpa_2 = mocker.MagicMock(name="mock_deployment")
-        mock_hpa_2.metadata.name = "mysterious_hpa"
-        mock_hpa_list.items = [mock_hpa, mock_hpa_2]
-
-        transformer_manager = TransformerManager("external-kubernetes")
-        transformer_manager.persistent_volume_claim_exists = mocker.Mock(
-            return_value=True
-        )
-
-        client = self._test_client(
-            extra_config={"TRANSFORMER_AUTOSCALE_ENABLED": False},
-            transformation_manager=transformer_manager,
-        )
-
-        with client.application.app_context():
-            hpas = transformer_manager.get_all_transformer_hpas()
-            assert hpas == [mock_hpa]
-
     def test_launch_transformer_with_pod_scheduling_options(self, mocker):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -1196,7 +1039,6 @@ class TestTransformerManager(ResourceTestBase):
 
         client = self._test_client(
             extra_config=make_config(
-                TRANSFORMER_AUTOSCALE_ENABLED=False,
                 TRANSFORMER_NODE_SELECTOR=node_selector,
                 TRANSFORMER_TOLERATIONS=tolerations,
                 TRANSFORMER_AFFINITY=affinity,
@@ -1210,7 +1052,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -1220,8 +1061,12 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_deployment = mock_kubernetes.mock_calls[1][2]["body"]
-            template = called_deployment.spec.template
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            template = called_job.spec.template
 
             # Verify pod annotations
             assert template.metadata.annotations == pod_annotations
@@ -1248,12 +1093,7 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
-
-        mock_autoscaling = mocker.Mock()
-        mocker.patch.object(
-            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
-        )
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -1261,7 +1101,6 @@ class TestTransformerManager(ResourceTestBase):
         # Test with empty/default values
         client = self._test_client(
             extra_config=make_config(
-                TRANSFORMER_AUTOSCALE_ENABLED=False,
                 TRANSFORMER_NODE_SELECTOR={},
                 TRANSFORMER_TOLERATIONS=[],
                 TRANSFORMER_AFFINITY={},
@@ -1275,7 +1114,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
@@ -1285,8 +1123,12 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_deployment = mock_kubernetes.mock_calls[1][2]["body"]
-            template = called_deployment.spec.template
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            template = called_job.spec.template
 
             # Verify empty values result in None (not empty dicts/lists)
             assert template.metadata.annotations is None
@@ -1305,14 +1147,13 @@ class TestTransformerManager(ResourceTestBase):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
         client = self._test_client(
             extra_config=make_config(
-                TRANSFORMER_AUTOSCALE_ENABLED=False,
                 TRANSFORMER_CVMFS_VOLUME=volume,
             ),
             transformation_manager=transformer,
@@ -1323,7 +1164,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=17,
-                max_workers=17,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="volume",
@@ -1333,7 +1173,11 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="scala",
                 transformer_command="echo",
             )
-            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
             container = called_job.spec.template.spec.containers[0]
 
             cvmfs_vol = next(

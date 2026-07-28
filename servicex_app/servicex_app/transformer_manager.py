@@ -97,22 +97,22 @@ class TransformerManager:
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
-        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
+        if request_rec.status == TransformStatus.running:
+            replicas = min(max(1, request_rec.files), config["TRANSFORMER_MAX_REPLICAS"])
+        else:
+            replicas = config["TRANSFORMER_MAX_REPLICAS"]
+
+        request_rec.workers = replicas
 
         current_app.logger.info(
-            f"Launching {request_rec.workers} transformers.",
+            f"Launching {replicas} transformers.",
             extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(
             image=request_rec.image,
             request_id=request_rec.request_id,
-            workers=request_rec.workers,
-            max_workers=(
-                max(1, request_rec.files)
-                if request_rec.status == TransformStatus.running
-                else config["TRANSFORMER_MAX_REPLICAS"]
-            ),
+            workers=replicas,
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,
@@ -405,7 +405,7 @@ class TransformerManager:
                 annotations=pod_annotations if pod_annotations else None,
             ),
             spec=client.V1PodSpec(
-                restart_policy="Always",
+                restart_policy="OnFailure",
                 termination_grace_period_seconds=TransformerManager.POD_TERMINATION_GRACE_PERIOD,
                 priority_class_name=current_app.config.get(
                     "TRANSFORMER_PRIORITY_CLASS", None
@@ -421,28 +421,24 @@ class TransformerManager:
             ),
         )
 
-        # Create the specification of deployment
-        selector = client.V1LabelSelector(
-            match_labels={"app": "transformer-" + request_id}
+        spec = client.V1JobSpec(
+            template=template,
+            parallelism=workers,
+            completions=workers,
+            backoff_limit=current_app.config.get("TRANSFORMER_BACKOFF_LIMIT", 4),
         )
 
-        # If we are using Autoscaler then always start with one replica
-        if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
-            replicas = current_app.config.get("TRANSFORMER_MIN_REPLICAS", 1)
-        else:
-            replicas = workers
-        spec = client.V1DeploymentSpec(
-            template=template, selector=selector, replicas=replicas
-        )
-
-        deployment = client.V1Deployment(
-            api_version="apps/v1",
-            kind="Deployment",
-            metadata=client.V1ObjectMeta(name="transformer-" + request_id),
+        job = client.V1Job(
+            api_version="batch/v1",
+            kind="Job",
+            metadata=client.V1ObjectMeta(
+                name="transformer-" + request_id,
+                labels={"app": "transformer-" + request_id},
+            ),
             spec=spec,
         )
 
-        return deployment
+        return job
 
     @staticmethod
     def create_posix_volume(volumes, volume_mounts):
@@ -513,50 +509,16 @@ class TransformerManager:
                 current_app.logger.error(f"Exception retrieving site data: {e}")
 
     @staticmethod
-    def create_hpa_object(request_id, max_workers):
-        target = client.V1CrossVersionObjectReference(
-            api_version="apps/v1", kind="Deployment", name="transformer-" + request_id
-        )
-
-        cfg = current_app.config
-        # don't scale beyond the number of files
-        spec = client.V1HorizontalPodAutoscalerSpec(
-            scale_target_ref=target,
-            target_cpu_utilization_percentage=cfg["TRANSFORMER_CPU_SCALE_THRESHOLD"],
-            min_replicas=min(max_workers, cfg["TRANSFORMER_MIN_REPLICAS"]),
-            max_replicas=min(max_workers, cfg["TRANSFORMER_MAX_REPLICAS"]),
-        )
-        hpa = client.V1HorizontalPodAutoscaler(
-            api_version="autoscaling/v1",
-            kind="HorizontalPodAutoscaler",
-            metadata=client.V1ObjectMeta(name="transformer-" + request_id),
-            spec=spec,
-        )
-
-        return hpa
-
-    @staticmethod
     def _create_job(api_instance, job, namespace, request_id):
         try:
-            api_instance.create_namespaced_deployment(body=job, namespace=namespace)
+            api_instance.create_namespaced_job(body=job, namespace=namespace)
             current_app.logger.info(
-                "Request deployment created.", extra={"request_id": request_id}
+                "Transformer Job created.", extra={"request_id": request_id}
             )
         except ApiException as e:
             current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
-            )
-
-    @staticmethod
-    def _create_hpa(api_instance, hpa, namespace, request_id):
-        try:
-            api_instance.create_namespaced_horizontal_pod_autoscaler(
-                body=hpa, namespace=namespace
-            )
-            current_app.logger.info("HPA created.", extra={"request_id": request_id})
-        except ApiException as e:
-            current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
+                f"Exception during Job Creation: {e}",
+                extra={"request_id": request_id},
             )
 
     def launch_transformer_jobs(
@@ -564,7 +526,6 @@ class TransformerManager:
         image,
         request_id,
         workers,
-        max_workers,
         rabbitmq_uri,
         namespace,
         x509_secret,
@@ -574,7 +535,7 @@ class TransformerManager:
         transformer_language,
         transformer_command,
     ):
-        api_v1 = client.AppsV1Api()
+        batch_api = client.BatchV1Api()
         job = self.create_job_object(
             request_id,
             image,
@@ -588,41 +549,14 @@ class TransformerManager:
             transformer_command,
         )
 
-        self._create_job(api_v1, job, namespace, request_id)
-
-        if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
-            autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            hpa = self.create_hpa_object(request_id, max_workers)
-            self._create_hpa(autoscaler_api, hpa, namespace, request_id)
+        self._create_job(batch_api, job, namespace, request_id)
 
     @classmethod
     def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
         # quiet_errors is intended to be used for reaper jobs where components of the transform
         # may be missing
         try:
-            if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
-                autoscaler_api = kubernetes.client.AutoscalingV1Api()
-                try:
-                    for attempt in Retrying(
-                        wait=wait_random_exponential(max=60),
-                        stop=stop_after_attempt(3),
-                        retry=retry_if_exception_type(ApiException),
-                    ):
-                        with attempt:
-                            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
-                                name="transformer-" + request_id, namespace=namespace
-                            )
-                except RetryError as e:
-                    e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job HPA Shut Down",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
-
-        try:
-            api_v1 = client.AppsV1Api()
+            batch_api = client.BatchV1Api()
             try:
                 for attempt in Retrying(
                     wait=wait_random_exponential(max=60),
@@ -630,15 +564,17 @@ class TransformerManager:
                     retry=retry_if_exception_type(ApiException),
                 ):
                     with attempt:
-                        api_v1.delete_namespaced_deployment(
-                            name="transformer-" + request_id, namespace=namespace
+                        batch_api.delete_namespaced_job(
+                            name="transformer-" + request_id,
+                            namespace=namespace,
+                            propagation_policy="Background",
                         )
             except RetryError as e:
                 e.reraise()
         except ApiException as e:
             if not quiet_errors:
                 current_app.logger.exception(
-                    "Exception during Job Deployment Shut Down",
+                    "Exception during Transformer Job Shut Down",
                     extra={"request_id": request_id, "retry_status": e.status},
                 )
 
@@ -681,28 +617,22 @@ class TransformerManager:
     @staticmethod
     def get_deployment_status(
         request_id: str,
-    ) -> Optional[kubernetes.client.models.v1_deployment_status.V1DeploymentStatus]:
+    ) -> Optional[kubernetes.client.models.v1_job_status.V1JobStatus]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        api = client.AppsV1Api()
+        api = client.BatchV1Api()
         selector = f"metadata.name=transformer-{request_id}"
-        results: kubernetes.client.AppsV1beta1DeploymentList
-        results = api.list_namespaced_deployment(namespace, field_selector=selector)
+        results = api.list_namespaced_job(namespace, field_selector=selector)
         if not results.items:
             return None
-        deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
-        return deployment.status
+        job: kubernetes.client.models.v1_job.V1Job = results.items[0]
+        return job.status
 
     @staticmethod
-    def get_all_transformer_deployments() -> list[client.models.V1Deployment]:
+    def get_all_transformer_jobs() -> list[client.models.V1Job]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        api = client.AppsV1Api()
-        rv: list[client.models.V1Deployment]
-        deployments: client.V1DeploymentList
-        deployments = api.list_namespaced_deployment(namespace)
-        rv = [
-            _ for _ in deployments.items if _.metadata.name.startswith("transformer-")
-        ]
-        return rv
+        api = client.BatchV1Api()
+        jobs: client.V1JobList = api.list_namespaced_job(namespace)
+        return [j for j in jobs.items if j.metadata.name.startswith("transformer-")]
 
     @staticmethod
     def create_configmap_from_zip(zipfile, request_id, namespace):
@@ -736,14 +666,4 @@ class TransformerManager:
         rv = [
             _ for _ in configmaps.items if _.metadata.name.endswith("-generated-source")
         ]
-        return rv
-
-    @staticmethod
-    def get_all_transformer_hpas() -> list[client.models.V1HorizontalPodAutoscaler]:
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        api = client.AutoscalingV1Api()
-        rv: list[client.models.V1HorizontalPodAutoscaler]
-        hpas: client.V1HorizontalPodAutoscalerList
-        hpas = api.list_namespaced_horizontal_pod_autoscaler(namespace)
-        rv = [_ for _ in hpas.items if _.metadata.name.startswith("transformer-")]
         return rv
