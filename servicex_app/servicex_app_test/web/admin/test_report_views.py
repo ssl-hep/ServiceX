@@ -100,7 +100,29 @@ class TestUsageReportView:
     def test_get_query_column_labels(self):
         query = UsageReportView().get_query()
         keys = list(query.exported_columns.keys())
-        assert keys == ["Name", "Email", "Institution", "Run Time"]
+        assert keys == [
+            "Name",
+            "Email",
+            "Institution",
+            "Title",
+            "Status",
+            "Run Time",
+            "Finish Time",
+            "Dataset Identifier (DID)",
+            "Image",
+            "Workers",
+            "Result Destination",
+            "Result Format",
+            "File Count",
+            "Files Completed",
+            "Files Failed",
+            "Total Events",
+            "DID Lookup Time",
+            "App Version",
+            "Code Gen Image",
+            "Transformer Language",
+            "Transformer Command",
+        ]
 
 
 class TestUserTransformationCountReportView:
