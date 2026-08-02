@@ -2,6 +2,26 @@ import os
 import pytest
 
 import servicex_app
+from servicex_app import strtobool
+
+
+class TestStrToBool:
+    @pytest.mark.parametrize(
+        "value", ["y", "yes", "t", "true", "on", "1", "Y", "YES", "True", "ON"]
+    )
+    def test_truthy_values(self, value):
+        assert strtobool(value) is True
+
+    @pytest.mark.parametrize(
+        "value", ["n", "no", "f", "false", "off", "0", "N", "NO", "False", "OFF"]
+    )
+    def test_falsy_values(self, value):
+        assert strtobool(value) is False
+
+    @pytest.mark.parametrize("value", ["", "maybe", "2", "yesplease"])
+    def test_invalid_value_raises(self, value):
+        with pytest.raises(ValueError, match="invalid truth value"):
+            strtobool(value)
 
 
 class TestAppInit:
