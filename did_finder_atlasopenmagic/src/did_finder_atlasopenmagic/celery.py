@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
 from typing import Any, Dict, Generator
 import atlasopenmagic as atom
 
@@ -37,9 +36,7 @@ from servicex_did_finder_lib.exceptions import (
 )
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 
-initialize_logging(component_name="atom_did_finder")
-
-__log = logging.getLogger(__name__)
+__log = initialize_logging(component_name="atom_did_finder")
 
 app = DIDFinderApp("atlasopenmagic")
 
