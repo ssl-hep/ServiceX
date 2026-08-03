@@ -91,7 +91,7 @@ class ServiceXResource(Resource):
         request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
 
         current_app.logger.info(
-            f"Lunching {request_rec.workers} transformers.",
+            f"Launching {request_rec.workers} transformers.",
             extra={"request_id": request_rec.request_id},
         )
 
