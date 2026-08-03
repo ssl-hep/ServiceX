@@ -1,5 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+  .selection-content {
+    margin-bottom: 0;
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .selection-content.collapsed {
+    max-height: 7.5em;
+  }
+</style>
 <div class="content-section">
   <div class="row justify-content-between align-items-center">
     <h4 class="mb-3 col-auto">Transformation Request</h4>
@@ -29,11 +41,16 @@
     <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
 
     <dt class="col-sm-3">Selection</dt>
-    {% if 'python' in req.code_gen_image %}
-    <dd class="col-sm-9" style="white-space: pre">{{ req.selection | b64decode }}</dd>
-    {% else %}
-    <dd class="col-sm-9">{{ req.selection }}</dd>
-    {% endif %}
+    <dd class="col-sm-9">
+      <div class="selection-wrapper">
+        {% if 'python' in req.code_gen_image %}
+        <pre class="selection-content collapsed">{{ req.selection | b64decode }}</pre>
+        {% else %}
+        <pre class="selection-content collapsed">{{ req.selection }}</pre>
+        {% endif %}
+        <button type="button" class="btn btn-link btn-sm p-0 selection-toggle" style="display: none">Show more</button>
+      </div>
+    </dd>
 
     <dt class="col-sm-3">Result Format</dt>
     <dd class="col-sm-9">{{ req.result_format }}</dd>
@@ -73,6 +90,21 @@
 <script>
   $(document).ready(function () {
     $(".tz").text(moment.tz(moment.tz.guess()).format("z"));
+
+    $(".selection-content").each(function () {
+      var content = this;
+      var $content = $(content);
+      var $toggle = $content.siblings(".selection-toggle");
+      if (content.scrollHeight > content.clientHeight) {
+        $toggle.show();
+        $toggle.on("click", function () {
+          var collapsed = $content.toggleClass("collapsed").hasClass("collapsed");
+          $toggle.text(collapsed ? "Show more" : "Show less");
+        });
+      } else {
+        $content.removeClass("collapsed");
+      }
+    });
   })
   </script>
 {% endblock %}
