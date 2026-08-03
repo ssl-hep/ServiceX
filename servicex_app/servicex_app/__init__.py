@@ -27,8 +27,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
+import queue
 import sys
 import json
+from logging.handlers import QueueHandler, QueueListener
 from celery import Celery
 from distutils.util import strtobool
 
@@ -135,6 +137,35 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
         # If exception, add debug info
         if record.exc_info:
             message.update(self.get_debug_fields(record))
+
+        return self.serialize(message)
+
+
+class VectorFormatter(logstash.formatter.LogstashFormatterBase):
+    """
+    Serializes a log record to JSON with stable, column-matching keys for the
+    Vector sidecar's postgres sink (the `log_messages` table). Any non-standard
+    record attributes are nested under `extra` (a JSON object). Emits bytes so
+    it plugs directly into logstash.TCPLogstashHandler's newline framing.
+    """
+
+    def format(self, record):
+        extra = self.get_extra_fields(record)
+        message = {
+            "timestamp": self.format_timestamp(record.created),
+            "level": record.levelname,
+            "logger": record.name,
+            "instance": instance,
+            "component": "servicex_app",
+            "message": record.getMessage(),
+            "request_id": extra.pop("request_id", None),
+            "dataset_id": extra.pop("dataset_id", None),
+            "extra": extra,
+        }
+
+        # If exception, add debug info
+        if record.exc_info:
+            message["extra"].update(self.get_debug_fields(record))
 
         return self.serialize(message)
 
@@ -261,6 +292,29 @@ def create_app(
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
+
+    # Ship logs to a Vector sidecar over a localhost TCP socket. The socket
+    # send runs on a QueueListener background thread so logging never blocks the
+    # app: app.logger -> QueueHandler (unbounded queue, non-blocking put) ->
+    # listener thread -> TCPLogstashHandler (newline-delimited JSON) -> Vector.
+    vector_host = os.environ.get("VECTOR_HOST")
+    vector_port = os.environ.get("VECTOR_PORT")
+    if vector_host and vector_port:
+        vector_handler = logstash.TCPLogstashHandler(
+            vector_host, int(vector_port), version=1
+        )
+        vector_handler.setFormatter(VectorFormatter("vector", None, None))
+        vector_handler.setLevel(level)
+
+        log_queue = queue.Queue(-1)
+        queue_handler = QueueHandler(log_queue)
+        queue_handler.setLevel(level)
+        app.logger.addHandler(queue_handler)
+
+        listener = QueueListener(log_queue, vector_handler, respect_handler_level=True)
+        listener.start()
+        # Keep a reference so the listener thread isn't garbage collected.
+        app.vector_log_listener = listener
 
     app.logger.info("Initialized logging")
 
