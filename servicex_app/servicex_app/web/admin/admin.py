@@ -13,6 +13,7 @@ from servicex_app.web.admin.reports import ReportView
 from servicex_app.web.admin.reports.user_transformation_count import (  # noqa: F401
     UserTransformationCountReportView,
 )
+from servicex_app.web.admin.reports.usage_report import UsageReportView  # noqa: F401
 
 Unique.field_flags = {"unique": True}
 FieldListInputRequired.field_flags = {"required": True}
