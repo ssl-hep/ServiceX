@@ -121,7 +121,6 @@ class ObjectStoreManager:
                 "OSM > created object.",
                 extra={
                     "request_id": bucket,
-                    "target_dir": bucket,
                     "object_name": result.object_name,
                 },
             )
