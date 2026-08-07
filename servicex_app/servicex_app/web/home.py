@@ -1,10 +1,10 @@
-from flask import current_app, redirect, render_template, session, url_for
+from flask import current_app, redirect, session, url_for
 
 
 def home():
-    """Land signed-in users on their dashboard; welcome page for everyone else."""
+    """Land signed-in users on their dashboard; send everyone else to sign in."""
     if not current_app.config.get("ENABLE_AUTH"):
         return redirect(url_for("global-dashboard"))
     if session.get("is_authenticated"):
         return redirect(url_for("user-dashboard"))
-    return render_template("home.html")
+    return redirect(url_for("sign_in"))
