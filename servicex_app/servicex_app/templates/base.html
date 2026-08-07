@@ -31,15 +31,7 @@
   <header class="site-header">
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
       <div class="container">
-          {% if config["ENABLE_AUTH"] %}
-            {% if session['is_authenticated'] %}
-            <a class="navbar-brand mr-4" href="{{ url_for('user-dashboard') }}" >ServiceX</a>
-            {% else %}
-            <a class="navbar-brand mr-4" href="{{ url_for('home') }}" >ServiceX</a>
-            {% endif %}
-          {%  else %}
-          <a class="navbar-brand mr-4" href="{{ url_for('global-dashboard') }}" >ServiceX</a>
-          {% endif %}
+          <a class="navbar-brand mr-4" href="{{ url_for('home') }}" >ServiceX</a>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle"
           aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
