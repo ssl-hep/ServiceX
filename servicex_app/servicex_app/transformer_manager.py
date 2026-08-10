@@ -111,8 +111,7 @@ class TransformerManager:
             initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
             replicas = min(max(1, initial), max_replicas)
 
-        # initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
-        # replicas = min(max(1, initial), max_replicas)
+        request_rec.workers = replicas
 
         current_app.logger.info(
             f"Launching {replicas} transformers.",
@@ -436,14 +435,10 @@ class TransformerManager:
             ),
         )
 
-        # Work-queue Job: only parallelism is set, no completions. That
-        # makes parallelism mutable (so we can patch it upward as more
-        # files are discovered) and lets K8s treat the Job as Complete
-        # when every pod has terminated, at least one successfully.
-        # Each sidecar decides for itself when to exit via its watchdog.
         spec = client.V1JobSpec(
             template=template,
             parallelism=workers,
+            completions=workers,
             backoff_limit=current_app.config.get("TRANSFORMER_BACKOFF_LIMIT", 4),
         )
 
