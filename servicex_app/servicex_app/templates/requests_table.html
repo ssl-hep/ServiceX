@@ -64,22 +64,21 @@
                 href="/transformation-request/{{ req.id }}/results?status=failure">{{ req.files_failed }}</a> failed)
             </div>
 
-          </td>
-          <td id="replicas-{{ req.request_id }}">-</td>
-          <td>
-            {% if not req.status.is_complete %}
-            <button id="cancel-{{ req.request_id }}"
-              onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel').then((res) => location.reload())"
-              type="button" class="btn btn-danger btn-sm">
-              Cancel
-            </button>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div>
+      </td>
+      <td id="replicas-{{ req.request_id }}">-</td>
+      <td>
+        {% if not req.status.is_complete %}
+        <button id="cancel-{{ req.request_id }}"
+          onclick="fetch('/servicex/transformation/{{ req.request_id }}/cancel', {method: 'POST'}).then((res) => location.reload())"
+          type="button" class="btn btn-danger btn-sm">
+          Cancel
+        </button>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% if pagination.items %}
 {{ render_pagination(pagination, align='center') }}
 {% else %}

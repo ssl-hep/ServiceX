@@ -104,6 +104,7 @@ data:
     TRANSFORMER_CPU_REQUEST = "{{ .Values.transformer.cpuRequest }}"
     TRANSFORMER_MEMORY_REQUEST = "{{ .Values.transformer.memoryRequest }}"
     TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.maxReplicas }}
+    TRANSFORMER_INITIAL_REPLICAS = {{ .Values.transformer.initialReplicas }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
     {{- if not .Values.noCerts }}
     TRANSFORMER_X509_SECRET="x509-proxy"

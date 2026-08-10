@@ -90,23 +90,38 @@ class TransformerManager:
 
     def start_transformers(self, config: dict, request_rec: TransformRequest):
         """
-        Start the transformers for a given request
+        Start the transformer Job for a given request.
+
+        Parallelism sizing:
+          - Fileset lookup complete (status == running): min(files, MAX_REPLICAS).
+          - Lookup still in flight: min(INITIAL_REPLICAS, MAX_REPLICAS) as a
+            starting point; the Job's parallelism is later patched upward by
+            AddFileToDataset / FilesetComplete once file counts are known.
         """
         rabbitmq_uri = config["TRANSFORMER_RABBIT_MQ_URL"]
         namespace = config["TRANSFORMER_NAMESPACE"]
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
-        if request_rec.status == TransformStatus.running:
-            replicas = min(max(1, request_rec.files), config["TRANSFORMER_MAX_REPLICAS"])
-        else:
-            replicas = config["TRANSFORMER_MAX_REPLICAS"]
+        max_replicas = config["TRANSFORMER_MAX_REPLICAS"]
 
-        request_rec.workers = replicas
+        if request_rec.status == TransformStatus.running:
+            replicas = min(max(1, request_rec.files), max_replicas)
+        else:
+            initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
+            replicas = min(max(1, initial), max_replicas)
+
+        # initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
+        # replicas = min(max(1, initial), max_replicas)
 
         current_app.logger.info(
             f"Launching {replicas} transformers.",
-            extra={"request_id": request_rec.request_id},
+            extra={
+                "request_id": request_rec.request_id,
+                "files_known": request_rec.status == TransformStatus.running,
+                "files": request_rec.files,
+                "max_replicas": max_replicas,
+            },
         )
 
         self.launch_transformer_jobs(
@@ -240,7 +255,7 @@ class TransformerManager:
         # provide pods with level and logging server info
         env += [
             client.V1EnvVar(
-                "LOG_LEVEL", value=os.environ.get("LOG_LEVEL", "INFO").upper()
+                "LOG_LEVEL", value=os.environ.get("LOG_LEVEL", "DEBUG").upper()
             ),
             client.V1EnvVar("LOGSTASH_HOST", value=os.environ.get("LOGSTASH_HOST")),
             client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get("LOGSTASH_PORT")),
@@ -421,10 +436,14 @@ class TransformerManager:
             ),
         )
 
+        # Work-queue Job: only parallelism is set, no completions. That
+        # makes parallelism mutable (so we can patch it upward as more
+        # files are discovered) and lets K8s treat the Job as Complete
+        # when every pod has terminated, at least one successfully.
+        # Each sidecar decides for itself when to exit via its watchdog.
         spec = client.V1JobSpec(
             template=template,
             parallelism=workers,
-            completions=workers,
             backoff_limit=current_app.config.get("TRANSFORMER_BACKOFF_LIMIT", 4),
         )
 
@@ -614,6 +633,58 @@ class TransformerManager:
                     extra={"request_id": request_id},
                 )
 
+    @classmethod
+    def patch_transformer_parallelism(
+        cls, request_id: str, namespace: str, desired_workers: int
+    ) -> None:
+        print("patch_transformer_parallelism")
+        """
+        Grow a running transformer Job's parallelism.
+
+        Only ever increases -- shrinking parallelism terminates pods, which
+        would reintroduce the "kill workers with in-flight tasks" problem the
+        Job conversion was meant to solve. If desired_workers is not greater
+        than the Job's current parallelism, this is a no-op.
+
+        A missing Job (404) is silently ignored so this can be called from
+        code paths that race with shutdown.
+        """
+        batch_api = client.BatchV1Api()
+        job_name = "transformer-" + request_id
+
+        try:
+            job = batch_api.read_namespaced_job(name=job_name, namespace=namespace)
+        except ApiException as e:
+            if e.status == 404:
+                return
+            current_app.logger.warning(
+                f"Could not read Job for parallelism patch: {e}",
+                extra={"request_id": request_id},
+            )
+            return
+
+        current = job.spec.parallelism or 0
+        if desired_workers <= current:
+            return
+
+        try:
+            batch_api.patch_namespaced_job(
+                name=job_name,
+                namespace=namespace,
+                body={"spec": {"parallelism": desired_workers}},
+            )
+            current_app.logger.info(
+                f"Patched transformer Job parallelism {current} -> {desired_workers}",
+                extra={"request_id": request_id},
+            )
+        except ApiException as e:
+            if e.status == 404:
+                return
+            current_app.logger.warning(
+                f"Failed to patch Job parallelism: {e}",
+                extra={"request_id": request_id},
+            )
+
     @staticmethod
     def get_deployment_status(
         request_id: str,
@@ -667,3 +738,18 @@ class TransformerManager:
             _ for _ in configmaps.items if _.metadata.name.endswith("-generated-source")
         ]
         return rv
+
+    def cancel_transform(self, request: TransformRequest):
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        if request.status in (TransformStatus.running, TransformStatus.lookup):
+            try:
+                self.shutdown_transformer_job(request.request_id, namespace)
+            except kubernetes.client.exceptions.ApiException as exc:
+                if exc.status == 404:
+                    pass
+                else:
+                    current_app.logger.error(
+                        f"Got Kubernetes api exception: {exc.reason}",
+                        extra={"request_id": request.request_id},
+                    )
+                    raise exc

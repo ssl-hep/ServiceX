@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### 1.8.5
+August 7, 2026
+
+### Added
+- Server side S3 url generation
+- Cancel All Button
+- Allow sites to mount CVMFS into transformer pods
+- Allow compression level zero
+- CSV Usage report
+
+### Changed
+- Update funcADL version to 2.2.8
+- Updated scheme for sanitzing object names in object store to work better with fsspec
+- Compression is configurable in the python codegen
+- Sign in redirect to the dashboard
+- Users no longer need to log out when they are made admin
+- Admin page updates
+- Collapse long selection strings in the dashboard
+- Log levels to be more consistent. Filtering out INFO and DEBUG messages in Kibana default
+
+### Fixed
+- Flask app environment var setting in app pod to make it easier to use the admin tools
+- Some celery interactions for use in debugging app
+- Horizontal scrolling of long titles in minimized browser windows
+
 ### 1.8.4
 May 15, 2026
 

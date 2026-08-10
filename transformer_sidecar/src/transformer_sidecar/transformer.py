@@ -53,6 +53,7 @@ from transformer_sidecar.science_container_command import (
     ScienceContainerException,
 )
 from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
+from transformer_sidecar.shutdown_watchdog import ShutdownWatchdog
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
@@ -485,6 +486,9 @@ def read_capabilities_file() -> dict[str, str]:
         return json.load(capabilities_file)
 
 
+
+
+
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, convert_root_to_rntuple, startup_time
     global object_store, posix_path, science_container
@@ -540,6 +544,31 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         "Connected to science container",
         extra={"request_id": request_id, "place": PLACE},
     )
+
+    # Start the shutdown watchdog. It polls the ServiceX server for the
+    # lookup-complete flag; once no more work will arrive and this worker
+    # has been idle long enough, it broadcasts a Celery shutdown so the
+    # worker (and its Job pod) can exit cleanly.
+    instance_name = os.environ.get("INSTANCE_NAME")
+    if instance_name:
+        status_url = (
+            f"http://{instance_name}-servicex-app:8000"
+            f"/servicex/internal/transformation/{request_id}/status"
+        )
+        watchdog = ShutdownWatchdog(
+            app=app,
+            status_url=status_url,
+            poll_interval=float(os.environ.get("SHUTDOWN_POLL_INTERVAL_SEC", "30")),
+            idle_shutdown_seconds=float(os.environ.get("SHUTDOWN_IDLE_SEC", "60")),
+            log_extra={"request_id": request_id, "place": PLACE},
+        )
+        watchdog.register_activity_signals()
+        watchdog.start()
+    else:
+        logger.warning(
+            "INSTANCE_NAME env var not set; shutdown watchdog disabled.",
+            extra={"request_id": request_id, "place": PLACE},
+        )
 
     app.worker_main(
         argv=[

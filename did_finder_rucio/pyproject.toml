@@ -10,7 +10,7 @@ packages = [{include = "rucio_did_finder", from = "src"}]
 python = "^3.11"
 rucio-clients = "^37.7.0"
 xmltodict = "^0.13.0"
-servicex-did-finder-lib = "^3.1.1"
+servicex-did-finder-lib = "^3.2.0-rc.1"
 geoip2 = "^4.7.0"
 requests = ">=2.33.0,<3.0.0"
 

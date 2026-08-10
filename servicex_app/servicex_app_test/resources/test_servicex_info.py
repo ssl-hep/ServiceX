@@ -44,6 +44,7 @@ class TestServicexInfo(ResourceTestBase):
             "capabilities": [
                 "poll_local_transformation_results",
                 "long_sample_titles_10240",
+                "cancel_transform_post_method",
                 "generate_file_urls",
             ],
         }  # noqa: E501

@@ -9,7 +9,11 @@ import pytest
 from pytest import fixture
 
 import servicex_app
-from servicex_app.models import TransformationResult, TransformRequest, UserModel
+from servicex_app.models import (
+    TransformationResult,
+    TransformRequest,
+    UserModel,
+)
 
 
 @pytest.fixture

@@ -28,52 +28,46 @@
 from datetime import datetime, timezone
 
 import kubernetes
-from flask import current_app
+from flask import current_app, session
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest, db, TransformStatus
+from servicex_app.models import TransformRequest, db, TransformStatus, UserModel
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.transformer_manager import TransformerManager
 
 
-class CancelTransform(ServiceXResource):
+class CancelAllTransforms(ServiceXResource):
     @classmethod
     def make_api(cls, transformer_manager: TransformerManager):
         cls.transformer_manager = transformer_manager
 
     @auth_required
-    def get(self, request_id: str):
-        """
-        This is legacy functionality to support old clients
-        """
-        return self._cancel_transform(request_id)
+    def post(self):
+        if not current_app.config.get("ENABLE_AUTH"):
+            return {"message": "This is not available when auth is disabled"}, 400
 
-    @auth_required
-    def post(self, request_id: str):
-        """
-        This is supported via the cancel_transform_post_method capability
-        """
-        return self._cancel_transform(request_id)
+        if session.get("is_authenticated"):
+            user = UserModel.find_by_email(session["email"])
+        else:
+            user = self.get_requesting_user()
 
-    def _cancel_transform(self, request_id: str):
-        transform_req = TransformRequest.lookup(request_id)
-        if not transform_req:
-            msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.warning(msg, extra={"request_id": request_id})
-            return {"message": msg}, 404
-        elif transform_req.status.is_complete:
-            msg = f"Transform request with id {request_id} is not in progress."
-            current_app.logger.warning(msg, extra={"request_id": request_id})
-            return {"message": msg}, 400
+        if user is None:
+            return {"message": "No user found"}, 400
 
-        try:
-            self.transformer_manager.cancel_transform(transform_req)
-        except kubernetes.client.exceptions.ApiException as exc:
-            return {"message": exc.reason}, exc.status
+        transform_reqs = TransformRequest.active_user_transformations(user)
 
-        transform_req.status = TransformStatus.canceled
-        transform_req.finish_time = datetime.now(tz=timezone.utc)
-        transform_req.save_to_db()
+        canceled_ids = []
+        now = datetime.now(tz=timezone.utc)
+
+        for transform_req in transform_reqs:
+            try:
+                self.transformer_manager.cancel_transform(transform_req)
+            except kubernetes.client.exceptions.ApiException:
+                pass
+
+            transform_req.status = TransformStatus.canceled
+            transform_req.finish_time = now
+            canceled_ids.append(transform_req.request_id)
+
         db.session.commit()
-
-        return {"message": f"Canceled transformation request {request_id}"}, 200
+        return {"canceled": canceled_ids}, 200

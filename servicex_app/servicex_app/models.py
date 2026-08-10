@@ -247,6 +247,19 @@ class TransformRequest(db.Model):
         return result_obj
 
     @classmethod
+    def active_user_transformations(cls, user: UserModel):
+        active_statuses = [s for s in TransformStatus if not s.is_complete]
+
+        return (
+            cls.query.filter(
+                cls.submitted_by == user.id,
+                cls.status.in_(active_statuses),
+            )
+            .with_for_update()
+            .all()
+        )
+
+    @classmethod
     def return_json(cls, requests: Iterable["TransformRequest"]):
         return {"requests": [r.to_json() for r in requests]}
 

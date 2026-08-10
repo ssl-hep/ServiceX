@@ -32,7 +32,7 @@ app:
       clusterIssuer: null
       enabled: false
       secretName: "{{.Release.Name}}-app-tls"
-  logLevel: INFO
+  logLevel: DEBUG
   mailgunApiKey: null
   mailgunDomain: null
   pullPolicy: Always
@@ -229,7 +229,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: develop
     resources:
       requests:
@@ -307,8 +307,7 @@ logging:
     port: 5959
     protocol: TCP
     monitor: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/c2cc1f30-4a5b-11ed-afcf-d91dad577662?embed=true&_g=(filters%3A!()%2CrefreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-24h%2Fh%2Cto%3Anow))&show-time-filter=true"
-    # This URL format is tied to a parser in servicex_app/servicex_app/web/kibana_url_filter.py
-    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h%2Fh,to:now))&_a=(filters:!((query:(match_phrase:(instance:{{.Release.Name}})))),index:'923eaa00-45b9-11ed-afcf-d91dad577662')"
+    logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h%2Fh,to:now))&_a=(filters:!((query:(match_phrase:(instance:{{.Release.Name}}))),(meta:(index:'923eaa00-45b9-11ed-afcf-d91dad577662',key:level,negate:!t,params:(query:INFO),type:phrase),query:(match_phrase:(level:INFO))),(meta:(index:'923eaa00-45b9-11ed-afcf-d91dad577662',key:level,negate:!t,params:(query:DEBUG),type:phrase),query:(match_phrase:(level:DEBUG)))),index:'923eaa00-45b9-11ed-afcf-d91dad577662')"
 minio:
   image:
     repository: bitnamilegacy/minio
@@ -383,8 +382,14 @@ transformer:
   cacheVPSLivenessURL: https://vps.cern.ch/liveness
 
 
-  # Maximum number of transformer pods k8s will run in parallel
+  # Maximum number of transformer pods k8s will run in parallel per request.
+  # Once the file count is known, the Job requests min(files, maxReplicas).
   maxReplicas: 20
+
+  # Starting pod count when the fileset lookup hasn't reported a file count
+  # yet. Kept small to avoid over-provisioning tiny datasets. The Job's
+  # parallelism is patched upward as more files are discovered.
+  initialReplicas: 1
   cpuLimit: 1
   memoryLimit: 2Gi
   cpuRequest: 500m

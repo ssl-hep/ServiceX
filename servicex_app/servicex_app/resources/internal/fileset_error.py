@@ -52,7 +52,7 @@ class FilesetError(ServiceXResource):
         dataset = Dataset.find_by_id(int(dataset_id))
 
         if dataset is None:
-            current_app.logger.info(
+            current_app.logger.warning(
                 "Dataset lookup error received for unknown dataset",
                 extra={
                     "dataset_id": dataset_id,
@@ -63,7 +63,7 @@ class FilesetError(ServiceXResource):
             )
             return "", 422
 
-        current_app.logger.info(
+        current_app.logger.warning(
             "Error in file lookup",
             extra={
                 "dataset_id": dataset_id,

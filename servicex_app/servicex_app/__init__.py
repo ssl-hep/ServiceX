@@ -236,9 +236,7 @@ def create_app(
     logstash_host = os.environ.get("LOGSTASH_HOST")
     logstash_port = os.environ.get("LOGSTASH_PORT")
 
-    level = os.environ.get("LOG_LEVEL", "INFO").upper()
-    if app.debug:
-        level = "DEBUG"
+    level = os.environ.get("LOG_LEVEL", "DEBUG").upper()
     app.logger.level = getattr(logging, level, None)
 
     # remove current handlers
