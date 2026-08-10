@@ -29,6 +29,7 @@
 Unit tests for ShutdownWatchdog. Because the class owns its own state, no
 module-level cleanup is required between tests.
 """
+
 from transformer_sidecar.shutdown_watchdog import ShutdownWatchdog
 
 
@@ -128,9 +129,7 @@ class TestRun:
     def test_loop_broadcasts_shutdown_when_ready(self, mocker):
         wd = _make(mocker, poll_interval=0.01)
         # First two polls: not ready. Third: ready.
-        mocker.patch.object(
-            wd, "_should_shutdown", side_effect=[False, False, True]
-        )
+        mocker.patch.object(wd, "_should_shutdown", side_effect=[False, False, True])
         wd._run()
         wd.app.control.shutdown.assert_called_once()
 
@@ -156,12 +155,8 @@ class TestSignalRegistration:
 
     def test_registers_and_disconnects(self, mocker):
         wd = _make(mocker)
-        prerun = mocker.patch(
-            "transformer_sidecar.shutdown_watchdog.task_prerun"
-        )
-        postrun = mocker.patch(
-            "transformer_sidecar.shutdown_watchdog.task_postrun"
-        )
+        prerun = mocker.patch("transformer_sidecar.shutdown_watchdog.task_prerun")
+        postrun = mocker.patch("transformer_sidecar.shutdown_watchdog.task_postrun")
 
         wd.register_activity_signals()
         prerun.connect.assert_called_once_with(wd._on_task_event, weak=False)
@@ -176,9 +171,7 @@ class TestLifecycle:
     def test_start_twice_raises(self, mocker):
         wd = _make(mocker)
         # Stub the thread so nothing actually runs.
-        mocker.patch(
-            "transformer_sidecar.shutdown_watchdog.threading.Thread"
-        )
+        mocker.patch("transformer_sidecar.shutdown_watchdog.threading.Thread")
         wd.start()
         import pytest
 
