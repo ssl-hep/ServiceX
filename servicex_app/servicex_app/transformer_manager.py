@@ -91,12 +91,6 @@ class TransformerManager:
     def start_transformers(self, config: dict, request_rec: TransformRequest):
         """
         Start the transformer Job for a given request.
-
-        Parallelism sizing:
-          - Fileset lookup complete (status == running): min(files, MAX_REPLICAS).
-          - Lookup still in flight: min(INITIAL_REPLICAS, MAX_REPLICAS) as a
-            starting point; the Job's parallelism is later patched upward by
-            AddFileToDataset / FilesetComplete once file counts are known.
         """
         rabbitmq_uri = config["TRANSFORMER_RABBIT_MQ_URL"]
         namespace = config["TRANSFORMER_NAMESPACE"]
@@ -632,7 +626,6 @@ class TransformerManager:
     def patch_transformer_parallelism(
         cls, request_id: str, namespace: str, desired_workers: int
     ) -> None:
-        print("patch_transformer_parallelism")
         """
         Grow a running transformer Job's parallelism.
 

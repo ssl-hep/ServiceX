@@ -385,10 +385,6 @@ transformer:
   # Maximum number of transformer pods k8s will run in parallel per request.
   # Once the file count is known, the Job requests min(files, maxReplicas).
   maxReplicas: 20
-
-  # Starting pod count when the fileset lookup hasn't reported a file count
-  # yet. Kept small to avoid over-provisioning tiny datasets. The Job's
-  # parallelism is patched upward as more files are discovered.
   initialReplicas: 1
   cpuLimit: 1
   memoryLimit: 2Gi

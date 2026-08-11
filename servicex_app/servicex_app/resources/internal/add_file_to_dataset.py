@@ -76,8 +76,6 @@ class AddFileToDataset(ServiceXResource):
             )
             db.session.commit()
 
-            # Ramp each running request's Job parallelism up to match the new
-            # file count. Only grows -- shrinking would terminate live pods.
             namespace = current_app.config["TRANSFORMER_NAMESPACE"]
             max_replicas = current_app.config["TRANSFORMER_MAX_REPLICAS"]
             for req in running_requests:
