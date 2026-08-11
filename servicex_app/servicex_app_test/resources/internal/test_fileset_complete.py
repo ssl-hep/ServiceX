@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import timezone, datetime
+from unittest.mock import call
 
 from servicex_app import LookupResultProcessor, TransformerManager
 from servicex_app.dataset_manager import DatasetManager
@@ -62,7 +63,9 @@ class TestFilesetComplete(ResourceTestBase):
         dataset = mock_find_dataset_by_id.return_value
 
         pending_request = TransformRequest()
+        pending_request.request_id = "pending-request"
         pending_request.status = TransformStatus.pending_lookup
+        pending_request.files = 17
         mock_lookup_pending = mocker.patch.object(
             TransformRequest,
             "lookup_pending_on_dataset",
@@ -70,17 +73,23 @@ class TestFilesetComplete(ResourceTestBase):
         )
 
         lookup_request = TransformRequest()
+        lookup_request.request_id = "lookup-request"
         lookup_request.status = TransformStatus.lookup
+        lookup_request.files = 17
         mock_lookup_running = mocker.patch.object(
             TransformRequest,
             "lookup_running_by_dataset_id",
             return_value=[lookup_request],
         )
         mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
 
         mock_publish_files = mocker.patch.object(DatasetManager, "publish_files")
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
 
         response = client.put(
             "/servicex/internal/transformation/1234/complete",
@@ -103,6 +112,15 @@ class TestFilesetComplete(ResourceTestBase):
         mock_publish_files.assert_called_once_with(pending_request, mock_processor)
         assert pending_request.status == TransformStatus.running
         assert lookup_request.status == TransformStatus.running
+        mock_transformer_manager.patch_transformer_parallelism.assert_has_calls(
+            [
+                call("pending-request", "my-ws", 5),
+                call("lookup-request", "my-ws", 5),
+            ]
+        )
+        assert (
+            mock_transformer_manager.patch_transformer_parallelism.call_count == 2
+        )
 
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
         pending_request = TransformRequest()
