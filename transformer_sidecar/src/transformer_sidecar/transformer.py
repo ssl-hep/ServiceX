@@ -486,9 +486,6 @@ def read_capabilities_file() -> dict[str, str]:
         return json.load(capabilities_file)
 
 
-
-
-
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, convert_root_to_rntuple, startup_time
     global object_store, posix_path, science_container
