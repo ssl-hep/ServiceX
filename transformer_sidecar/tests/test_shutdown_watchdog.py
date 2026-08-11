@@ -45,6 +45,8 @@ def _make(mocker, **overrides):
     kwargs = dict(
         app=mocker.MagicMock(),
         status_url="http://svc/status",
+        request_id="test-request",
+        place={"host": "test-host", "site": "test-site", "pod": "test-pod"},
         poll_interval=1.0,
         idle_shutdown_seconds=60.0,
     )

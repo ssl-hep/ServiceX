@@ -107,14 +107,10 @@ class TransformerManager:
 
         request_rec.workers = replicas
 
+        files_known = request_rec.status == TransformStatus.running
         current_app.logger.info(
-            f"Launching {replicas} transformers.",
-            extra={
-                "request_id": request_rec.request_id,
-                "files_known": request_rec.status == TransformStatus.running,
-                "files": request_rec.files,
-                "max_replicas": max_replicas,
-            },
+            f"Launching {replicas} transformers ",
+            extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(

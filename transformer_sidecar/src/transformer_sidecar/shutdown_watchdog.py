@@ -52,15 +52,17 @@ class ShutdownWatchdog:
         self,
         app: Celery,
         status_url: str,
+        request_id: str,
+        place: dict,
         poll_interval: float = 30.0,
         idle_shutdown_seconds: float = 60.0,
-        log_extra: Optional[dict] = None,
     ):
         self.app = app
         self.status_url = status_url
+        self.request_id = request_id
+        self.place = place
         self.poll_interval = poll_interval
         self.idle_shutdown_seconds = idle_shutdown_seconds
-        self.log_extra = log_extra or {}
 
         self._lock = threading.Lock()
         self._last_activity = time.time()
@@ -115,14 +117,16 @@ class ShutdownWatchdog:
                 continue
 
             logger.info(
-                "Fileset lookup complete and worker idle; requesting shutdown.",
-                extra={**self.log_extra, "idle_seconds": self.idle_seconds()},
+                "Fileset lookup complete and worker idle for "
+                f"{self.idle_seconds():.1f}s; requesting shutdown.",
+                extra={"request_id": self.request_id, "place": self.place},
             )
             try:
                 self.app.control.shutdown()
             except Exception as exc:
                 logger.warning(
-                    f"Shutdown broadcast failed: {exc}", extra=self.log_extra
+                    f"Shutdown broadcast failed: {exc}",
+                    extra={"request_id": self.request_id, "place": self.place},
                 )
             return
 
@@ -140,14 +144,14 @@ class ShutdownWatchdog:
         except Exception as exc:
             logger.debug(
                 f"Shutdown watchdog: status poll failed: {exc}",
-                extra=self.log_extra,
+                extra={"request_id": self.request_id, "place": self.place},
             )
             return None
 
         if response.status_code != 200:
             logger.debug(
                 f"Shutdown watchdog: status returned {response.status_code}",
-                extra=self.log_extra,
+                extra={"request_id": self.request_id, "place": self.place},
             )
             return None
 

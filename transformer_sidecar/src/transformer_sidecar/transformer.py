@@ -555,9 +555,10 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         watchdog = ShutdownWatchdog(
             app=app,
             status_url=status_url,
+            request_id=request_id,
+            place=PLACE,
             poll_interval=float(os.environ.get("SHUTDOWN_POLL_INTERVAL_SEC", "30")),
             idle_shutdown_seconds=float(os.environ.get("SHUTDOWN_IDLE_SEC", "60")),
-            log_extra={"request_id": request_id, "place": PLACE},
         )
         watchdog.register_activity_signals()
         watchdog.start()
