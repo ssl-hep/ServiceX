@@ -123,8 +123,7 @@ class TestAddFileToDataset(ResourceTestBase):
                 ]
             )
             assert (
-                mock_transformer_manager.patch_transformer_parallelism.call_count
-                == 2
+                mock_transformer_manager.patch_transformer_parallelism.call_count == 2
             )
 
     def test_put_new_file_bulk(
@@ -184,10 +183,7 @@ class TestAddFileToDataset(ResourceTestBase):
                 call("second_request", "my-ws", 2),
             ]
         )
-        assert (
-            mock_transformer_manager.patch_transformer_parallelism.call_count
-            == 2
-        )
+        assert mock_transformer_manager.patch_transformer_parallelism.call_count == 2
 
     def test_put_new_file_with_exception(
         self,

@@ -118,9 +118,7 @@ class TestFilesetComplete(ResourceTestBase):
                 call("lookup-request", "my-ws", 5),
             ]
         )
-        assert (
-            mock_transformer_manager.patch_transformer_parallelism.call_count == 2
-        )
+        assert mock_transformer_manager.patch_transformer_parallelism.call_count == 2
 
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
         pending_request = TransformRequest()
