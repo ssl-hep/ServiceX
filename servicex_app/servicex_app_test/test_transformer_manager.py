@@ -1308,3 +1308,240 @@ class TestShutdownPod:
             req = self._make_req(TransformStatus.running)
             manager.cancel_transform(req)
         mock_error.assert_called_once()
+
+
+class TestPatchTransformerParallelism:
+    @pytest.fixture(autouse=True)
+    def _allowed_image_prefixes(self):
+        os.environ.setdefault("ALLOWED_IMAGE_PREFIXES", '["sslhep/"]')
+
+    @pytest.fixture
+    def batch_api(self, mocker):
+        import kubernetes
+
+        mocker.patch(
+            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
+        )
+        api = mocker.MagicMock(kubernetes.client.BatchV1Api)
+        mocker.patch.object(kubernetes.client, "BatchV1Api", return_value=api)
+        return api
+
+    def _job_with_parallelism(self, value):
+        return SimpleNamespace(spec=SimpleNamespace(parallelism=value))
+
+    def test_read_returns_404(self, app_context, mocker, batch_api):
+        import kubernetes
+
+        batch_api.read_namespaced_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=404)
+        )
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 5
+        )
+
+        batch_api.patch_namespaced_job.assert_not_called()
+        mock_warning.assert_not_called()
+
+    def test_read_returns_non_404_logs_warning(self, app_context, mocker, batch_api):
+        import kubernetes
+
+        batch_api.read_namespaced_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=500, reason="boom")
+        )
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 5
+        )
+
+        batch_api.patch_namespaced_job.assert_not_called()
+        mock_warning.assert_called_once()
+
+    def test_noop_when_desired_le_current(self, app_context, batch_api):
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(5)
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 3
+        )
+
+        batch_api.patch_namespaced_job.assert_not_called()
+
+    def test_patch_happy_path(self, app_context, mocker, batch_api):
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(2)
+        mock_info = mocker.patch.object(app_context.logger, "info")
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 5
+        )
+
+        batch_api.patch_namespaced_job.assert_called_once_with(
+            name="transformer-abc",
+            namespace="test-ns",
+            body={"spec": {"parallelism": 5}},
+        )
+        mock_info.assert_called_once()
+
+    def test_patch_none_parallelism_treated_as_zero(self, app_context, batch_api):
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(None)
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 1
+        )
+
+        batch_api.patch_namespaced_job.assert_called_once_with(
+            name="transformer-abc",
+            namespace="test-ns",
+            body={"spec": {"parallelism": 1}},
+        )
+
+    def test_patch_404_swallowed(self, app_context, mocker, batch_api):
+        import kubernetes
+
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(1)
+        batch_api.patch_namespaced_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=404)
+        )
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 5
+        )
+
+        mock_warning.assert_not_called()
+
+    def test_patch_non_404_logs_warning(self, app_context, mocker, batch_api):
+        import kubernetes
+
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(1)
+        batch_api.patch_namespaced_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=500, reason="boom")
+        )
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+            "abc", "test-ns", 5
+        )
+
+        mock_warning.assert_called_once()
+
+
+class TestStartTransformers:
+    @pytest.fixture(autouse=True)
+    def _allowed_image_prefixes(self):
+        os.environ.setdefault("ALLOWED_IMAGE_PREFIXES", '["sslhep/"]')
+
+    @pytest.fixture
+    def manager(self, mocker):
+        mocker.patch(
+            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
+        )
+        mgr = TransformerManager("internal-kubernetes")
+        mgr.launch_transformer_jobs = mocker.Mock()
+        return mgr
+
+    def _make_request(self, status, files, request_id="req-1"):
+        req = TransformRequest()
+        req.request_id = request_id
+        req.status = status
+        req.files = files
+        req.image = "sslhep/foo:latest"
+        req.result_destination = "object-store"
+        req.result_format = "arrow"
+        req.transformer_language = "scala"
+        req.transformer_command = "echo"
+        req.generated_code_cm = "cm-1"
+        return req
+
+    @staticmethod
+    def _base_config(**overrides):
+        cfg = {
+            "TRANSFORMER_RABBIT_MQ_URL": "amqp://rabbit",
+            "TRANSFORMER_NAMESPACE": "test-ns",
+            "TRANSFORMER_X509_SECRET": "x509",
+            "TRANSFORMER_MAX_REPLICAS": 17,
+        }
+        cfg.update(overrides)
+        return cfg
+
+    def test_running_status_clamps_to_files(self, app_context, manager):
+        req = self._make_request(TransformStatus.running, files=10)
+
+        manager.start_transformers(self._base_config(), req)
+
+        assert req.workers == 10
+        assert manager.launch_transformer_jobs.call_args.kwargs["workers"] == 10
+
+    def test_running_status_clamps_to_max_replicas(self, app_context, manager):
+        req = self._make_request(TransformStatus.running, files=100)
+
+        manager.start_transformers(self._base_config(), req)
+
+        assert req.workers == 17
+        assert manager.launch_transformer_jobs.call_args.kwargs["workers"] == 17
+
+    def test_running_status_floor_of_one(self, app_context, manager):
+        req = self._make_request(TransformStatus.running, files=0)
+
+        manager.start_transformers(self._base_config(), req)
+
+        assert req.workers == 1
+
+    def test_non_running_defaults_initial_to_one(self, app_context, manager):
+        req = self._make_request(TransformStatus.submitted, files=50)
+
+        manager.start_transformers(self._base_config(), req)
+
+        assert req.workers == 1
+        assert manager.launch_transformer_jobs.call_args.kwargs["workers"] == 1
+
+    def test_non_running_uses_initial_replicas(self, app_context, manager):
+        req = self._make_request(TransformStatus.submitted, files=50)
+
+        manager.start_transformers(
+            self._base_config(TRANSFORMER_INITIAL_REPLICAS=5), req
+        )
+
+        assert req.workers == 5
+
+    def test_non_running_initial_replicas_clamped_to_max(self, app_context, manager):
+        req = self._make_request(TransformStatus.submitted, files=50)
+
+        manager.start_transformers(
+            self._base_config(TRANSFORMER_INITIAL_REPLICAS=99), req
+        )
+
+        assert req.workers == 17
+
+    def test_launch_receives_forwarded_args(self, app_context, manager):
+        req = self._make_request(TransformStatus.running, files=3)
+
+        manager.start_transformers(self._base_config(), req)
+
+        kwargs = manager.launch_transformer_jobs.call_args.kwargs
+        assert kwargs["image"] == "sslhep/foo:latest"
+        assert kwargs["request_id"] == "req-1"
+        assert kwargs["rabbitmq_uri"] == "amqp://rabbit"
+        assert kwargs["namespace"] == "test-ns"
+        assert kwargs["x509_secret"] == "x509"
+        assert kwargs["generated_code_cm"] == "cm-1"
+
+
+class TestCreateJob:
+    @pytest.fixture(autouse=True)
+    def _allowed_image_prefixes(self):
+        os.environ.setdefault("ALLOWED_IMAGE_PREFIXES", '["sslhep/"]')
+
+    def test_create_job_logs_exception_and_swallows(self, app_context, mocker):
+        import kubernetes
+
+        api = mocker.MagicMock()
+        api.create_namespaced_job.side_effect = (
+            kubernetes.client.exceptions.ApiException(status=500, reason="boom")
+        )
+        mock_exception = mocker.patch.object(app_context.logger, "exception")
+
+        TransformerManager._create_job(api, mocker.Mock(), "test-ns", "req-1")
+
+        mock_exception.assert_called_once()
