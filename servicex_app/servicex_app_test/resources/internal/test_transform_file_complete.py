@@ -608,7 +608,9 @@ class TestBackfillDatasetStats:
         assert file_row.file_events == 999
         assert file_row.file_size == 999
         # Dataset should NOT be queried since deltas are both zero
-        queried_classes = [call.args[0] for call in session.query.mock_calls if call.args]
+        queried_classes = [
+            call.args[0] for call in session.query.mock_calls if call.args
+        ]
         assert Dataset not in queried_classes
 
     def test_backfills_file_row_and_dataset(self, mocker):
