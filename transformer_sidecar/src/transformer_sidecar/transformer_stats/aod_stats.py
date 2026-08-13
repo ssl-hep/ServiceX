@@ -36,16 +36,12 @@ class AODStats(TransformerStats):
         super().__init__(log_path)
 
         # First see if the total events processed is printed
-        range_matches = re.findall(
-            r"Processing events 0-(\d+) in file", self.log_body
-        )
+        range_matches = re.findall(r"Processing events 0-(\d+) in file", self.log_body)
         if range_matches:
             self.total_events = int(range_matches[-1])
         else:
             # Fallback: "Processed N events" is a periodic progress marker
-            progress_matches = re.findall(
-                r"Processed (\d+) events", self.log_body
-            )
+            progress_matches = re.findall(r"Processed (\d+) events", self.log_body)
             if progress_matches:
                 self.total_events = max(int(m) for m in progress_matches)
 
