@@ -29,7 +29,12 @@
 import psycopg2
 import pytest
 
-from servicex_app.models import TransformationResult, TransformRequest, TransformStatus
+from servicex_app.models import (
+    DatasetFile,
+    TransformationResult,
+    TransformRequest,
+    TransformStatus,
+)
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -75,10 +80,20 @@ class TestTransformFileComplete(ResourceTestBase):
         return rv
 
     @pytest.fixture
-    def mock_transform_request_lookup(self, db_session, trqmock, othermock):
+    def dsfilemock(self, mocker):
+        rv = mocker.Mock()
+        rv.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
+            None
+        )
+        return rv
+
+    @pytest.fixture
+    def mock_transform_request_lookup(self, db_session, trqmock, othermock, dsfilemock):
         def switcher(cls):
             if cls == TransformRequest:
                 return trqmock
+            elif cls == DatasetFile:
+                return dsfilemock
             else:
                 return othermock
 
