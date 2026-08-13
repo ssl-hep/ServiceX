@@ -30,10 +30,14 @@ import psycopg2
 import pytest
 
 from servicex_app.models import (
+    Dataset,
     DatasetFile,
     TransformationResult,
     TransformRequest,
     TransformStatus,
+)
+from servicex_app.resources.internal.transformer_file_complete import (
+    TransformerFileComplete,
 )
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
@@ -535,3 +539,136 @@ class TestTransformFileComplete(ResourceTestBase):
         # add called once for the transform result and then once for the updated transform request
         # once with a failure and once successfully
         assert db_session.add.call_count == 3
+
+
+class TestBackfillDatasetStats:
+    """Direct unit tests for TransformerFileComplete.backfill_dataset_stats."""
+
+    @staticmethod
+    def _session(mocker, file_row=None, dataset_row=None):
+        session = mocker.Mock()
+        session.begin = mocker.MagicMock()
+
+        def switcher(cls):
+            chain = mocker.Mock()
+            if cls is DatasetFile:
+                chain.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
+                    file_row
+                )
+            elif cls is Dataset:
+                chain.filter_by.return_value.with_for_update.return_value.one_or_none.return_value = (  # noqa: E501
+                    dataset_row
+                )
+            return chain
+
+        session.query.side_effect = switcher
+        return session
+
+    @staticmethod
+    def _info(**overrides):
+        base = {
+            "file-id": 42,
+            "status": "success",
+            "total-events": 12345,
+            "total-bytes": 6789,
+        }
+        base.update(overrides)
+        return base
+
+    def test_skips_when_status_not_success(self, mocker):
+        session = self._session(mocker)
+        TransformerFileComplete.backfill_dataset_stats(
+            session, self._info(status="failure")
+        )
+        session.query.assert_not_called()
+
+    def test_skips_when_events_and_size_both_zero(self, mocker):
+        session = self._session(mocker)
+        TransformerFileComplete.backfill_dataset_stats(
+            session, self._info(**{"total-events": 0, "total-bytes": 0})
+        )
+        session.query.assert_not_called()
+
+    def test_skips_when_file_row_missing(self, mocker):
+        session = self._session(mocker, file_row=None)
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+        # DatasetFile queried, but never reaches Dataset
+        assert Dataset not in [call.args[0] for call in session.query.mock_calls]
+
+    def test_skips_when_file_row_already_populated(self, mocker):
+        file_row = mocker.Mock()
+        file_row.file_events = 999
+        file_row.file_size = 999
+        file_row.dataset_id = 7
+        session = self._session(mocker, file_row=file_row)
+
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+
+        # File row values not overwritten
+        assert file_row.file_events == 999
+        assert file_row.file_size == 999
+        # Dataset should NOT be queried since deltas are both zero
+        queried_classes = [call.args[0] for call in session.query.mock_calls if call.args]
+        assert Dataset not in queried_classes
+
+    def test_backfills_file_row_and_dataset(self, mocker):
+        file_row = mocker.Mock()
+        file_row.file_events = 0
+        file_row.file_size = 0
+        file_row.dataset_id = 7
+        dataset_row = mocker.Mock()
+        dataset_row.events = 100
+        dataset_row.size = 500
+        session = self._session(mocker, file_row=file_row, dataset_row=dataset_row)
+
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+
+        assert file_row.file_events == 12345
+        assert file_row.file_size == 6789
+        assert dataset_row.events == 100 + 12345
+        assert dataset_row.size == 500 + 6789
+
+    def test_backfills_from_none_dataset_counters(self, mocker):
+        file_row = mocker.Mock()
+        file_row.file_events = 0
+        file_row.file_size = 0
+        file_row.dataset_id = 7
+        dataset_row = mocker.Mock()
+        dataset_row.events = None
+        dataset_row.size = None
+        session = self._session(mocker, file_row=file_row, dataset_row=dataset_row)
+
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+
+        assert dataset_row.events == 12345
+        assert dataset_row.size == 6789
+
+    def test_backfills_only_events_when_size_already_set(self, mocker):
+        file_row = mocker.Mock()
+        file_row.file_events = 0
+        file_row.file_size = 999
+        file_row.dataset_id = 7
+        dataset_row = mocker.Mock()
+        dataset_row.events = 0
+        dataset_row.size = 0
+        session = self._session(mocker, file_row=file_row, dataset_row=dataset_row)
+
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+
+        assert file_row.file_events == 12345
+        assert file_row.file_size == 999
+        assert dataset_row.events == 12345
+        assert dataset_row.size == 0
+
+    def test_skips_when_dataset_row_missing(self, mocker):
+        file_row = mocker.Mock()
+        file_row.file_events = 0
+        file_row.file_size = 0
+        file_row.dataset_id = 7
+        session = self._session(mocker, file_row=file_row, dataset_row=None)
+
+        TransformerFileComplete.backfill_dataset_stats(session, self._info())
+
+        # File row is still updated even though Dataset lookup returned None
+        assert file_row.file_events == 12345
+        assert file_row.file_size == 6789
