@@ -29,7 +29,7 @@ def filter_kibana_url(url: str, request_id: str, log_level: str) -> str:
     if view is None or instance is None or index is None:
         return url
 
-    _a = f"(filters:!((query:(match_phrase:(instance:{instance}))),(query:(match_phrase:(requestId:'{request_id}'))),(query:(match_phrase:(level:{log_level})))),index:'{index}')"  # NOQA  E502
+    _a = f"(filters:!((query:(match_phrase:(instance:{instance}))),(query:(match_phrase:(request_id:'{request_id}'))),(query:(match_phrase:(level:{log_level})))),index:'{index}')"  # NOQA  E502
 
     new_fragment = f"/view/{view}?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h/h,to:now))"  # NOQA  E502
     new_fragment += f"&_a={urllib.parse.quote(_a)}"
