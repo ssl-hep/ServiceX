@@ -88,7 +88,7 @@ class FileURLGenerator(ServiceXResource):
                 "cannot generate presigned URLs."
             )
             current_app.logger.error(msg, extra={"request_id": request_id})
-            return {"message": msg}, 409
+            return {"message": msg}, 400
 
         if not transform.output_path:
             msg = (
@@ -96,7 +96,7 @@ class FileURLGenerator(ServiceXResource):
                 "recorded; cannot generate file URLs."
             )
             current_app.logger.error(msg, extra={"request_id": request_id})
-            return {"message": msg}, 409
+            return {"message": msg}, 400
 
         rv = {
             f: (

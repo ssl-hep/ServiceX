@@ -68,7 +68,7 @@ class DeleteTransform(ServiceXResource):
                     "recorded; refusing to delete to avoid leaking the bucket."
                 )
                 current_app.logger.error(msg, extra={"request_id": request_id})
-                return {"message": msg}, 409
+                return {"message": msg}, 400
 
             # Delete all the results for this transform
             session.query(TransformationResult).filter_by(
