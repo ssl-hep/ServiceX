@@ -81,11 +81,28 @@ class FileURLGenerator(ServiceXResource):
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
         # Add branches for other backends when relevant
+        if transform.result_destination != TransformRequest.OBJECT_STORE_DEST:
+            msg = (
+                f"Transformation request {request_id} does not use object-store "
+                f"storage (result_destination={transform.result_destination}); "
+                "cannot generate presigned URLs."
+            )
+            current_app.logger.error(msg, extra={"request_id": request_id})
+            return {"message": msg}, 409
+
+        if not transform.output_path:
+            msg = (
+                f"Transformation request {request_id} has no output_path "
+                "recorded; cannot generate file URLs."
+            )
+            current_app.logger.error(msg, extra={"request_id": request_id})
+            return {"message": msg}, 409
+
         rv = {
             f: (
                 self.s3client.generate_presigned_url(
                     "get_object",
-                    Params={"Bucket": request_id, "Key": f},
+                    Params={"Bucket": transform.output_path, "Key": f},
                     ExpiresIn=expirydelta,
                 ),
                 {},

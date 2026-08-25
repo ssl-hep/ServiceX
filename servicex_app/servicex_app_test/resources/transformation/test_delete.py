@@ -15,9 +15,8 @@ class TestTransformDelete(ResourceTestBase):
 
     @pytest.fixture
     def fake_transform(self, mocker) -> TransformRequest:
-        mock_transform_request_cls = mocker.patch(f"{self.module}.TransformRequest")
         transform = self._generate_transform_request()
-        mock_transform_request_cls.lookup.return_value = transform
+        mocker.patch(f"{self.module}.TransformRequest.lookup", return_value=transform)
         return transform
 
     @pytest.fixture

@@ -46,6 +46,7 @@ class TestFileURLGenerator(ResourceTestBase):
                 fake_transform_request = self._generate_transform_request()
                 fake_transform_request.submit_time = datetime(2021, 1, 1, 12, 0, 0)
                 fake_transform_request.finish_time = datetime(2021, 1, 1, 12, 30, 0)
+                fake_transform_request.output_path = "1234"
                 fake_transform_request.files = 32
                 fake_transform_request.files_completed = 15
                 fake_transform_request.files_failed = 2

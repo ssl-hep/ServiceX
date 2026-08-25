@@ -130,6 +130,7 @@ class TestDataLifecycleOps(ResourceTestBase):
         active_transform = self._generate_transform_request()
         active_transform.submit_time = datetime(2022, 1, 1, 0, 0)
         active_transform.request_id = 1
+        active_transform.output_path = "1"
         active_transform.did_id = 1
         active_transform.title = "active"
         db_session.add(active_transform)
@@ -144,6 +145,7 @@ class TestDataLifecycleOps(ResourceTestBase):
         stale_transform = self._generate_transform_request()
         stale_transform.submit_time = datetime(2021, 1, 1, 0, 0)
         stale_transform.request_id = 2
+        stale_transform.output_path = "2"
         stale_transform.did_id = 1
         stale_transform.title = "stale"
         db_session.add(stale_transform)
