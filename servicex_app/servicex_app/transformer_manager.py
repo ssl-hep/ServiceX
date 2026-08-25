@@ -357,8 +357,9 @@ class TransformerManager:
         )
 
         if result_destination == "volume":
-            sidecar_command += " --output-dir " + TransformerManager.compute_output_path(
-                request_id, result_destination
+            sidecar_command += (
+                " --output-dir "
+                + TransformerManager.compute_output_path(request_id, result_destination)
             )
 
         resources = client.V1ResourceRequirements(
