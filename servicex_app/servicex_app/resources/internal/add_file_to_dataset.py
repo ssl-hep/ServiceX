@@ -76,6 +76,14 @@ class AddFileToDataset(ServiceXResource):
             )
             db.session.commit()
 
+            namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+            max_replicas = current_app.config["TRANSFORMER_MAX_REPLICAS"]
+            for req in running_requests:
+                desired = min(max(1, req.files), max_replicas)
+                self.transformer_manager.patch_transformer_parallelism(
+                    req.request_id, namespace, desired
+                )
+
             return {"dataset_id": str(dataset_id)}
         except Exception as e:
             current_app.logger.exception(
