@@ -427,7 +427,7 @@ class TransformerManager:
         spec = client.V1JobSpec(
             template=template,
             parallelism=workers,
-            completions=workers,
+            completions=current_app.config["TRANSFORMER_MAX_REPLICAS"],
             backoff_limit=current_app.config.get("TRANSFORMER_BACKOFF_LIMIT", 4),
         )
 
