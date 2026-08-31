@@ -48,6 +48,52 @@ class TestTransformDelete(ResourceTestBase):
             "BR549"
         )
 
+    def test_delete_missing_output_path(
+        self, fake_transform, db_session, mock_object_store_manager
+    ):
+        fake_transform.status = TransformStatus.complete
+        fake_transform.output_path = None
+
+        local_config = {
+            "OBJECT_STORE_ENABLED": True,
+            "MINIO_URL": "localhost:9000",
+            "MINIO_ACCESS_KEY": "miniouser",
+            "MINIO_SECRET_KEY": "leftfoot1",
+        }
+
+        client = self._test_client(
+            extra_config=local_config, object_store=mock_object_store_manager
+        )
+
+        resp = client.delete("/servicex/transformation/BR549")
+        assert resp.status_code == 400
+        assert "no output_path" in resp.json["message"]
+        assert not db_session.delete.called
+        mock_object_store_manager.delete_bucket_and_contents.assert_not_called()
+
+    def test_delete_volume_destination_no_object_store_call(
+        self, fake_transform, db_session, mock_object_store_manager
+    ):
+        fake_transform.status = TransformStatus.complete
+        fake_transform.result_destination = TransformRequest.VOLUME_DEST
+        fake_transform.output_path = "/some/volume/path"
+
+        local_config = {
+            "OBJECT_STORE_ENABLED": True,
+            "MINIO_URL": "localhost:9000",
+            "MINIO_ACCESS_KEY": "miniouser",
+            "MINIO_SECRET_KEY": "leftfoot1",
+        }
+
+        client = self._test_client(
+            extra_config=local_config, object_store=mock_object_store_manager
+        )
+
+        resp = client.delete("/servicex/transformation/BR549")
+        assert resp.status_code == 200
+        db_session.delete.assert_called_once_with(fake_transform)
+        mock_object_store_manager.delete_bucket_and_contents.assert_not_called()
+
     def test_running(self, fake_transform, db_session):
         fake_transform.status = TransformStatus.running
 
