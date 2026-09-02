@@ -1,0 +1,41 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  labels:
+    app: {{ .Release.Name }}-prometheus
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+spec:
+  type: {{ .Values.monitoring.prometheus.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.monitoring.prometheus.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-prometheus
+{{- if .Values.monitoring.prometheus.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  labels:
+    app: {{ .Release.Name }}-prometheus
+    release: "{{ .Release.Name }}"
+    component: prometheus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.monitoring.prometheus.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.monitoring.prometheus.persistence.size }}
+{{- end }}
+{{- end }}

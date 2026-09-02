@@ -28,7 +28,7 @@
 
 from celery import group, shared_task, current_app
 from celery.utils.log import get_task_logger
-from celery.signals import celeryd_after_setup
+from celery.signals import celeryd_after_setup, worker_process_init
 from ..celery_task_router import route_task
 from functools import lru_cache
 import os
@@ -43,6 +43,13 @@ def celery_task_name(request_id):
 @lru_cache
 def advertised_endpoint():
     return f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
+
+
+@worker_process_init.connect
+def setup_tracing(**kwargs):
+    from ..tracing import init_tracing
+
+    init_tracing(os.environ.get("OTEL_SERVICE_NAME", "servicex-app") + "-celery")
 
 
 @celeryd_after_setup.connect

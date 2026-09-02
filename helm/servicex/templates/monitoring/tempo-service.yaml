@@ -1,0 +1,49 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.tracing.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-tempo
+  labels:
+    app: {{ .Release.Name }}-tempo
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: tempo
+spec:
+  type: {{ .Values.monitoring.tracing.tempo.service.type }}
+  ports:
+    - name: http
+      port: 3200
+      targetPort: http
+      protocol: TCP
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-tempo
+{{- if .Values.monitoring.tracing.tempo.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-tempo
+  labels:
+    app: {{ .Release.Name }}-tempo
+    release: "{{ .Release.Name }}"
+    component: tempo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.monitoring.tracing.tempo.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.monitoring.tracing.tempo.persistence.size }}
+{{- end }}
+{{- end }}

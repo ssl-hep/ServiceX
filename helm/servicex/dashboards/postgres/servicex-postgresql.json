@@ -1,0 +1,241 @@
+{
+  "uid": "servicex-postgresql",
+  "title": "ServiceX PostgreSQL",
+  "tags": ["servicex", "postgresql", "infrastructure"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "datname",
+        "label": "Database",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+        "query": "label_values(pg_database_size_bytes{datname!~\"template.*\"}, datname)",
+        "current": { "text": "servicex", "value": "servicex" },
+        "includeAll": false,
+        "refresh": 1,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Exporter up",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [{ "refId": "A", "expr": "up{job=\"postgresql\"}" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red", "index": 0 } } },
+            { "type": "value", "options": { "1": { "text": "UP", "color": "green", "index": 1 } } }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Connections",
+      "description": "Backends currently connected to the selected database.",
+      "gridPos": { "h": 4, "w": 5, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(pg_stat_database_numbackends{datname=\"$datname\"})" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Database size",
+      "gridPos": { "h": 4, "w": 5, "x": 9, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "pg_database_size_bytes{datname=\"$datname\"}" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "color": { "mode": "fixed", "fixedColor": "purple" } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Cache hit ratio",
+      "description": "blks_hit / (blks_hit + blks_read). Sustained values below ~0.99 on a small working set usually mean shared_buffers is too small.",
+      "gridPos": { "h": 4, "w": 5, "x": 14, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(pg_stat_database_blks_hit{datname=\"$datname\"}[$__rate_interval])) / clamp_min(sum(rate(pg_stat_database_blks_hit{datname=\"$datname\"}[$__rate_interval])) + sum(rate(pg_stat_database_blks_read{datname=\"$datname\"}[$__rate_interval])), 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.9 },
+              { "color": "green", "value": 0.99 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Longest transaction",
+      "gridPos": { "h": 4, "w": 5, "x": 19, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "max(pg_stat_activity_max_tx_duration{datname=\"$datname\"})" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "mode": "fixed", "fixedColor": "orange" } },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Connections by state",
+      "description": "Watch for 'idle in transaction' climbing — that is a session holding a transaction open, and it blocks vacuum.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (state) (pg_stat_activity_count{datname=\"$datname\", state!=\"\"}) > 0",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "normal" } } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Transactions per second",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(pg_stat_database_xact_commit{datname=\"$datname\"}[$__rate_interval])",
+          "legendFormat": "commit"
+        },
+        {
+          "refId": "B",
+          "expr": "rate(pg_stat_database_xact_rollback{datname=\"$datname\"}[$__rate_interval])",
+          "legendFormat": "rollback"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 10, "showPoints": "never" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "rollback" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          }
+        ]
+      }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Tuple activity",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "rate(pg_stat_database_tup_inserted{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "inserted" },
+        { "refId": "B", "expr": "rate(pg_stat_database_tup_updated{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "updated" },
+        { "refId": "C", "expr": "rate(pg_stat_database_tup_deleted{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "deleted" },
+        { "refId": "D", "expr": "rate(pg_stat_database_tup_fetched{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "fetched" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 0, "showPoints": "never" } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Block I/O",
+      "description": "blks_read is what missed the cache and went to disk.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "rate(pg_stat_database_blks_hit{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "cache hit" },
+        { "refId": "B", "expr": "rate(pg_stat_database_blks_read{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "disk read" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 10, "showPoints": "never" } },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Locks held by mode",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (mode) (pg_locks_count{datname=\"$datname\"}) > 0",
+          "legendFormat": "{{mode}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "normal" } } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Deadlocks and conflicts",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "rate(pg_stat_database_deadlocks{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "deadlocks" },
+        { "refId": "B", "expr": "rate(pg_stat_database_conflicts{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "conflicts" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "custom": { "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Temp file usage",
+      "description": "Non-zero means queries are spilling to disk — usually work_mem is too small for the plan.",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "rate(pg_stat_database_temp_bytes{datname=\"$datname\"}[$__rate_interval])", "legendFormat": "temp bytes/s" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10, "showPoints": "never" } },
+        "overrides": []
+      }
+    }
+  ]
+}

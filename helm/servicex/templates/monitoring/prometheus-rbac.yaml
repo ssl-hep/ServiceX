@@ -1,0 +1,51 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.prometheus.podDiscovery .Values.rbacEnabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "servicex.fullname" . }}-prometheus
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+
+---
+
+# Namespace-scoped only: Prometheus discovers targets in the release namespace,
+# which is where the app, the databases and the transformer pods all live.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "servicex.fullname" . }}-prometheus
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "servicex.fullname" . }}-prometheus
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+subjects:
+- kind: ServiceAccount
+  name: {{ template "servicex.fullname" . }}-prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "servicex.fullname" . }}-prometheus
+{{- end }}

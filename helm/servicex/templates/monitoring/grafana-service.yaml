@@ -1,0 +1,56 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-grafana-admin
+  labels:
+    app: {{ .Release.Name }}-grafana
+    release: "{{ .Release.Name }}"
+    component: grafana
+type: Opaque
+data:
+  admin-user: {{ .Values.monitoring.grafana.adminUser | b64enc | quote }}
+  admin-password: {{ .Values.monitoring.grafana.adminPassword | b64enc | quote }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-grafana
+  labels:
+    app: {{ .Release.Name }}-grafana
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: grafana
+spec:
+  type: {{ .Values.monitoring.grafana.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.monitoring.grafana.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-grafana
+{{- if .Values.monitoring.grafana.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-grafana
+  labels:
+    app: {{ .Release.Name }}-grafana
+    release: "{{ .Release.Name }}"
+    component: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.monitoring.grafana.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.monitoring.grafana.persistence.size }}
+{{- end }}
+{{- end }}

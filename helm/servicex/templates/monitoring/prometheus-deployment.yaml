@@ -1,0 +1,97 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  labels:
+    app: {{ .Release.Name }}-prometheus
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+spec:
+  replicas: 1
+  strategy:
+    # A single writer per data directory; never run old and new pods at once.
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-prometheus
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-prometheus
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/monitoring/prometheus-configmap.yaml") . | sha256sum }}
+        {{- with .Values.monitoring.prometheus.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if and .Values.monitoring.prometheus.podDiscovery .Values.rbacEnabled }}
+      serviceAccountName: {{ template "servicex.fullname" . }}-prometheus
+      {{- end }}
+      {{- with .Values.monitoring.prometheus.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.monitoring.prometheus.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.monitoring.prometheus.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        # The upstream image runs as nobody; make the volume writable by it.
+        fsGroup: 65534
+        runAsUser: 65534
+        runAsNonRoot: true
+      containers:
+        - name: prometheus
+          image: "{{ .Values.monitoring.prometheus.image }}:{{ .Values.monitoring.prometheus.tag }}"
+          imagePullPolicy: {{ .Values.monitoring.prometheus.pullPolicy }}
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time={{ .Values.monitoring.prometheus.retention }}
+            - --web.enable-lifecycle
+            {{- if and .Values.monitoring.tracing.enabled .Values.monitoring.tracing.tempo.serviceGraphs }}
+            # Accepts the span metrics and service graph that Tempo's
+            # metrics-generator remote-writes.
+            - --web.enable-remote-write-receiver
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: 30
+          {{- with .Values.monitoring.prometheus.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: storage
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-prometheus-config
+        - name: storage
+        {{- if .Values.monitoring.prometheus.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

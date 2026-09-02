@@ -1,0 +1,113 @@
+{
+  "uid": "servicex-tracing",
+  "title": "ServiceX Tracing",
+  "tags": ["servicex", "tracing"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "editable": true,
+  "panels": [
+    {
+      "type": "nodeGraph",
+      "title": "Service graph",
+      "description": "Derived by Tempo's metrics-generator from span relationships.",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "tempo", "uid": "servicex-tempo" },
+      "targets": [
+        { "refId": "A", "queryType": "serviceMap", "datasource": { "type": "tempo", "uid": "servicex-tempo" } }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Calls between services",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (client, server) (rate(traces_service_graph_request_total[5m]))",
+          "legendFormat": "{{client}} -> {{server}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "fillOpacity": 10, "showPoints": "never" } },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Span rate by service",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (rate(traces_spanmetrics_calls_total[5m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "fillOpacity": 10, "showPoints": "never" } },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Error span rate by service",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (rate(traces_spanmetrics_calls_total{status_code=\"STATUS_CODE_ERROR\"}[5m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "custom": { "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 span latency by operation",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "servicex-prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, service, span_name) (rate(traces_spanmetrics_latency_bucket[5m])))",
+          "legendFormat": "{{service}} {{span_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 0, "showPoints": "never" } },
+        "overrides": []
+      }
+    },
+
+    {
+      "type": "traces",
+      "title": "Recent traces",
+      "description": "TraceQL. Narrow with e.g. { duration > 500ms } or { .service.name = \"servicex-app-celery\" }.",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "tempo", "uid": "servicex-tempo" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{}",
+          "limit": 50,
+          "datasource": { "type": "tempo", "uid": "servicex-tempo" }
+        }
+      ]
+    }
+  ]
+}

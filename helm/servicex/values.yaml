@@ -300,6 +300,89 @@ didFinder:
     podAnnotations: {}
 
 gridAccount: <your account>
+
+monitoring:
+  enabled: false
+  appMetrics:
+    enabled: true
+  prometheus:
+    image: prom/prometheus
+    tag: v3.1.0
+    pullPolicy: IfNotPresent
+    retention: 7d
+    scrapeInterval: 30s
+    podDiscovery: true
+    service:
+      type: ClusterIP
+      port: 9090
+    persistence:
+      enabled: false
+      size: 10Gi
+      storageClass: null
+    extraScrapeConfigs: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
+  tracing:
+    enabled: false
+    sampleRatio: 1.0
+    tempo:
+      image: grafana/tempo
+      tag: 2.7.1
+      pullPolicy: IfNotPresent
+      retention: 48h
+      serviceGraphs: true
+      service:
+        type: ClusterIP
+      persistence:
+        enabled: false
+        size: 10Gi
+        storageClass: null
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 1
+          memory: 2Gi
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      podAnnotations: {}
+  grafana:
+    image: grafana/grafana
+    tag: 11.5.2
+    pullPolicy: IfNotPresent
+    adminUser: admin
+    adminPassword: admin
+    rootUrlSubPath: ""
+    service:
+      type: ClusterIP
+      port: 3000
+    persistence:
+      enabled: false
+      size: 5Gi
+      storageClass: null
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
+
 logging:
   logstash:
     enabled: true
@@ -336,6 +419,10 @@ postgres:
 postgresql:
   image:
     repository: bitnamilegacy/postgresql
+  metrics:
+    enabled: false
+    image:
+      repository: bitnamilegacy/postgres-exporter
   volumePermissions:
     image:
       repository: bitnamilegacy/os-shell
@@ -355,6 +442,8 @@ postgresql:
 rabbitmq:
   image:
     repository: bitnamilegacy/rabbitmq
+  metrics:
+    enabled: false
   auth:
     password: leftfoot1
   persistence:

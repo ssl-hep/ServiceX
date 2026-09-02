@@ -1,0 +1,70 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.tracing.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-tempo-config
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: tempo
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+      grpc_listen_port: 9095
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+
+    ingester:
+      # Short blocks so traces become searchable quickly; this is a local
+      # single-binary install, not a high-throughput cluster.
+      max_block_duration: 5m
+
+    compactor:
+      compaction:
+        block_retention: {{ .Values.monitoring.tracing.tempo.retention }}
+
+    storage:
+      trace:
+        backend: local
+        wal:
+          path: /var/tempo/wal
+        local:
+          path: /var/tempo/blocks
+
+    {{- if .Values.monitoring.tracing.tempo.serviceGraphs }}
+    # Derives RED metrics and the service graph from spans, then pushes them
+    # into the bundled Prometheus. Prometheus is started with
+    # --web.enable-remote-write-receiver to accept them.
+    metrics_generator:
+      registry:
+        external_labels:
+          source: tempo
+      storage:
+        path: /var/tempo/generator/wal
+        remote_write:
+          - url: http://{{ .Release.Name }}-prometheus:{{ .Values.monitoring.prometheus.service.port }}/api/v1/write
+            send_exemplars: true
+      traces_storage:
+        path: /var/tempo/generator/traces
+
+    overrides:
+      defaults:
+        metrics_generator:
+          processors:
+            - service-graphs
+            - span-metrics
+    {{- end }}
+
+    usage_report:
+      reporting_enabled: false
+{{- end }}
