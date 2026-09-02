@@ -79,6 +79,22 @@ class TransformerManager:
         cls.celery_app = celery_app
         return cls
 
+    @staticmethod
+    def compute_output_path(request_id: str, result_destination: str) -> str:
+        """Return the destination the transformer will write results to.
+
+        For ``object-store`` this is the S3 bucket name; for ``volume`` this
+        is the on-disk directory the sidecar writes files into.
+        """
+        if result_destination == TransformRequest.OBJECT_STORE_DEST:
+            return request_id
+        if result_destination == TransformRequest.VOLUME_DEST:
+            return os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config["TRANSFORMER_PERSISTENCE_SUBDIR"],
+            )
+        raise ValueError(f"Unknown result_destination: {result_destination}")
+
     def __init__(self, manager_mode):
         if manager_mode == "internal-kubernetes":
             kubernetes.config.load_incluster_config()
@@ -341,9 +357,9 @@ class TransformerManager:
         )
 
         if result_destination == "volume":
-            sidecar_command += " --output-dir " + os.path.join(
-                TransformerManager.POSIX_VOLUME_MOUNT,
-                current_app.config["TRANSFORMER_PERSISTENCE_SUBDIR"],
+            sidecar_command += (
+                " --output-dir "
+                + TransformerManager.compute_output_path(request_id, result_destination)
             )
 
         resources = client.V1ResourceRequirements(

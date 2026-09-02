@@ -57,14 +57,27 @@ class DeleteTransform(ServiceXResource):
             if user and (not user.admin and user.id != transform_req.submitted_by):
                 return {"message": "You are not authorized to delete this request"}, 403
 
+            needs_bucket_cleanup = (
+                self.object_store
+                and transform_req.result_destination
+                == TransformRequest.OBJECT_STORE_DEST
+            )
+            if needs_bucket_cleanup and not transform_req.output_path:
+                msg = (
+                    f"Transform request {request_id} has no output_path "
+                    "recorded; refusing to delete to avoid leaking the bucket."
+                )
+                current_app.logger.error(msg, extra={"request_id": request_id})
+                return {"message": msg}, 400
+
             # Delete all the results for this transform
             session.query(TransformationResult).filter_by(
                 request_id=transform_req.request_id
             ).delete()
 
             # Delete the transformed files out of object store along with the bucket
-            if self.object_store:
-                self.object_store.delete_bucket_and_contents(transform_req.request_id)
+            if needs_bucket_cleanup:
+                self.object_store.delete_bucket_and_contents(transform_req.output_path)
 
             # Delete the transform request
             session.delete(transform_req)

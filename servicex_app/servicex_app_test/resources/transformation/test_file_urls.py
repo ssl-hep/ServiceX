@@ -46,6 +46,7 @@ class TestFileURLGenerator(ResourceTestBase):
                 fake_transform_request = self._generate_transform_request()
                 fake_transform_request.submit_time = datetime(2021, 1, 1, 12, 0, 0)
                 fake_transform_request.finish_time = datetime(2021, 1, 1, 12, 30, 0)
+                fake_transform_request.output_path = "1234"
                 fake_transform_request.files = 32
                 fake_transform_request.files_completed = 15
                 fake_transform_request.files_failed = 2
@@ -88,3 +89,42 @@ class TestFileURLGenerator(ResourceTestBase):
         )
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")
+
+    def test_non_object_store_destination(self, mocker, client):
+        import servicex_app
+
+        fake_transform_request = self._generate_transform_request()
+        fake_transform_request.result_destination = "volume"
+        fake_transform_request.output_path = "/some/path"
+
+        mocker.patch.object(
+            servicex_app.models.TransformRequest,
+            "lookup",
+            return_value=fake_transform_request,
+        )
+
+        response = client.post(
+            "/servicex/transformation/file-urls",
+            json={"request_id": 1234, "file_list": ["abc"]},
+        )
+        assert response.status_code == 400
+        assert "does not use object-store" in response.json["message"]
+
+    def test_missing_output_path(self, mocker, client):
+        import servicex_app
+
+        fake_transform_request = self._generate_transform_request()
+        fake_transform_request.output_path = None
+
+        mocker.patch.object(
+            servicex_app.models.TransformRequest,
+            "lookup",
+            return_value=fake_transform_request,
+        )
+
+        response = client.post(
+            "/servicex/transformation/file-urls",
+            json={"request_id": 1234, "file_list": ["abc"]},
+        )
+        assert response.status_code == 400
+        assert "no output_path" in response.json["message"]
