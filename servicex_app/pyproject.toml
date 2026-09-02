@@ -44,6 +44,13 @@ authlib = "^1.6.9"
 flask-moment = "^1.0.6"
 boto3 = ">=1.42.94"
 flask-admin = "^2.0.2"
+prometheus-flask-exporter = "^0.23.2"
+opentelemetry-sdk = "^1.30.0"
+opentelemetry-exporter-otlp = "^1.30.0"
+opentelemetry-instrumentation-flask = "^0.51b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.51b0"
+opentelemetry-instrumentation-requests = "^0.51b0"
+opentelemetry-instrumentation-celery = "^0.51b0"
 
 [tool.poetry.group.test]
 optional = true

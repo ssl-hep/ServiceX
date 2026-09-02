@@ -68,6 +68,18 @@ spec:
           value: "{{ .Values.app.logLevel | upper }}"
         - name: ALLOWED_IMAGE_PREFIXES
           value: {{ .Values.app.allowedImagePrefixes | toJson | quote }}
+        {{- if and .Values.monitoring.enabled .Values.monitoring.tracing.enabled }}
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://{{ .Release.Name }}-tempo:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_SERVICE_NAME
+          value: "servicex-app"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_traceidratio"
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.monitoring.tracing.sampleRatio }}"
+        {{- end }}
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"

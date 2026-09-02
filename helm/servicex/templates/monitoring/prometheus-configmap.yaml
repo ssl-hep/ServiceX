@@ -1,0 +1,93 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-prometheus-config
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ .Values.monitoring.prometheus.scrapeInterval }}
+      evaluation_interval: {{ .Values.monitoring.prometheus.scrapeInterval }}
+      external_labels:
+        instance_name: {{ .Release.Name }}
+
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      {{- if .Values.monitoring.appMetrics.enabled }}
+      # The Flask app. Scraping the Service load-balances across gunicorn
+      # replicas; each replica already aggregates its own worker processes.
+      - job_name: servicex-app
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["{{ .Release.Name }}-servicex-app:8000"]
+            labels:
+              service: servicex-app
+      {{- end }}
+
+      {{- if and .Values.postgres.enabled .Values.postgresql.metrics.enabled }}
+      - job_name: postgresql
+        static_configs:
+          - targets: ["{{ .Release.Name }}-postgresql-metrics:9187"]
+            labels:
+              service: postgresql
+      {{- end }}
+
+      {{- if .Values.rabbitmq.metrics.enabled }}
+      - job_name: rabbitmq
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["{{ .Release.Name }}-rabbitmq:9419"]
+            labels:
+              service: rabbitmq
+      {{- end }}
+
+      {{- if and .Values.monitoring.prometheus.podDiscovery .Values.rbacEnabled }}
+      # Picks up anything else in the namespace that opts in with
+      # prometheus.io/scrape: "true" — transformers, code generators, DID
+      # finders — without needing a scrape_config per component.
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ["{{ .Release.Namespace }}"]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          {{- if .Values.rabbitmq.metrics.enabled }}
+          # The RabbitMQ chart annotates its own pods for scraping, which would
+          # duplicate the static rabbitmq job above.
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: drop
+            regex: rabbitmq
+          {{- end }}
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            target_label: __address__
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: service
+      {{- end }}
+
+      {{- with .Values.monitoring.prometheus.extraScrapeConfigs }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

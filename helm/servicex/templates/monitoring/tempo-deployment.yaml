@@ -1,0 +1,90 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.tracing.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-tempo
+  labels:
+    app: {{ .Release.Name }}-tempo
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: tempo
+spec:
+  replicas: 1
+  strategy:
+    # Single writer per WAL directory.
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-tempo
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-tempo
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/monitoring/tempo-configmap.yaml") . | sha256sum }}
+        {{- with .Values.monitoring.tracing.tempo.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.monitoring.tracing.tempo.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.monitoring.tracing.tempo.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.monitoring.tracing.tempo.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        # uid/gid baked into the upstream tempo image
+        fsGroup: 10001
+        runAsUser: 10001
+        runAsNonRoot: true
+      containers:
+        - name: tempo
+          image: "{{ .Values.monitoring.tracing.tempo.image }}:{{ .Values.monitoring.tracing.tempo.tag }}"
+          imagePullPolicy: {{ .Values.monitoring.tracing.tempo.pullPolicy }}
+          args:
+            - -config.file=/etc/tempo/tempo.yaml
+          ports:
+            - name: http
+              containerPort: 3200
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: otlp-http
+              containerPort: 4318
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 45
+          {{- with .Values.monitoring.tracing.tempo.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tempo
+            - name: storage
+              mountPath: /var/tempo
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-tempo-config
+        - name: storage
+        {{- if .Values.monitoring.tracing.tempo.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-tempo
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

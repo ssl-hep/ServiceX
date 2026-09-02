@@ -30,6 +30,9 @@ data:
     # Enable JWT auth on public endpoints
     ENABLE_AUTH={{- ternary "True" "False" .Values.app.auth }}
 
+    # Serve Prometheus metrics on /metrics
+    ENABLE_METRICS={{- ternary "True" "False" .Values.monitoring.appMetrics.enabled }}
+
     # OAuth configuration
     OAUTH_METADATA_URL = '{{ .Values.app.oauthMetadataURL }}'
     OAUTH_CLIENT_ID = '{{ .Values.app.oauthClientID }}'
