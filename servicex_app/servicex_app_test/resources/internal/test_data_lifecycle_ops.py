@@ -232,9 +232,7 @@ class TestDataLifecycleOps(ResourceTestBase):
         db_session.commit()
 
         mock_object_store = mocker.MagicMock()
-        mock_logger = mocker.patch(
-            f"{self.module}.current_app", new=mocker.MagicMock()
-        )
+        mock_logger = mocker.patch(f"{self.module}.current_app", new=mocker.MagicMock())
 
         data_life_cycle_ops = DataLifecycleOps()
         response = data_life_cycle_ops.delete_expired_transforms(
