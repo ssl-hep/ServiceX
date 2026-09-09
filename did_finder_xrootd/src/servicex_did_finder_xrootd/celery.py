@@ -25,9 +25,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import glob
 import os
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 from typing import Any, Dict, Generator
+from urllib.parse import urlparse
 from XRootD import client as xrd
 
 from servicex_did_finder_lib import DIDFinderApp
@@ -40,6 +42,29 @@ __log = initialize_logging(component_name="xrootd_did_finder")
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
 app = DIDFinderApp("xrootd")
+
+# XRootD kXR_NotFound: the server reports that the path does not exist
+KXR_NOT_FOUND = 3011
+
+
+def static_directory_missing(pattern: str) -> bool:
+    """Check whether the wildcard-free directory prefix of a glob pattern is missing.
+
+    Only that prefix can be missing, since every deeper directory of a multi-level
+    glob comes from a listing. Returns False when the prefix exists or when the
+    server cannot be asked, so that the caller reports a lookup failure.
+    """
+    directory = os.path.dirname(pattern.rstrip("/"))
+    while glob.has_magic(directory):
+        directory = os.path.dirname(directory.rstrip("/"))
+    url = urlparse(directory)
+    if not url.scheme or not url.netloc:
+        return False
+    try:
+        status, _ = xrd.FileSystem(f"{url.scheme}://{url.netloc}/").stat(url.path)
+    except Exception:
+        return False
+    return not status.ok and status.errno == KXR_NOT_FOUND
 
 
 @app.did_lookup_task(name="did_finder_xrootd.lookup_dataset")
@@ -72,8 +97,13 @@ def find_files(
     )
 
     try:
-        urls = xrd.glob(cache_prefix + did_name)
+        urls = xrd.glob(cache_prefix + did_name, raise_error=True)
     except Exception as e:
+        if static_directory_missing(cache_prefix + did_name):
+            raise NoSuchDatasetException(
+                f"Directory for {did_name} does not exist for dataset "
+                f"{info['dataset-id']} - are you sure it is correct?"
+            )
         raise LookupFailureException(f"Failure searching for {did_name}: {e}")
     if len(urls) == 0:
         raise NoSuchDatasetException(
