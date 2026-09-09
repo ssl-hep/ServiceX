@@ -27,6 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
+import pytest
+
 from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
 
 
@@ -76,10 +78,11 @@ class TestServiceXAdapter:
         import requests
 
         caplog.set_level(logging.INFO)
+        mocker.patch("transformer_sidecar.servicex_adapter.RETRY_DELAY", 0)
         mock_session = mocker.MagicMock(requests.session)
         mock_session.mount = mocker.Mock()
         mock_session.put = mocker.Mock(
-            side_effect=[requests.exceptions.ConnectionError, 200]
+            side_effect=[requests.exceptions.ConnectionError, mocker.MagicMock()]
         )
         mocker.patch("requests.session", return_value=mock_session)
 
@@ -94,3 +97,27 @@ class TestServiceXAdapter:
         assert caplog.records[0].msg == "%s, retrying in %s seconds..."
         assert caplog.records[1].levelno == logging.INFO
         assert caplog.records[1].msg == "Put file complete."
+
+    def test_put_file_complete_http_error(self, mocker, caplog):
+        import requests
+
+        caplog.set_level(logging.INFO)
+        mocker.patch("transformer_sidecar.servicex_adapter.RETRY_DELAY", 0)
+        response = mocker.MagicMock()
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "500 Server Error"
+        )
+        mock_session = mocker.MagicMock(requests.session)
+        mock_session.mount = mocker.Mock()
+        mock_session.put = mocker.Mock(return_value=response)
+        mocker.patch("requests.session", return_value=mock_session)
+
+        adapter = ServiceXAdapter("http://foo.com")
+        rec = FileCompleteRecord(
+            "42", "my-root.root", 42, "testing", 1, 2, 3, "file://s3-object-name"
+        )
+        with pytest.raises(requests.exceptions.HTTPError):
+            adapter.put_file_complete(rec)
+
+        assert mock_session.put.call_count == 1
+        assert not caplog.records
