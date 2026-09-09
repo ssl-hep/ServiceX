@@ -90,7 +90,7 @@ data:
     TRANSFORMER_MANAGER_ENABLED = True
 
     {{- if .Values.transformer.cachePrefix }}
-    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
+    TRANSFORMER_CACHE_PREFIX = "{{ .Values.transformer.cachePrefix }}"
     {{- else }}
     TRANSFORMER_CACHE_PREFIX = ""
     {{- end }}
