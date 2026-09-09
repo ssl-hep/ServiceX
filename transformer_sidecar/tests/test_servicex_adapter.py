@@ -29,7 +29,11 @@ import logging
 
 import pytest
 
-from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
+from transformer_sidecar.servicex_adapter import (
+    MAX_RETRIES,
+    FileCompleteRecord,
+    ServiceXAdapter,
+)
 
 
 class TestServiceXAdapter:
@@ -92,11 +96,9 @@ class TestServiceXAdapter:
         )
         adapter.put_file_complete(rec)
         assert mock_session.put.call_count == 2
-        assert len(caplog.records) == 2
-        assert caplog.records[0].levelno == logging.WARNING
-        assert caplog.records[0].msg == "%s, retrying in %s seconds..."
-        assert caplog.records[1].levelno == logging.INFO
-        assert caplog.records[1].msg == "Put file complete."
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.INFO
+        assert caplog.records[0].msg == "Put file complete."
 
     def test_put_file_complete_http_error(self, mocker, caplog):
         import requests
@@ -119,5 +121,5 @@ class TestServiceXAdapter:
         with pytest.raises(requests.exceptions.HTTPError):
             adapter.put_file_complete(rec)
 
-        assert mock_session.put.call_count == 1
+        assert mock_session.put.call_count == MAX_RETRIES
         assert not caplog.records

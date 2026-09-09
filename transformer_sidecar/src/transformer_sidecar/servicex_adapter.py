@@ -31,7 +31,12 @@ from typing import Any
 import requests
 import os
 
-from retry.api import retry_call
+from tenacity import (
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
@@ -108,14 +113,19 @@ class ServiceXAdapter:
     def put_file_complete(self, rec: FileCompleteRecord):
         if self.server_endpoint:
             try:
-                response = retry_call(
-                    self.session.put,
-                    fargs=[self.server_endpoint + "/file-complete"],
-                    fkwargs={"json": rec.to_json(), "timeout": REQUEST_TIMEOUT},
-                    tries=MAX_RETRIES,
-                    delay=RETRY_DELAY,
-                )
-                response.raise_for_status()
+                for attempt in Retrying(
+                    stop=stop_after_attempt(MAX_RETRIES),
+                    wait=wait_fixed(RETRY_DELAY),
+                    retry=retry_if_exception_type(requests.RequestException),
+                    reraise=True,
+                ):
+                    with attempt:
+                        response = self.session.put(
+                            self.server_endpoint + "/file-complete",
+                            json=rec.to_json(),
+                            timeout=REQUEST_TIMEOUT,
+                        )
+                        response.raise_for_status()
                 self.logger.info(
                     "Put file complete.",
                     extra={
