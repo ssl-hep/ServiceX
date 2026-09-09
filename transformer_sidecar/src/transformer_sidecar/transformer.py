@@ -222,25 +222,20 @@ def transform_file(
                     transformer_capabilities["stats-parser"],
                     Path(os.path.join(request_path, "abc.log")),
                 )
+                output_path = Path(transform_request["safeOutputFileName"])
                 if science_container_response == "success.":
-                    output_path = Path(transform_request["safeOutputFileName"])
-
                     # Now is the time to convert the file to parquet if that's what
                     # the user requested, but our particular transformer doesn't
                     # support it. Delete source if we did a conversion so it doesn't
                     # clutter the POSIX output if we use that.
                     if convert_root_to_parquet:
                         object_name = output_path.with_suffix(".parquet").name
-                        if (
-                            file_to_upload := convert_to_parquet(output_path)
-                        ) is not None:
-                            output_path.unlink()
+                        file_to_upload = convert_to_parquet(output_path)
+                        output_path.unlink(missing_ok=True)
                     elif convert_root_to_rntuple:
                         object_name = output_path.name
-                        if (
-                            file_to_upload := convert_to_rntuple(output_path)
-                        ) is not None:
-                            output_path.unlink()
+                        file_to_upload = convert_to_rntuple(output_path)
+                        output_path.unlink(missing_ok=True)
                     else:
                         file_to_upload = output_path
                         object_name = output_path.name
@@ -270,6 +265,9 @@ def transform_file(
                         transformer_stats.error_info = (
                             "Sidecar format conversion failed"
                         )
+                else:
+                    # The science container may have left a partial file behind
+                    output_path.unlink(missing_ok=True)
             finally:
                 science_container.confirm()
 
@@ -388,6 +386,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         logger.error(
             f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
         )
+        Path(source_path.parent, "temp.parquet").unlink(missing_ok=True)
         return None
 
     return parquet_file
@@ -428,6 +427,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
             f"Failed to convert ROOT TTree to RNTuple: {e}",
             extra={"request_id": request_id},
         )
+        rntuple_file.unlink(missing_ok=True)
         return None
 
     return rntuple_file
