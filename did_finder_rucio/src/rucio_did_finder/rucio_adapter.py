@@ -45,10 +45,13 @@ class RucioAdapter:
         self.replica_client = replica_client
         self.report_logical_files = report_logical_files
         self.all_scopes = []
+        self._client_location = None
         # set logging to a null handler
         self.logger = initialize_logging(component_name="rucio_did_finder")
 
     def client_location(self):
+        if self._client_location is not None:
+            return self._client_location
         client_location = {}
         if "SITE_NAME" in os.environ:
             client_location["site"] = os.environ["SITE_NAME"]
@@ -74,6 +77,7 @@ class RucioAdapter:
                     client_location = response.json()
             except Exception as ex:
                 self.logger.exception(ex)
+        self._client_location = client_location
         return client_location
 
     def parse_did(self, did):
@@ -169,9 +173,7 @@ class RucioAdapter:
             return
         no_replica_files = 0
         for ds in datasets:
-            nfiles = 0
             try:
-                nfiles = len(list(self.did_client.list_files(ds[0], ds[1])))
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
                     schemes=["davs", "root", "http", "https"],
@@ -198,6 +200,7 @@ class RucioAdapter:
                     # Path is either a list of replicas or a single logical name
                     if "url" not in f:
                         self.logger.error(f"File {f['identity']} has no replicas.")
+                        no_replica_files += 1
                         continue
                     path = (
                         self.get_paths(f["url"])
@@ -213,7 +216,6 @@ class RucioAdapter:
                             "paths": path,
                         }
                     )
-            no_replica_files += nfiles - len(g_files)
             yield g_files
 
         if no_replica_files > 0:
