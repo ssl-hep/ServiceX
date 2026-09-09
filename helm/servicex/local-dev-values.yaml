@@ -2,39 +2,55 @@ noCerts: false
 didFinder:
   rucio:
     enabled: true
-    tag: sidecar-monorepo
-    pullPolicy: Always
+    tag: develop
+    pullPolicy: IfNotPresent
 
   CERNOpenData:
     enabled: false
 
-  YT:
+  atlasopenmagic:
+    enabled: false
+
+  xrootd:
     enabled: false
 app:
-  tag: sidecar-monorepo
+  tag: develop
   pullPolicy: IfNotPresent
   validateTransformerImage: false
 
 transformer:
-  autoscalerEnabled: false
-  sidecarTag: sidecar-monorepo
+  autoscaler:
+    enabled: false
+  sidecarTag: develop
   sidecarPullPolicy: IfNotPresent
-
-#  language: python
-#  exec: /generated/transform_single_file.py
-#  defaultScienceContainerImage: sslhep/servicex_func_adl_uproot_transformer
-
-  language: bash
-  exec: /generated/transform_single_file.sh
   scienceContainerPullPolicy: IfNotPresent
 
 codeGen:
-  #image: sslhep/servicex_code_gen_func_adl_uproot
-  image: sslhep/servicex_code_gen_atlas_xaod
-  tag: sidecar-monorepo
-  pullPolicy: IfNotPresent
-  defaultScienceContainerImage: sslhep/servicex_func_adl_xaod_transformer
-  defaultScienceContainerTag: sidecar-monorepo
+  uproot-raw:
+    enabled: true
+    tag: develop
+    pullPolicy: IfNotPresent
+
+  uproot:
+    enabled: false
+
+  python:
+    enabled: false
+
+  rdataframe:
+    enabled: false
+
+  atlasr21:
+    enabled: false
+
+  atlasr22:
+    enabled: false
+
+  atlasr25:
+    enabled: false
+
+  topcp:
+    enabled: false
 
 objectStore:
   enabled: true

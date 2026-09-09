@@ -40,7 +40,7 @@ data:
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
 
     # Number of seconds the JWT is valid for
-    JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
+    JWT_REFRESH_TOKEN_EXPIRES={{- if .Values.app.tokenExpires }}{{ .Values.app.tokenExpires }}{{ else }}False{{ end }}
     JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
 
     # Slack webhooks
@@ -90,7 +90,7 @@ data:
     TRANSFORMER_MANAGER_ENABLED = True
 
     {{- if .Values.transformer.cachePrefix }}
-    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
+    TRANSFORMER_CACHE_PREFIX = "{{ .Values.transformer.cachePrefix }}"
     {{- else }}
     TRANSFORMER_CACHE_PREFIX = ""
     {{- end }}
@@ -212,6 +212,10 @@ data:
     {{- if .Values.didFinder.xrootd.enabled }}
     DID_XROOTD_FINDER_TAG = '{{ .Values.didFinder.xrootd.tag }}'
       {{- $didFinders = append $didFinders "xrootd" }}
+    {{- end }}
+    {{- if .Values.didFinder.atlasopenmagic.enabled }}
+    DID_ATLASOPENMAGIC_FINDER_TAG = '{{ .Values.didFinder.atlasopenmagic.tag }}'
+      {{- $didFinders = append $didFinders "atlasopenmagic" }}
     {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}

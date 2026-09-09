@@ -73,11 +73,11 @@ spec:
           - name: GEOIP_DB_URL
             value: {{ .Values.didFinder.rucio.geoIPURL }}
           {{- else }}
-          {{- if .Values.didFinder.rucio.geoIPEdition -}}
+          {{- if .Values.didFinder.rucio.geoIPEdition }}
           - name: GEOIP_DB_EDITION
             value: {{ .Values.didFinder.rucio.geoIPEdition }}
-          {{- end -}}
-          {{- if .Values.secrets -}}
+          {{- end }}
+          {{- if .Values.secrets }}
           - name: GEOIP_DB_LICENSE_KEY
             valueFrom:
               secretKeyRef:
