@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask import current_app
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
@@ -47,17 +48,26 @@ class ObjectStoreManager:
         return self.minio_client.list_buckets()
 
     def delete_bucket_and_contents(self, bucket_name):
+        from minio.deleteobjects import DeleteObject
+
         if not self.minio_client.bucket_exists(bucket_name):
-            print(f"Bucket '{bucket_name}' does not exist. Nothing to delete.")
+            current_app.logger.warning(
+                f"Bucket '{bucket_name}' does not exist. Nothing to delete."
+            )
             return
 
         # List all objects in the bucket
         objects = self.minio_client.list_objects(bucket_name, recursive=True)
 
-        # Remove each object
-        for obj in objects:
-            self.minio_client.remove_object(bucket_name, obj.object_name)
+        # Remove the objects in batches
+        errors = self.minio_client.remove_objects(
+            bucket_name, [DeleteObject(obj.object_name) for obj in objects]
+        )
+        for error in errors:
+            current_app.logger.error(
+                f"Error deleting object from bucket '{bucket_name}': {error}"
+            )
 
         # Remove the bucket itself
         self.minio_client.remove_bucket(bucket_name)
-        print(f"Bucket '{bucket_name}' deleted successfully.")
+        current_app.logger.info(f"Bucket '{bucket_name}' deleted successfully.")
