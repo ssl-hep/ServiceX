@@ -54,9 +54,23 @@ SORTED_JUNK_REPLICAS = [
 LOCATION = {"latitude": 41.78, "longitude": -87.7}
 
 
-def test_sorting():
+def test_sorting(mocker):
     """Also test unpacking tgz database"""
+    import socket
+
     from rucio_did_finder.replica_distance import ReplicaSorter
+
+    real_gethostbyname = socket.gethostbyname
+
+    def fake_gethostbyname(host):
+        if host == "junk.does.not.exist.org":
+            raise socket.gaierror(-2, "Name or service not known")
+        return real_gethostbyname(host)
+
+    mocker.patch(
+        "rucio_did_finder.replica_distance.gethostbyname",
+        side_effect=fake_gethostbyname,
+    )
 
     rs = ReplicaSorter((GEOIP_TGZ_URL, False))
     # Given location (Chicago) replicas should sort US, FR, DE
@@ -77,6 +91,18 @@ def test_envvars():
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == SORTED_REPLICAS
     del os.environ["GEOIP_DB_URL"]
+
+
+def test_no_hostname():
+    """A replica URL without a hostname should sort last, not abort the sort"""
+    from rucio_did_finder.replica_distance import ReplicaSorter
+
+    rs = ReplicaSorter((GEOIP_URL, True))
+    replicas = [
+        "/no/scheme/DAOD_PHYSLITE.37020764._000004.pool.root.1",
+        "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    ]
+    assert rs.sort_replicas(replicas, LOCATION) == [replicas[1], replicas[0]]
 
 
 def test_bad_geodb():

@@ -35,12 +35,6 @@ from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
-cache_prefix = os.environ.get("CACHE_PREFIX", "")
-# Initialize the finder
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client, False)
-
 if (
     "RUCIO_LATITUDE" in os.environ
     and "RUCIO_LONGITUDE" in os.environ
@@ -55,13 +49,28 @@ else:
     location = None
     replica_sorter = None
 
-app = DIDFinderApp("rucio", did_finder_args={"rucio_adapter": rucio_adapter})
+app = DIDFinderApp("rucio")
+
+# Built on first use so that each prefork worker process gets its own clients
+_rucio_adapter = None
+
+
+def get_rucio_adapter():
+    global _rucio_adapter
+    if _rucio_adapter is None:
+        report_logical_files = os.environ.get(
+            "REPORT_LOGICAL_FILES", ""
+        ).strip().lower() not in ("", "0", "false", "no")
+        _rucio_adapter = RucioAdapter(
+            DIDClient(), ReplicaClient(), report_logical_files
+        )
+    return _rucio_adapter
 
 
 def find_files(did_name, info, did_finder_args):
     lookup_request = LookupRequest(
         did=did_name,
-        rucio_adapter=did_finder_args["rucio_adapter"],
+        rucio_adapter=get_rucio_adapter(),
         dataset_id=info["dataset-id"],
         replica_sorter=replica_sorter,
         location=location,
