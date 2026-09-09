@@ -472,3 +472,12 @@ class TestDataLifecycleOps(ResourceTestBase):
         )
 
         mock_orphaned.assert_called_with(ANY)
+
+    @mark.parametrize("query_string", [{}, {"cutoff_timestamp": "not-a-timestamp"}])
+    def test_post_bad_cutoff_timestamp(self, query_string):
+        client = self._test_client()
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle", query_string=query_string
+            )
+        assert response.status_code == 400
