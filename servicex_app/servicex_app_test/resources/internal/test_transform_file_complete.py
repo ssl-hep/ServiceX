@@ -262,6 +262,55 @@ class TestTransformFileComplete(ResourceTestBase):
             "1234", "my-ws"
         )
 
+    def test_put_transform_file_complete_no_files_remaining_still_in_lookup(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        # The DID finder is still publishing files in batches, so more are coming
+        fake_transform_request.status = TransformStatus.lookup
+        fake_transform_request.files_completed = 7
+        fake_transform_request.files_failed = 2
+
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response.status_code == 200
+        assert fake_transform_request.status == TransformStatus.lookup
+        assert fake_transform_request.finish_time is None
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_put_transform_file_complete_no_files_remaining_canceled(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.status = TransformStatus.canceled
+        fake_transform_request.files_completed = 7
+        fake_transform_request.files_failed = 2
+
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response.status_code == 200
+        assert fake_transform_request.status == TransformStatus.canceled
+        assert fake_transform_request.finish_time is None
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
     def test_put_transform_file_complete_duplicate_report(
         self,
         mocker,
