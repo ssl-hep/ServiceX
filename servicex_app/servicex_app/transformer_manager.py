@@ -750,7 +750,7 @@ class TransformerManager:
 
     def cancel_transform(self, request: TransformRequest):
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        if request.status in (TransformStatus.running, TransformStatus.lookup):
+        if not request.status.is_complete:
             try:
                 self.shutdown_transformer_job(request.request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:
