@@ -29,7 +29,11 @@ import logging
 
 import pytest
 
-from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
+from transformer_sidecar.servicex_adapter import (
+    MAX_RETRIES,
+    FileCompleteRecord,
+    ServiceXAdapter,
+)
 
 
 class TestServiceXAdapter:
@@ -98,14 +102,18 @@ class TestServiceXAdapter:
         assert caplog.records[1].levelno == logging.INFO
         assert caplog.records[1].msg == "Put file complete."
 
-    def test_put_file_complete_http_error(self, mocker, caplog):
+    @pytest.mark.parametrize(
+        "status_code, attempts", [(500, MAX_RETRIES), (503, MAX_RETRIES), (404, 1)]
+    )
+    def test_put_file_complete_http_error(self, mocker, caplog, status_code, attempts):
         import requests
 
         caplog.set_level(logging.INFO)
         mocker.patch("transformer_sidecar.servicex_adapter.RETRY_DELAY", 0)
         response = mocker.MagicMock()
+        response.status_code = status_code
         response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "500 Server Error"
+            f"{status_code} Error", response=response
         )
         mock_session = mocker.MagicMock(requests.session)
         mock_session.mount = mocker.Mock()
@@ -119,5 +127,7 @@ class TestServiceXAdapter:
         with pytest.raises(requests.exceptions.HTTPError):
             adapter.put_file_complete(rec)
 
-        assert mock_session.put.call_count == 1
-        assert not caplog.records
+        # Server errors are retried, but a client error won't go away
+        assert mock_session.put.call_count == attempts
+        assert len(caplog.records) == attempts - 1
+        assert all(r.levelno == logging.WARNING for r in caplog.records)
