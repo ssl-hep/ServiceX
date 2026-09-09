@@ -27,13 +27,50 @@ jobs:
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
 
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }} )
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Run chart-testing (lint)
         run: ct lint --target-branch ${{ github.event.repository.default_branch }} --chart-dirs ${GITHUB_WORKSPACE}/helm/servicex --charts helm/servicex
+
+      - name: Build chart dependencies
+        run: helm dependency build helm/servicex
+
+      - name: Render templates with default values
+        run: |
+          helm template test helm/servicex > "$RUNNER_TEMP/default.yaml"
+          python helm/check_rendered_chart.py "$RUNNER_TEMP/default.yaml"
+
+      - name: Render templates with the rucio replica sorter enabled
+        run: |
+          helm template test helm/servicex \
+            --set didFinder.rucio.replicaSorterEnabled=true \
+            --set didFinder.rucio.geoIPEdition=GeoLite2-City \
+            --set secrets=servicex-secrets \
+            --set app.auth=true \
+            --set app.tokenExpires=86400 \
+            --set transformer.cachePrefix=xcache.example.org:1094 > "$RUNNER_TEMP/sorter.yaml"
+          python helm/check_rendered_chart.py "$RUNNER_TEMP/sorter.yaml"
+
+      - name: Render templates with a values file
+        run: |
+          # Numbers from a values file are floats, and older deployments pass
+          # cachePrefix already wrapped in double quotes.
+          cat > "$RUNNER_TEMP/values.yaml" <<'VALUES'
+          app:
+            tokenExpires: 2592000
+            authExpires: 2592000
+          transformer:
+            cachePrefix: '"c111.example.org:1094,c112.example.org:1094"'
+          didFinder:
+            xrootd:
+              enabled: false
+          VALUES
+          helm template test helm/servicex -f "$RUNNER_TEMP/values.yaml" > "$RUNNER_TEMP/values-file.yaml"
+          python helm/check_rendered_chart.py "$RUNNER_TEMP/values-file.yaml"
+
+      - name: Render templates with only the atlasopenmagic DID finder
+        run: |
+          helm template test helm/servicex \
+            --set didFinder.rucio.enabled=false \
+            --set didFinder.CERNOpenData.enabled=false \
+            --set didFinder.xrootd.enabled=false \
+            --set didFinder.servicex.enabled=false > "$RUNNER_TEMP/atlasopenmagic.yaml"
+          python helm/check_rendered_chart.py "$RUNNER_TEMP/atlasopenmagic.yaml"
