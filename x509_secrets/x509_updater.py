@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
+import subprocess
 import sys
 import time
 
@@ -75,54 +76,63 @@ else:
     print("Saving to docker volume")
 
 
-myCmd = """
- voms-proxy-init3 --pwstdin --key /etc/grid-certs/userkey.pem \
-                  --cert /etc/grid-certs/usercert.pem \
-                  --voms=%s \
-                  <  /etc/grid-certs-ro/passphrase
-                  """
-os.system(myCmd % args.voms)
+myCmd = [
+    "voms-proxy-init3",
+    "--pwstdin",
+    "--key",
+    "/etc/grid-certs/userkey.pem",
+    "--cert",
+    "/etc/grid-certs/usercert.pem",
+    "--voms=%s" % args.voms,
+]
+passphrase_file = "/etc/grid-certs-ro/passphrase"
 f = "/tmp/x509up"
+
+
+def create_proxy():
+    try:
+        with open(passphrase_file, "rb") as passphrase:
+            subprocess.run(myCmd, stdin=passphrase, check=True)
+    except (OSError, subprocess.CalledProcessError) as proxy_error:
+        print(
+            "Failed to create the x509 proxy, leaving any existing proxy untouched:",
+            proxy_error,
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+create_proxy()
 
 if not secret_name:
     sys.exit(0)
 
-print("Delete existing secret if present")
-try:
-    client.CoreV1Api().delete_namespaced_secret(
-        namespace=pod_namespace, name=secret_name
-    )
-except kubernetes.client.rest.ApiException:
-    print("No existing secret to delete")
-
-
-secret_created = False
 while True:
     with open(f, "rb") as proxy_file:
         data = {"x509up": base64.b64encode(proxy_file.read()).decode("ascii")}
-        secret = client.V1Secret(
-            data=data,
-            kind="Secret",
-            type="Opaque",
-            metadata=client.V1ObjectMeta(name=secret_name),
+    secret = client.V1Secret(
+        data=data,
+        kind="Secret",
+        type="Opaque",
+        metadata=client.V1ObjectMeta(name=secret_name),
+    )
+
+    try:
+        client.CoreV1Api().patch_namespaced_secret(
+            name=secret_name, namespace=pod_namespace, body=secret
         )
-
-        if secret_created:
-            client.CoreV1Api().patch_namespaced_secret(
-                name=secret_name, namespace=pod_namespace, body=secret
-            )
-            print("Updated proxy cert in %s" % secret_name)
-
-        else:
-            client.CoreV1Api().create_namespaced_secret(
-                namespace=pod_namespace, body=secret
-            )
-            print("Created Secret %s" % secret_name)
-            secret_created = True
+        print("Updated proxy cert in %s" % secret_name)
+    except kubernetes.client.rest.ApiException as api_error:
+        if api_error.status != 404:
+            raise
+        client.CoreV1Api().create_namespaced_secret(
+            namespace=pod_namespace, body=secret
+        )
+        print("Created Secret %s" % secret_name)
 
     if not args.loop:
         # exit after first pass through
         sys.exit(0)
 
     time.sleep(6 * 60 * 60)
-    os.system(myCmd % args.voms)
+    create_proxy()
