@@ -51,14 +51,20 @@ class ScienceContainerCommand:
             if timeout is not None
             else float(os.environ.get("SCIENCE_CONTAINER_TIMEOUT", DEFAULT_TIMEOUT))
         )
+        self.conn = None
+        self.addr = None
 
-        # Open a socket to the science container
+        # Open a socket for the science container. We bind and listen right away so
+        # the science container can connect as soon as it is up, and only wait for
+        # it to show up in accept()
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # A restarted sidecar must be able to bind again while the connection
         # of the previous one is still in TIME_WAIT
         self.serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serv.bind(("localhost", 8081))
         self.serv.listen()
+
+    def accept(self):
         self.conn, self.addr = self.serv.accept()
         self.conn.settimeout(self.timeout)
 

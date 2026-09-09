@@ -28,10 +28,32 @@ else
 
 fi
 
-sleep 1
 echo "connecting..."
 
-coproc nc { nc "$SIDECAR_HOST" 8081; }
+# The sidecar may not be listening yet, so keep trying for a while
+connected=0
+attempt=0
+max_attempts="${SIDECAR_CONNECT_RETRIES:-60}"
+
+while [ "$attempt" -lt "$max_attempts" ]; do
+    attempt=$((attempt + 1))
+    coproc nc { nc "$SIDECAR_HOST" 8081; }
+    sleep 1
+    if [[ -n "$nc_PID" ]] && kill -0 "$nc_PID" 2>/dev/null; then
+        connected=1
+        break
+    fi
+    echo "sidecar is not listening yet, retrying (attempt $attempt)"
+    # release the descriptors of the failed attempt if bash still holds them
+    if [[ -n "${nc[0]}" ]]; then
+        eval "exec ${nc[0]}<&- ${nc[1]}>&-" 2>/dev/null
+    fi
+done
+
+if [ "$connected" != 1 ]; then
+    echo "could not connect to the sidecar on $SIDECAR_HOST:8081"
+    exit 1
+fi
 
 while [[ $nc_PID ]] ; do
 
