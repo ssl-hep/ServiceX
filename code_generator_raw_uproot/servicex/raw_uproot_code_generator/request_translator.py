@@ -97,7 +97,6 @@ os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
 def run_query(file_path):
     jquery = {jquery}
 
-    rv_arrays_trees = {{}}; rv_arrays_histograms = {{}}
     for subquery in jquery:
         for obj in run_single_query(file_path, subquery):
             yield obj
@@ -174,7 +173,6 @@ def run_single_query(file_path, query):
                        'filter_name': query.get('filter_name'),
                        'aliases': query.get('aliases')}}
 
-    rv_arrays_trees = {{}}; rv_arrays_histograms = {{}}
     open_func = retry(stop=stop_after_attempt(5),
                       retry=retry_if_exception_message(match='.*Operation expired.*'),
                       wait=wait_exponential_jitter(initial=1, max=60))(uproot.open)

@@ -85,6 +85,4 @@ class AstUprootTranslator(CodeGenerator):
             os.path.join(query_file_path, "transformer_capabilities.json"),
         )
 
-        os.system("ls -lht " + query_file_path)
-
         return GeneratedFileResult(hash, query_file_path)
