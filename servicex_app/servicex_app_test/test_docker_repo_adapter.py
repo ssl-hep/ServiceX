@@ -30,6 +30,7 @@ import subprocess
 import pytest
 from unittest.mock import MagicMock
 
+from servicex_app import docker_repo_adapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 
 
@@ -65,7 +66,7 @@ class TestDockerRepoAdapter:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear the cache before each test to ensure test isolation."""
-        DockerRepoAdapter.check_image_exists.cache_clear()
+        docker_repo_adapter._known_images.clear()
 
     def test_check_image_exists(self, mock_subprocess_success):
         docker = DockerRepoAdapter()
@@ -76,6 +77,25 @@ class TestDockerRepoAdapter:
         docker = DockerRepoAdapter()
         result = docker.check_image_exists("foo/bar:baz")
         assert not result
+
+    def test_check_image_exists_caches_only_successes(
+        self, mocker, mock_subprocess_failure
+    ):
+        docker = DockerRepoAdapter()
+        assert not docker.check_image_exists("foo/bar:baz")
+
+        # A failed lookup is not cached, so a later success is picked up
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        success = mocker.patch(
+            "servicex_app.docker_repo_adapter.subprocess.run",
+            return_value=mock_result,
+        )
+        assert docker.check_image_exists("foo/bar:baz")
+
+        # A successful lookup is cached, so the registry is not queried again
+        assert docker.check_image_exists("foo/bar:baz")
+        assert success.call_count == 1
 
     def test_check_image_exists_invalid_name(self, mock_subprocess_failure):
         docker = DockerRepoAdapter()
