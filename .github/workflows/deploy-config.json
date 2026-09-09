@@ -2,68 +2,81 @@
   {
     "dir_name": "servicex_app",
     "image_name": "servicex_app",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "code_generator_python",
     "image_name": "servicex_code_gen_python",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "did_finder_cernopendata",
     "image_name": "servicex-did-finder-cernopendata",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "did_finder_atlasopenmagic",
     "image_name": "servicex-did-finder-atlasopenmagic",
+    "python_version": "3.14",
     "test_required": true
   },
   {
     "dir_name": "did_finder_rucio",
     "image_name": "servicex-did-finder",
+    "python_version": "3.11",
     "test_required": true
   },
   {
     "dir_name": "did_finder_xrootd",
     "image_name": "servicex-did-finder-xrootd",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "code_generator_funcadl_uproot",
     "image_name": "servicex_code_gen_func_adl_uproot",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "code_generator_raw_uproot",
     "image_name": "servicex_code_gen_raw_uproot",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "image_name": "servicex_sidecar_transformer",
     "dir_name": "transformer_sidecar",
+    "python_version": "3.10",
     "test_required": true
   },
   {
     "dir_name": "x509_secrets",
     "image_name": "x509-secrets",
+    "python_version": "3.11",
     "test_required": false
   },
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_cms_aod",
+    "python_version": "3.10",
     "build_args": "APP_CONFIG_FILE=app.cms.aod.conf",
     "test_required": true
   },
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_atlas_xaod",
+    "python_version": "3.10",
     "build_args": "APP_CONFIG_FILE=app.atlas.xaod.conf",
     "test_required": false
   },
   {
     "dir_name": "code_generator_TopCPToolkit",
     "image_name": "servicex_code_gen_topcp",
+    "python_version": "3.10",
     "test_required": true
   }
 ]
