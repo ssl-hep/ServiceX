@@ -29,7 +29,7 @@ from servicex_did_finder_lib.logstash_logging import initialize_logging
 import os
 
 from typing import List, Mapping, Optional, Tuple
-from socket import gethostbyname
+from socket import gaierror, gethostbyname
 import math
 from functools import lru_cache
 import tempfile
@@ -55,7 +55,10 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float):
 
 @lru_cache
 def _get_distance(
-    database: Optional[geoip2.database.Reader], fqdn: str, my_lat: float, my_lon: float
+    database: Optional[geoip2.database.Reader],
+    fqdn: Optional[str],
+    my_lat: float,
+    my_lon: float,
 ):
     """
     Determine angular distance between server at fqdn and (my_lat, my_lon).
@@ -64,9 +67,12 @@ def _get_distance(
     """
     if database is None:
         return math.pi
+    if not fqdn:
+        logger.warning("Replica has no hostname, returning maximum distance.")
+        return math.pi
     try:
         loc_data = database.city(gethostbyname(fqdn)).location
-    except geoip2.errors.AddressNotFoundError as e:
+    except (geoip2.errors.AddressNotFoundError, gaierror) as e:
         logger.warning(
             f"Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}"
         )
