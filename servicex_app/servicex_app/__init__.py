@@ -107,8 +107,6 @@ class StreamFormatter(logging.Formatter):
             string += " extra: " + str(extra)
         return string
 
-        return super().format(record)
-
 
 class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
 
@@ -150,11 +148,7 @@ def _override_config_with_environ(app):
 
     # Create a dictionary of environment vars that have keys that match keys from the
     # loaded config. These will override anything from the config file
-    return {
-        k: (lambda key, value: _convert_string(os.environ[k]))(k, v)
-        for (k, v) in app.config.items()
-        if k in os.environ
-    }
+    return {k: _convert_string(os.environ[k]) for k in app.config if k in os.environ}
 
 
 def create_app(
@@ -323,8 +317,6 @@ def create_app(
             transformer_manager = provided_transformer_manager
 
         if not provided_celery_app:
-            sys.path.append("/opt/servicex/celery")
-
             celery_app = Celery("ServiceX-App", broker=app.config["RABBIT_MQ_URL"])
             celery_app.conf.task_routes = (route_task,)
             # Register as the process-wide default app so that @shared_task
@@ -374,12 +366,6 @@ def create_app(
             os.makedirs(app.instance_path)
         except OSError:
             pass
-
-        def create_tables():
-            from servicex_app.models import db
-
-            db.init_app(app)
-            db.create_all()
 
         add_routes(
             api,
