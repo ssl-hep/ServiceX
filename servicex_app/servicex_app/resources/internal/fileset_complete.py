@@ -51,6 +51,14 @@ class FilesetComplete(ServiceXResource):
         summary = request.get_json()
         dataset = Dataset.find_by_id(int(dataset_id))
 
+        if dataset is None:
+            current_app.logger.error(
+                "Fileset complete received for unknown dataset; the DID finder "
+                "and the database are out of sync",
+                extra={"dataset_id": dataset_id, "elapsed": summary["elapsed-time"]},
+            )
+            return "", 422
+
         current_app.logger.info(
             "Completed fileset for datasetID",
             extra={"dataset_id": dataset_id, "elapsed": summary["elapsed-time"]},

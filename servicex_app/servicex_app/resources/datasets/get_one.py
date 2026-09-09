@@ -34,6 +34,9 @@ class OneDataset(ServiceXResource):
     @auth_required
     def get(self, dataset_id):
         dataset = Dataset.find_by_id(dataset_id)
+        if dataset is None:
+            return {"message": f"Dataset {dataset_id} not found"}, 404
+
         result = dataset.to_json()
         result["files"] = [f.to_json() for f in dataset.files]
         return result
