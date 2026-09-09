@@ -156,7 +156,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_bad_code_gen_image(self, client):
         request = self._generate_transformation_request(codegen="foo")
         response = client.post("/servicex/transformation", json=request)
-        assert response.status_code == 500
+        assert response.status_code == 400
         assert (
             "Invalid Codegen Image Passed in Request: foo" in response.json["message"]
         )
@@ -423,6 +423,44 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             mock_transform_manager.start_transformers.assert_called_with(
                 ANY, submitted_request
+            )
+
+    def test_submit_transformation_disallowed_image(
+        self, mock_dataset_manager_from_did, mock_codegen
+    ):
+        client = self._test_client(
+            code_gen_service=mock_codegen,
+            allowed_image_prefixes='["someoneelse/"]',
+        )
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 400
+            assert "does not match any allowed prefix" in response.json["message"]
+
+    def test_submit_transformation_missing_image(
+        self,
+        mocker,
+        mock_docker_repo_adapter,
+        mock_dataset_manager_from_did,
+        mock_codegen,
+    ):
+        mock_docker_repo_adapter.check_image_exists = mocker.Mock(return_value=False)
+        client = self._test_client(
+            docker_repo_adapter=mock_docker_repo_adapter,
+            code_gen_service=mock_codegen,
+        )
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 400
+            assert (
+                "Requested transformer docker image doesn't exist"
+                in response.json["message"]
             )
 
     def test_submit_transformation_request_no_docker_check(
