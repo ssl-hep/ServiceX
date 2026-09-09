@@ -174,9 +174,12 @@ class ReplicaSorter(object):
             if unpacked:
                 self._database = geoip2.database.Reader(fname)
             else:
-                tarball = tarfile.open(fname)
                 self._tmpdir = tempfile.TemporaryDirectory()
-                tarball.extractall(self._tmpdir.name)
+                with tarfile.open(fname) as tarball:
+                    try:
+                        tarball.extractall(self._tmpdir.name, filter="data")
+                    except TypeError:
+                        tarball.extractall(self._tmpdir.name)
                 self._database = geoip2.database.Reader(
                     glob.glob(os.path.join(self._tmpdir.name, "*/*mmdb"))[0]
                 )

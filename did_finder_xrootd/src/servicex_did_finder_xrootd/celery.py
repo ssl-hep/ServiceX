@@ -74,7 +74,7 @@ def find_files(
     try:
         urls = xrd.glob(cache_prefix + did_name, raise_error=True)
     except Exception as e:
-        raise LookupFailureException(f"Failure searching for {did_name}: {e}")
+        raise LookupFailureException(f"Failure searching for {did_name}: {e}") from e
     if len(urls) == 0:
         raise NoSuchDatasetException(
             f"No files found matching {did_name} for dataset "

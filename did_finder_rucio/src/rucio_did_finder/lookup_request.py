@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_did_finder_lib.logstash_logging import initialize_logging
-from datetime import datetime
+import time
 from rucio_did_finder.rucio_adapter import RucioAdapter
 from .replica_distance import ReplicaSorter
 from typing import Optional, Mapping
@@ -68,7 +68,7 @@ class LookupRequest:
         ds_size = 0
         total_paths = 0
         avg_replicas = 0
-        lookup_start = datetime.now()
+        lookup_start = time.monotonic()
 
         self.logger.info("Doing Rucio lookup.")
         for ds_files in self.rucio_adapter.list_files_for_did(self.did):
@@ -84,7 +84,7 @@ class LookupRequest:
                 self.logger.debug(f'path after {af["paths"]}')
             yield ds_files
 
-        lookup_finish = datetime.now()
+        lookup_finish = time.monotonic()
 
         if n_files:
             avg_replicas = float(total_paths) / n_files
@@ -96,6 +96,6 @@ class LookupRequest:
                 "num_files": n_files,
                 "dataset_size": ds_size,
                 "average_replicas": avg_replicas,
-                "lookup_duration": (lookup_finish - lookup_start).total_seconds(),
+                "lookup_duration": lookup_finish - lookup_start,
             },
         )
