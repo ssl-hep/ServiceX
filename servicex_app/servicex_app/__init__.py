@@ -374,7 +374,7 @@ def create_app(
             )
             sys.exit(-1)
 
-        api = Api(app, errors=Flask.errorhandler)
+        api = Api(app)
 
         # ensure the instance folder exists
         try:
