@@ -284,15 +284,15 @@ class TransformerManager:
         science_command = " "
         if x509_secret:
             science_command += (
-                "until [ -f /servicex/output/scripts/proxy-exporter.sh ];"
+                f"until [ -f {output_path}/scripts/proxy-exporter.sh ];"
                 "do sleep 5;done &&"
-                " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
+                f" {output_path}/scripts/proxy-exporter.sh & sleep 5 && "
             )
 
         sidecar_command = (
             "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH "
             + "python /servicex/transformer_sidecar/transformer.py "
-            + " --shared-dir /servicex/output "
+            + f" --shared-dir {output_path} "
             + " --request-id "
             + request_id
             + " --rabbit-uri "

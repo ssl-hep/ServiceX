@@ -240,6 +240,48 @@ class TestTransformerManager(ResourceTestBase):
             assert requests["cpu"] == "500m"
             assert requests["memory"] == "512Mi"
 
+    def test_launch_transformer_jobs_custom_sidecar_volume_path(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mocker.patch.object(kubernetes.client, "AutoscalingV1Api", mocker.Mock())
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_SIDECAR_VOLUME_PATH="/shared/scratch",
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_deployment = mock_api.mock_calls[1][2]["body"]
+            sidecar, science = called_deployment.spec.template.spec.containers
+
+            assert _arg_value(sidecar.args, "--shared-dir") == "/shared/scratch"
+            assert "/shared/scratch/scripts/proxy-exporter.sh" in science.args[0]
+            assert "/servicex/output" not in sidecar.args[0]
+            assert "/servicex/output" not in science.args[0]
+
     def test_launch_transformer_jobs_deployment_failure(self, mocker):
         import kubernetes
 
