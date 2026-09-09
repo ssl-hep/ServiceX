@@ -13,6 +13,10 @@ class TransformationResults(ServiceXResource):
         if not request_id:
             return {"message": "Missing required transformation request_id"}, 400
 
+        _, error = self._get_owned_request(request_id)
+        if error:
+            return error
+
         parser = reqparse.RequestParser()
         parser.add_argument("later_than", type=str, required=False, location="args")
 

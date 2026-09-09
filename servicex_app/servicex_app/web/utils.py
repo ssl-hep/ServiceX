@@ -1,7 +1,19 @@
-from flask import current_app
+from flask import current_app, session
 from authlib.integrations.flask_client import OAuth
 
 oauth = None
+
+
+def user_owns_request(req) -> bool:
+    """
+    Return True if the signed-in web user is allowed to view this transform
+    request, i.e. auth is disabled, they are an admin, or they submitted it.
+    """
+    if not current_app.config.get("ENABLE_AUTH"):
+        return True
+    if session.get("admin"):
+        return True
+    return session.get("user_id") == req.submitted_by
 
 
 def load_oauth_client():

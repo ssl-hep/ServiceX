@@ -26,7 +26,7 @@ class TestTransformCancel(ResourceTestBase):
     def fake_transform(self, mocker) -> TransformRequest:
         fake = self._generate_transform_request()
         fake.save_to_db = mocker.Mock()
-        mocker.patch(f"{self.module}.TransformRequest.lookup", return_value=fake)
+        mocker.patch("servicex_app.models.TransformRequest.lookup", return_value=fake)
         return fake
 
     def test_submitted(
@@ -107,3 +107,45 @@ class TestTransformCancel(ResourceTestBase):
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 404
         assert "Transformation request not found" in resp.json["message"]
+
+    def test_auth_disabled(self, http_method, fake_transform, mock_transform_manager):
+        fake_transform.status = TransformStatus.running
+        fake_transform.submitted_by = 43
+        client = self._test_client(transformation_manager=mock_transform_manager)
+
+        resp = getattr(client, http_method)(URL)
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize(
+        "user_id, submitter_id, is_admin, expected_status",
+        [
+            (42, 42, False, 200),  # Owner cancels their own request
+            (42, 43, True, 200),  # Admin cancels someone else's request
+            (42, 43, False, 403),  # User tries to cancel someone else's request
+        ],
+    )
+    def test_ownership(
+        self,
+        http_method,
+        user_id,
+        submitter_id,
+        is_admin,
+        expected_status,
+        fake_transform,
+        mock_transform_manager,
+        mock_jwt_extended,
+        mock_requesting_user,
+    ):
+        fake_transform.status = TransformStatus.running
+        client = self._test_client(
+            extra_config={"ENABLE_AUTH": True},
+            transformation_manager=mock_transform_manager,
+        )
+        with client.application.app_context():
+            mock_requesting_user.id = user_id
+            mock_requesting_user.admin = is_admin
+            fake_transform.submitted_by = submitter_id
+
+            resp = getattr(client, http_method)(URL, headers=self.fake_header())
+
+            assert resp.status_code == expected_status

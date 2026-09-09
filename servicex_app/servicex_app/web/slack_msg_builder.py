@@ -69,6 +69,16 @@ def verification_failed() -> str:
     )
 
 
+def action_not_supported(action_id) -> str:
+    return json.dumps(
+        {
+            "response_type": "ephemeral",
+            "replace_original": False,
+            "text": f"Sorry, the '{action_id}' action is not supported yet.",
+        }
+    )
+
+
 def user_not_found(error) -> str:
     return json.dumps(
         {"response_type": "ephemeral", "replace_original": False, "text": error}

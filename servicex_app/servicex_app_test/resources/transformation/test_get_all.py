@@ -52,8 +52,16 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.json == self.example_json()
         mock_return_json.assert_called()
 
+    @fixture()
+    def mock_query(self, mocker):
+        mock_tr_cls = mocker.patch(
+            "servicex_app.resources.transformation.get_all.TransformRequest"
+        )
+        mock_tr_cls.return_json.return_value = self.example_json()
+        return mock_tr_cls.query
+
     def test_get_all_auth_enabled(
-        self, mock_jwt_extended, mock_return_json, mock_requesting_user
+        self, mock_jwt_extended, mock_requesting_user, mock_query
     ):
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.application.app_context():
@@ -62,11 +70,26 @@ class TestAllTransformationRequest(ResourceTestBase):
             )
         assert response.status_code == 200
         assert response.json == self.example_json()
-        mock_return_json.assert_called()
+        # A non-admin user only sees their own requests
+        mock_query.filter_by.assert_called_once_with(
+            submitted_by=mock_requesting_user.id
+        )
+        mock_query.all.assert_not_called()
 
-    def test_get_by_user(
-        self, mock_jwt_extended, mock_requesting_user, mock_return_json
+    def test_get_all_as_admin(
+        self, mock_jwt_extended, mock_requesting_user, mock_query
     ):
+        mock_requesting_user.admin = True
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            response = client.get(
+                "/servicex/transformation", headers=self.fake_header()
+            )
+        assert response.status_code == 200
+        assert response.json == self.example_json()
+        mock_query.all.assert_called_once_with()
+
+    def test_get_by_user(self, mock_jwt_extended, mock_requesting_user, mock_query):
         user_id = mock_requesting_user.id
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         with client.application.app_context():
@@ -76,4 +99,47 @@ class TestAllTransformationRequest(ResourceTestBase):
             )
         assert response.status_code == 200
         assert response.json == self.example_json()
-        mock_return_json.assert_called()
+        mock_query.filter_by.assert_called_once_with(submitted_by=user_id)
+
+    def test_get_by_other_user_forbidden(
+        self, mock_jwt_extended, mock_requesting_user, mock_query
+    ):
+        other_id = mock_requesting_user.id + 1
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            response = client.get(
+                f"/servicex/transformation?submitted_by={other_id}",
+                headers=self.fake_header(),
+            )
+        assert response.status_code == 403
+        mock_query.filter_by.assert_not_called()
+        mock_query.all.assert_not_called()
+
+    def test_get_by_other_user_as_admin(
+        self, mock_jwt_extended, mock_requesting_user, mock_query
+    ):
+        mock_requesting_user.admin = True
+        other_id = mock_requesting_user.id + 1
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            response = client.get(
+                f"/servicex/transformation?submitted_by={other_id}",
+                headers=self.fake_header(),
+            )
+        assert response.status_code == 200
+        mock_query.filter_by.assert_called_once_with(submitted_by=other_id)
+
+    def test_get_by_user_zero(
+        self, mock_jwt_extended, mock_requesting_user, mock_query
+    ):
+        """submitted_by=0 must not be treated as an absent filter."""
+        mock_requesting_user.admin = True
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            response = client.get(
+                "/servicex/transformation?submitted_by=0",
+                headers=self.fake_header(),
+            )
+        assert response.status_code == 200
+        mock_query.filter_by.assert_called_once_with(submitted_by=0)
+        mock_query.all.assert_not_called()

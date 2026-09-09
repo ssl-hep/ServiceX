@@ -85,25 +85,31 @@ payload = {
 
 
 class TestSlackInteraction(ResourceTestBase):
+    @staticmethod
+    def _signed_headers(secret, timestamp):
+        body = f"payload={quote_plus(json.dumps(payload), safe=',:@/')}"
+        sig_basestring = f"v0:{timestamp}:{body}".encode("utf-8")
+        signature = hmac.new(
+            secret.encode("utf-8"), sig_basestring, digestmod=hashlib.sha256
+        ).hexdigest()
+        return {
+            "X-Slack_Request-Timestamp": timestamp,
+            "X-Slack-Signature": "v0=" + signature,
+        }
+
     def test_slack_interaction_not_configured(self, mocker, client):
         mock_post = mocker.patch("requests.post")
         response: Response = client.post(
             "/slack", data={"payload": json.dumps(payload)}
         )
         assert response.status_code == 403
-        with client.application.app_context():
-            from servicex_app.web.slack_msg_builder import missing_slack_app
-
-            mock_post.assert_called_once_with(
-                payload["response_url"], missing_slack_app(), timeout=(0.5, None)
-            )
+        mock_post.assert_not_called()
 
     def test_slack_interaction_expired(self, mocker):
+        secret = "my-slack-secret"
         mock_post = mocker.patch("requests.post")
-        client = self._test_client(
-            extra_config={"SLACK_SIGNING_SECRET": "my-slack-secret"}
-        )
-        headers = {"X-Slack_Request-Timestamp": 0}
+        client = self._test_client(extra_config={"SLACK_SIGNING_SECRET": secret})
+        headers = self._signed_headers(secret, 0)
         response: Response = client.post(
             "/slack", data={"payload": json.dumps(payload)}, headers=headers
         )
@@ -113,6 +119,53 @@ class TestSlackInteraction(ResourceTestBase):
 
             mock_post.assert_called_once_with(
                 payload["response_url"], request_expired(), timeout=(0.5, None)
+            )
+
+    def test_slack_interaction_future_timestamp(self, mocker):
+        secret = "my-slack-secret"
+        mock_post = mocker.patch("requests.post")
+        client = self._test_client(extra_config={"SLACK_SIGNING_SECRET": secret})
+        headers = self._signed_headers(secret, time.time() + 3600)
+        response: Response = client.post(
+            "/slack", data={"payload": json.dumps(payload)}, headers=headers
+        )
+        assert response.status_code == 403
+        with client.application.app_context():
+            from servicex_app.web.slack_msg_builder import request_expired
+
+            mock_post.assert_called_once_with(
+                payload["response_url"], request_expired(), timeout=(0.5, None)
+            )
+
+    def test_slack_interaction_reject_user(self, mocker):
+        secret = "my-slack-secret"
+        mock_post = mocker.patch("requests.post")
+        client = self._test_client(extra_config={"SLACK_SIGNING_SECRET": secret})
+        reject_payload = dict(payload)
+        reject_payload["actions"] = [
+            dict(payload["actions"][0], action_id="reject_user")
+        ]
+        body = f"payload={quote_plus(json.dumps(reject_payload), safe=',:@/')}"
+        timestamp = time.time()
+        sig_basestring = f"v0:{timestamp}:{body}".encode("utf-8")
+        signature = hmac.new(
+            secret.encode("utf-8"), sig_basestring, digestmod=hashlib.sha256
+        ).hexdigest()
+        headers = {
+            "X-Slack_Request-Timestamp": timestamp,
+            "X-Slack-Signature": "v0=" + signature,
+        }
+        response: Response = client.post(
+            "/slack", data={"payload": json.dumps(reject_payload)}, headers=headers
+        )
+        assert response.status_code == 200
+        with client.application.app_context():
+            from servicex_app.web.slack_msg_builder import action_not_supported
+
+            mock_post.assert_called_once_with(
+                payload["response_url"],
+                action_not_supported("reject_user"),
+                timeout=(0.5, None),
             )
 
     def test_slack_interaction_invalid(self, mocker):
@@ -125,12 +178,7 @@ class TestSlackInteraction(ResourceTestBase):
             "/slack", data={"payload": json.dumps(payload)}, headers=headers
         )
         assert response.status_code == 401
-        with client.application.app_context():
-            from servicex_app.web.slack_msg_builder import verification_failed
-
-            mock_post.assert_called_once_with(
-                payload["response_url"], verification_failed(), timeout=(0.5, None)
-            )
+        mock_post.assert_not_called()
 
     def test_slack_interaction_accept_user(self, mocker):
         mock_post = mocker.patch("requests.post")
