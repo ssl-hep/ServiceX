@@ -30,7 +30,6 @@ import os
 import sys
 import json
 from celery import Celery
-from distutils.util import strtobool
 
 import base64
 import click
@@ -136,6 +135,16 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
         return self.serialize(message)
 
 
+def _strtobool(value: str) -> bool:
+    """Convert a string representation of truth to a boolean."""
+    normalized = value.strip().lower()
+    if normalized in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if normalized in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"invalid truth value {value!r}")
+
+
 def _override_config_with_environ(app):
     """
     Use app.config as a guide to configuration settings that can be overridden from env
@@ -144,7 +153,7 @@ def _override_config_with_environ(app):
 
     # Env vars will be strings. Convert boolean values
     def _convert_string(value):
-        return value if value not in ["true", "false"] else strtobool(value)
+        return value if value not in ["true", "false"] else _strtobool(value)
 
     # Create a dictionary of environment vars that have keys that match keys from the
     # loaded config. These will override anything from the config file
@@ -292,7 +301,7 @@ def create_app(
                     if isinstance(app.config["MINIO_ENCRYPT"], bool):
                         use_https = app.config["MINIO_ENCRYPT"]
                     else:
-                        use_https = strtobool(app.config["MINIO_ENCRYPT"])
+                        use_https = _strtobool(app.config["MINIO_ENCRYPT"])
                 else:
                     use_https = False
                 object_store = ObjectStoreManager(
