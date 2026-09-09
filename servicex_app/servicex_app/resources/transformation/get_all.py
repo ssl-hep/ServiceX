@@ -44,8 +44,17 @@ class AllTransformationRequests(ServiceXResource):
     def get(self):
         args = parser.parse_args()
         query_id = args.get("submitted_by")
+        user = self.get_requesting_user()
         transforms: List[TransformRequest]
-        if query_id:
+        if current_app.config.get("ENABLE_AUTH") and user is None:
+            # Fail closed rather than fall through to listing every request
+            return {"message": "Not Authorized: could not identify the user"}, 401
+        if user and not user.admin:
+            # Non-admin users may only see their own requests
+            if query_id is not None and query_id != user.id:
+                return {"message": "You are not authorized to view these requests"}, 403
+            query_id = user.id
+        if query_id is not None:
             current_app.logger.debug(f"Querying transform request by id: {query_id}")
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
