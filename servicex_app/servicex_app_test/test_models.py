@@ -12,6 +12,7 @@ import servicex_app
 from servicex_app.models import (
     TransformationResult,
     TransformRequest,
+    TransformStatus,
     UserModel,
 )
 
@@ -90,6 +91,24 @@ class TestTransformRequest:
         )
         mock_result_cls.query.filter_by.return_value.all.assert_called_once()
 
+    def test_to_json_unfinished_has_null_finish_time(self):
+        request = TransformRequest(
+            request_id="1234",
+            status=TransformStatus.running,
+            submit_time=datetime(2021, 1, 1),
+            finish_time=None,
+        )
+        assert request.to_json()["finish-time"] is None
+
+    def test_to_json_finished_formats_finish_time(self):
+        request = TransformRequest(
+            request_id="1234",
+            status=TransformStatus.complete,
+            submit_time=datetime(2021, 1, 1),
+            finish_time=datetime(2021, 1, 2, 3, 4, 5),
+        )
+        assert request.to_json()["finish-time"] == "2021-01-02T03:04:05.000000Z"
+
     def test_files_remaining_unknown(self):
         request = TransformRequest()
         request.files = None
@@ -164,3 +183,17 @@ class TestTransformRequest:
             # Assert
             assert result is None
             mock_conn.execute.assert_called_once()
+
+
+class TestTransformationResult:
+    def test_to_json_reports_file_id(self):
+        result = TransformationResult(
+            id=7,
+            file_id=42,
+            request_id="1234",
+            file_path="root://some/file.root",
+            transform_status="success",
+        )
+        serialized = TransformationResult.to_json(result)
+        assert serialized["id"] == 7
+        assert serialized["file-id"] == 42

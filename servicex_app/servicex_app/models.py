@@ -240,10 +240,12 @@ class TransformRequest(db.Model):
             "files-failed": self.files_failed,
             "files-remaining": self.files_remaining,
             "submit-time": str(self.submit_time.strftime(iso_fmt)),
-            "finish-time": str(self.finish_time),
+            "finish-time": (
+                str(self.finish_time.strftime(iso_fmt))
+                if self.finish_time is not None
+                else None
+            ),
         }
-        if self.finish_time is not None:
-            result_obj["finish-time"] = str(self.finish_time.strftime(iso_fmt))
         return result_obj
 
     @classmethod
@@ -468,7 +470,7 @@ class TransformationResult(db.Model):
         return {
             "id": x.id,
             "request-id": x.request_id,
-            "file-id": x.id,
+            "file-id": x.file_id,
             "file-path": x.file_path,
             "s3-object-name": x.s3_object_name,
             "transform_status": x.transform_status,
