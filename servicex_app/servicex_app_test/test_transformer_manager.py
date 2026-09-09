@@ -122,6 +122,61 @@ class TestTransformerManager(ResourceTestBase):
             mock_kubernetes.config.load_incluster_config.assert_not_called()
             mock_kubernetes.config.load_kube_config.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "workers, files, status, expected_workers, expected_max_workers",
+        [
+            # fresh lookup: the file count is still 0, keep what was requested
+            (5, 0, TransformStatus.lookup, 5, 17),
+            # never more replicas than the site allows
+            (50, 0, TransformStatus.lookup, 17, 17),
+            # cached dataset: the file count is known and bounds the replicas
+            (5, 3, TransformStatus.running, 3, 3),
+            (0, 0, TransformStatus.lookup, 1, 17),
+        ],
+    )
+    def test_start_transformers_worker_count(
+        self,
+        mocker,
+        workers,
+        files,
+        status,
+        expected_workers,
+        expected_max_workers,
+    ):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        cfg = make_config(
+            TRANSFORMER_AUTOSCALE_ENABLED=False,
+            TRANSFORMER_MAX_REPLICAS=17,
+            TRANSFORMER_RABBIT_MQ_URL="amqp://trans.rabbit",
+            TRANSFORMER_NAMESPACE="my-ns",
+            TRANSFORMER_X509_SECRET="my-x509-secret",
+        )
+        transformer = TransformerManager("external-kubernetes")
+        transformer.launch_transformer_jobs = mocker.Mock()
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        client = self._test_client(transformation_manager=transformer, extra_config=cfg)
+
+        request_rec = SimpleNamespace(
+            request_id="1234",
+            image="sslhep/servicex-transformer:pytest",
+            workers=workers,
+            files=files,
+            status=status,
+            generated_code_cm="1234-generated-source",
+            result_destination="object-store",
+            result_format="parquet",
+            transformer_language="python",
+            transformer_command="echo",
+        )
+        with client.application.app_context():
+            transformer.start_transformers(client.application.config, request_rec)
+
+        kwargs = transformer.launch_transformer_jobs.call_args.kwargs
+        assert kwargs["workers"] == expected_workers
+        assert kwargs["max_workers"] == expected_max_workers
+
     @pytest.mark.skip(reason="Needs to be updated to work with sidecar")
     def test_launch_transformer_jobs(self, mocker):
         import kubernetes

@@ -75,22 +75,29 @@ class TransformerManager:
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
-        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
+        # The file count is only known at this point for a dataset that was
+        # already cached, which is the case where the request starts out running
+        max_workers = (
+            max(1, request_rec.files)
+            if request_rec.status == TransformStatus.running
+            else config["TRANSFORMER_MAX_REPLICAS"]
+        )
+        # Without the autoscaler the worker count is the replica count, so keep
+        # it within the site's replica limit and the file count when known
+        workers = max(
+            1, min(request_rec.workers, max_workers, config["TRANSFORMER_MAX_REPLICAS"])
+        )
 
         current_app.logger.info(
-            f"Launching {request_rec.workers} transformers.",
+            f"Launching {workers} transformers.",
             extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(
             image=request_rec.image,
             request_id=request_rec.request_id,
-            workers=request_rec.workers,
-            max_workers=(
-                max(1, request_rec.files)
-                if request_rec.status == TransformStatus.running
-                else config["TRANSFORMER_MAX_REPLICAS"]
-            ),
+            workers=workers,
+            max_workers=max_workers,
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,
