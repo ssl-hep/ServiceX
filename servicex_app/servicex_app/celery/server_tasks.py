@@ -28,9 +28,7 @@
 
 from celery import group, shared_task, current_app
 from celery.utils.log import get_task_logger
-from celery.signals import celeryd_after_setup
-from ..celery_task_router import route_task
-from functools import lru_cache
+from flask import current_app as flask_app, has_app_context
 import os
 
 logger = get_task_logger(__name__)
@@ -40,27 +38,21 @@ def celery_task_name(request_id):
     return f"transformer-{request_id}.transform_file"
 
 
-@lru_cache
-def advertised_endpoint():
-    return f"http://{os.environ['INSTANCE_NAME']}-servicex-app:8000/"
-
-
-@celeryd_after_setup.connect
-def setup_routing(sender, instance, **kwargs):
-    instance.app.conf.task_routes = (route_task,)
+def advertised_endpoint(endpoint: str = "") -> str:
+    """
+    URL of this ServiceX app, as advertised to transformers and DID finders.
+    Celery workers run outside of a Flask app context, so they fall back to
+    deriving the hostname from the instance name.
+    """
+    if has_app_context():
+        hostname = flask_app.config["ADVERTISED_HOSTNAME"]
+    else:
+        hostname = f"{os.environ['INSTANCE_NAME']}-servicex-app:8000"
+    return f"http://{hostname}/{endpoint}"
 
 
 @shared_task
 def add_files_to_processing_queue(request, files):
-    from ..models import TransformStatus
-
-    if TransformStatus.status_from_string(request["status"]).is_complete:
-        logger.debug(
-            "Rejecting file addition request, request is canceled",
-            extra={"task_id": celery_task_name(request["request_id"])},
-        )
-        return
-
     tasks = group(
         [
             current_app.signature(
@@ -69,9 +61,9 @@ def add_files_to_processing_queue(request, files):
                     "request_id": request["request_id"],
                     "file_id": file_record["id"],
                     "paths": file_record["paths"].split(","),
-                    "service_endpoint": advertised_endpoint()
-                    + "servicex/internal/transformation/"
-                    + request["request_id"],
+                    "service_endpoint": advertised_endpoint(
+                        "servicex/internal/transformation/" + request["request_id"]
+                    ),
                     "result_destination": request["result-destination"],
                     "result_format": request["result-format"],
                 },
