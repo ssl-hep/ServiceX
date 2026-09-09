@@ -33,6 +33,7 @@ import signal
 import time
 import timeit
 import re
+import uuid
 from argparse import Namespace
 from hashlib import sha1, sha256
 from pathlib import Path
@@ -206,6 +207,13 @@ def transform_file(
                 )
 
             transform_request["result-format"] = result_format
+            output_path = Path(transform_request["safeOutputFileName"])
+
+            # In a shared volume a file with this name may be another request's
+            # output, so after a failure we only remove a file that wasn't there
+            # before this transform
+            output_existed = output_path.exists()
+
             science_container.synch()
             science_container.send(transform_request)
 
@@ -227,24 +235,18 @@ def transform_file(
                     Path(os.path.join(request_path, "abc.log")),
                 )
                 if science_container_response == "success.":
-                    output_path = Path(transform_request["safeOutputFileName"])
-
                     # Now is the time to convert the file to parquet if that's what
                     # the user requested, but our particular transformer doesn't
                     # support it. Delete source if we did a conversion so it doesn't
                     # clutter the POSIX output if we use that.
                     if convert_root_to_parquet:
                         object_name = output_path.with_suffix(".parquet").name
-                        if (
-                            file_to_upload := convert_to_parquet(output_path)
-                        ) is not None:
-                            output_path.unlink()
+                        file_to_upload = convert_to_parquet(output_path)
+                        output_path.unlink(missing_ok=True)
                     elif convert_root_to_rntuple:
                         object_name = output_path.name
-                        if (
-                            file_to_upload := convert_to_rntuple(output_path)
-                        ) is not None:
-                            output_path.unlink()
+                        file_to_upload = convert_to_rntuple(output_path)
+                        output_path.unlink(missing_ok=True)
                     else:
                         file_to_upload = output_path
                         object_name = output_path.name
@@ -273,6 +275,9 @@ def transform_file(
                         transformer_stats.error_info = (
                             "Sidecar format conversion failed"
                         )
+                elif not output_existed:
+                    # The science container may have left a partial file behind
+                    output_path.unlink(missing_ok=True)
             except BaseException as error:
                 # Confirm anyway, but a broken connection must not hide the error
                 # that got us here. If that error doesn't already mean the science
@@ -440,6 +445,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         "Converting ROOT to Parquet.",
         extra={"request_id": request_id, "input_path": str(source_path)},
     )
+    temp_file = None
     try:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
@@ -455,8 +461,9 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             parquet_file = source_path.with_suffix(".parquet")
 
             # Save to temp file in same directory as parquet_file. The to_parquet
-            # method doesn't plqy well with long paths.
-            temp_file = Path(parquet_file.parent, "temp.parquet")
+            # method doesn't plqy well with long paths. The name is unique so that
+            # we never touch another transform's file in a shared volume.
+            temp_file = Path(parquet_file.parent, f"temp-{uuid.uuid4().hex}.parquet")
             ak.to_parquet(all_data, temp_file.as_posix())
             temp_file.rename(parquet_file)
 
@@ -464,6 +471,8 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         logger.error(
             f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
         )
+        if temp_file is not None:
+            temp_file.unlink(missing_ok=True)
         return None
 
     return parquet_file
@@ -481,11 +490,13 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
     )
 
     rntuple_file = source_path.with_suffix(".rntuple.root")
+    rntuple_file_created = False
 
     try:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
             with open(rntuple_file, "b+w") as wfile:
+                rntuple_file_created = True
                 with uproot.recreate(wfile) as writer:
                     for key in data.keys(cycle=False):
                         obj = data[key]
@@ -504,6 +515,10 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
             f"Failed to convert ROOT TTree to RNTuple: {e}",
             extra={"request_id": request_id},
         )
+        # Only remove the file if we got as far as writing it, it may be another
+        # transform's output in a shared volume otherwise
+        if rntuple_file_created:
+            rntuple_file.unlink(missing_ok=True)
         return None
 
     return rntuple_file

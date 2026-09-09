@@ -340,6 +340,9 @@ def test_transformer_root_to_parquet_failed(
             == "failure"
         )
 
+        # The ROOT file that couldn't be converted doesn't stay behind
+        assert not result_file_path.exists()
+
 
 def test_transformer_parquet(
     args,
@@ -906,6 +909,149 @@ def temporary_signal_handler(sig, handler):
         signal.signal(sig, original_handler)
 
 
+def science_container_writes_output(mock_science_container, response):
+    """
+    Pretend that the science container writes (part of) the output file it was
+    asked for before responding
+    """
+
+    def await_response():
+        request = mock_science_container.return_value.send.call_args[0][0]
+        with open(request["safeOutputFileName"], "w") as f:
+            f.write("partial")
+        return response
+
+    return await_response
+
+
+def test_transform_file_failure_removes_partial_output(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+):
+    mock_science_container.return_value.await_response.side_effect = (
+        science_container_writes_output(mock_science_container, "failure.")
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        scratch_dir = Path(temp_dir) / test_request_id / "scratch"
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+        assert mock_science_container.return_value.send.call_count == 2
+        assert list(scratch_dir.iterdir()) == []
+
+    assert (
+        mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+        == "failure"
+    )
+
+
+def test_transform_file_failure_keeps_existing_output_in_volume(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_science_container,
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        args.result_destination = "volume"
+        args.output_dir = os.path.join(temp_dir, "local", "results")
+        os.makedirs(args.output_dir)
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root", "parquet"],
+            "root",
+        )
+
+        # Another request already wrote its output for the same input file
+        other_output = Path(args.output_dir) / "site1:file.root"
+        other_output.write_text("another request")
+
+        # The science container fails for the first replica without writing
+        # anything, and leaves a partial file for the second one
+        mock_science_container.return_value.await_response.side_effect = [
+            "failure.",
+            "failure.",
+        ]
+        partial_output = Path(args.output_dir) / "site2:file.root"
+
+        def send(request):
+            if request["safeOutputFileName"] == str(partial_output):
+                partial_output.write_text("partial")
+
+        mock_science_container.return_value.send.side_effect = send
+
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination="volume",
+            result_format="root",
+        )
+
+        assert other_output.read_text() == "another request"
+        assert not partial_output.exists()
+
+
+def test_parquet_conversion_failure_cleanup(mocker):
+    """A failed conversion only removes the temporary file that it wrote"""
+    import awkward as ak
+    import numpy as np
+    import uproot
+    from transformer_sidecar.transformer import convert_to_parquet
+
+    def partial_to_parquet(array, destination, *args, **kwargs):
+        Path(destination).write_text("partial")
+        raise OSError("No space left on device")
+
+    mocker.patch.object(ak, "to_parquet", side_effect=partial_to_parquet)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_file = Path(temp_dir) / "source.root"
+        with uproot.recreate(source_file) as source:
+            source.mktree("test", {"data": np.array([1, 2, 3, 4])})
+
+        # Another transform writing to the same shared volume
+        other_temp_file = Path(temp_dir) / "temp.parquet"
+        other_temp_file.write_text("another transform")
+
+        assert convert_to_parquet(source_file) is None
+
+        assert sorted(p.name for p in Path(temp_dir).iterdir()) == [
+            "source.root",
+            "temp.parquet",
+        ]
+        assert other_temp_file.read_text() == "another transform"
+
+
+def test_rntuple_conversion_failure_cleanup(mocker):
+    """A conversion that fails while writing removes the partial file"""
+    import numpy as np
+    import uproot
+    from transformer_sidecar.transformer import convert_to_rntuple
+
+    mocker.patch.object(
+        uproot.writing.writable.WritableDirectory,
+        "mkrntuple",
+        side_effect=OSError("No space left on device"),
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_file = Path(temp_dir) / "source.root"
+        with uproot.recreate(source_file) as source:
+            source.mktree("test", {"data": np.array([1, 2, 3, 4])})
+
+        assert convert_to_rntuple(source_file) is None
+        assert [p.name for p in Path(temp_dir).iterdir()] == ["source.root"]
+
+
 def test_prioritize_replicas():
     replicas = [
         "http://site1/file1.root",
@@ -1023,3 +1169,6 @@ def test_rntuple_conversion():
         with open(source_file, "w") as source:
             source.write("abcd")
         assert convert_to_rntuple(source_file) is None
+
+        # We never got to write the output, so the existing file isn't ours to remove
+        assert target_file.exists()
