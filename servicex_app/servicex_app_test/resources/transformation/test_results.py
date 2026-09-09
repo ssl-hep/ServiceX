@@ -33,9 +33,11 @@ class TestTransformationResults(ResourceTestBase):
 
     @fixture
     def mock_transformation_result(self, mocker):
-        return mocker.patch(
+        mock = mocker.patch(
             "servicex_app.resources.transformation.results.TransformationResult"
         )
+        mock.to_json_list.side_effect = TransformationResult.to_json_list
+        return mock
 
     @staticmethod
     def sample_results():
