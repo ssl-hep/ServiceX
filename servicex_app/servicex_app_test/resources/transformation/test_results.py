@@ -33,9 +33,11 @@ class TestTransformationResults(ResourceTestBase):
 
     @fixture
     def mock_transformation_result(self, mocker):
-        return mocker.patch(
+        mock = mocker.patch(
             "servicex_app.resources.transformation.results.TransformationResult"
         )
+        mock.to_json_list.side_effect = TransformationResult.to_json_list
+        return mock
 
     @staticmethod
     def sample_results():
@@ -124,8 +126,60 @@ class TestTransformationResults(ResourceTestBase):
         assert "total-events" in result
         assert "total-bytes" in result
         assert "avg-rate" in result
+        assert result["s3-object-name"] == sample_results[0].s3_object_name
+        assert result["created_at"] == sample_results[0].created_at.isoformat()
 
         mock_query.filter_by.assert_called_with(request_id="test-request-id")
+
+    def test_internal_results_route_does_not_require_auth(
+        self,
+        mock_codegen,
+        mock_celery_app,
+        mock_transformation_result,
+    ):
+        """The internal results route serves results without a user token."""
+        client = self._test_client(
+            code_gen_service=mock_codegen,
+            celery_app=mock_celery_app,
+            extra_config={"ENABLE_AUTH": True},
+        )
+
+        mock_query = mock_transformation_result.query
+        mock_filtered = mock_query.filter_by.return_value
+        sample_results = self.sample_results()
+        mock_filtered.__iter__ = lambda mock_self: iter(sample_results)
+
+        response = client.get(
+            "/servicex/internal/transformation/test-request-id/results"
+        )
+
+        assert response.status_code == 200
+        results = response.json["results"]
+        assert [r["s3-object-name"] for r in results] == [
+            r.s3_object_name for r in sample_results
+        ]
+        assert [r["created_at"] for r in results] == [
+            r.created_at.isoformat() for r in sample_results
+        ]
+        mock_query.filter_by.assert_called_with(request_id="test-request-id")
+
+    def test_public_results_route_requires_auth(
+        self,
+        mock_codegen,
+        mock_celery_app,
+        mock_transformation_result,
+    ):
+        """The user-facing results route rejects requests without a token."""
+        client = self._test_client(
+            code_gen_service=mock_codegen,
+            celery_app=mock_celery_app,
+            extra_config={"ENABLE_AUTH": True},
+        )
+
+        response = client.get("/servicex/transformation/test-request-id/results")
+
+        assert response.status_code == 401
+        mock_transformation_result.query.filter_by.assert_not_called()
 
     def test_get_results_with_invalid_later_than_format(
         self, mock_codegen, mock_celery_app
