@@ -81,6 +81,21 @@ def test_generate_code():
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
+        # not JSON at all
+        query = "{not json"
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+        # subquery is not a dictionary
+        query = json.dumps(["nominal"])
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+        # non-finite floats cannot be written into the generated code
+        query = '[{"treename": "nominal", "cut": NaN}]'
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
 
 def test_app():
     import servicex.raw_uproot_code_generator

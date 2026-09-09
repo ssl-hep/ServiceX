@@ -61,8 +61,9 @@ def generate_files_from_query(jquery: dict, query_file_path):
             if options[key].get("optional", False):
                 continue
             raise ValueError(
-                key + " must be specified. May be type None or ",
-                options[key]["properTypeString"],
+                key
+                + " must be specified. May be type None or "
+                + options[key]["properTypeString"]
             )
 
     for key in jquery:
@@ -77,7 +78,10 @@ def generate_files_from_query(jquery: dict, query_file_path):
             continue
 
         # type check key
-        if not isinstance(jquery[key], options[key]["properType"]):
+        proper_type = options[key]["properType"]
+        if not isinstance(jquery[key], proper_type) or (
+            proper_type is int and isinstance(jquery[key], bool)
+        ):
             raise TypeError(
                 key + " must be of type " + options[key]["properTypeString"]
             )

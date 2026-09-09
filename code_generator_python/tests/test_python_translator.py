@@ -35,6 +35,9 @@ import base64
 import os
 import tempfile
 
+import pytest
+from servicex_codegen.code_generator import GenerateCodeException
+
 from python_code_generator.python_translator import PythonTranslator
 
 
@@ -51,3 +54,31 @@ def test_generate_code():
         result = translator.generate_code(code, tmpdirname)
         assert result.hash == expected_hash
         assert result.output_dir == os.path.join(tmpdirname, expected_hash)
+
+
+def test_generate_code_non_ascii_source():
+    os.environ["TEMPLATE_PATH"] = (
+        "python_code_generator/templates/transform_single_file.py"
+    )
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = base64.b64encode("x = 'π'".encode("utf-8"))
+        result = translator.generate_code(code, tmpdirname)
+        assert result.output_dir == os.path.join(tmpdirname, "no-hash")
+
+
+def test_generate_code_bad_base64():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code("not base64!", tmpdirname)
+
+
+def test_generate_code_bad_syntax():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = base64.b64encode(b"def f(:")
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(code, tmpdirname)
