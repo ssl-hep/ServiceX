@@ -103,8 +103,8 @@ def find_files(
             raise NoSuchDatasetException(
                 f"Directory for {did_name} does not exist for dataset "
                 f"{info['dataset-id']} - are you sure it is correct?"
-            )
-        raise LookupFailureException(f"Failure searching for {did_name}: {e}")
+            ) from e
+        raise LookupFailureException(f"Failure searching for {did_name}: {e}") from e
     if len(urls) == 0:
         raise NoSuchDatasetException(
             f"No files found matching {did_name} for dataset "

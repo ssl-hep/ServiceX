@@ -126,14 +126,14 @@ class RucioAdapter:
                 )
                 datasets.append([parsed_did["scope"], parsed_did["name"]])
             return datasets
-        except DataIdentifierNotFound:
+        except DataIdentifierNotFound as e:
             self.logger.warning(
                 f"{did} not found",
                 extra={"dataset_name": did, "error_type": "does_not_exist"},
             )
-            raise NoSuchDatasetException(f"{did} not found")
+            raise NoSuchDatasetException(f"{did} not found") from e
         except Exception as e:
-            raise LookupFailureException(f"Problem in lookup of {did}: {e}")
+            raise LookupFailureException(f"Problem in lookup of {did}: {e}") from e
 
     @staticmethod
     def get_paths(replicas):
@@ -191,7 +191,7 @@ class RucioAdapter:
             except Exception as e:
                 raise LookupFailureException(
                     f"Lookup failed for {ds[0]}:{ds[1]} for did: {e}"
-                )
+                ) from e
 
             g_files = []
             if "file" in d["metalink"]:
