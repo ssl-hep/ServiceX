@@ -52,12 +52,14 @@
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_cms_aod",
+    "build_args": "APP_CONFIG_FILE=app.cms.aod.conf",
     "test_required": true
   },
   {
     "dir_name": "code_generator_funcadl_xAOD",
     "image_name": "servicex_code_gen_atlas_xaod",
-    "test_required": true
+    "build_args": "APP_CONFIG_FILE=app.atlas.xaod.conf",
+    "test_required": false
   },
   {
     "dir_name": "code_generator_TopCPToolkit",
