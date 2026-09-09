@@ -37,6 +37,14 @@ class TestTransformationResults(ResourceTestBase):
             "servicex_app.resources.transformation.results.TransformationResult"
         )
 
+    @fixture
+    def fake_transform(self, mocker):
+        transform = self._generate_transform_request()
+        mocker.patch(
+            "servicex_app.models.TransformRequest.lookup", return_value=transform
+        )
+        return transform
+
     @staticmethod
     def sample_results():
         """Return a list of sample transformation results"""
@@ -73,12 +81,8 @@ class TestTransformationResults(ResourceTestBase):
 
         response = client.get("/servicex/transformation/non-existent-id/results")
 
-        assert response.status_code == 200
-        data = response.json
-
-        assert "results" in data
-        assert isinstance(data["results"], list)
-        assert len(data["results"]) == 0
+        assert response.status_code == 404
+        assert "Transformation request not found" in response.json["message"]
 
     def test_get_results_missing_request_id(
         self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
@@ -100,6 +104,7 @@ class TestTransformationResults(ResourceTestBase):
         mock_codegen,
         mock_celery_app,
         mock_transformation_result,
+        fake_transform,
     ):
         """Test getting results with mock sample results."""
         client = self._test_client(
@@ -136,7 +141,7 @@ class TestTransformationResults(ResourceTestBase):
         mock_query.filter_by.assert_called_with(request_id="test-request-id")
 
     def test_get_results_with_invalid_later_than_format(
-        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
+        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app, fake_transform
     ):
         """Test later_than parameter with invalid datetime format."""
         client = self._test_client(

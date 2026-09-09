@@ -82,11 +82,27 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     Pending or deleted users will receive a 401: Unauthorized response.
     """
 
+    no_user_msg = (
+        "Not Authorized: No user found matching this API token. "
+        "Your account may have been deleted. "
+        "Please visit the ServiceX website to obtain a new API token."
+    )
+    pending_msg = (
+        "Not Authorized: Your account is still pending. "
+        "An administrator should approve it shortly. If not, "
+        "please contact the ServiceX admins via email or Slack."
+    )
+
     @wraps(fn)
     def inner(*args, **kwargs) -> Response:
         if not current_app.config.get("ENABLE_AUTH"):
             return fn(*args, **kwargs)
         elif session.get("is_authenticated"):
+            user = UserModel.find_by_id(session.get("user_id"))
+            if not user:
+                return make_response({"message": no_user_msg}, 401)
+            elif user.pending:
+                return make_response({"message": pending_msg}, 401)
             return fn(*args, **kwargs)
         try:
             verify_jwt_in_request(locations=["headers"])
@@ -100,19 +116,9 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             user = get_jwt_user()
 
             if not user:
-                msg = (
-                    "Not Authorized: No user found matching this API token. "
-                    "Your account may have been deleted. "
-                    "Please visit the ServiceX website to obtain a new API token."
-                )
-                return make_response({"message": msg}, 401)
+                return make_response({"message": no_user_msg}, 401)
             elif user.pending:
-                msg = (
-                    "Not Authorized: Your account is still pending. "
-                    "An administrator should approve it shortly. If not, "
-                    "please contact the ServiceX admins via email or Slack."
-                )
-                return make_response({"message": msg}, 401)
+                return make_response({"message": pending_msg}, 401)
 
         return fn(*args, **kwargs)
 

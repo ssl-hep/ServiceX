@@ -2,6 +2,7 @@ from flask import abort, render_template, request
 from flask_sqlalchemy.pagination import Pagination
 from servicex_app.decorators import oauth_required
 from servicex_app.models import TransformationResult, TransformRequest
+from servicex_app.web.utils import user_owns_request
 
 
 @oauth_required
@@ -9,6 +10,8 @@ def transformation_results(id_: str):
     treq = TransformRequest.lookup(id_)
     if not treq:
         abort(404)
+    if not user_owns_request(treq):
+        abort(403)
     page = request.args.get("page", 1, type=int)
     filter_by_values = {}
     status = request.args.get("status")
