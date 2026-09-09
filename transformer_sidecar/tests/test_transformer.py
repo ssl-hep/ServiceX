@@ -42,6 +42,8 @@ from pytest import fixture
 from transformer_sidecar.object_store_manager import ObjectStoreError
 from transformer_sidecar.science_container_command import ScienceContainerException
 from transformer_sidecar.transformer import (
+    MAX_EXTENSION_LEN,
+    MAX_PATH_LEN,
     init,
     report_lost_worker,
     transform_file,
@@ -480,7 +482,7 @@ def test_transformer_long_filename(
         assert (
             len(science_request["safeOutputFileName"])
             - len(os.path.join(args.shared_dir, test_request_id, "scratch"))
-            == 256
+            == MAX_PATH_LEN - MAX_EXTENSION_LEN + 1
         )
 
 
@@ -490,8 +492,10 @@ def test_hash_path():
     # Short names not messed with
     assert hash_path("root://site1/file.root") == "root://site1/file.root"
 
-    # Long names are hashed
-    assert len(hash_path("rootfile12" * 300)) == 255
+    # Long names are hashed, with room left for an extension we may add later
+    hashed = hash_path("rootfile12" * 300)
+    assert len(hashed) == MAX_PATH_LEN - MAX_EXTENSION_LEN
+    assert len(Path(hashed).with_suffix(".rntuple.root").name) <= MAX_PATH_LEN
 
 
 def test_transform_file(
