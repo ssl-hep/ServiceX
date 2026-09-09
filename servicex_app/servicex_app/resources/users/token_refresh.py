@@ -47,9 +47,31 @@ class TokenRefresh(Resource):
         claims = get_jwt()
 
         user = UserModel.find_by_email(claims["sub"])
+        if not user:
+            return {
+                "message": (
+                    "Not Authorized: No user found matching this API token. "
+                    "Your account may have been deleted or its email changed. "
+                    "Please visit the ServiceX website to obtain a new API token."
+                ),
+                "reason": "user_not_found",
+            }, 401
+        if not user.refresh_token:
+            return {
+                "message": (
+                    "Not Authorized: No API token is registered for this account. "
+                    "Generate one from your profile page on the ServiceX website "
+                    "and update your servicex.yaml."
+                ),
+                "reason": "no_refresh_token",
+            }, 401
+
         decoded = decode_token(user.refresh_token)
         if not claims["jti"] == decoded["jti"]:
-            return {"message": "Invalid or outdated refresh token"}, 401
+            return {
+                "message": "Invalid or outdated refresh token",
+                "reason": "token_revoked",
+            }, 401
         current_user = user.email
         access_token = create_access_token(identity=current_user)
         return {"access_token": access_token, "auth_disabled": False}, 200
