@@ -38,7 +38,6 @@ from servicex_app.resources.internal.dataset_lifecycle_ops import DatasetLifecyc
 def add_routes(
     api,
     transformer_manager,
-    rabbit_mq_adaptor,
     object_store,
     code_gen_service,
     lookup_result_processor,
@@ -99,7 +98,6 @@ def add_routes(
     from servicex_app.web.create_profile import create_profile
 
     SubmitTransformationRequest.make_api(
-        rabbitmq_adaptor=rabbit_mq_adaptor,
         object_store=object_store,
         code_gen_service=code_gen_service,
         lookup_result_processor=lookup_result_processor,

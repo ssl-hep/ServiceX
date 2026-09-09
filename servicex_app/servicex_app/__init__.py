@@ -54,7 +54,6 @@ from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.object_store_manager import ObjectStoreManager
-from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
 from servicex_app.transformer_manager import TransformerManager
 from flask_migrate import Migrate
@@ -161,7 +160,6 @@ def _override_config_with_environ(app):
 def create_app(
     test_config=None,
     provided_transformer_manager=None,
-    provided_rabbit_adaptor=None,
     provided_object_store=None,
     provided_code_gen_service=None,
     provided_lookup_result_processor=None,
@@ -338,11 +336,6 @@ def create_app(
         else:
             celery_app = provided_celery_app
 
-        if not provided_rabbit_adaptor:
-            rabbit_adaptor = RabbitAdaptor(app.config["RABBIT_MQ_URL"])
-        else:
-            rabbit_adaptor = provided_rabbit_adaptor
-
         if not provided_code_gen_service:
             code_gen_service = CodeGenAdapter(
                 app.config["CODE_GEN_SERVICE_URLS"], transformer_manager
@@ -391,7 +384,6 @@ def create_app(
         add_routes(
             api,
             transformer_manager,
-            rabbit_adaptor,
             object_store,
             code_gen_service,
             lookup_result_processor,
