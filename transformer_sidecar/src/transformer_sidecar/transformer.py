@@ -29,7 +29,7 @@
 import json
 import os
 import shutil
-import sys
+import signal
 import time
 import timeit
 import re
@@ -93,6 +93,7 @@ logger = initialize_logging()
 
 @shared_task(
     acks_late=True,
+    reject_on_worker_lost=True,
 )
 def transform_file(
     request_id,
@@ -199,65 +200,74 @@ def transform_file(
             transform_request["result-format"] = result_format
             science_container.synch()
             science_container.send(transform_request)
-            science_container_response = science_container.await_response()
 
-            transform_request["status"] = science_container_response
-            logger.info(
-                "Science container completed with status %s"
-                % science_container_response,
-                extra=log_extra,
-            )
+            # Whatever happens from here on, the science container is waiting for a
+            # confirmation before it will accept another request
+            try:
+                science_container_response = science_container.await_response()
 
-            # Grab the logs
-            transformer_stats = fill_stats_parser(
-                transformer_capabilities["stats-parser"],
-                Path(os.path.join(request_path, "abc.log")),
-            )
-            if science_container_response == "success.":
-                output_path = Path(transform_request["safeOutputFileName"])
+                transform_request["status"] = science_container_response
+                logger.info(
+                    "Science container completed with status %s"
+                    % science_container_response,
+                    extra=log_extra,
+                )
 
-                # Now is the time to convert the file to parquet if that's what the user
-                # requested, but our particular transformer doesn't support it.
-                # Delete source if we did a conversion so it doesn't clutter the POSIX
-                # output if we use that.
-                if convert_root_to_parquet:
-                    object_name = output_path.with_suffix(".parquet").name
-                    if (file_to_upload := convert_to_parquet(output_path)) is not None:
-                        output_path.unlink()
-                elif convert_root_to_rntuple:
-                    object_name = output_path.name
-                    if (file_to_upload := convert_to_rntuple(output_path)) is not None:
-                        output_path.unlink()
-                else:
-                    file_to_upload = output_path
-                    object_name = output_path.name
+                # Grab the logs
+                transformer_stats = fill_stats_parser(
+                    transformer_capabilities["stats-parser"],
+                    Path(os.path.join(request_path, "abc.log")),
+                )
+                if science_container_response == "success.":
+                    output_path = Path(transform_request["safeOutputFileName"])
 
-                if file_to_upload is not None:
-                    # only None if conversion has failed
-                    rec = FileCompleteRecord(
-                        request_id=request_id,
-                        file_path=_file_path,
-                        s3_object_name=object_name,
-                        file_id=file_id,
-                        status="success",
-                        total_time=time.time() - total_time,
-                        total_events=transformer_stats.total_events,
-                        total_bytes=file_to_upload.stat().st_size,
-                    )
-                    if object_store:
-                        upload_file(file_to_upload, servicex, rec)
+                    # Now is the time to convert the file to parquet if that's what
+                    # the user requested, but our particular transformer doesn't
+                    # support it. Delete source if we did a conversion so it doesn't
+                    # clutter the POSIX output if we use that.
+                    if convert_root_to_parquet:
+                        object_name = output_path.with_suffix(".parquet").name
+                        if (
+                            file_to_upload := convert_to_parquet(output_path)
+                        ) is not None:
+                            output_path.unlink()
+                    elif convert_root_to_rntuple:
+                        object_name = output_path.name
+                        if (
+                            file_to_upload := convert_to_rntuple(output_path)
+                        ) is not None:
+                            output_path.unlink()
                     else:
-                        servicex.put_file_complete(rec)
+                        file_to_upload = output_path
+                        object_name = output_path.name
 
-                    transform_success = True
-                    logger.info("Transformer stats.", extra=log_extra)
-                    science_container.confirm()
-                    break
-                else:
-                    transform_success = False
-                    transformer_stats.error_info = "Sidecar format conversion failed"
+                    if file_to_upload is not None:
+                        # only None if conversion has failed
+                        rec = FileCompleteRecord(
+                            request_id=request_id,
+                            file_path=_file_path,
+                            s3_object_name=object_name,
+                            file_id=file_id,
+                            status="success",
+                            total_time=time.time() - total_time,
+                            total_events=transformer_stats.total_events,
+                            total_bytes=file_to_upload.stat().st_size,
+                        )
+                        if object_store:
+                            upload_file(file_to_upload, servicex, rec)
+                        else:
+                            servicex.put_file_complete(rec)
 
-            science_container.confirm()
+                        transform_success = True
+                        logger.info("Transformer stats.", extra=log_extra)
+                        break
+                    else:
+                        transform_success = False
+                        transformer_stats.error_info = (
+                            "Sidecar format conversion failed"
+                        )
+            finally:
+                science_container.confirm()
 
         # If none of the replicas resulted in a successful transform then we have
         # a hard failure with this file.
@@ -305,7 +315,22 @@ def transform_file(
             extra=log_extra,
             exc_info=e,
         )
-        sys.exit(-1)
+        rec = FileCompleteRecord(
+            request_id=request_id,
+            file_path=_file_paths[0],
+            s3_object_name="none",
+            file_id=file_id,
+            status="failure",
+            total_time=time.time() - total_time,
+            total_events=0,
+            total_bytes=0,
+        )
+        servicex.put_file_complete(rec)
+
+        # Exiting only takes down the pool child, which would be replaced by one
+        # that inherits the same dead connection. Bring down the whole worker so
+        # that the pod is restarted and the socket is set up again.
+        os.kill(os.getppid(), signal.SIGTERM)
 
     except Exception as error:
         logger.exception(

@@ -50,7 +50,7 @@ def mock_socket(mocker):
 def test_connect(mock_socket):
     mock_socket_instance = mock_socket.return_value
 
-    _ = ScienceContainerCommand()
+    scc = ScienceContainerCommand()
 
     # Assert that socket was created with correct parameters
     mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,6 +63,7 @@ def test_connect(mock_socket):
 
     # Assert that accept was called
     mock_socket_instance.accept.assert_called_once()
+    scc.conn.settimeout.assert_called_once_with(scc.timeout)
 
 
 def test_sync(mock_socket):
@@ -107,3 +108,21 @@ def test_close(mock_socket):
     scc.close()
     scc.conn.close.assert_called_once()
     scc.serv.close.assert_called_once()
+
+
+def test_await_response_fail(mock_socket):
+    scc = ScienceContainerCommand()
+    scc.conn.recv.return_value = b""
+    with pytest.raises(ScienceContainerException) as exc_info:
+        scc.await_response()
+
+    assert str(exc_info.value) == "problem in getting the status"
+
+
+def test_await_response_timeout(mock_socket):
+    scc = ScienceContainerCommand(timeout=1)
+    scc.conn.recv.side_effect = socket.timeout
+    with pytest.raises(ScienceContainerException) as exc_info:
+        scc.await_response()
+
+    assert str(exc_info.value) == "timed out waiting for the science container"

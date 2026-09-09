@@ -27,7 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import logging
+import os
 import socket
+from typing import Optional
+
+# Transforms can run for a very long time, so we only give up on the science
+# container after it has been silent for many hours.
+DEFAULT_TIMEOUT = 12 * 60 * 60
 
 
 class ScienceContainerException(Exception):
@@ -35,24 +41,42 @@ class ScienceContainerException(Exception):
 
 
 class ScienceContainerCommand:
-    def __init__(self, request_id: str = ""):
+    def __init__(self, request_id: str = "", timeout: Optional[float] = None):
         handler = logging.NullHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
         self.request_id = request_id
+        self.timeout = (
+            timeout
+            if timeout is not None
+            else float(os.environ.get("SCIENCE_CONTAINER_TIMEOUT", DEFAULT_TIMEOUT))
+        )
 
         # Open a socket to the science container
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serv.bind(("localhost", 8081))
         self.serv.listen()
         self.conn, self.addr = self.serv.accept()
+        self.conn.settimeout(self.timeout)
+
+    def _recv(self) -> bytes:
+        try:
+            return self.conn.recv(4096)
+        except socket.timeout as e:
+            self.logger.error(
+                "timed out waiting for the science container",
+                extra={"request_id": self.request_id},
+            )
+            raise ScienceContainerException(
+                "timed out waiting for the science container"
+            ) from e
 
     def synch(self):
         while True:
             self.logger.debug(
                 "waiting for the GeT", extra={"request_id": self.request_id}
             )
-            req = self.conn.recv(4096)
+            req = self._recv()
             if not req:
                 self.logger.error(
                     "problem in getting GeT", extra={"request_id": self.request_id}
@@ -74,9 +98,12 @@ class ScienceContainerCommand:
         self.logger.debug(
             "WAITING FOR STATUS...", extra={"request_id": self.request_id}
         )
-        req = self.conn.recv(4096)
-        # if not req:
-        #     break
+        req = self._recv()
+        if not req:
+            self.logger.error(
+                "problem in getting the status", extra={"request_id": self.request_id}
+            )
+            raise ScienceContainerException("problem in getting the status")
         req2 = req.decode("utf8").strip()
         self.logger.debug(
             f"STATUS RECEIVED: {req2}", extra={"request_id": self.request_id}
