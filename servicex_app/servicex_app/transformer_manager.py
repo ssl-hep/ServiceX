@@ -75,8 +75,6 @@ class TransformerManager:
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
-        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
-
         current_app.logger.info(
             f"Launching {request_rec.workers} transformers.",
             extra={"request_id": request_rec.request_id},
@@ -397,7 +395,7 @@ class TransformerManager:
         if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
             replicas = current_app.config.get("TRANSFORMER_MIN_REPLICAS", 1)
         else:
-            replicas = workers
+            replicas = max(1, workers)
         spec = client.V1DeploymentSpec(
             template=template, selector=selector, replicas=replicas
         )
