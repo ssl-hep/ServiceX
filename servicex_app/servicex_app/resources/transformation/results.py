@@ -47,4 +47,8 @@ class TransformationResultsInsecure(ServiceXResource):
 class TransformationResultsSecure(TransformationResultsInsecure):
     @auth_required
     def get(self, request_id):
+        # The Insecure parent is also mounted, without auth, as an internal
+        # endpoint for the ServiceX DID finder, so the ownership check belongs
+        # here and not in the shared body.
+        self.get_owned_request(request_id)
         return super().get(request_id)

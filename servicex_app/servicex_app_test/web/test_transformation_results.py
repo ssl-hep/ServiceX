@@ -15,13 +15,13 @@ class TestUserDashboard(WebTestBase):
     template_name = "transformation_results.html"
 
     @pytest.fixture
-    def mock_tr_cls(self, mocker):
-        return mocker.patch(f"{self.module}.TransformRequest")
+    def mock_lookup(self, mocker):
+        return mocker.patch("servicex_app.models.TransformRequest.lookup")
 
     @pytest.fixture
-    def mock_tr(self, mock_tr_cls) -> TransformRequest:
+    def mock_tr(self, mock_lookup) -> TransformRequest:
         req = self._test_transformation_req()
-        mock_tr_cls.lookup.return_value = req
+        mock_lookup.return_value = req
         return req
 
     @pytest.fixture
@@ -79,9 +79,20 @@ class TestUserDashboard(WebTestBase):
         assert template.name == self.template_name
         assert context["pagination"] == pagination
 
-    def test_404(self, client, mock_tr_cls):
-        mock_tr_cls.lookup.return_value = None
+    def test_404(self, client, mock_lookup):
+        mock_lookup.return_value = None
         resp: Response = client.get(
             url_for(self.endpoint, id_=1), headers=self.fake_header()
         )
         assert resp.status_code == 404
+
+    def test_403_for_non_owner(self, mock_tr, user):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        user.id = 42
+        user.admin = False
+        mock_tr.submitted_by = 43
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = user.id
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 403

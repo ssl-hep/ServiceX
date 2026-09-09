@@ -36,6 +36,17 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 
 import boto3
 
+parser = reqparse.RequestParser()
+parser.add_argument("request_id", type=str, required=True, location="json")
+parser.add_argument("file_list", type=list, required=True, location="json")
+parser.add_argument(
+    "scheme",
+    type=str,
+    choices=["http", "xrootd"],
+    required=False,
+    location="json",
+)
+
 
 class FileURLGeneratorInsecure(ServiceXResource):
     def __init__(self):
@@ -56,20 +67,8 @@ class FileURLGeneratorInsecure(ServiceXResource):
         )
 
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("request_id", type=str, required=True, location="json")
-        parser.add_argument("file_list", type=list, required=True, location="json")
-        parser.add_argument(
-            "scheme",
-            type=str,
-            choices=["http", "xrootd"],
-            required=False,
-            location="json",
-        )
-
         args = parser.parse_args()
         request_id = args["request_id"]
-        # Validate that the user is an admin or submitted the request (not yet implemented)
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f"Transformation request not found with id: {request_id}"
@@ -102,4 +101,8 @@ class FileURLGeneratorSecure(FileURLGeneratorInsecure):
 
     @auth_required
     def post(self):
+        # The Insecure parent is also mounted, without auth, as an internal
+        # endpoint for the ServiceX DID finder, so the ownership check belongs
+        # here and not in the shared body.
+        self.get_owned_request(parser.parse_args()["request_id"])
         return super().post()

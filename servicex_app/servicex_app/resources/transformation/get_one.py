@@ -38,12 +38,7 @@ parser = reqparse.RequestParser()
 class TransformationRequest(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        # Validate that the user is an admin or submitted the request
-        transform = TransformRequest.lookup(request_id)
-        if not transform:
-            msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.error(msg, extra={"request_id": request_id})
-            return {"message": msg}, 404
+        transform = self.get_owned_request(request_id)
 
         transform_json = transform.to_json()
         if (

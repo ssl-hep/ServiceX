@@ -108,6 +108,7 @@ class TestDecorators(WebTestBase):
             assert response.json == data
 
     def test_auth_decorator_integration_oauth(self, mocker, user):
+        user.id = 7
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         fake_transform_id = 123
         data = {"id": fake_transform_id}
@@ -118,6 +119,7 @@ class TestDecorators(WebTestBase):
         mock.to_json.return_value = data
         with client.session_transaction() as sess:
             sess["is_authenticated"] = True
+            sess["user_id"] = user.id
         with client.application.app_context():
             response: Response = client.get(
                 f"servicex/transformation/{fake_transform_id}"
@@ -125,6 +127,58 @@ class TestDecorators(WebTestBase):
             print(response.data)
             assert response.status_code == 200
             assert response.json == data
+
+    def test_auth_decorator_integration_oauth_user_deleted(self, mocker):
+        mocker.patch("servicex_app.models.UserModel.find_by_id", return_value=None)
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = 7
+        with client.application.app_context():
+            response: Response = client.get("servicex/transformation/123")
+            assert response.status_code == 401
+            assert "deleted" in response.json["message"]
+
+    def test_auth_decorator_integration_oauth_no_profile(self, mocker):
+        find_by_id = mocker.patch("servicex_app.models.UserModel.find_by_id")
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+        with client.application.app_context():
+            response: Response = client.get("servicex/transformation/123")
+            assert response.status_code == 401
+            assert "profile" in response.json["message"]
+        find_by_id.assert_not_called()
+
+    def test_auth_decorator_integration_oauth_user_pending(self, user):
+        user.id = 7
+        user.pending = True
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = user.id
+        with client.application.app_context():
+            response: Response = client.get("servicex/transformation/123")
+            assert response.status_code == 401
+            assert "pending" in response.json["message"]
+
+    def test_auth_decorator_integration_oauth_not_owner(self, mocker, user):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        mock = mocker.patch(
+            "servicex_app.resources.transformation.get_one" ".TransformRequest.lookup"
+        ).return_value
+        mock.submitted_by = 4321
+        user.id = 7
+        user.admin = False
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = user.id
+        with client.application.app_context():
+            response: Response = client.get("servicex/transformation/123")
+            assert response.status_code == 403
+            assert response.json == {
+                "message": "You are not authorized to access this request"
+            }
 
     def test_admin_decorator_integration_auth_disabled(self, mocker, client):
         data = {"users": [{"id": 1234}]}
