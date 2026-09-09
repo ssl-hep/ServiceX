@@ -538,6 +538,10 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     shutil.copy("scripts/watch.sh", scripts_path)
     shutil.copy("scripts/proxy-exporter.sh", scripts_path)
 
+    # Start listening before waiting for the capabilities file so the science
+    # container doesn't get its connection refused while we are still waiting
+    science_container = ScienceContainerCommand(request_id=request_id)
+
     transformer_capabilities = read_capabilities_file()
 
     # If the user requested Parquet, but the transformer isn't capable of producing it,
@@ -564,7 +568,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         },
     )
 
-    science_container = ScienceContainerCommand(request_id=request_id)
+    science_container.accept()
     logger.debug(
         "Connected to science container",
         extra={"request_id": request_id, "place": PLACE},
