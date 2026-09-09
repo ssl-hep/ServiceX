@@ -894,9 +894,7 @@ class TestTransformerManager(ResourceTestBase):
         mock_zip_ext = mocker.Mock()
         mock_zip_ext.filename = "foo.sh"
         mock_zip.filelist = [mock_zip_ext]
-        mock_open = mocker.Mock()
-        mock_open.read = mocker.Mock(return_value=b"hi there")
-        mock_zip.open = mocker.Mock(return_value=mock_open)
+        mock_zip.read = mocker.Mock(return_value=b"hi there")
 
         transformer.create_configmap_from_zip(mock_zip, "my-request", "servicex")
 

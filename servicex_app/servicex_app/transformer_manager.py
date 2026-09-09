@@ -645,11 +645,11 @@ class TransformerManager:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"
-        results: kubernetes.client.AppsV1beta1DeploymentList
+        results: client.V1DeploymentList
         results = api.list_namespaced_deployment(namespace, field_selector=selector)
         if not results.items:
             return None
-        deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
+        deployment: client.V1Deployment = results.items[0]
         return deployment.status
 
     @staticmethod
@@ -668,7 +668,7 @@ class TransformerManager:
     def create_configmap_from_zip(zipfile, request_id, namespace):
         configmap_name = "{}-generated-source".format(request_id)
         data = {
-            file.filename: base64.b64encode(zipfile.open(file).read()).decode("ascii")
+            file.filename: base64.b64encode(zipfile.read(file)).decode("ascii")
             for file in zipfile.filelist
         }
 
