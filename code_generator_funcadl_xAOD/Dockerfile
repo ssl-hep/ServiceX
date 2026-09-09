@@ -21,7 +21,6 @@ RUN pip list
 COPY boot.sh ./
 COPY transformer_capabilities.json ./
 COPY xaod_code_generator/ ./xaod_code_generator
-COPY scripts/from_ast_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
