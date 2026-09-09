@@ -36,13 +36,18 @@ import time
 import urllib3
 from tenacity import (
     Retrying,
-    RetryError,
     stop_after_attempt,
     wait_random_exponential,
-    retry_if_exception_type,
+    retry_if_exception,
 )
 
 from servicex_app.models import TransformRequest, TransformStatus
+
+
+def _is_retryable_api_error(exc: BaseException) -> bool:
+    if isinstance(exc, ApiException):
+        return exc.status is not None and exc.status >= 500
+    return isinstance(exc, urllib3.exceptions.HTTPError)
 
 
 class TransformerManager:
@@ -562,74 +567,62 @@ class TransformerManager:
             hpa = self.create_hpa_object(request_id, max_workers)
             self._create_hpa(autoscaler_api, hpa, namespace, request_id)
 
+    @staticmethod
+    def _delete_with_retries(delete, description, request_id, quiet_errors):
+        try:
+            for attempt in Retrying(
+                wait=wait_random_exponential(max=60),
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception(_is_retryable_api_error),
+                reraise=True,
+            ):
+                with attempt:
+                    delete()
+        except ApiException as e:
+            # the resource is already gone, which is all we wanted
+            if e.status == 404:
+                return
+            if not quiet_errors:
+                current_app.logger.exception(
+                    description,
+                    extra={"request_id": request_id, "retry_status": e.status},
+                )
+
     @classmethod
     def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
         # quiet_errors is intended to be used for reaper jobs where components of the transform
         # may be missing
-        try:
-            if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
-                autoscaler_api = kubernetes.client.AutoscalingV1Api()
-                try:
-                    for attempt in Retrying(
-                        wait=wait_random_exponential(max=60),
-                        stop=stop_after_attempt(3),
-                        retry=retry_if_exception_type(ApiException),
-                    ):
-                        with attempt:
-                            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
-                                name="transformer-" + request_id, namespace=namespace
-                            )
-                except RetryError as e:
-                    e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job HPA Shut Down",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
+            autoscaler_api = kubernetes.client.AutoscalingV1Api()
+            cls._delete_with_retries(
+                lambda: autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+                    name="transformer-" + request_id, namespace=namespace
+                ),
+                "Exception during Job HPA Shut Down",
+                request_id,
+                quiet_errors,
+            )
 
-        try:
-            api_v1 = client.AppsV1Api()
-            try:
-                for attempt in Retrying(
-                    wait=wait_random_exponential(max=60),
-                    stop=stop_after_attempt(3),
-                    retry=retry_if_exception_type(ApiException),
-                ):
-                    with attempt:
-                        api_v1.delete_namespaced_deployment(
-                            name="transformer-" + request_id, namespace=namespace
-                        )
-            except RetryError as e:
-                e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job Deployment Shut Down",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        api_v1 = client.AppsV1Api()
+        cls._delete_with_retries(
+            lambda: api_v1.delete_namespaced_deployment(
+                name="transformer-" + request_id, namespace=namespace
+            ),
+            "Exception during Job Deployment Shut Down",
+            request_id,
+            quiet_errors,
+        )
 
-        try:
-            api_core = client.CoreV1Api()
-            configmap_name = "{}-generated-source".format(request_id)
-            try:
-                for attempt in Retrying(
-                    wait=wait_random_exponential(max=60),
-                    stop=stop_after_attempt(3),
-                    retry=retry_if_exception_type(ApiException),
-                ):
-                    with attempt:
-                        api_core.delete_namespaced_config_map(
-                            name=configmap_name, namespace=namespace
-                        )
-            except RetryError as e:
-                e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job ConfigMap cleanup",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        api_core = client.CoreV1Api()
+        configmap_name = "{}-generated-source".format(request_id)
+        cls._delete_with_retries(
+            lambda: api_core.delete_namespaced_config_map(
+                name=configmap_name, namespace=namespace
+            ),
+            "Exception during Job ConfigMap cleanup",
+            request_id,
+            quiet_errors,
+        )
 
         # delete RabbitMQ queue
         try:
