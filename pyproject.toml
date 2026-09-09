@@ -6,11 +6,11 @@ authors = ["Ben Galewsky <ben@peartreestudio.net>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "~3.10"
-servicex-app = {path = "servicex_app", develop = true}
-did-finder-cernopendata = {path = "did_finder_cernopendata", develop = true}
+python = ">=3.10,<3.15"
+servicex-app = {path = "servicex_app", develop = true, python = "~3.10"}
+did-finder-cernopendata = {path = "did_finder_cernopendata", develop = true, python = "~3.10"}
 did-finder-xrootd = {path = "did_finder_xrootd", develop = true}
-did-finder-rucio = {path = "did_finder_rucio", develop = true}
+did-finder-rucio = {path = "did_finder_rucio", develop = true, python = "^3.11"}
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.1.1"
