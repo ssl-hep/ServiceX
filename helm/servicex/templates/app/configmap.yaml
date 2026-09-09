@@ -213,6 +213,10 @@ data:
     DID_XROOTD_FINDER_TAG = '{{ .Values.didFinder.xrootd.tag }}'
       {{- $didFinders = append $didFinders "xrootd" }}
     {{- end }}
+    {{- if .Values.didFinder.atlasopenmagic.enabled }}
+    DID_ATLASOPENMAGIC_FINDER_TAG = '{{ .Values.didFinder.atlasopenmagic.tag }}'
+      {{- $didFinders = append $didFinders "atlasopenmagic" }}
+    {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
