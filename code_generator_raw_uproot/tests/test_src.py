@@ -27,9 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from servicex.raw_uproot_code_generator.request_translator import RawUprootTranslator
+import importlib.util
 import json
 import os
+import sys
 import tempfile
+import types
+from pathlib import Path
+
 import pytest
 from servicex_codegen.code_generator import GenerateCodeException
 
@@ -95,6 +100,36 @@ def test_generate_code():
         query = '[{"treename": "nominal", "cut": NaN}]'
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
+
+
+def test_template_writes_empty_parquet_when_no_tree_is_found(tmp_path, monkeypatch):
+    import pyarrow.parquet as pq
+
+    def run_query(file_path):
+        # every requested tree is missing, so nothing is yielded
+        yield from ()
+
+    generated = types.ModuleType("generated_transformer")
+    generated.run_query = run_query
+    monkeypatch.setitem(sys.modules, "generated_transformer", generated)
+
+    template_path = (
+        Path(__file__).parent.parent / "servicex/templates/transform_single_file.py"
+    )
+    spec = importlib.util.spec_from_file_location("raw_uproot_template", template_path)
+    template = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(template)
+
+    output_path = tmp_path / "output.parquet"
+    total_events, output_size = template.transform_single_file(
+        "root://example//missing_trees.root", output_path, "parquet"
+    )
+
+    assert total_events == 0
+    assert output_size == output_path.stat().st_size
+    table = pq.read_table(output_path)
+    assert table.num_columns == 0
+    assert table.num_rows == 0
 
 
 def test_app():
