@@ -130,7 +130,7 @@ class UserModel(db.Model):
 
     @classmethod
     def delete_all_pending(cls):
-        num_rows_deleted = db.session.query.filter_by(pending=True).delete()
+        num_rows_deleted = db.session.query(cls).filter_by(pending=True).delete()
         db.session.commit()
         return {"message": "{} row(s) deleted".format(num_rows_deleted)}
 
