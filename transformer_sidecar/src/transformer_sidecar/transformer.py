@@ -73,7 +73,6 @@ convert_root_to_rntuple: bool = False
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
-celery_app: Optional[Celery] = None
 
 request_id: str = ""
 
@@ -281,7 +280,6 @@ def transform_file(
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
 
-        if not transform_success:
             rec = FileCompleteRecord(
                 request_id=request_id,
                 file_path=_file_paths[0],
@@ -516,11 +514,10 @@ def read_capabilities_file() -> dict[str, str]:
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, convert_root_to_rntuple, startup_time
     global object_store, posix_path, science_container
-    global shared_dir, transformer_capabilities, request_id, celery_app
+    global shared_dir, transformer_capabilities, request_id
 
     shared_dir = args.shared_dir
     request_id = args.request_id
-    celery_app = app
 
     if args.result_destination == "object-store":
         posix_path = args.shared_dir
@@ -703,8 +700,6 @@ def setup_loggers(logger, *args, **kwargs):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    start_time = timeit.default_timer()
-
     parser = TransformerArgumentParser(description="ServiceX Transformer")
     _args = parser.parse_args()
     app = Celery("transformer_sidecar", broker=_args.rabbit_uri)
