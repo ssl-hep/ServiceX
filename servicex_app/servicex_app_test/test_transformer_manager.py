@@ -1174,15 +1174,15 @@ class TestTransformerManager(ResourceTestBase):
                 "key": "gpu",
                 "operator": "Exists",
                 "effect": "NoExecute",
-                "toleration_seconds": 3600,
+                "tolerationSeconds": 3600,
             },
         ]
         affinity = {
-            "node_affinity": {
-                "required_during_scheduling_ignored_during_execution": {
-                    "node_selector_terms": [
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
                         {
-                            "match_expressions": [
+                            "matchExpressions": [
                                 {
                                     "key": "topology.kubernetes.io/zone",
                                     "operator": "In",
@@ -1234,20 +1234,15 @@ class TestTransformerManager(ResourceTestBase):
             # Verify node selector
             assert template.spec.node_selector == node_selector
 
-            # Verify tolerations
-            assert len(template.spec.tolerations) == 2
-            assert template.spec.tolerations[0].key == "dedicated"
-            assert template.spec.tolerations[0].operator == "Equal"
-            assert template.spec.tolerations[0].value == "servicex"
-            assert template.spec.tolerations[0].effect == "NoSchedule"
-            assert template.spec.tolerations[1].key == "gpu"
-            assert template.spec.tolerations[1].operator == "Exists"
-            assert template.spec.tolerations[1].effect == "NoExecute"
-            assert template.spec.tolerations[1].toleration_seconds == 3600
-
-            # Verify affinity
-            assert template.spec.affinity is not None
-            assert template.spec.affinity.node_affinity is not None
+            # Verify the manifest which actually gets sent to Kubernetes keeps
+            # the standard camelCase spelling of these settings
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_deployment
+            )
+            pod_spec = manifest["spec"]["template"]["spec"]
+            assert pod_spec["tolerations"] == tolerations
+            assert pod_spec["affinity"] == affinity
+            assert pod_spec["nodeSelector"] == node_selector
 
     def test_launch_transformer_with_empty_pod_scheduling_options(self, mocker):
         import kubernetes
