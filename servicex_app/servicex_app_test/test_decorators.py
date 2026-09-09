@@ -107,6 +107,28 @@ class TestDecorators(WebTestBase):
             assert response.status_code == 200
             assert response.json == data
 
+    def test_auth_decorator_shares_user_with_resource(self, mocker, user):
+        """The resource reuses the user that auth_required verified and loaded"""
+        import flask_jwt_extended.view_decorators
+        from servicex_app.models import UserModel
+
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        mock = mocker.patch(
+            "servicex_app.resources.transformation.delete.TransformRequest.lookup"
+        ).return_value
+        mock.status.is_complete = True
+        mock.submitted_by = -1
+        jwt_required_verify = mocker.spy(
+            flask_jwt_extended.view_decorators, "verify_jwt_in_request"
+        )
+        with client.application.app_context():
+            response: Response = client.delete(
+                "servicex/transformation/123", headers=self.fake_header()
+            )
+            assert response.status_code == 403
+        UserModel.find_by_email.assert_called_once_with("testuser")
+        jwt_required_verify.assert_not_called()
+
     def test_auth_decorator_integration_oauth(self, mocker, user):
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
         fake_transform_id = 123

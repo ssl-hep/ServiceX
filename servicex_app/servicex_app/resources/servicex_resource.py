@@ -28,7 +28,7 @@
 from typing import Optional
 
 from importlib.metadata import version, PackageNotFoundError
-from flask import current_app
+from flask import current_app, g
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
@@ -50,13 +50,20 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
-    @jwt_required_if_auth_enabled
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
         If auth is enabled, this cannot be None for JWT-protected resources
         which are decorated with @auth_required or @admin_required.
         """
+        # @auth_required has already verified the token and loaded the user
+        if "requesting_user" in g:
+            return g.requesting_user
+        return ServiceXResource._find_requesting_user()
+
+    @staticmethod
+    @jwt_required_if_auth_enabled
+    def _find_requesting_user() -> Optional[UserModel]:
         user = None
         if current_app.config.get("ENABLE_AUTH"):
             user = UserModel.find_by_email(get_jwt_identity())
