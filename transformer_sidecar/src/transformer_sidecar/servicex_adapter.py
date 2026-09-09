@@ -38,6 +38,9 @@ from requests.adapters import HTTPAdapter
 MAX_RETRIES = 3
 RETRY_DELAY = 2
 
+# Connect and read timeouts for calls back to the ServiceX app
+REQUEST_TIMEOUT = (5, 60)
+
 PLACE = {
     "host": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
@@ -105,13 +108,14 @@ class ServiceXAdapter:
     def put_file_complete(self, rec: FileCompleteRecord):
         if self.server_endpoint:
             try:
-                retry_call(
+                response = retry_call(
                     self.session.put,
                     fargs=[self.server_endpoint + "/file-complete"],
-                    fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
+                    fkwargs={"json": rec.to_json(), "timeout": REQUEST_TIMEOUT},
                     tries=MAX_RETRIES,
                     delay=RETRY_DELAY,
                 )
+                response.raise_for_status()
                 self.logger.info(
                     "Put file complete.",
                     extra={
