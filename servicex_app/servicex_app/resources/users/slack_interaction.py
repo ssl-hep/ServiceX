@@ -12,9 +12,8 @@ from servicex_app.reliable_requests import servicex_retry, REQUEST_TIMEOUT
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.web.slack_msg_builder import (
     signup_ia,
-    missing_slack_app,
+    action_not_supported,
     request_expired,
-    verification_failed,
     user_not_found,
 )
 
@@ -33,35 +32,36 @@ def slack_submit(response_url=None, response_msg=None):
 
 class SlackInteraction(ServiceXResource):
     def post(self) -> Response:
-        body = request.get_data().decode("utf-8")
-        decoder = json.JSONDecoder()
-        data = decoder.decode(request.form["payload"])
-        response_url = data["response_url"]
-
         secret = current_app.config.get("SLACK_SIGNING_SECRET")
         if not secret:
             current_app.logger.error(
                 "Slack interaction received but no Slack app configured"
             )
-            respond(response_url, missing_slack_app())
             return Response(status=403)
 
-        timestamp = request.headers["X-Slack-Request-Timestamp"]
-        if abs(time.time() - float(timestamp) > 60 * 5):
+        # The signature must be verified before we parse the payload or contact
+        # the caller-supplied response_url, otherwise anyone can make us issue
+        # outbound requests.
+        timestamp = request.headers.get("X-Slack-Request-Timestamp", "")
+        sig_basestring = b"v0:" + timestamp.encode("utf-8") + b":" + request.get_data()
+        signature = b"v0=" + hmac.new(
+            secret.encode("utf-8"), sig_basestring, digestmod=hashlib.sha256
+        ).hexdigest().encode("ascii")
+        slack_signature = request.headers.get("X-Slack-Signature", "").encode("utf-8")
+        if not hmac.compare_digest(signature, slack_signature):
+            current_app.logger.error("Slack signature verification failed")
+            return Response(status=401)
+
+        data = json.loads(request.form["payload"])
+        response_url = data["response_url"]
+
+        try:
+            expired = abs(time.time() - float(timestamp)) > 60 * 5
+        except ValueError:
+            expired = True
+        if expired:
             respond(response_url, request_expired())
             return Response(status=403)
-
-        sig_basestring = f"v0:{timestamp}:{body}".encode("utf-8")
-        signature = (
-            "v0="
-            + hmac.new(
-                secret.encode("utf-8"), sig_basestring, digestmod=hashlib.sha256
-            ).hexdigest()
-        )
-        slack_signature = request.headers["X-Slack-Signature"]
-        if not hmac.compare_digest(signature, slack_signature):
-            respond(response_url, verification_failed())
-            return Response(status=401)
 
         action = data["actions"][0]
         initiating_user = data["user"]
@@ -80,5 +80,7 @@ class SlackInteraction(ServiceXResource):
             slack_response.raise_for_status()
         elif action_id == "reject_user":
             # todo blocked by PR for delete-user endpoint
-            raise NotImplementedError
+            current_app.logger.warning(f"Unsupported Slack action: {action_id}")
+            respond(response_url, action_not_supported(action_id))
+            return Response(status=200)
         return Response(status=200)
