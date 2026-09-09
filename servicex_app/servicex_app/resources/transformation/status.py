@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask_restful import reqparse
+from flask_restful import inputs, reqparse
 from flask import jsonify, current_app
 
 from servicex_app.decorators import auth_required
@@ -34,7 +34,7 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 
 status_request_parser = reqparse.RequestParser()
 status_request_parser.add_argument(
-    "details", type=bool, default=False, required=False, location="args"
+    "details", type=inputs.boolean, default=False, required=False, location="args"
 )
 
 
