@@ -35,8 +35,6 @@ from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
-cache_prefix = os.environ.get("CACHE_PREFIX", "")
-
 if (
     "RUCIO_LATITUDE" in os.environ
     and "RUCIO_LONGITUDE" in os.environ

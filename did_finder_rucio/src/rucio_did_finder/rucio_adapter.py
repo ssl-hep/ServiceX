@@ -113,8 +113,6 @@ class RucioAdapter:
 
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
-        if not parsed_did:
-            return []
         try:
             datasets = []
             did_info = self.did_client.get_did(parsed_did["scope"], parsed_did["name"])
