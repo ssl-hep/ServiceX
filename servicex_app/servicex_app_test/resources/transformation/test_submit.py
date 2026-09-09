@@ -163,14 +163,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation(
         self,
-        mock_rabbit_adaptor,
         mock_dataset_manager_from_did,
         mock_codegen,
         mock_app_version,
         mock_celery_app,
     ):
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
@@ -213,14 +211,12 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_default_scheme(
         self,
-        mock_rabbit_adaptor,
         mock_dataset_manager_from_did,
         mock_codegen,
         mock_app_version,
         mock_celery_app,
     ):
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
@@ -255,7 +251,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_existing_dataset(
         self,
         mocker,
-        mock_rabbit_adaptor,
         mock_dataset_manager_from_did,
         mock_codegen,
         mock_app_version,
@@ -263,7 +258,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             lookup_result_processor=mock_processor,
             code_gen_service=mock_codegen,
         )
@@ -300,7 +294,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation_incomplete_existing_dataset(
         self,
         mocker,
-        mock_rabbit_adaptor,
         mock_dataset_manager_from_did,
         mock_codegen,
         mock_app_version,
@@ -308,7 +301,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             lookup_result_processor=mock_processor,
             code_gen_service=mock_codegen,
         )
@@ -344,7 +336,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_with_root_file(
         self,
-        mock_rabbit_adaptor,
         mock_code_gen_service,
         mock_dataset_manager_from_did,
         mock_app_version,
@@ -356,9 +347,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             "echo",
         )
 
-        client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor, code_gen_service=mock_code_gen_service
-        )
+        client = self._test_client(code_gen_service=mock_code_gen_service)
         with client.application.app_context():
             request = self._generate_transformation_request()
 

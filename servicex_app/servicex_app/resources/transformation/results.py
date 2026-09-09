@@ -10,9 +10,6 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 class TransformationResults(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        if not request_id:
-            return {"message": "Missing required transformation request_id"}, 400
-
         parser = reqparse.RequestParser()
         parser.add_argument("later_than", type=str, required=False, location="args")
 
@@ -37,9 +34,4 @@ class TransformationResults(ServiceXResource):
                 TransformationResult.created_at > later_than
             )
 
-        results = [
-            transformation_result.to_json(transformation_result)
-            for transformation_result in transform_result_query
-        ]
-
-        return {"results": results}
+        return {"results": TransformationResult.to_json_list(transform_result_query)}

@@ -33,9 +33,11 @@ class TestTransformationResults(ResourceTestBase):
 
     @fixture
     def mock_transformation_result(self, mocker):
-        return mocker.patch(
+        mock = mocker.patch(
             "servicex_app.resources.transformation.results.TransformationResult"
         )
+        mock.to_json_list.side_effect = TransformationResult.to_json_list
+        return mock
 
     @staticmethod
     def sample_results():
@@ -61,12 +63,9 @@ class TestTransformationResults(ResourceTestBase):
 
         return results
 
-    def test_get_results_nonexistent_request_id(
-        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
-    ):
+    def test_get_results_nonexistent_request_id(self, mock_codegen, mock_celery_app):
         """Test getting results for non-existent request_id."""
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
@@ -80,12 +79,9 @@ class TestTransformationResults(ResourceTestBase):
         assert isinstance(data["results"], list)
         assert len(data["results"]) == 0
 
-    def test_get_results_missing_request_id(
-        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
-    ):
+    def test_get_results_missing_request_id(self, mock_codegen, mock_celery_app):
         """Test getting results with missing request_id parameter."""
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
@@ -96,14 +92,12 @@ class TestTransformationResults(ResourceTestBase):
 
     def test_get_results_with_samples(
         self,
-        mock_rabbit_adaptor,
         mock_codegen,
         mock_celery_app,
         mock_transformation_result,
     ):
         """Test getting results with mock sample results."""
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
@@ -136,11 +130,10 @@ class TestTransformationResults(ResourceTestBase):
         mock_query.filter_by.assert_called_with(request_id="test-request-id")
 
     def test_get_results_with_invalid_later_than_format(
-        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
+        self, mock_codegen, mock_celery_app
     ):
         """Test later_than parameter with invalid datetime format."""
         client = self._test_client(
-            rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
         )
