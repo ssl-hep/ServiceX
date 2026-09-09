@@ -296,20 +296,28 @@ class TransformRequest(db.Model):
             return []
 
     @classmethod
-    def lookup_pending_on_dataset(cls, dataset_id: int) -> list[TransformRequest]:
+    def lock_awaiting_dataset(cls, dataset_id: int) -> list[TransformRequest]:
         """
-        Looks up TransformRequests that have been pending resolving of the given
-        dataset ID.
+        Looks up and locks the TransformRequests in "Lookup" or "Pending Lookup"
+        state that are waiting for the dataset given by its dataset_id. The rows
+        are locked in id order until the caller commits, so file-complete
+        callbacks and cancels for them wait, and the returned objects carry the
+        latest committed counters and status.
         :param dataset_id: dataset id. Must be an integer.
         :return result: list of TransformRequests, or empty list if not found.
         """
-        try:
-            return cls.query.filter(
-                (cls.status == TransformStatus.pending_lookup)
-                & (cls.did_id == dataset_id)
-            ).all()
-        except NoResultFound:
-            return []
+        return (
+            cls.query.filter(
+                cls.did_id == dataset_id,
+                cls.status.in_(
+                    [TransformStatus.lookup, TransformStatus.pending_lookup]
+                ),
+            )
+            .order_by(cls.id)
+            .with_for_update()
+            .populate_existing()
+            .all()
+        )
 
     @property
     def age(self) -> timedelta:

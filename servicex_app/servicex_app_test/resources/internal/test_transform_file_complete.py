@@ -250,17 +250,67 @@ class TestTransformFileComplete(ResourceTestBase):
         assert fake_transform_request.files_completed == 8
         assert fake_transform_request.files_failed == 2
 
-        assert db_session.add.call_count == 2
+        db_session.add.assert_called_once()
         assert isinstance(db_session.add.mock_calls[0][1][0], TransformationResult)
         assert db_session.add.mock_calls[0][1][0].file_id == 42
 
-        updated_transform = db_session.add.mock_calls[1][1][0]
-        assert isinstance(updated_transform, TransformRequest)
-        assert updated_transform.status == TransformStatus.complete
-        assert updated_transform.finish_time is not None
-        mock_transformer_manager.shutdown_transformer_job.assert_called_with(
+        # The request is completed inside the locked transaction that recorded the
+        # file, and only then are the transformers shut down
+        assert db_session.begin.call_count == 2
+        assert fake_transform_request.status == TransformStatus.complete
+        assert fake_transform_request.finish_time is not None
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
             "1234", "my-ws"
         )
+
+    def test_put_transform_file_complete_no_files_remaining_still_in_lookup(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        # The DID finder is still publishing files in batches, so more are coming
+        fake_transform_request.status = TransformStatus.lookup
+        fake_transform_request.files_completed = 7
+        fake_transform_request.files_failed = 2
+
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response.status_code == 200
+        assert fake_transform_request.status == TransformStatus.lookup
+        assert fake_transform_request.finish_time is None
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
+
+    def test_put_transform_file_complete_no_files_remaining_canceled(
+        self,
+        mock_transformer_manager,
+        db_session,
+        trqmock,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.status = TransformStatus.canceled
+        fake_transform_request.files_completed = 7
+        fake_transform_request.files_failed = 2
+
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+
+        assert response.status_code == 200
+        assert fake_transform_request.status == TransformStatus.canceled
+        assert fake_transform_request.finish_time is None
+        mock_transformer_manager.shutdown_transformer_job.assert_not_called()
 
     def test_put_transform_file_complete_duplicate_report(
         self,
@@ -497,17 +547,15 @@ class TestTransformFileComplete(ResourceTestBase):
         self,
         mock_transformer_manager,
         db_session,
+        trqmock,
         mock_transform_request_lookup,
         fake_transform_request,
         file_complete_response,
         test_client,
     ):
-
-        # Trigger the fileset complete by setting the files_remaining to 0
+        # Make this the last file, and fail the first attempt to lock the request
         fake_transform_request.files_completed = 9
-
-        db_session.add.side_effect = [
-            fake_transform_request,
+        trqmock.filter_by.return_value.with_for_update.return_value.one_or_none.side_effect = [  # noqa: E501
             psycopg2.OperationalError("server closed the connection unexpectedly"),
             fake_transform_request,
         ]
@@ -517,6 +565,33 @@ class TestTransformFileComplete(ResourceTestBase):
             json=file_complete_response,
         )
         assert response.status_code == 200
-        # add called once for the transform result and then once for the updated transform request
-        # once with a failure and once successfully
-        assert db_session.add.call_count == 3
+        assert fake_transform_request.status == TransformStatus.complete
+        assert fake_transform_request.finish_time is not None
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
+            "1234", "my-ws"
+        )
+
+    def test_shutdown_failure_after_complete(
+        self,
+        mock_transformer_manager,
+        db_session,
+        mock_transform_request_lookup,
+        fake_transform_request,
+        file_complete_response,
+        test_client,
+    ):
+        fake_transform_request.files_completed = 9
+        mock_transformer_manager.shutdown_transformer_job.side_effect = ConnectionError(
+            "kubernetes api unreachable"
+        )
+
+        response = test_client.put(
+            "/servicex/internal/transformation/1234/file-complete",
+            json=file_complete_response,
+        )
+        # The completion was already committed, so a failed shutdown is only logged
+        assert response.status_code == 200
+        assert fake_transform_request.status == TransformStatus.complete
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
+            "1234", "my-ws"
+        )
