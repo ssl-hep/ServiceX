@@ -40,8 +40,8 @@ data:
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
 
     # Number of seconds the JWT is valid for
-    JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
-    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
+    JWT_REFRESH_TOKEN_EXPIRES={{- if .Values.app.tokenExpires }}{{ .Values.app.tokenExpires | int64 }}{{ else }}False{{ end }}
+    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires | int64 }}
 
     # Slack webhooks
     {{ if .Values.app.slackSigningSecret }}
