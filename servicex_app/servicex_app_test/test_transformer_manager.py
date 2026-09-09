@@ -792,13 +792,13 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_autoscaling = mocker.Mock()
@@ -806,7 +806,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         transformer = TransformerManager("external-kubernetes")
@@ -833,6 +833,8 @@ class TestTransformerManager(ResourceTestBase):
             transformer.celery_app.control.cancel_consumer.assert_called_with(
                 "transformer-1234"
             )
+            # a 403 is not worth retrying
+            assert mock_api.delete_namespaced_deployment.call_count == 1
         assert client.application.logger.exception.call_count == 4
 
         # now check quiet mode
@@ -852,7 +854,8 @@ class TestTransformerManager(ResourceTestBase):
             )
         client.application.logger.exception.assert_not_called()
 
-    def test_shutdown_transformer_jobs_exceptions_once(self, mocker):
+    @pytest.mark.parametrize("status", [500, 429])
+    def test_shutdown_transformer_jobs_exceptions_once(self, mocker, status):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
@@ -860,14 +863,14 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
@@ -876,7 +879,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
@@ -897,6 +900,49 @@ class TestTransformerManager(ResourceTestBase):
                 == 2
             )
             assert client.application.logger.exception.call_count == 0
+
+    def test_shutdown_transformer_jobs_already_gone(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        not_found = kubernetes.client.rest.ApiException(status=404)
+
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_deployment.side_effect = not_found
+
+        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
+        mock_core_api.delete_namespaced_config_map.side_effect = not_found
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
+            not_found
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock()
+
+        client = self._test_client(transformation_manager=transformer)
+        client.application.logger = mocker.MagicMock()
+
+        # a resource that is already gone is what we wanted: no retry, no error
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns")
+            assert mock_api.delete_namespaced_deployment.call_count == 1
+            assert mock_core_api.delete_namespaced_config_map.call_count == 1
+            assert (
+                mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.call_count
+                == 1
+            )
+            transformer.celery_app.control.cancel_consumer.assert_called_with(
+                "transformer-1234"
+            )
+        client.application.logger.exception.assert_not_called()
 
     def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
@@ -1566,38 +1612,3 @@ class TestShutdownPod:
         req = self._make_req(TransformStatus.lookup)
         manager.cancel_transform(req)
         manager.shutdown_transformer_job.assert_called_once_with("test-123", "test-ns")
-
-    def test_404_swallowed(self, app_context, mocker):
-        import kubernetes
-
-        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-
-        mocker.patch(
-            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
-        )
-        manager = TransformerManager("internal-kubernetes")
-        manager.shutdown_transformer_job = Mock()
-        manager.shutdown_transformer_job.side_effect = (
-            kubernetes.client.exceptions.ApiException(status=404)
-        )
-        req = self._make_req(TransformStatus.running)
-        manager.cancel_transform(req)
-
-    def test_non_404_logs_and_reraises(self, app_context, mocker):
-        import kubernetes
-
-        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-
-        mocker.patch(
-            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
-        )
-        manager = TransformerManager("internal-kubernetes")
-        manager.shutdown_transformer_job = Mock()
-        mock_error = mocker.patch.object(app_context.logger, "error")
-        manager.shutdown_transformer_job.side_effect = (
-            kubernetes.client.exceptions.ApiException(status=403, reason="Forbidden")
-        )
-        with pytest.raises(kubernetes.client.exceptions.ApiException):
-            req = self._make_req(TransformStatus.running)
-            manager.cancel_transform(req)
-        mock_error.assert_called_once()
