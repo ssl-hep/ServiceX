@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pytest
+import requests
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.models import TransformRequest
 
@@ -53,6 +54,31 @@ class TestCodeGenAdapter:
     def test_init(self, mock_transformer_manager):
         service = CodeGenAdapter(CODE_GEN_SERVICE_URLS, mock_transformer_manager)
         assert service.code_gen_service_urls == CODE_GEN_SERVICE_URLS
+
+    def test_post_request_not_retried_on_read_timeout(
+        self, mocker, mock_transformer_manager
+    ):
+        mock_requests_post = mocker.patch(
+            "requests.post", side_effect=requests.exceptions.ReadTimeout()
+        )
+        service = CodeGenAdapter(CODE_GEN_SERVICE_URLS, mock_transformer_manager)
+        with pytest.raises(requests.exceptions.ReadTimeout):
+            service.post_request("http://localhost:8000", {"code": "x"})
+        assert mock_requests_post.call_count == 1
+
+    def test_post_request_retried_on_connection_error(
+        self, mocker, mock_transformer_manager
+    ):
+        mock_response = mocker.MagicMock()
+        mock_requests_post = mocker.patch(
+            "requests.post",
+            side_effect=[requests.exceptions.ConnectTimeout(), mock_response],
+        )
+        service = CodeGenAdapter(CODE_GEN_SERVICE_URLS, mock_transformer_manager)
+        assert service.post_request("http://localhost:8000", {"code": "x"}) is (
+            mock_response
+        )
+        assert mock_requests_post.call_count == 2
 
     def test_generate_code_for_selection(
         self, mocker, mock_transformer_manager, transform_request
