@@ -533,8 +533,8 @@ class Dataset(db.Model):
         return cls.query.filter_by(name=name, stale=False).with_for_update().first()
 
     @classmethod
-    def find_by_id(cls, id) -> Optional["Dataset"]:
-        return cls.query.get(id)
+    def find_by_id(cls, id) -> Dataset | None:
+        return db.session.get(cls, id)
 
     @classmethod
     def get_by_did_finder(cls, did_finder, show_deleted: bool = False) -> list[Dataset]:
