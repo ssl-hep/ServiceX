@@ -237,7 +237,10 @@ def create_app(
     logstash_port = os.environ.get("LOGSTASH_PORT")
 
     level = os.environ.get("LOG_LEVEL", "DEBUG").upper()
-    app.logger.level = getattr(logging, level, None)
+    numeric_level = getattr(logging, level, None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Unknown LOG_LEVEL: {level}")
+    app.logger.setLevel(numeric_level)
 
     # remove current handlers
     for h in app.logger.handlers:
