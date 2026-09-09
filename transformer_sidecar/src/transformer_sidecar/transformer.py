@@ -80,6 +80,10 @@ request_id: str = ""
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
 
+# Room to be left for the extension that a sidecar conversion may append to the
+# name we hand to the science container
+MAX_EXTENSION_LEN = len(".rntuple.root")
+
 PLACE = {
     "host": os.getenv("HOST_NAME", "unknown"),
     "site": os.getenv("site", "unknown"),
@@ -634,18 +638,20 @@ def get_process_info():
 def hash_path(file_name: str) -> str:
     """
     Make the path safe for object store or POSIX, by keeping the length
-    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
-    forty character hash.
+    less than MAX_PATH_LEN. Room is left for the extension that a sidecar
+    conversion may add to the name. Replace the leading (less interesting)
+    characters with a forty character hash.
     :param file_name: Input filename
     :return: Safe path string
     """
-    if len(file_name) > MAX_PATH_LEN:
+    max_len = MAX_PATH_LEN - MAX_EXTENSION_LEN
+    if len(file_name) > max_len:
         hashed_value = sha1(file_name.encode("utf-8")).hexdigest()
         return "".join(
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],  # noqa: E203
+                file_name[-1 * (max_len - len(hashed_value) - 1) :],  # noqa: E203
             ]
         )
     else:
