@@ -1295,13 +1295,29 @@ class TestTransformerManager(ResourceTestBase):
             assert template.spec.affinity is None
 
     @pytest.mark.parametrize(
-        "volume",
+        "volume, mount_propagation",
         [
-            {"hostPath": {"path": "/cvmfs"}},
-            {"persistentVolumeClaim": {"claimName": "cvmfs"}},
+            ({"hostPath": {"path": "/cvmfs"}}, "HostToContainer"),
+            ({"persistentVolumeClaim": {"claimName": "cvmfs"}}, None),
+            (
+                {"persistentVolumeClaim": {"claimName": "cvmfs", "readOnly": True}},
+                None,
+            ),
+            (
+                {
+                    "csi": {
+                        "driver": "cvmfs.csi.cern.ch",
+                        "readOnly": True,
+                        "volumeAttributes": {"repository": "atlas.cern.ch"},
+                    }
+                },
+                None,
+            ),
         ],
     )
-    def test_launch_transformer_jobs_with_cvmfs(self, mocker, volume):
+    def test_launch_transformer_jobs_with_cvmfs(
+        self, mocker, volume, mount_propagation
+    ):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
@@ -1336,34 +1352,24 @@ class TestTransformerManager(ResourceTestBase):
             called_job = mock_kubernetes.mock_calls[1][2]["body"]
             container = called_job.spec.template.spec.containers[0]
 
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_job
+            )
             cvmfs_vol = next(
                 filter(
-                    lambda v: v.name == "cvmfs",
-                    called_job.spec.template.spec.volumes,
+                    lambda v: v["name"] == "cvmfs",
+                    manifest["spec"]["template"]["spec"]["volumes"],
                 )
             )
-            # check that one volume type exists
-            assert (
-                len(
-                    [
-                        _
-                        for _ in cvmfs_vol.to_dict().items()
-                        if _[1] is not None and _[0] != "name"
-                    ]
-                )
-                == 1
-            )
-            # check that all the keys have been snake cased
-            for key, subdict in cvmfs_vol.to_dict().items():
-                if key == "name":
-                    continue
-                if subdict is not None:
-                    assert all(_.islower() for _ in subdict.keys())
+            # the volume definition is passed through verbatim, apart from the name
+            assert cvmfs_vol == {**volume, "name": "cvmfs"}
 
             cvmfs_vol_mount = next(
                 filter(lambda m: m.name == "cvmfs", container.volume_mounts)
             )
             assert cvmfs_vol_mount.mount_path == "/cvmfs"
+            assert cvmfs_vol_mount.read_only is True
+            assert cvmfs_vol_mount.mount_propagation == mount_propagation
 
 
 @pytest.fixture
