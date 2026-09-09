@@ -35,6 +35,9 @@ import base64
 import os
 import tempfile
 
+import pytest
+from servicex_codegen.code_generator import GenerateCodeException
+
 from python_code_generator.python_translator import PythonTranslator
 
 
@@ -51,3 +54,44 @@ def test_generate_code():
         result = translator.generate_code(code, tmpdirname)
         assert result.hash == expected_hash
         assert result.output_dir == os.path.join(tmpdirname, expected_hash)
+
+
+def test_generate_code_non_ascii_source():
+    os.environ["TEMPLATE_PATH"] = (
+        "python_code_generator/templates/transform_single_file.py"
+    )
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        code = base64.b64encode("x = 'π'".encode("utf-8"))
+        result = translator.generate_code(code, tmpdirname)
+        assert result.output_dir == os.path.join(tmpdirname, "no-hash")
+        generated = os.path.join(result.output_dir, "generated_transformer.py")
+        with open(generated, encoding="utf-8") as f:
+            assert "x = 'π'" in f.read()
+
+
+def test_generate_code_accepts_newer_python_syntax():
+    # The code runs in the science image, which may use a newer Python than
+    # the code generator, so syntax this interpreter rejects must pass through.
+    os.environ["TEMPLATE_PATH"] = (
+        "python_code_generator/templates/transform_single_file.py"
+    )
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        source = 'def run_query(d):\n    return f"{d["a"]}"\n'
+        code = base64.b64encode(source.encode("utf-8"))
+        result = translator.generate_code(code, tmpdirname)
+        generated = os.path.join(result.output_dir, "generated_transformer.py")
+        with open(generated, encoding="utf-8") as f:
+            assert source in f.read()
+
+
+def test_generate_code_bad_base64():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = PythonTranslator()
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code("not base64!", tmpdirname)
