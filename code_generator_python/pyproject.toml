@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = []
 readme = "README.md"
-packages = [{include = "code_generator_python"}]
+packages = [{include = "python_code_generator"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"
