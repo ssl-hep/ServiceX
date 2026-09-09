@@ -240,6 +240,83 @@ class TestTransformerManager(ResourceTestBase):
             assert requests["cpu"] == "500m"
             assert requests["memory"] == "512Mi"
 
+    def test_launch_transformer_jobs_custom_sidecar_volume_path(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mocker.patch.object(kubernetes.client, "AutoscalingV1Api", mocker.Mock())
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_SIDECAR_VOLUME_PATH="/shared/scratch",
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_deployment = mock_api.mock_calls[1][2]["body"]
+            sidecar, science = called_deployment.spec.template.spec.containers
+
+            assert _arg_value(sidecar.args, "--shared-dir") == "/shared/scratch"
+            assert "/shared/scratch/scripts/proxy-exporter.sh" in science.args[0]
+            assert "/servicex/output" not in sidecar.args[0]
+            assert "/servicex/output" not in science.args[0]
+
+    def test_launch_transformer_jobs_deployment_failure(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.create_namespaced_deployment.side_effect = (
+            kubernetes.client.rest.ApiException(status=403)
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(TRANSFORMER_AUTOSCALE_ENABLED=False),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            with pytest.raises(kubernetes.client.rest.ApiException):
+                transformer.launch_transformer_jobs(
+                    image="sslhep/servicex-transformer:pytest",
+                    request_id="1234",
+                    workers=17,
+                    max_workers=17,
+                    rabbitmq_uri="ampq://test.com",
+                    namespace="my-ns",
+                    result_destination="object-store",
+                    result_format="arrow",
+                    x509_secret="x509",
+                    generated_code_cm=None,
+                    transformer_language="scala",
+                    transformer_command="echo",
+                )
+
     def test_launch_transformer_with_hostpath(self, mocker):
         import kubernetes
 
@@ -660,13 +737,13 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_autoscaling = mocker.Mock()
@@ -674,7 +751,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         transformer = TransformerManager("external-kubernetes")
@@ -701,6 +778,8 @@ class TestTransformerManager(ResourceTestBase):
             transformer.celery_app.control.cancel_consumer.assert_called_with(
                 "transformer-1234"
             )
+            # a 403 is not worth retrying
+            assert mock_api.delete_namespaced_deployment.call_count == 1
         assert client.application.logger.exception.call_count == 4
 
         # now check quiet mode
@@ -728,14 +807,14 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=500),
             None,
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=500),
             None,
         )
 
@@ -744,7 +823,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=500),
             None,
         )
 
@@ -815,9 +894,7 @@ class TestTransformerManager(ResourceTestBase):
         mock_zip_ext = mocker.Mock()
         mock_zip_ext.filename = "foo.sh"
         mock_zip.filelist = [mock_zip_ext]
-        mock_open = mocker.Mock()
-        mock_open.read = mocker.Mock(return_value=b"hi there")
-        mock_zip.open = mocker.Mock(return_value=mock_open)
+        mock_zip.read = mocker.Mock(return_value=b"hi there")
 
         transformer.create_configmap_from_zip(mock_zip, "my-request", "servicex")
 
@@ -1174,15 +1251,15 @@ class TestTransformerManager(ResourceTestBase):
                 "key": "gpu",
                 "operator": "Exists",
                 "effect": "NoExecute",
-                "toleration_seconds": 3600,
+                "tolerationSeconds": 3600,
             },
         ]
         affinity = {
-            "node_affinity": {
-                "required_during_scheduling_ignored_during_execution": {
-                    "node_selector_terms": [
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
                         {
-                            "match_expressions": [
+                            "matchExpressions": [
                                 {
                                     "key": "topology.kubernetes.io/zone",
                                     "operator": "In",
@@ -1234,20 +1311,15 @@ class TestTransformerManager(ResourceTestBase):
             # Verify node selector
             assert template.spec.node_selector == node_selector
 
-            # Verify tolerations
-            assert len(template.spec.tolerations) == 2
-            assert template.spec.tolerations[0].key == "dedicated"
-            assert template.spec.tolerations[0].operator == "Equal"
-            assert template.spec.tolerations[0].value == "servicex"
-            assert template.spec.tolerations[0].effect == "NoSchedule"
-            assert template.spec.tolerations[1].key == "gpu"
-            assert template.spec.tolerations[1].operator == "Exists"
-            assert template.spec.tolerations[1].effect == "NoExecute"
-            assert template.spec.tolerations[1].toleration_seconds == 3600
-
-            # Verify affinity
-            assert template.spec.affinity is not None
-            assert template.spec.affinity.node_affinity is not None
+            # Verify the manifest which actually gets sent to Kubernetes keeps
+            # the standard camelCase spelling of these settings
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_deployment
+            )
+            pod_spec = manifest["spec"]["template"]["spec"]
+            assert pod_spec["tolerations"] == tolerations
+            assert pod_spec["affinity"] == affinity
+            assert pod_spec["nodeSelector"] == node_selector
 
     def test_launch_transformer_with_empty_pod_scheduling_options(self, mocker):
         import kubernetes
@@ -1341,29 +1413,17 @@ class TestTransformerManager(ResourceTestBase):
             called_job = mock_kubernetes.mock_calls[1][2]["body"]
             container = called_job.spec.template.spec.containers[0]
 
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_job
+            )
             cvmfs_vol = next(
                 filter(
-                    lambda v: v.name == "cvmfs",
-                    called_job.spec.template.spec.volumes,
+                    lambda v: v["name"] == "cvmfs",
+                    manifest["spec"]["template"]["spec"]["volumes"],
                 )
             )
-            # check that one volume type exists
-            assert (
-                len(
-                    [
-                        _
-                        for _ in cvmfs_vol.to_dict().items()
-                        if _[1] is not None and _[0] != "name"
-                    ]
-                )
-                == 1
-            )
-            # check that all the keys have been snake cased
-            for key, subdict in cvmfs_vol.to_dict().items():
-                if key == "name":
-                    continue
-                if subdict is not None:
-                    assert all(_.islower() for _ in subdict.keys())
+            # the volume definition is passed through verbatim, apart from the name
+            assert cvmfs_vol == {**volume, "name": "cvmfs"}
 
             cvmfs_vol_mount = next(
                 filter(lambda m: m.name == "cvmfs", container.volume_mounts)

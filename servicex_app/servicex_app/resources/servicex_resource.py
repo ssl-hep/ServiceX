@@ -31,9 +31,7 @@ from importlib.metadata import version, PackageNotFoundError
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
-from servicex_app.models import UserModel, TransformRequest, TransformStatus
-
-from servicex_app.transformer_manager import TransformerManager
+from servicex_app.models import UserModel
 
 from servicex_app.decorators import jwt_required_if_auth_enabled
 
@@ -72,44 +70,3 @@ class ServiceXResource(Resource):
             return version("servicex_app")
         except PackageNotFoundError:
             return "develop"
-
-    @classmethod
-    def start_transformers(
-        cls,
-        transformer_manager: TransformerManager,
-        config: dict,
-        request_rec: TransformRequest,
-    ):
-        """
-        Start the transformers for a given request
-        """
-        rabbitmq_uri = config["TRANSFORMER_RABBIT_MQ_URL"]
-        namespace = config["TRANSFORMER_NAMESPACE"]
-        x509_secret = config["TRANSFORMER_X509_SECRET"]
-        generated_code_cm = request_rec.generated_code_cm
-
-        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
-
-        current_app.logger.info(
-            f"Launching {request_rec.workers} transformers.",
-            extra={"request_id": request_rec.request_id},
-        )
-
-        transformer_manager.launch_transformer_jobs(
-            image=request_rec.image,
-            request_id=request_rec.request_id,
-            workers=request_rec.workers,
-            max_workers=(
-                max(1, request_rec.files)
-                if request_rec.status == TransformStatus.running
-                else config["TRANSFORMER_MAX_REPLICAS"]
-            ),
-            rabbitmq_uri=rabbitmq_uri,
-            namespace=namespace,
-            x509_secret=x509_secret,
-            generated_code_cm=generated_code_cm,
-            result_destination=request_rec.result_destination,
-            result_format=request_rec.result_format,
-            transformer_language=request_rec.transformer_language,
-            transformer_command=request_rec.transformer_command,
-        )
