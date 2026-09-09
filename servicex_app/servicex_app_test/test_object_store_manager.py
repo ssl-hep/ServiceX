@@ -25,10 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from flask import Flask
+from pytest import fixture
+
 from servicex_app.object_store_manager import ObjectStoreManager
 
 
 class TestObjectStoreManager:
+    @fixture
+    def app(self):
+        return Flask(__name__)
+
     def test_init(self, mocker):
         mock_minio = mocker.patch("minio.Minio")
         ObjectStoreManager("localhost:9999", "foo", "bar")
@@ -58,7 +65,7 @@ class TestObjectStoreManager:
         mock_minio.list_buckets.assert_called()
         assert bucket_list == ["a", "b"]
 
-    def test_delete_bucket_and_contents(self, mocker):
+    def test_delete_bucket_and_contents(self, mocker, app):
         import minio
 
         mock_minio = mocker.MagicMock(minio.api.Minio)
@@ -67,17 +74,21 @@ class TestObjectStoreManager:
         mock_object = mocker.MagicMock()
         mock_object.object_name = "a"
         mock_minio.list_objects = mocker.Mock(return_value=[mock_object])
+        mock_minio.remove_objects = mocker.Mock(return_value=[])
         mocker.patch("minio.Minio", return_value=mock_minio)
 
         object_store = ObjectStoreManager("localhost:9999", "foo", "bar")
-        object_store.delete_bucket_and_contents("123-455")
+        with app.app_context():
+            object_store.delete_bucket_and_contents("123-455")
 
         mock_minio.bucket_exists.assert_called_with("123-455")
         mock_minio.list_objects.assert_called_with("123-455", recursive=True)
-        mock_minio.remove_object.assert_called_with("123-455", "a")
+        bucket, delete_objects = mock_minio.remove_objects.call_args[0]
+        assert bucket == "123-455"
+        assert [obj.name for obj in delete_objects] == ["a"]
         mock_minio.remove_bucket.assert_called_with("123-455")
 
-    def test_delete_bucket_and_contents_no_bucket(self, mocker):
+    def test_delete_bucket_and_contents_no_bucket(self, mocker, app):
         import minio
 
         mock_minio = mocker.MagicMock(minio.api.Minio)
@@ -86,7 +97,8 @@ class TestObjectStoreManager:
         mocker.patch("minio.Minio", return_value=mock_minio)
 
         object_store = ObjectStoreManager("localhost:9999", "foo", "bar")
-        object_store.delete_bucket_and_contents("123-455")
+        with app.app_context():
+            object_store.delete_bucket_and_contents("123-455")
 
         mock_minio.bucket_exists.assert_called_with("123-455")
         mock_minio.list_objects.assert_not_called()

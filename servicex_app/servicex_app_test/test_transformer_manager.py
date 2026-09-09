@@ -992,7 +992,10 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
 
             env = container.env
-            request_func_mock.assert_called_with("GET", "https://dummy")
+            request_args, request_kwargs = request_func_mock.call_args
+            assert request_args == ("GET", "https://dummy")
+            assert request_kwargs["timeout"].connect_timeout == 2
+            assert request_kwargs["timeout"].read_timeout == 5
             assert (
                 _env_value(env, "CACHE_PREFIX")
                 == "1.1.1.1:1094,1.1.1.2:1094,1.1.1.3:1094"
@@ -1073,7 +1076,10 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
 
             env = container.env
-            request_func_mock.assert_called_with("GET", "https://dummy")
+            request_args, request_kwargs = request_func_mock.call_args
+            assert request_args == ("GET", "https://dummy")
+            assert request_kwargs["timeout"].connect_timeout == 2
+            assert request_kwargs["timeout"].read_timeout == 5
             assert _env_value(env, "CACHE_PREFIX") == "root://dummy"
 
     def test_get_all_deployments(self, mocker, mock_kubernetes):

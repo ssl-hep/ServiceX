@@ -50,7 +50,6 @@ def jwt_required_if_auth_enabled(*dargs, **dkwargs):
     return decorate
 
 
-@jwt_required_if_auth_enabled
 def get_jwt_user():
     user = UserModel.find_by_email(get_jwt_identity())
 
