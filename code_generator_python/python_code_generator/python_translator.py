@@ -112,6 +112,4 @@ os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
             os.path.join(query_file_path, "transformer_capabilities.json"),
         )
 
-        os.system("ls -lht " + query_file_path)
-        os.system(f"cat {query_file_path}/generated_transformer.py")
         return GeneratedFileResult(hash, query_file_path)
