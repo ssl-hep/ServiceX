@@ -28,7 +28,7 @@
 from datetime import datetime
 from unittest.mock import ANY
 
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 
 from servicex_app.models import (
     Dataset,
@@ -216,6 +216,36 @@ class TestDataLifecycleOps(ResourceTestBase):
         assert len(remaining_results) == 1
         if use_object_store:
             mock_object_store.delete_bucket_and_contents.assert_called_with("2")
+
+    def test_expired_transforms_object_store_failure(
+        self, mocker, insert_transforms, db_session
+    ):
+        """A failure part way through keeps the transforms already deleted"""
+        data_life_cycle_ops = DataLifecycleOps()
+
+        mock_object_store = mocker.MagicMock()
+        mock_object_store.delete_bucket_and_contents.side_effect = [
+            None,
+            RuntimeError("bucket not empty"),
+        ]
+
+        with raises(RuntimeError):
+            data_life_cycle_ops.delete_expired_transforms(
+                db_session,
+                mock_object_store,
+                cutoff_timestamp=datetime.fromisoformat("2022-01-01T00:00:00"),
+            )
+
+        # The first transform is gone, the one whose bucket failed is kept
+        first, second = [
+            call.args[0]
+            for call in mock_object_store.delete_bucket_and_contents.call_args_list
+        ]
+        remaining_transforms = db_session.query(TransformRequest).all()
+        assert [t.request_id for t in remaining_transforms] == [second]
+        remaining_results = db_session.query(TransformationResult).all()
+        assert [r.request_id for r in remaining_results] == [second]
+        assert first != second
 
     def test_orphaned_datasets(self, insert_datasets, db_session):
         data_life_cycle_ops = DataLifecycleOps()
@@ -472,3 +502,12 @@ class TestDataLifecycleOps(ResourceTestBase):
         )
 
         mock_orphaned.assert_called_with(ANY)
+
+    @mark.parametrize("query_string", [{}, {"cutoff_timestamp": "not-a-timestamp"}])
+    def test_post_bad_cutoff_timestamp(self, query_string):
+        client = self._test_client()
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/data-lifecycle", query_string=query_string
+            )
+        assert response.status_code == 400
