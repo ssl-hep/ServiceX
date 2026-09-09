@@ -511,15 +511,11 @@ class TransformerManager:
 
     @staticmethod
     def _create_job(api_instance, job, namespace, request_id):
-        try:
-            api_instance.create_namespaced_deployment(body=job, namespace=namespace)
-            current_app.logger.info(
-                "Request deployment created.", extra={"request_id": request_id}
-            )
-        except ApiException as e:
-            current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
-            )
+        # A failure here propagates to the caller, which records it on the request
+        api_instance.create_namespaced_deployment(body=job, namespace=namespace)
+        current_app.logger.info(
+            "Request deployment created.", extra={"request_id": request_id}
+        )
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace, request_id):
