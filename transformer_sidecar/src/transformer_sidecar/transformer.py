@@ -436,7 +436,6 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
 def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
-    object_store = ObjectStoreManager()
     object_name = rec.s3_object_name
 
     logger.info(
