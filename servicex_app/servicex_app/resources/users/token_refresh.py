@@ -47,6 +47,9 @@ class TokenRefresh(Resource):
         claims = get_jwt()
 
         user = UserModel.find_by_email(claims["sub"])
+        if not user or not user.refresh_token:
+            return {"message": "Invalid or outdated refresh token"}, 401
+
         decoded = decode_token(user.refresh_token)
         if not claims["jti"] == decoded["jti"]:
             return {"message": "Invalid or outdated refresh token"}, 401

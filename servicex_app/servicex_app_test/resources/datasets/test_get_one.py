@@ -65,3 +65,11 @@ class TestDatasetsGetOne(ResourceTestBase):
         response = client.get("/servicex/datasets/123")
         mock_get.assert_called()
         assert response.status_code == 200
+
+    @patch("servicex_app.models.Dataset.find_by_id")
+    def test_get_one_not_found(self, mock_get):
+        mock_get.return_value = None
+        client = self._test_client()
+        response = client.get("/servicex/datasets/123")
+        mock_get.assert_called()
+        assert response.status_code == 404
