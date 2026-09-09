@@ -29,7 +29,11 @@ import base64
 import os
 import shutil
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 ALLOWED_COMPRESSION_ALGORITHMS = {"ZLIB", "LZMA", "LZ4", "ZSTD"}
 ALLOWED_COMPRESSION_LEVELS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -40,7 +44,15 @@ class PythonTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
 
-        src = base64.b64decode(query).decode("ascii")
+        try:
+            decoded = base64.b64decode(query)
+        except ValueError as e:
+            raise GenerateCodeException(f"Query is not valid base64: {e}")
+
+        try:
+            src = decoded.decode("utf-8")
+        except UnicodeDecodeError as e:
+            raise GenerateCodeException(f"Query is not valid UTF-8: {e}")
 
         compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM", "ZSTD")
         try:
@@ -73,7 +85,9 @@ os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
             os.makedirs(query_file_path)
 
         with open(
-            os.path.join(query_file_path, "generated_transformer.py"), "w"
+            os.path.join(query_file_path, "generated_transformer.py"),
+            "w",
+            encoding="utf-8",
         ) as python_file:
             python_file.write(src)
 
