@@ -53,7 +53,7 @@ def test_generate_code():
                 {"copy_histograms": "CutBookkeeper*"},
             ]
         )
-        expected_hash = "a3ac3db03730b67eafccd0fe8ca8f607"
+        expected_hash = "2af5a1a57aaa8f327b0fd76d3b9a3312"
 
         result = translator.generate_code(query, tmpdirname)
 
@@ -78,6 +78,21 @@ def test_generate_code():
             translator.generate_code(query, tmpdirname)
 
         query = json.dumps([{}])
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+        # not JSON at all
+        query = "{not json"
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+        # subquery is not a dictionary
+        query = json.dumps(["nominal"])
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+        # non-finite floats cannot be written into the generated code
+        query = '[{"treename": "nominal", "cut": NaN}]'
         with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 

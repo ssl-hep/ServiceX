@@ -32,6 +32,7 @@ import time
 from pathlib import Path
 from generated_transformer import run_query  # noqa
 import awkward as ak
+import pyarrow as pa
 import pyarrow.parquet as pq
 import functools
 
@@ -146,6 +147,8 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             finally:
                 if writer:
                     writer.close()
+            if writer is None:
+                pq.write_table(pa.table({}), output_path)
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size

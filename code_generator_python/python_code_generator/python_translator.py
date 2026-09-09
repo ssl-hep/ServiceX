@@ -25,11 +25,16 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import ast
 import base64
 import os
 import shutil
 
-from servicex_codegen.code_generator import CodeGenerator, GeneratedFileResult
+from servicex_codegen.code_generator import (
+    CodeGenerator,
+    GeneratedFileResult,
+    GenerateCodeException,
+)
 
 ALLOWED_COMPRESSION_ALGORITHMS = {"ZLIB", "LZMA", "LZ4", "ZSTD"}
 ALLOWED_COMPRESSION_LEVELS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -40,7 +45,20 @@ class PythonTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
 
-        src = base64.b64decode(query).decode("ascii")
+        try:
+            decoded = base64.b64decode(query)
+        except ValueError as e:
+            raise GenerateCodeException(f"Query is not valid base64: {e}")
+
+        try:
+            src = decoded.decode("utf-8")
+        except UnicodeDecodeError as e:
+            raise GenerateCodeException(f"Query is not valid UTF-8: {e}")
+
+        try:
+            ast.parse(src)
+        except SyntaxError as e:
+            raise GenerateCodeException(f"Query is not valid Python: {e}")
 
         compression_algorithm = os.environ.get("COMPRESSION_ALGORITHM", "ZSTD")
         try:
@@ -94,6 +112,4 @@ os.environ['COMPRESSION_LEVEL'] = '{compression_level}'
             os.path.join(query_file_path, "transformer_capabilities.json"),
         )
 
-        os.system("ls -lht " + query_file_path)
-        os.system(f"cat {query_file_path}/generated_transformer.py")
         return GeneratedFileResult(hash, query_file_path)

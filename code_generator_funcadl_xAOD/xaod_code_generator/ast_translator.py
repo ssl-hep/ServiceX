@@ -69,6 +69,8 @@ class AstAODTranslator(CodeGenerator):
         return self._exe
 
     def generate_code(self, query, cache_path: str):
+        import hashlib
+
         path = Path(cache_path)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
@@ -83,6 +85,8 @@ class AstAODTranslator(CodeGenerator):
                 f'Requested codegen for "{query}" yielded no code statements (or too many).'
             )  # noqa: E501
         a = body[0].value
+
+        _hash = hashlib.md5(query.encode(), usedforsecurity=False).hexdigest()
 
         self._exe.reset()
         self._exe.write_cpp_files(self._exe.apply_ast_transformations(a), path)
@@ -101,6 +105,4 @@ class AstAODTranslator(CodeGenerator):
             capabilities_path, os.path.join(path, "transformer_capabilities.json")
         )
 
-        os.system("ls -lht " + cache_path)
-
-        return GeneratedFileResult(hash, cache_path)
+        return GeneratedFileResult(_hash, cache_path)
