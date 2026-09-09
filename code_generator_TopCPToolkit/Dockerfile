@@ -7,7 +7,7 @@ WORKDIR /home/servicex
 RUN mkdir ./servicex
 
 ENV  POETRY_VERSION=2.1.1
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
