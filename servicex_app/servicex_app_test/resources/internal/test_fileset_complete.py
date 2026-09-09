@@ -148,3 +148,32 @@ class TestFilesetComplete(ResourceTestBase):
         assert running_request.finish_time is not None
         assert pending_request.status == TransformStatus.complete
         assert pending_request.finish_time is not None
+
+    def test_put_fileset_complete_unknown_dataset(self, mocker):
+        mock_lookup_pending = mocker.patch.object(
+            TransformRequest, "lookup_pending_on_dataset", return_value=[]
+        )
+        mock_lookup_running = mocker.patch.object(
+            TransformRequest, "lookup_running_by_dataset_id", return_value=[]
+        )
+        mock_find_dataset_by_id = mocker.patch.object(
+            Dataset, "find_by_id", return_value=None
+        )
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(lookup_result_processor=mock_processor)
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/complete",
+            json={
+                "files": 17,
+                "total-events": 1024,
+                "total-bytes": 2046,
+                "elapsed-time": 42,
+            },
+        )
+
+        assert response.status_code == 422
+        mock_find_dataset_by_id.assert_called_once_with(1234)
+        mock_lookup_pending.assert_not_called()
+        mock_lookup_running.assert_not_called()

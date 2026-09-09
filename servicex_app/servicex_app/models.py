@@ -530,7 +530,11 @@ class Dataset(db.Model):
             "size": self.size,
             "events": self.events,
             "last_used": str(self.last_used.strftime(iso_fmt)),
-            "last_updated": str(self.last_updated.strftime(iso_fmt)),
+            "last_updated": (
+                str(self.last_updated.strftime(iso_fmt))
+                if self.last_updated is not None
+                else None
+            ),
             "lookup_status": self.lookup_status,
             "is_stale": self.stale,
         }
