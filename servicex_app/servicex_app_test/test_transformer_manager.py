@@ -240,6 +240,41 @@ class TestTransformerManager(ResourceTestBase):
             assert requests["cpu"] == "500m"
             assert requests["memory"] == "512Mi"
 
+    def test_launch_transformer_jobs_deployment_failure(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.create_namespaced_deployment.side_effect = (
+            kubernetes.client.rest.ApiException(status=403)
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(TRANSFORMER_AUTOSCALE_ENABLED=False),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            with pytest.raises(kubernetes.client.rest.ApiException):
+                transformer.launch_transformer_jobs(
+                    image="sslhep/servicex-transformer:pytest",
+                    request_id="1234",
+                    workers=17,
+                    max_workers=17,
+                    rabbitmq_uri="ampq://test.com",
+                    namespace="my-ns",
+                    result_destination="object-store",
+                    result_format="arrow",
+                    x509_secret="x509",
+                    generated_code_cm=None,
+                    transformer_language="scala",
+                    transformer_command="echo",
+                )
+
     def test_launch_transformer_with_hostpath(self, mocker):
         import kubernetes
 

@@ -509,8 +509,10 @@ class TransformerManager:
             )
         except ApiException as e:
             current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
+                f"Exception during Deployment Creation: {e}",
+                extra={"request_id": request_id},
             )
+            raise
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace, request_id):
