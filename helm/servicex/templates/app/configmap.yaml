@@ -90,7 +90,8 @@ data:
     TRANSFORMER_MANAGER_ENABLED = True
 
     {{- if .Values.transformer.cachePrefix }}
-    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
+    {{- /* Strip the surrounding double quotes older values files needed */}}
+    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix | toString | trimAll "\"" | quote }}
     {{- else }}
     TRANSFORMER_CACHE_PREFIX = ""
     {{- end }}
