@@ -31,12 +31,20 @@ from typing import Any
 import requests
 import os
 
-from retry.api import retry_call
+from tenacity import (
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2
+
+# Connect and read timeouts for calls back to the ServiceX app
+REQUEST_TIMEOUT = (5, 60)
 
 PLACE = {
     "host": os.getenv("HOST_NAME", "unknown"),
@@ -105,13 +113,19 @@ class ServiceXAdapter:
     def put_file_complete(self, rec: FileCompleteRecord):
         if self.server_endpoint:
             try:
-                retry_call(
-                    self.session.put,
-                    fargs=[self.server_endpoint + "/file-complete"],
-                    fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
-                    tries=MAX_RETRIES,
-                    delay=RETRY_DELAY,
-                )
+                for attempt in Retrying(
+                    stop=stop_after_attempt(MAX_RETRIES),
+                    wait=wait_fixed(RETRY_DELAY),
+                    retry=retry_if_exception_type(requests.RequestException),
+                    reraise=True,
+                ):
+                    with attempt:
+                        response = self.session.put(
+                            self.server_endpoint + "/file-complete",
+                            json=rec.to_json(),
+                            timeout=REQUEST_TIMEOUT,
+                        )
+                        response.raise_for_status()
                 self.logger.info(
                     "Put file complete.",
                     extra={

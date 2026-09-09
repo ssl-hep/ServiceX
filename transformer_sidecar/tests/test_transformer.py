@@ -37,7 +37,10 @@ from pathlib import Path
 from pytest import fixture
 
 from transformer_sidecar.object_store_manager import ObjectStoreError
+from transformer_sidecar.science_container_command import ScienceContainerException
 from transformer_sidecar.transformer import (
+    MAX_EXTENSION_LEN,
+    MAX_PATH_LEN,
     init,
     transform_file,
     prioritize_replicas,
@@ -475,7 +478,7 @@ def test_transformer_long_filename(
         assert (
             len(science_request["safeOutputFileName"])
             - len(os.path.join(args.shared_dir, test_request_id, "scratch"))
-            == 256
+            == MAX_PATH_LEN - MAX_EXTENSION_LEN + 1
         )
 
 
@@ -485,8 +488,10 @@ def test_hash_path():
     # Short names not messed with
     assert hash_path("root://site1/file.root") == "root://site1/file.root"
 
-    # Long names are hashed
-    assert len(hash_path("rootfile12" * 300)) == 255
+    # Long names are hashed, with room left for an extension we may add later
+    hashed = hash_path("rootfile12" * 300)
+    assert len(hashed) == MAX_PATH_LEN - MAX_EXTENSION_LEN
+    assert len(Path(hashed).with_suffix(".rntuple.root").name) <= MAX_PATH_LEN
 
 
 def test_transform_file(
@@ -618,6 +623,54 @@ def test_transform_file_exception(
         assert failure_report.file_path == test_paths[0]
         assert failure_report.file_id == test_file_id
         assert failure_report.request_id == test_request_id
+
+        # The science container is waiting for a confirmation, even though we
+        # never got a usable response out of it
+        mock_science_container.return_value.confirm.assert_called_once()
+
+
+def test_transform_file_science_container_exception(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root", "parquet"],
+            "root",
+        )
+
+        mock_science_container.return_value.await_response.side_effect = (
+            ScienceContainerException("Science container is gone")
+        )
+        mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination=test_result_destination,
+            result_format=test_result_format,
+        )
+
+        mock_servicex_adapter.return_value.put_file_complete.assert_called_once()
+        failure_report = mock_servicex_adapter.return_value.put_file_complete.call_args[
+            0
+        ][0]
+        assert failure_report.status == "failure"
+        assert failure_report.file_id == test_file_id
+
+        # The whole worker is taken down, not just the pool child
+        mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
 
 
 def test_transform_file_object_store_error(
