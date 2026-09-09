@@ -34,11 +34,16 @@ import tempfile
 from types import SimpleNamespace
 from pathlib import Path
 
+import pytest
+import requests
+from celery.exceptions import WorkerLostError
 from pytest import fixture
 
 from transformer_sidecar.object_store_manager import ObjectStoreError
+from transformer_sidecar.science_container_command import ScienceContainerException
 from transformer_sidecar.transformer import (
     init,
+    report_lost_worker,
     transform_file,
     prioritize_replicas,
     prepend_xcache,
@@ -618,6 +623,228 @@ def test_transform_file_exception(
         assert failure_report.file_path == test_paths[0]
         assert failure_report.file_id == test_file_id
         assert failure_report.request_id == test_request_id
+
+        # The science container is waiting for a confirmation, even though we
+        # never got a usable response out of it
+        mock_science_container.return_value.confirm.assert_called_once()
+
+
+def test_transform_file_science_container_exception(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root", "parquet"],
+            "root",
+        )
+
+        mock_science_container.return_value.await_response.side_effect = (
+            ScienceContainerException("Science container is gone")
+        )
+        mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination=test_result_destination,
+            result_format=test_result_format,
+        )
+
+        mock_servicex_adapter.return_value.put_file_complete.assert_called_once()
+        failure_report = mock_servicex_adapter.return_value.put_file_complete.call_args[
+            0
+        ][0]
+        assert failure_report.status == "failure"
+        assert failure_report.file_id == test_file_id
+
+        # The whole worker is taken down, not just the pool child
+        mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def run_transform_file(args, mock_celery, transformer_capabilities, temp_dir):
+    init_test(
+        args,
+        mock_celery,
+        transformer_capabilities,
+        temp_dir,
+        ["root", "parquet"],
+        "root",
+    )
+    transform_file(
+        request_id=test_request_id,
+        file_id=test_file_id,
+        paths=test_paths,
+        service_endpoint=test_service_endpoint,
+        result_destination=test_result_destination,
+        result_format=test_result_format,
+    )
+
+
+@pytest.mark.parametrize(
+    "response_error",
+    [ScienceContainerException("Science container is gone"), Exception("Oops")],
+)
+def test_transform_file_confirm_fails(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+    response_error,
+):
+    # The connection broke, so confirming the request fails as well. That must not
+    # keep the worker from being restarted.
+    mock_science_container.return_value.await_response.side_effect = response_error
+    mock_science_container.return_value.confirm.side_effect = ScienceContainerException(
+        "lost the connection to the science container"
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    put_file_complete = mock_servicex_adapter.return_value.put_file_complete
+    put_file_complete.assert_called_once()
+    assert put_file_complete.call_args[0][0].status == "failure"
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_transform_file_confirm_fails_after_success(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    # The file was transformed, but the science container went away before we
+    # could confirm it
+    mock_science_container.return_value.await_response.return_value = "success."
+    mock_science_container.return_value.confirm.side_effect = ScienceContainerException(
+        "lost the connection to the science container"
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result_file_path = (
+            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+        )
+        result_file_path.parent.mkdir(parents=True)
+        result_file_path.write_text("test")
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_transform_file_failure_report_fails(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    # Even if the failure can't be reported, the worker has to be restarted
+    mock_science_container.return_value.await_response.side_effect = (
+        ScienceContainerException("Science container is gone")
+    )
+    mock_servicex_adapter.return_value.put_file_complete.side_effect = (
+        requests.HTTPError("500 Server Error")
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with pytest.raises(requests.HTTPError):
+            run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_report_lost_worker(mock_servicex_adapter, mocker):
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    report_lost_worker(
+        sender=transform_file,
+        exception=WorkerLostError("Worker exited prematurely: signal 9 (SIGKILL)."),
+        args=(),
+        kwargs={
+            "request_id": test_request_id,
+            "file_id": test_file_id,
+            "paths": ["davs://site2/file.root", "root://site1//file.root"],
+            "service_endpoint": test_service_endpoint,
+            "result_destination": test_result_destination,
+            "result_format": test_result_format,
+        },
+    )
+
+    mock_servicex_adapter.assert_called_once_with(test_service_endpoint)
+    put_file_complete = mock_servicex_adapter.return_value.put_file_complete
+    put_file_complete.assert_called_once()
+    rec = put_file_complete.call_args[0][0]
+    assert rec.status == "failure"
+    assert rec.request_id == test_request_id
+    assert rec.file_id == test_file_id
+    assert rec.file_path == "root://site1//file.root"
+
+    # This runs in the worker's main process, so it shuts itself down
+    mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+
+
+def test_report_lost_worker_positional_args(mock_servicex_adapter, mocker):
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+    mock_servicex_adapter.return_value.put_file_complete.side_effect = (
+        requests.ConnectionError()
+    )
+
+    with pytest.raises(requests.ConnectionError):
+        report_lost_worker(
+            sender=transform_file,
+            exception=WorkerLostError(),
+            args=(
+                test_request_id,
+                test_file_id,
+                test_paths,
+                test_service_endpoint,
+                test_result_destination,
+                test_result_format,
+            ),
+            kwargs={},
+        )
+
+    rec = mock_servicex_adapter.return_value.put_file_complete.call_args[0][0]
+    assert rec.file_id == test_file_id
+    mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+
+
+def test_report_lost_worker_ignores_task_errors(mock_servicex_adapter, mocker):
+    # Errors raised by the task itself have already been reported by the task
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    report_lost_worker(
+        sender=transform_file,
+        exception=requests.HTTPError("500 Server Error"),
+        args=(),
+        kwargs={"request_id": test_request_id, "file_id": test_file_id},
+    )
+
+    mock_servicex_adapter.return_value.put_file_complete.assert_not_called()
+    mock_kill.assert_not_called()
 
 
 def test_transform_file_object_store_error(
