@@ -167,7 +167,8 @@ class ReplicaSorter(object):
         try:
             fname, _ = urlretrieve(url)
         except Exception as e:
-            logger.error(f"Failure retrieving GeoIP database {url}.\nError: {e}")
+            safe_url = urlparse(url)._replace(query="").geturl()
+            logger.error(f"Failure retrieving GeoIP database {safe_url}.\nError: {e}")
             return
         try:
             if unpacked:
