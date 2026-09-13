@@ -122,6 +122,30 @@ class TestTransformerManager(ResourceTestBase):
             mock_kubernetes.config.load_incluster_config.assert_not_called()
             mock_kubernetes.config.load_kube_config.assert_not_called()
 
+    def test_compute_output_path_object_store(self):
+        assert (
+            TransformerManager.compute_output_path(
+                "req-123", TransformRequest.OBJECT_STORE_DEST
+            )
+            == "req-123"
+        )
+
+    def test_compute_output_path_volume(self):
+        client = self._test_client(
+            extra_config={"TRANSFORMER_PERSISTENCE_SUBDIR": "out-dir"}
+        )
+        with client.application.app_context():
+            result = TransformerManager.compute_output_path(
+                "req-123", TransformRequest.VOLUME_DEST
+            )
+            assert result == os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT, "out-dir"
+            )
+
+    def test_compute_output_path_unknown(self):
+        with pytest.raises(ValueError, match="Unknown result_destination"):
+            TransformerManager.compute_output_path("req-123", "s3-bucket")
+
     @pytest.mark.skip(reason="Needs to be updated to work with sidecar")
     def test_launch_transformer_jobs(self, mocker):
         import kubernetes
