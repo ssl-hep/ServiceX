@@ -542,10 +542,10 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         extra={"request_id": request_id, "place": PLACE},
     )
 
-    # Start the shutdown watchdog. It polls the ServiceX server for the
-    # lookup-complete flag; once no more work will arrive and this worker
-    # has been idle long enough, it broadcasts a Celery shutdown so the
-    # worker (and its Job pod) can exit cleanly.
+    # Start the shutdown watchdog. It polls the ServiceX server to find out
+    # whether this request has any work left; once no more will arrive and
+    # this worker has been idle long enough, it shuts this worker down so
+    # the pod (and eventually its Job) can exit cleanly.
     instance_name = os.environ.get("INSTANCE_NAME")
     if instance_name:
         status_url = (
@@ -553,7 +553,6 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             f"/servicex/internal/transformation/{request_id}/status"
         )
         watchdog = ShutdownWatchdog(
-            app=app,
             status_url=status_url,
             request_id=request_id,
             place=PLACE,
@@ -684,7 +683,7 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
 
         # Construct the path
         prefixed_paths.append(f"root://{prefix_list[pinned_xcache_index]}//{f}")
-    return prefixed_paths
+    return prefixed_paths + list(file_paths)
 
 
 @after_setup_logger.connect

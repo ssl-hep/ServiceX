@@ -1338,10 +1338,11 @@ class TestPatchTransformerParallelism:
         )
         mock_warning = mocker.patch.object(app_context.logger, "warning")
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 5
         )
 
+        assert result is False
         batch_api.patch_namespaced_job.assert_not_called()
         mock_warning.assert_not_called()
 
@@ -1353,30 +1354,34 @@ class TestPatchTransformerParallelism:
         )
         mock_warning = mocker.patch.object(app_context.logger, "warning")
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 5
         )
 
+        assert result is False
         batch_api.patch_namespaced_job.assert_not_called()
         mock_warning.assert_called_once()
 
     def test_noop_when_desired_le_current(self, app_context, batch_api):
         batch_api.read_namespaced_job.return_value = self._job_with_parallelism(5)
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 3
         )
 
+        # Already big enough counts as success: the caller may record it.
+        assert result is True
         batch_api.patch_namespaced_job.assert_not_called()
 
     def test_patch_happy_path(self, app_context, mocker, batch_api):
         batch_api.read_namespaced_job.return_value = self._job_with_parallelism(2)
         mock_info = mocker.patch.object(app_context.logger, "info")
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 5
         )
 
+        assert result is True
         batch_api.patch_namespaced_job.assert_called_once_with(
             name="transformer-abc",
             namespace="test-ns",
@@ -1387,10 +1392,11 @@ class TestPatchTransformerParallelism:
     def test_patch_none_parallelism_treated_as_zero(self, app_context, batch_api):
         batch_api.read_namespaced_job.return_value = self._job_with_parallelism(None)
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 1
         )
 
+        assert result is True
         batch_api.patch_namespaced_job.assert_called_once_with(
             name="transformer-abc",
             namespace="test-ns",
@@ -1406,10 +1412,11 @@ class TestPatchTransformerParallelism:
         )
         mock_warning = mocker.patch.object(app_context.logger, "warning")
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 5
         )
 
+        assert result is False
         mock_warning.assert_not_called()
 
     def test_patch_non_404_logs_warning(self, app_context, mocker, batch_api):
@@ -1421,10 +1428,11 @@ class TestPatchTransformerParallelism:
         )
         mock_warning = mocker.patch.object(app_context.logger, "warning")
 
-        TransformerManager("internal-kubernetes").patch_transformer_parallelism(
+        result = TransformerManager("internal-kubernetes").patch_transformer_parallelism(
             "abc", "test-ns", 5
         )
 
+        assert result is False
         mock_warning.assert_called_once()
 
 

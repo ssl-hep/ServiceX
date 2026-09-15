@@ -427,7 +427,6 @@ class TransformerManager:
         spec = client.V1JobSpec(
             template=template,
             parallelism=workers,
-            completions=current_app.config["TRANSFORMER_MAX_REPLICAS"],
             backoff_limit=current_app.config.get("TRANSFORMER_BACKOFF_LIMIT", 4),
         )
 
@@ -620,17 +619,9 @@ class TransformerManager:
     @classmethod
     def patch_transformer_parallelism(
         cls, request_id: str, namespace: str, desired_workers: int
-    ) -> None:
+    ) -> bool:
         """
         Grow a running transformer Job's parallelism.
-
-        Only ever increases -- shrinking parallelism terminates pods, which
-        would reintroduce the "kill workers with in-flight tasks" problem the
-        Job conversion was meant to solve. If desired_workers is not greater
-        than the Job's current parallelism, this is a no-op.
-
-        A missing Job (404) is silently ignored so this can be called from
-        code paths that race with shutdown.
         """
         batch_api = client.BatchV1Api()
         job_name = "transformer-" + request_id
@@ -639,16 +630,22 @@ class TransformerManager:
             job = batch_api.read_namespaced_job(name=job_name, namespace=namespace)
         except ApiException as e:
             if e.status == 404:
-                return
+                return False
             current_app.logger.warning(
                 f"Could not read Job for parallelism patch: {e}",
                 extra={"request_id": request_id},
             )
-            return
+            return False
+        except Exception as e:
+            current_app.logger.warning(
+                f"Could not read Job for parallelism patch: {e}",
+                extra={"request_id": request_id},
+            )
+            return False
 
         current = job.spec.parallelism or 0
         if desired_workers <= current:
-            return
+            return True
 
         try:
             batch_api.patch_namespaced_job(
@@ -660,13 +657,21 @@ class TransformerManager:
                 f"Patched transformer Job parallelism {current} -> {desired_workers}",
                 extra={"request_id": request_id},
             )
+            return True
         except ApiException as e:
             if e.status == 404:
-                return
+                return False
             current_app.logger.warning(
                 f"Failed to patch Job parallelism: {e}",
                 extra={"request_id": request_id},
             )
+            return False
+        except Exception as e:
+            current_app.logger.warning(
+                f"Failed to patch Job parallelism: {e}",
+                extra={"request_id": request_id},
+            )
+            return False
 
     @staticmethod
     def get_deployment_status(

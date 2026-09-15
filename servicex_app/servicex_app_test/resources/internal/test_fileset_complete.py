@@ -83,6 +83,7 @@ class TestFilesetComplete(ResourceTestBase):
         )
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.patch_transformer_parallelism.return_value = True
 
         mock_publish_files = mocker.patch.object(DatasetManager, "publish_files")
 
@@ -119,6 +120,8 @@ class TestFilesetComplete(ResourceTestBase):
             ]
         )
         assert mock_transformer_manager.patch_transformer_parallelism.call_count == 2
+        assert pending_request.workers == 5
+        assert lookup_request.workers == 5
 
     def test_put_fileset_complete_empty_dataset(self, mocker, mock_find_dataset_by_id):
         pending_request = TransformRequest()
@@ -141,6 +144,7 @@ class TestFilesetComplete(ResourceTestBase):
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.patch_transformer_parallelism.return_value = True
         mock_transformer_manager.shutdown_transformer_job = mocker.Mock()
 
         client = self._test_client(

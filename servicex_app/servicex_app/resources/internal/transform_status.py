@@ -37,10 +37,7 @@ class TransformationStatusInternal(ServiceXResource):
     def get(self, request_id):
         """
         Return whether the transformer sidecars for this request can safely
-        shut down. Sidecars poll this endpoint. `lookup_complete` flips to
-        True once the DID finder has finished discovering files; combined
-        with a drained local queue, that tells a worker no more work will
-        arrive and it may exit.
+        shut down. Sidecars poll this endpoint.
         """
         submitted_request = TransformRequest.lookup(request_id)
         if submitted_request is None:
@@ -54,4 +51,6 @@ class TransformationStatusInternal(ServiceXResource):
             "request_id": request_id,
             "status": submitted_request.status.string_name,
             "lookup_complete": lookup_complete,
+            "files_remaining": submitted_request.files_remaining,
+            "transform_complete": submitted_request.status.is_complete,
         }

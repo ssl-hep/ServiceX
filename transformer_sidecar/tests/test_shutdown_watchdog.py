@@ -30,6 +30,8 @@ Unit tests for ShutdownWatchdog. Because the class owns its own state, no
 module-level cleanup is required between tests.
 """
 
+import signal
+
 from transformer_sidecar.shutdown_watchdog import ShutdownWatchdog
 
 
@@ -43,7 +45,6 @@ def _response(mocker, status_code=200, payload=None):
 def _make(mocker, **overrides):
     """Build a watchdog with sensible defaults; overrides supersede."""
     kwargs = dict(
-        app=mocker.MagicMock(),
         status_url="http://svc/status",
         request_id="test-request",
         place={"host": "test-host", "site": "test-site", "pod": "test-pod"},
@@ -54,39 +55,94 @@ def _make(mocker, **overrides):
     return ShutdownWatchdog(**kwargs)
 
 
-class TestShouldShutdown:
-    """_should_shutdown() gates the actual celery shutdown call."""
+def _idle(wd):
+    """Make the worker look like it has been idle since the epoch."""
+    wd._last_activity = 0.0
 
-    def test_true_when_lookup_complete_and_idle(self, mocker):
+
+class TestShouldShutdown:
+    """_should_shutdown() gates the actual worker shutdown."""
+
+    def test_true_when_lookup_complete_and_no_files_remaining(self, mocker):
         wd = _make(mocker)
-        # Force worker to look "idle for a long time".
-        wd._last_activity = 0.0
+        _idle(wd)
         mocker.patch(
             "transformer_sidecar.shutdown_watchdog.requests.get",
-            return_value=_response(mocker, payload={"lookup_complete": True}),
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": True, "files_remaining": 0},
+            ),
         )
         assert wd._should_shutdown() is True
 
-    def test_false_when_lookup_pending(self, mocker):
+    def test_false_when_files_still_remaining(self, mocker):
+        # The DID finder is done, but the queue still holds work: leaving now
+        # would drop the last consumer of an auto-delete queue.
         wd = _make(mocker)
-        wd._last_activity = 0.0
+        _idle(wd)
         mocker.patch(
             "transformer_sidecar.shutdown_watchdog.requests.get",
-            return_value=_response(mocker, payload={"lookup_complete": False}),
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": True, "files_remaining": 12},
+            ),
         )
         assert wd._should_shutdown() is False
+
+    def test_false_when_file_count_not_known_yet(self, mocker):
+        # files_remaining is None until the server has a count to report.
+        wd = _make(mocker)
+        _idle(wd)
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.requests.get",
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": True, "files_remaining": None},
+            ),
+        )
+        assert wd._should_shutdown() is False
+
+    def test_false_when_lookup_pending(self, mocker):
+        wd = _make(mocker)
+        _idle(wd)
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.requests.get",
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": False, "files_remaining": 0},
+            ),
+        )
+        assert wd._should_shutdown() is False
+
+    def test_true_when_transform_reached_terminal_state(self, mocker):
+        wd = _make(mocker)
+        _idle(wd)
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.requests.get",
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": False, "transform_complete": True},
+            ),
+        )
+        assert wd._should_shutdown() is True
 
     def test_false_when_worker_still_busy(self, mocker):
         # last_activity = "now" => idle for ~0 seconds
         wd = _make(mocker, idle_shutdown_seconds=60.0)
         mocker.patch(
             "transformer_sidecar.shutdown_watchdog.requests.get",
-            return_value=_response(mocker, payload={"lookup_complete": True}),
+            return_value=_response(
+                mocker,
+                payload={"lookup_complete": True, "files_remaining": 0},
+            ),
         )
         assert wd._should_shutdown() is False
 
     def test_false_on_transient_error(self, mocker):
         wd = _make(mocker)
+        # Must look idle, or the poll is never reached and this would pass
+        # for the wrong reason.
+        _idle(wd)
         mocker.patch(
             "transformer_sidecar.shutdown_watchdog.requests.get",
             side_effect=RuntimeError("connection refused"),
@@ -95,11 +151,23 @@ class TestShouldShutdown:
 
     def test_false_on_5xx(self, mocker):
         wd = _make(mocker)
+        # Must look idle, or the poll is never reached and this would pass
+        # for the wrong reason.
+        _idle(wd)
         mocker.patch(
             "transformer_sidecar.shutdown_watchdog.requests.get",
             return_value=_response(mocker, status_code=502),
         )
         assert wd._should_shutdown() is False
+
+
+class TestPollingIsSkippedWhenBusy:
+    def test_busy_worker_does_not_poll(self, mocker):
+        wd = _make(mocker, idle_shutdown_seconds=60.0)
+        get = mocker.patch("transformer_sidecar.shutdown_watchdog.requests.get")
+
+        assert wd._should_shutdown() is False
+        get.assert_not_called()
 
 
 class TestActivityTracking:
@@ -125,31 +193,49 @@ class TestActivityTracking:
         assert wd.idle_seconds() == 60.0
 
 
+class TestRequestShutdown:
+    """Shutdown must stay local to this worker, never fan out on the broker."""
+
+    def test_signals_only_this_process(self, mocker):
+        wd = _make(mocker)
+        kill = mocker.patch("transformer_sidecar.shutdown_watchdog.os.kill")
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.os.getpid", return_value=4242
+        )
+
+        wd._request_shutdown()
+
+        kill.assert_called_once_with(4242, signal.SIGTERM)
+
+    def test_signal_failure_is_swallowed(self, mocker):
+        wd = _make(mocker)
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.os.kill",
+            side_effect=OSError("no such process"),
+        )
+        # Should not raise.
+        wd._request_shutdown()
+
+
 class TestRun:
     """The _run loop keeps polling until _should_shutdown returns True."""
 
-    def test_loop_broadcasts_shutdown_when_ready(self, mocker):
+    def test_loop_shuts_down_when_ready(self, mocker):
         wd = _make(mocker, poll_interval=0.01)
+        request_shutdown = mocker.patch.object(wd, "_request_shutdown")
         # First two polls: not ready. Third: ready.
         mocker.patch.object(wd, "_should_shutdown", side_effect=[False, False, True])
         wd._run()
-        wd.app.control.shutdown.assert_called_once()
+        request_shutdown.assert_called_once()
 
     def test_loop_exits_cleanly_on_stop(self, mocker):
         wd = _make(mocker, poll_interval=0.01)
+        request_shutdown = mocker.patch.object(wd, "_request_shutdown")
         # Set stop before entering the loop; wait() returns True immediately.
         wd._stop_event.set()
         mocker.patch.object(wd, "_should_shutdown", return_value=True)
         wd._run()
-        wd.app.control.shutdown.assert_not_called()
-
-    def test_shutdown_broadcast_failure_is_swallowed(self, mocker):
-        wd = _make(mocker, poll_interval=0.01)
-        wd.app.control.shutdown.side_effect = RuntimeError("broker down")
-        mocker.patch.object(wd, "_should_shutdown", return_value=True)
-        # Should not raise.
-        wd._run()
-        wd.app.control.shutdown.assert_called_once()
+        request_shutdown.assert_not_called()
 
 
 class TestSignalRegistration:

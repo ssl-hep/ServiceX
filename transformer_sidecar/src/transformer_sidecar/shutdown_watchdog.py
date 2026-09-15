@@ -26,12 +26,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import os
+import signal
 import threading
 import time
 from typing import Optional
 
 import requests
-from celery import Celery
 from celery.signals import task_postrun, task_prerun
 
 logger = logging.getLogger(__name__)
@@ -39,10 +40,10 @@ logger = logging.getLogger(__name__)
 
 class ShutdownWatchdog:
     """
-    Poll the ServiceX status endpoint; once the fileset lookup has completed
-    and this worker has been idle for `idle_shutdown_seconds`, request a
-    graceful Celery shutdown so the pod exits and its Job can complete
-    naturally.
+    Poll the ServiceX status endpoint; once the server reports that this
+    request has no work left and this worker has been idle for
+    `idle_shutdown_seconds`, ask the worker to shut down warmly so the pod
+    exits and its Job can complete naturally.
 
     All state lives on the instance: constructing a new watchdog for tests
     is safe and does not touch other instances.
@@ -50,14 +51,12 @@ class ShutdownWatchdog:
 
     def __init__(
         self,
-        app: Celery,
         status_url: str,
         request_id: str,
         place: dict,
         poll_interval: float = 30.0,
         idle_shutdown_seconds: float = 60.0,
     ):
-        self.app = app
         self.status_url = status_url
         self.request_id = request_id
         self.place = place
@@ -81,8 +80,8 @@ class ShutdownWatchdog:
         ]
 
     def disconnect_signals(self) -> None:
-        for signal, handler in self._connections:
-            signal.disconnect(handler)
+        for sig, handler in self._connections:
+            sig.disconnect(handler)
         self._connections = []
 
     def _on_task_event(self, *args, **kwargs) -> None:
@@ -117,26 +116,39 @@ class ShutdownWatchdog:
                 continue
 
             logger.info(
-                "Fileset lookup complete and worker idle for "
+                "No work left for this request and worker idle for "
                 f"{self.idle_seconds():.1f}s; requesting shutdown.",
                 extra={"request_id": self.request_id, "place": self.place},
             )
-            try:
-                self.app.control.shutdown()
-            except Exception as exc:
-                logger.warning(
-                    f"Shutdown broadcast failed: {exc}",
-                    extra={"request_id": self.request_id, "place": self.place},
-                )
+            self._request_shutdown()
             return
 
+    def _request_shutdown(self) -> None:
+        try:
+            os.kill(os.getpid(), signal.SIGTERM)
+        except Exception as exc:
+            logger.warning(
+                f"Shutdown request failed: {exc}",
+                extra={"request_id": self.request_id, "place": self.place},
+            )
+
     def _should_shutdown(self) -> bool:
+        """
+        A worker may only exit once the server says no more work is coming for
+        this request: the DID finder has finished (`lookup_complete`) *and*
+        every file it found has been accounted for (`files_remaining` is 0).
+        """
+        if self.idle_seconds() < self.idle_shutdown_seconds:
+            return False
         payload = self._poll()
         if payload is None:
             return False
+        if payload.get("transform_complete"):
+            return True
         if not payload.get("lookup_complete"):
             return False
-        return self.idle_seconds() >= self.idle_shutdown_seconds
+        files_remaining = payload.get("files_remaining")
+        return files_remaining is not None and files_remaining <= 0
 
     def _poll(self) -> Optional[dict]:
         try:
