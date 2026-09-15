@@ -15,7 +15,20 @@ updates:
 
   # Maintain dependencies for poetry
   - package-ecosystem: "pip"
-    directory: "/"
+    directories:
+      - "/"
+      - "/code_generator_TopCPToolkit"
+      - "/code_generator_funcadl_uproot"
+      - "/code_generator_funcadl_xAOD"
+      - "/code_generator_python"
+      - "/code_generator_raw_uproot"
+      - "/did_finder_atlasopenmagic"
+      - "/did_finder_cernopendata"
+      - "/did_finder_rucio"
+      - "/did_finder_xrootd"
+      - "/servicex_app"
+      - "/transformer_sidecar"
+      - "/x509_secrets"
     schedule:
       interval: "weekly"
     groups:

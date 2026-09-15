@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "code-generator-funcadl-uproot-raw"
+name = "code-generator-topcptoolkit"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "code_generator_funcadl_uproot_raw"}]
+packages = [{include = "servicex"}]
 
 [tool.poetry.dependencies]
 python = "~3.10"

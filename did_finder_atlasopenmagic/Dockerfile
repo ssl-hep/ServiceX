@@ -12,17 +12,17 @@ RUN useradd -g 0 -ms /bin/bash celery
 
 ENV  POETRY_VERSION=2.3
 
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-# Bring over the main scripts
-COPY . .
-
 ENV XDG_CONFIG_HOME=/opt/servicex
 RUN poetry config virtualenvs.in-project true
 RUN poetry install --no-root --no-interaction --no-ansi
+
+# Bring over the main scripts
+COPY . .
 
 # Change ownership of the app directory to celery user. Also set the group to zero since
 # that is the group OpenShift will run the container as

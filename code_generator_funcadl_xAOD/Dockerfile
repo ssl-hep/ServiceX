@@ -3,7 +3,7 @@ FROM python:3.10
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
 ENV  POETRY_VERSION=2.1.1
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 
