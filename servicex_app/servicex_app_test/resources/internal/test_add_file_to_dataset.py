@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from unittest.mock import ANY
+from unittest.mock import ANY, call
 
 from pytest import fixture
 from servicex_app import LookupResultProcessor
@@ -34,20 +34,29 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 from servicex_app.dataset_manager import DatasetManager
 
 from servicex_app.models import TransformRequest
+from servicex_app.transformer_manager import TransformerManager
 
 
 class TestAddFileToDataset(ResourceTestBase):
+    @fixture
+    def mock_transformer_manager(self, mocker):
+        manager = mocker.MagicMock(TransformerManager)
+        manager.patch_transformer_parallelism.return_value = True
+        return manager
+
     @fixture
     def mock_transformer_lookup(self, mocker):
         first_request = self._generate_transform_request()
         first_request.request_id = "first_request"
         first_request.staus = "Running"
         first_request.files = 0
+        first_request.workers = 1
 
         second_request = self._generate_transform_request()
         second_request.request_id = "second_request"
         second_request.status = "Submitted"
         second_request.files = 0
+        second_request.workers = 1
 
         mock_transformer_lookup = mocker.patch.object(
             TransformRequest,
@@ -70,13 +79,26 @@ class TestAddFileToDataset(ResourceTestBase):
         return mock_dataset_manager_find
 
     def test_put_new_file(
-        self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup
+        self,
+        mocker,
+        mock_dataset_manager_from_id,
+        mock_transformer_lookup,
+        mock_transformer_manager,
     ):
         mock_add_files = mock_dataset_manager_from_id.return_value.add_files
 
+        def fake_add_files(files, requests, _processor):
+            for req in requests:
+                req.files += len(files)
+
+        mock_add_files.side_effect = fake_add_files
+
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
         with client.application.app_context():
 
             response = client.put(
@@ -98,14 +120,28 @@ class TestAddFileToDataset(ResourceTestBase):
             assert len(dataset_file_list) == 1
             assert dataset_file_list[0].paths == "/foo/bar1.root,/foo/bar2.root"
             assert len(running_transform_list) == 2
+            mock_transformer_manager.patch_transformer_parallelism.assert_not_called()
 
     def test_put_new_file_bulk(
-        self, mocker, mock_transformer_lookup, mock_dataset_manager_from_id
+        self,
+        mocker,
+        mock_transformer_lookup,
+        mock_dataset_manager_from_id,
+        mock_transformer_manager,
     ):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_add_files = mock_dataset_manager_from_id.return_value.add_files
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        def fake_add_files(files, requests, _processor):
+            for req in requests:
+                req.files += len(files)
+
+        mock_add_files.side_effect = fake_add_files
+
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
 
         response = client.put(
             "/servicex/internal/transformation/1234/files",
@@ -137,13 +173,108 @@ class TestAddFileToDataset(ResourceTestBase):
         assert running_transform_list[1].request_id == "second_request"
         assert response.json == {"dataset_id": "1234"}
 
+        mock_transformer_manager.patch_transformer_parallelism.assert_has_calls(
+            [
+                call("first_request", "my-ws", 2),
+                call("second_request", "my-ws", 2),
+            ]
+        )
+        assert mock_transformer_manager.patch_transformer_parallelism.call_count == 2
+        assert running_transform_list[0].workers == 2
+        assert running_transform_list[1].workers == 2
+
+    def test_failed_patch_is_not_recorded_as_scaled(
+        self,
+        mocker,
+        mock_dataset_manager_from_id,
+        mock_transformer_lookup,
+        mock_transformer_manager,
+    ):
+        mock_transformer_manager.patch_transformer_parallelism.return_value = False
+
+        mock_add_files = mock_dataset_manager_from_id.return_value.add_files
+
+        def fake_add_files(files, requests, _processor):
+            for req in requests:
+                req.files += len(files)
+
+        mock_add_files.side_effect = fake_add_files
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/files",
+            json=[
+                {
+                    "paths": ["/foo/bar1.root"],
+                    "adler32": "12345",
+                    "file_size": 1024,
+                    "file_events": 500,
+                },
+                {
+                    "paths": ["/foo1/bar1.root"],
+                    "adler32": "12345",
+                    "file_size": 2048,
+                    "file_events": 500,
+                },
+            ],
+        )
+
+        assert response.status_code == 200
+        mock_transformer_manager.patch_transformer_parallelism.assert_called()
+        running_transform_list = mock_add_files.call_args[0][1]
+        assert running_transform_list[0].workers == 1
+        assert running_transform_list[1].workers == 1
+
+    def test_put_file_does_not_scale_past_max_replicas(
+        self,
+        mocker,
+        mock_transformer_lookup,
+        mock_dataset_manager_from_id,
+        mock_transformer_manager,
+    ):
+        for req in mock_transformer_lookup.return_value:
+            req.files = 100
+            req.workers = 5
+
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/files",
+            json={
+                "paths": ["/foo/bar1.root"],
+                "adler32": "12345",
+                "file_size": 1024,
+                "file_events": 500,
+            },
+        )
+
+        assert response.status_code == 200
+        mock_transformer_manager.patch_transformer_parallelism.assert_not_called()
+
     def test_put_new_file_with_exception(
-        self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup
+        self,
+        mocker,
+        mock_dataset_manager_from_id,
+        mock_transformer_lookup,
+        mock_transformer_manager,
     ):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_processor.add_files_to_processing_queue.side_effect = Exception("Test")
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(
+            lookup_result_processor=mock_processor,
+            transformation_manager=mock_transformer_manager,
+        )
 
         response = client.put(
             "/servicex/internal/transformation/1234/files",
@@ -158,3 +289,4 @@ class TestAddFileToDataset(ResourceTestBase):
         assert response.json == {
             "message": "Something went wrong: sequence item 0: expected str instance, int found"
         }
+        mock_transformer_manager.patch_transformer_parallelism.assert_not_called()

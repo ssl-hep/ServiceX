@@ -229,7 +229,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: develop
     resources:
       requests:
@@ -382,11 +382,10 @@ transformer:
   cacheVPSLivenessURL: https://vps.cern.ch/liveness
 
 
-  autoscaler:
-    cpuScaleThreshold: 30
-    enabled: true
-    maxReplicas: 20
-    minReplicas: 1
+  # Maximum number of transformer pods k8s will run in parallel per request.
+  # Once the file count is known, the Job requests min(files, maxReplicas).
+  maxReplicas: 20
+  initialReplicas: 1
   cpuLimit: 1
   memoryLimit: 2Gi
   cpuRequest: 500m

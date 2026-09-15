@@ -99,14 +99,12 @@ data:
     TRANSFORMER_CACHE_VPS_INTERVAL = {{ .Values.transformer.cacheVPSCheckInterval }}
     TRANSFORMER_CACHE_VPS_LIVENESS_URL = "{{ .Values.transformer.cacheVPSLivenessURL }}"
     {{- end }}
-    TRANSFORMER_AUTOSCALE_ENABLED = {{- ternary "True" "False" .Values.transformer.autoscaler.enabled }}
     TRANSFORMER_CPU_LIMIT = {{ .Values.transformer.cpuLimit }}
     TRANSFORMER_MEMORY_LIMIT = "{{ .Values.transformer.memoryLimit }}"
     TRANSFORMER_CPU_REQUEST = "{{ .Values.transformer.cpuRequest }}"
     TRANSFORMER_MEMORY_REQUEST = "{{ .Values.transformer.memoryRequest }}"
-    TRANSFORMER_CPU_SCALE_THRESHOLD = {{ .Values.transformer.autoscaler.cpuScaleThreshold }}
-    TRANSFORMER_MIN_REPLICAS = {{ .Values.transformer.autoscaler.minReplicas }}
-    TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.autoscaler.maxReplicas }}
+    TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.maxReplicas }}
+    TRANSFORMER_INITIAL_REPLICAS = {{ .Values.transformer.initialReplicas }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'
     {{- if not .Values.noCerts }}
     TRANSFORMER_X509_SECRET="x509-proxy"

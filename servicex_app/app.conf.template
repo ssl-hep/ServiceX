@@ -48,21 +48,13 @@ ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 
 TRANSFORMER_MANAGER_ENABLED = True
 
-# Set to True to use transformer pod autoscaling. If False then it will always
-# start the requested number of transformers
-TRANSFORMER_AUTOSCALE_ENABLED = True
-
-# Set min and max replicas for autoscaler
-TRANSFORMER_MIN_REPLICAS = 1
+# Maximum number of transformer pods (parallelism) to run in parallel
 TRANSFORMER_MAX_REPLICAS = 20
 
 # Use one core per transformer
 TRANSFORMER_CPU_LIMIT = 1
 # Use 2GB per transformer
 TRANSFORMER_MEMORY_LIMIT = "2Gi"
-
-# CPU threshold for HPA (in percent) to spawn additional transformers
-TRANSFORMER_CPU_SCALE_THRESHOLD = 70
 
 TRANSFORMER_MANAGER_MODE = 'external-kubernetes'
 
