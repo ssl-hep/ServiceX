@@ -47,6 +47,23 @@ class FilesetComplete(ServiceXResource):
         cls.transformer_manager = transformer_manager
         return cls
 
+    def _complete_if_finished(self, transform_request, namespace):
+        """
+        Complete a request whose files have all been transformed already. No further
+        file-complete callbacks are coming for it, so nothing else would finish it.
+        """
+        files_remaining = transform_request.files_remaining
+        if files_remaining is not None and files_remaining == 0:
+            current_app.logger.info(
+                "All files already transformed. Shutting down transformers",
+                extra={"request_id": transform_request.request_id},
+            )
+            transform_request.status = TransformStatus.complete
+            transform_request.finish_time = datetime.now(tz=timezone.utc)
+            self.transformer_manager.shutdown_transformer_job(
+                transform_request.request_id, namespace
+            )
+
     def put(self, dataset_id):
         summary = request.get_json()
         dataset = Dataset.find_by_id(int(dataset_id))
@@ -62,6 +79,8 @@ class FilesetComplete(ServiceXResource):
         db.session.commit()
 
         if summary["files"] > 0:
+            namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+
             # Now time to pick up any transform requests for this dataset that came in
             # while we were still looking up files and send the dataset to them
             dataset_manager = DatasetManager(dataset, current_app.logger, db)
@@ -72,12 +91,14 @@ class FilesetComplete(ServiceXResource):
                     transform_request, self.lookup_result_processor
                 )
                 transform_request.status = TransformStatus.running
+                self._complete_if_finished(transform_request, namespace)
 
             # also resolve the status of whatever transform prompted this lookup
             for transform_request in TransformRequest.lookup_running_by_dataset_id(
                 int(dataset_id)
             ):
                 transform_request.status = TransformStatus.running
+                self._complete_if_finished(transform_request, namespace)
 
         else:
             current_app.logger.info(
@@ -104,5 +125,8 @@ class FilesetComplete(ServiceXResource):
             ):
                 pending_transform.status = TransformStatus.complete
                 pending_transform.finish_time = datetime.now(tz=timezone.utc)
+                self.transformer_manager.shutdown_transformer_job(
+                    pending_transform.request_id, namespace
+                )
 
         db.session.commit()

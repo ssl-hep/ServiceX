@@ -84,9 +84,7 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.celery_app = celery_app
 
         cls.parser = reqparse.RequestParser()
-        cls.parser.add_argument(
-            "title", help="Optional title for this request (max 128 chars)"
-        )
+        cls.parser.add_argument("title", help="Optional title for this request")
         cls.parser.add_argument(
             "did", help="Dataset Identifier. Provide this or file-list"
         )
@@ -201,7 +199,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if not code_gen_image_name:
                 msg = f"Invalid Codegen Image Passed in Request: {user_codegen_name}"
                 current_app.logger.error(msg, extra={"request_id": request_id})
-                return {"message": msg}, 500
+                return {"message": msg}, 400
 
             # The first thing to do is make sure the requested selection is correct
             # and can generate the requested code.
@@ -217,7 +215,13 @@ class SubmitTransformationRequest(ServiceXResource):
                 user_codegen_name=user_codegen_name,
             )
 
-            _validate_custom_docker_image(codegen_transformer_image)
+            try:
+                _validate_custom_docker_image(codegen_transformer_image)
+            except ValueError as invalid_image:
+                current_app.logger.error(
+                    str(invalid_image), extra={"request_id": request_id}
+                )
+                return {"message": str(invalid_image)}, 400
 
             # Check to make sure the transformer docker image actually exists (if enabled)
             if config["TRANSFORMER_VALIDATE_DOCKER_IMAGE"]:
@@ -226,7 +230,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 ):
                     msg = f"Requested transformer docker image doesn't exist: {codegen_transformer_image}"  # noqa: E501
                     current_app.logger.error(msg, extra={"request_id": request_id})
-                    return {"message": msg}, 500
+                    return {"message": msg}, 400
 
             # If the user has requested an object store destination, now is the time
             # to create a bucket named after the request id
@@ -313,7 +317,6 @@ class SubmitTransformationRequest(ServiceXResource):
 
             # start transformers independently of the state of dataset.
             if current_app.config["TRANSFORMER_MANAGER_ENABLED"]:
-                print(f"-----------> files: {request_rec.files}")
                 self.transformer_manager.start_transformers(
                     current_app.config, request_rec
                 )
