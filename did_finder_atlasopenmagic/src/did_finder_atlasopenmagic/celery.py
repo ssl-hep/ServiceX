@@ -78,7 +78,7 @@ def find_files(
     try:
         atom.set_release(release)
     except ValueError as e:
-        raise NoSuchDatasetException(f"Invalid release. Error: {e}")
+        raise NoSuchDatasetException(f"Invalid release. Error: {e}") from e
 
     if did not in atom.available_datasets():
         raise NoSuchDatasetException(
@@ -97,4 +97,4 @@ def find_files(
                 "file_events": 0,  # Number of events if known
             }
     except Exception as e:
-        raise LookupFailureException(f"Lookup failure: {e}")
+        raise LookupFailureException(f"Lookup failure: {e}") from e

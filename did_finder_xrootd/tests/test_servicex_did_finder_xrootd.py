@@ -65,7 +65,10 @@ def test_exception_no_files():
 
 
 def test_exception_io(mocker):
-    mocker.patch("XRootD.client.glob", side_effect=Exception)
+    glob = mocker.patch(
+        "XRootD.client.glob",
+        side_effect=RuntimeError("[ERROR] Operation expired for path 'root://foo'"),
+    )
     iter = find_files(
         (
             "root://eospublic.cern.ch//eos/opendata/atlas/"
@@ -75,3 +78,4 @@ def test_exception_io(mocker):
     )
     with pytest.raises(LookupFailureException):
         [f for f in iter]
+    assert glob.call_args.kwargs["raise_error"] is True
