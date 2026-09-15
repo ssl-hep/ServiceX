@@ -500,7 +500,9 @@ class TransformerManager:
             current_app.config["TRANSFORMER_CACHE_VPS_LASTCHECK"] = now
             vps_server = current_app.config["TRANSFORMER_CACHE_VPS_LIVENESS_URL"]
             try:
-                sitedata = urllib3.request("GET", vps_server).json()
+                sitedata = urllib3.request(
+                    "GET", vps_server, timeout=urllib3.Timeout(connect=2, read=5)
+                ).json()
                 if thissite not in sitedata:
                     current_app.logger.error(f"{thissite} is not in VPS liveness data")
                     return

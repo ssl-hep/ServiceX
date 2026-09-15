@@ -30,7 +30,7 @@ from datetime import datetime, timedelta, timezone
 from flask import request, current_app
 
 from servicex_app.resources.servicex_resource import ServiceXResource
-from servicex_app.models import Dataset
+from servicex_app.models import Dataset, db
 
 
 class DatasetLifecycleOps(ServiceXResource):
@@ -44,17 +44,20 @@ class DatasetLifecycleOps(ServiceXResource):
         except Exception:
             return {"message": "Invalid age parameter"}, 422
         delta = timedelta(hours=age)
-        datasets = (
-            Dataset.get_all()
-        )  # by default this will only give non-stale datasets
-        todelete = [
-            _.id for _ in datasets if _.last_updated and (now - _.last_updated) > delta
-        ]
+        cutoff = now - delta
+        obsoleted = (
+            db.session.query(Dataset)
+            .filter(
+                Dataset.stale.is_(False),
+                Dataset.last_updated.isnot(None),
+                Dataset.last_updated < cutoff,
+            )
+            .update({Dataset.stale: True}, synchronize_session=False)
+        )
+        db.session.commit()
         current_app.logger.info(
             f"Obsoletion called for datasets older than {delta}. "
-            f"Obsoleting {len(todelete)} datasets."
+            f"Obsoleting {obsoleted} datasets."
         )
-        for dataset_id in todelete:
-            Dataset.delete_dataset(dataset_id)
 
         return {"message": "Success"}, 200

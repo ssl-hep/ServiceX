@@ -182,7 +182,7 @@ class TransformRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     title = db.Column(db.String(10240), nullable=True)
-    submit_time = db.Column(db.DateTime, nullable=False)
+    submit_time = db.Column(db.DateTime, nullable=False, index=True)
     finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
     did_id = db.Column(
@@ -579,7 +579,7 @@ class DatasetFile(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     dataset_id = db.Column(
-        db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False
+        db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False, index=True
     )
     adler32 = db.Column(db.String(48), nullable=True)
     file_size = db.Column(db.BigInteger, nullable=True)
