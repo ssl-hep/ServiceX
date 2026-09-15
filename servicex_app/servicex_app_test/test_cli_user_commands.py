@@ -74,8 +74,7 @@ class TestListUsers:
 
     def test_with_email_filter_calls_ilike_query(self, mocker, capsys):
         mock_model = mocker.patch("servicex_app.cli.user_commands.UserModel")
-        mock_model.query.all.return_value = []
-        mock_model.query.filter.return_value = iter([])
+        mock_model.query.filter.return_value.all.return_value = []
         list_users(email_filter="@cern.ch")
         mock_model.query.filter.assert_called_once()
 

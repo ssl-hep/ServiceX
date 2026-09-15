@@ -48,19 +48,23 @@ class SecureAdminIndexView(AdminAuthMixin, AdminIndexView):
             if view is self or not isinstance(view, ReportView):
                 continue
             url = url_for(f"{view.endpoint}.{view._default_view}")
-            entry = {
-                "name": view.report_name,
-                "url": url,
-                "description": view.description,
-            }
-            if isinstance(view, ReportView):
-                _report_views.append(entry)
+            _report_views.append(
+                {
+                    "name": view.report_name,
+                    "url": url,
+                    "description": view.description,
+                }
+            )
 
         return self.render(
             "admin/index.html",
             model_views=model_views,
             report_views=_report_views,
         )
+
+
+class SecureReportIndexView(AdminAuthMixin, AdminIndexView):
+    pass
 
 
 class AdminModelView(AdminAuthMixin, ModelView):
@@ -110,8 +114,7 @@ def init_admin(app):
     report_admin = Admin(
         app,
         name="ServiceX Reports",
-        url="/report",
-        endpoint="report",
+        index_view=SecureReportIndexView(endpoint="report", url="/report"),
     )
 
     admin_index = SecureAdminIndexView(endpoint="admin")
