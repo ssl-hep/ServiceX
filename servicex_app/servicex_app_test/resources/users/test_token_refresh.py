@@ -62,6 +62,45 @@ class TestTokenRefresh(ResourceTestBase):
             assert "auth_disabled" in response.json
             assert response.json["auth_disabled"] is False
 
+    def test_token_refresh_with_deleted_user(self, mocker):
+        """Test that token refresh fails when the user no longer exists."""
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+
+        with client.application.app_context():
+            mocker.patch(
+                "servicex_app.resources.users.token_refresh.UserModel.find_by_email",
+                return_value=None,
+            )
+
+            refresh_token = create_refresh_token(identity="testuser@example.com")
+            headers = {"Authorization": f"Bearer {refresh_token}"}
+            response: Response = client.post("/token/refresh", headers=headers)
+
+            assert response.status_code == 401
+
+    def test_token_refresh_without_stored_refresh_token(self, mocker):
+        """Test that token refresh fails when the user has no stored refresh token."""
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+
+        with client.application.app_context():
+            test_user = UserModel()
+            test_user.email = "testuser@example.com"
+            test_user.sub = "test-sub-123"
+            test_user.name = "Test User"
+            test_user.institution = "Test Institution"
+            test_user.refresh_token = None
+
+            mocker.patch(
+                "servicex_app.resources.users.token_refresh.UserModel.find_by_email",
+                return_value=test_user,
+            )
+
+            refresh_token = create_refresh_token(identity=test_user.email)
+            headers = {"Authorization": f"Bearer {refresh_token}"}
+            response: Response = client.post("/token/refresh", headers=headers)
+
+            assert response.status_code == 401
+
     def test_token_refresh_with_mismatched_jti(self, mocker):
         """Test that token refresh fails when JTI doesn't match stored token."""
         client = self._test_client(extra_config={"ENABLE_AUTH": True})
