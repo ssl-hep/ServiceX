@@ -274,6 +274,22 @@ didFinder:
     tolerations: []
     affinity: {}
     podAnnotations: {}
+  servicex:
+    enabled: true
+    image: sslhep/servicex-did-finder-servicex
+    pullPolicy: Always
+    tag: develop
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
   rucio:
     auth_host: https://atlas-rucio-auth.cern.ch:443
     enabled: true
