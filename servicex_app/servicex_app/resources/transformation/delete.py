@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_app import ObjectStoreManager
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest, TransformationResult, db
+from servicex_app.models import TransformationResult, db
 from servicex_app.resources.servicex_resource import ServiceXResource
 from flask import current_app
 
@@ -42,20 +42,14 @@ class DeleteTransform(ServiceXResource):
         session = db.session
         with session.begin():
 
-            transform_req = TransformRequest.lookup(request_id)
-            if not transform_req:
-                msg = f"Transformation request not found with id: {request_id}"
-                current_app.logger.warning(msg, extra={"request_id": request_id})
-                return {"message": msg}, 404
+            transform_req, error = self._get_owned_request(request_id)
+            if error:
+                return error
 
             if not transform_req.status.is_complete:
                 msg = f"Transform request with id {request_id} is still in progress."
                 current_app.logger.warning(msg, extra={"request_id": request_id})
                 return {"message": msg}, 400
-
-            user = self.get_requesting_user()
-            if user and (not user.admin and user.id != transform_req.submitted_by):
-                return {"message": "You are not authorized to delete this request"}, 403
 
             # Delete all the results for this transform
             session.query(TransformationResult).filter_by(

@@ -31,7 +31,6 @@ from flask import current_app
 from flask_restful import reqparse
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 import boto3
@@ -70,12 +69,9 @@ class FileURLGenerator(ServiceXResource):
 
         args = parser.parse_args()
         request_id = args["request_id"]
-        # Validate that the user is an admin or submitted the request (not yet implemented)
-        transform = TransformRequest.lookup(request_id)
-        if not transform:
-            msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.error(msg, extra={"request_id": request_id})
-            return {"message": msg}, 404
+        _, error = self._get_owned_request(request_id)
+        if error:
+            return error
 
         expirydelta = 365 * 24 * 60 * 60
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
