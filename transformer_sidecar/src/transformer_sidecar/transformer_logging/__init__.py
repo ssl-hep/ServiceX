@@ -45,12 +45,15 @@ def initialize_logging(log=None, **kwargs):
     :return: logger with correct formatting that outputs to console
     """
 
-    logging.basicConfig(level=logging.INFO, force=True)
-
     if log is None:
         log = logging.getLogger()
 
     log.setLevel(logging.INFO)
+
+    # Drop any handler that is already installed so that we don't log twice
+    for handler in log.handlers[:]:
+        log.removeHandler(handler)
+
     stream_handler = logging.StreamHandler()
     stream_formatter = StreamFormatter(
         "%(levelname)s " + f"{instance} transformer sidecar " + "%(message)s"
