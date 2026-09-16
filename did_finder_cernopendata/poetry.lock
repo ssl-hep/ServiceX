@@ -701,14 +701,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<8)"]
 
 [[package]]
 name = "servicex-did-finder-lib"
-version = "3.2.0rc1"
+version = "3.2.0"
 description = "ServiceX DID Library Routines"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "servicex_did_finder_lib-3.2.0rc1-py3-none-any.whl", hash = "sha256:a4574dd26d1712a5cebb75a32eed3e6f4a5bae2f1ef2571a42a0061b1d8ac87a"},
-    {file = "servicex_did_finder_lib-3.2.0rc1.tar.gz", hash = "sha256:ee43cacedd784ed54002c246cbb5eceefd654a349bec8a4ac8976c5c866375dc"},
+    {file = "servicex_did_finder_lib-3.2.0-py3-none-any.whl", hash = "sha256:2acc150aa41888328d43530e9a20b332c3eb7b3e68ac65a4cf712b65c6933af5"},
+    {file = "servicex_did_finder_lib-3.2.0.tar.gz", hash = "sha256:42b8ce9ee16dc47997e5dcb150da529704aa24e248b8d38ef7a57151bae5721e"},
 ]
 
 [package.dependencies]
@@ -874,4 +874,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "86808f98b92ef579129528e1cdba82bbe323ba161b238a7725d7990ccfb3d15d"
+content-hash = "5a2fda047f04e81da10ebe250035c61769d3fba7f297025d7fe30a19fc2ccd2b"
