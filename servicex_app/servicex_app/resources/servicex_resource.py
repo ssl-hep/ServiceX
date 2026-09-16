@@ -31,6 +31,7 @@ from importlib.metadata import version, PackageNotFoundError
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
+from servicex_app.celery.server_tasks import advertised_endpoint
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
 from servicex_app.transformer_manager import TransformerManager
@@ -47,7 +48,7 @@ class ServiceXResource(Resource):
 
     @classmethod
     def _generate_advertised_endpoint(cls, endpoint):
-        return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
+        return advertised_endpoint(endpoint)
 
     @staticmethod
     @jwt_required_if_auth_enabled

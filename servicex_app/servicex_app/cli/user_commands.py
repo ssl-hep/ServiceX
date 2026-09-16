@@ -1,10 +1,6 @@
 from flask import current_app
 from flask_jwt_extended import create_refresh_token
-from servicex_app.models import UserModel
-
-
-def check_user_exists(sub):
-    return UserModel.find_by_sub(sub)
+from servicex_app.models import UserModel, db
 
 
 def add_user(sub, email, name, institution, refresh_token):
@@ -24,16 +20,18 @@ def add_user(sub, email, name, institution, refresh_token):
         new_user.admin = True
 
     try:
-        if not check_user_exists(new_user.sub):
+        if not UserModel.find_by_sub(new_user.sub):
             new_user.save_to_db()
-    except Exception as ex:
-        print(str(ex))
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def list_users(email_filter=None) -> None:
-    users = UserModel.query.all()
+    query = UserModel.query
     if email_filter:
-        users = UserModel.query.filter(UserModel.email.ilike(f"%{email_filter}%"))
+        query = query.filter(UserModel.email.ilike(f"%{email_filter}%"))
+    users = query.all()
 
     print("Sub, Email, Name, Institution, Admin, Pending?")
     for user in users:

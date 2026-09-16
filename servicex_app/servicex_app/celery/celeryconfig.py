@@ -28,5 +28,9 @@
 
 # configuration options for server task celery workers
 
+from servicex_app.celery_task_router import route_task
+
 # retry RabbitMQ connections forever
 broker_connection_max_retries = None
+
+task_routes = (route_task,)
