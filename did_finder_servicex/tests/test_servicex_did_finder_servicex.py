@@ -42,7 +42,7 @@ def test_working_call(monkeypatch):
 
     (
         respx.get(
-            "http://funtimes/servicex/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
+            "http://funtimes/servicex/internal/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
         )
         .mock()
         .respond(
@@ -94,7 +94,7 @@ def test_working_call(monkeypatch):
     )
 
     respx.post(
-        "http://funtimes/servicex/transformation/file-urls",
+        "http://funtimes/servicex/internal/transformation/file-urls",
     ).mock(
         return_value=httpx.Response(
             200,
@@ -140,14 +140,14 @@ def test_exception_no_files(monkeypatch):
 
     (
         respx.get(
-            "http://funtimes/servicex/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
+            "http://funtimes/servicex/internal/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
         )
         .mock()
         .respond(200, json={"results": []})
     )
 
     respx.post(
-        "http://funtimes/servicex/transformation/file-urls",
+        "http://funtimes/servicex/internal/transformation/file-urls",
     ).mock(
         return_value=httpx.Response(
             404,
@@ -170,7 +170,7 @@ def test_exception_io(monkeypatch):
     from servicex_did_finder_servicex.celery import find_files
 
     respx.get(
-        "http://funtimes/servicex/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
+        "http://funtimes/servicex/internal/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"
     ).mock(side_effect=httpx.ConnectError("Connection error"))
     iter = find_files(
         "4313b658-646b-4483-87be-7fa72dd5ae9c",
