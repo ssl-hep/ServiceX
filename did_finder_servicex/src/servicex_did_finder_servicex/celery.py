@@ -81,7 +81,7 @@ def find_files(
             timeout=Timeout(10, read=300),
         ) as session:
             service_url = (
-                servicex_endpoint + f"/servicex/transformation/{did_name}/results"
+                servicex_endpoint + f"/servicex/internal/transformation/{did_name}/results"
             )
             r = session.get(url=service_url)
             if r.status_code != 200:
@@ -95,7 +95,7 @@ def find_files(
                 if _["transform_status"] == "success"
             ]
 
-            service_url = servicex_endpoint + "/servicex/transformation/file-urls"
+            service_url = servicex_endpoint + "/servicex/internal/transformation/file-urls"
             r = session.post(
                 service_url, json={"request_id": did_name, "file_list": file_list}
             )

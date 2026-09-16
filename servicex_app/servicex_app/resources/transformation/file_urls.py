@@ -37,7 +37,7 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 import boto3
 
 
-class FileURLGenerator(ServiceXResource):
+class FileURLGeneratorInsecure(ServiceXResource):
     def __init__(self):
         super().__init__()
         # Add branches for different backends when relevant
@@ -95,3 +95,12 @@ class FileURLGenerator(ServiceXResource):
         }
 
         return {"uris": rv}
+
+
+class FileURLGeneratorSecure(FileURLGeneratorInsecure):
+    def __init__(self):
+        super().__init__()
+
+    @auth_required
+    def post(self):
+        return super().post()

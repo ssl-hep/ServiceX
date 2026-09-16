@@ -68,8 +68,8 @@ def add_routes(
     from servicex_app.resources.transformation.get_all import AllTransformationRequests
     from servicex_app.resources.transformation.get_one import TransformationRequest
     from servicex_app.resources.transformation.deployment import DeploymentStatus
-    from servicex_app.resources.transformation.results import TransformationResults
-    from servicex_app.resources.transformation.file_urls import FileURLGenerator
+    from servicex_app.resources.transformation.results import (TransformationResultsInsecure, TransformationResultsSecure)
+    from servicex_app.resources.transformation.file_urls import (FileURLGeneratorInsecure, FileURLGeneratorSecure)
 
     from servicex_app.resources.users.all_users import AllUsers
     from servicex_app.resources.users.token_refresh import TokenRefresh
@@ -162,10 +162,10 @@ def add_routes(
     CancelAllTransforms.make_api(transformer_manager)
     api.add_resource(CancelAllTransforms, prefix + "/cancel-all")
 
-    api.add_resource(FileURLGenerator, prefix + "/file-urls")
+    api.add_resource(FileURLGeneratorSecure, prefix + "/file-urls")
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
-    api.add_resource(TransformationResults, prefix + "/results")
+    api.add_resource(TransformationResultsSecure, prefix + "/results")
 
     DeleteTransform.make_api(object_store)
     api.add_resource(DeleteTransform, prefix)
@@ -216,3 +216,8 @@ def add_routes(
     api.add_resource(
         CleanupKubernetesResources, "/servicex/internal/kubernetes-cleanup"
     )
+
+    api.add_resource(TransformationResultsInsecure,
+                     "/servicex/internal/transformation/<string:request_id>/results")
+    api.add_resource(FileURLGeneratorInsecure, 
+                     "/servicex/internal/transformation/file-urls")
