@@ -130,6 +130,7 @@ class TestDataLifecycleOps(ResourceTestBase):
         active_transform = self._generate_transform_request()
         active_transform.submit_time = datetime(2022, 1, 1, 0, 0)
         active_transform.request_id = 1
+        active_transform.output_path = "1"
         active_transform.did_id = 1
         active_transform.title = "active"
         db_session.add(active_transform)
@@ -144,6 +145,7 @@ class TestDataLifecycleOps(ResourceTestBase):
         stale_transform = self._generate_transform_request()
         stale_transform.submit_time = datetime(2021, 1, 1, 0, 0)
         stale_transform.request_id = 2
+        stale_transform.output_path = "2"
         stale_transform.did_id = 1
         stale_transform.title = "stale"
         db_session.add(stale_transform)
@@ -216,6 +218,57 @@ class TestDataLifecycleOps(ResourceTestBase):
         assert len(remaining_results) == 1
         if use_object_store:
             mock_object_store.delete_bucket_and_contents.assert_called_with("2")
+
+    def test_expired_transform_missing_output_path_skips_bucket_cleanup(
+        self, mocker, db_session
+    ):
+        stale_transform = self._generate_transform_request()
+        stale_transform.submit_time = datetime(2021, 1, 1, 0, 0)
+        stale_transform.request_id = "no-output-path"
+        stale_transform.output_path = None
+        stale_transform.did_id = 1
+        stale_transform.title = "stale-no-path"
+        db_session.add(stale_transform)
+        db_session.commit()
+
+        mock_object_store = mocker.MagicMock()
+        mock_logger = mocker.patch(f"{self.module}.current_app", new=mocker.MagicMock())
+
+        data_life_cycle_ops = DataLifecycleOps()
+        response = data_life_cycle_ops.delete_expired_transforms(
+            db_session,
+            mock_object_store,
+            cutoff_timestamp=datetime.fromisoformat("2021-01-02T00:00:00"),
+        )
+
+        assert len(response) == 1
+        mock_object_store.delete_bucket_and_contents.assert_not_called()
+        mock_logger.logger.warning.assert_called_once()
+        # Transform row is still gone
+        assert db_session.query(TransformRequest).all() == []
+
+    def test_expired_volume_transform_skips_object_store(self, mocker, db_session):
+        stale_transform = self._generate_transform_request()
+        stale_transform.submit_time = datetime(2021, 1, 1, 0, 0)
+        stale_transform.request_id = "volume-transform"
+        stale_transform.result_destination = TransformRequest.VOLUME_DEST
+        stale_transform.output_path = "/some/volume/path"
+        stale_transform.did_id = 1
+        stale_transform.title = "stale-volume"
+        db_session.add(stale_transform)
+        db_session.commit()
+
+        mock_object_store = mocker.MagicMock()
+
+        data_life_cycle_ops = DataLifecycleOps()
+        response = data_life_cycle_ops.delete_expired_transforms(
+            db_session,
+            mock_object_store,
+            cutoff_timestamp=datetime.fromisoformat("2021-01-02T00:00:00"),
+        )
+
+        assert len(response) == 1
+        mock_object_store.delete_bucket_and_contents.assert_not_called()
 
     def test_orphaned_datasets(self, insert_datasets, db_session):
         data_life_cycle_ops = DataLifecycleOps()
