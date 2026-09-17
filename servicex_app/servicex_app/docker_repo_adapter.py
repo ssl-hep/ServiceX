@@ -25,27 +25,32 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import functools
 import subprocess
 
 from flask import current_app
 
+# Images which have been confirmed to exist in the registry. Only successful
+# lookups are cached, so failures are retried on the next request.
+_known_images = set()
+
 
 class DockerRepoAdapter:
     @staticmethod
-    @functools.cache
     def check_image_exists(tagged_image: str) -> bool:
         """
         Checks that the given Docker image exists using crane.
         :param tagged_image: Full Docker image name, e.g. "sslhep/servicex_app:latest".
         :return: Whether or not the image exists in the registry.
         """
+        if tagged_image in _known_images:
+            return True
         try:
             result = subprocess.run(
                 ["crane", "digest", tagged_image], capture_output=True, timeout=30
             )
             if result.returncode == 0:
                 current_app.logger.info(f"Requested Image: {tagged_image} exists")
+                _known_images.add(tagged_image)
                 return True
             else:
                 current_app.logger.warning(

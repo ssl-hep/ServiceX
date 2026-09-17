@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import datetime
+from datetime import datetime, timezone
 
 from flask import current_app
 from flask_restful import reqparse
@@ -38,22 +38,27 @@ import boto3
 
 
 class FileURLGenerator(ServiceXResource):
-    def __init__(self):
-        super().__init__()
-        # Add branches for different backends when relevant
-        # set up S3 client
-        endpoint_url = (
-            "https://"
-            if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
-            else "http://"
-        ) + current_app.config["MINIO_PUBLIC_URL"]
-        self.s3client = boto3.client(
-            "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
-            aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
-            use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
-        )
+    # Add branches for different backends when relevant
+    _s3clients = {}
+
+    @property
+    def s3client(self):
+        """S3 client, built once per set of object store settings."""
+        use_ssl = current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
+        public_url = current_app.config["MINIO_PUBLIC_URL"]
+        access_key = current_app.config["MINIO_ACCESS_KEY"]
+        secret_key = current_app.config["MINIO_SECRET_KEY"]
+
+        key = (use_ssl, public_url, access_key, secret_key)
+        if key not in self._s3clients:
+            FileURLGenerator._s3clients[key] = boto3.client(
+                "s3",
+                endpoint_url=("https://" if use_ssl else "http://") + public_url,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                use_ssl=use_ssl,
+            )
+        return self._s3clients[key]
 
     @auth_required
     def post(self):
@@ -78,7 +83,7 @@ class FileURLGenerator(ServiceXResource):
             return {"message": msg}, 404
 
         expirydelta = 365 * 24 * 60 * 60
-        expiry = int(datetime.datetime.now().timestamp() + expirydelta)
+        expiry = int(datetime.now(timezone.utc).timestamp() + expirydelta)
 
         # Add branches for other backends when relevant
         rv = {

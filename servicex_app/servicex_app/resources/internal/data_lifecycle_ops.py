@@ -30,7 +30,7 @@ from typing import List
 
 from flask import request, current_app
 from sqlalchemy import select, exists
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from servicex_app import ObjectStoreManager
 from servicex_app.models import (
@@ -57,12 +57,12 @@ class DataLifecycleOps(ServiceXResource):
         with session.begin():
             expired_transforms = (
                 session.query(TransformRequest)
+                .options(joinedload(TransformRequest.user))
                 .filter(TransformRequest.submit_time <= cutoff_timestamp)
                 .all()
             )
 
-        for transform in expired_transforms:
-            with session.begin():
+            for transform in expired_transforms:
                 # Delete all the results for this transform
                 session.query(TransformationResult).filter_by(
                     request_id=transform.request_id
@@ -72,12 +72,13 @@ class DataLifecycleOps(ServiceXResource):
                 if object_store:
                     object_store.delete_bucket_and_contents(transform.request_id)
 
-                # Delete the transform request
-                session.delete(transform)
-
                 deleted_log.append(
                     f"{transform.submitter_name} - {transform.request_id}: {transform.title}"
                 )
+
+                # Delete the transform request
+                session.delete(transform)
+
         return deleted_log
 
     def delete_orphaned_datasets(self, session: Session):
@@ -91,13 +92,12 @@ class DataLifecycleOps(ServiceXResource):
             query = select(Dataset).where(~exists(subquery))
             orphaned_datasets = session.execute(query).scalars().all()
 
-        for dataset in orphaned_datasets:
-            with session.begin():
+            for dataset in orphaned_datasets:
                 session.query(DatasetFile).filter_by(dataset_id=dataset.id).delete()
 
-                session.delete(dataset)
-
                 deleted_datasets.append(f"{dataset.name} - {dataset.id}")
+
+                session.delete(dataset)
 
         return deleted_datasets
 
@@ -129,9 +129,12 @@ class DataLifecycleOps(ServiceXResource):
             cutoff_timestamp: ISO formatted datetime string.
         """
 
-        with db.session.begin():
+        try:
             cutoff_timestamp = datetime.fromisoformat(request.args["cutoff_timestamp"])
+        except (KeyError, TypeError, ValueError):
+            return {"message": "Invalid or missing cutoff_timestamp parameter"}, 400
 
+        with db.session.begin():
             # See how many bytes are currently in the cache
             total_bytes = TransformRequest.total_cache_size()
 
