@@ -55,7 +55,6 @@ class FileURLGeneratorInsecure(ServiceXResource):
             use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
         )
 
-    @auth_required
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument("request_id", type=str, required=True, location="json")
