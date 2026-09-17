@@ -94,6 +94,8 @@ def add_routes(
     from servicex_app.web.transformation_request import transformation_request
     from servicex_app.web.transformation_results import transformation_results
     from servicex_app.web.multiple_codegen_list import multiple_codegen_list
+    from servicex_app.web.datasets import datasets as datasets_page
+    from servicex_app.web.dataset import dataset as dataset_page
 
     # Must be its own module to allow patching
     from servicex_app.web.create_profile import create_profile
@@ -140,6 +142,8 @@ def add_routes(
     app.add_url_rule(
         "/multiple-codegen-list", "multiple_codegen_list", multiple_codegen_list
     )
+    app.add_url_rule("/datasets", "datasets", datasets_page)
+    app.add_url_rule("/datasets/<int:id_>", "dataset", dataset_page)
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, "/token/refresh")

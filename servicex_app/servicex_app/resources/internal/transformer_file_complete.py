@@ -46,6 +46,8 @@ from tenacity import (
 
 from servicex_app import TransformerManager
 from servicex_app.models import (
+    Dataset,
+    DatasetFile,
     TransformRequest,
     TransformStatus,
     TransformationResult,
@@ -117,6 +119,10 @@ class TransformerFileComplete(ServiceXResource):
                     f"Duplicate result report - new_info: {info}, old_info: {orig_counts}",
                     extra=log_extra,
                 )
+
+            # Backfill per-file and per-dataset stats from the transformer's report
+            # if the DID finder never populated them (e.g., user file-list datasets).
+            self.backfill_dataset_stats(session, info)
 
             # Lookup the transformation request and increment either the successful
             # or failed file count
@@ -249,6 +255,49 @@ class TransformerFileComplete(ServiceXResource):
                 )
             session.add(result)
         return orig_counts
+
+    @staticmethod
+    @file_complete_ops_retry
+    def backfill_dataset_stats(session: Session, info: dict):
+        if info.get("status") != "success":
+            return
+        events = info.get("total-events") or 0
+        size = info.get("total-bytes") or 0
+        if not events and not size:
+            return
+
+        with session.begin():
+            file_row = (
+                session.query(DatasetFile)
+                .filter_by(id=info["file-id"])
+                .with_for_update()
+                .one_or_none()
+            )
+            if file_row is None:
+                return
+
+            events_delta = 0
+            size_delta = 0
+            if not file_row.file_events and events:
+                file_row.file_events = events
+                events_delta = events
+            if not file_row.file_size and size:
+                file_row.file_size = size
+                size_delta = size
+
+            if events_delta == 0 and size_delta == 0:
+                return
+
+            dataset = (
+                session.query(Dataset)
+                .filter_by(id=file_row.dataset_id)
+                .with_for_update()
+                .one_or_none()
+            )
+            if dataset is None:
+                return
+            dataset.events = (dataset.events or 0) + events_delta
+            dataset.size = (dataset.size or 0) + size_delta
 
     @staticmethod
     @file_complete_ops_retry
