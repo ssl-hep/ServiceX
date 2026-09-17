@@ -213,6 +213,10 @@ data:
     DID_XROOTD_FINDER_TAG = '{{ .Values.didFinder.xrootd.tag }}'
       {{- $didFinders = append $didFinders "xrootd" }}
     {{- end }}
+    {{- if .Values.didFinder.servicex.enabled }}
+    DID_SERVICEX_FINDER_TAG = '{{ .Values.didFinder.servicex.tag }}'
+      {{- $didFinders = append $didFinders "servicex" }}
+    {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
@@ -223,6 +227,9 @@ data:
     {{- end }}
     {{- if and (not $defaultScheme) .Values.didFinder.xrootd.enabled }}
     {{- $defaultScheme = "xrootd" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.servicex.enabled }}
+    {{- $defaultScheme = "servicex" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
