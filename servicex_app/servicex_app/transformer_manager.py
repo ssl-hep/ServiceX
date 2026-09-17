@@ -34,37 +34,20 @@ from kubernetes.client.rest import ApiException
 from typing import Optional
 import time
 import urllib3
-import re
 from tenacity import (
     Retrying,
-    RetryError,
     stop_after_attempt,
     wait_random_exponential,
-    retry_if_exception_type,
+    retry_if_exception,
 )
 
 from servicex_app.models import TransformRequest, TransformStatus
 
-# these regexes are defined to help translate camelCase to snake_case
-# due to mismatch of Kubernetes yaml syntax and Python API
-UPPER_FOLLOWED_BY_LOWER_RE = re.compile("(.)([A-Z][a-z]+)")
-LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE = re.compile("([a-z0-9])([A-Z])")
 
-
-def camel_to_snake_case(strin: str):
-    strout = UPPER_FOLLOWED_BY_LOWER_RE.sub(r"\1_\2", strin)
-    strout = LOWER_OR_NUM_FOLLOWED_BY_UPPER_RE.sub(r"\1_\2", strout).lower()
-    return strout
-
-
-def camel_to_snake_case_dict(dictin: dict):
-    dictout = {}
-    for key, value in dictin.items():
-        keyout = camel_to_snake_case(key)
-        dictout[keyout] = (
-            camel_to_snake_case_dict(value) if isinstance(value, dict) else value
-        )
-    return dictout
+def _is_retryable_api_error(exc: BaseException) -> bool:
+    if isinstance(exc, ApiException):
+        return exc.status is not None and exc.status >= 500
+    return isinstance(exc, urllib3.exceptions.HTTPError)
 
 
 class TransformerManager:
@@ -96,8 +79,6 @@ class TransformerManager:
         namespace = config["TRANSFORMER_NAMESPACE"]
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
-
-        request_rec.workers = min(max(1, request_rec.files), request_rec.workers)
 
         current_app.logger.info(
             f"Launching {request_rec.workers} transformers.",
@@ -219,17 +200,16 @@ class TransformerManager:
             )
 
         if (cvmfs_volume := current_app.config["TRANSFORMER_CVMFS_VOLUME"]) is not None:
-            cvmfs_volume = camel_to_snake_case_dict(cvmfs_volume)
-            cvmfs_volume["name"] = "cvmfs"
+            cvmfs_volume = {**cvmfs_volume, "name": "cvmfs"}
             cvmfs_volume_mount = {
                 "name": "cvmfs",
                 "mount_path": "/cvmfs",
                 "read_only": True,
             }
-            if "host_path" in cvmfs_volume:
+            if "hostPath" in cvmfs_volume:
                 cvmfs_volume_mount["mount_propagation"] = "HostToContainer"
 
-            volumes.append(client.V1Volume(**cvmfs_volume))
+            volumes.append(cvmfs_volume)
             volume_mounts.append(client.V1VolumeMount(**cvmfs_volume_mount))
 
         # Compute Environment Vars
@@ -309,15 +289,15 @@ class TransformerManager:
         science_command = " "
         if x509_secret:
             science_command += (
-                "until [ -f /servicex/output/scripts/proxy-exporter.sh ];"
+                f"until [ -f {output_path}/scripts/proxy-exporter.sh ];"
                 "do sleep 5;done &&"
-                " /servicex/output/scripts/proxy-exporter.sh & sleep 5 && "
+                f" {output_path}/scripts/proxy-exporter.sh & sleep 5 && "
             )
 
         sidecar_command = (
             "PYTHONPATH=/servicex/transformer_sidecar:$PYTHONPATH "
             + "python /servicex/transformer_sidecar/transformer.py "
-            + " --shared-dir /servicex/output "
+            + f" --shared-dir {output_path} "
             + " --request-id "
             + request_id
             + " --rabbit-uri "
@@ -386,18 +366,8 @@ class TransformerManager:
         # Create and Configure a spec section
         pod_annotations = current_app.config.get("TRANSFORMER_POD_ANNOTATIONS", {})
         node_selector = current_app.config.get("TRANSFORMER_NODE_SELECTOR", {})
-        tolerations_config = current_app.config.get("TRANSFORMER_TOLERATIONS", [])
-        affinity_config = current_app.config.get("TRANSFORMER_AFFINITY", {})
-
-        # Convert tolerations from config dicts to V1Toleration objects
-        tolerations = None
-        if tolerations_config:
-            tolerations = [client.V1Toleration(**t) for t in tolerations_config]
-
-        # Convert affinity from config dict to V1Affinity object
-        affinity = None
-        if affinity_config:
-            affinity = client.V1Affinity(**affinity_config)
+        tolerations = current_app.config.get("TRANSFORMER_TOLERATIONS", [])
+        affinity = current_app.config.get("TRANSFORMER_AFFINITY", {})
 
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
@@ -411,8 +381,8 @@ class TransformerManager:
                     "TRANSFORMER_PRIORITY_CLASS", None
                 ),
                 node_selector=node_selector if node_selector else None,
-                tolerations=tolerations,
-                affinity=affinity,
+                tolerations=tolerations if tolerations else None,
+                affinity=affinity if affinity else None,
                 containers=[
                     sidecar,
                     science_container,
@@ -430,7 +400,7 @@ class TransformerManager:
         if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
             replicas = current_app.config.get("TRANSFORMER_MIN_REPLICAS", 1)
         else:
-            replicas = workers
+            replicas = max(1, workers)
         spec = client.V1DeploymentSpec(
             template=template, selector=selector, replicas=replicas
         )
@@ -544,8 +514,10 @@ class TransformerManager:
             )
         except ApiException as e:
             current_app.logger.exception(
-                f"Exception during HPA Creation: {e}", extra={"request_id": request_id}
+                f"Exception during Deployment Creation: {e}",
+                extra={"request_id": request_id},
             )
+            raise
 
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace, request_id):
@@ -595,74 +567,62 @@ class TransformerManager:
             hpa = self.create_hpa_object(request_id, max_workers)
             self._create_hpa(autoscaler_api, hpa, namespace, request_id)
 
+    @staticmethod
+    def _delete_with_retries(delete, description, request_id, quiet_errors):
+        try:
+            for attempt in Retrying(
+                wait=wait_random_exponential(max=60),
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception(_is_retryable_api_error),
+                reraise=True,
+            ):
+                with attempt:
+                    delete()
+        except ApiException as e:
+            # the resource is already gone, which is all we wanted
+            if e.status == 404:
+                return
+            if not quiet_errors:
+                current_app.logger.exception(
+                    description,
+                    extra={"request_id": request_id, "retry_status": e.status},
+                )
+
     @classmethod
     def shutdown_transformer_job(cls, request_id, namespace, quiet_errors=False):
         # quiet_errors is intended to be used for reaper jobs where components of the transform
         # may be missing
-        try:
-            if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
-                autoscaler_api = kubernetes.client.AutoscalingV1Api()
-                try:
-                    for attempt in Retrying(
-                        wait=wait_random_exponential(max=60),
-                        stop=stop_after_attempt(3),
-                        retry=retry_if_exception_type(ApiException),
-                    ):
-                        with attempt:
-                            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
-                                name="transformer-" + request_id, namespace=namespace
-                            )
-                except RetryError as e:
-                    e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job HPA Shut Down",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        if current_app.config["TRANSFORMER_AUTOSCALE_ENABLED"]:
+            autoscaler_api = kubernetes.client.AutoscalingV1Api()
+            cls._delete_with_retries(
+                lambda: autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+                    name="transformer-" + request_id, namespace=namespace
+                ),
+                "Exception during Job HPA Shut Down",
+                request_id,
+                quiet_errors,
+            )
 
-        try:
-            api_v1 = client.AppsV1Api()
-            try:
-                for attempt in Retrying(
-                    wait=wait_random_exponential(max=60),
-                    stop=stop_after_attempt(3),
-                    retry=retry_if_exception_type(ApiException),
-                ):
-                    with attempt:
-                        api_v1.delete_namespaced_deployment(
-                            name="transformer-" + request_id, namespace=namespace
-                        )
-            except RetryError as e:
-                e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job Deployment Shut Down",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        api_v1 = client.AppsV1Api()
+        cls._delete_with_retries(
+            lambda: api_v1.delete_namespaced_deployment(
+                name="transformer-" + request_id, namespace=namespace
+            ),
+            "Exception during Job Deployment Shut Down",
+            request_id,
+            quiet_errors,
+        )
 
-        try:
-            api_core = client.CoreV1Api()
-            configmap_name = "{}-generated-source".format(request_id)
-            try:
-                for attempt in Retrying(
-                    wait=wait_random_exponential(max=60),
-                    stop=stop_after_attempt(3),
-                    retry=retry_if_exception_type(ApiException),
-                ):
-                    with attempt:
-                        api_core.delete_namespaced_config_map(
-                            name=configmap_name, namespace=namespace
-                        )
-            except RetryError as e:
-                e.reraise()
-        except ApiException as e:
-            if not quiet_errors:
-                current_app.logger.exception(
-                    "Exception during Job ConfigMap cleanup",
-                    extra={"request_id": request_id, "retry_status": e.status},
-                )
+        api_core = client.CoreV1Api()
+        configmap_name = "{}-generated-source".format(request_id)
+        cls._delete_with_retries(
+            lambda: api_core.delete_namespaced_config_map(
+                name=configmap_name, namespace=namespace
+            ),
+            "Exception during Job ConfigMap cleanup",
+            request_id,
+            quiet_errors,
+        )
 
         # delete RabbitMQ queue
         try:
@@ -685,11 +645,11 @@ class TransformerManager:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"
-        results: kubernetes.client.AppsV1beta1DeploymentList
+        results: client.V1DeploymentList
         results = api.list_namespaced_deployment(namespace, field_selector=selector)
         if not results.items:
             return None
-        deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
+        deployment: client.V1Deployment = results.items[0]
         return deployment.status
 
     @staticmethod
@@ -708,7 +668,7 @@ class TransformerManager:
     def create_configmap_from_zip(zipfile, request_id, namespace):
         configmap_name = "{}-generated-source".format(request_id)
         data = {
-            file.filename: base64.b64encode(zipfile.open(file).read()).decode("ascii")
+            file.filename: base64.b64encode(zipfile.read(file)).decode("ascii")
             for file in zipfile.filelist
         }
 
