@@ -699,11 +699,14 @@ def test_prepend_xcache():
     replicas = ["root://site3/file3.root", "root://site1/file1.root"]
     assert prepend_xcache(replicas) == replicas
 
-    # Now test with single xcache
+    # Now test with single xcache. The un-prefixed origins stay on the end as
+    # fallbacks so a dead cache doesn't turn into a hard file failure.
     os.environ["CACHE_PREFIX"] = "//xcache-cms-local:"
     assert prepend_xcache(replicas) == [
         "root:////xcache-cms-local://root://site3/file3.root",
         "root:////xcache-cms-local://root://site1/file1.root",
+        "root://site3/file3.root",
+        "root://site1/file1.root",
     ]
 
     # Now test with multiple xcache
