@@ -49,21 +49,39 @@ class TestTransformStatusInternal(ResourceTestBase):
         assert response.status_code == 200
         mock_request.save_to_db.assert_not_called()
 
-    def test_post_status_fatal(self, mocker, client):
+    def test_post_status_fatal(self, client):
+        from servicex_app.models import TransformRequest, TransformStatus
+
+        with client.application.app_context():
+            transform_request = self._generate_transform_request()
+            transform_request.save_to_db()
+
+            response = client.post(
+                "/servicex/internal/transformation/BR549/status",
+                json={
+                    "severity": "fatal",
+                    "info": "Just testing",
+                    "source": "test source",
+                },
+            )
+
+            assert response.status_code == 200
+            saved = TransformRequest.lookup("BR549")
+            assert saved.status == TransformStatus.fatal
+            assert saved.finish_time is not None
+            assert saved.failure_description == "Just testing"
+
+    def test_post_status_fatal_unknown_request(self, mocker, client):
         from servicex_app.models import TransformRequest
 
-        mock_request = self._generate_transform_request()
-        mock_request.save_to_db = mocker.Mock()
-        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+        mocker.patch.object(TransformRequest, "lookup", return_value=None)
 
         response = client.post(
             "/servicex/internal/transformation/1234/status",
             json={"severity": "fatal", "info": "Just testing", "source": "test source"},
         )
 
-        assert response.status_code == 200
-        assert mock_request.finish_time is not None
-        mock_request.save_to_db.assert_called()
+        assert response.status_code == 404
 
     def test_post_status_bad_data(self, client):
         response = client.post(
