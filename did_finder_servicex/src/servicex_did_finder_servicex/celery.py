@@ -100,8 +100,8 @@ def find_files(
                 servicex_endpoint + "/servicex/internal/transformation/file-urls"
             )
             r = session.post(
-                service_url, json={"request_id": did_name,
-                                   "file_list": [_[0] for _ in file_list]}
+                service_url,
+                json={"request_id": did_name, "file_list": [_[0] for _ in file_list]},
             )
             if r.status_code == 404:
                 raise NoSuchDatasetException(f"Results for {did_name} not found")
