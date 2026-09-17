@@ -120,7 +120,7 @@ class TransformerFileComplete(ServiceXResource):
 
             # Lookup the transformation request and increment either the successful
             # or failed file count
-            transform_req = self.record_file_complete(
+            transform_req, is_last_file = self.record_file_complete(
                 session, current_app.logger, request_id, info, log_extra, orig_counts
             )
 
@@ -129,11 +129,9 @@ class TransformerFileComplete(ServiceXResource):
                 return "Request not found", 404
 
             # Now we can see if we are done with the transformation and
-            # can shut down the transformers. Files remaining is None if
-            # we are still waiting for final results from the DID finder
-            with session.begin():
-                files_remaining = transform_req.files_remaining
-                if files_remaining is not None and files_remaining == 0:
+            # can shut down the transformers.
+            if is_last_file:
+                with session.begin():
                     self.transform_complete(
                         session,
                         current_app.logger,
@@ -167,7 +165,7 @@ class TransformerFileComplete(ServiceXResource):
         info: dict[str, str],
         log_extra: dict[str, str],
         orig_counts: Optional[dict[str, str]],
-    ) -> TransformRequest | None:
+    ) -> tuple[TransformRequest | None, bool]:
 
         with session.begin():
             # Lock the row for update
@@ -181,7 +179,7 @@ class TransformerFileComplete(ServiceXResource):
             if transform_req is None:
                 msg = f"Request not found with id: '{request_id}'"
                 logger.error(msg, extra=log_extra)
-                return None
+                return None, False
 
             if orig_counts:
                 # undo previous statistics accumulation
@@ -209,7 +207,18 @@ class TransformerFileComplete(ServiceXResource):
             else:
                 transform_req.files_failed += 1
 
-        return transform_req
+            # Decide, while the row is still locked, whether this is the callback
+            # that finishes the request. Files remaining is None if we are still
+            # waiting for final results from the DID finder, and a request which
+            # is not running yet may still be given more files.
+            files_remaining = transform_req.files_remaining
+            is_last_file = (
+                files_remaining is not None
+                and files_remaining == 0
+                and transform_req.status == TransformStatus.running
+            )
+
+        return transform_req, is_last_file
 
     @staticmethod
     @file_complete_ops_retry

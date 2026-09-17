@@ -30,6 +30,9 @@ def edit_profile():
             user.experiment = form.experiment.data
             user.updated_at = datetime.utcnow()
             db.session.commit()
+            session["name"] = user.name
+            session["email"] = user.email
+            session["institution"] = user.institution
             flash("Your profile has been saved!", "success")
             current_app.logger.info(f"Updated profile for {user.name}")
             return redirect(url_for("profile"))
