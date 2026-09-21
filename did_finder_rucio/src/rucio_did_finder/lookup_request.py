@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 from datetime import datetime
-from rucio_did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
 from .replica_distance import ReplicaSorter
 from typing import Optional, Mapping
 
@@ -40,6 +40,8 @@ class LookupRequest:
         dataset_id: str = "bogus-id",
         replica_sorter: Optional[ReplicaSorter] = None,
         location: Optional[Mapping[str, float]] = None,
+        rse_expression: str = DEFAULT_RSE_EXPRESSION,
+        ignore_availability: bool = False,
     ):
         """Create the `LookupRequest` object that is responsible for returning
         lists of files. Processes things in chunks.
@@ -49,10 +51,16 @@ class LookupRequest:
             rucio_adapter (RucioAdapter): Rucio lookup object
             dataset_id (str, optional): ServiceX Request ID that requested this DID.
                 Defaults to 'bogus-id'.
+            rse_expression (str, optional): Rucio RSE expression limiting which
+                replicas are returned. Defaults to `DEFAULT_RSE_EXPRESSION`.
+            ignore_availability (bool, optional): Include replicas on RSEs Rucio
+                has marked unavailable. Defaults to False.
         """
         self.did = did
         self.rucio_adapter = rucio_adapter
         self.dataset_id = dataset_id
+        self.rse_expression = rse_expression
+        self.ignore_availability = ignore_availability
 
         # set logging to a null handler
         self.logger = initialize_logging(component_name="rucio_did_finder")
@@ -72,7 +80,11 @@ class LookupRequest:
 
         self.logger.info("Doing Rucio lookup.")
         full_file_list = []
-        for ds_files in self.rucio_adapter.list_files_for_did(self.did):
+        for ds_files in self.rucio_adapter.list_files_for_did(
+            self.did,
+            rse_expression=self.rse_expression,
+            ignore_availability=self.ignore_availability,
+        ):
             for af in ds_files:
                 n_files += 1
                 ds_size += af["file_size"]
