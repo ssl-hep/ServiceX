@@ -607,10 +607,10 @@ class DatasetFile(db.Model):
 
 class LogMessage(db.Model):
     """
-    Application log records shipped to Postgres by the Vector sidecar. The app
+    Application log records shipped to Postgres by the Vector aggregator. The app
     never reads or writes this table via the ORM; the model exists so that
     flask-migrate manages the schema. Columns match the JSON event fields
-    emitted by VectorFormatter, plus a UUID `id` minted by Vector's remap
+    emitted by VectorFormatter, plus a UUID `id` minted by the aggregator's remap
     transform (kept as a plain string PK so Vector's
     `INSERT ... SELECT * FROM json_populate_recordset(...)` never has to
     populate a serial column).

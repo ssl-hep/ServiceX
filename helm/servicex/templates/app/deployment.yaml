@@ -14,9 +14,6 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app/configmap.yaml") . | sha256sum }}
-        {{- if .Values.logging.vector.enabled }}
-        checksum/vector-config: {{ include (print $.Template.BasePath "/app/vector-configmap.yaml") . | sha256sum }}
-        {{- end }}
         {{- with .Values.app.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -80,16 +77,12 @@ spec:
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
         {{- if .Values.logging.vector.enabled }}
+        # The app logs straight to the shared vector aggregator; it has no vector
+        # sidecar of its own, and no postgres credentials are needed here.
         - name: VECTOR_HOST
-          value: "127.0.0.1"
+          value: "{{ .Release.Name }}-vector-aggregator"
         - name: VECTOR_PORT
           value: "{{ .Values.logging.vector.port }}"
-        {{- if not .Values.secrets }}
-        # transformer_manager forwards PG_PASS to the transformer pods' vector
-        # sidecar. When .Values.secrets is set it is already injected below.
-        - name: PG_PASS
-          value: "{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}"
-        {{- end }}
         {{- end }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
@@ -198,45 +191,6 @@ spec:
         ports:
           - containerPort: 5000
 
-      {{- if .Values.logging.vector.enabled }}
-      - name: vector
-        image: {{ .Values.logging.vector.image }}:{{ .Values.logging.vector.tag }}
-        imagePullPolicy: {{ .Values.app.pullPolicy }}
-        args: [ "--config", "/etc/vector/vector.yaml" ]
-        env:
-        - name: VECTOR_SOCKET_PORT
-          value: "{{ .Values.logging.vector.port }}"
-        - name: VECTOR_LOG
-          value: "{{ .Values.logging.vector.logLevel }}"
-        - name: PG_HOST
-          value: "{{ .Release.Name }}-postgresql"
-        - name: PG_PORT
-          value: "5432"
-        - name: PG_USER
-          value: "postgres"
-        - name: PG_DB
-          value: "{{ .Values.postgresql.global.postgresql.auth.database }}"
-        {{- if .Values.secrets }}
-        - name: PG_PASS
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.secrets }}
-              key: postgresql-password
-        {{- else }}
-        - name: PG_PASS
-          value: "{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}"
-        {{- end }}
-        {{- if .Values.logging.vector.resources }}
-        resources:
-{{ toYaml .Values.logging.vector.resources | indent 10 }}
-        {{- end }}
-        volumeMounts:
-          - name: vector-config
-            mountPath: /etc/vector
-            readOnly: true
-          - name: vector-data
-            mountPath: /vector-data-dir
-      {{- end }}
 
       volumes:
         {{- if eq .Values.app.environment "dev" }}
@@ -257,10 +211,3 @@ spec:
           secret:
             secretName: users
         {{ end }}
-        {{- if .Values.logging.vector.enabled }}
-        - name: vector-config
-          configMap:
-            name: {{ .Release.Name }}-vector-config
-        - name: vector-data
-          emptyDir: {}
-        {{- end }}

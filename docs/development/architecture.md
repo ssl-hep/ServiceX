@@ -290,22 +290,30 @@ root and enforced at commit time by `hooks/check_log_extras.py`.
 
 ### Vector / Postgres
 
-When `logging.vector.enabled` is set, a `vector` sidecar container runs alongside the app
-and writes log records into the Postgres `log_messages` table, which the transformation
-request page renders as a filterable grid. The app's logger formats records as JSON whose
-keys match the table's columns and writes them to the sidecar over a localhost TCP socket,
-via a `QueueListener` background thread so logging never blocks the request path.
+When `logging.vector.enabled` is set, a **Vector aggregator** deployment
+(`{release}-vector-aggregator`) writes log records into the Postgres `log_messages` table,
+which the transformation request page renders as a filterable grid. It is the only thing
+in the release that connects to Postgres for logging, and the only thing that holds the
+database credentials. Everything else feeds it through its ClusterIP Service:
 
-`logging.vector.transformer.enabled` extends the same mechanism to the transformer worker
-pods that `transformer_manager.py` schedules. Each pod gets its own `vector` container with
-two sources:
+- **the app**, whose logger formats records as JSON matching the table's columns and writes
+  them to the aggregator's TCP socket source, via a `QueueListener` background thread so
+  logging never blocks the request path. The app has no Vector container of its own.
+- **transformer worker pods**, when `logging.vector.transformer.enabled` is set.
 
-- **the python transformer sidecar**, over a localhost socket, exactly as the app does
-  (`component = "transformer_sidecar"`);
+A transformer pod still needs a local Vector, because one of its two log streams is a file
+rather than a socket. `transformer_manager.py` gives each pod a `vector` container with:
+
+- **the python transformer sidecar**, over a localhost socket, exactly as the app talks to
+  the aggregator (`component = "transformer_sidecar"`);
 - **the science container's stdout**, which `watch.sh` tees into `science.*.log` chunks on
   the shared output volume for Vector to tail (`component = "science"`). Vector deletes each
   chunk once it has read it, which is what keeps that volume from growing for the life of
   the pod.
+
+That container's only sink is the aggregator, over Vector's native protocol. It never talks
+to Postgres, which is what keeps database credentials out of pods that also run
+user-supplied science images. The aggregator mints each row's UUID primary key.
 
 Rows from all three components carry the `request_id`, which is what the request page
 filters on, so transformer logs outlive the pods that produced them.
@@ -316,9 +324,13 @@ And `watch.sh`'s own `echo` output is not tee'd — only the transform command's
 so those lines stay in `kubectl logs` only; the sidecar separately logs hard failures with
 the captured output in `extra.log_body`.
 
-Each transformer pod's Vector holds its own Postgres connection, so the connection ceiling
-is roughly `maxReplicas x concurrent transforms`. The sink is pinned to a pool of one to
-keep that manageable.
+The Postgres connection count is now fixed at `aggregator.replicas x aggregator.poolSize`
+rather than growing with `maxReplicas x concurrent transforms`. Because the aggregator is a
+choke point, its Postgres sink is backed by a disk buffer (on the pod's `emptyDir`) by
+default, so a Postgres outage or a sink restart does not immediately drop records; set
+`logging.vector.aggregator.buffer.type=memory` to trade that durability for disk. The
+deployment's health probes use Vector's own API, so a replica replaying its buffer is kept
+out of the Service.
 
 ## Monitoring and Accounting
 

@@ -154,7 +154,7 @@ def strtobool(value: str) -> bool:
 class VectorFormatter(logstash.formatter.LogstashFormatterBase):
     """
     Serializes a log record to JSON with stable, column-matching keys for the
-    Vector sidecar's postgres sink (the `log_messages` table). Any non-standard
+    Vector aggregator's postgres sink (the `log_messages` table). Any non-standard
     record attributes are nested under `extra` (a JSON object). Emits bytes so
     it plugs directly into logstash.TCPLogstashHandler's newline framing.
     """
@@ -301,10 +301,12 @@ def create_app(
         logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
 
-    # Ship logs to a Vector sidecar over a localhost TCP socket. The socket
-    # send runs on a QueueListener background thread so logging never blocks the
-    # app: app.logger -> QueueHandler (unbounded queue, non-blocking put) ->
-    # listener thread -> TCPLogstashHandler (newline-delimited JSON) -> Vector.
+    # Ship logs to the release's Vector aggregator over TCP. The socket send runs
+    # on a QueueListener background thread so logging never blocks the app:
+    # app.logger -> QueueHandler (unbounded queue, non-blocking put) -> listener
+    # thread -> TCPLogstashHandler (newline-delimited JSON) -> Vector aggregator.
+    # VECTOR_HOST is the aggregator's Service, so a restart there only costs the
+    # records already on the wire.
     vector_host = os.environ.get("VECTOR_HOST")
     vector_port = os.environ.get("VECTOR_PORT")
     if vector_host and vector_port:

@@ -13,6 +13,9 @@ data:
   # servicex_app/servicex_app/transformer_manager.py. Two sources feed one sink:
   #   sidecar_logs  - JSON over a localhost socket from the python transformer sidecar
   #   science_logs  - the science container's stdout, tee'd to the shared volume by watch.sh
+  # Both are forwarded to the release's vector aggregator, which owns the only
+  # connection to postgres. Nothing here touches the database, so transformer pods
+  # never see the postgres credentials.
   # Vector refuses to start if any ${VAR} below is unset, so every one of them is
   # either injected by transformer_manager or given a default here.
   vector.yaml: |
@@ -61,20 +64,11 @@ data:
               }
             }
           }
-      add_id:
-        type: remap
-        inputs: [sidecar_logs, science_events]
-        source: |
-          .id = uuid_v4()
     sinks:
-      postgres_logs:
-        type: postgres
-        inputs: [add_id]
-        endpoint: "postgres://${PG_USER}:${PG_PASS}@${PG_HOST}:${PG_PORT}/${PG_DB}"
-        table: log_messages
-        # One connection per pod. Transformers scale out to maxReplicas, so the
-        # default pool of 5 would exhaust postgres max_connections on its own.
-        pool_size: 1
+      aggregator:
+        type: vector
+        inputs: [sidecar_logs, science_events]
+        address: ${VECTOR_AGGREGATOR_ADDRESS}
         batch:
           max_events: {{ .Values.logging.vector.batch.maxEvents }}
           timeout_secs: {{ .Values.logging.vector.batch.timeoutSecs }}

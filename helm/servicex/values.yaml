@@ -310,22 +310,42 @@ logging:
     # This URL format is tied to a parser in servicex_app/servicex_app/web/kibana_url_filter.py
     logs: "https://atlas-kibana.mwt2.org:5601/s/servicex/app/dashboards?auth_provider_hint=anonymous1#/view/bb682100-5558-11ed-afcf-d91dad577662?embed=true&_g=(filters:!(),refreshInterval:(pause:!t,value:1000),time:(from:now-24h%2Fh,to:now))&_a=(filters:!((query:(match_phrase:(instance:{{.Release.Name}}))),(meta:(index:'923eaa00-45b9-11ed-afcf-d91dad577662',key:level,negate:!t,params:(query:INFO),type:phrase),query:(match_phrase:(level:INFO))),(meta:(index:'923eaa00-45b9-11ed-afcf-d91dad577662',key:level,negate:!t,params:(query:DEBUG),type:phrase),query:(match_phrase:(level:DEBUG)))),index:'923eaa00-45b9-11ed-afcf-d91dad577662')"
 
-  # Vector sidecar that receives app logs over a localhost TCP socket and writes
-  # them to the Postgres `log_messages` table. Requires postgres.enabled=true.
+  # A shared Vector aggregator deployment that writes log records into the Postgres
+  # `log_messages` table. The app sends its logs to the aggregator directly over TCP;
+  # transformer pods run their own Vector (they need a file source for the science
+  # container's stdout) and forward to the aggregator over Vector's native protocol.
+  # The aggregator holds the only postgres connections. Requires postgres.enabled=true.
   vector:
     enabled: false
     image: timberio/vector
     tag: 0.48.0-debian        # must be >= 0.44.0 (postgres sink)
-    port: 9000                # localhost TCP port: app -> vector sidecar
+    port: 9000                # TCP port: app -> aggregator (newline-delimited JSON)
     logLevel: warn            # vector's own internal log level
-    resources: {}
     batch:
       maxEvents: 1000
       timeoutSecs: 5
 
+    aggregator:
+      replicas: 1
+      port: 6000              # TCP port: transformer vectors -> aggregator (native protocol)
+      apiPort: 8686           # vector's own API, used only by the health probes
+      # Postgres connections held per replica. Unlike the old per-transformer-pod
+      # sidecars, this is a fixed ceiling that does not grow with transform load.
+      poolSize: 5
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      buffer:
+        # disk survives a postgres outage or an aggregator restart; memory does not.
+        type: disk            # disk | memory
+        maxSize: 268435488    # bytes, disk only. Vector's minimum is 256Mi.
+        maxEvents: 500        # memory only
+        whenFull: block       # block | drop_newest
+
     # Also run a Vector sidecar inside every transformer worker pod, shipping the
     # transformer sidecar's structured logs and the science container's stdout to
-    # the same `log_messages` table. Requires logging.vector.enabled.
+    # the aggregator. Requires logging.vector.enabled.
     transformer:
       enabled: false
       port: 9000              # localhost TCP port: transformer sidecar -> vector
