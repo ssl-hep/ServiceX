@@ -23,7 +23,7 @@ def transformation_request(id_: str):
         # LOG_LEVELS is ordered least to most severe, so everything from the
         # selected level onward is "this level and above".
         query = query.filter(
-            LogMessage.level.in_(LOG_LEVELS[LOG_LEVELS.index(log_level):])
+            LogMessage.level.in_(LOG_LEVELS[LOG_LEVELS.index(log_level) :])
         )
 
     logs = query.order_by(LogMessage.timestamp.desc()).paginate(
