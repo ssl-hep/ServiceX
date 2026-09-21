@@ -278,11 +278,47 @@ There are several distinct kinds of errors:
 
 ## Logging
 
-Filebeats captures logging messages from various components and sends it to an Elasticsearch
-cluster for storage and presentation in Kibana dashboards.  In addition, transformers also
-send messages to the flask app.  These messages are persisted to the database.  Finally,
-components also write log messages to stdout.  These messages can be viewed using Kubectl's
-log command.
+Every component writes log messages to stdout, viewable with `kubectl logs`. On top of that
+there are two optional shipping paths, both configured under `logging` in the helm chart.
+
+### Logstash / Elasticsearch
+
+When `logging.logstash.enabled` is set, components attach a TCP logstash handler and send
+structured records to an Elasticsearch cluster for presentation in Kibana dashboards. The
+keys allowed in a record's `extra` dict are defined by `logging_schema.json` at the repo
+root and enforced at commit time by `hooks/check_log_extras.py`.
+
+### Vector / Postgres
+
+When `logging.vector.enabled` is set, a `vector` sidecar container runs alongside the app
+and writes log records into the Postgres `log_messages` table, which the transformation
+request page renders as a filterable grid. The app's logger formats records as JSON whose
+keys match the table's columns and writes them to the sidecar over a localhost TCP socket,
+via a `QueueListener` background thread so logging never blocks the request path.
+
+`logging.vector.transformer.enabled` extends the same mechanism to the transformer worker
+pods that `transformer_manager.py` schedules. Each pod gets its own `vector` container with
+two sources:
+
+- **the python transformer sidecar**, over a localhost socket, exactly as the app does
+  (`component = "transformer_sidecar"`);
+- **the science container's stdout**, which `watch.sh` tees into `science.*.log` chunks on
+  the shared output volume for Vector to tail (`component = "science"`). Vector deletes each
+  chunk once it has read it, which is what keeps that volume from growing for the life of
+  the pod.
+
+Rows from all three components carry the `request_id`, which is what the request page
+filters on, so transformer logs outlive the pods that produced them.
+
+Two caveats worth knowing. Science log lines are unstructured, so their severity is a
+keyword guess and their timestamp is Vector's ingest time rather than the science program's.
+And `watch.sh`'s own `echo` output is not tee'd — only the transform command's output is —
+so those lines stay in `kubectl logs` only; the sidecar separately logs hard failures with
+the captured output in `extra.log_body`.
+
+Each transformer pod's Vector holds its own Postgres connection, so the connection ceiling
+is roughly `maxReplicas x concurrent transforms`. The sink is pinned to a pool of one to
+keep that manageable.
 
 ## Monitoring and Accounting
 

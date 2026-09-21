@@ -54,7 +54,7 @@ from transformer_sidecar.science_container_command import (
 )
 from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
-from transformer_sidecar.transformer_logging import initialize_logging
+from transformer_sidecar.transformer_logging import initialize_logging, set_request_id
 from transformer_sidecar.transformer_stats import TransformerStats
 from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.raw_uproot_stats import (  # noqa: F401
@@ -493,6 +493,11 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     shared_dir = args.shared_dir
     request_id = args.request_id
     celery_app = app
+
+    # Stamps the id onto records whose call site can't supply one - everything
+    # logged by celery.* and friends. This has to happen before worker_main()
+    # below, which is where celery tears down and re-runs logging setup.
+    set_request_id(request_id)
 
     if args.result_destination == "object-store":
         posix_path = args.shared_dir
