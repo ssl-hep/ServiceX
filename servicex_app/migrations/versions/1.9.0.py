@@ -33,6 +33,8 @@ def upgrade():
         sa.Column("instance", sa.String(length=255), nullable=True),
         sa.Column("component", sa.String(length=64), nullable=True),
         sa.Column("message", sa.Text(), nullable=True),
+        sa.Column("request_id", sa.String(length=48), nullable=True),
+        sa.Column("dataset_id", sa.Integer(), nullable=True),
         sa.Column("extra", sa.JSON(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
