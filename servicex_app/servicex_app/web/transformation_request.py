@@ -14,15 +14,20 @@ def transformation_request(id_: str):
         abort(404)
 
     page = request.args.get("page", 1, type=int)
-    log_level = request.args.get("log_level")
-    filter_by_values = {}
-    if log_level:
-        filter_by_values["level"] = log_level
+    log_level = request.args.get("log_level", "").upper()
+    if log_level not in LOG_LEVELS:
+        log_level = None
 
-    logs = (
-        LogMessage.query.filter_by(request_id=req.request_id, **filter_by_values)
-        .order_by(LogMessage.timestamp.desc())
-        .paginate(page=page, per_page=50, error_out=False)
+    query = LogMessage.query.filter_by(request_id=req.request_id)
+    if log_level:
+        # LOG_LEVELS is ordered least to most severe, so everything from the
+        # selected level onward is "this level and above".
+        query = query.filter(
+            LogMessage.level.in_(LOG_LEVELS[LOG_LEVELS.index(log_level):])
+        )
+
+    logs = query.order_by(LogMessage.timestamp.desc()).paginate(
+        page=page, per_page=50, error_out=False
     )
 
     return render_template(
