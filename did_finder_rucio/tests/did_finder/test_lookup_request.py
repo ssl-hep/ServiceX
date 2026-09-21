@@ -28,7 +28,7 @@
 import pytest
 
 from rucio_did_finder.lookup_request import LookupRequest
-from rucio_did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
 
 from servicex_did_finder_lib.exceptions import (
     BadDatasetNameException,
@@ -38,6 +38,36 @@ from servicex_did_finder_lib.exceptions import (
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from rucio.common.exception import DataIdentifierNotFound
+
+
+REPLICA_METALINK = """<?xml version="1.0" encoding="UTF-8"?>
+<metalink xmlns="urn:ietf:params:xml:ns:metalink">
+ <file name="ghi">
+ <identity>abc:ghi</identity>
+ <hash type="adler32">430cf1b4</hash>
+ <size>19969184</size>
+ <glfn name="/atlas/rucio/ghi"></glfn>
+ <url location="SITE" priority="1">root://site/ghi</url>
+ </file>
+</metalink>"""
+
+
+def _mock_clients(mocker):
+    """Mock DID/replica clients that resolve `my-did` to a single replicated file."""
+    mock_did_client = mocker.MagicMock(DIDClient)
+    mock_replica_client = mocker.MagicMock(ReplicaClient)
+
+    mocker.patch(
+        "rucio_did_finder.rucio_adapter.RucioAdapter.list_datasets_for_did",
+        return_value=[["abc", "def"]],
+    )
+    mocker.patch(
+        "rucio_did_finder.rucio_adapter.RucioAdapter.client_location",
+        return_value={},
+    )
+    mock_did_client.list_files.return_value = ["ghi"]
+    mock_replica_client.list_replicas.return_value = REPLICA_METALINK
+    return mock_did_client, mock_replica_client
 
 
 class TestLookupRequest:
@@ -76,7 +106,38 @@ class TestLookupRequest:
 
         assert len(sum([_ for _ in request.lookup_files()], [])) == 20
 
-        mock_rucio.list_files_for_did.assert_called_with("my-did")
+        mock_rucio.list_files_for_did.assert_called_with(
+            "my-did",
+            rse_expression=DEFAULT_RSE_EXPRESSION,
+            ignore_availability=False,
+        )
+
+    def test_lookup_files_default_rse_expression(self, mocker):
+        mock_did_client, mock_replica_client = _mock_clients(mocker)
+
+        request = LookupRequest(
+            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+        )
+        assert len(sum([_ for _ in request.lookup_files()], [])) == 1
+
+        kwargs = mock_replica_client.list_replicas.call_args.kwargs
+        assert kwargs["rse_expression"] == DEFAULT_RSE_EXPRESSION
+        assert kwargs["ignore_availability"] is False
+
+    def test_lookup_files_custom_rse_expression(self, mocker):
+        mock_did_client, mock_replica_client = _mock_clients(mocker)
+
+        request = LookupRequest(
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            rse_expression="tier=1",
+            ignore_availability=True,
+        )
+        assert len(sum([_ for _ in request.lookup_files()], [])) == 1
+
+        kwargs = mock_replica_client.list_replicas.call_args.kwargs
+        assert kwargs["rse_expression"] == "tier=1"
+        assert kwargs["ignore_availability"] is True
 
     def test_lookup_files_no_replica(self, mocker):
         mock_did_client = mocker.MagicMock(DIDClient)

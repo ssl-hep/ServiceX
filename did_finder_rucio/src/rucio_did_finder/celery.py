@@ -31,7 +31,7 @@ from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 
 from rucio_did_finder.lookup_request import LookupRequest
-from rucio_did_finder.rucio_adapter import RucioAdapter
+from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
@@ -55,6 +55,13 @@ else:
     location = None
     replica_sorter = None
 
+rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION", DEFAULT_RSE_EXPRESSION)
+ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+
 app = DIDFinderApp("rucio", did_finder_args={"rucio_adapter": rucio_adapter})
 
 
@@ -65,6 +72,8 @@ def find_files(did_name, info, did_finder_args):
         dataset_id=info["dataset-id"],
         replica_sorter=replica_sorter,
         location=location,
+        rse_expression=rse_expression,
+        ignore_availability=ignore_availability,
     )
     for file in lookup_request.lookup_files():
         yield file
