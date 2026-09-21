@@ -1,6 +1,10 @@
+import json
+import re
 from datetime import datetime, timedelta
+from html import unescape
 
 from flask import Response, url_for
+from markupsafe import escape
 
 from pytest import fixture
 
@@ -24,8 +28,13 @@ class TestTransformationRequest(WebTestBase):
         return req
 
     @staticmethod
-    def _seed_logs(client, request_id, levels):
-        """Insert one LogMessage per entry in `levels` for the given request."""
+    def _seed_logs(client, request_id, levels, messages=None, extras=None):
+        """Insert one LogMessage per entry in `levels` for the given request.
+
+        `messages` and `extras` override the body and the `extra` payload of
+        each record, one entry per level, for tests that care about how the
+        log record itself is rendered.
+        """
         with client.application.app_context():
             for i, level in enumerate(levels):
                 db.session.add(
@@ -34,7 +43,8 @@ class TestTransformationRequest(WebTestBase):
                         timestamp=datetime.utcnow() + timedelta(seconds=i),
                         level=level,
                         component="transformer",
-                        message=f"message {i}",
+                        message=messages[i] if messages else f"message {i}",
+                        extra=extras[i] if extras else None,
                         request_id=request_id,
                     )
                 )
@@ -159,3 +169,63 @@ class TestTransformationRequest(WebTestBase):
         # per_page is 50, so page 2 holds the remaining 10.
         assert context["logs"].total == 60
         assert len(context["logs"].items) == 10
+
+    def test_long_log_message_is_truncated_in_grid(
+        self, client, mock_tr: TransformRequest
+    ):
+        long_message = 'Traceback (most recent call last):\n  File "<stdin>"\n' + (
+            "spam " * 100
+        )
+        self._seed_logs(client, mock_tr.request_id, ["ERROR"], [long_message])
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        html = resp.data.decode()
+        # The grid shows an elided fragment...
+        preview = re.search(
+            r'<span class="log-message-preview">(.*?)</span>', html, re.DOTALL
+        ).group(1)
+        assert preview.endswith("\u2026")
+        assert len(preview) < len(long_message)
+        # ...while the View link carries the whole thing for the dialog.
+        assert f'data-message="{escape(long_message)}"' in html
+
+    def test_short_log_message_is_not_truncated(
+        self, client, mock_tr: TransformRequest
+    ):
+        self._seed_logs(client, mock_tr.request_id, ["INFO"], ["a short message"])
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        html = resp.data.decode()
+        assert "a short message" in html
+        assert "\u2026" not in html
+
+    def test_log_message_dialog_is_rendered(self, client, mock_tr: TransformRequest):
+        self._seed_logs(client, mock_tr.request_id, ["INFO"])
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        html = resp.data.decode()
+        assert 'id="logMessageModal"' in html
+        assert 'data-target="#logMessageModal"' in html
+        assert ">View</a>" in html
+
+    def test_log_message_extra_is_available_to_dialog(
+        self, client, mock_tr: TransformRequest
+    ):
+        extra = {"file_id": 7, "note": 'quoted "value" & <tag>'}
+        self._seed_logs(client, mock_tr.request_id, ["INFO"], extras=[extra])
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        html = resp.data.decode()
+        assert 'id="logMessageExtra"' in html
+        # The payload rides along as escaped JSON on the View link: what the
+        # browser hands the dialog must parse back to the original object.
+        attr = re.search(r'data-extra="(.*?)"', html, re.DOTALL).group(1)
+        assert json.loads(unescape(attr)) == extra
+
+    def test_log_message_without_extra_omits_attribute(
+        self, client, mock_tr: TransformRequest
+    ):
+        self._seed_logs(client, mock_tr.request_id, ["INFO"])
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        assert "data-extra=" not in resp.data.decode()
