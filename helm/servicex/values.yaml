@@ -280,6 +280,8 @@ didFinder:
     image: sslhep/servicex-did-finder
     pullPolicy: Always
     reportLogicalFiles: false
+    rseExpression: 'istape=False&(*\type=SPECIAL|cloud=CERN)'
+    ignoreAvailability: false
     rucio_host: https://voatlasrucio-server-prod.cern.ch:443
     servicex_latitude: 41.78
     servicex_longitude: -87.7
