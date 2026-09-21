@@ -322,6 +322,27 @@ logging:
     batch:
       maxEvents: 1000
       timeoutSecs: 5
+
+    # Also run a Vector sidecar inside every transformer worker pod, shipping the
+    # transformer sidecar's structured logs and the science container's stdout to
+    # the same `log_messages` table. Requires logging.vector.enabled.
+    transformer:
+      enabled: false
+      port: 9000              # localhost TCP port: transformer sidecar -> vector
+      # This MUST carry a cpu request. The transformer HPA is autoscaling/v1 and
+      # averages CPU utilization over every container in the pod, so a container
+      # with no cpu request makes utilization unknown and stops autoscaling.
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+      # Seconds Vector waits before deleting a science log chunk it has fully read.
+      scienceLogRemoveAfterSecs: 300
+      # Optional size cap on the shared transformer output emptyDir.
+      # Leave null to keep the current (uncapped) behavior.
+      outputSizeLimit: null
 minio:
   image:
     repository: bitnamilegacy/minio

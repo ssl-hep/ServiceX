@@ -84,6 +84,12 @@ spec:
           value: "127.0.0.1"
         - name: VECTOR_PORT
           value: "{{ .Values.logging.vector.port }}"
+        {{- if not .Values.secrets }}
+        # transformer_manager forwards PG_PASS to the transformer pods' vector
+        # sidecar. When .Values.secrets is set it is already injected below.
+        - name: PG_PASS
+          value: "{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}"
+        {{- end }}
         {{- end }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
