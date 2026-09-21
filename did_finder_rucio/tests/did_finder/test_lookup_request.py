@@ -39,7 +39,6 @@ from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from rucio.common.exception import DataIdentifierNotFound
 
-
 REPLICA_METALINK = """<?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
  <file name="ghi">
