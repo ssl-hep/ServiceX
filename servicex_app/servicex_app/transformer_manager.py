@@ -255,7 +255,7 @@ class TransformerManager:
         ]
 
         # Point the transformer sidecar at the pod's own Vector container, which
-        # ships its logs to the Postgres log_messages table. This has to happen
+        # forwards its logs to the release's Vector aggregator. This has to happen
         # before the containers are constructed below, since they share this list.
         vector_enabled = current_app.config.get("TRANSFORMER_VECTOR_ENABLED", False)
         if vector_enabled:
@@ -494,15 +494,15 @@ class TransformerManager:
         """
         Build the Vector sidecar for a transformer pod. It receives the python
         transformer sidecar's logs over a localhost socket, tails the science
-        container's stdout off the shared output volume, and writes both to the
-        Postgres log_messages table.
+        container's stdout off the shared output volume, and forwards both to the
+        release's Vector aggregator, which is the only thing that writes to the
+        Postgres log_messages table. No database credentials reach this pod.
 
         Note this deliberately builds its OWN volume mount list. The science and
         sidecar containers share a single mount list object, so appending to that
         would mount Vector's config into them as well.
         """
         cfg = current_app.config
-        pg = cfg["TRANSFORMER_VECTOR_PG"]
 
         volume_mounts = [
             # Read-only: Vector only ever tails the science logs written here.
@@ -526,11 +526,10 @@ class TransformerManager:
             # The vector config interpolates these; Vector refuses to start if any
             # of them is unset.
             client.V1EnvVar("REQUEST_ID", value=request_id),
-            client.V1EnvVar("PG_HOST", value=str(pg["host"])),
-            client.V1EnvVar("PG_PORT", value=str(pg["port"])),
-            client.V1EnvVar("PG_USER", value=str(pg["user"])),
-            client.V1EnvVar("PG_DB", value=str(pg["database"])),
-            client.V1EnvVar("PG_PASS", value=os.environ.get("PG_PASS")),
+            client.V1EnvVar(
+                "VECTOR_AGGREGATOR_ADDRESS",
+                value=cfg["TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS"],
+            ),
             client.V1EnvVar("POD_NAME", value_from=pod_name_value_from),
             client.V1EnvVar("HOST_NAME", value_from=host_name_value_from),
         ]

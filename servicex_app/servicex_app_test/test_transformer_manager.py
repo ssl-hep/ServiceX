@@ -82,12 +82,7 @@ VECTOR_CONFIG = {
         "requests": {"cpu": "50m", "memory": "64Mi"},
         "limits": {"memory": "128Mi"},
     },
-    "TRANSFORMER_VECTOR_PG": {
-        "host": "rolling-snail-postgresql",
-        "port": "5432",
-        "user": "postgres",
-        "database": "servicex",
-    },
+    "TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS": "rolling-snail-vector-aggregator:6000",
     "TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB": "/servicex/output/*/science.*.log",
 }
 
@@ -643,15 +638,13 @@ class TestTransformerManager(ResourceTestBase):
             args = container.args
             assert not args[0].startswith("/servicex/proxy-exporter.sh & sleep 5 && ")
 
-    def _launch_with(self, mocker, extra_config, env=None):
+    def _launch_with(self, mocker, extra_config):
         """Launch a transform and return the V1Deployment handed to kubernetes."""
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
         mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
         mocker.patch.object(kubernetes.client, "AutoscalingV1Api")
-        if env is not None:
-            mocker.patch.dict(os.environ, env)
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -689,7 +682,6 @@ class TestTransformerManager(ResourceTestBase):
         deployment = self._launch_with(
             mocker,
             make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-            env={"PG_PASS": "shhh-pg"},
         )
         spec = deployment.spec.template.spec
 
@@ -724,7 +716,6 @@ class TestTransformerManager(ResourceTestBase):
         deployment = self._launch_with(
             mocker,
             make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-            env={"PG_PASS": "shhh-pg"},
         )
         sidecar, science, vector = deployment.spec.template.spec.containers
 
@@ -742,7 +733,6 @@ class TestTransformerManager(ResourceTestBase):
         deployment = self._launch_with(
             mocker,
             make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-            env={"PG_PASS": "shhh-pg"},
         )
         sidecar, _, vector = deployment.spec.template.spec.containers
 
@@ -758,12 +748,14 @@ class TestTransformerManager(ResourceTestBase):
             _env_value(vector.env, "SCIENCE_LOG_GLOB")
             == "/servicex/output/*/science.*.log"
         )
-        assert _env_value(vector.env, "PG_HOST") == "rolling-snail-postgresql"
-        assert _env_value(vector.env, "PG_PORT") == "5432"
-        assert _env_value(vector.env, "PG_USER") == "postgres"
-        assert _env_value(vector.env, "PG_DB") == "servicex"
-        # Sourced from the app pod's own env, never from app.conf.
-        assert _env_value(vector.env, "PG_PASS") == "shhh-pg"
+        assert (
+            _env_value(vector.env, "VECTOR_AGGREGATOR_ADDRESS")
+            == "rolling-snail-vector-aggregator:6000"
+        )
+
+        # The aggregator owns the only postgres connection. A transformer pod that
+        # carried credentials would hand them to every user-supplied science image.
+        assert not [e for e in vector.env if e.name.startswith("PG_")]
 
     def test_vector_sidecar_has_cpu_request(self, mocker):
         """
@@ -774,7 +766,6 @@ class TestTransformerManager(ResourceTestBase):
         deployment = self._launch_with(
             mocker,
             make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-            env={"PG_PASS": "shhh-pg"},
         )
         science, vector = deployment.spec.template.spec.containers[1:]
 
