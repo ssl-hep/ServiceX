@@ -1,0 +1,61 @@
+{{- if .Values.logging.vector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-vector-aggregator-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  # The one Vector that talks to Postgres. Everything else in the release forwards
+  # here, so the log_messages connection count is this deployment's replicas x
+  # poolSize rather than one connection per transformer pod.
+  #   app_logs       - JSON over TCP from the servicex app's logger
+  #   forwarded_logs - the native Vector protocol, from each transformer pod's vector
+  # Vector refuses to start if any ${VAR} below is unset; all of them are injected
+  # by the aggregator deployment.
+  vector.yaml: |
+    data_dir: /vector-data-dir
+    api:
+      enabled: true
+      address: 0.0.0.0:{{ .Values.logging.vector.aggregator.apiPort }}
+    sources:
+      app_logs:
+        type: socket
+        mode: tcp
+        address: 0.0.0.0:${VECTOR_SOCKET_PORT}
+        decoding:
+          codec: json
+      forwarded_logs:
+        type: vector
+        address: 0.0.0.0:${VECTOR_AGGREGATOR_PORT}
+    transforms:
+      add_id:
+        type: remap
+        inputs: [app_logs, forwarded_logs]
+        source: |
+          .id = uuid_v4()
+    sinks:
+      postgres_logs:
+        type: postgres
+        inputs: [add_id]
+        endpoint: "postgres://${PG_USER}:${PG_PASS}@${PG_HOST}:${PG_PORT}/${PG_DB}"
+        table: log_messages
+        pool_size: {{ .Values.logging.vector.aggregator.poolSize }}
+        batch:
+          max_events: {{ .Values.logging.vector.batch.maxEvents }}
+          timeout_secs: {{ .Values.logging.vector.batch.timeoutSecs }}
+        buffer:
+        {{- if eq .Values.logging.vector.aggregator.buffer.type "disk" }}
+          # Backed by the vector-data emptyDir, so it survives a Postgres outage
+          # but not the pod being rescheduled. Vector's minimum is 256Mi.
+          type: disk
+          max_size: {{ int64 .Values.logging.vector.aggregator.buffer.maxSize }}
+        {{- else }}
+          type: memory
+          max_events: {{ int64 .Values.logging.vector.aggregator.buffer.maxEvents }}
+        {{- end }}
+          when_full: {{ .Values.logging.vector.aggregator.buffer.whenFull }}
+{{- end }}

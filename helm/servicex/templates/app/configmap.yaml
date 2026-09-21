@@ -142,9 +142,8 @@ data:
     {{- end }}
 
     {{- if and .Values.logging.vector.enabled .Values.logging.vector.transformer.enabled }}
-    # Vector sidecar for transformer worker pods. The postgres password is
-    # deliberately absent here - app.conf lands in a ConfigMap - and is read from
-    # the PG_PASS environment variable instead.
+    # Vector sidecar for transformer worker pods. It only forwards to the release's
+    # vector aggregator, so no postgres connection details are needed here.
     TRANSFORMER_VECTOR_ENABLED = True
     TRANSFORMER_VECTOR_IMAGE = "{{ .Values.logging.vector.image }}:{{ .Values.logging.vector.tag }}"
     TRANSFORMER_VECTOR_PULL_POLICY = '{{ .Values.app.pullPolicy }}'
@@ -152,7 +151,7 @@ data:
     TRANSFORMER_VECTOR_LOG_LEVEL = '{{ .Values.logging.vector.logLevel }}'
     TRANSFORMER_VECTOR_CONFIG_MAP = "{{ .Release.Name }}-transformer-vector-config"
     TRANSFORMER_VECTOR_RESOURCES = {{ .Values.logging.vector.transformer.resources | toJson }}
-    TRANSFORMER_VECTOR_PG = {{ dict "host" (printf "%s-postgresql" .Release.Name) "port" "5432" "user" "postgres" "database" .Values.postgresql.global.postgresql.auth.database | toJson }}
+    TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ .Release.Name }}-vector-aggregator:{{ .Values.logging.vector.aggregator.port }}"
     TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB = "{{ .Values.transformer.outputDir }}/*/science.*.log"
     {{- if .Values.logging.vector.transformer.outputSizeLimit }}
     TRANSFORMER_VECTOR_OUTPUT_SIZE_LIMIT = "{{ .Values.logging.vector.transformer.outputSizeLimit }}"
