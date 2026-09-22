@@ -637,6 +637,24 @@ class LogMessage(db.Model):
     dataset_id = db.Column(db.Integer)
     extra = db.Column(db.JSON)
 
+    __table_args__ = (
+        # timestamp DESC rides along so the web log grid's "one transform,
+        # newest first, 50 at a time" read is answered straight from the index
+        # instead of sorting every record for the transform. dataset_id needs
+        # no such column: those records are only ever matched and purged.
+        db.Index(
+            "ix_log_messages_request_id",
+            request_id,
+            timestamp.desc(),
+            postgresql_where=request_id.isnot(None),
+        ),
+        db.Index(
+            "ix_log_messages_dataset_id",
+            dataset_id,
+            postgresql_where=dataset_id.isnot(None),
+        ),
+    )
+
     @classmethod
     def delete_by_request_id(cls, request_id: str, session=None) -> int:
         """
