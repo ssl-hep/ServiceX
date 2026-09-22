@@ -299,6 +299,13 @@ database credentials. Everything else feeds it through its ClusterIP Service:
 - **the app**, whose logger formats records as JSON matching the table's columns and writes
   them to the aggregator's TCP socket source, via a `QueueListener` background thread so
   logging never blocks the request path. The app has no Vector container of its own.
+- **the four DID finders**, the same way. They are long-running deployments rather than
+  per-request pods, so like the app they need no Vector container — `initialize_logging`
+  in `servicex_did_finder_lib` attaches the handler whenever `VECTOR_HOST` is set. One
+  wrinkle: the finders are celery workers running the prefork pool, and a `QueueListener`
+  is a thread, so the handler rebuilds its queue, listener and socket the first time it
+  emits in a forked child. Without that, the children would enqueue into a queue nobody
+  drains and share one socket between them.
 - **transformer worker pods**, when `logging.vector.transformer.enabled` is set.
 
 A transformer pod still needs a local Vector, because one of its two log streams is a file
@@ -315,8 +322,14 @@ That container's only sink is the aggregator, over Vector's native protocol. It 
 to Postgres, which is what keeps database credentials out of pods that also run
 user-supplied science images. The aggregator mints each row's UUID primary key.
 
-Rows from all three components carry the `request_id`, which is what the request page
-filters on, so transformer logs outlive the pods that produced them.
+App, sidecar and science rows carry the `request_id`, which is what the request page
+filters on, so transformer logs outlive the pods that produced them. DID finder rows are
+keyed on `dataset_id` instead — a DID lookup belongs to a dataset, and the same lookup may
+serve several requests — so their `request_id` is null and the request page does not show
+them yet. `TransformRequest.did_id` is the foreign key that would join the two.
+
+A DID finder row only carries a `dataset_id` if its call site passed one in `extra`. Log
+lines from celery, kombu and rucio therefore land unattributed.
 
 Two caveats worth knowing. Science log lines are unstructured, so their severity is a
 keyword guess and their timestamp is Vector's ingest time rather than the science program's.

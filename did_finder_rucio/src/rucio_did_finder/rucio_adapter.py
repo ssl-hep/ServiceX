@@ -73,7 +73,7 @@ class RucioAdapter:
                 ):
                     client_location = response.json()
             except Exception as ex:
-                self.logger.exception(ex)
+                self.logger.exception(ex, extra={"error_message": str(ex)})
         return client_location
 
     def parse_did(self, did):
@@ -102,7 +102,12 @@ class RucioAdapter:
                 d["scope"], d["name"] = sc, did
                 return d
 
-        self.logger.error(f"Scope of the dataset {did} could not be determined.")
+        # The shared RucioAdapter has no dataset_id of its own, so these rows
+        # land in log_messages keyed only on the dataset name.
+        self.logger.error(
+            f"Scope of the dataset {did} could not be determined.",
+            extra={"dataset_name": did, "error_type": "bad_name"},
+        )
         raise BadDatasetNameException(
             f"Scope of the dataset {did} could not be determined."
         )
@@ -116,7 +121,8 @@ class RucioAdapter:
             did_info = self.did_client.get_did(parsed_did["scope"], parsed_did["name"])
             if did_info["type"] == "CONTAINER":
                 self.logger.info(
-                    f"{did} is a container of {did_info['length']} datasets."
+                    f"{did} is a container of {did_info['length']} datasets.",
+                    extra={"dataset_name": did},
                 )
                 content = self.did_client.list_content(
                     parsed_did["scope"], parsed_did["name"]
@@ -125,13 +131,21 @@ class RucioAdapter:
                     datasets.append([c["scope"], c["name"]])
             elif did_info["type"] == "DATASET":
                 datasets.append([parsed_did["scope"], parsed_did["name"]])
-                self.logger.info(f"{did} is a dataset with {did_info['length']} files.")
+                self.logger.info(
+                    f"{did} is a dataset with {did_info['length']} files.",
+                    extra={"dataset_name": did, "num_files": did_info["length"]},
+                )
             else:
-                self.logger.info(f"{did} is a file: {did_info}.")
+                self.logger.info(
+                    f"{did} is a file: {did_info}.", extra={"dataset_name": did}
+                )
                 datasets.append([parsed_did["scope"], parsed_did["name"]])
             return datasets
         except DataIdentifierNotFound:
-            self.logger.warning(f"{did} not found")
+            self.logger.warning(
+                f"{did} not found",
+                extra={"dataset_name": did, "error_type": "does_not_exist"},
+            )
             raise NoSuchDatasetException(f"{did} not found")
         except Exception as e:
             raise LookupFailureException(f"Problem in lookup of {did}: {e}")
