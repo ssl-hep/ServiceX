@@ -38,7 +38,6 @@ from servicex_app.models import (
     Dataset,
     db,
     LogMessage,
-    TransformationResult,
     DatasetFile,
 )
 from servicex_app.resources.servicex_resource import ServiceXResource
@@ -64,22 +63,7 @@ class DataLifecycleOps(ServiceXResource):
 
         for transform in expired_transforms:
             with session.begin():
-                # Delete all the results for this transform
-                session.query(TransformationResult).filter_by(
-                    request_id=transform.request_id
-                ).delete()
-
-                # Delete the log records that were shipped for this transform
-                purged_logs = LogMessage.delete_by_request_id(
-                    transform.request_id, session=session
-                )
-
-                # Delete the transformed files out of object store along with the bucket
-                if object_store:
-                    object_store.delete_bucket_and_contents(transform.request_id)
-
-                # Delete the transform request
-                session.delete(transform)
+                purged_logs = transform.purge(session, object_store)
 
                 deleted_log.append(
                     f"{transform.submitter_name} - {transform.request_id}: "

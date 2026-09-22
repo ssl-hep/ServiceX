@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-vector-aggregator
+  name: {{ include "servicex.vector.aggregatorHost" . }}
   labels:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    app: {{ .Release.Name }}-vector-aggregator
+    app: {{ include "servicex.vector.aggregatorHost" . }}
 spec:
   replicas: {{ .Values.logging.vector.aggregator.replicas }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-vector-aggregator
+      app: {{ include "servicex.vector.aggregatorHost" . }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-vector-aggregator
+        app: {{ include "servicex.vector.aggregatorHost" . }}
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
       annotations:
         checksum/vector-config: {{ include (print $.Template.BasePath "/app/vector-aggregator-configmap.yaml") . | sha256sum }}
@@ -39,10 +39,6 @@ spec:
         imagePullPolicy: {{ .Values.app.pullPolicy }}
         args: [ "--config", "/etc/vector/vector.yaml" ]
         env:
-        - name: VECTOR_SOCKET_PORT
-          value: "{{ .Values.logging.vector.port }}"
-        - name: VECTOR_AGGREGATOR_PORT
-          value: "{{ .Values.logging.vector.aggregator.port }}"
         - name: VECTOR_LOG
           value: "{{ .Values.logging.vector.logLevel }}"
         - name: PG_HOST

@@ -669,6 +669,13 @@ class TestTransformerManager(ResourceTestBase):
             )
             return mock_api.mock_calls[1][2]["body"]
 
+    @pytest.fixture
+    def vector_deployment(self, mocker):
+        """A transform launched with the vector sidecar turned on."""
+        return self._launch_with(
+            mocker, make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG)
+        )
+
     def test_vector_sidecar_disabled_by_default(self, mocker):
         """No vector container, and nothing bolted onto the shared volumes."""
         deployment = self._launch_with(
@@ -678,12 +685,8 @@ class TestTransformerManager(ResourceTestBase):
         assert [c.name for c in spec.containers] == ["sidecar", "transformer"]
         assert not [v for v in spec.volumes if v.name.startswith("vector-")]
 
-    def test_vector_sidecar_added_when_enabled(self, mocker):
-        deployment = self._launch_with(
-            mocker,
-            make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-        )
-        spec = deployment.spec.template.spec
+    def test_vector_sidecar_added_when_enabled(self, vector_deployment):
+        spec = vector_deployment.spec.template.spec
 
         # Appended last, so the existing sidecar/science indices are unchanged.
         assert [c.name for c in spec.containers] == [
@@ -707,17 +710,15 @@ class TestTransformerManager(ResourceTestBase):
             config_volume.config_map.name == "rolling-snail-transformer-vector-config"
         )
 
-    def test_vector_sidecar_does_not_leak_into_other_containers(self, mocker):
+    def test_vector_sidecar_does_not_leak_into_other_containers(
+        self, vector_deployment
+    ):
         """
         The science and sidecar containers share one mount list object, so
         building Vector's mounts by appending to it would silently mount
         /etc/vector into both of them.
         """
-        deployment = self._launch_with(
-            mocker,
-            make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-        )
-        sidecar, science, vector = deployment.spec.template.spec.containers
+        sidecar, science, vector = vector_deployment.spec.template.spec.containers
 
         for container in (sidecar, science):
             assert [m.name for m in container.volume_mounts] == ["sidecar-volume"]
@@ -729,12 +730,8 @@ class TestTransformerManager(ResourceTestBase):
         ]
         assert vector.volume_mounts[0].read_only is True
 
-    def test_vector_sidecar_env(self, mocker):
-        deployment = self._launch_with(
-            mocker,
-            make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-        )
-        sidecar, _, vector = deployment.spec.template.spec.containers
+    def test_vector_sidecar_env(self, vector_deployment):
+        sidecar, _, vector = vector_deployment.spec.template.spec.containers
 
         # The python sidecar talks to vector over the pod's loopback.
         assert _env_value(sidecar.env, "VECTOR_HOST") == "127.0.0.1"
@@ -757,17 +754,13 @@ class TestTransformerManager(ResourceTestBase):
         # carried credentials would hand them to every user-supplied science image.
         assert not [e for e in vector.env if e.name.startswith("PG_")]
 
-    def test_vector_sidecar_has_cpu_request(self, mocker):
+    def test_vector_sidecar_has_cpu_request(self, vector_deployment):
         """
         The transformer HPA is autoscaling/v1 and averages CPU utilization over
         every container in the pod. A vector container with no cpu request makes
         utilization unknown and silently stops transformer autoscaling.
         """
-        deployment = self._launch_with(
-            mocker,
-            make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG),
-        )
-        science, vector = deployment.spec.template.spec.containers[1:]
+        science, vector = vector_deployment.spec.template.spec.containers[1:]
 
         assert vector.resources.requests["cpu"] == "50m"
         # And it must not inherit the science container's much larger limits.

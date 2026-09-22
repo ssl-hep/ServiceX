@@ -75,6 +75,22 @@ class RequestIdFilter(logging.Filter):
         return True
 
 
+class _DirectQueueHandler(QueueHandler):
+    """
+    A QueueHandler that puts the record on the queue as-is.
+
+    The stdlib's prepare() formats the record and then shallow-copies it so it
+    can cross a process boundary. Our listener is a thread in this same process,
+    so that buys nothing and costs a format plus a copy of every record, on the
+    thread that logged it. prepare() also nulls exc_info, which is the field
+    VectorFormatter checks before attaching a traceback, so skipping it is also
+    what lets tracebacks reach the `extra` column at all.
+    """
+
+    def prepare(self, record):
+        return record
+
+
 # initialize_logging() is called more than once, and on different loggers: once
 # at import against the root logger, and again from Celery's after_setup_logger
 # hook against Celery's. One queue and one listener are shared across all of
@@ -163,10 +179,10 @@ def _initialize_vector_logging(log):
     ):
         return
 
-    queue_handler = QueueHandler(_vector_queue)
+    queue_handler = _DirectQueueHandler(_vector_queue)
     queue_handler.setLevel(log.level)
-    # Filter here rather than on the listener's handler: QueueHandler.prepare()
-    # copies the record on its way into the queue, and handler filters run before
-    # emit(), so this is the last point at which the original record is in hand.
+    # Filter here rather than on the listener's handler. Handler filters run
+    # before emit(), so this stamps the record while it is still on the thread
+    # that logged it, and the listener sees it already attributed.
     queue_handler.addFilter(RequestIdFilter())
     log.addHandler(queue_handler)

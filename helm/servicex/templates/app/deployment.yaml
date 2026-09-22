@@ -76,13 +76,8 @@ spec:
         - name: LOGSTASH_PROTOCOL
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
-        {{- if .Values.logging.vector.enabled }}
-        # The app logs straight to the shared vector aggregator; it has no vector
-        # sidecar of its own, and no postgres credentials are needed here.
-        - name: VECTOR_HOST
-          value: "{{ .Release.Name }}-vector-aggregator"
-        - name: VECTOR_PORT
-          value: "{{ .Values.logging.vector.port }}"
+        {{- with (include "servicex.vector.env" . | trim) }}
+        {{- nindent 8 . }}
         {{- end }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
@@ -187,10 +182,8 @@ spec:
             mountPath: /default_users
           {{ end }}
 
-
         ports:
           - containerPort: 5000
-
 
       volumes:
         {{- if eq .Values.app.environment "dev" }}

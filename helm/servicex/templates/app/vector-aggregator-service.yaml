@@ -3,12 +3,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-vector-aggregator
+  name: {{ include "servicex.vector.aggregatorHost" . }}
   labels:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    app: {{ .Release.Name }}-vector-aggregator
+    app: {{ include "servicex.vector.aggregatorHost" . }}
 spec:
   ports:
    # The app's logger writes newline-delimited JSON here.
@@ -22,6 +22,6 @@ spec:
      name: "vector"
      protocol: TCP
   selector:
-    app: {{ .Release.Name }}-vector-aggregator
+    app: {{ include "servicex.vector.aggregatorHost" . }}
   type: ClusterIP
 {{- end }}

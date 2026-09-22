@@ -361,9 +361,6 @@ logging:
           memory: 128Mi
       # Seconds Vector waits before deleting a science log chunk it has fully read.
       scienceLogRemoveAfterSecs: 300
-      # Optional size cap on the shared transformer output emptyDir.
-      # Leave null to keep the current (uncapped) behavior.
-      outputSizeLimit: null
 minio:
   image:
     repository: bitnamilegacy/minio

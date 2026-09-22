@@ -168,6 +168,44 @@ class TestTransformRequest:
             mock_conn.execute.assert_called_once()
 
 
+class TestTransformRequestPurge:
+    """
+    purge() is the whole teardown for a transform, shared by the delete endpoint
+    and the expiry sweep. It must never commit: both callers wrap it in their own
+    transaction so the results, the log records and the request go together.
+    """
+
+    @fixture
+    def transform(self):
+        request = TransformRequest()
+        request.request_id = "BR549"
+        return request
+
+    def test_purge(self, transform, mocker):
+        session = mocker.MagicMock()
+        object_store = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=7)
+
+        assert transform.purge(session, object_store) == 7
+
+        session.query.assert_called_once_with(TransformationResult)
+        session.query.return_value.filter_by.assert_called_once_with(request_id="BR549")
+        LogMessage.delete_by_request_id.assert_called_once_with(
+            "BR549", session=session
+        )
+        object_store.delete_bucket_and_contents.assert_called_once_with("BR549")
+        session.delete.assert_called_once_with(transform)
+        assert not session.commit.called
+
+    def test_purge_without_object_store(self, transform, mocker):
+        """Object store is optional; the rest of the teardown still runs."""
+        session = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=0)
+
+        assert transform.purge(session) == 0
+        session.delete.assert_called_once_with(transform)
+
+
 class TestLogMessage:
     def test_delete_by_request_id(self, mocker):
         with patch("servicex_app.models.db") as mock_db:
