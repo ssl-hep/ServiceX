@@ -31,7 +31,7 @@ from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 
 from rucio_did_finder.lookup_request import LookupRequest
-from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
@@ -55,7 +55,13 @@ else:
     location = None
     replica_sorter = None
 
-rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION", DEFAULT_RSE_EXPRESSION)
+rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION")
+if not rse_expression:
+    raise ValueError(
+        "RUCIO_RSE_EXPRESSION environment variable must be set to a Rucio RSE "
+        "expression appropriate for this experiment's Rucio instance"
+    )
+
 ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
     "true",
     "1",

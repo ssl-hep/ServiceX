@@ -38,8 +38,6 @@ from servicex_did_finder_lib.exceptions import (
     LookupFailureException,
 )
 
-DEFAULT_RSE_EXPRESSION = r"istape=False&(*\type=SPECIAL|cloud=CERN)"
-
 
 class RucioAdapter:
     def __init__(self, did_client, replica_client, report_logical_files=False):
@@ -163,7 +161,7 @@ class RucioAdapter:
     def list_files_for_did(
         self,
         did,
-        rse_expression=DEFAULT_RSE_EXPRESSION,
+        rse_expression,
         ignore_availability=False,
     ):
         """

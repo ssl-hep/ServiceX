@@ -28,7 +28,7 @@
 import pytest
 
 from rucio_did_finder.lookup_request import LookupRequest
-from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 
 from servicex_did_finder_lib.exceptions import (
     BadDatasetNameException,
@@ -38,6 +38,8 @@ from servicex_did_finder_lib.exceptions import (
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 from rucio.common.exception import DataIdentifierNotFound
+
+TEST_RSE_EXPRESSION = "cloud=CERN"
 
 REPLICA_METALINK = """<?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
@@ -72,7 +74,7 @@ def _mock_clients(mocker):
 class TestLookupRequest:
     def test_init(self, mocker):
         mock_rucio = mocker.MagicMock(RucioAdapter)
-        request = LookupRequest("my-did", mock_rucio)
+        request = LookupRequest("my-did", mock_rucio, TEST_RSE_EXPRESSION)
         assert request.rucio_adapter == mock_rucio
         assert request.did == "my-did"
 
@@ -101,29 +103,17 @@ class TestLookupRequest:
             [rucio_file_list1, rucio_file_list2]
         )
 
-        request = LookupRequest("my-did", mock_rucio)
+        request = LookupRequest("my-did", mock_rucio, TEST_RSE_EXPRESSION)
 
         assert len(sum([_ for _ in request.lookup_files()], [])) == 20
 
         mock_rucio.list_files_for_did.assert_called_with(
             "my-did",
-            rse_expression=DEFAULT_RSE_EXPRESSION,
+            rse_expression=TEST_RSE_EXPRESSION,
             ignore_availability=False,
         )
 
-    def test_lookup_files_default_rse_expression(self, mocker):
-        mock_did_client, mock_replica_client = _mock_clients(mocker)
-
-        request = LookupRequest(
-            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
-        )
-        assert len(sum([_ for _ in request.lookup_files()], [])) == 1
-
-        kwargs = mock_replica_client.list_replicas.call_args.kwargs
-        assert kwargs["rse_expression"] == DEFAULT_RSE_EXPRESSION
-        assert kwargs["ignore_availability"] is False
-
-    def test_lookup_files_custom_rse_expression(self, mocker):
+    def test_lookup_files_rse_expression(self, mocker):
         mock_did_client, mock_replica_client = _mock_clients(mocker)
 
         request = LookupRequest(
@@ -158,7 +148,9 @@ class TestLookupRequest:
 </metalink>"""
 
         request = LookupRequest(
-            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
         )
 
         with pytest.raises(LookupFailureException):
@@ -172,7 +164,9 @@ class TestLookupRequest:
         mock_replica_client = mocker.MagicMock(ReplicaClient)
 
         request = LookupRequest(
-            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
         )
 
         with pytest.raises(BadDatasetNameException):
@@ -184,7 +178,9 @@ class TestLookupRequest:
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
         request = LookupRequest(
-            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
         )
         with pytest.raises(BadDatasetNameException):
             [_ for _ in request.lookup_files()]
@@ -195,7 +191,9 @@ class TestLookupRequest:
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
         request = LookupRequest(
-            "my-did", RucioAdapter(mock_did_client, mock_replica_client)
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
         )
         with pytest.raises(BadDatasetNameException):
             [_ for _ in request.lookup_files()]
