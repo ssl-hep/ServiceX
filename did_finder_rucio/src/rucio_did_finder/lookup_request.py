@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 from datetime import datetime
-from rucio_did_finder.rucio_adapter import DEFAULT_RSE_EXPRESSION, RucioAdapter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 from .replica_distance import ReplicaSorter
 from typing import Optional, Mapping
 
@@ -37,10 +37,10 @@ class LookupRequest:
         self,
         did: str,
         rucio_adapter: RucioAdapter,
+        rse_expression: str,
         dataset_id: str = "bogus-id",
         replica_sorter: Optional[ReplicaSorter] = None,
         location: Optional[Mapping[str, float]] = None,
-        rse_expression: str = DEFAULT_RSE_EXPRESSION,
         ignore_availability: bool = False,
     ):
         """Create the `LookupRequest` object that is responsible for returning
@@ -49,10 +49,11 @@ class LookupRequest:
         Args:
             did (str): The DID we are going to lookup
             rucio_adapter (RucioAdapter): Rucio lookup object
+            rse_expression (str): Rucio RSE expression limiting which replicas
+                are returned. This is experiment specific, so there is no
+                default; it must be supplied by the caller.
             dataset_id (str, optional): ServiceX Request ID that requested this DID.
                 Defaults to 'bogus-id'.
-            rse_expression (str, optional): Rucio RSE expression limiting which
-                replicas are returned. Defaults to `DEFAULT_RSE_EXPRESSION`.
             ignore_availability (bool, optional): Include replicas on RSEs Rucio
                 has marked unavailable. Defaults to False.
         """
