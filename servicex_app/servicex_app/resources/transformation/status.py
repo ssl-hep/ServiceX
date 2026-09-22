@@ -29,7 +29,7 @@ from flask_restful import reqparse
 from flask import jsonify, current_app
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformationResult, TransformRequest
+from servicex_app.models import TransformationResult
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 status_request_parser = reqparse.RequestParser()
@@ -41,11 +41,9 @@ status_request_parser.add_argument(
 class TransformationStatus(ServiceXResource):
     @auth_required
     def get(self, request_id):
-        transform = TransformRequest.lookup(request_id)
-        if not transform:
-            msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.error(msg, extra={"request_id": request_id})
-            return {"message": msg}, 404
+        transform, error = self._get_owned_request(request_id)
+        if error:
+            return error
 
         status_request = status_request_parser.parse_args()
 

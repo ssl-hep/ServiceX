@@ -25,10 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from typing import Optional
+from typing import Any, Optional, Tuple
 
 from importlib.metadata import version, PackageNotFoundError
-from flask import current_app
+from flask import current_app, session
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
@@ -50,7 +50,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
-    @jwt_required_if_auth_enabled
+    @jwt_required_if_auth_enabled(optional=True)
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
@@ -59,8 +59,34 @@ class ServiceXResource(Resource):
         """
         user = None
         if current_app.config.get("ENABLE_AUTH"):
-            user = UserModel.find_by_email(get_jwt_identity())
+            if session.get("is_authenticated"):
+                user = UserModel.find_by_id(session.get("user_id"))
+            else:
+                user = UserModel.find_by_email(get_jwt_identity())
         return user
+
+    def _get_owned_request(self, request_id) -> Tuple[Optional[TransformRequest], Any]:
+        """
+        Look up a transform request and confirm that the requesting user is
+        allowed to act on it.
+        :return: A (transform request, error response) pair. The error response
+        is None if the lookup succeeded and the user is an admin or the
+        submitter, and is a 404 or 403 response otherwise.
+        """
+        transform_req = TransformRequest.lookup(request_id)
+        if not transform_req:
+            msg = f"Transformation request not found with id: {request_id}"
+            current_app.logger.warning(msg, extra={"request_id": request_id})
+            return None, ({"message": msg}, 404)
+
+        if current_app.config.get("ENABLE_AUTH"):
+            user = self.get_requesting_user()
+            if not user or (not user.admin and user.id != transform_req.submitted_by):
+                msg = "You are not authorized to access this request"
+                current_app.logger.warning(msg, extra={"request_id": request_id})
+                return None, ({"message": msg}, 403)
+
+        return transform_req, None
 
     @classmethod
     def _get_app_version(cls):

@@ -85,3 +85,12 @@ class TestUserDashboard(WebTestBase):
             url_for(self.endpoint, id_=1), headers=self.fake_header()
         )
         assert resp.status_code == 404
+
+    def test_403_for_non_owner(self, mock_tr):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        mock_tr.submitted_by = 43
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = 42
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 403

@@ -31,7 +31,7 @@ import kubernetes
 from flask import current_app
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest, db, TransformStatus
+from servicex_app.models import db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.transformer_manager import TransformerManager
 
@@ -56,12 +56,10 @@ class CancelTransform(ServiceXResource):
         return self._cancel_transform(request_id)
 
     def _cancel_transform(self, request_id: str):
-        transform_req = TransformRequest.lookup(request_id)
-        if not transform_req:
-            msg = f"Transformation request not found with id: {request_id}"
-            current_app.logger.warning(msg, extra={"request_id": request_id})
-            return {"message": msg}, 404
-        elif transform_req.status.is_complete:
+        transform_req, error = self._get_owned_request(request_id)
+        if error:
+            return error
+        if transform_req.status.is_complete:
             msg = f"Transform request with id {request_id} is not in progress."
             current_app.logger.warning(msg, extra={"request_id": request_id})
             return {"message": msg}, 400
