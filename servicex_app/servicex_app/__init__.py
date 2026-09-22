@@ -180,6 +180,22 @@ class VectorFormatter(logstash.formatter.LogstashFormatterBase):
         return self.serialize(message)
 
 
+class _DirectQueueHandler(QueueHandler):
+    """
+    A QueueHandler that puts the record on the queue as-is.
+
+    The stdlib's prepare() formats the record and then shallow-copies it so it
+    can cross a process boundary. Our listener is a thread in this same process,
+    so that buys nothing and costs a format plus a copy of every record, on the
+    thread that logged it. prepare() also nulls exc_info, which is the field
+    VectorFormatter checks before attaching a traceback, so skipping it is also
+    what lets tracebacks reach the `extra` column at all.
+    """
+
+    def prepare(self, record):
+        return record
+
+
 def _override_config_with_environ(app):
     """
     Use app.config as a guide to configuration settings that can be overridden from env
@@ -317,7 +333,7 @@ def create_app(
         vector_handler.setLevel(level)
 
         log_queue = queue.Queue(-1)
-        queue_handler = QueueHandler(log_queue)
+        queue_handler = _DirectQueueHandler(log_queue)
         queue_handler.setLevel(level)
         app.logger.addHandler(queue_handler)
 

@@ -320,7 +320,16 @@ rather than a socket. `transformer_manager.py` gives each pod a `vector` contain
 
 That container's only sink is the aggregator, over Vector's native protocol. It never talks
 to Postgres, which is what keeps database credentials out of pods that also run
-user-supplied science images. The aggregator mints each row's UUID primary key.
+user-supplied science images.
+
+The aggregator's single `normalize` transform is where every record in the release meets,
+whatever produced it, so it is where anything that has to hold for all of them belongs. It
+mints each row's UUID primary key, and it derives `level_no` — python's numeric log level —
+from the `level` name. Storing severity as a number is what lets the request page's filter
+be one `level_no >= n` rather than an `IN` over an ordered list of level names; deriving it
+here rather than in each producer's formatter is what keeps that ordering out of the app,
+the transformer sidecar and `servicex_did_finder_lib` alike. A level name the map does not
+recognise gets 0, which sorts below `DEBUG` and so shows up only with the filter off.
 
 App, sidecar and science rows carry the `request_id`, which is what the request page
 filters on, so transformer logs outlive the pods that produced them. DID finder rows are

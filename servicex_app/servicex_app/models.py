@@ -400,6 +400,28 @@ class TransformRequest(db.Model):
         TransformationResult.query.filter_by(request_id=self.request_id).delete()
         db.session.commit()
 
+    def purge(self, session, object_store=None) -> int:
+        """
+        Tear down everything this transform owns, returning the log record count.
+
+        Deletes the results, the shipped log records, the object store bucket and
+        the request itself. Like LogMessage._delete_by this runs in the caller's
+        transaction and never commits, so both the delete endpoint and the
+        expiry sweep get the whole teardown as one atomic unit. truncate_results
+        is not reusable here for exactly that reason - it commits.
+        """
+        session.query(TransformationResult).filter_by(
+            request_id=self.request_id
+        ).delete()
+
+        purged_logs = LogMessage.delete_by_request_id(self.request_id, session=session)
+
+        if object_store:
+            object_store.delete_bucket_and_contents(self.request_id)
+
+        session.delete(self)
+        return purged_logs
+
     @property
     def all_files(self) -> List["DatasetFile"]:
         return DatasetFile.query.filter_by(dataset_id=self.did_id).all()
@@ -622,6 +644,12 @@ class LogMessage(db.Model):
     A record is keyed by either `request_id` (app, transformer and science
     container logs) or `dataset_id` (DID finder logs), never both; the unused
     column is null.
+
+    Severity is stored as both a name and a number. `level` is what the UI
+    renders; `level_no` is what gets compared, so the log grid's "this level and
+    above" filter is one range predicate rather than an IN over an ordered list
+    of level names. The vector aggregator derives the number from the name for
+    every record it writes, so LEVELS below is only ever read, never written.
     """
 
     __tablename__ = "log_messages"
@@ -629,6 +657,7 @@ class LogMessage(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     timestamp = db.Column(DateTime(timezone=True))
     level = db.Column(db.String(16))
+    level_no = db.Column(db.Integer)
     logger = db.Column(db.String(255))
     instance = db.Column(db.String(255))
     component = db.Column(db.String(64))
@@ -637,11 +666,20 @@ class LogMessage(db.Model):
     dataset_id = db.Column(db.Integer)
     extra = db.Column(db.JSON)
 
+    # python's logging levelnos, which is what the aggregator writes into
+    # level_no. Ordered least to most severe so it also drives the web log
+    # grid's filter dropdown.
+    LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+
     __table_args__ = (
         # timestamp DESC rides along so the web log grid's "one transform,
         # newest first, 50 at a time" read is answered straight from the index
-        # instead of sorting every record for the transform. dataset_id needs
-        # no such column: those records are only ever matched and purged.
+        # instead of sorting every record for the transform. level_no is
+        # deliberately not in here: as a key column it would break that
+        # ordering, and as an INCLUDE it buys nothing measurable, because the
+        # grid selects whole rows and so visits the heap either way.
+        # dataset_id needs no second column at all: those records are only ever
+        # matched and purged.
         db.Index(
             "ix_log_messages_request_id",
             request_id,
@@ -656,38 +694,37 @@ class LogMessage(db.Model):
     )
 
     @classmethod
-    def delete_by_request_id(cls, request_id: str, session=None) -> int:
+    def _delete_by(cls, session, **criteria) -> int:
         """
-        Purge the log records for a transform request, returning the row count.
+        Purge the log records matching `criteria`, returning the row count.
 
         The delete runs in the caller's transaction and is never committed
         here: callers inside a `with session.begin():` block get it as part of
         that transaction, and callers on the implicit db.session commit for
-        themselves. An empty request_id deletes nothing - filtering on None
-        would match every DID finder record instead.
+        themselves.
+        """
+        session = session or db.session
+        return (
+            session.query(cls).filter_by(**criteria).delete(synchronize_session=False)
+        )
+
+    @classmethod
+    def delete_by_request_id(cls, request_id: str, session=None) -> int:
+        """
+        Purge the log records for a transform request, returning the row count.
+
+        An empty request_id deletes nothing - filtering on None would match
+        every DID finder record instead.
         """
         if not request_id:
             return 0
-
-        session = session or db.session
-        return (
-            session.query(cls)
-            .filter_by(request_id=request_id)
-            .delete(synchronize_session=False)
-        )
+        return cls._delete_by(session, request_id=request_id)
 
     @classmethod
     def delete_by_dataset_id(cls, dataset_id: int, session=None) -> int:
         """
         Purge the DID finder log records for a dataset, returning the row count.
-        See delete_by_request_id for the transaction semantics.
         """
         if dataset_id is None:
             return 0
-
-        session = session or db.session
-        return (
-            session.query(cls)
-            .filter_by(dataset_id=dataset_id)
-            .delete(synchronize_session=False)
-        )
+        return cls._delete_by(session, dataset_id=dataset_id)

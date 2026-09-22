@@ -145,17 +145,9 @@ class TransformerManager:
             client.V1VolumeMount(name="sidecar-volume", mount_path=output_path)
         )
 
-        # Unset by default, which is the historical behaviour. Setting it turns a
-        # runaway output volume (science logs, say) into a single predictable pod
-        # eviction rather than node-wide disk pressure.
         volumes.append(
             client.V1Volume(
-                name="sidecar-volume",
-                empty_dir=client.V1EmptyDirVolumeSource(
-                    size_limit=current_app.config.get(
-                        "TRANSFORMER_VECTOR_OUTPUT_SIZE_LIMIT"
-                    )
-                ),
+                name="sidecar-volume", empty_dir=client.V1EmptyDirVolumeSource()
             )
         )
 
@@ -404,13 +396,15 @@ class TransformerManager:
             resources=resources,
         )
 
-        vector_container = None
+        containers = [sidecar, science_container]  # started in this order
         if vector_enabled:
-            vector_container = TransformerManager.create_vector_container(
-                request_id=request_id,
-                output_path=output_path,
-                pod_name_value_from=pod_name_value_from,
-                host_name_value_from=host_name_value_from,
+            containers.append(
+                TransformerManager.create_vector_container(
+                    request_id=request_id,
+                    output_path=output_path,
+                    pod_name_value_from=pod_name_value_from,
+                    host_name_value_from=host_name_value_from,
+                )
             )
             volumes.append(
                 client.V1Volume(
@@ -456,10 +450,7 @@ class TransformerManager:
                 node_selector=node_selector if node_selector else None,
                 tolerations=tolerations,
                 affinity=affinity,
-                containers=(
-                    [sidecar, science_container]
-                    + ([vector_container] if vector_container else [])
-                ),  # Containers are started in this order
+                containers=containers,
                 volumes=volumes,
             ),
         )

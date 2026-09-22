@@ -6,7 +6,7 @@ from html import unescape
 from flask import Response, url_for
 from markupsafe import escape
 
-from pytest import fixture
+from pytest import fixture, mark
 
 from servicex_app.models import TransformRequest, LogMessage, db
 from .web_test_base import WebTestBase
@@ -42,6 +42,10 @@ class TestTransformationRequest(WebTestBase):
                         id=f"{request_id}-{i}",
                         timestamp=datetime.utcnow() + timedelta(seconds=i),
                         level=level,
+                        # The vector aggregator derives this from the level
+                        # name for every record; mirror it here so the seeded
+                        # rows exercise the real filter.
+                        level_no=LogMessage.LEVELS.get(level, 0),
                         component="transformer",
                         message=messages[i] if messages else f"message {i}",
                         extra=extras[i] if extras else None,
@@ -94,7 +98,35 @@ class TestTransformationRequest(WebTestBase):
 
     ALL_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
+    @mark.parametrize(
+        "query, active, total",
+        [
+            ("WARNING", "WARNING", 3),  # a minimum: WARNING and everything above
+            ("DEBUG", "DEBUG", 5),  # the lowest level matches everything
+            ("CRITICAL", "CRITICAL", 1),  # the highest matches only itself
+            ("error", "ERROR", 2),  # the filter is case insensitive
+            ("BOGUS", None, 5),  # an unknown level is no filter at all
+        ],
+    )
     def test_logs_filtered_by_level(
+        self,
+        client,
+        mock_tr: TransformRequest,
+        captured_templates,
+        query,
+        active,
+        total,
+    ):
+        self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
+        resp: Response = client.get(
+            url_for(self.endpoint, id_=mock_tr.id, log_level=query)
+        )
+        assert resp.status_code == 200
+        _, context = captured_templates[0]
+        assert context["active_level"] == active
+        assert context["logs"].total == total
+
+    def test_logs_filter_selects_the_levels_at_or_above(
         self, client, mock_tr: TransformRequest, captured_templates
     ):
         self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
@@ -103,61 +135,11 @@ class TestTransformationRequest(WebTestBase):
         )
         assert resp.status_code == 200
         _, context = captured_templates[0]
-        assert context["active_level"] == "WARNING"
-        # The selected level is a minimum: WARNING and everything above it.
-        assert context["logs"].total == 3
         assert {msg.level for msg in context["logs"].items} == {
             "WARNING",
             "ERROR",
             "CRITICAL",
         }
-
-    def test_logs_filtered_by_lowest_level(
-        self, client, mock_tr: TransformRequest, captured_templates
-    ):
-        self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
-        resp: Response = client.get(
-            url_for(self.endpoint, id_=mock_tr.id, log_level="DEBUG")
-        )
-        assert resp.status_code == 200
-        _, context = captured_templates[0]
-        assert context["logs"].total == len(self.ALL_LEVELS)
-
-    def test_logs_filtered_by_highest_level(
-        self, client, mock_tr: TransformRequest, captured_templates
-    ):
-        self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
-        resp: Response = client.get(
-            url_for(self.endpoint, id_=mock_tr.id, log_level="CRITICAL")
-        )
-        assert resp.status_code == 200
-        _, context = captured_templates[0]
-        assert context["logs"].total == 1
-        assert context["logs"].items[0].level == "CRITICAL"
-
-    def test_logs_filter_is_case_insensitive(
-        self, client, mock_tr: TransformRequest, captured_templates
-    ):
-        self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
-        resp: Response = client.get(
-            url_for(self.endpoint, id_=mock_tr.id, log_level="error")
-        )
-        assert resp.status_code == 200
-        _, context = captured_templates[0]
-        assert context["active_level"] == "ERROR"
-        assert context["logs"].total == 2
-
-    def test_logs_unknown_level_is_ignored(
-        self, client, mock_tr: TransformRequest, captured_templates
-    ):
-        self._seed_logs(client, mock_tr.request_id, self.ALL_LEVELS)
-        resp: Response = client.get(
-            url_for(self.endpoint, id_=mock_tr.id, log_level="BOGUS")
-        )
-        assert resp.status_code == 200
-        _, context = captured_templates[0]
-        assert context["active_level"] is None
-        assert context["logs"].total == len(self.ALL_LEVELS)
 
     def test_logs_paginated(
         self, client, mock_tr: TransformRequest, captured_templates
