@@ -12,10 +12,11 @@ data:
   # The one Vector that talks to Postgres. Everything else in the release forwards
   # here, so the log_messages connection count is this deployment's replicas x
   # poolSize rather than one connection per transformer pod.
-  #   app_logs       - JSON over TCP from the servicex app's logger
+  #   app_logs       - JSON over TCP from the servicex app's logger and the DID finders
   #   forwarded_logs - the native Vector protocol, from each transformer pod's vector
-  # Vector refuses to start if any ${VAR} below is unset; all of them are injected
-  # by the aggregator deployment.
+  # Ports and other release-static values are templated in directly. Only the
+  # postgres credentials arrive as ${VAR}, injected by the aggregator deployment;
+  # Vector refuses to start if any of them is unset.
   vector.yaml: |
     data_dir: /vector-data-dir
     api:
@@ -25,22 +26,32 @@ data:
       app_logs:
         type: socket
         mode: tcp
-        address: 0.0.0.0:${VECTOR_SOCKET_PORT}
+        address: 0.0.0.0:{{ .Values.logging.vector.port }}
         decoding:
           codec: json
       forwarded_logs:
         type: vector
-        address: 0.0.0.0:${VECTOR_AGGREGATOR_PORT}
+        address: 0.0.0.0:{{ .Values.logging.vector.aggregator.port }}
     transforms:
-      add_id:
+      normalize:
         type: remap
         inputs: [app_logs, forwarded_logs]
         source: |
           .id = uuid_v4()
+          # Severity as a number, so the web log grid's "this level and above"
+          # filter is one `level_no >= n` instead of an IN over an ordered list
+          # of level names. Derived here rather than in each producer's
+          # formatter because every record in the release - app, did finders,
+          # transformer sidecar, science stdout - passes through this remap,
+          # whatever wrote it. These are python's logging levelnos; an
+          # unrecognized name gets 0, which sorts below DEBUG and so is only
+          # visible with the filter off.
+          levels = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+          .level_no = int(get!(levels, [upcase(to_string(.level) ?? "")])) ?? 0
     sinks:
       postgres_logs:
         type: postgres
-        inputs: [add_id]
+        inputs: [normalize]
         endpoint: "postgres://${PG_USER}:${PG_PASS}@${PG_HOST}:${PG_PORT}/${PG_DB}"
         table: log_messages
         pool_size: {{ .Values.logging.vector.aggregator.poolSize }}

@@ -151,11 +151,8 @@ data:
     TRANSFORMER_VECTOR_LOG_LEVEL = '{{ .Values.logging.vector.logLevel }}'
     TRANSFORMER_VECTOR_CONFIG_MAP = "{{ .Release.Name }}-transformer-vector-config"
     TRANSFORMER_VECTOR_RESOURCES = {{ .Values.logging.vector.transformer.resources | toJson }}
-    TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ .Release.Name }}-vector-aggregator:{{ .Values.logging.vector.aggregator.port }}"
+    TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ include "servicex.vector.aggregatorHost" . }}:{{ .Values.logging.vector.aggregator.port }}"
     TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB = "{{ .Values.transformer.outputDir }}/*/science.*.log"
-    {{- if .Values.logging.vector.transformer.outputSizeLimit }}
-    TRANSFORMER_VECTOR_OUTPUT_SIZE_LIMIT = "{{ .Values.logging.vector.transformer.outputSizeLimit }}"
-    {{- end }}
     {{- else }}
     TRANSFORMER_VECTOR_ENABLED = False
     {{- end }}

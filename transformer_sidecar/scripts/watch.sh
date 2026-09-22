@@ -54,11 +54,13 @@ while [[ $nc_PID ]] ; do
 
     echo "Attempting $download_path -> $output_file with $output_format format"
     # abc.log is truncated per input file - the sidecar parses it for transform
-    # stats after every file. science.*.log accumulates a chunk per file for the
-    # Vector sidecar to tail; Vector deletes each chunk once it has read it, which
-    # is what keeps the shared volume from growing for the life of the pod.
+    # stats after every file. science.*.log is one chunk per file for the Vector
+    # sidecar to tail; Vector deletes each chunk once it has read it, which is
+    # what keeps the shared volume from growing for the life of the pod. The
+    # nanosecond stamp makes each chunk name unique, so this is a redirect
+    # rather than an append.
     $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 \
-        | tee "$path/abc.log" | tee -a "$path/science.$(date +%s%N).log"
+        | tee "$path/abc.log" > "$path/science.$(date +%s%N).log"
 
     # sending status back
     if [ "${PIPESTATUS[0]}" == 0 ]; then

@@ -1,7 +1,5 @@
 [flake8]
 max-line-length = 99
-# E203 conflicts with Black in slices (Black considers `:` a binary operator there).
-extend-ignore = E203
 exclude =
     .tox,
     __pycache__
