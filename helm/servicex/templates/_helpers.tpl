@@ -32,6 +32,34 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Log shipping env vars, shared by all four DID finder deployments.
+
+  logstash - the legacy path to the external Elastic cluster.
+  vector   - the release's vector aggregator, which owns the only connection to
+             the Postgres log_messages table. A DID finder is a long-running
+             deployment rather than a per-request pod, so like the app it writes
+             straight to the aggregator's TCP socket source; it needs no vector
+             container of its own.
+
+Render with `nindent 10` under a container's `env:`. INSTANCE_NAME is
+deliberately not here: the finders place it in different spots in their lists.
+*/}}
+{{- define "servicex.didFinder.loggingEnv" -}}
+{{- if .Values.logging.logstash.enabled }}
+- name: LOGSTASH_HOST
+  value: "{{ .Values.logging.logstash.host }}"
+- name: LOGSTASH_PORT
+  value: "{{ .Values.logging.logstash.port }}"
+{{- end }}
+{{- if .Values.logging.vector.enabled }}
+- name: VECTOR_HOST
+  value: "{{ .Release.Name }}-vector-aggregator"
+- name: VECTOR_PORT
+  value: "{{ .Values.logging.vector.port }}"
+{{- end }}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 {{- define "servicex.labels" -}}
