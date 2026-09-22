@@ -86,12 +86,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.logging.logstash.enabled }}
-          - name: LOGSTASH_HOST
-            value: "{{ .Values.logging.logstash.host }}"
-          - name: LOGSTASH_PORT
-            value: "{{ .Values.logging.logstash.port }}"
-          {{- end }}
+          {{- include "servicex.didFinder.loggingEnv" . | trim | nindent 10 }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
         volumeMounts:

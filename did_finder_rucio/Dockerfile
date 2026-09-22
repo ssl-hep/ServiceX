@@ -19,9 +19,14 @@ RUN yum -y update
 # https://docs.docker.com/engine/reference/builder/#shell
 
 ENV POETRY_VERSION=2.1.1
-RUN python3 -m pip install --upgrade pip
 
-RUN pip install poetry==$POETRY_VERSION
+# Use python3.11 by name, not `python3`. The base image points /usr/bin/python3 at
+# python3.11, but that path belongs to AlmaLinux's python3 (3.9) rpm, so the `yum -y
+# update` above hands it back to 3.9 -- which has no pip. pyproject requires ^3.11
+# anyway, so name the interpreter we actually want.
+RUN python3.11 -m pip install --upgrade pip
+
+RUN python3.11 -m pip install poetry==$POETRY_VERSION
 RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
