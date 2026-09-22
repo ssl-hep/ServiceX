@@ -37,6 +37,7 @@ from servicex_app.models import (
     TransformRequest,
     Dataset,
     db,
+    LogMessage,
     TransformationResult,
     DatasetFile,
 )
@@ -68,6 +69,11 @@ class DataLifecycleOps(ServiceXResource):
                     request_id=transform.request_id
                 ).delete()
 
+                # Delete the log records that were shipped for this transform
+                purged_logs = LogMessage.delete_by_request_id(
+                    transform.request_id, session=session
+                )
+
                 # Delete the transformed files out of object store along with the bucket
                 if object_store:
                     object_store.delete_bucket_and_contents(transform.request_id)
@@ -76,7 +82,8 @@ class DataLifecycleOps(ServiceXResource):
                 session.delete(transform)
 
                 deleted_log.append(
-                    f"{transform.submitter_name} - {transform.request_id}: {transform.title}"
+                    f"{transform.submitter_name} - {transform.request_id}: "
+                    f"{transform.title} ({purged_logs} log records)"
                 )
         return deleted_log
 
@@ -95,9 +102,16 @@ class DataLifecycleOps(ServiceXResource):
             with session.begin():
                 session.query(DatasetFile).filter_by(dataset_id=dataset.id).delete()
 
+                # Delete the DID finder log records for this dataset
+                purged_logs = LogMessage.delete_by_dataset_id(
+                    dataset.id, session=session
+                )
+
                 session.delete(dataset)
 
-                deleted_datasets.append(f"{dataset.name} - {dataset.id}")
+                deleted_datasets.append(
+                    f"{dataset.name} - {dataset.id} ({purged_logs} log records)"
+                )
 
         return deleted_datasets
 

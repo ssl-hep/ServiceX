@@ -33,6 +33,7 @@ from pytest import fixture, mark
 from servicex_app.models import (
     Dataset,
     DatasetFile,
+    LogMessage,
     TransformRequest,
     TransformationResult,
 )
@@ -190,11 +191,48 @@ class TestDataLifecycleOps(ResourceTestBase):
         db_session.commit()
         return dataset
 
+    @fixture
+    def insert_logs(self, db_session, insert_datasets):
+        # A log record carries either a request_id or a dataset_id, never both
+        for log_id, request_id in [("active-log", "1"), ("stale-log", "2")]:
+            db_session.add(
+                LogMessage(
+                    id=log_id,
+                    timestamp=datetime(2022, 1, 1),
+                    level="INFO",
+                    message=log_id,
+                    request_id=request_id,
+                )
+            )
+
+        for log_id, dataset_id in [("not-orphaned-log", 1), ("orphaned-log", 2)]:
+            db_session.add(
+                LogMessage(
+                    id=log_id,
+                    timestamp=datetime(2022, 1, 1),
+                    level="INFO",
+                    message=log_id,
+                    dataset_id=dataset_id,
+                )
+            )
+
+        # A record belonging to neither, which no purge should ever match
+        db_session.add(
+            LogMessage(
+                id="unkeyed-log",
+                timestamp=datetime(2022, 1, 1),
+                level="INFO",
+                message="unkeyed-log",
+            )
+        )
+
+        db_session.commit()
+
     @mark.parametrize(
         "use_object_store", [True, False]  # Enable Object store  # No object store
     )
     def test_expired_transforms(
-        self, use_object_store, mocker, insert_transforms, db_session
+        self, use_object_store, mocker, insert_transforms, insert_logs, db_session
     ):
 
         data_life_cycle_ops = DataLifecycleOps()
@@ -217,7 +255,18 @@ class TestDataLifecycleOps(ResourceTestBase):
         if use_object_store:
             mock_object_store.delete_bucket_and_contents.assert_called_with("2")
 
-    def test_orphaned_datasets(self, insert_datasets, db_session):
+        # Only the expired transform's logs are gone; the dataset-keyed and
+        # unkeyed records are untouched
+        remaining_logs = {_.id for _ in db_session.query(LogMessage).all()}
+        assert remaining_logs == {
+            "active-log",
+            "not-orphaned-log",
+            "orphaned-log",
+            "unkeyed-log",
+        }
+        assert "(1 log records)" in response[0]
+
+    def test_orphaned_datasets(self, insert_datasets, insert_logs, db_session):
         data_life_cycle_ops = DataLifecycleOps()
         response = data_life_cycle_ops.delete_orphaned_datasets(db_session)
         assert len(response) == 1
@@ -227,6 +276,17 @@ class TestDataLifecycleOps(ResourceTestBase):
         assert remaining_datasets[0].name == "not-orphaned"
 
         assert len(db_session.query(DatasetFile).all()) == 1
+
+        # Only the orphaned dataset's logs are gone; the request-keyed and
+        # unkeyed records are untouched
+        remaining_logs = {_.id for _ in db_session.query(LogMessage).all()}
+        assert remaining_logs == {
+            "active-log",
+            "stale-log",
+            "not-orphaned-log",
+            "unkeyed-log",
+        }
+        assert "(1 log records)" in response[0]
 
     @fixture
     def mock_delete_expired(self, mocker):

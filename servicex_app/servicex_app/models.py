@@ -568,6 +568,10 @@ class Dataset(db.Model):
         if dataset.stale:
             return False
 
+        # Drop the DID finder log records for this dataset before the commit
+        # below, so the purge and the stale flag land in one transaction.
+        LogMessage.delete_by_dataset_id(dataset.id)
+
         dataset.stale = True
         dataset.save_to_db()
 
@@ -608,12 +612,16 @@ class DatasetFile(db.Model):
 class LogMessage(db.Model):
     """
     Application log records shipped to Postgres by the Vector aggregator. The app
-    never reads or writes this table via the ORM; the model exists so that
-    flask-migrate manages the schema. Columns match the JSON event fields
-    emitted by VectorFormatter, plus a UUID `id` minted by the aggregator's remap
-    transform (kept as a plain string PK so Vector's
+    never inserts into this table itself; it only reads records back and purges
+    them when the transform or dataset they describe is deleted. Columns match
+    the JSON event fields emitted by VectorFormatter, plus a UUID `id` minted by
+    the aggregator's remap transform (kept as a plain string PK so Vector's
     `INSERT ... SELECT * FROM json_populate_recordset(...)` never has to
     populate a serial column).
+
+    A record is keyed by either `request_id` (app, transformer and science
+    container logs) or `dataset_id` (DID finder logs), never both; the unused
+    column is null.
     """
 
     __tablename__ = "log_messages"
@@ -628,3 +636,40 @@ class LogMessage(db.Model):
     request_id = db.Column(db.String(48))
     dataset_id = db.Column(db.Integer)
     extra = db.Column(db.JSON)
+
+    @classmethod
+    def delete_by_request_id(cls, request_id: str, session=None) -> int:
+        """
+        Purge the log records for a transform request, returning the row count.
+
+        The delete runs in the caller's transaction and is never committed
+        here: callers inside a `with session.begin():` block get it as part of
+        that transaction, and callers on the implicit db.session commit for
+        themselves. An empty request_id deletes nothing - filtering on None
+        would match every DID finder record instead.
+        """
+        if not request_id:
+            return 0
+
+        session = session or db.session
+        return (
+            session.query(cls)
+            .filter_by(request_id=request_id)
+            .delete(synchronize_session=False)
+        )
+
+    @classmethod
+    def delete_by_dataset_id(cls, dataset_id: int, session=None) -> int:
+        """
+        Purge the DID finder log records for a dataset, returning the row count.
+        See delete_by_request_id for the transaction semantics.
+        """
+        if dataset_id is None:
+            return 0
+
+        session = session or db.session
+        return (
+            session.query(cls)
+            .filter_by(dataset_id=dataset_id)
+            .delete(synchronize_session=False)
+        )
