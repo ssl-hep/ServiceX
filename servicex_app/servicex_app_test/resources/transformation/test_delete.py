@@ -26,7 +26,13 @@ class TestTransformDelete(ResourceTestBase):
         mock_db.session = mocker.MagicMock()
         return mock_db.session
 
-    def test_delete(self, fake_transform, db_session, mock_object_store_manager):
+    @pytest.fixture
+    def mock_log_message(self, mocker) -> MagicMock:
+        return mocker.patch(f"{self.module}.LogMessage")
+
+    def test_delete(
+        self, fake_transform, db_session, mock_object_store_manager, mock_log_message
+    ):
         fake_transform.status = TransformStatus.complete
 
         local_config = {
@@ -48,8 +54,11 @@ class TestTransformDelete(ResourceTestBase):
         mock_object_store_manager.delete_bucket_and_contents.assert_called_once_with(
             "BR549"
         )
+        mock_log_message.delete_by_request_id.assert_called_once_with(
+            "BR549", session=db_session
+        )
 
-    def test_running(self, fake_transform, db_session):
+    def test_running(self, fake_transform, db_session, mock_log_message):
         fake_transform.status = TransformStatus.running
 
         client = self._test_client()
@@ -62,12 +71,14 @@ class TestTransformDelete(ResourceTestBase):
         )
         assert not db_session.query().filter_by.return_value.delete.called
         assert not db_session.delete.called
+        assert not mock_log_message.delete_by_request_id.called
 
-    def test_not_found(self):
+    def test_not_found(self, mock_log_message):
         client = self._test_client()
 
         resp = client.delete("/servicex/transformation/BR549")
         assert resp.status_code == 404
+        assert not mock_log_message.delete_by_request_id.called
 
     @pytest.mark.parametrize(
         "user_id, submitter_id, is_admin, expected_status",
