@@ -76,11 +76,6 @@ def find_files(
             "CERNOpenData can only work with dataset numbers as names (e.g. 1507)"
         )
 
-    __log.info(
-        "DID Lookup request received.",
-        extra={"dataset_id": info["dataset-id"], "dataset_name": did_name},
-    )
-
     cmd = f"cernopendata-client get-file-locations --protocol xrootd --recid {did_name}".split(
         " "
     )

@@ -12,15 +12,13 @@
   .selection-content.collapsed {
     max-height: 7.5em;
   }
-  .log-message-preview {
+  .log-message-preview, .log-message-full {
     word-break: break-word;
     overflow-wrap: anywhere;
   }
   .log-message-full {
     margin-bottom: 0;
     white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: anywhere;
     font-size: 0.875rem;
   }
 </style>
@@ -97,6 +95,7 @@
   </dl>
 </div>
 
+{% set level_badges = {"CRITICAL": "danger", "ERROR": "danger", "WARNING": "warning", "INFO": "info"} %}
 <div class="content-section" id="logs">
   <div class="row justify-content-between align-items-center mb-3">
     <h4 class="col-auto mb-0">Log Messages</h4>
@@ -128,15 +127,7 @@
       <tr>
         <td style="white-space: nowrap">{{ moment(msg.timestamp).format("YYYY-MM-DD HH:mm:ss") }}</td>
         <td>
-          {% if msg.level in ("ERROR", "CRITICAL") %}
-          <span class="badge badge-danger">{{ msg.level }}</span>
-          {% elif msg.level == "WARNING" %}
-          <span class="badge badge-warning">{{ msg.level }}</span>
-          {% elif msg.level == "INFO" %}
-          <span class="badge badge-info">{{ msg.level }}</span>
-          {% else %}
-          <span class="badge badge-secondary">{{ msg.level }}</span>
-          {% endif %}
+          <span class="badge badge-{{ level_badges.get(msg.level, 'secondary') }}">{{ msg.level }}</span>
         </td>
         <td>{{ msg.component }}</td>
         <td class="log-message-cell">
@@ -229,18 +220,11 @@
       $("#logMessageLogger").text($link.attr("data-logger"));
       $("#logMessageText").text($link.attr("data-message"));
 
-      // `extra` arrives as JSON; pretty-print it, and fall back to the raw
-      // string if it somehow isn't parseable.
+      // `extra` is always rendered through Jinja's `tojson`, so it parses.
       var extra = $link.attr("data-extra");
       var $section = $("#logMessageExtraSection");
       if (extra) {
-        var formatted;
-        try {
-          formatted = JSON.stringify(JSON.parse(extra), null, 2);
-        } catch (e) {
-          formatted = extra;
-        }
-        $("#logMessageExtra").text(formatted);
+        $("#logMessageExtra").text(JSON.stringify(JSON.parse(extra), null, 2));
         $section.removeClass("d-none");
       } else {
         $("#logMessageExtra").text("");

@@ -27,11 +27,12 @@ class TestTransformDelete(ResourceTestBase):
         return mock_db.session
 
     @pytest.fixture
-    def mock_log_message(self, mocker) -> MagicMock:
-        return mocker.patch(f"{self.module}.LogMessage")
+    def mock_purge(self, mocker) -> MagicMock:
+        """TransformRequest.purge owns the teardown; see test_models for what it does."""
+        return mocker.patch.object(TransformRequest, "purge", return_value=7)
 
     def test_delete(
-        self, fake_transform, db_session, mock_object_store_manager, mock_log_message
+        self, fake_transform, db_session, mock_object_store_manager, mock_purge
     ):
         fake_transform.status = TransformStatus.complete
 
@@ -48,17 +49,9 @@ class TestTransformDelete(ResourceTestBase):
 
         resp = client.delete("/servicex/transformation/BR549")
         assert resp.status_code == 200
-        db_session.delete.assert_called_once_with(fake_transform)
-        db_session.query().filter_by.assert_called_once_with(request_id="BR549")
-        db_session.query().filter_by.return_value.delete.assert_called_once_with()
-        mock_object_store_manager.delete_bucket_and_contents.assert_called_once_with(
-            "BR549"
-        )
-        mock_log_message.delete_by_request_id.assert_called_once_with(
-            "BR549", session=db_session
-        )
+        mock_purge.assert_called_once_with(db_session, mock_object_store_manager)
 
-    def test_running(self, fake_transform, db_session, mock_log_message):
+    def test_running(self, fake_transform, db_session, mock_purge):
         fake_transform.status = TransformStatus.running
 
         client = self._test_client()
@@ -69,16 +62,14 @@ class TestTransformDelete(ResourceTestBase):
             resp.json["message"]
             == "Transform request with id BR549 is still in progress."
         )
-        assert not db_session.query().filter_by.return_value.delete.called
-        assert not db_session.delete.called
-        assert not mock_log_message.delete_by_request_id.called
+        assert not mock_purge.called
 
-    def test_not_found(self, mock_log_message):
+    def test_not_found(self, mock_purge):
         client = self._test_client()
 
         resp = client.delete("/servicex/transformation/BR549")
         assert resp.status_code == 404
-        assert not mock_log_message.delete_by_request_id.called
+        assert not mock_purge.called
 
     @pytest.mark.parametrize(
         "user_id, submitter_id, is_admin, expected_status",
