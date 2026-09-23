@@ -16,14 +16,14 @@ class TestDatasets(WebTestBase):
             "filtered": filtered.order_by.return_value,
         }
 
-    def test_default_filters_out_stale(self, client, user, mock_query, captured_templates):
+    def test_default_filters_out_stale(
+        self, client, user, mock_query, captured_templates
+    ):
         pagination = mock_query["filtered"].paginate(
             page=1, per_page=15, total=0, items=[]
         )
         mock_query["filtered"].paginate.return_value = pagination
-        response: Response = client.get(
-            url_for("datasets"), headers=self.fake_header()
-        )
+        response: Response = client.get(url_for("datasets"), headers=self.fake_header())
         assert response.status_code == 200
         template, context = captured_templates[0]
         assert template.name == "datasets.html"
@@ -35,9 +35,7 @@ class TestDatasets(WebTestBase):
     def test_show_deleted_true_skips_stale_filter(
         self, client, user, mock_query, captured_templates
     ):
-        pagination = mock_query["raw"].paginate(
-            page=1, per_page=15, total=0, items=[]
-        )
+        pagination = mock_query["raw"].paginate(page=1, per_page=15, total=0, items=[])
         mock_query["raw"].paginate.return_value = pagination
         response: Response = client.get(
             url_for("datasets") + "?show_deleted=true",
