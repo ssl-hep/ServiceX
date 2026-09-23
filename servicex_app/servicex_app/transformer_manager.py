@@ -79,22 +79,6 @@ class TransformerManager:
         cls.celery_app = celery_app
         return cls
 
-    @staticmethod
-    def compute_output_path(request_id: str, result_destination: str) -> str:
-        """Return the destination the transformer will write results to.
-
-        For ``object-store`` this is the S3 bucket name; for ``volume`` this
-        is the on-disk directory the sidecar writes files into.
-        """
-        if result_destination == TransformRequest.OBJECT_STORE_DEST:
-            return request_id
-        if result_destination == TransformRequest.VOLUME_DEST:
-            return os.path.join(
-                TransformerManager.POSIX_VOLUME_MOUNT,
-                current_app.config["TRANSFORMER_PERSISTENCE_SUBDIR"],
-            )
-        raise ValueError(f"Unknown result_destination: {result_destination}")
-
     def __init__(self, manager_mode):
         if manager_mode == "internal-kubernetes":
             kubernetes.config.load_incluster_config()
@@ -135,6 +119,7 @@ class TransformerManager:
             generated_code_cm=generated_code_cm,
             result_destination=request_rec.result_destination,
             result_format=request_rec.result_format,
+            output_path=request_rec.output_path,
             transformer_language=request_rec.transformer_language,
             transformer_command=request_rec.transformer_command,
         )
@@ -147,6 +132,7 @@ class TransformerManager:
         workers,
         result_destination,
         result_format,
+        output_path,
         x509_secret,
         generated_code_cm,
         transformer_language,
@@ -156,9 +142,9 @@ class TransformerManager:
         volumes = []
 
         # append sidecar volume
-        output_path = current_app.config["TRANSFORMER_SIDECAR_VOLUME_PATH"]
+        sidecar_volume_path = current_app.config["TRANSFORMER_SIDECAR_VOLUME_PATH"]
         volume_mounts.append(
-            client.V1VolumeMount(name="sidecar-volume", mount_path=output_path)
+            client.V1VolumeMount(name="sidecar-volume", mount_path=sidecar_volume_path)
         )
 
         volumes.append(
@@ -350,17 +336,14 @@ class TransformerManager:
         science_command += (
             "cp /generated/transformer_capabilities.json {op} && "
             "PYTHONPATH=/generated:$PYTHONPATH "
-            "bash {op}/scripts/watch.sh ".format(op=output_path)
+            "bash {op}/scripts/watch.sh ".format(op=sidecar_volume_path)
             + "{TL} ".format(TL=transformer_language)
             + "{TC} ".format(TC=transformer_command)
             + watch_path
         )
 
         if result_destination == "volume":
-            sidecar_command += (
-                " --output-dir "
-                + TransformerManager.compute_output_path(request_id, result_destination)
-            )
+            sidecar_command += " --output-dir " + output_path
 
         resources = client.V1ResourceRequirements(
             limits={
@@ -587,6 +570,7 @@ class TransformerManager:
         generated_code_cm,
         result_destination,
         result_format,
+        output_path,
         transformer_language,
         transformer_command,
     ):
@@ -598,6 +582,7 @@ class TransformerManager:
             workers,
             result_destination,
             result_format,
+            output_path,
             x509_secret,
             generated_code_cm,
             transformer_language,

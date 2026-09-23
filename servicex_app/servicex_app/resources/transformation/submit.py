@@ -121,6 +121,22 @@ class SubmitTransformationRequest(ServiceXResource):
         )
         return cls
 
+    @staticmethod
+    def _compute_output_path(request_id: str, result_destination: str) -> str:
+        """Return the destination the transformer will write results to.
+
+        For ``object-store`` this is the S3 bucket name; for ``volume`` this
+        is the on-disk directory the sidecar writes files into.
+        """
+        if result_destination == TransformRequest.OBJECT_STORE_DEST:
+            return request_id
+        if result_destination == TransformRequest.VOLUME_DEST:
+            return os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config["TRANSFORMER_PERSISTENCE_SUBDIR"],
+            )
+        raise ValueError(f"Unknown result_destination: {result_destination}")
+
     def _initialize_dataset_manager(
         self,
         did: Optional[str],
@@ -229,7 +245,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     current_app.logger.error(msg, extra={"request_id": request_id})
                     return {"message": msg}, 500
 
-            output_path = TransformerManager.compute_output_path(
+            output_path = self._compute_output_path(
                 request_id, args["result-destination"]
             )
 
