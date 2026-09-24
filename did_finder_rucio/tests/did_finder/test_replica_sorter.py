@@ -38,17 +38,17 @@ REPLICAS = [
 
 SORTED_REPLICAS = [
     "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
-    "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
     "root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
 ]  # noqa: E501
 
 JUNK_REPLICAS = [
-    "https://junk.does.not.exist.org/",
+    "https://junk.does.not.exist/",
     "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
 ]
 SORTED_JUNK_REPLICAS = [
     "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
-    "https://junk.does.not.exist.org/",
+    "https://junk.does.not.exist/",
 ]
 
 LOCATION = {"latitude": 41.78, "longitude": -87.7}
@@ -59,7 +59,7 @@ def test_sorting():
     from rucio_did_finder.replica_distance import ReplicaSorter
 
     rs = ReplicaSorter((GEOIP_TGZ_URL, False))
-    # Given location (Chicago) replicas should sort US, FR, DE
+    # Given location (Chicago) IPv6 replicas will sort US, DE, FR
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == SORTED_REPLICAS
     # the nonexistent FQDN should sort at end
@@ -92,26 +92,20 @@ def test_bad_geodb():
 def test_unresolvable_host_returns_max_distance(mocker):
     """gethostbyname raising socket.gaierror should yield the maximum distance"""
     import math
-    import socket
     from rucio_did_finder import replica_distance
 
     replica_distance._get_distance.cache_clear()
-    mocker.patch.object(
-        replica_distance,
-        "gethostbyname",
-        side_effect=socket.gaierror(socket.EAI_NONAME, "Name or service not known"),
-    )
     mock_logger = mocker.patch.object(replica_distance, "logger")
     mock_db = mocker.MagicMock()
 
     distance = replica_distance._get_distance(
-        mock_db, "junk.does.not.exist.org", LOCATION["latitude"], LOCATION["longitude"]
+        mock_db, "junk.does.not.exist", LOCATION["latitude"], LOCATION["longitude"]
     )
 
     assert distance == math.pi
     mock_db.city.assert_not_called()
     mock_logger.warning.assert_called_once()
     assert (
-        "Cannot resolve junk.does.not.exist.org" in mock_logger.warning.call_args[0][0]
+        "Error looking up junk.does.not.exist" in mock_logger.warning.call_args[0][0]
     )
     replica_distance._get_distance.cache_clear()

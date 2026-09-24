@@ -31,7 +31,6 @@ from servicex_did_finder_lib.logstash_logging import initialize_logging
 import os
 
 from typing import List, Mapping, Optional, Tuple
-from socket import gethostbyname
 import math
 from functools import lru_cache
 import tempfile
@@ -67,7 +66,10 @@ def _get_distance(
     if database is None:
         return math.pi
     try:
-        loc_data = database.city(gethostbyname(fqdn)).location
+        # getaddrinfo contract: result cannot be empty list;
+        # failed lookup raises exception
+        ipdata: str = socket.getaddrinfo(fqdn, None)[0][4][0]
+        loc_data = database.city(ipdata).location
     except geoip2.errors.AddressNotFoundError as e:
         logger.warning(
             f"Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}"
@@ -75,7 +77,7 @@ def _get_distance(
         return math.pi
     except socket.gaierror as e:
         logger.warning(
-            f"Cannot resolve {fqdn}, returning maximum distance.\nError: {e}"
+            f"Error looking up {fqdn}, returning maximum distance.\nError: {e.strerror}"
         )
         return math.pi
 
