@@ -105,7 +105,5 @@ def test_unresolvable_host_returns_max_distance(mocker):
     assert distance == math.pi
     mock_db.city.assert_not_called()
     mock_logger.warning.assert_called_once()
-    assert (
-        "Error looking up junk.does.not.exist" in mock_logger.warning.call_args[0][0]
-    )
+    assert "Error looking up junk.does.not.exist" in mock_logger.warning.call_args[0][0]
     replica_distance._get_distance.cache_clear()
