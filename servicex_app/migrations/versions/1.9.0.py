@@ -18,7 +18,7 @@ depends_on = None
 def upgrade():
     op.add_column(
         "requests",
-        sa.Column("output_path", sa.String(length=1024), nullable=True),
+        sa.Column("output_path", sa.Text(), nullable=True),
     )
 
     op.execute(
