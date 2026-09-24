@@ -87,3 +87,31 @@ def test_bad_geodb():
     assert rs._database is None
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == REPLICAS
+
+
+def test_unresolvable_host_returns_max_distance(mocker):
+    """gethostbyname raising socket.gaierror should yield the maximum distance"""
+    import math
+    import socket
+    from rucio_did_finder import replica_distance
+
+    replica_distance._get_distance.cache_clear()
+    mocker.patch.object(
+        replica_distance,
+        "gethostbyname",
+        side_effect=socket.gaierror(socket.EAI_NONAME, "Name or service not known"),
+    )
+    mock_logger = mocker.patch.object(replica_distance, "logger")
+    mock_db = mocker.MagicMock()
+
+    distance = replica_distance._get_distance(
+        mock_db, "junk.does.not.exist.org", LOCATION["latitude"], LOCATION["longitude"]
+    )
+
+    assert distance == math.pi
+    mock_db.city.assert_not_called()
+    mock_logger.warning.assert_called_once()
+    assert (
+        "Cannot resolve junk.does.not.exist.org" in mock_logger.warning.call_args[0][0]
+    )
+    replica_distance._get_distance.cache_clear()

@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import socket
+
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 import os
 
@@ -71,6 +73,12 @@ def _get_distance(
             f"Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}"
         )
         return math.pi
+    except socket.gaierror as e:
+        logger.warning(
+            f"Cannot resolve {fqdn}, returning maximum distance.\nError: {e}"
+        )
+        return math.pi
+
     site_lat, site_lon = loc_data.latitude, loc_data.longitude
     if site_lat is None or site_lon is None:
         return math.pi
