@@ -70,4 +70,3 @@ class ServiceXResource(Resource):
             return version("servicex_app")
         except PackageNotFoundError:
             return "develop"
-
