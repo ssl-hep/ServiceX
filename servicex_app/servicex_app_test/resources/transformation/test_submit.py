@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 from datetime import datetime, timezone
 from unittest.mock import ANY
 
@@ -34,7 +35,10 @@ import pytest
 from pytest import MonkeyPatch
 import json
 
-from servicex_app.resources.transformation.submit import _validate_custom_docker_image
+from servicex_app.resources.transformation.submit import (
+    SubmitTransformationRequest,
+    _validate_custom_docker_image,
+)
 from servicex_app import LookupResultProcessor
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.dataset_manager import DatasetManager
@@ -670,6 +674,30 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 "Transformation submitted with client version: unknown",
                 extra={"request_id": request_id},
             )
+
+    def test_compute_output_path_object_store(self):
+        assert (
+            SubmitTransformationRequest._compute_output_path(
+                "req-123", TransformRequest.OBJECT_STORE_DEST
+            )
+            == "req-123"
+        )
+
+    def test_compute_output_path_volume(self):
+        client = self._test_client(
+            extra_config={"TRANSFORMER_PERSISTENCE_SUBDIR": "out-dir"}
+        )
+        with client.application.app_context():
+            result = SubmitTransformationRequest._compute_output_path(
+                "req-123", TransformRequest.VOLUME_DEST
+            )
+            assert result == os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT, "out-dir"
+            )
+
+    def test_compute_output_path_unknown(self):
+        with pytest.raises(ValueError, match="Unknown result_destination"):
+            SubmitTransformationRequest._compute_output_path("req-123", "s3-bucket")
 
 
 class TestValidateCustomDockerImage:

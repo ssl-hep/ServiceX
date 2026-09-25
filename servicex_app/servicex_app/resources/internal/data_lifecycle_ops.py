@@ -69,8 +69,18 @@ class DataLifecycleOps(ServiceXResource):
                 ).delete()
 
                 # Delete the transformed files out of object store along with the bucket
-                if object_store:
-                    object_store.delete_bucket_and_contents(transform.request_id)
+                if (
+                    object_store
+                    and transform.result_destination
+                    == TransformRequest.OBJECT_STORE_DEST
+                ):
+                    if transform.output_path:
+                        object_store.delete_bucket_and_contents(transform.output_path)
+                    else:
+                        current_app.logger.warning(
+                            "Skipping bucket cleanup: transform has no output_path recorded",
+                            extra={"request_id": transform.request_id},
+                        )
 
                 # Delete the transform request
                 session.delete(transform)
