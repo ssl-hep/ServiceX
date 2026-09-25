@@ -1,0 +1,109 @@
+{{- if .Values.logging.vector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "servicex.vector.aggregatorHost" . }}
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ include "servicex.vector.aggregatorHost" . }}
+spec:
+  replicas: {{ .Values.logging.vector.aggregator.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "servicex.vector.aggregatorHost" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "servicex.vector.aggregatorHost" . }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      annotations:
+        checksum/vector-config: {{ include (print $.Template.BasePath "/app/vector-aggregator-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.logging.vector.aggregator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.logging.vector.aggregator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.logging.vector.aggregator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: vector
+        image: {{ .Values.logging.vector.image }}:{{ .Values.logging.vector.tag }}
+        imagePullPolicy: {{ .Values.app.pullPolicy }}
+        args: [ "--config", "/etc/vector/vector.yaml" ]
+        env:
+        - name: VECTOR_LOG
+          value: "{{ .Values.logging.vector.logLevel }}"
+        - name: PG_HOST
+          value: "{{ .Release.Name }}-postgresql"
+        - name: PG_PORT
+          value: "5432"
+        - name: PG_USER
+          value: "postgres"
+        - name: PG_DB
+          value: "{{ .Values.postgresql.global.postgresql.auth.database }}"
+        {{- if .Values.secrets }}
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: postgresql-password
+        {{- else }}
+        - name: PG_PASS
+          value: "{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}"
+        {{- end }}
+        ports:
+          - name: socket
+            containerPort: {{ .Values.logging.vector.port }}
+            protocol: TCP
+          - name: vector
+            containerPort: {{ .Values.logging.vector.aggregator.port }}
+            protocol: TCP
+          - name: api
+            containerPort: {{ .Values.logging.vector.aggregator.apiPort }}
+            protocol: TCP
+        # Readiness gates the Service: a pod that is still replaying its disk
+        # buffer should not be handed new connections.
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: api
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: api
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        {{- if .Values.logging.vector.aggregator.resources }}
+        resources:
+{{ toYaml .Values.logging.vector.aggregator.resources | indent 10 }}
+        {{- end }}
+        volumeMounts:
+          - name: vector-config
+            mountPath: /etc/vector
+            readOnly: true
+          - name: vector-data
+            mountPath: /vector-data-dir
+      volumes:
+        - name: vector-config
+          configMap:
+            name: {{ .Release.Name }}-vector-aggregator-config
+        - name: vector-data
+        {{- if eq .Values.logging.vector.aggregator.buffer.type "disk" }}
+          emptyDir:
+            # Headroom over max_size: Vector can briefly overshoot the buffer cap
+            # while a data file is being finalized.
+            sizeLimit: {{ add (int64 .Values.logging.vector.aggregator.buffer.maxSize) 134217728 }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

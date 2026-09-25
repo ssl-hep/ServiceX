@@ -27,8 +27,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import os
+import queue
 import sys
 import json
+from logging.handlers import QueueHandler, QueueListener
 from celery import Celery
 
 import base64
@@ -147,6 +149,51 @@ def strtobool(value: str) -> bool:
     if value in ("n", "no", "f", "false", "off", "0"):
         return False
     raise ValueError(f"invalid truth value {value!r}")
+
+
+class VectorFormatter(logstash.formatter.LogstashFormatterBase):
+    """
+    Serializes a log record to JSON with stable, column-matching keys for the
+    Vector aggregator's postgres sink (the `log_messages` table). Any non-standard
+    record attributes are nested under `extra` (a JSON object). Emits bytes so
+    it plugs directly into logstash.TCPLogstashHandler's newline framing.
+    """
+
+    def format(self, record):
+        extra = self.get_extra_fields(record)
+        message = {
+            "timestamp": self.format_timestamp(record.created),
+            "level": record.levelname,
+            "logger": record.name,
+            "instance": instance,
+            "component": "servicex_app",
+            "message": record.getMessage(),
+            "request_id": extra.pop("request_id", None),
+            "dataset_id": extra.pop("dataset_id", None),
+            "extra": extra,
+        }
+
+        # If exception, add debug info
+        if record.exc_info:
+            message["extra"].update(self.get_debug_fields(record))
+
+        return self.serialize(message)
+
+
+class _DirectQueueHandler(QueueHandler):
+    """
+    A QueueHandler that puts the record on the queue as-is.
+
+    The stdlib's prepare() formats the record and then shallow-copies it so it
+    can cross a process boundary. Our listener is a thread in this same process,
+    so that buys nothing and costs a format plus a copy of every record, on the
+    thread that logged it. prepare() also nulls exc_info, which is the field
+    VectorFormatter checks before attaching a traceback, so skipping it is also
+    what lets tracebacks reach the `extra` column at all.
+    """
+
+    def prepare(self, record):
+        return record
 
 
 def _override_config_with_environ(app):
@@ -269,6 +316,31 @@ def create_app(
         logstash_handler.setFormatter(logstash_formatter)
         logstash_handler.setLevel(level)
         app.logger.addHandler(logstash_handler)
+
+    # Ship logs to the release's Vector aggregator over TCP. The socket send runs
+    # on a QueueListener background thread so logging never blocks the app:
+    # app.logger -> QueueHandler (unbounded queue, non-blocking put) -> listener
+    # thread -> TCPLogstashHandler (newline-delimited JSON) -> Vector aggregator.
+    # VECTOR_HOST is the aggregator's Service, so a restart there only costs the
+    # records already on the wire.
+    vector_host = os.environ.get("VECTOR_HOST")
+    vector_port = os.environ.get("VECTOR_PORT")
+    if vector_host and vector_port:
+        vector_handler = logstash.TCPLogstashHandler(
+            vector_host, int(vector_port), version=1
+        )
+        vector_handler.setFormatter(VectorFormatter("vector", None, None))
+        vector_handler.setLevel(level)
+
+        log_queue = queue.Queue(-1)
+        queue_handler = _DirectQueueHandler(log_queue)
+        queue_handler.setLevel(level)
+        app.logger.addHandler(queue_handler)
+
+        listener = QueueListener(log_queue, vector_handler, respect_handler_level=True)
+        listener.start()
+        # Keep a reference so the listener thread isn't garbage collected.
+        app.vector_log_listener = listener
 
     app.logger.info("Initialized logging")
 

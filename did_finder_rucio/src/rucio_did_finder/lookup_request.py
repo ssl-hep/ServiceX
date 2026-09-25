@@ -79,7 +79,10 @@ class LookupRequest:
         avg_replicas = 0
         lookup_start = datetime.now()
 
-        self.logger.info("Doing Rucio lookup.")
+        self.logger.info(
+            "Doing Rucio lookup.",
+            extra={"dataset_id": self.dataset_id, "dataset_name": self.did},
+        )
         full_file_list = []
         for ds_files in self.rucio_adapter.list_files_for_did(
             self.did,

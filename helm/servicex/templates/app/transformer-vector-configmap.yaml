@@ -1,0 +1,75 @@
+{{- if and .Values.logging.vector.enabled .Values.logging.vector.transformer.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-transformer-vector-config
+  labels:
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app: {{ .Release.Name }}
+data:
+  # Mounted into the `vector` container of every transformer worker pod by
+  # servicex_app/servicex_app/transformer_manager.py. Two sources feed one sink:
+  #   sidecar_logs  - JSON over a localhost socket from the python transformer sidecar
+  #   science_logs  - the science container's stdout, tee'd to the shared volume by watch.sh
+  # Both are forwarded to the release's vector aggregator, which owns the only
+  # connection to postgres. Nothing here touches the database, so transformer pods
+  # never see the postgres credentials.
+  # Vector refuses to start if any ${VAR} below is unset, so every one of them is
+  # either injected by transformer_manager or given a default here.
+  vector.yaml: |
+    data_dir: /vector-data-dir
+    sources:
+      sidecar_logs:
+        type: socket
+        mode: tcp
+        address: 0.0.0.0:${VECTOR_SOCKET_PORT}
+        decoding:
+          codec: json
+      science_logs:
+        type: file
+        include:
+          - ${SCIENCE_LOG_GLOB}
+        read_from: beginning
+        remove_after_secs: {{ .Values.logging.vector.transformer.scienceLogRemoveAfterSecs }}
+    transforms:
+      science_events:
+        type: remap
+        inputs: [science_logs]
+        source: |
+          msg = to_string(.message) ?? ""
+          # Science stdout is unstructured, so severity is a guess. No leading
+          # word boundary, so PascalCase exception names (ValueError, KeyError)
+          # match; the trailing one keeps "errors"/"terrorist" from matching.
+          # Over-flagging is the safer failure here: the request page's log
+          # filter is a minimum severity, so an INFO-classified stack trace
+          # would be invisible to anyone filtering for errors.
+          lvl = "INFO"
+          if match(msg, r'(?i)(error|exception|fatal|critical|traceback)\b') {
+            lvl = "ERROR"
+          }
+          . = {
+            "timestamp": format_timestamp!(now(), format: "%+"),
+            "level": lvl,
+            "logger": "science",
+            "instance": "${INSTANCE_NAME-Unknown}",
+            "component": "science",
+            "message": msg,
+            "request_id": "${REQUEST_ID}",
+            "extra": {
+              "place": {
+                "pod": "${POD_NAME-unknown}",
+                "host": "${HOST_NAME-unknown}"
+              }
+            }
+          }
+    sinks:
+      aggregator:
+        type: vector
+        inputs: [sidecar_logs, science_events]
+        address: ${VECTOR_AGGREGATOR_ADDRESS}
+        batch:
+          max_events: {{ .Values.logging.vector.batch.maxEvents }}
+          timeout_secs: {{ .Values.logging.vector.batch.timeoutSecs }}
+{{- end }}

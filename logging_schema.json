@@ -34,6 +34,14 @@
       "type": "number",
       "description": "Dataset-related — average number of replicas for files in dataset"
     },
+    "files_skipped": {
+      "type": "integer",
+      "description": "Dataset-related — files skipped during lookup"
+    },
+    "total_events": {
+      "type": "integer",
+      "description": "Dataset-related — total events across the files in a dataset"
+    },
     "lookup_duration": {
       "type": "number",
       "description": "Dataset-related — duration of lookup operation in seconds"
@@ -105,7 +113,7 @@
     },
     "task_id": {
       "type": "string",
-      "description": "Queue context — Celery task name"
+      "description": "Queue context — Celery task id (the task name is in the logger column)"
     },
     "num_files": {
       "type": "integer",

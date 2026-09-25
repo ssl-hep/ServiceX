@@ -141,6 +141,22 @@ data:
     TRANSFORMER_CVMFS_VOLUME = None
     {{- end }}
 
+    {{- if and .Values.logging.vector.enabled .Values.logging.vector.transformer.enabled }}
+    # Vector sidecar for transformer worker pods. It only forwards to the release's
+    # vector aggregator, so no postgres connection details are needed here.
+    TRANSFORMER_VECTOR_ENABLED = True
+    TRANSFORMER_VECTOR_IMAGE = "{{ .Values.logging.vector.image }}:{{ .Values.logging.vector.tag }}"
+    TRANSFORMER_VECTOR_PULL_POLICY = '{{ .Values.app.pullPolicy }}'
+    TRANSFORMER_VECTOR_PORT = {{ .Values.logging.vector.transformer.port }}
+    TRANSFORMER_VECTOR_LOG_LEVEL = '{{ .Values.logging.vector.logLevel }}'
+    TRANSFORMER_VECTOR_CONFIG_MAP = "{{ .Release.Name }}-transformer-vector-config"
+    TRANSFORMER_VECTOR_RESOURCES = {{ .Values.logging.vector.transformer.resources | toJson }}
+    TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ include "servicex.vector.aggregatorHost" . }}:{{ .Values.logging.vector.aggregator.port }}"
+    TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB = "{{ .Values.transformer.outputDir }}/*/science.*.log"
+    {{- else }}
+    TRANSFORMER_VECTOR_ENABLED = False
+    {{- end }}
+
     {{ if .Values.objectStore.enabled }}
     OBJECT_STORE_ENABLED = True
     # default to using a https connection to the client unless explicitly

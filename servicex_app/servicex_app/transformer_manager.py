@@ -246,6 +246,19 @@ class TransformerManager:
             client.V1EnvVar("LOGSTASH_PORT", value=os.environ.get("LOGSTASH_PORT")),
         ]
 
+        # Point the transformer sidecar at the pod's own Vector container, which
+        # forwards its logs to the release's Vector aggregator. This has to happen
+        # before the containers are constructed below, since they share this list.
+        vector_enabled = current_app.config.get("TRANSFORMER_VECTOR_ENABLED", False)
+        if vector_enabled:
+            env += [
+                client.V1EnvVar("VECTOR_HOST", value="127.0.0.1"),
+                client.V1EnvVar(
+                    "VECTOR_PORT",
+                    value=str(current_app.config["TRANSFORMER_VECTOR_PORT"]),
+                ),
+            ]
+
         # Provide each pod with an environment var holding that pod's name
         pod_name_value_from = client.V1EnvVarSource(
             field_ref=client.V1ObjectFieldSelector(field_path="metadata.name")
@@ -383,6 +396,30 @@ class TransformerManager:
             resources=resources,
         )
 
+        containers = [sidecar, science_container]  # started in this order
+        if vector_enabled:
+            containers.append(
+                TransformerManager.create_vector_container(
+                    request_id=request_id,
+                    output_path=output_path,
+                    pod_name_value_from=pod_name_value_from,
+                    host_name_value_from=host_name_value_from,
+                )
+            )
+            volumes.append(
+                client.V1Volume(
+                    name="vector-config",
+                    config_map=client.V1ConfigMapVolumeSource(
+                        name=current_app.config["TRANSFORMER_VECTOR_CONFIG_MAP"]
+                    ),
+                )
+            )
+            volumes.append(
+                client.V1Volume(
+                    name="vector-data", empty_dir=client.V1EmptyDirVolumeSource()
+                )
+            )
+
         # Create and Configure a spec section
         pod_annotations = current_app.config.get("TRANSFORMER_POD_ANNOTATIONS", {})
         node_selector = current_app.config.get("TRANSFORMER_NODE_SELECTOR", {})
@@ -413,10 +450,7 @@ class TransformerManager:
                 node_selector=node_selector if node_selector else None,
                 tolerations=tolerations,
                 affinity=affinity,
-                containers=[
-                    sidecar,
-                    science_container,
-                ],  # Containers are started in this order
+                containers=containers,
                 volumes=volumes,
             ),
         )
@@ -443,6 +477,76 @@ class TransformerManager:
         )
 
         return deployment
+
+    @staticmethod
+    def create_vector_container(
+        request_id, output_path, pod_name_value_from, host_name_value_from
+    ):
+        """
+        Build the Vector sidecar for a transformer pod. It receives the python
+        transformer sidecar's logs over a localhost socket, tails the science
+        container's stdout off the shared output volume, and forwards both to the
+        release's Vector aggregator, which is the only thing that writes to the
+        Postgres log_messages table. No database credentials reach this pod.
+
+        Note this deliberately builds its OWN volume mount list. The science and
+        sidecar containers share a single mount list object, so appending to that
+        would mount Vector's config into them as well.
+        """
+        cfg = current_app.config
+
+        volume_mounts = [
+            # Read-only: Vector only ever tails the science logs written here.
+            client.V1VolumeMount(
+                name="sidecar-volume", mount_path=output_path, read_only=True
+            ),
+            client.V1VolumeMount(
+                name="vector-config", mount_path="/etc/vector", read_only=True
+            ),
+            client.V1VolumeMount(name="vector-data", mount_path="/vector-data-dir"),
+        ]
+
+        env = [
+            client.V1EnvVar(
+                "VECTOR_SOCKET_PORT", value=str(cfg["TRANSFORMER_VECTOR_PORT"])
+            ),
+            client.V1EnvVar("VECTOR_LOG", value=cfg["TRANSFORMER_VECTOR_LOG_LEVEL"]),
+            client.V1EnvVar(
+                "SCIENCE_LOG_GLOB", value=cfg["TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB"]
+            ),
+            # The vector config interpolates these; Vector refuses to start if any
+            # of them is unset.
+            client.V1EnvVar("REQUEST_ID", value=request_id),
+            client.V1EnvVar(
+                "VECTOR_AGGREGATOR_ADDRESS",
+                value=cfg["TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS"],
+            ),
+            client.V1EnvVar("POD_NAME", value_from=pod_name_value_from),
+            client.V1EnvVar("HOST_NAME", value_from=host_name_value_from),
+        ]
+        if "INSTANCE_NAME" in cfg:
+            env.append(client.V1EnvVar("INSTANCE_NAME", value=cfg["INSTANCE_NAME"]))
+
+        # Vector needs its own resources. Inheriting the science container's would
+        # be wasteful, and having none at all makes the autoscaling/v1 HPA report
+        # unknown CPU utilization and stop scaling transformers entirely.
+        resources_config = cfg.get("TRANSFORMER_VECTOR_RESOURCES") or {}
+        resources = client.V1ResourceRequirements(
+            limits=resources_config.get("limits"),
+            requests=resources_config.get("requests"),
+        )
+
+        return client.V1Container(
+            name="vector",
+            image=cfg["TRANSFORMER_VECTOR_IMAGE"],
+            image_pull_policy=cfg["TRANSFORMER_VECTOR_PULL_POLICY"],
+            # --watch-config so a helm upgrade mid-transform is picked up once the
+            # kubelet syncs the ConfigMap.
+            args=["--config", "/etc/vector/vector.yaml", "--watch-config"],
+            env=env,
+            volume_mounts=volume_mounts,
+            resources=resources,
+        )
 
     @staticmethod
     def create_posix_volume(volumes, volume_mounts):

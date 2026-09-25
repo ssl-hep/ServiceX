@@ -65,6 +65,25 @@ BASE_TRANSFORMER_CONFIG = {
     "TRANSFORMER_SIDECAR_PULL_POLICY": "Always",
     "TRANSFORMER_SCIENCE_IMAGE_PULL_POLICY": "Always",
     "TRANSFORMER_CVMFS_VOLUME": None,
+    # Off by default, matching the helm chart. Spelled out rather than left to
+    # the .get() fallback so the default is explicit.
+    "TRANSFORMER_VECTOR_ENABLED": False,
+}
+
+# Everything the helm chart emits when logging.vector.transformer.enabled is on.
+VECTOR_CONFIG = {
+    "TRANSFORMER_VECTOR_ENABLED": True,
+    "TRANSFORMER_VECTOR_IMAGE": "timberio/vector:0.48.0-debian",
+    "TRANSFORMER_VECTOR_PULL_POLICY": "IfNotPresent",
+    "TRANSFORMER_VECTOR_PORT": 9000,
+    "TRANSFORMER_VECTOR_LOG_LEVEL": "warn",
+    "TRANSFORMER_VECTOR_CONFIG_MAP": "rolling-snail-transformer-vector-config",
+    "TRANSFORMER_VECTOR_RESOURCES": {
+        "requests": {"cpu": "50m", "memory": "64Mi"},
+        "limits": {"memory": "128Mi"},
+    },
+    "TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS": "rolling-snail-vector-aggregator:6000",
+    "TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB": "/servicex/output/*/science.*.log",
 }
 
 
@@ -618,6 +637,134 @@ class TestTransformerManager(ResourceTestBase):
             assert len(called_deployment.spec.template.spec.volumes) == 1
             args = container.args
             assert not args[0].startswith("/servicex/proxy-exporter.sh & sleep 5 && ")
+
+    def _launch_with(self, mocker, extra_config):
+        """Launch a transform and return the V1Deployment handed to kubernetes."""
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mocker.patch.object(kubernetes.client, "AutoscalingV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        client = self._test_client(
+            extra_config=extra_config, transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=2,
+                max_workers=2,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret=None,
+                generated_code_cm=None,
+                transformer_language="python",
+                transformer_command="echo",
+            )
+            return mock_api.mock_calls[1][2]["body"]
+
+    @pytest.fixture
+    def vector_deployment(self, mocker):
+        """A transform launched with the vector sidecar turned on."""
+        return self._launch_with(
+            mocker, make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG)
+        )
+
+    def test_vector_sidecar_disabled_by_default(self, mocker):
+        """No vector container, and nothing bolted onto the shared volumes."""
+        deployment = self._launch_with(
+            mocker, make_config(TRANSFORMER_AUTOSCALE_ENABLED=False)
+        )
+        spec = deployment.spec.template.spec
+        assert [c.name for c in spec.containers] == ["sidecar", "transformer"]
+        assert not [v for v in spec.volumes if v.name.startswith("vector-")]
+
+    def test_vector_sidecar_added_when_enabled(self, vector_deployment):
+        spec = vector_deployment.spec.template.spec
+
+        # Appended last, so the existing sidecar/science indices are unchanged.
+        assert [c.name for c in spec.containers] == [
+            "sidecar",
+            "transformer",
+            "vector",
+        ]
+        vector = spec.containers[2]
+        assert vector.image == "timberio/vector:0.48.0-debian"
+        assert vector.image_pull_policy == "IfNotPresent"
+        assert vector.args == [
+            "--config",
+            "/etc/vector/vector.yaml",
+            "--watch-config",
+        ]
+
+        volume_names = {v.name for v in spec.volumes}
+        assert {"vector-config", "vector-data"} <= volume_names
+        config_volume = [v for v in spec.volumes if v.name == "vector-config"][0]
+        assert (
+            config_volume.config_map.name == "rolling-snail-transformer-vector-config"
+        )
+
+    def test_vector_sidecar_does_not_leak_into_other_containers(
+        self, vector_deployment
+    ):
+        """
+        The science and sidecar containers share one mount list object, so
+        building Vector's mounts by appending to it would silently mount
+        /etc/vector into both of them.
+        """
+        sidecar, science, vector = vector_deployment.spec.template.spec.containers
+
+        for container in (sidecar, science):
+            assert [m.name for m in container.volume_mounts] == ["sidecar-volume"]
+
+        assert [m.name for m in vector.volume_mounts] == [
+            "sidecar-volume",
+            "vector-config",
+            "vector-data",
+        ]
+        assert vector.volume_mounts[0].read_only is True
+
+    def test_vector_sidecar_env(self, vector_deployment):
+        sidecar, _, vector = vector_deployment.spec.template.spec.containers
+
+        # The python sidecar talks to vector over the pod's loopback.
+        assert _env_value(sidecar.env, "VECTOR_HOST") == "127.0.0.1"
+        assert _env_value(sidecar.env, "VECTOR_PORT") == "9000"
+
+        # Vector refuses to start if any interpolated var is missing.
+        assert _env_value(vector.env, "VECTOR_SOCKET_PORT") == "9000"
+        assert _env_value(vector.env, "VECTOR_LOG") == "warn"
+        assert _env_value(vector.env, "REQUEST_ID") == "1234"
+        assert (
+            _env_value(vector.env, "SCIENCE_LOG_GLOB")
+            == "/servicex/output/*/science.*.log"
+        )
+        assert (
+            _env_value(vector.env, "VECTOR_AGGREGATOR_ADDRESS")
+            == "rolling-snail-vector-aggregator:6000"
+        )
+
+        # The aggregator owns the only postgres connection. A transformer pod that
+        # carried credentials would hand them to every user-supplied science image.
+        assert not [e for e in vector.env if e.name.startswith("PG_")]
+
+    def test_vector_sidecar_has_cpu_request(self, vector_deployment):
+        """
+        The transformer HPA is autoscaling/v1 and averages CPU utilization over
+        every container in the pod. A vector container with no cpu request makes
+        utilization unknown and silently stops transformer autoscaling.
+        """
+        science, vector = vector_deployment.spec.template.spec.containers[1:]
+
+        assert vector.resources.requests["cpu"] == "50m"
+        # And it must not inherit the science container's much larger limits.
+        assert vector.resources.limits != science.resources.limits
 
     def test_shutdown_transformer_jobs(self, mocker):
         import kubernetes
