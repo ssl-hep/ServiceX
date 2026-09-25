@@ -43,12 +43,12 @@ SORTED_REPLICAS = [
 ]  # noqa: E501
 
 JUNK_REPLICAS = [
-    "https://junk.does.not.exist.org/",
+    "https://junk.does.not.exist/",
     "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
 ]
 SORTED_JUNK_REPLICAS = [
     "root://fax.mwt2.org:1094//pnfs/uchicago.edu/",
-    "https://junk.does.not.exist.org/",
+    "https://junk.does.not.exist/",
 ]
 
 LOCATION = {"latitude": 41.78, "longitude": -87.7}
@@ -59,7 +59,7 @@ def test_sorting():
     from rucio_did_finder.replica_distance import ReplicaSorter
 
     rs = ReplicaSorter((GEOIP_TGZ_URL, False))
-    # Given location (Chicago) replicas should sort US, FR, DE
+    # Given location (Chicago) IPv6 replicas will sort US, FR, DE
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == SORTED_REPLICAS
     # the nonexistent FQDN should sort at end
@@ -87,3 +87,23 @@ def test_bad_geodb():
     assert rs._database is None
     sorted = rs.sort_replicas(REPLICAS, LOCATION)
     assert sorted == REPLICAS
+
+
+def test_unresolvable_host_returns_max_distance(mocker):
+    """gethostbyname raising socket.gaierror should yield the maximum distance"""
+    import math
+    from rucio_did_finder import replica_distance
+
+    replica_distance._get_distance.cache_clear()
+    mock_logger = mocker.patch.object(replica_distance, "logger")
+    mock_db = mocker.MagicMock()
+
+    distance = replica_distance._get_distance(
+        mock_db, "junk.does.not.exist", LOCATION["latitude"], LOCATION["longitude"]
+    )
+
+    assert distance == math.pi
+    mock_db.city.assert_not_called()
+    mock_logger.warning.assert_called_once()
+    assert "Error looking up junk.does.not.exist" in mock_logger.warning.call_args[0][0]
+    replica_distance._get_distance.cache_clear()
