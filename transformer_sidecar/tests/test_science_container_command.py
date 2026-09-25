@@ -47,10 +47,16 @@ def mock_socket(mocker):
     return mock_socket
 
 
+def connected_command(timeout=None):
+    scc = ScienceContainerCommand(timeout=timeout)
+    scc.accept()
+    return scc
+
+
 def test_connect(mock_socket):
     mock_socket_instance = mock_socket.return_value
 
-    _ = ScienceContainerCommand()
+    scc = ScienceContainerCommand()
 
     # Assert that socket was created with correct parameters
     mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,19 +67,23 @@ def test_connect(mock_socket):
     # Assert that listen was called
     mock_socket_instance.listen.assert_called_once()
 
-    # Assert that accept was called
+    # We don't wait for the science container until we are asked to
+    mock_socket_instance.accept.assert_not_called()
+
+    scc.accept()
     mock_socket_instance.accept.assert_called_once()
+    scc.conn.settimeout.assert_called_once_with(scc.timeout)
 
 
 def test_sync(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     scc.conn.recv.return_value = b"GeT"
     scc.synch()
     scc.conn.recv.assert_called_once_with(4096)
 
 
 def test_sync_fail(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     scc.conn.recv.return_value = None
     with pytest.raises(ScienceContainerException) as exc_info:
         scc.synch()
@@ -83,27 +93,45 @@ def test_sync_fail(mock_socket):
 
 
 def test_send(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     transform_request = {"foo": "bar"}
     scc.send(transform_request)
     scc.conn.send.assert_called_once_with(b'{"foo": "bar"}\n')
 
 
 def test_await_response(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     scc.conn.recv.return_value = b"status"
     assert scc.await_response() == "status"
     scc.conn.recv.assert_called_once_with(4096)
 
 
 def test_confirm(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     scc.confirm()
     scc.conn.send.assert_called_once_with(b"confirmed.\n")
 
 
 def test_close(mock_socket):
-    scc = ScienceContainerCommand()
+    scc = connected_command()
     scc.close()
     scc.conn.close.assert_called_once()
     scc.serv.close.assert_called_once()
+
+
+def test_await_response_fail(mock_socket):
+    scc = connected_command()
+    scc.conn.recv.return_value = b""
+    with pytest.raises(ScienceContainerException) as exc_info:
+        scc.await_response()
+
+    assert str(exc_info.value) == "problem in getting the status"
+
+
+def test_await_response_timeout(mock_socket):
+    scc = connected_command(timeout=1)
+    scc.conn.recv.side_effect = socket.timeout
+    with pytest.raises(ScienceContainerException) as exc_info:
+        scc.await_response()
+
+    assert str(exc_info.value) == "timed out waiting for the science container"
