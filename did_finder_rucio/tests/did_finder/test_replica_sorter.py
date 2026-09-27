@@ -33,14 +33,14 @@ GEOIP_TGZ_URL = "https://ponyisi.web.cern.ch/public/GeoLite2-City_20241015.tar.g
 REPLICAS = [
     "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",
     "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
-    "root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
+    "davs://xrootd-redirector.atlas.unimelb.edu.au:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
 ]
 
 SORTED_REPLICAS = [
     "root://fax.mwt2.org:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
     "https://ccxrootdatlas.in2p3.fr:1094//pnfs/DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
-    "root://atlasdcache-kit.gridka.de:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",
-]  # noqa: E501
+    "davs://xrootd-redirector.atlas.unimelb.edu.au:1094//DAOD_PHYSLITE.37020764._000004.pool.root.1",  # noqa: E501
+]
 
 JUNK_REPLICAS = [
     "https://junk.does.not.exist/",
