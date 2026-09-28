@@ -813,8 +813,7 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads(
-            """
+        request_func_mock.return_value.json.return_value = json.loads("""
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -842,8 +841,7 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}"""
-        )
+}""")
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -894,8 +892,7 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads(
-            """
+        request_func_mock.return_value.json.return_value = json.loads("""
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -923,8 +920,7 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}"""
-        )
+}""")
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
