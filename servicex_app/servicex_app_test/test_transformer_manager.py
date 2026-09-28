@@ -697,11 +697,7 @@ class TestTransformerManager(ResourceTestBase):
         vector = spec.containers[2]
         assert vector.image == "timberio/vector:0.48.0-debian"
         assert vector.image_pull_policy == "IfNotPresent"
-        assert vector.args == [
-            "--config",
-            "/etc/vector/vector.yaml",
-            "--watch-config",
-        ]
+        assert vector.args == ["--config", "/etc/vector/vector.yaml"]
 
         volume_names = {v.name for v in spec.volumes}
         assert {"vector-config", "vector-data"} <= volume_names
