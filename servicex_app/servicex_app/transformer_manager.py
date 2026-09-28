@@ -540,9 +540,12 @@ class TransformerManager:
             name="vector",
             image=cfg["TRANSFORMER_VECTOR_IMAGE"],
             image_pull_policy=cfg["TRANSFORMER_VECTOR_PULL_POLICY"],
-            # --watch-config so a helm upgrade mid-transform is picked up once the
-            # kubelet syncs the ConfigMap.
-            args=["--config", "/etc/vector/vector.yaml", "--watch-config"],
+            # No --watch-config. The watcher takes an inotify instance, and those
+            # are capped per node (fs.inotify.max_user_instances, often 128), so a
+            # node packed with transformer pods runs out and vector exits with
+            # "Too many open files". Transformer pods are short-lived and pick up
+            # a new ConfigMap when they are next created.
+            args=["--config", "/etc/vector/vector.yaml"],
             env=env,
             volume_mounts=volume_mounts,
             resources=resources,
