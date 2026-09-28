@@ -511,6 +511,12 @@ class TransformerManager:
                 "VECTOR_SOCKET_PORT", value=str(cfg["TRANSFORMER_VECTOR_PORT"])
             ),
             client.V1EnvVar("VECTOR_LOG", value=cfg["TRANSFORMER_VECTOR_LOG_LEVEL"]),
+            # Vector defaults to one worker thread per core on the node, and its
+            # memory grows with the thread count, so on a many-core node it is
+            # OOMKilled at startup.
+            client.V1EnvVar(
+                "VECTOR_THREADS", value=str(cfg["TRANSFORMER_VECTOR_THREADS"])
+            ),
             client.V1EnvVar(
                 "SCIENCE_LOG_GLOB", value=cfg["TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB"]
             ),

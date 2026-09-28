@@ -41,6 +41,8 @@ spec:
         env:
         - name: VECTOR_LOG
           value: "{{ .Values.logging.vector.logLevel }}"
+        - name: VECTOR_THREADS
+          value: "{{ .Values.logging.vector.aggregator.threads }}"
         - name: PG_HOST
           value: "{{ .Release.Name }}-postgresql"
         - name: PG_PORT
