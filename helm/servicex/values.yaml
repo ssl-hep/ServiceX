@@ -333,6 +333,11 @@ logging:
       # Postgres connections held per replica. Unlike the old per-transformer-pod
       # sidecars, this is a fixed ceiling that does not grow with transform load.
       poolSize: 5
+      # Vector worker threads. Left unset, Vector starts one per core on the node,
+      # and its memory grows with the thread count. The aggregator carries every
+      # transformer's logs, so it gets more than the per-pod vectors, but the
+      # postgres writes are bounded by poolSize, not by threads.
+      threads: 4
       resources: {}
       nodeSelector: {}
       tolerations: []
@@ -359,6 +364,11 @@ logging:
           memory: 64Mi
         limits:
           memory: 128Mi
+      # Vector worker threads. Left unset, Vector starts one per core it can see,
+      # and with no cpu limit that is every core on the node. Memory grows with
+      # the thread count, so on a many-core node vector blows through its memory
+      # limit and is OOMKilled at startup. One transform's logs need very little.
+      threads: 2
       # Seconds Vector waits before deleting a science log chunk it has fully read.
       scienceLogRemoveAfterSecs: 300
 minio:

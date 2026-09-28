@@ -149,6 +149,7 @@ data:
     TRANSFORMER_VECTOR_PULL_POLICY = '{{ .Values.app.pullPolicy }}'
     TRANSFORMER_VECTOR_PORT = {{ .Values.logging.vector.transformer.port }}
     TRANSFORMER_VECTOR_LOG_LEVEL = '{{ .Values.logging.vector.logLevel }}'
+    TRANSFORMER_VECTOR_THREADS = {{ .Values.logging.vector.transformer.threads }}
     TRANSFORMER_VECTOR_CONFIG_MAP = "{{ .Release.Name }}-transformer-vector-config"
     TRANSFORMER_VECTOR_RESOURCES = {{ .Values.logging.vector.transformer.resources | toJson }}
     TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ include "servicex.vector.aggregatorHost" . }}:{{ .Values.logging.vector.aggregator.port }}"
