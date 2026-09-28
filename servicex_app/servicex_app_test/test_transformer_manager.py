@@ -77,6 +77,7 @@ VECTOR_CONFIG = {
     "TRANSFORMER_VECTOR_PULL_POLICY": "IfNotPresent",
     "TRANSFORMER_VECTOR_PORT": 9000,
     "TRANSFORMER_VECTOR_LOG_LEVEL": "warn",
+    "TRANSFORMER_VECTOR_THREADS": 2,
     "TRANSFORMER_VECTOR_CONFIG_MAP": "rolling-snail-transformer-vector-config",
     "TRANSFORMER_VECTOR_RESOURCES": {
         "requests": {"cpu": "50m", "memory": "64Mi"},
@@ -736,6 +737,7 @@ class TestTransformerManager(ResourceTestBase):
         # Vector refuses to start if any interpolated var is missing.
         assert _env_value(vector.env, "VECTOR_SOCKET_PORT") == "9000"
         assert _env_value(vector.env, "VECTOR_LOG") == "warn"
+        assert _env_value(vector.env, "VECTOR_THREADS") == "2"
         assert _env_value(vector.env, "REQUEST_ID") == "1234"
         assert (
             _env_value(vector.env, "SCIENCE_LOG_GLOB")
