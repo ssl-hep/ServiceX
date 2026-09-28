@@ -70,3 +70,99 @@ class TestTransformStatusInternal(ResourceTestBase):
             "/servicex/internal/transformation/1234/status", json={"foo": "bar"}
         )
         assert response.status_code == 400
+
+    def test_get_unknown_request(self, mocker, client):
+        from servicex_app.models import TransformRequest
+
+        mocker.patch.object(TransformRequest, "lookup", return_value=None)
+
+        response = client.get("/servicex/internal/transformation/1234/status")
+
+        assert response.status_code == 404
+        assert response.json == {"message": "Unknown request id: 1234"}
+
+    def test_get_lookup_complete_true(self, mocker, client):
+        from servicex_app.models import DatasetStatus, TransformRequest
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = self._generate_dataset()
+        mock_request.dataset.lookup_status = DatasetStatus.complete
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json == {
+            "request_id": "BR549",
+            "status": mock_request.status.string_name,
+            "lookup_complete": True,
+            "files_remaining": 1,
+            "transform_complete": False,
+        }
+
+    def test_get_files_remaining_zero_when_all_accounted_for(self, mocker, client):
+        from servicex_app.models import DatasetStatus, TransformRequest
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = self._generate_dataset()
+        mock_request.dataset.lookup_status = DatasetStatus.complete
+        mock_request.files = 3
+        mock_request.files_completed = 2
+        mock_request.files_failed = 1
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json["files_remaining"] == 0
+
+    def test_get_files_remaining_none_before_lookup_reports_count(self, mocker, client):
+        from servicex_app.models import TransformRequest
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = self._generate_dataset()
+        mock_request.files = 0
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json["files_remaining"] is None
+
+    def test_get_transform_complete_for_terminal_status(self, mocker, client):
+        from servicex_app.models import TransformRequest, TransformStatus
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = self._generate_dataset()
+        mock_request.status = TransformStatus.canceled
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json["transform_complete"] is True
+
+    def test_get_lookup_incomplete_when_dataset_not_complete(self, mocker, client):
+        from servicex_app.models import DatasetStatus, TransformRequest
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = self._generate_dataset()
+        mock_request.dataset.lookup_status = DatasetStatus.looking
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json["lookup_complete"] is False
+
+    def test_get_lookup_incomplete_when_dataset_missing(self, mocker, client):
+        from servicex_app.models import TransformRequest
+
+        mock_request = self._generate_transform_request()
+        mock_request.dataset = None
+        mocker.patch.object(TransformRequest, "lookup", return_value=mock_request)
+
+        response = client.get("/servicex/internal/transformation/BR549/status")
+
+        assert response.status_code == 200
+        assert response.json["lookup_complete"] is False

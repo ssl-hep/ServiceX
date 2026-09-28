@@ -53,6 +53,7 @@ from transformer_sidecar.science_container_command import (
     ScienceContainerException,
 )
 from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAdapter
+from transformer_sidecar.shutdown_watchdog import ShutdownWatchdog
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging
 from transformer_sidecar.transformer_stats import TransformerStats
@@ -541,6 +542,31 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         extra={"request_id": request_id, "place": PLACE},
     )
 
+    # Start the shutdown watchdog. It polls the ServiceX server to find out
+    # whether this request has any work left; once no more will arrive and
+    # this worker has been idle long enough, it shuts this worker down so
+    # the pod (and eventually its Job) can exit cleanly.
+    instance_name = os.environ.get("INSTANCE_NAME")
+    if instance_name:
+        status_url = (
+            f"http://{instance_name}-servicex-app:8000"
+            f"/servicex/internal/transformation/{request_id}/status"
+        )
+        watchdog = ShutdownWatchdog(
+            status_url=status_url,
+            request_id=request_id,
+            place=PLACE,
+            poll_interval=float(os.environ.get("SHUTDOWN_POLL_INTERVAL_SEC", "30")),
+            idle_shutdown_seconds=float(os.environ.get("SHUTDOWN_IDLE_SEC", "60")),
+        )
+        watchdog.register_activity_signals()
+        watchdog.start()
+    else:
+        logger.warning(
+            "INSTANCE_NAME env var not set; shutdown watchdog disabled.",
+            extra={"request_id": request_id, "place": PLACE},
+        )
+
     app.worker_main(
         argv=[
             "worker",
@@ -657,7 +683,7 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
 
         # Construct the path
         prefixed_paths.append(f"root://{prefix_list[pinned_xcache_index]}//{f}")
-    return prefixed_paths
+    return prefixed_paths + list(file_paths)
 
 
 @after_setup_logger.connect

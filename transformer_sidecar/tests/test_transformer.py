@@ -161,6 +161,49 @@ def test_transformer_init(
         )
 
 
+def test_transformer_init_starts_shutdown_watchdog(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_object_store_manager,
+    mock_science_container,
+    monkeypatch,
+    mocker,
+):
+    """
+    With INSTANCE_NAME set the worker supervises itself, so its Job can
+    complete once the request runs dry instead of idling forever.
+    """
+    monkeypatch.setenv("INSTANCE_NAME", "rolling-snail")
+    monkeypatch.setenv("SHUTDOWN_POLL_INTERVAL_SEC", "5")
+    monkeypatch.setenv("SHUTDOWN_IDLE_SEC", "15")
+    mock_watchdog_cls = mocker.patch("transformer_sidecar.transformer.ShutdownWatchdog")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root-file"],
+            "root-file",
+        )
+
+    mock_watchdog_cls.assert_called_once_with(
+        status_url=(
+            "http://rolling-snail-servicex-app:8000"
+            "/servicex/internal/transformation/1234/status"
+        ),
+        request_id="1234",
+        place=mocker.ANY,
+        poll_interval=5.0,
+        idle_shutdown_seconds=15.0,
+    )
+    watchdog = mock_watchdog_cls.return_value
+    watchdog.register_activity_signals.assert_called_once()
+    watchdog.start.assert_called_once()
+
+
 def test_transformer_root_to_parquet(
     args,
     mock_celery,
@@ -699,11 +742,14 @@ def test_prepend_xcache():
     replicas = ["root://site3/file3.root", "root://site1/file1.root"]
     assert prepend_xcache(replicas) == replicas
 
-    # Now test with single xcache
+    # Now test with single xcache. The un-prefixed origins stay on the end as
+    # fallbacks so a dead cache doesn't turn into a hard file failure.
     os.environ["CACHE_PREFIX"] = "//xcache-cms-local:"
     assert prepend_xcache(replicas) == [
         "root:////xcache-cms-local://root://site3/file3.root",
         "root:////xcache-cms-local://root://site1/file1.root",
+        "root://site3/file3.root",
+        "root://site1/file1.root",
     ]
 
     # Now test with multiple xcache
