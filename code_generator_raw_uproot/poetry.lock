@@ -778,21 +778,21 @@ watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
 name = "wtforms"
-version = "3.1.2"
+version = "3.2.2"
 description = "Form validation and rendering for Python web development."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "wtforms-3.1.2-py3-none-any.whl", hash = "sha256:bf831c042829c8cdbad74c27575098d541d039b1faa74c771545ecac916f2c07"},
-    {file = "wtforms-3.1.2.tar.gz", hash = "sha256:f8d76180d7239c94c6322f7990ae1216dae3659b7aa1cee94b6318bdffb474b9"},
+    {file = "wtforms-3.2.2-py3-none-any.whl", hash = "sha256:72b90d5d921bd3119252069cf0301e9c13915f9e52792652bc91c5dda4b79e56"},
+    {file = "wtforms-3.2.2.tar.gz", hash = "sha256:7b00c73f8670f35d4edb0293dcd81b980528bee72fd662b182aaba27ae570b93"},
 ]
 
 [package.dependencies]
-markupsafe = "*"
+markupsafe = ">=1.1.1"
 
 [package.extras]
-email = ["email-validator"]
+email = ["email-validator (>=2.0)"]
 
 [metadata]
 lock-version = "2.1"
