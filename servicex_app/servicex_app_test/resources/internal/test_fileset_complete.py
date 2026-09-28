@@ -168,3 +168,94 @@ class TestFilesetComplete(ResourceTestBase):
         assert running_request.finish_time is not None
         assert pending_request.status == TransformStatus.complete
         assert pending_request.finish_time is not None
+
+    def test_put_fileset_complete_pool_already_large_enough(
+        self, mocker, mock_find_dataset_by_id
+    ):
+        """
+        A request whose Job already runs at (or above) the target parallelism
+        should not be patched: the Job spec is fine as it stands.
+        """
+        pending_request = TransformRequest()
+        pending_request.request_id = "pending-request"
+        pending_request.status = TransformStatus.pending_lookup
+        pending_request.files = 17
+        pending_request.workers = 5
+
+        mocker.patch.object(
+            TransformRequest,
+            "lookup_pending_on_dataset",
+            return_value=[pending_request],
+        )
+        mocker.patch.object(
+            TransformRequest, "lookup_running_by_dataset_id", return_value=[]
+        )
+        mocker.patch.object(DatasetManager, "publish_files")
+
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+
+        client = self._test_client(
+            lookup_result_processor=mocker.MagicMock(LookupResultProcessor),
+            transformation_manager=mock_transformer_manager,
+        )
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/complete",
+            json={
+                "files": 17,
+                "total-events": 1024,
+                "total-bytes": 2046,
+                "elapsed-time": 42,
+            },
+        )
+
+        assert response.status_code == 200
+        mock_transformer_manager.patch_transformer_parallelism.assert_not_called()
+        assert pending_request.workers == 5
+
+    def test_put_fileset_complete_scale_up_rejected(
+        self, mocker, mock_find_dataset_by_id
+    ):
+        """
+        If the Job could not be patched (it may already be gone), the recorded
+        worker count must keep reflecting reality rather than the target.
+        """
+        pending_request = TransformRequest()
+        pending_request.request_id = "pending-request"
+        pending_request.status = TransformStatus.pending_lookup
+        pending_request.files = 17
+        pending_request.workers = 1
+
+        mocker.patch.object(
+            TransformRequest,
+            "lookup_pending_on_dataset",
+            return_value=[pending_request],
+        )
+        mocker.patch.object(
+            TransformRequest, "lookup_running_by_dataset_id", return_value=[]
+        )
+        mocker.patch.object(DatasetManager, "publish_files")
+
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.patch_transformer_parallelism.return_value = False
+
+        client = self._test_client(
+            lookup_result_processor=mocker.MagicMock(LookupResultProcessor),
+            transformation_manager=mock_transformer_manager,
+        )
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/complete",
+            json={
+                "files": 17,
+                "total-events": 1024,
+                "total-bytes": 2046,
+                "elapsed-time": 42,
+            },
+        )
+
+        assert response.status_code == 200
+        mock_transformer_manager.patch_transformer_parallelism.assert_called_once_with(
+            "pending-request", "my-ws", 5
+        )
+        assert pending_request.workers == 1

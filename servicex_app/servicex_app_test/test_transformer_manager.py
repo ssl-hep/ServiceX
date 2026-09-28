@@ -813,7 +813,8 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads("""
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -841,7 +842,8 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}""")
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -892,7 +894,8 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         request_func_mock = mocker.patch("urllib3.request")
-        request_func_mock.return_value.json.return_value = json.loads("""
+        request_func_mock.return_value.json.return_value = json.loads(
+            """
 {
   "MWT2": {
     "xcache-uc-1": {
@@ -920,7 +923,8 @@ class TestTransformerManager(ResourceTestBase):
       "live": true
     }
   }
-}""")
+}"""
+        )
 
         with client.application.app_context():
             transformer.launch_transformer_jobs(
@@ -946,6 +950,222 @@ class TestTransformerManager(ResourceTestBase):
             env = container.env
             request_func_mock.assert_called_with("GET", "https://dummy")
             assert _env_value(env, "CACHE_PREFIX") == "root://dummy"
+
+    def test_cache_vps_lookup_failure_leaves_prefix_unset(self, mocker):
+        """
+        When the VPS liveness server can't be reached there is nothing to
+        derive a prefix from, so no CACHE_PREFIX env var reaches the pod.
+        """
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_LOCAL_PATH="/tmp/foo",
+                # deliberately no TRANSFORMER_CACHE_PREFIX
+                TRANSFORMER_CACHE_VPS_SITE="MWT2",
+                TRANSFORMER_CACHE_VPS_LIVENESS_URL="https://dummy",
+            ),
+            transformation_manager=transformer,
+        )
+
+        request_func_mock = mocker.patch(
+            "urllib3.request", side_effect=RuntimeError("connection refused")
+        )
+
+        with client.application.app_context():
+            mock_error = mocker.patch.object(client.application.logger, "error")
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            request_func_mock.assert_called_with("GET", "https://dummy")
+            mock_error.assert_called_once()
+
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            container = called_job.spec.template.spec.containers[0]
+            assert not [e for e in container.env if e.name == "CACHE_PREFIX"]
+            assert "TRANSFORMER_CACHE_PREFIX" not in client.application.config
+
+    def test_validate_caches_skipped_within_ttl(self, mocker):
+        """
+        The liveness server is only consulted once per TRANSFORMER_CACHE_VPS_INTERVAL.
+        """
+        import time
+
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_CACHE_VPS_SITE="MWT2",
+                TRANSFORMER_CACHE_VPS_LIVENESS_URL="https://dummy",
+                TRANSFORMER_CACHE_VPS_INTERVAL=1800,
+                TRANSFORMER_CACHE_VPS_LASTCHECK=time.time(),
+            ),
+            transformation_manager=transformer,
+        )
+
+        request_func_mock = mocker.patch("urllib3.request")
+
+        with client.application.app_context():
+            TransformerManager.validate_caches()
+
+        request_func_mock.assert_not_called()
+
+    def test_instance_name_passed_to_pod(self, mocker):
+        """
+        The sidecar needs INSTANCE_NAME to build the status URL its shutdown
+        watchdog polls, so it must be forwarded from the app config.
+        """
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(INSTANCE_NAME="rolling-snail"),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            container = called_job.spec.template.spec.containers[0]
+            assert _env_value(container.env, "INSTANCE_NAME") == "rolling-snail"
+
+    def test_mount_local_in_dev(self, mocker):
+        """
+        A dev deployment with mountLocal bind-mounts the sidecar source so code
+        edits are picked up without rebuilding the image.
+        """
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(APP_ENVIRONMENT="dev", APP_MOUNT_LOCAL=True),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            pod_spec = called_job.spec.template.spec
+            volumes = {v.name: v for v in pod_spec.volumes}
+            assert (
+                volumes["host-volume"].host_path.path
+                == "/mnt/servicex/transformer_sidecar/src"
+            )
+            assert (
+                volumes["host-scripts-volume"].host_path.path
+                == "/mnt/servicex/transformer_sidecar/scripts"
+            )
+
+            mounts = {
+                m.name: m.mount_path for m in pod_spec.containers[0].volume_mounts
+            }
+            assert mounts["host-volume"] == "/servicex"
+            assert mounts["host-scripts-volume"] == "/servicex/scripts"
+
+    def test_no_mount_local_outside_dev(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(APP_ENVIRONMENT="prod", APP_MOUNT_LOCAL=True),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = (
+                mock_kubernetes.return_value.create_namespaced_job.call_args.kwargs[
+                    "body"
+                ]
+            )
+            volumes = {v.name for v in called_job.spec.template.spec.volumes}
+            assert "host-volume" not in volumes
+            assert "host-scripts-volume" not in volumes
 
     def test_get_all_transformer_jobs(self, mocker, mock_kubernetes):
         mock_api = mock_kubernetes.client.BatchV1Api.return_value
@@ -1426,6 +1646,32 @@ class TestPatchTransformerParallelism:
         batch_api.patch_namespaced_job.side_effect = (
             kubernetes.client.exceptions.ApiException(status=500, reason="boom")
         )
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        result = TransformerManager(
+            "internal-kubernetes"
+        ).patch_transformer_parallelism("abc", "test-ns", 5)
+
+        assert result is False
+        mock_warning.assert_called_once()
+
+    def test_read_non_api_exception_logs_warning(self, app_context, mocker, batch_api):
+        # A transport-level failure has no .status, so it must not be mistaken
+        # for a 404 and must leave the caller's worker count untouched.
+        batch_api.read_namespaced_job.side_effect = RuntimeError("connection reset")
+        mock_warning = mocker.patch.object(app_context.logger, "warning")
+
+        result = TransformerManager(
+            "internal-kubernetes"
+        ).patch_transformer_parallelism("abc", "test-ns", 5)
+
+        assert result is False
+        batch_api.patch_namespaced_job.assert_not_called()
+        mock_warning.assert_called_once()
+
+    def test_patch_non_api_exception_logs_warning(self, app_context, mocker, batch_api):
+        batch_api.read_namespaced_job.return_value = self._job_with_parallelism(1)
+        batch_api.patch_namespaced_job.side_effect = RuntimeError("connection reset")
         mock_warning = mocker.patch.object(app_context.logger, "warning")
 
         result = TransformerManager(

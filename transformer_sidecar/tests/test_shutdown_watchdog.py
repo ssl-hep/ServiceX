@@ -265,3 +265,34 @@ class TestLifecycle:
 
         with pytest.raises(RuntimeError):
             wd.start()
+
+    def test_stop_halts_the_loop_and_unregisters(self, mocker):
+        wd = _make(mocker)
+        prerun = mocker.patch("transformer_sidecar.shutdown_watchdog.task_prerun")
+        postrun = mocker.patch("transformer_sidecar.shutdown_watchdog.task_postrun")
+        wd.register_activity_signals()
+
+        wd.stop()
+
+        assert wd._stop_event.is_set()
+        # Signals must be dropped too, or a stopped watchdog keeps handling
+        # task events for a worker it no longer supervises.
+        prerun.disconnect.assert_called_once_with(wd._on_task_event)
+        postrun.disconnect.assert_called_once_with(wd._on_task_event)
+
+
+class TestPoll:
+    def test_unparseable_body_is_treated_as_no_answer(self, mocker):
+        # A 200 that isn't JSON tells us nothing about the request, so the
+        # watchdog must not read it as permission to shut down.
+        response = _response(mocker)
+        response.json.side_effect = ValueError("not json")
+        mocker.patch(
+            "transformer_sidecar.shutdown_watchdog.requests.get",
+            return_value=response,
+        )
+        wd = _make(mocker)
+        _idle(wd)
+
+        assert wd._poll() is None
+        assert wd._should_shutdown() is False
