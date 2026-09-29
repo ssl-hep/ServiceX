@@ -305,21 +305,43 @@ monitoring:
   enabled: false
   appMetrics:
     enabled: true
-  prometheus:
-    image: prom/prometheus
-    tag: v3.1.0
-    pullPolicy: IfNotPresent
+  dashboards:
+    enabled: true
+  tracing:
+    enabled: false
+    sampleRatio: 1.0
+
+prometheus:
+  rbac:
+    create: false
+  serviceAccounts:
+    server:
+      create: true
+      name: ""
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  server:
+    name: server
     retention: 7d
-    scrapeInterval: 30s
-    podDiscovery: true
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+    extraFlags:
+      - web.enable-lifecycle
+      - web.enable-remote-write-receiver
     service:
       type: ClusterIP
-      port: 9090
-    persistence:
+      servicePort: 9090
+    persistentVolume:
       enabled: false
       size: 10Gi
-      storageClass: null
-    extraScrapeConfigs: []
+      storageClass: ""
     resources:
       requests:
         cpu: 100m
@@ -331,57 +353,164 @@ monitoring:
     tolerations: []
     affinity: {}
     podAnnotations: {}
-  tracing:
-    enabled: false
-    sampleRatio: 1.0
-    tempo:
-      image: grafana/tempo
-      tag: 2.7.1
-      pullPolicy: IfNotPresent
-      retention: 48h
-      serviceGraphs: true
-      service:
-        type: ClusterIP
-      persistence:
-        enabled: false
-        size: 10Gi
-        storageClass: null
-      resources:
-        requests:
-          cpu: 100m
-          memory: 512Mi
-        limits:
-          cpu: 1
-          memory: 2Gi
-      nodeSelector: {}
-      tolerations: []
-      affinity: {}
-      podAnnotations: {}
-  grafana:
-    image: grafana/grafana
-    tag: 11.5.2
-    pullPolicy: IfNotPresent
-    adminUser: admin
-    adminPassword: admin
-    rootUrlSubPath: ""
-    service:
-      type: ClusterIP
-      port: 3000
-    persistence:
+  scrapeConfigs:
+    kubernetes-api-servers:
       enabled: false
-      size: 5Gi
-      storageClass: null
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    kubernetes-pods:
+      enabled: true
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            own_namespace: true
+    kubernetes-service-endpoints:
+      enabled: true
+      kubernetes_sd_configs:
+        - role: endpointslice
+          namespaces:
+            own_namespace: true
+
+grafana:
+  adminUser: admin
+  adminPassword: admin
+  rbac:
+    create: true
+    namespaced: true
+  service:
+    type: ClusterIP
+    port: 3000
+  persistence:
+    enabled: false
+    size: 5Gi
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      provider:
+        folder: ServiceX
+        disableDelete: true
+        allowUiUpdates: false
+  testFramework:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  grafana.ini:
+    analytics:
+      check_for_updates: false
+      reporting_enabled: false
+tempo:
+  tempo:
+    retention: 48h
+    reportingEnabled: false
+    server:
+      http_listen_port: 3200
+    ingester:
+      max_block_duration: 5m
+    metricsGenerator:
+      enabled: true
+      registry:
+        external_labels:
+          source: tempo
+      storage:
+        path: /var/tempo/generator/wal
+      traces_storage:
+        path: /var/tempo/generator/traces
+    overrides:
+      defaults:
+        metrics_generator:
+          processors:
+            - service-graphs
+            - span-metrics
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+        wal:
+          path: /var/tempo/wal
     resources:
       requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 500m
+        cpu: 100m
         memory: 512Mi
-    nodeSelector: {}
-    tolerations: []
-    affinity: {}
-    podAnnotations: {}
+      limits:
+        cpu: 1
+        memory: 2Gi
+  persistence:
+    enabled: false
+    size: 10Gi
+  service:
+    type: ClusterIP
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  config: |
+    memberlist:
+      cluster_label: "{{ .Release.Name }}.{{ .Release.Namespace }}"
+    multitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}
+    usage_report:
+      reporting_enabled: {{ .Values.tempo.reportingEnabled }}
+    compactor:
+      compaction:
+        block_retention: {{ .Values.tempo.retention }}
+    distributor:
+      receivers:
+        {{- toYaml .Values.tempo.receivers | nindent 8 }}
+    ingester:
+      {{- toYaml .Values.tempo.ingester | nindent 6 }}
+    server:
+      {{- toYaml .Values.tempo.server | nindent 6 }}
+    storage:
+      {{- toYaml .Values.tempo.storage | nindent 6 }}
+    querier:
+      {{- toYaml .Values.tempo.querier | nindent 6 }}
+    query_frontend:
+      {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}
+    overrides:
+      {{- toYaml .Values.tempo.overrides | nindent 6 }}
+      {{- if .Values.tempo.metricsGenerator.enabled }}
+    metrics_generator:
+      {{- if .Values.tempo.metricsGenerator.processor }}
+      processor:
+        {{- toYaml .Values.tempo.metricsGenerator.processor | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tempo.metricsGenerator.registry }}
+      registry:
+        {{- toYaml .Values.tempo.metricsGenerator.registry | nindent 8 }}
+      {{- end }}
+      storage:
+        path: {{ .Values.tempo.metricsGenerator.storage.path | quote }}
+        remote_write:
+          - url: http://{{ .Release.Name }}-prometheus-server:9090/api/v1/write
+            send_exemplars: true
+      traces_storage:
+        path: {{ .Values.tempo.metricsGenerator.traces_storage.path | quote }}
+      {{- end }}
 
 logging:
   logstash:

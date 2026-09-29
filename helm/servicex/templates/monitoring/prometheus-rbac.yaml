@@ -1,23 +1,13 @@
-{{- if and .Values.monitoring.enabled .Values.monitoring.prometheus.podDiscovery .Values.rbacEnabled }}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ template "servicex.fullname" . }}-prometheus
-  labels:
-    app: {{ template "servicex.name" . }}
-    chart: {{ template "servicex.chart" . }}
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
-    component: prometheus
-
----
-
-# Namespace-scoped only: Prometheus discovers targets in the release namespace,
-# which is where the app, the databases and the transformer pods all live.
+{{- if and .Values.monitoring.enabled .Values.rbacEnabled (not .Values.prometheus.rbac.create) }}
+# The upstream prometheus chart only knows how to grant itself a ClusterRole.
+# ServiceX discovers targets in its own namespace only (see the
+# `own_namespace: true` service discovery in values.yaml), so we turn the
+# chart's RBAC off and bind its ServiceAccount to a namespaced Role instead --
+# that keeps the chart installable by someone who is not a cluster admin.
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "servicex.fullname" . }}-prometheus
+  name: {{ include "servicex.prometheus.server" . }}
   labels:
     app: {{ template "servicex.name" . }}
     chart: {{ template "servicex.chart" . }}
@@ -28,13 +18,16 @@ rules:
 - apiGroups: [""]
   resources: ["pods", "services", "endpoints"]
   verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
+  verbs: ["get", "list", "watch"]
 
 ---
 
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "servicex.fullname" . }}-prometheus
+  name: {{ include "servicex.prometheus.server" . }}
   labels:
     app: {{ template "servicex.name" . }}
     chart: {{ template "servicex.chart" . }}
@@ -43,9 +36,10 @@ metadata:
     component: prometheus
 subjects:
 - kind: ServiceAccount
-  name: {{ template "servicex.fullname" . }}-prometheus
+  name: {{ default (include "servicex.prometheus.server" .) .Values.prometheus.serviceAccounts.server.name }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "servicex.fullname" . }}-prometheus
+  name: {{ include "servicex.prometheus.server" . }}
 {{- end }}

@@ -1,12 +1,30 @@
 dependencies:
   - name: rabbitmq
-    version: 11.16.2
+    version: 16.0.9
     repository: https://charts.bitnami.com/bitnami/
   - name: minio
-    version: 11.10.26
+    version: 17.0.9
     repository: https://charts.bitnami.com/bitnami/
     condition: objectStore.internal, objectStore.enabled
   - name: postgresql
-    version: 11.9.13
+    version: 16.7.15
     repository: https://charts.bitnami.com/bitnami/
     condition: postgres.enabled
+  # Observability stack. Configured under the top-level `prometheus:`,
+  # `grafana:` and `tempo:` keys in values.yaml; the ServiceX-side switches
+  # live under `monitoring:`.
+  - name: prometheus
+    version: 29.35.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.enabled
+  - name: grafana
+    version: 10.5.15
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.enabled
+  # A condition is a single boolean path, so this cannot also require
+  # monitoring.enabled -- templates/monitoring/validate.yaml rejects the
+  # combination instead.
+  - name: tempo
+    version: 1.24.4
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.tracing.enabled

@@ -1,0 +1,26 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.dashboards.enabled }}
+# Picked up by the grafana chart's dashboard sidecar (sidecar.dashboards),
+# which drops every key into the provisioning folder named by
+# grafana.sidecar.dashboards.provider.folder.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboards
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: grafana
+    {{ .Values.grafana.sidecar.dashboards.label }}: {{ .Values.grafana.sidecar.dashboards.labelValue | default "1" | quote }}
+data:
+{{ (.Files.Glob "dashboards/core/*.json").AsConfig | indent 2 }}
+{{- if .Values.monitoring.tracing.enabled }}
+  # Panels here query the Tempo datasource, so they only ship when it exists.
+{{ (.Files.Glob "dashboards/tracing/*.json").AsConfig | indent 2 }}
+{{- end }}
+{{- if and .Values.postgres.enabled .Values.postgresql.metrics.enabled }}
+  # Needs the postgres_exporter sidecar, otherwise every panel is empty.
+{{ (.Files.Glob "dashboards/postgres/*.json").AsConfig | indent 2 }}
+{{- end }}
+{{- end }}

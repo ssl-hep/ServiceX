@@ -1,12 +1,21 @@
 dependencies:
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami/
-  version: 11.16.2
+  version: 16.0.9
 - name: minio
   repository: https://charts.bitnami.com/bitnami/
-  version: 11.10.26
+  version: 17.0.9
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami/
-  version: 11.9.13
-digest: sha256:89088cda84e9c968cd177a4ec4a986969db95dff2293a3efc51dcf24bbb2b7f8
-generated: "2025-08-22T10:22:33.266158-05:00"
+  version: 16.7.15
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 29.35.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 10.5.15
+- name: tempo
+  repository: https://grafana.github.io/helm-charts
+  version: 1.24.4
+digest: sha256:084720e1054cc9026276bd97e092d764d36d556f907bfc312c8a47c02b36d858
+generated: "2026-09-29T12:55:00.57222-05:00"

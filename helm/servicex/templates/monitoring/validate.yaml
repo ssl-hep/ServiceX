@@ -1,0 +1,11 @@
+{{/*
+Guards for combinations the subchart `condition:` fields cannot express --
+a condition is a single boolean path, so "tempo only when monitoring is on
+too" has to be checked here. Renders no object.
+*/}}
+{{- if and .Values.monitoring.tracing.enabled (not .Values.monitoring.enabled) }}
+{{- fail "monitoring.tracing.enabled requires monitoring.enabled: Tempo would be installed with nothing to query it and the app would not be told to export spans." }}
+{{- end }}
+{{- if and .Values.monitoring.enabled (not .Values.rbacEnabled) (not .Values.prometheus.rbac.create) }}
+{{- fail "monitoring.enabled needs either rbacEnabled (namespaced Role, the default) or prometheus.rbac.create (upstream ClusterRole); without one Prometheus cannot discover any pods to scrape." }}
+{{- end }}
