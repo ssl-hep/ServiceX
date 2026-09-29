@@ -3,6 +3,7 @@
 Both hooks here exist because gunicorn forks its workers, and the observability
 SDKs care which side of the fork they are initialised on.
 """
+
 import os
 
 

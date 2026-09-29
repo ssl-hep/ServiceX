@@ -48,6 +48,7 @@ Two processes need initialising, and neither can do it at import time:
 Tracing is off unless ``OTEL_EXPORTER_OTLP_ENDPOINT`` is set, which the Helm
 chart only does when ``monitoring.tracing.enabled`` is true.
 """
+
 import logging
 import os
 import socket
