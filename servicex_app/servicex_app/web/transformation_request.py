@@ -15,11 +15,11 @@ def transformation_request(id_: str):
     log_level = request.args.get("log_level", "").upper()
     # An unrecognized level is no filter at all, not an empty result.
     min_level = LogMessage.LEVELS.get(log_level)
-    if min_level is None:
-        log_level = None
 
     query = LogMessage.query.filter_by(request_id=req.request_id)
-    if min_level is not None:
+    if min_level is None:
+        log_level = None
+    else:
         # The filter is a minimum severity: this level and everything above it.
         query = query.filter(LogMessage.level_no >= min_level)
 

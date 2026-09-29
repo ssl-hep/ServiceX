@@ -152,8 +152,6 @@ data:
     TRANSFORMER_VECTOR_THREADS = {{ .Values.logging.vector.transformer.threads }}
     TRANSFORMER_VECTOR_CONFIG_MAP = "{{ .Release.Name }}-transformer-vector-config"
     TRANSFORMER_VECTOR_RESOURCES = {{ .Values.logging.vector.transformer.resources | toJson }}
-    TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS = "{{ include "servicex.vector.aggregatorHost" . }}:{{ .Values.logging.vector.aggregator.port }}"
-    TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB = "{{ .Values.transformer.outputDir }}/*/science.*.log"
     {{- else }}
     TRANSFORMER_VECTOR_ENABLED = False
     {{- end }}
