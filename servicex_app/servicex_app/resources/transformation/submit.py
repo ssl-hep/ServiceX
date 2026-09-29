@@ -111,7 +111,11 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument(
             "result-destination",
             required=True,
-            choices=[TransformRequest.OBJECT_STORE_DEST, TransformRequest.VOLUME_DEST],
+            choices=[
+                TransformRequest.OBJECT_STORE_DEST,
+                TransformRequest.VOLUME_DEST,
+                TransformRequest.WEBDAV_DEST,
+            ],
         )
         cls.parser.add_argument(
             "result-format",
@@ -189,6 +193,16 @@ class SubmitTransformationRequest(ServiceXResource):
                 return {"message": msg}, 400
 
             config = current_app.config
+
+            # The transformers create the WebDAV collection for a request as
+            # they upload, so there is nothing to set up here. We just have to
+            # be sure a server was actually deployed.
+            if args["result-destination"] == TransformRequest.WEBDAV_DEST and not (
+                config.get("WEBDAV_ENABLED", False)
+            ):
+                msg = "This ServiceX instance has no WebDAV server deployed"
+                current_app.logger.error(msg, extra={"request_id": request_id})
+                return {"message": msg}, 400
 
             did = args.get("did")
             file_list = args.get("file-list")

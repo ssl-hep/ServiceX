@@ -41,16 +41,21 @@ from servicex_app.models import (
     DatasetFile,
 )
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.webdav_manager import WebDavManager
 
 
 class DataLifecycleOps(ServiceXResource):
     @classmethod
-    def make_api(cls, object_store_manager):
+    def make_api(cls, object_store_manager, webdav_manager=None):
         cls.object_store = object_store_manager
+        cls.webdav = webdav_manager
 
     @staticmethod
     def delete_expired_transforms(
-        session: Session, object_store: ObjectStoreManager, cutoff_timestamp: datetime
+        session: Session,
+        object_store: ObjectStoreManager,
+        cutoff_timestamp: datetime,
+        webdav: WebDavManager = None,
     ) -> List[str]:
         deleted_log = []
 
@@ -68,8 +73,11 @@ class DataLifecycleOps(ServiceXResource):
                     request_id=transform.request_id
                 ).delete()
 
-                # Delete the transformed files out of object store along with the bucket
-                if object_store:
+                # Delete the transformed files out of whichever store they went to
+                if transform.result_destination == TransformRequest.WEBDAV_DEST:
+                    if webdav:
+                        webdav.delete_collection_and_contents(transform.request_id)
+                elif object_store:
                     object_store.delete_bucket_and_contents(transform.request_id)
 
                 # Delete the transform request
@@ -166,6 +174,7 @@ class DataLifecycleOps(ServiceXResource):
             session=db.session,
             object_store=self.object_store,
             cutoff_timestamp=cutoff_timestamp,
+            webdav=self.webdav,
         )
 
         if deleted_log:

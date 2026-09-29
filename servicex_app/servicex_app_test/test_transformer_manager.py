@@ -458,6 +458,59 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, "MINIO_SECRET_KEY") == "shhh"
             assert _env_value(env, "MINIO_ENCRYPT") == "True"
 
+    def test_launch_transformer_jobs_webdav(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        client = self._test_client(
+            extra_config=make_config(
+                OBJECT_STORE_ENABLED=False,
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                WEBDAV_ENABLED=True,
+                WEBDAV_URL_TRANSFORMER="http://rolling-snail-webdav:80",
+                WEBDAV_ROOT="servicex",
+                WEBDAV_USERNAME="itsame",
+                WEBDAV_PASSWORD="shhh",
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="webdav",
+                result_format="parquet",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+
+            assert _arg_value(container.args, "--result-destination") == "webdav"
+
+            env = container.env
+            assert _env_value(env, "WEBDAV_URL") == "http://rolling-snail-webdav:80"
+            assert _env_value(env, "WEBDAV_ROOT") == "servicex"
+            assert _env_value(env, "WEBDAV_USERNAME") == "itsame"
+            assert _env_value(env, "WEBDAV_PASSWORD") == "shhh"
+
+            # No posix volume is needed - results go over the network
+            assert not [
+                v
+                for v in called_job.spec.template.spec.volumes
+                if v.name == "posix-volume"
+            ]
+
     def test_launch_transformer_jobs_with_provided_claim(self, mocker):
         import kubernetes
 

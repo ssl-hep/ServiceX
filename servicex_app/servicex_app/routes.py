@@ -40,6 +40,7 @@ def add_routes(
     transformer_manager,
     rabbit_mq_adaptor,
     object_store,
+    webdav_manager,
     code_gen_service,
     lookup_result_processor,
     docker_repo_adapter,
@@ -173,7 +174,7 @@ def add_routes(
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationResultsSecure, prefix + "/results")
 
-    DeleteTransform.make_api(object_store)
+    DeleteTransform.make_api(object_store, webdav_manager)
     api.add_resource(DeleteTransform, prefix)
 
     api.add_resource(TransformationStatus, prefix + "/status")
@@ -213,7 +214,7 @@ def add_routes(
         "/servicex/internal/transformation/<string:request_id>/file-complete",
     )
 
-    DataLifecycleOps.make_api(object_store)
+    DataLifecycleOps.make_api(object_store, webdav_manager)
     api.add_resource(DataLifecycleOps, "/servicex/internal/data-lifecycle")
 
     api.add_resource(DatasetLifecycleOps, "/servicex/internal/dataset-lifecycle")

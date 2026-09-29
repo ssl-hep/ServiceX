@@ -62,10 +62,14 @@ from transformer_sidecar.transformer_stats.raw_uproot_stats import (  # noqa: F4
 )
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
+from transformer_sidecar.webdav_store_manager import WebDavStoreManager
 
 # Module globals
 shared_dir: Optional[str] = None
 object_store = None
+# Class used to talk to whichever result store this transform writes to. A
+# fresh instance is made for each upload.
+object_store_class = None
 posix_path: str = ""
 startup_time = None
 convert_root_to_parquet: bool = False
@@ -407,7 +411,7 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
 def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
-    object_store = ObjectStoreManager()
+    object_store = object_store_class()
     object_name = rec.s3_object_name
 
     logger.info(
@@ -487,7 +491,7 @@ def read_capabilities_file() -> dict[str, str]:
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, convert_root_to_rntuple, startup_time
-    global object_store, posix_path, science_container
+    global object_store, object_store_class, posix_path, science_container
     global shared_dir, transformer_capabilities, request_id, celery_app
 
     shared_dir = args.shared_dir
@@ -496,7 +500,12 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
 
     if args.result_destination == "object-store":
         posix_path = args.shared_dir
+        object_store_class = ObjectStoreManager
         object_store = ObjectStoreManager()
+    elif args.result_destination == "webdav":
+        posix_path = args.shared_dir
+        object_store_class = WebDavStoreManager
+        object_store = WebDavStoreManager()
     elif args.output_dir:
         object_store = None
         posix_path = args.output_dir

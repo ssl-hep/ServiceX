@@ -60,8 +60,8 @@ class TransformerArgumentParser(argparse.ArgumentParser):
             dest="result_destination",
             action="store",
             default="object-store",
-            help="object-store, output-dir, volume",
-            choices=["object-store", "output-dir", "volume"],
+            help="object-store, output-dir, volume, webdav",
+            choices=["object-store", "output-dir", "volume", "webdav"],
         )
 
         self.add_argument(

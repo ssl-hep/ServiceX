@@ -42,6 +42,9 @@ class FileURLGeneratorInsecure(ServiceXResource):
         super().__init__()
         # Add branches for different backends when relevant
         # set up S3 client
+        self.s3client = None
+        if not current_app.config["OBJECT_STORE_ENABLED"]:
+            return
         endpoint_url = (
             "https://"
             if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
@@ -75,6 +78,18 @@ class FileURLGeneratorInsecure(ServiceXResource):
             msg = f"Transformation request not found with id: {request_id}"
             current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
+
+        # Presigned URLs are an object store concept. Results written anywhere
+        # else are reached through the endpoint reported with the transform.
+        if not self.s3client or (
+            transform.result_destination != TransformRequest.OBJECT_STORE_DEST
+        ):
+            msg = (
+                "Signed file URLs are only available for transforms with a "
+                f"{TransformRequest.OBJECT_STORE_DEST} result destination"
+            )
+            current_app.logger.error(msg, extra={"request_id": request_id})
+            return {"message": msg}, 400
 
         expirydelta = 365 * 24 * 60 * 60
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)

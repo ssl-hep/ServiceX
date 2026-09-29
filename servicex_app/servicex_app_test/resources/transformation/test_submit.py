@@ -137,6 +137,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         response = client.post("/servicex/transformation", json=request)
         assert response.status_code == 400
 
+    def test_submit_transformation_webdav_not_deployed(self, client):
+        request = self._generate_transformation_request(
+            **{"result-destination": "webdav"}
+        )
+        response = client.post("/servicex/transformation", json=request)
+        assert response.status_code == 400
+        assert "WebDAV" in response.json["message"]
+
     def test_submit_transformation_bad_result_format(self, client):
         request = self._generate_transformation_request()
         request["result-format"] = "foo"

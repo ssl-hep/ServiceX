@@ -56,6 +56,7 @@ from servicex_app.object_store_manager import ObjectStoreManager
 from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
 from servicex_app.transformer_manager import TransformerManager
+from servicex_app.webdav_manager import WebDavManager
 from flask_migrate import Migrate
 from flask_moment import Moment
 from servicex_app.models import db
@@ -324,6 +325,16 @@ def create_app(
         else:
             object_store = None
 
+        if app.config.get("WEBDAV_ENABLED", False):
+            webdav_manager = WebDavManager(
+                app.config["WEBDAV_URL_TRANSFORMER"],
+                root=app.config.get("WEBDAV_ROOT", ""),
+                username=app.config.get("WEBDAV_USERNAME"),
+                password=app.config.get("WEBDAV_PASSWORD"),
+            )
+        else:
+            webdav_manager = None
+
         if (
             app.config["TRANSFORMER_MANAGER_ENABLED"]
             and not provided_transformer_manager
@@ -403,6 +414,7 @@ def create_app(
             transformer_manager,
             rabbit_adaptor,
             object_store,
+            webdav_manager,
             code_gen_service,
             lookup_result_processor,
             docker_repo_adapter,

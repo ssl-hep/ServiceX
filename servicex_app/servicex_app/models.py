@@ -178,6 +178,7 @@ class TransformRequest(db.Model):
     __tablename__ = "requests"
     OBJECT_STORE_DEST = "object-store"
     VOLUME_DEST = "volume"
+    WEBDAV_DEST = "webdav"
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)

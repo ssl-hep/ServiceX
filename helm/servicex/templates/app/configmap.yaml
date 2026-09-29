@@ -178,6 +178,37 @@ data:
     OBJECT_STORE_ENABLED = False
     {{ end }}
 
+    {{ if .Values.webdav.enabled }}
+    WEBDAV_ENABLED = True
+    WEBDAV_ROOT = '{{ .Values.webdav.root | trimAll "/" }}'
+      {{- if .Values.webdav.internal }}
+      {{- $internal_webdav := printf "http://%s-webdav:%v" .Release.Name .Values.webdav.service.port }}
+    # using the captive webdav server deployed by this chart
+    WEBDAV_URL_TRANSFORMER = '{{ $internal_webdav }}'
+        {{- if .Values.webdav.ingress.enabled }}
+        {{- $scheme := ternary "https" "http" .Values.webdav.ingress.tls.enabled }}
+    WEBDAV_PUBLIC_URL = '{{ .Values.webdav.publicURL | default (printf "%s://%s" $scheme .Values.webdav.ingress.host) }}'
+        {{- else }}
+    # no webdav ingress
+    WEBDAV_PUBLIC_URL = '{{ .Values.webdav.publicURL | default $internal_webdav }}'
+        {{- end }}
+      {{- else }}
+    # using an external webdav server
+    WEBDAV_URL_TRANSFORMER = '{{ required "webdav.url is required when webdav.internal is false" .Values.webdav.url }}'
+    WEBDAV_PUBLIC_URL = '{{ .Values.webdav.publicURL | default .Values.webdav.url }}'
+      {{- end }}
+      {{- if .Values.webdav.auth.enabled }}
+    WEBDAV_USERNAME = '{{ .Values.webdav.auth.username }}'
+    WEBDAV_PASSWORD = '{{ .Values.webdav.auth.password }}'
+      {{- else }}
+    WEBDAV_USERNAME = ''
+    WEBDAV_PASSWORD = ''
+      {{- end }}
+    {{ else }}
+    # no webdav server
+    WEBDAV_ENABLED = False
+    {{ end }}
+
     {{ if .Values.scheduledTasks.dataLifecycle.enabled}}
     MAX_DESIRED_TRANSFORM_CACHE_SIZE = "{{.Values.scheduledTasks.dataLifecycle.maxDesiredCacheSize}}"
     {{ end }}

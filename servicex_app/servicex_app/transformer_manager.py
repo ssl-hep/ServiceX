@@ -303,6 +303,26 @@ class TransformerManager:
                     )
                 ]
 
+        if result_destination == "webdav":
+            env = env + [
+                client.V1EnvVar(
+                    name="WEBDAV_URL",
+                    value=current_app.config["WEBDAV_URL_TRANSFORMER"],
+                ),
+                client.V1EnvVar(
+                    name="WEBDAV_ROOT",
+                    value=current_app.config.get("WEBDAV_ROOT", ""),
+                ),
+                client.V1EnvVar(
+                    name="WEBDAV_USERNAME",
+                    value=current_app.config.get("WEBDAV_USERNAME", ""),
+                ),
+                client.V1EnvVar(
+                    name="WEBDAV_PASSWORD",
+                    value=current_app.config.get("WEBDAV_PASSWORD", ""),
+                ),
+            ]
+
         if result_destination == "volume":
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 

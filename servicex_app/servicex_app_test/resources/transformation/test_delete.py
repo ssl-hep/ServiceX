@@ -49,6 +49,36 @@ class TestTransformDelete(ResourceTestBase):
             "BR549"
         )
 
+    def test_delete_webdav(self, mocker, db_session):
+        # The delete resource looks the destination up on the model class, so
+        # the patched class needs the real constant on it.
+        mock_transform_request_cls = mocker.patch(f"{self.module}.TransformRequest")
+        mock_transform_request_cls.WEBDAV_DEST = TransformRequest.WEBDAV_DEST
+
+        transform = self._generate_transform_request()
+        transform.status = TransformStatus.complete
+        transform.result_destination = TransformRequest.WEBDAV_DEST
+        mock_transform_request_cls.lookup.return_value = transform
+
+        mock_webdav_cls = mocker.patch("servicex_app.WebDavManager")
+
+        client = self._test_client(
+            extra_config={
+                "OBJECT_STORE_ENABLED": False,
+                "WEBDAV_ENABLED": True,
+                "WEBDAV_URL_TRANSFORMER": "http://webdav:80",
+                "WEBDAV_ROOT": "servicex",
+                "WEBDAV_USERNAME": "servicex",
+                "WEBDAV_PASSWORD": "leftfoot1",
+            }
+        )
+
+        resp = client.delete("/servicex/transformation/BR549")
+        assert resp.status_code == 200
+        db_session.delete.assert_called_once_with(transform)
+        webdav = mock_webdav_cls.return_value
+        webdav.delete_collection_and_contents.assert_called_once_with("BR549")
+
     def test_running(self, fake_transform, db_session):
         fake_transform.status = TransformStatus.running
 

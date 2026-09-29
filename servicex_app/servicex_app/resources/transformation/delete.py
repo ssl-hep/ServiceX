@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_app import ObjectStoreManager
+from servicex_app.webdav_manager import WebDavManager
 from servicex_app.decorators import auth_required
 from servicex_app.models import TransformRequest, TransformationResult, db
 from servicex_app.resources.servicex_resource import ServiceXResource
@@ -34,8 +35,13 @@ from flask import current_app
 
 class DeleteTransform(ServiceXResource):
     @classmethod
-    def make_api(cls, object_store_manager: ObjectStoreManager):
+    def make_api(
+        cls,
+        object_store_manager: ObjectStoreManager,
+        webdav_manager: WebDavManager = None,
+    ):
         cls.object_store = object_store_manager
+        cls.webdav = webdav_manager
 
     @auth_required
     def delete(self, request_id: str):
@@ -62,8 +68,11 @@ class DeleteTransform(ServiceXResource):
                 request_id=transform_req.request_id
             ).delete()
 
-            # Delete the transformed files out of object store along with the bucket
-            if self.object_store:
+            # Delete the transformed files out of whichever store they went to
+            if transform_req.result_destination == TransformRequest.WEBDAV_DEST:
+                if self.webdav:
+                    self.webdav.delete_collection_and_contents(transform_req.request_id)
+            elif self.object_store:
                 self.object_store.delete_bucket_and_contents(transform_req.request_id)
 
             # Delete the transform request

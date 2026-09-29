@@ -58,6 +58,22 @@ class TransformationRequest(ServiceXResource):
             transform_json["minio-access-key"] = current_app.config["MINIO_ACCESS_KEY"]
             transform_json["minio-secret-key"] = current_app.config["MINIO_SECRET_KEY"]
 
+        if (
+            current_app.config.get("WEBDAV_ENABLED", False)
+            and transform_json["result-destination"] == TransformRequest.WEBDAV_DEST
+        ):
+            # Results for this request live in a collection named after the
+            # request id, below the server's configured root.
+            transform_json["webdav-endpoint"] = "/".join(
+                [
+                    current_app.config["WEBDAV_PUBLIC_URL"].rstrip("/"),
+                    current_app.config["WEBDAV_ROOT"].strip("/"),
+                    transform.request_id,
+                ]
+            )
+            transform_json["webdav-username"] = current_app.config["WEBDAV_USERNAME"]
+            transform_json["webdav-password"] = current_app.config["WEBDAV_PASSWORD"]
+
         if "LOGS_URL" in current_app.config:
             transform_json["log-url"] = current_app.config["LOGS_URL"]
         return transform_json

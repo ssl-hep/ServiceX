@@ -435,6 +435,97 @@ transformer:
   cvmfsAvailable: false
   cvmfsVolume: null
 
+webdav:
+  # Deploy a WebDAV server (https://github.com/vaggeliskls/webdav-server) that
+  # transformers can write their results to. Submit transforms with
+  # result-destination: webdav to use it.
+  enabled: false
+
+  # Deploy the server as part of this release. Set to false to point the
+  # transformers at a WebDAV server you run yourself, and fill in url below.
+  internal: true
+
+  image: ghcr.io/vaggeliskls/webdav-server
+  tag: latest
+  pullPolicy: IfNotPresent
+
+  # Collection under the server's data directory that transforms write to.
+  # Each request gets a sub-collection named after its request id.
+  root: servicex
+
+  # Credentials the transformers use to write, and clients use to read. Turn
+  # auth off only if the server is not reachable from outside the cluster.
+  auth:
+    enabled: true
+    username: servicex
+    password: leftfoot1
+
+  # URL the transformers use to reach an external server (internal: false).
+  url: null
+
+  # URL handed to clients for downloading results. Defaults to the ingress
+  # host when one is enabled, otherwise the in-cluster service URL.
+  publicURL: null
+
+  service:
+    port: 80
+    type: ClusterIP
+
+  persistence:
+    enabled: true
+    # Use a claim you have already created instead of having the chart make one
+    existingClaim: null
+    storageClass: null
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  ingress:
+    enabled: false
+    class: nginx
+    host: webdav.example.com
+    annotations: {}
+    tls:
+      enabled: false
+      clusterIssuer: null
+      secretName: "{{.Release.Name}}-webdav-tls"
+
+  # Serve GET /_health, which the pod probes use
+  healthCheck: true
+
+  # Maximum size in bytes of a single uploaded file. "0" means unlimited.
+  limitRequestBody: "0"
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+  # The image runs as the non-root "webuser" (uid/gid 999). fsGroup is what
+  # makes the mounted volume writable by it.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    # The entrypoint generates Apache config under /usr/local/apache2/conf at
+    # startup, so the root filesystem has to stay writable.
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+
 x509Secrets:
   image: sslhep/x509-secrets
   initImage: alpine:3.6
