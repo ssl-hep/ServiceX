@@ -47,10 +47,8 @@ DID finders. They are long-running deployments rather than per-request pods, so
 they write straight to the aggregator's TCP socket source and need no vector
 container of their own, and no postgres credentials.
 
-Renders empty when vector is disabled. Since `nindent` on an empty string still
-emits an indented blank line, a caller with nothing else in the block wraps it
-in `with`; a caller that always has other env vars can just pipe through
-`trim | nindent`.
+Renders empty when vector is disabled. Render with `trim | nindent` under an
+`env:` list that has other entries.
 */}}
 {{- define "servicex.vector.env" -}}
 {{- if .Values.logging.vector.enabled }}
