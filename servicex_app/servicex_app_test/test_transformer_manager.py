@@ -83,8 +83,6 @@ VECTOR_CONFIG = {
         "requests": {"cpu": "50m", "memory": "64Mi"},
         "limits": {"memory": "128Mi"},
     },
-    "TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS": "rolling-snail-vector-aggregator:6000",
-    "TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB": "/servicex/output/*/science.*.log",
 }
 
 
@@ -735,18 +733,9 @@ class TestTransformerManager(ResourceTestBase):
         assert _env_value(sidecar.env, "VECTOR_PORT") == "9000"
 
         # Vector refuses to start if any interpolated var is missing.
-        assert _env_value(vector.env, "VECTOR_SOCKET_PORT") == "9000"
         assert _env_value(vector.env, "VECTOR_LOG") == "warn"
         assert _env_value(vector.env, "VECTOR_THREADS") == "2"
         assert _env_value(vector.env, "REQUEST_ID") == "1234"
-        assert (
-            _env_value(vector.env, "SCIENCE_LOG_GLOB")
-            == "/servicex/output/*/science.*.log"
-        )
-        assert (
-            _env_value(vector.env, "VECTOR_AGGREGATOR_ADDRESS")
-            == "rolling-snail-vector-aggregator:6000"
-        )
 
         # The aggregator owns the only postgres connection. A transformer pod that
         # carried credentials would hand them to every user-supplied science image.

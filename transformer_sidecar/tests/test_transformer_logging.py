@@ -61,6 +61,10 @@ def test_vector_formatter_tolerates_missing_request_id():
     assert _format(_record())["request_id"] is None
 
 
+def _queue_handlers(log):
+    return [h for h in log.handlers if isinstance(h, logging.handlers.QueueHandler)]
+
+
 @pytest.fixture
 def no_vector_listener():
     """Leave the module-level listener the way we found it."""
@@ -71,6 +75,14 @@ def no_vector_listener():
     transformer_logging._vector_queue = None
 
 
+@pytest.fixture
+def vector_env(monkeypatch, mocker, no_vector_listener):
+    monkeypatch.setenv("VECTOR_HOST", "127.0.0.1")
+    monkeypatch.setenv("VECTOR_PORT", "9000")
+    # Don't open a real socket to a vector that isn't there.
+    mocker.patch("logstash.TCPLogstashHandler.emit")
+
+
 def test_initialize_logging_without_vector_env(monkeypatch, no_vector_listener):
     monkeypatch.delenv("VECTOR_HOST", raising=False)
     monkeypatch.delenv("VECTOR_PORT", raising=False)
@@ -78,23 +90,14 @@ def test_initialize_logging_without_vector_env(monkeypatch, no_vector_listener):
     log = initialize_logging(logging.getLogger("test-no-vector"))
 
     assert transformer_logging._vector_listener is None
-    assert not [h for h in log.handlers if isinstance(h, logging.handlers.QueueHandler)]
+    assert not _queue_handlers(log)
 
 
-def _queue_handlers(log):
-    return [h for h in log.handlers if isinstance(h, logging.handlers.QueueHandler)]
-
-
-def test_initialize_logging_is_idempotent(monkeypatch, mocker, no_vector_listener):
+def test_initialize_logging_is_idempotent(vector_env):
     """
     initialize_logging runs twice on the same logger. The second run must not
     orphan the first run's listener, nor double-attach to the queue.
     """
-    monkeypatch.setenv("VECTOR_HOST", "127.0.0.1")
-    monkeypatch.setenv("VECTOR_PORT", "9000")
-    # Don't open a real socket to a vector that isn't there.
-    mocker.patch("logstash.TCPLogstashHandler.emit")
-
     log = logging.getLogger("test-idempotent")
     log.handlers.clear()
 
@@ -109,18 +112,12 @@ def test_initialize_logging_is_idempotent(monkeypatch, mocker, no_vector_listene
     assert len(_queue_handlers(log)) == 1
 
 
-def test_initialize_logging_shares_one_listener_across_loggers(
-    monkeypatch, mocker, no_vector_listener
-):
+def test_initialize_logging_shares_one_listener_across_loggers(vector_env):
     """
     The real call sites use two different loggers: the root logger at import,
     then Celery's from after_setup_logger. Both must feed the same live queue --
     a per-call listener would leave the first logger writing into a dead one.
     """
-    monkeypatch.setenv("VECTOR_HOST", "127.0.0.1")
-    monkeypatch.setenv("VECTOR_PORT", "9000")
-    mocker.patch("logstash.TCPLogstashHandler.emit")
-
     first_log = logging.getLogger("test-first")
     second_log = logging.getLogger("test-second")
     first_log.handlers.clear()
@@ -181,13 +178,7 @@ def test_set_request_id_reaches_a_filter_built_earlier(monkeypatch):
     assert _format(record)["request_id"] == "abc-123"
 
 
-def test_vector_queue_handler_carries_the_request_id_filter(
-    monkeypatch, mocker, no_vector_listener
-):
-    monkeypatch.setenv("VECTOR_HOST", "127.0.0.1")
-    monkeypatch.setenv("VECTOR_PORT", "9000")
-    mocker.patch("logstash.TCPLogstashHandler.emit")
-
+def test_vector_queue_handler_carries_the_request_id_filter(vector_env):
     log = logging.getLogger("test-request-id-filter")
     log.handlers.clear()
 

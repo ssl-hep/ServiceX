@@ -339,8 +339,6 @@ def create_app(
 
         listener = QueueListener(log_queue, vector_handler, respect_handler_level=True)
         listener.start()
-        # Keep a reference so the listener thread isn't garbage collected.
-        app.vector_log_listener = listener
 
     app.logger.info("Initialized logging")
 

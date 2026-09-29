@@ -193,8 +193,15 @@ class TestDataLifecycleOps(ResourceTestBase):
 
     @fixture
     def insert_logs(self, db_session, insert_datasets):
-        # A log record carries either a request_id or a dataset_id, never both
-        for log_id, request_id in [("active-log", "1"), ("stale-log", "2")]:
+        # A log record carries either a request_id or a dataset_id, never both.
+        # The unkeyed record belongs to neither, so no purge should ever match it.
+        for log_id, request_id, dataset_id in [
+            ("active-log", "1", None),
+            ("stale-log", "2", None),
+            ("not-orphaned-log", None, 1),
+            ("orphaned-log", None, 2),
+            ("unkeyed-log", None, None),
+        ]:
             db_session.add(
                 LogMessage(
                     id=log_id,
@@ -202,29 +209,9 @@ class TestDataLifecycleOps(ResourceTestBase):
                     level="INFO",
                     message=log_id,
                     request_id=request_id,
-                )
-            )
-
-        for log_id, dataset_id in [("not-orphaned-log", 1), ("orphaned-log", 2)]:
-            db_session.add(
-                LogMessage(
-                    id=log_id,
-                    timestamp=datetime(2022, 1, 1),
-                    level="INFO",
-                    message=log_id,
                     dataset_id=dataset_id,
                 )
             )
-
-        # A record belonging to neither, which no purge should ever match
-        db_session.add(
-            LogMessage(
-                id="unkeyed-log",
-                timestamp=datetime(2022, 1, 1),
-                level="INFO",
-                message="unkeyed-log",
-            )
-        )
 
         db_session.commit()
 

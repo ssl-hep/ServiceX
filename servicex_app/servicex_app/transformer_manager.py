@@ -507,9 +507,6 @@ class TransformerManager:
         ]
 
         env = [
-            client.V1EnvVar(
-                "VECTOR_SOCKET_PORT", value=str(cfg["TRANSFORMER_VECTOR_PORT"])
-            ),
             client.V1EnvVar("VECTOR_LOG", value=cfg["TRANSFORMER_VECTOR_LOG_LEVEL"]),
             # Vector defaults to one worker thread per core on the node, and its
             # memory grows with the thread count, so on a many-core node it is
@@ -517,21 +514,12 @@ class TransformerManager:
             client.V1EnvVar(
                 "VECTOR_THREADS", value=str(cfg["TRANSFORMER_VECTOR_THREADS"])
             ),
-            client.V1EnvVar(
-                "SCIENCE_LOG_GLOB", value=cfg["TRANSFORMER_VECTOR_SCIENCE_LOG_GLOB"]
-            ),
-            # The vector config interpolates these; Vector refuses to start if any
-            # of them is unset.
+            # The vector config interpolates these per-pod values; Vector refuses
+            # to start if any of them is unset.
             client.V1EnvVar("REQUEST_ID", value=request_id),
-            client.V1EnvVar(
-                "VECTOR_AGGREGATOR_ADDRESS",
-                value=cfg["TRANSFORMER_VECTOR_AGGREGATOR_ADDRESS"],
-            ),
             client.V1EnvVar("POD_NAME", value_from=pod_name_value_from),
             client.V1EnvVar("HOST_NAME", value_from=host_name_value_from),
         ]
-        if "INSTANCE_NAME" in cfg:
-            env.append(client.V1EnvVar("INSTANCE_NAME", value=cfg["INSTANCE_NAME"]))
 
         # Vector needs its own resources. Inheriting the science container's would
         # be wasteful, and having none at all makes the autoscaling/v1 HPA report
