@@ -83,7 +83,6 @@ class LookupRequest:
             "Doing Rucio lookup.",
             extra={"dataset_id": self.dataset_id, "dataset_name": self.did},
         )
-        full_file_list = []
         for ds_files in self.rucio_adapter.list_files_for_did(
             self.did,
             rse_expression=self.rse_expression,
@@ -93,14 +92,12 @@ class LookupRequest:
                 n_files += 1
                 ds_size += af["file_size"]
                 total_paths += len(af["paths"])
-                ipaths = af["paths"].copy()
-                self.logger.debug(f"path before {ipaths}")
+                self.logger.debug(f'path before {af["paths"]}')
                 if self.replica_sorter is not None and self.location is not None:
                     af["paths"] = self.replica_sorter.sort_replicas(
-                        ipaths, self.location
+                        af["paths"], self.location
                     )
                 self.logger.debug(f'path after {af["paths"]}')
-                full_file_list.append(af)
             yield ds_files
 
         lookup_finish = datetime.now()
