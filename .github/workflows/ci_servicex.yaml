@@ -23,6 +23,12 @@ jobs:
         working-directory: ./.github/workflows
         id: set-matrix
         run: |
+          # Fail early if a tested entry does not say which interpreter to use,
+          # instead of silently testing on the runner's system Python.
+          if ! jq -e 'all(.[]; (.test_required | not) or ((.python_version // "") | test("^3\\.[0-9]+$")))' deploy-config.json > /dev/null; then
+            echo "::error file=.github/workflows/deploy-config.json::Every entry with test_required must set python_version (e.g. \"3.13\")"
+            exit 1
+          fi
           echo "matrix<<EOF" >> $GITHUB_OUTPUT
           cat deploy-config.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -32,28 +38,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
         app: "${{fromJson(needs.build-matrix.outputs.matrix)}}"
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v7.0.1
 
-      - name: Set up Python versions
-        uses: actions/setup-python@v7.0.0
-        with:
-          python-version: |
-            3.14
-            3.10
-            3.11
-        if: ${{ matrix.app.test_required }}
-
       - name: Install poetry
         uses: abatilo/actions-poetry@v4.0.0
+        if: ${{ matrix.app.test_required }}
         with:
           poetry-version: 2.2.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ matrix.app.python_version }}
+          cache: poetry
+          cache-dependency-path: ${{ matrix.app.dir_name }}/poetry.lock
+        if: ${{ matrix.app.test_required }}
 
       - name: Install dependencies
         working-directory: ${{ matrix.app.dir_name }}
@@ -61,7 +64,6 @@ jobs:
         run: |
           echo "${{ matrix.app }}"
           poetry install --no-root --with=test
-          pip list
       - name: Lint with Flake8
         working-directory: ${{ matrix.app.dir_name }}
         if: ${{ matrix.app.test_required }}
@@ -120,6 +122,7 @@ jobs:
           context: ${{ matrix.app.dir_name }}
           push: true
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
+          build-args: ${{ matrix.app.build_args }}
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           cache-to: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }},mode=max
           file: ${{ matrix.app.dockerfile }}
@@ -130,6 +133,7 @@ jobs:
         with:
           context: ${{ matrix.app.dir_name }}
           tags: ${{ steps.extract_tag_name.outputs.imagetag }}
+          build-args: ${{ matrix.app.build_args }}
           cache-from: type=${{ format('registry,ref={0}',steps.extract_cache_name.outputs.cachetag) }}
           file: ${{ matrix.app.dockerfile }}
           platforms: linux/amd64,linux/arm64

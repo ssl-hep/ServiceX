@@ -10,13 +10,14 @@ WORKDIR /home/servicex
 RUN mkdir ./servicex
 
 ENV  POETRY_VERSION=2.1.1
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 COPY README.rst README.rst
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi --without dev
+    poetry install --no-root --no-interaction --no-ansi --without dev && \
+    rm -rf "$(poetry config cache-dir)"
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex_app/ ./servicex_app
