@@ -207,8 +207,17 @@ class DatasetManager:
         self.dataset.save_to_db()
 
         for request in requests:
-            request.files += len(files)
-            lookup_result_processor.add_files_to_processing_queue(
-                request, files=[file for file in files]
+            # Lock the row for update so that concurrent batches of files from the
+            # DID finder do not lose increments to the file count
+            locked_request = (
+                self.db.session.query(TransformRequest)
+                .filter_by(request_id=request.request_id)
+                .populate_existing()
+                .with_for_update()
+                .one()
             )
-            request.save_to_db()
+            locked_request.files += len(files)
+            lookup_result_processor.add_files_to_processing_queue(
+                locked_request, files=[file for file in files]
+            )
+            locked_request.save_to_db()

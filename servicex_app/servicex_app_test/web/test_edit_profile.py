@@ -37,6 +37,42 @@ class TestEditProfile(WebTestBase):
         assert response.status_code == 302
         assert response.location == url_for("profile")
 
+    def test_get_edit_profile_email_read_only(self, client, user):
+        with client.session_transaction() as sess:
+            sess["sub"] = user.sub
+            sess["email"] = user.email
+        response: Response = client.get(url_for("edit_profile"))
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        email_input = next(line for line in html.splitlines() if 'id="email"' in line)
+        assert "readonly" in email_input
+        assert user.email in email_input
+
+    def test_post_edit_profile_keeps_email(self, client, user, db, mock_flash, mocker):
+        mocker.patch("servicex_app.web.edit_profile.db", db)
+        original_email = user.email
+
+        with client.session_transaction() as sess:
+            sess["sub"] = user.sub
+            sess["email"] = original_email
+        response: Response = client.post(
+            url_for("edit_profile"),
+            data={
+                "name": "new name",
+                "email": "someone-else@example.com",
+                "institution": "new institution",
+                "experiment": user.experiment,
+            },
+        )
+        assert response.status_code == 302
+        db.session.commit.assert_called_once()
+        assert user.email == original_email
+        assert user.name == "new name"
+        with client.session_transaction() as sess:
+            assert sess["email"] == original_email
+            assert sess["name"] == "new name"
+            assert sess["institution"] == "new institution"
+
     def test_post_edit_profile_invalid(self, client, user, mock_flash):
         with client.session_transaction() as sess:
             sess["sub"] = user.sub
