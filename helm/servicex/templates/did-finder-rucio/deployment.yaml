@@ -66,6 +66,10 @@ spec:
           - name: SITE_NAME
             value: "{{ .Values.didFinder.rucio.site }}"
           {{- end }}
+          - name: RUCIO_RSE_EXPRESSION
+            value: {{ .Values.didFinder.rucio.rseExpression | quote }}
+          - name: RUCIO_IGNORE_AVAILABILITY
+            value: {{ .Values.didFinder.rucio.ignoreAvailability | quote }}
           {{- if .Values.didFinder.rucio.replicaSorterEnabled }}
           - name: USE_REPLICA_SORTER
             value: "1"

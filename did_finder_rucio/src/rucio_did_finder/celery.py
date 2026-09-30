@@ -55,6 +55,19 @@ else:
     location = None
     replica_sorter = None
 
+rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION")
+if not rse_expression:
+    raise ValueError(
+        "RUCIO_RSE_EXPRESSION environment variable must be set to a Rucio RSE "
+        "expression appropriate for this experiment's Rucio instance"
+    )
+
+ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+
 app = DIDFinderApp("rucio", did_finder_args={"rucio_adapter": rucio_adapter})
 
 
@@ -65,6 +78,8 @@ def find_files(did_name, info, did_finder_args):
         dataset_id=info["dataset-id"],
         replica_sorter=replica_sorter,
         location=location,
+        rse_expression=rse_expression,
+        ignore_availability=ignore_availability,
     )
     for file in lookup_request.lookup_files():
         yield file
