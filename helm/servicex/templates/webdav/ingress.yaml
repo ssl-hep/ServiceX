@@ -1,0 +1,35 @@
+{{- if and .Values.webdav.enabled .Values.webdav.internal .Values.webdav.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.webdav.ingress.class }}
+    {{- if .Values.webdav.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.webdav.ingress.tls.clusterIssuer }}
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    {{- end }}
+    {{- with .Values.webdav.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    app: {{ .Release.Name }}-webdav
+  name: {{ .Release.Name }}-webdav
+spec:
+  {{- if .Values.webdav.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.webdav.ingress.host }}
+    secretName: {{ tpl .Values.webdav.ingress.tls.secretName . }}
+  {{- end }}
+  rules:
+  - host: {{ .Values.webdav.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-webdav
+            port:
+              number: {{ .Values.webdav.service.port }}
+{{- end }}

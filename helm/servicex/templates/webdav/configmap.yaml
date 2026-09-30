@@ -1,0 +1,18 @@
+{{- if and .Values.webdav.enabled .Values.webdav.internal }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-webdav-config
+  labels:
+    app: {{ .Release.Name }}-webdav
+data:
+  SERVER_NAME: "{{ .Release.Name }}-webdav"
+  # Transforms write below a single read-write collection. Each request gets a
+  # sub-collection named after its request id, created by the transformers.
+  FOLDER_PERMISSIONS: "/{{ .Values.webdav.root | trimAll "/" }}:{{ if .Values.webdav.auth.enabled }}{{ .Values.webdav.auth.username }}{{ else }}public{{ end }}:rw"
+  AUTO_CREATE_FOLDERS: "true"
+  BASIC_AUTH_ENABLED: "{{ .Values.webdav.auth.enabled }}"
+  HEALTH_CHECK_ENABLED: "{{ .Values.webdav.healthCheck }}"
+  # Bytes. "0" leaves uploads unlimited.
+  LIMIT_REQUEST_BODY: "{{ .Values.webdav.limitRequestBody }}"
+{{- end }}

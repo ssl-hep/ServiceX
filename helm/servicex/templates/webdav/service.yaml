@@ -1,0 +1,17 @@
+{{- if and .Values.webdav.enabled .Values.webdav.internal }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-webdav
+  labels:
+    app: {{ .Release.Name }}-webdav
+spec:
+  ports:
+    - port: {{ .Values.webdav.service.port }}
+      targetPort: http
+      name: "tcp"
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-webdav
+  type: {{ .Values.webdav.service.type }}
+{{- end }}

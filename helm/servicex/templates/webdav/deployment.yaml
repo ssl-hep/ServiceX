@@ -1,0 +1,92 @@
+{{- if and .Values.webdav.enabled .Values.webdav.internal }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-webdav
+  labels:
+    app: {{ .Release.Name }}-webdav
+spec:
+  replicas: 1
+  # The results live on a single volume, so never run two pods at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-webdav
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-webdav
+      {{- with .Values.webdav.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.webdav.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webdav.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webdav.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webdav.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: webdav
+          image: {{ .Values.webdav.image }}:{{ .Values.webdav.tag }}
+          imagePullPolicy: {{ .Values.webdav.pullPolicy }}
+          {{- with .Values.webdav.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-webdav-config
+            {{- if .Values.webdav.auth.enabled }}
+            - secretRef:
+                name: {{ .Release.Name }}-webdav-secret
+            {{- end }}
+          {{- if .Values.webdav.healthCheck }}
+          livenessProbe:
+            httpGet:
+              path: /_health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /_health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.webdav.resources }}
+          resources:
+{{ toYaml .Values.webdav.resources | indent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/dav/data
+      volumes:
+        - name: data
+        {{- if .Values.webdav.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.webdav.persistence.existingClaim | default (printf "%s-webdav-data" .Release.Name) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

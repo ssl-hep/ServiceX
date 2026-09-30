@@ -1,0 +1,19 @@
+{{- if and .Values.webdav.enabled .Values.webdav.internal .Values.webdav.persistence.enabled }}
+{{- if not .Values.webdav.persistence.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-webdav-data
+  labels:
+    app: {{ .Release.Name }}-webdav
+spec:
+  accessModes:
+    - {{ .Values.webdav.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.webdav.persistence.size }}
+  {{- if .Values.webdav.persistence.storageClass }}
+  storageClassName: {{ .Values.webdav.persistence.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}
