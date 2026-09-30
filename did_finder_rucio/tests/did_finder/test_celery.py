@@ -33,6 +33,7 @@ from unittest.mock import patch
 import pytest
 
 from rucio_did_finder.replica_distance import ReplicaSorter
+from rucio_did_finder.rucio_adapter import RucioAdapter
 
 MODULE_NAME = "rucio_did_finder.celery"
 
@@ -75,12 +76,28 @@ class TestModuleConfiguration:
     def test_rucio_adapter_wired_into_app(self, import_celery):
         celery = import_celery(**MINIMAL_ENV)
 
-        adapter = celery.app.did_finder_args["rucio_adapter"]
-        assert adapter is celery.rucio_adapter
-        assert adapter.did_client is celery.did_client
-        assert adapter.replica_client is celery.replica_client
-        assert adapter.report_logical_files is False
         assert celery.app.name == "rucio"
+        # No Rucio clients are built at import time, only in the worker process
+        assert "rucio_adapter" not in celery.app.did_finder_args
+        celery.DIDClient.assert_not_called()
+        celery.ReplicaClient.assert_not_called()
+
+        celery.init_worker_process()
+
+        adapter = celery.app.did_finder_args["rucio_adapter"]
+        assert isinstance(adapter, RucioAdapter)
+        assert adapter.did_client is celery.DIDClient.return_value
+        assert adapter.replica_client is celery.ReplicaClient.return_value
+        assert adapter.report_logical_files is False
+
+    def test_worker_process_init_signal_builds_adapter(self, import_celery):
+        from celery.signals import worker_process_init
+
+        celery = import_celery(**MINIMAL_ENV)
+        worker_process_init.send(sender=None)
+
+        assert isinstance(celery.app.did_finder_args["rucio_adapter"], RucioAdapter)
+        celery.DIDClient.assert_called_once_with()
 
     def test_cache_prefix(self, import_celery):
         celery = import_celery(CACHE_PREFIX="root://cache/", **MINIMAL_ENV)
@@ -125,7 +142,7 @@ class TestModuleConfiguration:
     def test_report_logical_files(self, import_celery, value, expected):
         celery = import_celery(REPORT_LOGICAL_FILES=value, **MINIMAL_ENV)
         assert celery.report_logical_files is expected
-        assert celery.rucio_adapter.report_logical_files is expected
+        assert celery.make_rucio_adapter().report_logical_files is expected
 
     def test_report_logical_files_default(self, import_celery):
         celery = import_celery(**MINIMAL_ENV)
@@ -157,6 +174,7 @@ class TestReplicaSorterConfiguration:
 class TestFindFiles:
     def test_passes_configuration_to_lookup_request(self, import_celery):
         celery = import_celery(RUCIO_IGNORE_AVAILABILITY="true", **MINIMAL_ENV)
+        celery.init_worker_process()
         files = [{"paths": ["root://site/ghi"]}, {"paths": ["root://site/jkl"]}]
 
         with patch.object(celery, "LookupRequest") as lookup_request:
@@ -172,13 +190,32 @@ class TestFindFiles:
         assert found == files
         lookup_request.assert_called_once_with(
             did="rucio://my-did",
-            rucio_adapter=celery.rucio_adapter,
+            rucio_adapter=celery.app.did_finder_args["rucio_adapter"],
             dataset_id=42,
             replica_sorter=None,
             location=None,
             rse_expression=TEST_RSE_EXPRESSION,
             ignore_availability=True,
         )
+
+    def test_adapter_built_once_without_worker_process_init(self, import_celery):
+        celery = import_celery(**MINIMAL_ENV)
+
+        with patch.object(celery, "LookupRequest") as lookup_request:
+            for _ in range(2):
+                lookup_request.return_value.lookup_files.return_value = iter([])
+                list(
+                    celery.find_files(
+                        "rucio://my-did", {"dataset-id": 42}, celery.app.did_finder_args
+                    )
+                )
+
+        adapter = celery.app.did_finder_args["rucio_adapter"]
+        celery.DIDClient.assert_called_once_with()
+        assert [c.kwargs["rucio_adapter"] for c in lookup_request.call_args_list] == [
+            adapter,
+            adapter,
+        ]
 
 
 class TestLookupDatasetTask:
