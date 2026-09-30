@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import datetime
+import functools
 
 from flask import current_app
 from flask_restful import reqparse
@@ -37,22 +38,27 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 import boto3
 
 
+@functools.lru_cache(maxsize=4)
+def _s3_client(use_ssl: bool, public_url: str, access_key: str, secret_key: str):
+    """S3 client for presigning, built once per set of object store settings."""
+    return boto3.client(
+        "s3",
+        endpoint_url=("https://" if use_ssl else "http://") + public_url,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        use_ssl=use_ssl,
+    )
+
+
 class FileURLGeneratorInsecure(ServiceXResource):
     def __init__(self):
         super().__init__()
         # Add branches for different backends when relevant
-        # set up S3 client
-        endpoint_url = (
-            "https://"
-            if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
-            else "http://"
-        ) + current_app.config["MINIO_PUBLIC_URL"]
-        self.s3client = boto3.client(
-            "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
-            aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
-            use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
+        self.s3client = _s3_client(
+            current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
+            current_app.config["MINIO_PUBLIC_URL"],
+            current_app.config["MINIO_ACCESS_KEY"],
+            current_app.config["MINIO_SECRET_KEY"],
         )
 
     def post(self):

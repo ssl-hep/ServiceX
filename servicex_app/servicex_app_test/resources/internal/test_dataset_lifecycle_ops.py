@@ -25,45 +25,40 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from datetime import datetime
-from unittest.mock import patch
+from datetime import datetime, timedelta, timezone
 
 from pytest import fixture
 
-from servicex_app.models import Dataset
+from servicex_app.models import Dataset, db
 
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestDatasetLifecycle(ResourceTestBase):
     @fixture
-    def fake_dataset_list(self):
-        with patch("servicex_app.models.Dataset.get_all") as dsfunc:
-            dsfunc.return_value = [
-                Dataset(
-                    last_used=datetime(2022, 1, 1),
-                    last_updated=datetime(2022, 1, 1),
-                    id=1,
-                    name="not-orphaned",
-                    events=100,
-                    size=1000,
-                    n_files=1,
-                    lookup_status="complete",
-                    did_finder="rucio",
-                ),
-                Dataset(
-                    last_used=datetime.now(),
-                    last_updated=datetime.now(),
-                    id=2,
-                    name="orphaned",
-                    events=100,
-                    size=1000,
-                    n_files=1,
-                    lookup_status="complete",
-                    did_finder="rucio",
-                ),
-            ]
-            yield dsfunc
+    def datasets(self, client):
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with client.application.app_context():
+            for dataset_id, name, last_updated in [
+                (1, "obsolete", now - timedelta(days=30)),
+                (2, "recent", now),
+                (3, "never-updated", None),
+            ]:
+                db.session.add(
+                    Dataset(
+                        last_used=now,
+                        last_updated=last_updated,
+                        id=dataset_id,
+                        name=name,
+                        events=100,
+                        size=1000,
+                        n_files=1,
+                        lookup_status="complete",
+                        did_finder="rucio",
+                    )
+                )
+            db.session.commit()
+        yield
 
     def test_fail_on_bad_param(self, client):
         with client.application.app_context():
@@ -72,12 +67,20 @@ class TestDatasetLifecycle(ResourceTestBase):
             )
             assert response.status_code == 422
 
-    def test_deletion(self, fake_dataset_list, client):
+    def test_deletion(self, datasets, client):
         with client.application.app_context():
-            with patch("servicex_app.models.Dataset.delete_dataset") as deletion_obj:
-                response = client.post(
-                    "/servicex/internal/dataset-lifecycle", json={"age": 24}
-                )
-                fake_dataset_list.assert_called_once()
-                deletion_obj.assert_called_once()
-                assert response.status_code == 200
+            response = client.post(
+                "/servicex/internal/dataset-lifecycle", json={"age": 24}
+            )
+            assert response.status_code == 200
+            assert response.json == {"message": "Success"}
+
+            stale_by_name = {
+                dataset.name: dataset.stale
+                for dataset in db.session.query(Dataset).all()
+            }
+            assert stale_by_name == {
+                "obsolete": True,
+                "recent": False,
+                "never-updated": False,
+            }

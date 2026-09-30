@@ -28,11 +28,19 @@
 from datetime import datetime
 from unittest.mock import patch, PropertyMock
 from freezegun import freeze_time
+from pytest import fixture
 
+from servicex_app.resources.transformation import file_urls
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestFileURLGenerator(ResourceTestBase):
+    @fixture(autouse=True)
+    def clear_s3_client_cache(self):
+        file_urls._s3_client.cache_clear()
+        yield
+        file_urls._s3_client.cache_clear()
+
     @freeze_time("2026-05-13 15:57:00")
     def test_file_urls(self, mocker, client):
         "This actually doesn't need to check if the files exist"
@@ -88,3 +96,24 @@ class TestFileURLGenerator(ResourceTestBase):
         )
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")
+
+    def test_s3_client_reused(self, mocker, client):
+        "The presigning client is built once and shared by both routes"
+        mocker.patch.object(file_urls.TransformRequest, "lookup", return_value=None)
+        mock_boto3_client = mocker.patch.object(file_urls.boto3, "client")
+
+        for url in [
+            "/servicex/transformation/file-urls",
+            "/servicex/internal/transformation/file-urls",
+            "/servicex/transformation/file-urls",
+        ]:
+            response = client.post(url, json={"request_id": 1234, "file_list": ["abc"]})
+            assert response.status_code == 404
+
+        mock_boto3_client.assert_called_once_with(
+            "s3",
+            endpoint_url="https://localhost:9999",
+            aws_access_key_id="miniouser",
+            aws_secret_access_key="leftfoot1",
+            use_ssl=True,
+        )

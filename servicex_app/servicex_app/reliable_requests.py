@@ -27,19 +27,28 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from functools import wraps
 
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter
+from requests.exceptions import ReadTimeout
+from tenacity import (
+    retry,
+    retry_if_not_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
 # This is the default timeout settings for requests. It represents the time to make a
 # connection and then the time to wait for a response.
-REQUEST_TIMEOUT = (0.5, None)
+REQUEST_TIMEOUT = (3, 30)
 
 
 # Use this decorator on all functions that wrap requests to
-# servicex microservices.
+# servicex microservices. A read timeout is not retried: the server accepted the
+# request and did not answer in time, so a retry would most likely time out again
+# and multiply the time the caller waits.
 def servicex_retry(max_attempts=3, wait_min=0.1, wait_max=30):
     def decorator(func):
         @retry(
             reraise=True,
+            retry=retry_if_not_exception_type(ReadTimeout),
             stop=stop_after_attempt(max_attempts),
             wait=wait_exponential_jitter(initial=wait_min, max=wait_max),
         )
