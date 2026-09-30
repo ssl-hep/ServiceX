@@ -12,14 +12,15 @@ RUN mkdir -p /etc/grid-security/certificates /etc/grid-security/vomsdir
 RUN yum -y update
 
 ENV POETRY_VERSION=2.1.1
-RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir --upgrade pip
 
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
+    poetry install --no-root --no-interaction --no-ansi && \
+    rm -rf "$(poetry config cache-dir)"
 
 COPY . .
 

@@ -1,0 +1,7 @@
+# Keep a local in-project virtualenv and build leftovers out of the image;
+# COPY . . runs after the image's own .venv is created.
+.venv
+**/__pycache__
+.pytest_cache
+.coverage
+coverage.xml

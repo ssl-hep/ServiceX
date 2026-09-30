@@ -19,16 +19,17 @@ RUN yum -y update
 # https://docs.docker.com/engine/reference/builder/#shell
 
 ENV POETRY_VERSION=2.1.1
-RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir --upgrade pip
 
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 RUN mkdir -p /opt/servicex/pypoetry
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 ENV XDG_CONFIG_HOME=/opt/servicex
 RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry install --no-root --no-interaction --no-ansi && \
+    rm -rf "$(poetry config cache-dir)"
 
 COPY . .
 

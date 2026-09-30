@@ -3,7 +3,7 @@ FROM python:3.10
 ARG APP_CONFIG_FILE="app.atlas.xaod.conf"
 
 ENV  POETRY_VERSION=2.1.1
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 
@@ -14,8 +14,9 @@ COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
-RUN pip install gunicorn
+    poetry install --no-root --no-interaction --no-ansi && \
+    rm -rf "$(poetry config cache-dir)"
+RUN pip install --no-cache-dir gunicorn
 RUN pip list
 
 COPY boot.sh ./
