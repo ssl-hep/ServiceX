@@ -67,7 +67,6 @@ class TestModuleConfiguration:
     def test_defaults(self, import_celery):
         celery = import_celery(**MINIMAL_ENV)
 
-        assert celery.cache_prefix == ""
         assert celery.rse_expression == TEST_RSE_EXPRESSION
         assert celery.ignore_availability is False
         assert celery.location is None
@@ -98,10 +97,6 @@ class TestModuleConfiguration:
 
         assert isinstance(celery.app.did_finder_args["rucio_adapter"], RucioAdapter)
         celery.DIDClient.assert_called_once_with()
-
-    def test_cache_prefix(self, import_celery):
-        celery = import_celery(CACHE_PREFIX="root://cache/", **MINIMAL_ENV)
-        assert celery.cache_prefix == "root://cache/"
 
     @pytest.mark.parametrize("missing", [{}, {"RUCIO_RSE_EXPRESSION": ""}])
     def test_rse_expression_is_required(self, import_celery, missing):

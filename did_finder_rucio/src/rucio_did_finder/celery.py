@@ -47,7 +47,6 @@ def env_flag(name: str, *legacy_values: str) -> bool:
     return value in ("true", "1", "yes") or value in legacy_values
 
 
-cache_prefix = os.environ.get("CACHE_PREFIX", "")
 # Older charts set the command line flag string rather than a boolean
 report_logical_files = env_flag("REPORT_LOGICAL_FILES", "--report-logical-files")
 
