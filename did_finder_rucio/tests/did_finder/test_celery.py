@@ -108,6 +108,29 @@ class TestModuleConfiguration:
         celery = import_celery(RUCIO_IGNORE_AVAILABILITY=value, **MINIMAL_ENV)
         assert celery.ignore_availability is expected
 
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            ("true", True),
+            ("TRUE", True),
+            ("1", True),
+            ("yes", True),
+            ("--report-logical-files", True),
+            ("false", False),
+            ("off", False),
+            ("0", False),
+            ("", False),
+        ],
+    )
+    def test_report_logical_files(self, import_celery, value, expected):
+        celery = import_celery(REPORT_LOGICAL_FILES=value, **MINIMAL_ENV)
+        assert celery.report_logical_files is expected
+        assert celery.rucio_adapter.report_logical_files is expected
+
+    def test_report_logical_files_default(self, import_celery):
+        celery = import_celery(**MINIMAL_ENV)
+        assert celery.report_logical_files is False
+
 
 class TestReplicaSorterConfiguration:
     SORTER_ENV = {
