@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from servicex.TopCP_code_generator.request_translator import TopCPTranslator
+import json
 import os
 import tempfile
 import pytest
@@ -84,7 +85,62 @@ def test_generate_code():
             '{"reco": 1, "parton": "a", "particle": "c", "max_events": 1, '
             '"no_systematics": false, "no_filter": false}'
         )
-        with pytest.raises(TypeError):
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(query, tmpdirname)
+
+
+def test_generate_code_fails_with_invalid_json():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code("{not json", tmpdirname)
+
+        with pytest.raises(GenerateCodeException):
+            translator.generate_code(json.dumps(["reco"]), tmpdirname)
+
+
+def test_generate_code_fails_with_bool_max_events():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        query = json.dumps(
+            {
+                "reco": "Output:\n  treeName: 'reco'\n",
+                "parton": None,
+                "particle": None,
+                "max_events": True,
+                "no_systematics": True,
+                "no_filter": False,
+            }
+        )
+
+        with pytest.raises(GenerateCodeException, match="max_events must be of type"):
+            translator.generate_code(query, tmpdirname)
+
+
+def test_generate_code_fails_with_negative_max_events():
+    os.environ["TEMPLATE_PATH"] = "servicex/templates/transform_single_file.py"
+    os.environ["CAPABILITIES_PATH"] = "transformer_capabilities.json"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        translator = TopCPTranslator()
+        query = json.dumps(
+            {
+                "reco": "Output:\n  treeName: 'reco'\n",
+                "parton": None,
+                "particle": None,
+                "max_events": -5,
+                "no_systematics": True,
+                "no_filter": False,
+            }
+        )
+
+        with pytest.raises(GenerateCodeException, match="max_events cannot be less"):
             translator.generate_code(query, tmpdirname)
 
 
@@ -114,7 +170,7 @@ def test_generate_code_fails_with_unknown_selection_key():
             '"no_systematics": true, "no_filter": false, "unknown_key": "unknown_value"}'
         )
 
-        with pytest.raises(KeyError):
+        with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
 
@@ -144,7 +200,7 @@ def test_generate_code_fails_with_missing_required_selection_key():
             '"no_systematics": true}'
         )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(GenerateCodeException):
             translator.generate_code(query, tmpdirname)
 
 

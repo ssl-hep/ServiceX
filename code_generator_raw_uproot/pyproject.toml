@@ -21,6 +21,8 @@ pytest = "^9.0.3"
 autopep8 = "^1.7.0"
 flake8 = "^5.0.4"
 coverage = "^6.5.0"
+awkward = "^2.6"
+pyarrow = ">=14"
 
 [build-system]
 requires = ["poetry-core"]

@@ -19,7 +19,6 @@ RUN pip install gunicorn
 COPY boot.sh ./
 COPY transformer_capabilities.json ./
 COPY python_code_generator/ ./python_code_generator
-COPY scripts/from_text_to_zip.py .
 RUN chmod +x boot.sh
 
 USER servicex
