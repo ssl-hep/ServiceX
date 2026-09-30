@@ -176,7 +176,9 @@ class RucioAdapter:
         for ds in datasets:
             nfiles = 0
             try:
-                nfiles = len(list(self.did_client.list_files(ds[0], ds[1])))
+                # A dataset or container replica listing leaves out files without
+                # a matching replica, so count the files separately to notice them
+                nfiles = sum(1 for _ in self.did_client.list_files(ds[0], ds[1]))
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
                     schemes=["davs", "root", "http", "https"],

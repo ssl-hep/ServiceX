@@ -172,6 +172,25 @@ class TestLookupRequest:
         with pytest.raises(LookupFailureException):
             [_ for _ in request.lookup_files()]
 
+    def test_lookup_files_partial_dataset(self, mocker):
+        # For a dataset or container, Rucio leaves files without a matching
+        # replica out of the metalink entirely, so only list_files sees them.
+        mock_did_client, mock_replica_client = _mock_clients(mocker)
+        mock_did_client.list_files.return_value = iter(
+            [{"name": "ghi"}, {"name": "jkl"}]
+        )
+
+        request = LookupRequest(
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
+        )
+        lookup = request.lookup_files()
+
+        assert [f["paths"] for f in next(lookup)] == [["root://site/ghi"]]
+        with pytest.raises(LookupFailureException, match="1 of its files"):
+            next(lookup)
+
     def test_lookup_files_no_dataset(self, mocker):
         mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
         mock_scope_client.list_scopes.return_value = ["abc"]
