@@ -29,10 +29,10 @@
 import json
 import os
 import shutil
-import sys
+import signal
 import time
-import timeit
 import re
+import uuid
 from argparse import Namespace
 from hashlib import sha1, sha256
 from pathlib import Path
@@ -42,7 +42,8 @@ from typing import NamedTuple, Optional, Union
 import kombu
 import psutil as psutil
 from celery import Celery, shared_task
-from celery.signals import after_setup_logger
+from celery.exceptions import WorkerLostError
+from celery.signals import after_setup_logger, task_failure
 
 from transformer_sidecar.object_store_manager import (
     ObjectStoreError,
@@ -73,12 +74,15 @@ convert_root_to_rntuple: bool = False
 
 science_container: Optional[ScienceContainerCommand] = None
 transformer_capabilities: dict = {}
-celery_app: Optional[Celery] = None
 
 request_id: str = ""
 
 # Use this to make sure we don't generate output file names that are crazy long
 MAX_PATH_LEN = 255
+
+# Room to be left for the extension that a sidecar conversion may append to the
+# name we hand to the science container
+MAX_EXTENSION_LEN = len(".rntuple.root")
 
 PLACE = {
     "host": os.getenv("HOST_NAME", "unknown"),
@@ -87,10 +91,13 @@ PLACE = {
 }
 
 
-start_time = timeit.default_timer()
 logger = initialize_logging()
 
 
+# Messages are only acknowledged once the file has been handled. If the pool child
+# dies while handling one, the message is still acknowledged instead of being
+# redelivered, since the same file would most likely kill the next worker too.
+# report_lost_worker() reports such a file as failed.
 @shared_task(
     acks_late=True,
 )
@@ -197,67 +204,94 @@ def transform_file(
                 )
 
             transform_request["result-format"] = result_format
+            output_path = Path(transform_request["safeOutputFileName"])
+
+            # In a shared volume a file with this name may be another request's
+            # output, so after a failure we only remove a file that wasn't there
+            # before this transform
+            output_existed = output_path.exists()
+
             science_container.synch()
             science_container.send(transform_request)
-            science_container_response = science_container.await_response()
 
-            transform_request["status"] = science_container_response
-            logger.info(
-                "Science container completed with status %s"
-                % science_container_response,
-                extra=log_extra,
-            )
+            # Whatever happens from here on, the science container is waiting for a
+            # confirmation before it will accept another request
+            try:
+                science_container_response = science_container.await_response()
 
-            # Grab the logs
-            transformer_stats = fill_stats_parser(
-                transformer_capabilities["stats-parser"],
-                Path(os.path.join(request_path, "abc.log")),
-            )
-            if science_container_response == "success.":
-                output_path = Path(transform_request["safeOutputFileName"])
+                transform_request["status"] = science_container_response
+                logger.info(
+                    "Science container completed with status %s"
+                    % science_container_response,
+                    extra=log_extra,
+                )
 
-                # Now is the time to convert the file to parquet if that's what the user
-                # requested, but our particular transformer doesn't support it.
-                # Delete source if we did a conversion so it doesn't clutter the POSIX
-                # output if we use that.
-                if convert_root_to_parquet:
-                    object_name = output_path.with_suffix(".parquet").name
-                    if (file_to_upload := convert_to_parquet(output_path)) is not None:
-                        output_path.unlink()
-                elif convert_root_to_rntuple:
-                    object_name = output_path.name
-                    if (file_to_upload := convert_to_rntuple(output_path)) is not None:
-                        output_path.unlink()
-                else:
-                    file_to_upload = output_path
-                    object_name = output_path.name
-
-                if file_to_upload is not None:
-                    # only None if conversion has failed
-                    rec = FileCompleteRecord(
-                        request_id=request_id,
-                        file_path=_file_path,
-                        s3_object_name=object_name,
-                        file_id=file_id,
-                        status="success",
-                        total_time=time.time() - total_time,
-                        total_events=transformer_stats.total_events,
-                        total_bytes=file_to_upload.stat().st_size,
-                    )
-                    if object_store:
-                        upload_file(file_to_upload, servicex, rec)
+                # Grab the logs
+                transformer_stats = fill_stats_parser(
+                    transformer_capabilities["stats-parser"],
+                    Path(os.path.join(request_path, "abc.log")),
+                )
+                if science_container_response == "success.":
+                    # Now is the time to convert the file to parquet if that's what
+                    # the user requested, but our particular transformer doesn't
+                    # support it. Delete source if we did a conversion so it doesn't
+                    # clutter the POSIX output if we use that.
+                    if convert_root_to_parquet:
+                        object_name = output_path.with_suffix(".parquet").name
+                        file_to_upload = convert_to_parquet(output_path)
+                        output_path.unlink(missing_ok=True)
+                    elif convert_root_to_rntuple:
+                        object_name = output_path.name
+                        file_to_upload = convert_to_rntuple(output_path)
+                        output_path.unlink(missing_ok=True)
                     else:
-                        servicex.put_file_complete(rec)
+                        file_to_upload = output_path
+                        object_name = output_path.name
 
-                    transform_success = True
-                    logger.info("Transformer stats.", extra=log_extra)
+                    if file_to_upload is not None:
+                        # only None if conversion has failed
+                        rec = FileCompleteRecord(
+                            request_id=request_id,
+                            file_path=_file_path,
+                            s3_object_name=object_name,
+                            file_id=file_id,
+                            status="success",
+                            total_time=time.time() - total_time,
+                            total_events=transformer_stats.total_events,
+                            total_bytes=file_to_upload.stat().st_size,
+                        )
+                        if object_store:
+                            upload_file(file_to_upload, servicex, rec)
+                        else:
+                            servicex.put_file_complete(rec)
+
+                        transform_success = True
+                        logger.info("Transformer stats.", extra=log_extra)
+                    else:
+                        transform_success = False
+                        transformer_stats.error_info = (
+                            "Sidecar format conversion failed"
+                        )
+                elif not output_existed:
+                    # The science container may have left a partial file behind
+                    output_path.unlink(missing_ok=True)
+            except BaseException as error:
+                # Confirm anyway, but a broken connection must not hide the error
+                # that got us here. If that error doesn't already mean the science
+                # container is gone, the dead connection has to be reported instead
+                # so that the worker is still restarted.
+                try:
                     science_container.confirm()
-                    break
-                else:
-                    transform_success = False
-                    transformer_stats.error_info = "Sidecar format conversion failed"
+                except ScienceContainerException as confirm_error:
+                    if isinstance(error, Exception) and not isinstance(
+                        error, ScienceContainerException
+                    ):
+                        raise confirm_error from error
+                raise
 
             science_container.confirm()
+            if transform_success:
+                break
 
         # If none of the replicas resulted in a successful transform then we have
         # a hard failure with this file.
@@ -269,7 +303,6 @@ def transform_file(
             }
             logger.error(f"Hard Failure: {transformer_stats.error_info}", extra=hf)
 
-        if not transform_success:
             rec = FileCompleteRecord(
                 request_id=request_id,
                 file_path=_file_paths[0],
@@ -305,7 +338,24 @@ def transform_file(
             extra=log_extra,
             exc_info=e,
         )
-        sys.exit(-1)
+        try:
+            rec = FileCompleteRecord(
+                request_id=request_id,
+                file_path=_file_paths[0],
+                s3_object_name="none",
+                file_id=file_id,
+                status="failure",
+                total_time=time.time() - total_time,
+                total_events=0,
+                total_bytes=0,
+            )
+            servicex.put_file_complete(rec)
+        finally:
+            # Exiting only takes down the pool child, which would be replaced by one
+            # that inherits the same dead connection. Bring down the whole worker,
+            # even if the failure couldn't be reported, so that the sidecar is
+            # restarted and the socket is set up again.
+            os.kill(os.getppid(), signal.SIGTERM)
 
     except Exception as error:
         logger.exception(
@@ -324,6 +374,62 @@ def transform_file(
         servicex.put_file_complete(rec)
 
 
+# The arguments of transform_file, in case a task was sent with positional ones
+TRANSFORM_FILE_ARGS = (
+    "request_id",
+    "file_id",
+    "paths",
+    "service_endpoint",
+    "result_destination",
+    "result_format",
+)
+
+
+@task_failure.connect
+def report_lost_worker(sender=None, exception=None, args=None, kwargs=None, **_):
+    """
+    If the pool child dies while handling a file (for example because it ran out
+    of memory), celery sends this signal from the worker's main process and
+    acknowledges the message. The file would never be reported, and the request
+    would never finish, so report it as failed here. Failures raised by the task
+    itself are already reported by the task.
+
+    The dead child may have left the science container waiting in the middle of
+    the protocol, so the worker is shut down to have the sidecar restarted.
+    """
+    if not isinstance(exception, WorkerLostError):
+        return
+
+    task_args = {**dict(zip(TRANSFORM_FILE_ARGS, args or ())), **(kwargs or {})}
+    log_extra = {
+        "request_id": task_args.get("request_id"),
+        "file_id": task_args.get("file_id"),
+        "place": PLACE,
+    }
+    logger.error(
+        "Lost the worker while transforming a file. Shutting down this transformer.",
+        extra=log_extra,
+        exc_info=exception,
+    )
+    try:
+        file_paths = prepend_xcache(
+            prioritize_replicas(change_davs_to_https(task_args["paths"]))
+        )
+        rec = FileCompleteRecord(
+            request_id=task_args["request_id"],
+            file_path=file_paths[0],
+            s3_object_name="none",
+            file_id=task_args["file_id"],
+            status="failure",
+            total_time=0,
+            total_events=0,
+            total_bytes=0,
+        )
+        ServiceXAdapter(task_args["service_endpoint"]).put_file_complete(rec)
+    finally:
+        os.kill(os.getpid(), signal.SIGTERM)
+
+
 def convert_to_parquet(source_path: Path) -> Optional[Path]:
     """
     Convert a ROOT file to Parquet.  Returns the path to the Parquet file if successful,
@@ -335,6 +441,7 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         "Converting ROOT to Parquet.",
         extra={"request_id": request_id, "input_path": str(source_path)},
     )
+    temp_file = None
     try:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
@@ -350,8 +457,9 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
             parquet_file = source_path.with_suffix(".parquet")
 
             # Save to temp file in same directory as parquet_file. The to_parquet
-            # method doesn't plqy well with long paths.
-            temp_file = Path(parquet_file.parent, "temp.parquet")
+            # method doesn't plqy well with long paths. The name is unique so that
+            # we never touch another transform's file in a shared volume.
+            temp_file = Path(parquet_file.parent, f"temp-{uuid.uuid4().hex}.parquet")
             ak.to_parquet(all_data, temp_file.as_posix())
             temp_file.rename(parquet_file)
 
@@ -359,6 +467,8 @@ def convert_to_parquet(source_path: Path) -> Optional[Path]:
         logger.error(
             f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
         )
+        if temp_file is not None:
+            temp_file.unlink(missing_ok=True)
         return None
 
     return parquet_file
@@ -376,11 +486,13 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
     )
 
     rntuple_file = source_path.with_suffix(".rntuple.root")
+    rntuple_file_created = False
 
     try:
         with open(source_path, "rb") as datafile:
             data = uproot.open(datafile)
             with open(rntuple_file, "b+w") as wfile:
+                rntuple_file_created = True
                 with uproot.recreate(wfile) as writer:
                     for key in data.keys(cycle=False):
                         obj = data[key]
@@ -399,6 +511,10 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
             f"Failed to convert ROOT TTree to RNTuple: {e}",
             extra={"request_id": request_id},
         )
+        # Only remove the file if we got as far as writing it, it may be another
+        # transform's output in a shared volume otherwise
+        if rntuple_file_created:
+            rntuple_file.unlink(missing_ok=True)
         return None
 
     return rntuple_file
@@ -407,7 +523,6 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
 def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
-    object_store = ObjectStoreManager()
     object_name = rec.s3_object_name
 
     logger.info(
@@ -488,11 +603,10 @@ def read_capabilities_file() -> dict[str, str]:
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     global convert_root_to_parquet, convert_root_to_rntuple, startup_time
     global object_store, posix_path, science_container
-    global shared_dir, transformer_capabilities, request_id, celery_app
+    global shared_dir, transformer_capabilities, request_id
 
     shared_dir = args.shared_dir
     request_id = args.request_id
-    celery_app = app
 
     if args.result_destination == "object-store":
         posix_path = args.shared_dir
@@ -508,6 +622,10 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
     os.makedirs(scripts_path, exist_ok=True)
     shutil.copy("scripts/watch.sh", scripts_path)
     shutil.copy("scripts/proxy-exporter.sh", scripts_path)
+
+    # Start listening before waiting for the capabilities file so the science
+    # container doesn't get its connection refused while we are still waiting
+    science_container = ScienceContainerCommand(request_id=request_id)
 
     transformer_capabilities = read_capabilities_file()
 
@@ -535,7 +653,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         },
     )
 
-    science_container = ScienceContainerCommand(request_id=request_id)
+    science_container.accept()
     logger.debug(
         "Connected to science container",
         extra={"request_id": request_id, "place": PLACE},
@@ -609,18 +727,20 @@ def get_process_info():
 def hash_path(file_name: str) -> str:
     """
     Make the path safe for object store or POSIX, by keeping the length
-    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
-    forty character hash.
+    less than MAX_PATH_LEN. Room is left for the extension that a sidecar
+    conversion may add to the name. Replace the leading (less interesting)
+    characters with a forty character hash.
     :param file_name: Input filename
     :return: Safe path string
     """
-    if len(file_name) > MAX_PATH_LEN:
+    max_len = MAX_PATH_LEN - MAX_EXTENSION_LEN
+    if len(file_name) > max_len:
         hashed_value = sha1(file_name.encode("utf-8")).hexdigest()
         return "".join(
             [
                 "_",
                 hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],  # noqa: E203
+                file_name[-1 * (max_len - len(hashed_value) - 1) :],  # noqa: E203
             ]
         )
     else:
@@ -669,8 +789,6 @@ def setup_loggers(logger, *args, **kwargs):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    start_time = timeit.default_timer()
-
     parser = TransformerArgumentParser(description="ServiceX Transformer")
     _args = parser.parse_args()
     app = Celery("transformer_sidecar", broker=_args.rabbit_uri)

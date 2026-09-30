@@ -27,7 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import logging
+import os
 import socket
+from typing import Optional
+
+# Transforms can run for a very long time, so we only give up on the science
+# container after it has been silent for many hours.
+DEFAULT_TIMEOUT = 12 * 60 * 60
 
 
 class ScienceContainerException(Exception):
@@ -35,24 +41,71 @@ class ScienceContainerException(Exception):
 
 
 class ScienceContainerCommand:
-    def __init__(self, request_id: str = ""):
+    def __init__(self, request_id: str = "", timeout: Optional[float] = None):
         handler = logging.NullHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
         self.request_id = request_id
+        self.timeout = (
+            timeout
+            if timeout is not None
+            else float(os.environ.get("SCIENCE_CONTAINER_TIMEOUT", DEFAULT_TIMEOUT))
+        )
+        self.conn = None
+        self.addr = None
 
-        # Open a socket to the science container
+        # Open a socket for the science container. We bind and listen right away so
+        # the science container can connect as soon as it is up, and only wait for
+        # it to show up in accept()
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # A restarted sidecar must be able to bind again while the connection
+        # of the previous one is still in TIME_WAIT
+        self.serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serv.bind(("localhost", 8081))
         self.serv.listen()
+
+    def accept(self):
         self.conn, self.addr = self.serv.accept()
+        self.conn.settimeout(self.timeout)
+
+    def _recv(self) -> bytes:
+        try:
+            return self.conn.recv(4096)
+        except socket.timeout as e:
+            self.logger.error(
+                "timed out waiting for the science container",
+                extra={"request_id": self.request_id},
+            )
+            raise ScienceContainerException(
+                "timed out waiting for the science container"
+            ) from e
+        except OSError as e:
+            self.logger.error(
+                f"lost the connection to the science container: {e}",
+                extra={"request_id": self.request_id},
+            )
+            raise ScienceContainerException(
+                "lost the connection to the science container"
+            ) from e
+
+    def _send(self, data: bytes):
+        try:
+            self.conn.send(data)
+        except OSError as e:
+            self.logger.error(
+                f"lost the connection to the science container: {e}",
+                extra={"request_id": self.request_id},
+            )
+            raise ScienceContainerException(
+                "lost the connection to the science container"
+            ) from e
 
     def synch(self):
         while True:
             self.logger.debug(
                 "waiting for the GeT", extra={"request_id": self.request_id}
             )
-            req = self.conn.recv(4096)
+            req = self._recv()
             if not req:
                 self.logger.error(
                     "problem in getting GeT", extra={"request_id": self.request_id}
@@ -68,15 +121,18 @@ class ScienceContainerCommand:
     def send(self, transform_request: dict):
         res = json.dumps(transform_request) + "\n"
         self.logger.debug(f"sending: {res}", extra={"request_id": self.request_id})
-        self.conn.send(res.encode())
+        self._send(res.encode())
 
     def await_response(self):
         self.logger.debug(
             "WAITING FOR STATUS...", extra={"request_id": self.request_id}
         )
-        req = self.conn.recv(4096)
-        # if not req:
-        #     break
+        req = self._recv()
+        if not req:
+            self.logger.error(
+                "problem in getting the status", extra={"request_id": self.request_id}
+            )
+            raise ScienceContainerException("problem in getting the status")
         req2 = req.decode("utf8").strip()
         self.logger.debug(
             f"STATUS RECEIVED: {req2}", extra={"request_id": self.request_id}
@@ -84,9 +140,13 @@ class ScienceContainerCommand:
         return req2
 
     def confirm(self):
-        self.conn.send("confirmed.\n".encode())
+        self._send("confirmed.\n".encode())
 
     def close(self):
-        self.conn.send("stop.\n".encode())
-        self.conn.close()
-        self.serv.close()
+        try:
+            self._send("stop.\n".encode())
+        except ScienceContainerException:
+            pass  # Already logged, and we are shutting down anyway
+        finally:
+            self.conn.close()
+            self.serv.close()

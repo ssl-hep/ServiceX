@@ -34,11 +34,18 @@ import tempfile
 from types import SimpleNamespace
 from pathlib import Path
 
+import pytest
+import requests
+from celery.exceptions import WorkerLostError
 from pytest import fixture
 
 from transformer_sidecar.object_store_manager import ObjectStoreError
+from transformer_sidecar.science_container_command import ScienceContainerException
 from transformer_sidecar.transformer import (
+    MAX_EXTENSION_LEN,
+    MAX_PATH_LEN,
     init,
+    report_lost_worker,
     transform_file,
     prioritize_replicas,
     prepend_xcache,
@@ -333,6 +340,9 @@ def test_transformer_root_to_parquet_failed(
             == "failure"
         )
 
+        # The ROOT file that couldn't be converted doesn't stay behind
+        assert not result_file_path.exists()
+
 
 def test_transformer_parquet(
     args,
@@ -475,7 +485,7 @@ def test_transformer_long_filename(
         assert (
             len(science_request["safeOutputFileName"])
             - len(os.path.join(args.shared_dir, test_request_id, "scratch"))
-            == 256
+            == MAX_PATH_LEN - MAX_EXTENSION_LEN + 1
         )
 
 
@@ -485,8 +495,10 @@ def test_hash_path():
     # Short names not messed with
     assert hash_path("root://site1/file.root") == "root://site1/file.root"
 
-    # Long names are hashed
-    assert len(hash_path("rootfile12" * 300)) == 255
+    # Long names are hashed, with room left for an extension we may add later
+    hashed = hash_path("rootfile12" * 300)
+    assert len(hashed) == MAX_PATH_LEN - MAX_EXTENSION_LEN
+    assert len(Path(hashed).with_suffix(".rntuple.root").name) <= MAX_PATH_LEN
 
 
 def test_transform_file(
@@ -619,6 +631,228 @@ def test_transform_file_exception(
         assert failure_report.file_id == test_file_id
         assert failure_report.request_id == test_request_id
 
+        # The science container is waiting for a confirmation, even though we
+        # never got a usable response out of it
+        mock_science_container.return_value.confirm.assert_called_once()
+
+
+def test_transform_file_science_container_exception(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root", "parquet"],
+            "root",
+        )
+
+        mock_science_container.return_value.await_response.side_effect = (
+            ScienceContainerException("Science container is gone")
+        )
+        mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination=test_result_destination,
+            result_format=test_result_format,
+        )
+
+        mock_servicex_adapter.return_value.put_file_complete.assert_called_once()
+        failure_report = mock_servicex_adapter.return_value.put_file_complete.call_args[
+            0
+        ][0]
+        assert failure_report.status == "failure"
+        assert failure_report.file_id == test_file_id
+
+        # The whole worker is taken down, not just the pool child
+        mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def run_transform_file(args, mock_celery, transformer_capabilities, temp_dir):
+    init_test(
+        args,
+        mock_celery,
+        transformer_capabilities,
+        temp_dir,
+        ["root", "parquet"],
+        "root",
+    )
+    transform_file(
+        request_id=test_request_id,
+        file_id=test_file_id,
+        paths=test_paths,
+        service_endpoint=test_service_endpoint,
+        result_destination=test_result_destination,
+        result_format=test_result_format,
+    )
+
+
+@pytest.mark.parametrize(
+    "response_error",
+    [ScienceContainerException("Science container is gone"), Exception("Oops")],
+)
+def test_transform_file_confirm_fails(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+    response_error,
+):
+    # The connection broke, so confirming the request fails as well. That must not
+    # keep the worker from being restarted.
+    mock_science_container.return_value.await_response.side_effect = response_error
+    mock_science_container.return_value.confirm.side_effect = ScienceContainerException(
+        "lost the connection to the science container"
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    put_file_complete = mock_servicex_adapter.return_value.put_file_complete
+    put_file_complete.assert_called_once()
+    assert put_file_complete.call_args[0][0].status == "failure"
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_transform_file_confirm_fails_after_success(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    # The file was transformed, but the science container went away before we
+    # could confirm it
+    mock_science_container.return_value.await_response.return_value = "success."
+    mock_science_container.return_value.confirm.side_effect = ScienceContainerException(
+        "lost the connection to the science container"
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        result_file_path = (
+            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+        )
+        result_file_path.parent.mkdir(parents=True)
+        result_file_path.write_text("test")
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_transform_file_failure_report_fails(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+    mocker,
+):
+    # Even if the failure can't be reported, the worker has to be restarted
+    mock_science_container.return_value.await_response.side_effect = (
+        ScienceContainerException("Science container is gone")
+    )
+    mock_servicex_adapter.return_value.put_file_complete.side_effect = (
+        requests.HTTPError("500 Server Error")
+    )
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with pytest.raises(requests.HTTPError):
+            run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+    mock_kill.assert_called_once_with(os.getppid(), signal.SIGTERM)
+
+
+def test_report_lost_worker(mock_servicex_adapter, mocker):
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    report_lost_worker(
+        sender=transform_file,
+        exception=WorkerLostError("Worker exited prematurely: signal 9 (SIGKILL)."),
+        args=(),
+        kwargs={
+            "request_id": test_request_id,
+            "file_id": test_file_id,
+            "paths": ["davs://site2/file.root", "root://site1//file.root"],
+            "service_endpoint": test_service_endpoint,
+            "result_destination": test_result_destination,
+            "result_format": test_result_format,
+        },
+    )
+
+    mock_servicex_adapter.assert_called_once_with(test_service_endpoint)
+    put_file_complete = mock_servicex_adapter.return_value.put_file_complete
+    put_file_complete.assert_called_once()
+    rec = put_file_complete.call_args[0][0]
+    assert rec.status == "failure"
+    assert rec.request_id == test_request_id
+    assert rec.file_id == test_file_id
+    assert rec.file_path == "root://site1//file.root"
+
+    # This runs in the worker's main process, so it shuts itself down
+    mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+
+
+def test_report_lost_worker_positional_args(mock_servicex_adapter, mocker):
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+    mock_servicex_adapter.return_value.put_file_complete.side_effect = (
+        requests.ConnectionError()
+    )
+
+    with pytest.raises(requests.ConnectionError):
+        report_lost_worker(
+            sender=transform_file,
+            exception=WorkerLostError(),
+            args=(
+                test_request_id,
+                test_file_id,
+                test_paths,
+                test_service_endpoint,
+                test_result_destination,
+                test_result_format,
+            ),
+            kwargs={},
+        )
+
+    rec = mock_servicex_adapter.return_value.put_file_complete.call_args[0][0]
+    assert rec.file_id == test_file_id
+    mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+
+
+def test_report_lost_worker_ignores_task_errors(mock_servicex_adapter, mocker):
+    # Errors raised by the task itself have already been reported by the task
+    mock_kill = mocker.patch("transformer_sidecar.transformer.os.kill")
+
+    report_lost_worker(
+        sender=transform_file,
+        exception=requests.HTTPError("500 Server Error"),
+        args=(),
+        kwargs={"request_id": test_request_id, "file_id": test_file_id},
+    )
+
+    mock_servicex_adapter.return_value.put_file_complete.assert_not_called()
+    mock_kill.assert_not_called()
+
 
 def test_transform_file_object_store_error(
     args,
@@ -673,6 +907,149 @@ def temporary_signal_handler(sig, handler):
         yield
     finally:
         signal.signal(sig, original_handler)
+
+
+def science_container_writes_output(mock_science_container, response):
+    """
+    Pretend that the science container writes (part of) the output file it was
+    asked for before responding
+    """
+
+    def await_response():
+        request = mock_science_container.return_value.send.call_args[0][0]
+        with open(request["safeOutputFileName"], "w") as f:
+            f.write("partial")
+        return response
+
+    return await_response
+
+
+def test_transform_file_failure_removes_partial_output(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_object_store_manager,
+    mock_science_container,
+):
+    mock_science_container.return_value.await_response.side_effect = (
+        science_container_writes_output(mock_science_container, "failure.")
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        scratch_dir = Path(temp_dir) / test_request_id / "scratch"
+        run_transform_file(args, mock_celery, transformer_capabilities, temp_dir)
+
+        assert mock_science_container.return_value.send.call_count == 2
+        assert list(scratch_dir.iterdir()) == []
+
+    assert (
+        mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+        == "failure"
+    )
+
+
+def test_transform_file_failure_keeps_existing_output_in_volume(
+    args,
+    mock_celery,
+    transformer_capabilities,
+    mock_servicex_adapter,
+    mock_science_container,
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        args.result_destination = "volume"
+        args.output_dir = os.path.join(temp_dir, "local", "results")
+        os.makedirs(args.output_dir)
+        init_test(
+            args,
+            mock_celery,
+            transformer_capabilities,
+            temp_dir,
+            ["root", "parquet"],
+            "root",
+        )
+
+        # Another request already wrote its output for the same input file
+        other_output = Path(args.output_dir) / "site1:file.root"
+        other_output.write_text("another request")
+
+        # The science container fails for the first replica without writing
+        # anything, and leaves a partial file for the second one
+        mock_science_container.return_value.await_response.side_effect = [
+            "failure.",
+            "failure.",
+        ]
+        partial_output = Path(args.output_dir) / "site2:file.root"
+
+        def send(request):
+            if request["safeOutputFileName"] == str(partial_output):
+                partial_output.write_text("partial")
+
+        mock_science_container.return_value.send.side_effect = send
+
+        transform_file(
+            request_id=test_request_id,
+            file_id=test_file_id,
+            paths=test_paths,
+            service_endpoint=test_service_endpoint,
+            result_destination="volume",
+            result_format="root",
+        )
+
+        assert other_output.read_text() == "another request"
+        assert not partial_output.exists()
+
+
+def test_parquet_conversion_failure_cleanup(mocker):
+    """A failed conversion only removes the temporary file that it wrote"""
+    import awkward as ak
+    import numpy as np
+    import uproot
+    from transformer_sidecar.transformer import convert_to_parquet
+
+    def partial_to_parquet(array, destination, *args, **kwargs):
+        Path(destination).write_text("partial")
+        raise OSError("No space left on device")
+
+    mocker.patch.object(ak, "to_parquet", side_effect=partial_to_parquet)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_file = Path(temp_dir) / "source.root"
+        with uproot.recreate(source_file) as source:
+            source.mktree("test", {"data": np.array([1, 2, 3, 4])})
+
+        # Another transform writing to the same shared volume
+        other_temp_file = Path(temp_dir) / "temp.parquet"
+        other_temp_file.write_text("another transform")
+
+        assert convert_to_parquet(source_file) is None
+
+        assert sorted(p.name for p in Path(temp_dir).iterdir()) == [
+            "source.root",
+            "temp.parquet",
+        ]
+        assert other_temp_file.read_text() == "another transform"
+
+
+def test_rntuple_conversion_failure_cleanup(mocker):
+    """A conversion that fails while writing removes the partial file"""
+    import numpy as np
+    import uproot
+    from transformer_sidecar.transformer import convert_to_rntuple
+
+    mocker.patch.object(
+        uproot.writing.writable.WritableDirectory,
+        "mkrntuple",
+        side_effect=OSError("No space left on device"),
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_file = Path(temp_dir) / "source.root"
+        with uproot.recreate(source_file) as source:
+            source.mktree("test", {"data": np.array([1, 2, 3, 4])})
+
+        assert convert_to_rntuple(source_file) is None
+        assert [p.name for p in Path(temp_dir).iterdir()] == ["source.root"]
 
 
 def test_prioritize_replicas():
@@ -792,3 +1169,6 @@ def test_rntuple_conversion():
         with open(source_file, "w") as source:
             source.write("abcd")
         assert convert_to_rntuple(source_file) is None
+
+        # We never got to write the output, so the existing file isn't ours to remove
+        assert target_file.exists()

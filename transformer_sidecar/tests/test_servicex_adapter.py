@@ -27,7 +27,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 
-from transformer_sidecar.servicex_adapter import ServiceXAdapter, FileCompleteRecord
+import pytest
+
+from transformer_sidecar.servicex_adapter import (
+    MAX_RETRIES,
+    FileCompleteRecord,
+    ServiceXAdapter,
+)
 
 
 class TestServiceXAdapter:
@@ -76,10 +82,11 @@ class TestServiceXAdapter:
         import requests
 
         caplog.set_level(logging.INFO)
+        mocker.patch("transformer_sidecar.servicex_adapter.RETRY_DELAY", 0)
         mock_session = mocker.MagicMock(requests.session)
         mock_session.mount = mocker.Mock()
         mock_session.put = mocker.Mock(
-            side_effect=[requests.exceptions.ConnectionError, 200]
+            side_effect=[requests.exceptions.ConnectionError, mocker.MagicMock()]
         )
         mocker.patch("requests.session", return_value=mock_session)
 
@@ -94,3 +101,33 @@ class TestServiceXAdapter:
         assert caplog.records[0].msg == "%s, retrying in %s seconds..."
         assert caplog.records[1].levelno == logging.INFO
         assert caplog.records[1].msg == "Put file complete."
+
+    @pytest.mark.parametrize(
+        "status_code, attempts", [(500, MAX_RETRIES), (503, MAX_RETRIES), (404, 1)]
+    )
+    def test_put_file_complete_http_error(self, mocker, caplog, status_code, attempts):
+        import requests
+
+        caplog.set_level(logging.INFO)
+        mocker.patch("transformer_sidecar.servicex_adapter.RETRY_DELAY", 0)
+        response = mocker.MagicMock()
+        response.status_code = status_code
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            f"{status_code} Error", response=response
+        )
+        mock_session = mocker.MagicMock(requests.session)
+        mock_session.mount = mocker.Mock()
+        mock_session.put = mocker.Mock(return_value=response)
+        mocker.patch("requests.session", return_value=mock_session)
+
+        adapter = ServiceXAdapter("http://foo.com")
+        rec = FileCompleteRecord(
+            "42", "my-root.root", 42, "testing", 1, 2, 3, "file://s3-object-name"
+        )
+        with pytest.raises(requests.exceptions.HTTPError):
+            adapter.put_file_complete(rec)
+
+        # Server errors are retried, but a client error won't go away
+        assert mock_session.put.call_count == attempts
+        assert len(caplog.records) == attempts - 1
+        assert all(r.levelno == logging.WARNING for r in caplog.records)
