@@ -1,4 +1,4 @@
-from pytest import fixture
+from pytest import fixture, mark
 from datetime import datetime, timedelta
 
 from servicex_app.code_gen_adapter import CodeGenAdapter
@@ -37,6 +37,14 @@ class TestTransformationResults(ResourceTestBase):
             "servicex_app.resources.transformation.results.TransformationResult"
         )
 
+    @fixture
+    def fake_transform(self, mocker):
+        transform = self._generate_transform_request()
+        mocker.patch(
+            "servicex_app.models.TransformRequest.lookup", return_value=transform
+        )
+        return transform
+
     @staticmethod
     def sample_results():
         """Return a list of sample transformation results"""
@@ -73,12 +81,8 @@ class TestTransformationResults(ResourceTestBase):
 
         response = client.get("/servicex/transformation/non-existent-id/results")
 
-        assert response.status_code == 200
-        data = response.json
-
-        assert "results" in data
-        assert isinstance(data["results"], list)
-        assert len(data["results"]) == 0
+        assert response.status_code == 404
+        assert "Transformation request not found" in response.json["message"]
 
     def test_get_results_missing_request_id(
         self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
@@ -100,6 +104,7 @@ class TestTransformationResults(ResourceTestBase):
         mock_codegen,
         mock_celery_app,
         mock_transformation_result,
+        fake_transform,
     ):
         """Test getting results with mock sample results."""
         client = self._test_client(
@@ -136,7 +141,7 @@ class TestTransformationResults(ResourceTestBase):
         mock_query.filter_by.assert_called_with(request_id="test-request-id")
 
     def test_get_results_with_invalid_later_than_format(
-        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app
+        self, mock_rabbit_adaptor, mock_codegen, mock_celery_app, fake_transform
     ):
         """Test later_than parameter with invalid datetime format."""
         client = self._test_client(
@@ -158,3 +163,48 @@ class TestTransformationResults(ResourceTestBase):
             "later_than value invalid-datetime-format is not an ISO 8601 compliant datetime"
             in data["message"]
         )
+
+    @mark.parametrize(
+        "user_id, submitter_id, is_admin, expected_status",
+        [
+            (42, 42, False, 200),  # Owner reads their own results
+            (42, 43, True, 200),  # Admin reads someone else's results
+            (42, 43, False, 403),  # User tries to read someone else's results
+        ],
+    )
+    def test_get_results_ownership(
+        self,
+        user_id,
+        submitter_id,
+        is_admin,
+        expected_status,
+        mock_transformation_result,
+        fake_transform,
+        mock_jwt_extended,
+        mock_requesting_user,
+    ):
+        mock_transformation_result.query.filter_by.return_value.__iter__ = (
+            lambda mock_self: iter([])
+        )
+        fake_transform.submitted_by = submitter_id
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            mock_requesting_user.id = user_id
+            mock_requesting_user.admin = is_admin
+            response = client.get(
+                "/servicex/transformation/BR549/results", headers=self.fake_header()
+            )
+            assert response.status_code == expected_status
+
+    def test_internal_results_open_with_auth_enabled(self, mock_transformation_result):
+        # The ServiceX DID finder calls the internal endpoint without any
+        # credentials, so it must not apply the user ownership check.
+        mock_transformation_result.query.filter_by.return_value.__iter__ = (
+            lambda mock_self: iter(self.sample_results())
+        )
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+
+        response = client.get("/servicex/internal/transformation/BR549/results")
+
+        assert response.status_code == 200
+        assert len(response.json["results"]) == 3

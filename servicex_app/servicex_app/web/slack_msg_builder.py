@@ -39,16 +39,6 @@ def signup_ia(original_msg, initiating_user, action_id) -> str:
     )
 
 
-def missing_slack_app() -> str:
-    return json.dumps(
-        {
-            "response_type": "ephemeral",
-            "replace_original": False,
-            "text": "ServiceX has no Slack app configured.",
-        }
-    )
-
-
 def request_expired() -> str:
     return json.dumps(
         {
@@ -59,12 +49,12 @@ def request_expired() -> str:
     )
 
 
-def verification_failed() -> str:
+def action_not_supported(action_id) -> str:
     return json.dumps(
         {
             "response_type": "ephemeral",
             "replace_original": False,
-            "text": "Slack Verification Failed: Signatures did not match.",
+            "text": f"Sorry, the '{action_id}' action is not supported yet.",
         }
     )
 

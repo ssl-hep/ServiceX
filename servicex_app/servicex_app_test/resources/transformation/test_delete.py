@@ -15,9 +15,10 @@ class TestTransformDelete(ResourceTestBase):
 
     @pytest.fixture
     def fake_transform(self, mocker) -> TransformRequest:
-        mock_transform_request_cls = mocker.patch(f"{self.module}.TransformRequest")
         transform = self._generate_transform_request()
-        mock_transform_request_cls.lookup.return_value = transform
+        mocker.patch(
+            "servicex_app.models.TransformRequest.lookup", return_value=transform
+        )
         return transform
 
     @pytest.fixture
@@ -101,3 +102,33 @@ class TestTransformDelete(ResourceTestBase):
             )
 
             assert resp.status_code == expected_status
+
+    def test_delete_with_session_cookie(self):
+        # The web UI calls this endpoint with a session cookie and no token.
+        # Uses the real database so the transaction handling is exercised.
+        from servicex_app.models import UserModel, db
+
+        client = self._test_client(
+            extra_config={"ENABLE_AUTH": True, "SECRET_KEY": "secret"}
+        )
+        with client.application.app_context():
+            user = UserModel(
+                name="Jane Doe", email="jane@example.com", sub="jane", pending=False
+            )
+            db.session.add(user)
+            db.session.commit()
+            transform = self._generate_transform_request()
+            transform.status = TransformStatus.complete
+            transform.submitted_by = user.id
+            db.session.add(transform)
+            db.session.commit()
+            user_id = user.id
+
+        with client.session_transaction() as sess:
+            sess["is_authenticated"] = True
+            sess["user_id"] = user_id
+
+        resp = client.delete("/servicex/transformation/BR549")
+        assert resp.status_code == 200
+        with client.application.app_context():
+            assert TransformRequest.lookup("BR549") is None

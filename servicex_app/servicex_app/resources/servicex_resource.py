@@ -28,9 +28,9 @@
 from typing import Optional
 
 from importlib.metadata import version, PackageNotFoundError
-from flask import current_app
+from flask import current_app, session
 from flask_jwt_extended import get_jwt_identity
-from flask_restful import Resource
+from flask_restful import Resource, abort
 from servicex_app.models import UserModel, TransformRequest, TransformStatus
 
 from servicex_app.transformer_manager import TransformerManager
@@ -50,7 +50,7 @@ class ServiceXResource(Resource):
         return "http://" + current_app.config["ADVERTISED_HOSTNAME"] + "/" + endpoint
 
     @staticmethod
-    @jwt_required_if_auth_enabled
+    @jwt_required_if_auth_enabled(optional=True)
     def get_requesting_user() -> Optional[UserModel]:
         """
         :return: User who submitted request for resource.
@@ -59,8 +59,38 @@ class ServiceXResource(Resource):
         """
         user = None
         if current_app.config.get("ENABLE_AUTH"):
-            user = UserModel.find_by_email(get_jwt_identity())
+            if session.get("is_authenticated"):
+                user_id = session.get("user_id")
+                if user_id is not None:
+                    user = UserModel.find_by_id(user_id)
+            else:
+                user = UserModel.find_by_email(get_jwt_identity())
         return user
+
+    @classmethod
+    def get_owned_request(cls, request_id) -> TransformRequest:
+        """
+        Look up a transform request and confirm that the requesting user is
+        allowed to act on it, i.e. auth is disabled, or they are an admin or
+        the submitter.
+        :return: The transform request.
+        :raises HTTPException: 404 if there is no such request, 403 if the
+        requesting user may not access it.
+        """
+        transform_req = TransformRequest.lookup(request_id)
+        if not transform_req:
+            msg = f"Transformation request not found with id: {request_id}"
+            current_app.logger.warning(msg, extra={"request_id": request_id})
+            abort(404, message=msg)
+
+        if current_app.config.get("ENABLE_AUTH"):
+            user = cls.get_requesting_user()
+            if not user or (not user.admin and user.id != transform_req.submitted_by):
+                msg = "You are not authorized to access this request"
+                current_app.logger.warning(msg, extra={"request_id": request_id})
+                abort(403, message=msg)
+
+        return transform_req
 
     @classmethod
     def _get_app_version(cls):

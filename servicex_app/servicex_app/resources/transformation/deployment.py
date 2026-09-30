@@ -16,6 +16,7 @@ class DeploymentStatus(ServiceXResource):
         Returns information about the transformer deployment for a given request.
         :param request_id: UUID of transformation request.
         """
+        self.get_owned_request(request_id)
         status = self.transformer_manager.get_deployment_status(request_id)
         if status is None:
             msg = f"Deployment not found: '{request_id}'"
