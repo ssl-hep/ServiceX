@@ -14,6 +14,11 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app/configmap.yaml") . | sha256sum }}
+        {{- if include "servicex.appMetrics.enabled" . }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+        {{- end }}
         {{- with .Values.app.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -68,6 +73,22 @@ spec:
           value: "{{ .Values.app.logLevel | upper }}"
         - name: ALLOWED_IMAGE_PREFIXES
           value: {{ .Values.app.allowedImagePrefixes | toJson | quote }}
+        {{- if include "servicex.appMetrics.enabled" . }}
+        - name: PROMETHEUS_MULTIPROC_DIR
+          value: "/tmp/prometheus_multiproc"
+        {{- end }}
+        {{- if and .Values.monitoring.enabled .Values.monitoring.tracing.enabled }}
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://{{ include "servicex.tempo.fullname" . }}:4317"
+        - name: OTEL_SERVICE_NAME
+          value: "servicex-app"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Release.Name }}"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_traceidratio"
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "{{ .Values.monitoring.tracing.sampleRatio }}"
+        {{- end }}
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"

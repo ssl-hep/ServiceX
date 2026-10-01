@@ -6,6 +6,7 @@ set -euo pipefail
 K8S_NAMESPACE="default"
 HELM_NAME="${HELM_INSTALLATION_NAME:-servicex}"
 SERVICE_TYPE=""
+TIMEOUT="300"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -18,21 +19,29 @@ while [[ $# -gt 0 ]]; do
             HELM_NAME="$2"
             shift 2
             ;;
-        app|minio|db)
+        --timeout)
+            TIMEOUT="$2"
+            shift 2
+            ;;
+        app|minio|db|prometheus|grafana|tempo)
             SERVICE_TYPE="$1"
             shift
             ;;
         -h|--help)
-            echo "Usage: $0 [app|minio|db] [OPTIONS]"
+            echo "Usage: $0 [app|minio|db|prometheus|grafana|tempo] [OPTIONS]"
             echo ""
             echo "Services:"
-            echo "  app   - Port forward to ServiceX app (8000)"
-            echo "  minio - Port forward to Minio (9000)"
-            echo "  db    - Port forward to PostgreSQL (5432)"
+            echo "  app        - Port forward to ServiceX app (8000)"
+            echo "  minio      - Port forward to Minio (9000)"
+            echo "  db         - Port forward to PostgreSQL (5432)"
+            echo "  prometheus - Port forward to Prometheus (9090)"
+            echo "  grafana    - Port forward to Grafana (3000)"
+            echo "  tempo      - Port forward to Tempo (3200)"
             echo ""
             echo "Options:"
             echo "  --namespace NAMESPACE    Kubernetes namespace (default: default)"
             echo "  --helm-name NAME         Helm installation name (default: servicex)"
+            echo "  --timeout SECONDS        How long to wait for the service (default: 300)"
             echo "  -h, --help              Show this help message"
             exit 0
             ;;
@@ -47,7 +56,7 @@ done
 # Validate service type is provided
 if [ -z "$SERVICE_TYPE" ]; then
     echo "Error: Service type is required"
-    echo "Usage: $0 [app|minio|db] [OPTIONS]"
+    echo "Usage: $0 [app|minio|db|prometheus|grafana|tempo] [OPTIONS]"
     echo "Run '$0 --help' for more information"
     exit 1
 fi
@@ -66,11 +75,33 @@ case "$SERVICE_TYPE" in
         SERVICE="${HELM_NAME}-postgresql"
         PORT="5432"
         ;;
+    # The prometheus chart names the server <release>-prometheus-server; the
+    # grafana and tempo charts collapse to <release>-<chart>.
+    prometheus)
+        SERVICE="${HELM_NAME}-prometheus-server"
+        PORT="9090"
+        ;;
+    grafana)
+        SERVICE="${HELM_NAME}-grafana"
+        PORT="3000"
+        ;;
+    tempo)
+        SERVICE="${HELM_NAME}-tempo"
+        PORT="3200"
+        ;;
 esac
+
+DEADLINE=$(( $(date +%s) + TIMEOUT ))
+
+give_up() {
+    echo "Error: $1 after ${TIMEOUT}s"
+    exit 1
+}
 
 # Check if service is available
 echo "Checking if service $SERVICE is available in namespace $K8S_NAMESPACE..."
 while ! kubectl get service "$SERVICE" --namespace="$K8S_NAMESPACE" >/dev/null 2>&1; do
+    [ "$(date +%s)" -lt "$DEADLINE" ] || give_up "service $SERVICE never appeared in namespace $K8S_NAMESPACE"
     echo "Service not found, waiting..."
     sleep 2
 done
@@ -84,6 +115,7 @@ while true; do
         echo "Service has ready endpoints"
         break
     fi
+    [ "$(date +%s)" -lt "$DEADLINE" ] || give_up "service $SERVICE never got a ready endpoint"
     echo "No ready endpoints found, waiting..."
     sleep 2
 done

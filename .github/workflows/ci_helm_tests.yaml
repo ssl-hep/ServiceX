@@ -23,9 +23,11 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.8.0
 
-      - name: add bitnami repos to helm
+      - name: add subchart repos to helm
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
 
       - name: Run chart-testing (list-changed)
         id: list-changed
