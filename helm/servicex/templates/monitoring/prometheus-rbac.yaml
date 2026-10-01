@@ -1,0 +1,44 @@
+{{- if and .Values.monitoring.enabled .Values.rbacEnabled (not .Values.prometheus.rbac.create) }}
+# The upstream prometheus chart only knows how to grant itself cluster-scoped
+# RBAC. ServiceX discovers targets in its own namespace only (see the
+# `own_namespace: true` service discovery under prometheus.scrapeConfigs in
+# values.yaml), so its RBAC is switched off and the server's ServiceAccount is
+# bound to a namespaced Role instead -- which keeps the chart installable by
+# someone who is not a cluster admin.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "servicex.prometheus.server" . }}
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+rules:
+# Exactly what the one enabled kubernetes_sd_config needs: `role: pod`.
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "servicex.prometheus.server" . }}
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: prometheus
+subjects:
+- kind: ServiceAccount
+  name: {{ default (include "servicex.prometheus.server" .) .Values.prometheus.serviceAccounts.server.name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "servicex.prometheus.server" . }}
+{{- end }}

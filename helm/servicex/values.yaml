@@ -347,6 +347,146 @@ minio:
   persistence:
     enabled: false
 noCerts: false
+
+monitoring:
+  enabled: false
+  appMetrics:
+    enabled: false
+  dashboards:
+    enabled: true
+  tracing:
+    enabled: false
+    sampleRatio: 1.0
+
+prometheus:
+  rbac:
+    create: false
+  serviceAccounts:
+    server:
+      create: true
+      name: ""
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  server:
+    name: server
+    retention: 7d
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+    service:
+      type: ClusterIP
+      servicePort: 9090
+    persistentVolume:
+      enabled: false
+      size: 10Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    podAnnotations: {}
+  scrapeConfigs:
+    kubernetes-api-servers:
+      enabled: false
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    kubernetes-service-endpoints:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
+    kubernetes-pods:
+      enabled: true
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            own_namespace: true
+
+grafana:
+  adminUser: admin
+  adminPassword: admin
+  rbac:
+    create: true
+    namespaced: true
+  service:
+    type: ClusterIP
+    port: 3000
+  persistence:
+    enabled: false
+    size: 5Gi
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      provider:
+        folder: ServiceX
+        disableDelete: true
+        allowUiUpdates: false
+  testFramework:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  grafana.ini:
+    analytics:
+      check_for_updates: false
+      reporting_enabled: false
+
+tempo:
+  tempo:
+    retention: 48h
+    reportingEnabled: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+    metricsGenerator:
+      enabled: false
+  persistence:
+    enabled: false
+    size: 10Gi
+  service:
+    type: ClusterIP
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+
 objectStore:
   enabled: true
   internal: true
@@ -358,6 +498,9 @@ postgres:
 postgresql:
   image:
     repository: bitnamilegacy/postgresql
+  metrics:
+    image:
+      repository: bitnamilegacy/postgres-exporter
   volumePermissions:
     image:
       repository: bitnamilegacy/os-shell

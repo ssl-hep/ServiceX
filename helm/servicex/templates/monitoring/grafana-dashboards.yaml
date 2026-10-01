@@ -1,0 +1,18 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.dashboards.enabled }}
+# Read by the grafana chart's dashboard sidecar (grafana.sidecar.dashboards),
+# which drops every key in here into the provisioning folder named by
+# grafana.sidecar.dashboards.provider.folder.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboards
+  labels:
+    app: {{ template "servicex.name" . }}
+    chart: {{ template "servicex.chart" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: grafana
+    {{ .Values.grafana.sidecar.dashboards.label }}: {{ .Values.grafana.sidecar.dashboards.labelValue | default "1" | quote }}
+data:
+{{ (.Files.Glob "dashboards/*.json").AsConfig | indent 2 }}
+{{- end }}

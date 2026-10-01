@@ -1,0 +1,11 @@
+{{/*
+Guards for value combinations a subchart `condition:` cannot express -- a
+condition is a single boolean path, so "Tempo only when monitoring is on too"
+has to be checked here. Renders no object.
+*/}}
+{{- if and .Values.monitoring.tracing.enabled (not .Values.monitoring.enabled) }}
+{{- fail "monitoring.tracing.enabled requires monitoring.enabled: Tempo would be installed with no Grafana to query it." }}
+{{- end }}
+{{- if and .Values.monitoring.enabled (not .Values.rbacEnabled) (not .Values.prometheus.rbac.create) }}
+{{- fail "monitoring.enabled needs either rbacEnabled (the namespaced Role this chart ships, the default) or prometheus.rbac.create (the upstream ClusterRole); without one Prometheus cannot discover any pods to scrape." }}
+{{- end }}

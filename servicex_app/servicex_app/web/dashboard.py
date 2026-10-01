@@ -42,6 +42,7 @@ def dashboard(template_name: str, user_specific=False):
     pagination = query.order_by(sort_order).paginate(
         page=args["page"], per_page=15, error_out=False
     )
+    raise Exception("broke")
     return render_template(
         template_name,
         pagination=pagination,

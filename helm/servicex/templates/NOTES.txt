@@ -75,3 +75,21 @@ Log in with
 {{ end }}
 
 {{ end }}
+
+{{ if .Values.monitoring.enabled }}
+Monitoring is enabled. Grafana is provisioned with the bundled Prometheus{{ if .Values.monitoring.tracing.enabled }} and
+Tempo{{ end }} as datasources, and with the "ServiceX App" dashboard.
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-grafana 3000:{{ .Values.grafana.service.port }}
+
+and then visit http://localhost:3000
+{{ if .Values.secrets }}
+Log in with the Grafana admin credentials you configured.
+{{ else }}
+Log in with
+    username: {{ .Values.grafana.adminUser }}
+    password: {{ .Values.grafana.adminPassword }}
+{{ end }}
+Prometheus itself is at svc/{{ include "servicex.prometheus.server" . }}:{{ .Values.prometheus.server.service.servicePort }}{{ if .Values.monitoring.tracing.enabled }}
+and Tempo at svc/{{ include "servicex.tempo.fullname" . }}:{{ .Values.tempo.tempo.server.http_listen_port | default 3200 }}{{ end }}.
+{{ end }}

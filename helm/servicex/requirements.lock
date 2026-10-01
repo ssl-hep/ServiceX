@@ -8,5 +8,14 @@ dependencies:
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami/
   version: 11.9.13
-digest: sha256:89088cda84e9c968cd177a4ec4a986969db95dff2293a3efc51dcf24bbb2b7f8
-generated: "2025-08-22T10:22:33.266158-05:00"
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 29.35.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 10.5.15
+- name: tempo
+  repository: https://grafana.github.io/helm-charts
+  version: 1.24.4
+digest: sha256:3f8a9ec5a7b35d74a619ebb514168954e509f682a4f329cfa6fa25fef720a0a9
+generated: "2026-09-30T15:18:02.277712-05:00"
