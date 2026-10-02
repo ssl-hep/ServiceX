@@ -38,6 +38,15 @@ class TestSecureAdminIndexView(WebTestBase):
         model_view_names = [v["name"] for v in contexts[0]["model_views"]]
         assert "User" in model_view_names
 
+    def test_report_index_returns_200_for_admin(self, admin_client):
+        response = admin_client.get("/report/")
+        assert response.status_code == 200
+
+    def test_report_index_redirects_anonymous_user(self):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        response = client.get("/report/")
+        assert response.status_code == 302
+
     def test_index_includes_report_views(self, admin_client, captured):
         admin_client.get("/admin/")
         contexts = [ctx for _, ctx in captured if "report_views" in ctx]

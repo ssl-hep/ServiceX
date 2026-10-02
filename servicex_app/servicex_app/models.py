@@ -97,7 +97,6 @@ class UserModel(db.Model):
     @classmethod
     def find_by_id(cls, user_id) -> Optional["UserModel"]:
         return db.session.get(cls, user_id)
-        # return cls.query.get(user_id)
 
     @classmethod
     def return_all(cls):
@@ -288,12 +287,9 @@ class TransformRequest(db.Model):
         :param dataset_id: dataset id. Must be an integer.
         :return result: list of TransformRequests, or empty list if not found.
         """
-        try:
-            return cls.query.filter(
-                (cls.status == TransformStatus.lookup) & (cls.did_id == dataset_id)
-            ).all()
-        except NoResultFound:
-            return []
+        return cls.query.filter(
+            (cls.status == TransformStatus.lookup) & (cls.did_id == dataset_id)
+        ).all()
 
     @classmethod
     def lookup_pending_on_dataset(cls, dataset_id: int) -> list[TransformRequest]:
@@ -303,13 +299,9 @@ class TransformRequest(db.Model):
         :param dataset_id: dataset id. Must be an integer.
         :return result: list of TransformRequests, or empty list if not found.
         """
-        try:
-            return cls.query.filter(
-                (cls.status == TransformStatus.pending_lookup)
-                & (cls.did_id == dataset_id)
-            ).all()
-        except NoResultFound:
-            return []
+        return cls.query.filter(
+            (cls.status == TransformStatus.pending_lookup) & (cls.did_id == dataset_id)
+        ).all()
 
     @property
     def age(self) -> timedelta:
@@ -541,22 +533,22 @@ class Dataset(db.Model):
         return cls.query.filter_by(name=name, stale=False).with_for_update().first()
 
     @classmethod
-    def find_by_id(cls, id) -> Optional["Dataset"]:
-        return cls.query.get(id)
+    def find_by_id(cls, id) -> Dataset | None:
+        return db.session.get(cls, id)
 
     @classmethod
-    def get_by_did_finder(cls, did_finder, show_deleted: bool = False) -> List[Dataset]:
+    def get_by_did_finder(cls, did_finder, show_deleted: bool = False) -> list[Dataset]:
         if show_deleted:
-            return cls.query.filter_by(did_finder=did_finder)
+            return cls.query.filter_by(did_finder=did_finder).all()
         else:
-            return cls.query.filter_by(did_finder=did_finder, stale=False)
+            return cls.query.filter_by(did_finder=did_finder, stale=False).all()
 
     @classmethod
-    def get_all(cls, show_deleted: bool = False) -> List[Dataset]:
+    def get_all(cls, show_deleted: bool = False) -> list[Dataset]:
         if show_deleted:
             return cls.query.all()
         else:
-            return cls.query.filter_by(stale=False)
+            return cls.query.filter_by(stale=False).all()
 
     @classmethod
     def delete_dataset(cls, dataset_id) -> Optional[bool]:

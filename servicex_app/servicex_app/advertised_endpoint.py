@@ -1,4 +1,4 @@
-# Copyright (c) 2025, IRIS-HEP
+# Copyright (c) 2026, IRIS-HEP
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,23 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
 
-# configuration options for server task celery workers
+from flask import current_app, has_app_context
 
-from servicex_app.celery_task_router import route_task
 
-# retry RabbitMQ connections forever
-broker_connection_max_retries = None
+def advertised_endpoint(endpoint: str = "") -> str:
+    """
+    URL of this ServiceX app, as advertised to transformers and DID finders.
 
-task_routes = (route_task,)
+    Inside a Flask app context (the web app) the hostname comes from the
+    ADVERTISED_HOSTNAME config value. Celery workers run outside of an app
+    context, so they derive it from the INSTANCE_NAME environment variable, as
+    they did before. The Helm chart sets both to the same host; in local
+    development only the web app honours ADVERTISED_HOSTNAME.
+    """
+    if has_app_context():
+        hostname = current_app.config["ADVERTISED_HOSTNAME"]
+    else:
+        hostname = f"{os.environ['INSTANCE_NAME']}-servicex-app:8000"
+    return f"http://{hostname}/{endpoint}"
