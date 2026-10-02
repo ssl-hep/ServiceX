@@ -81,3 +81,20 @@ class TestDatasetLifecycle(ResourceTestBase):
                 fake_dataset_list.assert_called_once()
                 deletion_obj.assert_called_once()
                 assert response.status_code == 200
+
+    def test_deletion_purges_logs(self, fake_dataset_list, client, mocker):
+        """Obsoleting a dataset takes its DID finder log records with it."""
+        mock_purge = mocker.patch("servicex_app.models.LogMessage.delete_by_dataset_id")
+        obsolete_dataset = fake_dataset_list.return_value[0]
+        mocker.patch(
+            "servicex_app.models.Dataset.find_by_id", return_value=obsolete_dataset
+        )
+        obsolete_dataset.save_to_db = mocker.Mock()
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/internal/dataset-lifecycle", json={"age": 24}
+            )
+            assert response.status_code == 200
+            mock_purge.assert_called_once_with(obsolete_dataset.id)
+            assert obsolete_dataset.stale
