@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from flask import current_app, request
-from servicex_app.models import TransformRequest, db
+from servicex_app.models import TransformRequest, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 
@@ -23,11 +23,15 @@ class TransformationStatusInternal(ServiceXResource):
             )
 
             submitted_request = TransformRequest.lookup(request_id)
-            submitted_request.status = "Fatal"
+            if not submitted_request:
+                msg = f"Transformation request not found with id: {request_id}"
+                current_app.logger.error(msg, extra={"request_id": request_id})
+                return {"message": msg}, 404
+
+            submitted_request.status = TransformStatus.fatal
             submitted_request.finish_time = datetime.now(tz=timezone.utc)
             submitted_request.failure_description = status["info"]
             submitted_request.save_to_db()
-            db.session.commit()
         else:
             current_app.logger.info(
                 "Transformation Status Update",
