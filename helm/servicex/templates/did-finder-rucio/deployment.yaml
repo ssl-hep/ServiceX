@@ -54,10 +54,8 @@ spec:
           - name: BROKER_URL
             value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
           {{- end }}
-          {{- if .Values.didFinder.rucio.reportLogicalFiles }}
           - name: REPORT_LOGICAL_FILES
-            value: "--report-logical-files"
-          {{- end }}
+            value: {{ .Values.didFinder.rucio.reportLogicalFiles | quote }}
           - name: RUCIO_LATITUDE
             value: "{{ .Values.didFinder.rucio.servicex_latitude }}"
           - name: RUCIO_LONGITUDE
