@@ -65,7 +65,7 @@ class RucioAdapter:
                 response = requests.post(
                     "https://location.cern.workers.dev",
                     json={"site": "servicex"},
-                    timeout=1.5,
+                    timeout=1,
                 )
                 if (
                     response.status_code == 200
