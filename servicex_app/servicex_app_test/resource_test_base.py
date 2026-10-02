@@ -163,6 +163,7 @@ class ResourceTestBase:
         transform_request.image = "sslhep/foo:latest"
         transform_request.result_format = "arrow"
         transform_request.result_destination = "object-store"
+        transform_request.output_path = "BR549"
         transform_request.total_events = 10000
         transform_request.total_bytes = 1203
         transform_request.files = 1
