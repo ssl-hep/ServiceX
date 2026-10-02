@@ -108,7 +108,7 @@ class ServiceXAdapter:
                 retry_call(
                     self.session.put,
                     fargs=[self.server_endpoint + "/file-complete"],
-                    fkwargs={"json": rec.to_json(), "timeout": (0.5, None)},
+                    fkwargs={"json": rec.to_json(), "timeout": (1.5, None)},
                     tries=MAX_RETRIES,
                     delay=RETRY_DELAY,
                 )
