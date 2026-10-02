@@ -52,6 +52,68 @@ def test_aod_stats():
         os.remove(test_logfile_path)
 
 
+def test_aod_stats_large_file():
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
+        test_logfile_path = Path(fp.name)
+        fp.write(
+            "Package.EventLoop        INFO    created submission directory "
+            "/home/atlas/rel/build/bogus\n"
+            "Package.EventLoop        INFO    submitting job in "
+            "/home/atlas/rel/build/bogus\n"
+            "Package.EventLoop        INFO    Running sample: ANALYSIS\n"
+            "Package.EventLoop        INFO    xAODInput = 1\n"
+            "Package.EventLoop        INFO    calling firstInitialize on all modules\n"
+            "Package.EventLoop        INFO    calling preFileInitialize on all modules\n"
+            "Package.EventLoop        INFO    Opening file "
+            "root://example/DAOD_PHYSLITE.pool.root.1\n"
+            "Package.EventLoop        INFO    Processing events 0-213934 in file "
+            "root://example/DAOD_PHYSLITE.pool.root.1\n"
+            "Package.EventLoop        INFO    Processed 10000 events\n"
+            "Package.EventLoop        INFO    Processed 20000 events\n"
+            "Package.EventLoop        INFO    Processed 100000 events\n"
+            "Package.EventLoop        INFO    Processed 200000 events\n"
+            "Package.EventLoop        INFO    Processed 210000 events\n"
+            "LeakCheckModule          INFO    Memory increase/change during the job:\n"
+            "Package.EventLoop        INFO    worker finished successfully\n"
+            "Package.EventLoop        INFO    done\n"
+        )
+        fp.close()
+        aod_stats = AODStats(test_logfile_path)
+        assert aod_stats.total_events == 213934
+        os.remove(test_logfile_path)
+
+
+def test_aod_stats_small_file():
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
+        test_logfile_path = Path(fp.name)
+        fp.write(
+            "Package.EventLoop        INFO    Opening file "
+            "root://example/DAOD_PHYSLITE.pool.root.1\n"
+            "Package.EventLoop        INFO    Processing events 0-11860 in file "
+            "root://example/DAOD_PHYSLITE.pool.root.1\n"
+            "Package.EventLoop        INFO    Processed 10000 events\n"
+            "Package.EventLoop        INFO    worker finished successfully\n"
+        )
+        fp.close()
+        aod_stats = AODStats(test_logfile_path)
+        assert aod_stats.total_events == 11860
+        os.remove(test_logfile_path)
+
+
+def test_aod_stats_fallback_progress_markers_only():
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
+        test_logfile_path = Path(fp.name)
+        fp.write(
+            "Package.EventLoop        INFO    Processed 10000 events\n"
+            "Package.EventLoop        INFO    Processed 20000 events\n"
+            "Package.EventLoop        INFO    Processed 30000 events\n"
+        )
+        fp.close()
+        aod_stats = AODStats(test_logfile_path)
+        assert aod_stats.total_events == 30000
+        os.remove(test_logfile_path)
+
+
 def test_bad_property():
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as fp:
         test_logfile_path = Path(fp.name)
