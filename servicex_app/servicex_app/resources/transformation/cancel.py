@@ -66,6 +66,10 @@ class CancelTransform(ServiceXResource):
             current_app.logger.warning(msg, extra={"request_id": request_id})
             return {"message": msg}, 400
 
+        user = self.get_requesting_user()
+        if user and (not user.admin and user.id != transform_req.submitted_by):
+            return {"message": "You are not authorized to cancel this request"}, 403
+
         try:
             self.transformer_manager.cancel_transform(transform_req)
         except kubernetes.client.exceptions.ApiException as exc:

@@ -107,3 +107,38 @@ class TestTransformCancel(ResourceTestBase):
         resp = getattr(client, http_method)(URL)
         assert resp.status_code == 404
         assert "Transformation request not found" in resp.json["message"]
+
+    @pytest.mark.parametrize(
+        "user_id, submitter_id, is_admin, expected_status",
+        [
+            (42, 42, False, 200),  # Submitting user wants to cancel their own request
+            (42, 42, True, 200),  # Admin wants to cancel their own request
+            (42, 43, True, 200),  # Admin wants to cancel someone else's request
+            (42, 43, False, 403),  # User tries to cancel someone else's request
+        ],
+    )
+    def test_cancel_auth(
+        self,
+        user_id,
+        submitter_id,
+        is_admin,
+        expected_status,
+        fake_transform,
+        mock_transform_manager,
+        mock_jwt_extended,
+        mock_requesting_user,
+    ):
+        fake_transform.submitted_by = submitter_id
+        fake_transform.status = TransformStatus.running
+        client = self._test_client(
+            extra_config={"ENABLE_AUTH": True},
+            transformation_manager=mock_transform_manager,
+        )
+        with client.application.app_context():
+            mock_requesting_user.id = user_id
+            mock_requesting_user.admin = is_admin
+
+            resp = client.get(URL, headers=self.fake_header())
+            assert resp.status_code == expected_status
+            if expected_status == 403:
+                assert resp.json["message"] == "You are not authorized to cancel this request"

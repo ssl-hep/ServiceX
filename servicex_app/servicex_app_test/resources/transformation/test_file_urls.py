@@ -28,6 +28,7 @@
 from datetime import datetime
 from unittest.mock import patch, PropertyMock
 from freezegun import freeze_time
+import pytest
 
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -88,3 +89,45 @@ class TestFileURLGenerator(ResourceTestBase):
         )
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")
+
+    @pytest.mark.parametrize(
+        "user_id, submitter_id, is_admin, expected_status",
+        [
+            (42, 42, False, 200),  # Submitting user wants to access their own request
+            (42, 42, True, 200),  # Admin wants to access their own request
+            (42, 43, True, 200),  # Admin wants to access someone else's request
+            (42, 43, False, 403),  # User tries to access someone else's request
+        ],
+    )
+    def test_file_urls_auth(
+        self,
+        user_id,
+        submitter_id,
+        is_admin,
+        expected_status,
+        mocker,
+        mock_jwt_extended,
+        mock_requesting_user,
+    ):
+        fake_transform = self._generate_transform_request()
+        fake_transform.submitted_by = submitter_id
+        mocker.patch(
+            "servicex_app.models.TransformRequest.lookup", return_value=fake_transform
+        )
+        mocker.patch(
+            "servicex_app.models.TransformRequest.statistics",
+            new_callable=PropertyMock,
+            return_value={},
+        )
+
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            mock_requesting_user.id = user_id
+            mock_requesting_user.admin = is_admin
+
+            response = client.post(
+                "/servicex/transformation/file-urls",
+                headers=self.fake_header(),
+                json={"request_id": 1234, "file_list": ["abc"]},
+            )
+            assert response.status_code == expected_status

@@ -44,6 +44,11 @@ class AllTransformationRequests(ServiceXResource):
     def get(self):
         args = parser.parse_args()
         query_id = args.get("submitted_by")
+        user = self.get_requesting_user()
+
+        if user and not user.admin:
+            query_id = user.id
+
         transforms: List[TransformRequest]
         if query_id:
             current_app.logger.debug(f"Querying transform request by id: {query_id}")

@@ -69,14 +69,18 @@ class FileURLGeneratorInsecure(ServiceXResource):
 
         args = parser.parse_args()
         request_id = args["request_id"]
-        # Validate that the user is an admin or submitted the request (not yet implemented)
+        # Validate that the user is an admin or submitted the request
         transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f"Transformation request not found with id: {request_id}"
             current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
 
-        expirydelta = 365 * 24 * 60 * 60
+        user = self.get_requesting_user()
+        if user and (not user.admin and user.id != transform.submitted_by):
+            return {"message": "You are not authorized to access this request"}, 403
+
+        expirydelta = current_app.config.get("FILE_URL_EXPIRY_SECONDS", 365 * 24 * 60 * 60)
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
         # Add branches for other backends when relevant
