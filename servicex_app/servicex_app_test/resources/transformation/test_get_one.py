@@ -99,4 +99,7 @@ class TestTransformationRequest(ResourceTestBase):
                 assert response.status_code == expected_status
                 if expected_status == 403:
                     assert "minio-access-key" not in response.json
-                    assert response.json["message"] == "You are not authorized to access this request"
+                    assert (
+                        response.json["message"]
+                        == "You are not authorized to access this request"
+                    )

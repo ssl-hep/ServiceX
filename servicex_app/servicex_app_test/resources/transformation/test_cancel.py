@@ -141,4 +141,7 @@ class TestTransformCancel(ResourceTestBase):
             resp = client.get(URL, headers=self.fake_header())
             assert resp.status_code == expected_status
             if expected_status == 403:
-                assert resp.json["message"] == "You are not authorized to cancel this request"
+                assert (
+                    resp.json["message"]
+                    == "You are not authorized to cancel this request"
+                )

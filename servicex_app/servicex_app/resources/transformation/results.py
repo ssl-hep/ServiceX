@@ -51,7 +51,11 @@ class TransformationResultsSecure(TransformationResultsInsecure):
         if user:
             transform = TransformRequest.lookup(request_id)
             if not transform:
-                return {"message": f"Transformation request not found with id: {request_id}"}, 404
+                return {
+                    "message": f"Transformation request not found with id: {request_id}"
+                }, 404
             if not user.admin and user.id != transform.submitted_by:
-                return {"message": "You are not authorized to access results for this request"}, 403
+                return {
+                    "message": "You are not authorized to access results for this request"
+                }, 403
         return super().get(request_id)

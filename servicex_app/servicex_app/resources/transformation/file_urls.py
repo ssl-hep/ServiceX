@@ -80,7 +80,9 @@ class FileURLGeneratorInsecure(ServiceXResource):
         if user and (not user.admin and user.id != transform.submitted_by):
             return {"message": "You are not authorized to access this request"}, 403
 
-        expirydelta = current_app.config.get("FILE_URL_EXPIRY_SECONDS", 365 * 24 * 60 * 60)
+        expirydelta = current_app.config.get(
+            "FILE_URL_EXPIRY_SECONDS", 365 * 24 * 60 * 60
+        )
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
         # Add branches for other backends when relevant
