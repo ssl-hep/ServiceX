@@ -683,7 +683,7 @@ def prepend_xcache(file_paths: list[str]) -> list[str]:
 
         # Construct the path
         prefixed_paths.append(f"root://{prefix_list[pinned_xcache_index]}//{f}")
-    return prefixed_paths + list(file_paths)
+    return prefixed_paths
 
 
 @after_setup_logger.connect

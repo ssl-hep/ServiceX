@@ -229,7 +229,7 @@ didFinder:
   CERNOpenData:
     enabled: true
     image: sslhep/servicex-did-finder-cernopendata
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     tag: develop
     resources:
       requests:
