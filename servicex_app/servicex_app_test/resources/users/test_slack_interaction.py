@@ -95,7 +95,7 @@ class TestSlackInteraction(ResourceTestBase):
             from servicex_app.web.slack_msg_builder import missing_slack_app
 
             mock_post.assert_called_once_with(
-                payload["response_url"], missing_slack_app(), timeout=(0.5, None)
+                payload["response_url"], missing_slack_app(), timeout=(1.5, None)
             )
 
     def test_slack_interaction_expired(self, mocker):
@@ -112,7 +112,7 @@ class TestSlackInteraction(ResourceTestBase):
             from servicex_app.web.slack_msg_builder import request_expired
 
             mock_post.assert_called_once_with(
-                payload["response_url"], request_expired(), timeout=(0.5, None)
+                payload["response_url"], request_expired(), timeout=(1.5, None)
             )
 
     def test_slack_interaction_invalid(self, mocker):
@@ -129,7 +129,7 @@ class TestSlackInteraction(ResourceTestBase):
             from servicex_app.web.slack_msg_builder import verification_failed
 
             mock_post.assert_called_once_with(
-                payload["response_url"], verification_failed(), timeout=(0.5, None)
+                payload["response_url"], verification_failed(), timeout=(1.5, None)
             )
 
     def test_slack_interaction_accept_user(self, mocker):
@@ -162,5 +162,5 @@ class TestSlackInteraction(ResourceTestBase):
 
             resp = signup_ia(payload["message"], payload["user"], "accept_user")
             mock_post.assert_called_once_with(
-                payload["response_url"], resp, timeout=(0.5, None)
+                payload["response_url"], resp, timeout=(1.5, None)
             )
