@@ -12,7 +12,7 @@ repos:
         exclude: ^transformer_sidecar/tests/sandbox/
       - id: trailing-whitespace
   - repo: https://github.com/pycqa/flake8
-    rev: "7.3.0"
+    rev: "7.4.1"
     hooks:
       - id: flake8
   - repo: local
@@ -27,7 +27,7 @@ repos:
           # To also require extra= on every log call, uncomment:
           # - --require-extras
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.5.1
+    rev: 26.10.0
     hooks:
       -   id: black
 
