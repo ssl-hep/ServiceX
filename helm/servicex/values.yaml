@@ -404,10 +404,16 @@ transformer:
   cacheVPSLivenessURL: https://vps.cern.ch/liveness
 
 
-  # Maximum number of transformer pods k8s will run in parallel per request.
-  # Once the file count is known, the Job requests min(files, maxReplicas).
+  # Max number of transformer pods k8s will run in parallel per request
   maxReplicas: 20
+  # Number of pods the transformer Job starts with
   initialReplicas: 1
+  # How many times k8s will retry a failing transformer pod before giving up
+  backoffLimit: 4
+  # How often a transformer Job asks whether there is still work left.
+  shutdownPollIntervalSec: 30
+  # How long a transformer must idle before it shuts itself down
+  shutdownIdleSec: 60
   cpuLimit: 1
   memoryLimit: 2Gi
   cpuRequest: 500m

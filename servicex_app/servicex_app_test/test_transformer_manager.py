@@ -1072,6 +1072,77 @@ class TestTransformerManager(ResourceTestBase):
             container = called_job.spec.template.spec.containers[0]
             assert _env_value(container.env, "INSTANCE_NAME") == "rolling-snail"
 
+    def _launch_and_get_job(self, transformer, mock_batch_api):
+        transformer.launch_transformer_jobs(
+            image="sslhep/servicex-transformer:pytest",
+            request_id="1234",
+            workers=17,
+            rabbitmq_uri="ampq://test.com",
+            namespace="my-ns",
+            result_destination="object-store",
+            result_format="arrow",
+            x509_secret="x509",
+            generated_code_cm=None,
+            transformer_language="scala",
+            transformer_command="echo",
+        )
+        return mock_batch_api.return_value.create_namespaced_job.call_args.kwargs[
+            "body"
+        ]
+
+    def test_shutdown_watchdog_tuning_from_config(self, mocker):
+        """
+        The watchdog's poll interval and idle threshold are chart values, so they
+        have to reach the pod as env vars for an operator's setting to take.
+        """
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_batch_api = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC=5,
+                TRANSFORMER_SHUTDOWN_IDLE_SEC=15,
+                TRANSFORMER_BACKOFF_LIMIT=2,
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            called_job = self._launch_and_get_job(transformer, mock_batch_api)
+            container = called_job.spec.template.spec.containers[0]
+            assert _env_value(container.env, "SHUTDOWN_POLL_INTERVAL_SEC") == "5"
+            assert _env_value(container.env, "SHUTDOWN_IDLE_SEC") == "15"
+            assert called_job.spec.backoff_limit == 2
+
+    def test_shutdown_watchdog_tuning_defaults(self, mocker):
+        """
+        Deployments whose config predates these keys still get sane values
+        rather than an unset env var the sidecar would have to guess at.
+        """
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_batch_api = mocker.patch.object(kubernetes.client, "BatchV1Api")
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(), transformation_manager=transformer
+        )
+
+        with client.application.app_context():
+            called_job = self._launch_and_get_job(transformer, mock_batch_api)
+            container = called_job.spec.template.spec.containers[0]
+            assert _env_value(container.env, "SHUTDOWN_POLL_INTERVAL_SEC") == "30"
+            assert _env_value(container.env, "SHUTDOWN_IDLE_SEC") == "60"
+            assert called_job.spec.backoff_limit == 4
+
     def test_mount_local_in_dev(self, mocker):
         """
         A dev deployment with mountLocal bind-mounts the sidecar source so code

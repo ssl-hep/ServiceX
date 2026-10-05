@@ -51,6 +51,17 @@ TRANSFORMER_MANAGER_ENABLED = True
 # Maximum number of transformer pods (parallelism) to run in parallel
 TRANSFORMER_MAX_REPLICAS = 20
 
+# Parallelism the transformer Job starts with, before the file count is known
+TRANSFORMER_INITIAL_REPLICAS = 1
+
+# How many times k8s retries a failing transformer pod before failing the Job
+TRANSFORMER_BACKOFF_LIMIT = 4
+
+# How often a transformer checks for remaining work
+TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC = 30
+# How long a transformer must be idle before it may shut itself down
+TRANSFORMER_SHUTDOWN_IDLE_SEC = 60
+
 # Use one core per transformer
 TRANSFORMER_CPU_LIMIT = 1
 # Use 2GB per transformer

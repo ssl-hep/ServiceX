@@ -269,6 +269,15 @@ class TransformerManager:
             )
             env = env + [env_var_instance_name]
 
+        poll_interval = current_app.config.get(
+            "TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC", 30
+        )
+        idle_seconds = current_app.config.get("TRANSFORMER_SHUTDOWN_IDLE_SEC", 60)
+        env += [
+            client.V1EnvVar("SHUTDOWN_POLL_INTERVAL_SEC", value=str(poll_interval)),
+            client.V1EnvVar("SHUTDOWN_IDLE_SEC", value=str(idle_seconds)),
+        ]
+
         # provide each pod with an environment var holding cache prefix path
         if (
             "TRANSFORMER_CACHE_PREFIX" in current_app.config
