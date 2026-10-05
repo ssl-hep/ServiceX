@@ -341,7 +341,8 @@ A DID finder row only carries a `dataset_id` if its call site passed one in `ext
 lines from celery, kombu and rucio therefore land unattributed.
 
 Two caveats worth knowing. Science log lines are unstructured, so their severity is a
-keyword guess and their timestamp is Vector's ingest time rather than the science program's.
+keyword guess (`DEBUG` by default, `ERROR` if the line looks like an error or traceback)
+and their timestamp is Vector's ingest time rather than the science program's.
 And `watch.sh`'s own `echo` output is not tee'd — only the transform command's output is —
 so those lines stay in `kubectl logs` only; the sidecar separately logs hard failures with
 the captured output in `extra.log_body`.
