@@ -67,7 +67,7 @@ def add_routes(
     from servicex_app.resources.transformation.cancel_all import CancelAllTransforms
     from servicex_app.resources.transformation.get_all import AllTransformationRequests
     from servicex_app.resources.transformation.get_one import TransformationRequest
-    from servicex_app.resources.transformation.deployment import DeploymentStatus
+    from servicex_app.resources.transformation.job_status import TransformerJobStatus
     from servicex_app.resources.transformation.results import (
         TransformationResultsInsecure,
         TransformationResultsSecure,
@@ -178,8 +178,8 @@ def add_routes(
 
     api.add_resource(TransformationStatus, prefix + "/status")
 
-    DeploymentStatus.make_api(transformer_manager)
-    api.add_resource(DeploymentStatus, prefix + "/deployment-status")
+    TransformerJobStatus.make_api(transformer_manager)
+    api.add_resource(TransformerJobStatus, prefix + "/job-status")
 
     CancelTransform.make_api(transformer_manager)
     api.add_resource(CancelTransform, prefix + "/cancel")

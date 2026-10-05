@@ -707,7 +707,7 @@ class TestTransformerManager(ResourceTestBase):
         assert calls[1]["namespace"] == "servicex"
         assert calls[1]["body"].metadata.name == "my-request-generated-source"
 
-    def test_get_deployment_status(self, mocker, mock_kubernetes):
+    def test_get_transformer_job_status(self, mocker, mock_kubernetes):
         mock_api = mock_kubernetes.client.BatchV1Api.return_value
         mock_job_list = mocker.MagicMock(name="mock_job_list")
         mock_api.list_namespaced_job.return_value = mock_job_list
@@ -724,10 +724,10 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         with client.application.app_context():
-            status = transformer_manager.get_deployment_status("1234")
+            status = transformer_manager.get_transformer_job_status("1234")
             assert status == mock_job.status
 
-    def test_get_deployment_status_404(self, mocker, mock_kubernetes):
+    def test_get_transformer_job_status_404(self, mocker, mock_kubernetes):
         mock_api = mock_kubernetes.client.BatchV1Api.return_value
         mock_job_list = mocker.MagicMock(name="mock_job_list")
         mock_api.list_namespaced_job.return_value = mock_job_list
@@ -743,7 +743,7 @@ class TestTransformerManager(ResourceTestBase):
         )
 
         with client.application.app_context():
-            status = transformer_manager.get_deployment_status("1234")
+            status = transformer_manager.get_transformer_job_status("1234")
             assert status is None
 
     def test_persistent_claim_exists(self, mock_kubernetes, mocker):

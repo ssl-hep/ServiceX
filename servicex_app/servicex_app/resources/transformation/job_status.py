@@ -5,7 +5,7 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 from servicex_app.transformer_manager import TransformerManager
 
 
-class DeploymentStatus(ServiceXResource):
+class TransformerJobStatus(ServiceXResource):
     @classmethod
     def make_api(cls, transformer_manager: TransformerManager):
         cls.transformer_manager = transformer_manager
@@ -16,7 +16,7 @@ class DeploymentStatus(ServiceXResource):
         Returns information about the transformer Job for a given request.
         :param request_id: UUID of transformation request.
         """
-        status = self.transformer_manager.get_deployment_status(request_id)
+        status = self.transformer_manager.get_transformer_job_status(request_id)
         if status is None:
             msg = f"Transformer Job not found: '{request_id}'"
             current_app.logger.error(msg, extra={"request_id": request_id})

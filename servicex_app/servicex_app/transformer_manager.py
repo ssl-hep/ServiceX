@@ -683,7 +683,7 @@ class TransformerManager:
             return False
 
     @staticmethod
-    def get_deployment_status(
+    def get_transformer_job_status(
         request_id: str,
     ) -> Optional[kubernetes.client.models.v1_job_status.V1JobStatus]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
