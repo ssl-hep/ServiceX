@@ -1,32 +1,32 @@
 ---
-{{ if .Values.didFinder.xrootd.enabled}}
+{{ if .Values.didFinder.servicex.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-did-finder-xrootd
+  name: {{ .Release.Name }}-did-finder-servicex
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-did-finder-xrootd
+      app: {{ .Release.Name }}-did-finder-servicex
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-did-finder-xrootd
-      {{- with .Values.didFinder.xrootd.podAnnotations }}
+        app: {{ .Release.Name }}-did-finder-servicex
+      {{- with .Values.didFinder.servicex.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.didFinder.xrootd.nodeSelector }}
+      {{- with .Values.didFinder.servicex.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.didFinder.xrootd.affinity }}
+      {{- with .Values.didFinder.servicex.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.didFinder.xrootd.tolerations }}
+      {{- with .Values.didFinder.servicex.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -37,16 +37,18 @@ spec:
           - name: URL
             value: "http://{{ .Release.Name }}-servicex-app:8000"
       containers:
-      - name: {{ .Release.Name }}-did-finder-xrootd
-        image: {{ .Values.didFinder.xrootd.image }}:{{ .Values.didFinder.xrootd.tag }}
-        imagePullPolicy: {{ .Values.didFinder.xrootd.pullPolicy }}
-        {{- if .Values.didFinder.xrootd.resources }}
+      - name: {{ .Release.Name }}-did-finder-servicex
+        image: {{ .Values.didFinder.servicex.image }}:{{ .Values.didFinder.servicex.tag }}
+        imagePullPolicy: {{ .Values.didFinder.servicex.pullPolicy }}
+        {{- if .Values.didFinder.servicex.resources }}
         resources:
-{{ toYaml .Values.didFinder.xrootd.resources | indent 10 }}
+{{ toYaml .Values.didFinder.servicex.resources | indent 10 }}
         {{- end }}
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+          - name: SERVICEX_ENDPOINT
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
         {{- if .Values.secrets }}
           - name: RMQ_PASS
             valueFrom:
@@ -65,17 +67,4 @@ spec:
           - name: LOGSTASH_PORT
             value: "{{ .Values.logging.logstash.port }}"
         {{- end }}
-        {{ if not .Values.noCerts}}
-        volumeMounts:
-          - name: x509-secret
-            mountPath: /etc/grid-security-ro
-            readOnly: true
-        {{- end }}
-      {{ if not .Values.noCerts}}
-      volumes:
-        - name: x509-secret
-          secret:
-            defaultMode: 292
-            secretName: x509-proxy
-      {{- end }}
 {{ end }}

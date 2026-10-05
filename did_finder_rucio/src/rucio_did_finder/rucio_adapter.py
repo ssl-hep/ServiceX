@@ -65,7 +65,7 @@ class RucioAdapter:
                 response = requests.post(
                     "https://location.cern.workers.dev",
                     json={"site": "servicex"},
-                    timeout=1,
+                    timeout=(1.5, None),
                 )
                 if (
                     response.status_code == 200
@@ -158,7 +158,12 @@ class RucioAdapter:
                 return cks["#text"]
         return None
 
-    def list_files_for_did(self, did):
+    def list_files_for_did(
+        self,
+        did,
+        rse_expression,
+        ignore_availability=False,
+    ):
         """
         from rucio, gets list of file replicas in metalink xml,
         parses it, and returns a sorted list of all possible paths,
@@ -177,8 +182,8 @@ class RucioAdapter:
                     schemes=["davs", "root", "http", "https"],
                     metalink=True,
                     sort="geoip",
-                    rse_expression=r"istape=False&(*\type=SPECIAL|cloud=CERN)",
-                    ignore_availability=False,
+                    rse_expression=rse_expression,
+                    ignore_availability=ignore_availability,
                     client_location=self.client_location(),
                 )
                 d = xmltodict.parse(reps)
