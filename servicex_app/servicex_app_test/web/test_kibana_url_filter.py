@@ -47,7 +47,7 @@ class TestAddRequestIdFilter:
     def test_includes_app_state_filter(self):
         result = filter_kibana_url(self.EXAMPLE_URL, "abc-123", log_level="INFO")
         assert "_a=" in result
-        assert "requestId" in result
+        assert "request_id" in result
 
     def test_preserves_time_range(self):
         result = filter_kibana_url(self.EXAMPLE_URL, "abc-123", log_level="INFO")
