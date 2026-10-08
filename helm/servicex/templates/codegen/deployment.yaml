@@ -41,7 +41,7 @@ spec:
         - name: TRANSFORMER_SCIENCE_IMAGE
           value: {{ .defaultScienceContainerImage }}:{{ .defaultScienceContainerTag }}
         {{- $compressionAlgorithm := .compressionAlgorithm | default "ZSTD" }}
-        {{- $compressionLevel := .compressionLevel | default 5 }}
+        {{- $compressionLevel := ternary 5 .compressionLevel (kindIs "invalid" .compressionLevel) }}
         - name: COMPRESSION_ALGORITHM
           value: {{ $compressionAlgorithm }}
         - name: COMPRESSION_LEVEL
