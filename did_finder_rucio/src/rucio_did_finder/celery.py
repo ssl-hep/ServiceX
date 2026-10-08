@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 
+from celery.signals import worker_process_init
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
 
@@ -35,11 +36,25 @@ from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
-cache_prefix = os.environ.get("CACHE_PREFIX", "")
-# Initialize the finder
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client, False)
+
+def env_flag(name: str, *legacy_values: str) -> bool:
+    """Read a boolean setting from the environment.
+
+    "true", "1" and "yes" (any case) enable it; anything else, including an unset
+    variable, leaves it off. `legacy_values` are extra strings that also enable it.
+    """
+    value = os.environ.get(name, "").strip().lower()
+    return value in ("true", "1", "yes") or value in legacy_values
+
+
+# Older charts set the command line flag string rather than a boolean
+report_logical_files = env_flag("REPORT_LOGICAL_FILES", "--report-logical-files")
+
+
+def make_rucio_adapter() -> RucioAdapter:
+    """Build a RucioAdapter with its own Rucio clients and HTTP sessions."""
+    return RucioAdapter(DIDClient(), ReplicaClient(), report_logical_files)
+
 
 if (
     "RUCIO_LATITUDE" in os.environ
@@ -62,16 +77,26 @@ if not rse_expression:
         "expression appropriate for this experiment's Rucio instance"
     )
 
-ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
-    "true",
-    "1",
-    "yes",
-)
+ignore_availability = env_flag("RUCIO_IGNORE_AVAILABILITY")
 
-app = DIDFinderApp("rucio", did_finder_args={"rucio_adapter": rucio_adapter})
+# The rucio adapter is added to did_finder_args once per worker process
+app = DIDFinderApp("rucio", did_finder_args={})
+
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    """Give each prefork worker process its own Rucio clients.
+
+    Building them at import time authenticated in the parent process and handed
+    every child a copy of the same HTTP sessions across the fork.
+    """
+    app.did_finder_args["rucio_adapter"] = make_rucio_adapter()
 
 
 def find_files(did_name, info, did_finder_args):
+    # Pools that do not fork, such as solo, never send worker_process_init
+    if "rucio_adapter" not in did_finder_args:
+        did_finder_args["rucio_adapter"] = make_rucio_adapter()
     lookup_request = LookupRequest(
         did=did_name,
         rucio_adapter=did_finder_args["rucio_adapter"],
