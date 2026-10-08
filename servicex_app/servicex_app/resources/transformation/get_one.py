@@ -45,6 +45,10 @@ class TransformationRequest(ServiceXResource):
             current_app.logger.error(msg, extra={"request_id": request_id})
             return {"message": msg}, 404
 
+        user = self.get_requesting_user()
+        if user and (not user.admin and user.id != transform.submitted_by):
+            return {"message": "You are not authorized to access this request"}, 403
+
         transform_json = transform.to_json()
         if (
             current_app.config["OBJECT_STORE_ENABLED"]

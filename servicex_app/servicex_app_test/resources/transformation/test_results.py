@@ -1,4 +1,5 @@
 from pytest import fixture
+import pytest
 from datetime import datetime, timedelta
 
 from servicex_app.code_gen_adapter import CodeGenAdapter
@@ -158,3 +159,46 @@ class TestTransformationResults(ResourceTestBase):
             "later_than value invalid-datetime-format is not an ISO 8601 compliant datetime"
             in data["message"]
         )
+
+    @pytest.mark.parametrize(
+        "user_id, submitter_id, is_admin, expected_status",
+        [
+            (42, 42, False, 200),  # Submitting user wants to access their own results
+            (42, 42, True, 200),  # Admin wants to access their own results
+            (42, 43, True, 200),  # Admin wants to access someone else's results
+            (42, 43, False, 403),  # User tries to access someone else's results
+        ],
+    )
+    def test_results_auth(
+        self,
+        user_id,
+        submitter_id,
+        is_admin,
+        expected_status,
+        mocker,
+        mock_transformation_result,
+        mock_jwt_extended,
+        mock_requesting_user,
+    ):
+        fake_transform = self._generate_transform_request()
+        fake_transform.submitted_by = submitter_id
+        mocker.patch(
+            "servicex_app.models.TransformRequest.lookup", return_value=fake_transform
+        )
+        mock_transformation_result.query.filter_by.return_value = []
+
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            mock_requesting_user.id = user_id
+            mock_requesting_user.admin = is_admin
+
+            response = client.get(
+                "/servicex/transformation/test-request-id/results",
+                headers=self.fake_header(),
+            )
+            assert response.status_code == expected_status
+            if expected_status == 403:
+                assert (
+                    response.json["message"]
+                    == "You are not authorized to access results for this request"
+                )

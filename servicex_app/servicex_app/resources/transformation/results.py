@@ -3,7 +3,7 @@ import datetime
 from flask_restful import reqparse
 
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformationResult
+from servicex_app.models import TransformationResult, TransformRequest
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 
@@ -47,4 +47,15 @@ class TransformationResultsInsecure(ServiceXResource):
 class TransformationResultsSecure(TransformationResultsInsecure):
     @auth_required
     def get(self, request_id):
+        user = self.get_requesting_user()
+        if user:
+            transform = TransformRequest.lookup(request_id)
+            if not transform:
+                return {
+                    "message": f"Transformation request not found with id: {request_id}"
+                }, 404
+            if not user.admin and user.id != transform.submitted_by:
+                return {
+                    "message": "You are not authorized to access results for this request"
+                }, 403
         return super().get(request_id)

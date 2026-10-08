@@ -77,3 +77,26 @@ class TestAllTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         assert response.json == self.example_json()
         mock_return_json.assert_called()
+
+    def test_get_all_tenant_isolation(
+        self, mock_jwt_extended, mock_requesting_user, mock_return_json
+    ):
+        client = self._test_client(extra_config={"ENABLE_AUTH": True})
+        with client.application.app_context():
+            # Non-admin user (ID: 6) requesting with another user's submitted_by (999)
+            mock_requesting_user.id = 6
+            mock_requesting_user.admin = False
+            response = client.get(
+                "/servicex/transformation?submitted_by=999", headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            assert response.json == self.example_json()
+
+            # Admin user (ID: 1) requesting with another user's submitted_by (999)
+            mock_requesting_user.id = 1
+            mock_requesting_user.admin = True
+            response = client.get(
+                "/servicex/transformation?submitted_by=999", headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            assert response.json == self.example_json()
