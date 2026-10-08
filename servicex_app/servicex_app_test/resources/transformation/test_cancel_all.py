@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, call
 
-import kubernetes as k8s
 import pytest
 
 from servicex_app.models import TransformStatus
@@ -97,52 +96,6 @@ class TestCancelAllTransform(ResourceTestBase):
 
         assert resp.status_code == 200
         assert resp.json["canceled"] == []
-
-    def test_k8s_error_still_cancels(
-        self, client, mock_transform_manager, mock_transform_request_cls, mocker
-    ):
-        fake = self._generate_transform_request()
-        fake.status = TransformStatus.running
-        self._setup_query(
-            mock_transform_request_cls, [fake], mocker, mock_transform_manager
-        )
-        mock_transform_manager.cancel_transform.side_effect = (
-            k8s.client.exceptions.ApiException(status=404)
-        )
-
-        with client.application.app_context():
-            resp = client.post(
-                "/servicex/transformation/cancel-all", headers=self.fake_header()
-            )
-
-        assert resp.status_code == 200
-        assert fake.request_id in resp.json["canceled"]
-        assert fake.status == TransformStatus.canceled
-
-    def test_shutdown_error_continues_to_next_transform(
-        self, client, mock_transform_manager, mock_transform_request_cls, mocker
-    ):
-        t1 = self._generate_transform_request()
-        t1.request_id = "aaa-111"
-        t1.status = TransformStatus.running
-        t2 = self._generate_transform_request()
-        t2.request_id = "bbb-222"
-        t2.status = TransformStatus.submitted
-        self._setup_query(
-            mock_transform_request_cls, [t1, t2], mocker, mock_transform_manager
-        )
-        exc = k8s.client.exceptions.ApiException(status=403, reason="Forbidden")
-        mock_transform_manager.cancel_transform.side_effect = exc
-
-        with client.application.app_context():
-            resp = client.post(
-                "/servicex/transformation/cancel-all", headers=self.fake_header()
-            )
-
-        assert resp.status_code == 200
-        assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
-        assert t1.status == TransformStatus.canceled
-        assert t2.status == TransformStatus.canceled
 
     def test_auth_enabled_queries_by_user(
         self,
