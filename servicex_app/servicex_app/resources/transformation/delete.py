@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from servicex_app import ObjectStoreManager
 from servicex_app.decorators import auth_required
-from servicex_app.models import TransformRequest, TransformationResult, db
+from servicex_app.models import TransformRequest, db
 from servicex_app.resources.servicex_resource import ServiceXResource
 from flask import current_app
 
@@ -57,17 +57,13 @@ class DeleteTransform(ServiceXResource):
             if user and (not user.admin and user.id != transform_req.submitted_by):
                 return {"message": "You are not authorized to delete this request"}, 403
 
-            # Delete all the results for this transform
-            session.query(TransformationResult).filter_by(
-                request_id=transform_req.request_id
-            ).delete()
+            purged_logs = transform_req.purge(session, self.object_store)
 
-            # Delete the transformed files out of object store along with the bucket
-            if self.object_store:
-                self.object_store.delete_bucket_and_contents(transform_req.request_id)
+        current_app.logger.info(
+            f"Deleted transform request {request_id} and {purged_logs} log records",
+            extra={"request_id": request_id},
+        )
 
-            # Delete the transform request
-            session.delete(transform_req)
         return {
             "message": f"Transform request with id {request_id} has been archived."
         }, 200

@@ -39,7 +39,7 @@ from servicex_did_finder_lib.exceptions import (
 
 def test_working_call():
     for did, nfiles in [("2024r-pp/700901", 11), ("2020e-13tev/data/3lep", 4)]:
-        iter = find_files(did, {"request-id": "112233"})
+        iter = find_files(did, {"dataset-id": "112233"})
         files = [f for f in iter]
         assert len(files) == nfiles
         assert isinstance(files[0], dict)
@@ -50,25 +50,25 @@ def test_working_call():
 def test_fails_on_bad_dataset_spec():
     for did in ["noslash", "too/many/slashes/here"]:
         with pytest.raises(BadDatasetNameException):
-            list(find_files(did, {"request-id": "112233"}))
+            list(find_files(did, {"dataset-id": "112233"}))
 
 
 def test_fails_on_bad_release():
     with pytest.raises(NoSuchDatasetException):
-        list(find_files("nosuchrelease/data", {"request-id": "112233"}))
+        list(find_files("nosuchrelease/data", {"dataset-id": "112233"}))
 
 
 def test_fails_on_bad_skim():
     with pytest.raises(NoSuchDatasetException):
-        list(find_files("2024r-pp/700901/3lep", {"request-id": "112233"}))
+        list(find_files("2024r-pp/700901/3lep", {"dataset-id": "112233"}))
 
 
 def test_fails_on_nonexistent_dataset():
     with pytest.raises(NoSuchDatasetException):
-        list(find_files("2024r-pp/notdata", {"request-id": "112233"}))
+        list(find_files("2024r-pp/notdata", {"dataset-id": "112233"}))
 
 
 def test_bad_lookup(mocker):
     mocker.patch("atlasopenmagic.get_urls", side_effect=Exception())
     with pytest.raises(LookupFailureException):
-        list(find_files("2024r-pp/700901", {"request-id": "112233"}))
+        list(find_files("2024r-pp/700901", {"dataset-id": "112233"}))

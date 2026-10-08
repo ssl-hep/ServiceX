@@ -76,6 +76,7 @@ spec:
         - name: LOGSTASH_PROTOCOL
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
+        {{- include "servicex.vector.env" . | trim | nindent 8 }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
           valueFrom:
@@ -178,7 +179,6 @@ spec:
           - name: users
             mountPath: /default_users
           {{ end }}
-
 
         ports:
           - containerPort: 5000
