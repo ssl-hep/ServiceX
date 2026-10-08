@@ -90,8 +90,10 @@ class RucioAdapter:
         except RucioException as e:
             # catch a common user error and be a little more helpful
             if did.startswith("rucio://"):
-                msg = (f"Provided dataset {did} incorrectly specified, "
-                       "must not start with \"rucio://\"")
+                msg = (
+                    f"Provided dataset {did} incorrectly specified, "
+                    'must not start with "rucio://"'
+                )
             else:
                 msg = f"Scope of the dataset {did} could not be determined."
             self.logger.error(msg)
