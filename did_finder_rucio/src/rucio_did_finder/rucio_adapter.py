@@ -85,8 +85,13 @@ class RucioAdapter:
         """
         d = dict()
         if ":" in did:
-            d["scope"], d["name"] = did.split(":")
-            return d
+            try:
+                d["scope"], d["name"] = did.split(":")
+                return d
+            except ValueError as e:
+                raise LookupFailureException(
+                    f"DID Format error; too many colons in string  {did}: {e}"
+                )
 
         if not self.all_scopes:
             try:
