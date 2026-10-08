@@ -6,15 +6,16 @@ WORKDIR /home/servicex
 RUN mkdir ./python_code_generator
 
 ENV  POETRY_VERSION=2.1.1
-RUN pip install poetry==$POETRY_VERSION
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
+    poetry install --no-root --no-interaction --no-ansi && \
+    rm -rf "$(poetry config cache-dir)"
 
-RUN pip install gunicorn
+RUN pip install --no-cache-dir gunicorn
 
 COPY boot.sh ./
 COPY transformer_capabilities.json ./

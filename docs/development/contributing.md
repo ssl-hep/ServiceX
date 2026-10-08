@@ -39,9 +39,10 @@ ServiceX uses a slightly modified GitLab flow. Each repository has a main branch
     git remote add upstream git@github.com:ssl-hep/ServiceX_App.git
     ```
     - Set up a new environment via ``conda`` or ``virtualenv``.
-    - Install dependencies, including test dependencies:
+    - Install dependencies, including test dependencies, from the directory
+    of the package you are changing (for example `servicex_app`):
     ```
-    python3 -m pip install -e .[test]
+    poetry install --with test
     ```
     - If the root directory contains a file named `.pre-commit-config.yaml`,
     you can install the [pre-commit](https://pre-commit.com/) hooks with:

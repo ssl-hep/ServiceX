@@ -20,7 +20,8 @@ COPY poetry.lock poetry.lock
 
 ENV XDG_CONFIG_HOME=/opt/servicex
 RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry install --no-root --no-interaction --no-ansi && \
+    rm -rf "$(poetry config cache-dir)"
 
 # Bring over the main scripts
 COPY . .

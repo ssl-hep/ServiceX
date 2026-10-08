@@ -13,13 +13,16 @@ updates:
       - "dependencies"
       - "github-actions"
 
-  # Maintain dependencies for poetry
+  # Maintain dependencies for poetry. "/*" covers every top-level package
+  # directory, including ones added later.
   - package-ecosystem: "pip"
-    directory: "/"
+    directories:
+      - "/"
+      - "/*"
     schedule:
       interval: "weekly"
     groups:
-      actions:
+      python:
         patterns:
           - "*"
     labels:
