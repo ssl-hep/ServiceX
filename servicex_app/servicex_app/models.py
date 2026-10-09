@@ -194,6 +194,7 @@ class TransformRequest(db.Model):
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
+    output_path = db.Column(db.Text, nullable=True)
     submitted_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
