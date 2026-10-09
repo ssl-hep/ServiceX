@@ -1,5 +1,7 @@
 import os
 
+from servicex_codegen.code_generator import GenerateCodeException
+
 options = {
     "reco": {
         "properType": str,
@@ -60,15 +62,16 @@ def generate_files_from_query(jquery: dict, query_file_path):
             # Skip optional parameters
             if options[key].get("optional", False):
                 continue
-            raise ValueError(
-                key + " must be specified. May be type None or ",
-                options[key]["properTypeString"],
+            raise GenerateCodeException(
+                key
+                + " must be specified. May be type None or "
+                + options[key]["properTypeString"]
             )
 
     for key in jquery:
         # ensure only available options are allowed
         if key not in options:
-            raise KeyError(
+            raise GenerateCodeException(
                 key + " is not implemented. Available keys: " + str(options.keys())
             )
 
@@ -77,8 +80,11 @@ def generate_files_from_query(jquery: dict, query_file_path):
             continue
 
         # type check key
-        if not isinstance(jquery[key], options[key]["properType"]):
-            raise TypeError(
+        proper_type = options[key]["properType"]
+        if not isinstance(jquery[key], proper_type) or (
+            proper_type is int and isinstance(jquery[key], bool)
+        ):
+            raise GenerateCodeException(
                 key + " must be of type " + options[key]["properTypeString"]
             )
 
@@ -102,7 +108,7 @@ def generate_files_from_query(jquery: dict, query_file_path):
         # check max events and skip events
         elif isinstance(jquery[key], int):
             if jquery[key] < options[key]["minimum"]:
-                raise ValueError(
+                raise GenerateCodeException(
                     key + " cannot be less than " + str(options[key]["minimum"])
                 )
             else:
