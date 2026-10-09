@@ -37,7 +37,7 @@ data:
     OAUTH_ALLOW_ALL_AFTER_AUTH = {{- ternary "True" "False" .Values.app.allowAllAfterAuth }}
     {{ if .Values.app.oauthDeviceFlowClientID }}
     OAUTH_DEVICE_FLOW_CLIENT_ID = '{{ .Values.app.oauthDeviceFlowClientID }}'
-    {{-end }}
+    {{- end }}
 
     # Specify an email address for the first admin user
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
