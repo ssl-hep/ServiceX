@@ -39,7 +39,9 @@ from flask.cli import AppGroup
 from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_restful import Api
+from jwt.exceptions import InvalidTokenError
 
 from servicex_app.decorators import is_admin_user
 from servicex_app.celery_task_router import route_task
@@ -136,6 +138,25 @@ class LogstashFormatter(logstash.formatter.LogstashFormatterBase):
             message.update(self.get_debug_fields(record))
 
         return self.serialize(message)
+
+
+class ServiceXApi(Api):
+    """
+    flask-restful Api that leaves token errors to flask-jwt-extended.
+
+    Outside of TESTING/DEBUG, and without PROPAGATE_EXCEPTIONS, flask-restful
+    answers every non-HTTP exception raised in a resource with a JSON 500.
+    That includes the flask-jwt-extended and PyJWT exceptions raised for a
+    missing, expired or malformed token. Re-raising them makes error_router
+    fall back to Flask, where the handlers registered by JWTManager answer
+    with their usual 401/422. Every other error keeps flask-restful's JSON
+    response.
+    """
+
+    def handle_error(self, e):
+        if isinstance(e, (JWTExtendedException, InvalidTokenError)):
+            raise e
+        return super().handle_error(e)
 
 
 def strtobool(value: str) -> bool:
@@ -384,7 +405,7 @@ def create_app(
             )
             sys.exit(-1)
 
-        api = Api(app)
+        api = ServiceXApi(app)
 
         # ensure the instance folder exists
         try:
