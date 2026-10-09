@@ -40,8 +40,8 @@ data:
     JWT_ADMIN = '{{ .Values.app.adminEmail }}'
 
     # Number of seconds the JWT is valid for
-    JWT_REFRESH_TOKEN_EXPIRES={{- ternary .Values.app.tokenExpires "False" .Values.app.tokenExpires }}
-    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires }}
+    JWT_REFRESH_TOKEN_EXPIRES={{- if .Values.app.tokenExpires }}{{ .Values.app.tokenExpires | int64 }}{{ else }}False{{ end }}
+    JWT_ACCESS_TOKEN_EXPIRES={{ .Values.app.authExpires | int64 }}
 
     # Slack webhooks
     {{ if .Values.app.slackSigningSecret }}
@@ -90,7 +90,8 @@ data:
     TRANSFORMER_MANAGER_ENABLED = True
 
     {{- if .Values.transformer.cachePrefix }}
-    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
+    {{- /* Strip the surrounding double quotes older values files needed */}}
+    TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix | toString | trimAll "\"" | quote }}
     {{- else }}
     TRANSFORMER_CACHE_PREFIX = ""
     {{- end }}
@@ -200,36 +201,30 @@ data:
     CODE_GEN_IMAGES = { {{ join "," $code_gen_images }} }
     {{- end }}
 
+    {{- /*
+    Register every enabled DID finder under its values key, lower-cased. The
+    key must match the name the finder passes to DIDFinderApp, since the app
+    routes requests to the did_finder_<scheme> Celery queue.
+    */}}
     {{- $didFinders := list }}
-    {{- if .Values.didFinder.CERNOpenData.enabled }}
-      {{- $didFinders = append $didFinders "cernopendata" }}
-    DID_CERNOPENDATA_FINDER_TAG = '{{ .Values.didFinder.CERNOpenData.tag }}'
+    {{- range $name, $finder := .Values.didFinder }}
+    {{- if kindIs "map" $finder }}
+    {{- if $finder.enabled }}
+    {{- $scheme := lower $name }}
+    DID_{{ upper $scheme }}_FINDER_TAG = '{{ $finder.tag }}'
+      {{- $didFinders = append $didFinders $scheme }}
     {{- end }}
-    {{- if .Values.didFinder.rucio.enabled }}
-    DID_RUCIO_FINDER_TAG = '{{ .Values.didFinder.rucio.tag }}'
-      {{- $didFinders = append $didFinders "rucio" }}
     {{- end }}
-    {{- if .Values.didFinder.xrootd.enabled }}
-    DID_XROOTD_FINDER_TAG = '{{ .Values.didFinder.xrootd.tag }}'
-      {{- $didFinders = append $didFinders "xrootd" }}
-    {{- end }}
-    {{- if .Values.didFinder.servicex.enabled }}
-    DID_SERVICEX_FINDER_TAG = '{{ .Values.didFinder.servicex.tag }}'
-      {{- $didFinders = append $didFinders "servicex" }}
     {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
-    {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
-    {{- $defaultScheme = "rucio" }}
+    {{- range list "rucio" "cernopendata" "xrootd" "servicex" "atlasopenmagic" }}
+    {{- if and (not $defaultScheme) (has . $didFinders) }}
+    {{- $defaultScheme = . }}
     {{- end }}
-    {{- if and (not $defaultScheme) .Values.didFinder.CERNOpenData.enabled }}
-    {{- $defaultScheme = "cernopendata" }}
     {{- end }}
-    {{- if and (not $defaultScheme) .Values.didFinder.xrootd.enabled }}
-    {{- $defaultScheme = "xrootd" }}
-    {{- end }}
-    {{- if and (not $defaultScheme) .Values.didFinder.servicex.enabled }}
-    {{- $defaultScheme = "servicex" }}
+    {{- if and (not $defaultScheme) $didFinders }}
+    {{- $defaultScheme = first $didFinders }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]

@@ -52,7 +52,6 @@ jobs:
             # Update the tags for the well known images in the helm values.yaml
             yq -i '.app.tag = strenv(DOCKER_TAG) | .app.tag style="double" |
             .transformer.sidecarTag = strenv(DOCKER_TAG) | .transformer.sidecarTag style="double" |
-            .minioCleanup.tag = strenv(DOCKER_TAG) | .minioCleanup.tag style="double" |
             .x509Secrets.tag = strenv(DOCKER_TAG) | .x509Secrets.tag style="double" ' helm/servicex/values.yaml &&
 
             # Loop over each of the DID Finders to update the tags for each
