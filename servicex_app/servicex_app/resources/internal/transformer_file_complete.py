@@ -44,7 +44,6 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from servicex_app import TransformerManager
 from servicex_app.models import (
     TransformRequest,
     TransformStatus,
@@ -52,6 +51,7 @@ from servicex_app.models import (
     db,
 )
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.transformer_manager import shutdown_finished_transformers
 
 
 def file_complete_ops_retry(func):
@@ -120,7 +120,7 @@ class TransformerFileComplete(ServiceXResource):
 
             # Lookup the transformation request and increment either the successful
             # or failed file count
-            transform_req = self.record_file_complete(
+            transform_req, is_last_file = self.record_file_complete(
                 session, current_app.logger, request_id, info, log_extra, orig_counts
             )
 
@@ -128,18 +128,18 @@ class TransformerFileComplete(ServiceXResource):
                 logger.error("Request not found", extra=log_extra)
                 return "Request not found", 404
 
-            # Now we can see if we are done with the transformation and
-            # can shut down the transformers. Files remaining is None if
-            # we are still waiting for final results from the DID finder
-            with session.begin():
-                files_remaining = transform_req.files_remaining
-                if files_remaining is not None and files_remaining == 0:
-                    self.transform_complete(
-                        session,
-                        current_app.logger,
-                        transform_req,
-                        self.transformer_manager,
-                    )
+            # The request was completed inside the locked transaction, so it is
+            # now safe to shut down the transformers.
+            if is_last_file:
+                logger.info(
+                    "Request completed. Shutting down transformers",
+                    extra={"request_id": request_id},
+                )
+                shutdown_finished_transformers(
+                    self.transformer_manager,
+                    [request_id],
+                    current_app.config["TRANSFORMER_NAMESPACE"],
+                )
 
             current_app.logger.info(
                 "FileComplete. Request state.",
@@ -167,7 +167,7 @@ class TransformerFileComplete(ServiceXResource):
         info: dict[str, str],
         log_extra: dict[str, str],
         orig_counts: Optional[dict[str, str]],
-    ) -> TransformRequest | None:
+    ) -> tuple[TransformRequest | None, bool]:
 
         with session.begin():
             # Lock the row for update
@@ -181,7 +181,7 @@ class TransformerFileComplete(ServiceXResource):
             if transform_req is None:
                 msg = f"Request not found with id: '{request_id}'"
                 logger.error(msg, extra=log_extra)
-                return None
+                return None, False
 
             if orig_counts:
                 # undo previous statistics accumulation
@@ -209,7 +209,22 @@ class TransformerFileComplete(ServiceXResource):
             else:
                 transform_req.files_failed += 1
 
-        return transform_req
+            # Decide, while the row is still locked, whether this is the callback
+            # that finishes the request, and complete it in the same transaction.
+            # Files remaining is None if we are still waiting for final results
+            # from the DID finder, and a request which is not running yet may
+            # still be given more files.
+            files_remaining = transform_req.files_remaining
+            is_last_file = (
+                files_remaining is not None
+                and files_remaining == 0
+                and transform_req.status == TransformStatus.running
+            )
+            if is_last_file:
+                transform_req.status = TransformStatus.complete
+                transform_req.finish_time = datetime.now(tz=timezone.utc)
+
+        return transform_req, is_last_file
 
     @staticmethod
     @file_complete_ops_retry
@@ -249,24 +264,3 @@ class TransformerFileComplete(ServiceXResource):
                 )
             session.add(result)
         return orig_counts
-
-    @staticmethod
-    @file_complete_ops_retry
-    def transform_complete(
-        session: Session,
-        logger: Logger,
-        transform_req: TransformRequest,
-        transformer_manager: TransformerManager,
-    ):
-        transform_req.status = TransformStatus.complete
-        transform_req.finish_time = datetime.now(tz=timezone.utc)
-        session.add(transform_req)
-
-        logger.info(
-            "Request completed. Shutting down transformers",
-            extra={"request_id": transform_req.request_id},
-        )
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        transformer_manager.shutdown_transformer_job(
-            transform_req.request_id, namespace
-        )

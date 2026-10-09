@@ -1,5 +1,6 @@
+import requests
 from flask import Response, url_for
-from pytest import fixture
+from pytest import fixture, mark
 
 from .web_test_base import WebTestBase
 
@@ -49,6 +50,34 @@ class TestCreateProfile(WebTestBase):
         data = {key: new_user.__dict__[key] for key in keys}
         response: Response = client.post(url_for("create_profile"), data=data)
         user_instance.save_to_db.assert_called_once()
+        mock_flash.assert_called_once()
+        assert "Profile created!" in mock_flash.call_args[0][0]
+        assert response.status_code == 302
+        assert response.location == url_for("profile")
+
+    @mark.parametrize(
+        "error",
+        [
+            requests.exceptions.HTTPError("500 Server Error"),
+            requests.exceptions.ConnectionError("connection refused"),
+            requests.exceptions.ConnectTimeout("timed out"),
+        ],
+    )
+    def test_post_create_profile_webhook_failure(
+        self, new_user, client, mock_flash, mocker, error
+    ):
+        client.application.config["SIGNUP_WEBHOOK_URL"] = "https://hooks.example.com"
+        mock_post_signup = mocker.patch(f"{self.module}.post_signup", side_effect=error)
+
+        with client.session_transaction() as sess:
+            sess["sub"] = "create-me"
+        keys = ["name", "email", "institution", "experiment"]
+        data = {key: new_user.__dict__[key] for key in keys}
+        response: Response = client.post(url_for("create_profile"), data=data)
+
+        # The user is already saved, so they are sent on to their profile
+        mock_post_signup.assert_called_once()
+        new_user.save_to_db.assert_called_once()
         mock_flash.assert_called_once()
         assert "Profile created!" in mock_flash.call_args[0][0]
         assert response.status_code == 302

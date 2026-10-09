@@ -22,14 +22,19 @@ def edit_profile():
     form = ProfileForm()
     if request.method == "GET":
         form = ProfileForm(user)
-    elif request.method == "POST":
+    # The email identifies the account: logins, the API refresh token and the web
+    # pages all look the user up by it, so it cannot be changed here
+    form.email.data = user.email
+    form.email.render_kw = {"readonly": True}
+    if request.method == "POST":
         if form.validate_on_submit():
             user.name = form.name.data
-            user.email = form.email.data
             user.institution = form.institution.data
             user.experiment = form.experiment.data
             user.updated_at = datetime.utcnow()
             db.session.commit()
+            session["name"] = user.name
+            session["institution"] = user.institution
             flash("Your profile has been saved!", "success")
             current_app.logger.info(f"Updated profile for {user.name}")
             return redirect(url_for("profile"))
