@@ -57,12 +57,13 @@ while [[ $nc_PID ]] ; do
     # stats after every file. science.*.log is one chunk per file for the Vector
     # sidecar to tail; Vector deletes each chunk once it has read it, which is
     # what keeps the shared volume from growing for the life of the pod. The
-    # nanosecond stamp makes each chunk name unique, so this is a redirect
-    # rather than an append. Vector never reads - and so never deletes - an
-    # empty file, so a chunk from a silent run is removed here instead.
+    # nanosecond stamp makes each chunk name unique, so tee writes it fresh
+    # rather than appending (no -a). The output also goes to stdout so it still
+    # shows up in the container log. Vector never reads - and so never deletes -
+    # an empty file, so a chunk from a silent run is removed here instead.
     chunk="$path/science.$(date +%s%N).log"
     $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 \
-        | tee "$path/abc.log" > "$chunk"
+        | tee "$path/abc.log" "$chunk"
     status=${PIPESTATUS[0]}
     [ -s "$chunk" ] || rm -f "$chunk"
 
