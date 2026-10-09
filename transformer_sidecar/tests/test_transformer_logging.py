@@ -1,10 +1,15 @@
 import json
 import logging
+import queue
+import sys
 
+import logstash
 import pytest
 
 from transformer_sidecar import transformer_logging
 from transformer_sidecar.transformer_logging import initialize_logging
+from transformer_sidecar.transformer_logging.logstash_formatter import LogstashFormatter
+from transformer_sidecar.transformer_logging.stream_formatter import StreamFormatter
 from transformer_sidecar.transformer_logging.vector_formatter import VectorFormatter
 
 # Columns of the Postgres log_messages table that the vector sidecar inserts into.
@@ -59,6 +64,82 @@ def test_vector_formatter_hoists_request_id_out_of_extra():
 
 def test_vector_formatter_tolerates_missing_request_id():
     assert _format(_record())["request_id"] is None
+
+
+def _exc_info():
+    try:
+        raise RuntimeError("boom")
+    except RuntimeError:
+        return sys.exc_info()
+
+
+def test_vector_formatter_puts_traceback_in_extra():
+    record = _record()
+    record.exc_info = _exc_info()
+
+    event = _format(record)
+
+    assert set(event) == LOG_MESSAGE_COLUMNS
+    assert "RuntimeError: boom" in event["extra"]["stack_trace"]
+
+
+def test_logstash_formatter_emits_logstash_event():
+    formatted = LogstashFormatter("logstash", None, None).format(_record(file_id=7))
+    event = json.loads(formatted.decode("utf-8"))
+
+    assert event["@version"] == "1"
+    assert event["message"] == "Transformed 3 files"
+    assert event["type"] == "logstash"
+    assert event["component"] == "transformer sidecar"
+    assert event["level"] == "INFO"
+    assert event["path"] == __file__
+    assert event["file_id"] == 7
+    assert "stack_trace" not in event
+
+
+def test_logstash_formatter_adds_traceback():
+    record = _record()
+    record.exc_info = _exc_info()
+
+    formatted = LogstashFormatter("logstash", None, None).format(record)
+    event = json.loads(formatted.decode("utf-8"))
+
+    assert "RuntimeError: boom" in event["stack_trace"]
+
+
+def test_stream_formatter_appends_extras():
+    formatter = StreamFormatter("%(levelname)s %(message)s")
+
+    assert (
+        formatter.format(_record(request_id="abc-123"))
+        == "INFO Transformed 3 files extra: {'request_id': 'abc-123'}"
+    )
+
+
+def test_stream_formatter_without_extras():
+    formatter = StreamFormatter("%(levelname)s %(message)s")
+    record = _record()
+    # LogRecord grew a taskName attribute in Python 3.12, which isn't in def_keys.
+    record.__dict__.pop("taskName", None)
+
+    assert formatter.format(record) == "INFO Transformed 3 files"
+
+
+def test_direct_queue_handler_enqueues_the_record_untouched():
+    """
+    The stdlib prepare() would format the record, copy it, and null exc_info -
+    which would strip the traceback before VectorFormatter ever saw it.
+    """
+    record = _record()
+    exc_info = _exc_info()
+    record.exc_info = exc_info
+
+    handler = transformer_logging._DirectQueueHandler(queue.Queue())
+    prepared = handler.prepare(record)
+
+    assert prepared is record
+    assert prepared.exc_info is exc_info
+    assert prepared.args == (3,)
 
 
 def _queue_handlers(log):
@@ -185,6 +266,86 @@ def test_vector_queue_handler_carries_the_request_id_filter(vector_env):
     initialize_logging(log)
 
     handler = _queue_handlers(log)[0]
+    assert any(
+        isinstance(f, transformer_logging.RequestIdFilter) for f in handler.filters
+    )
+
+
+def test_vector_listener_receives_traceback_and_request_id(vector_env, monkeypatch):
+    """
+    End to end through the real queue and listener thread: a logged exception
+    reaches the vector handler with its traceback and the pod's request id.
+    """
+    monkeypatch.setattr(transformer_logging, "request_id", "abc-123")
+    emit = logstash.TCPLogstashHandler.emit
+    log = logging.getLogger("test-vector-end-to-end")
+    log.handlers.clear()
+    log.propagate = False
+
+    initialize_logging(log)
+    try:
+        raise RuntimeError("boom")
+    except RuntimeError:
+        log.exception("Transform failed")
+    # The listener marks each record done after handing it to the handler.
+    transformer_logging._vector_queue.join()
+
+    emit.assert_called_once()
+    record = emit.call_args.args[0]
+    vector_handler = transformer_logging._vector_listener.handlers[0]
+    assert isinstance(vector_handler.formatter, VectorFormatter)
+    event = json.loads(vector_handler.format(record).decode("utf-8"))
+    assert event["message"] == "Transform failed"
+    assert event["level"] == "ERROR"
+    assert event["request_id"] == "abc-123"
+    assert "RuntimeError: boom" in event["extra"]["stack_trace"]
+
+
+@pytest.fixture
+def restore_root_logger():
+    """initialize_logging() with no logger reconfigures the root logger."""
+    root = logging.getLogger()
+    handlers, level = list(root.handlers), root.level
+    yield root
+    root.handlers[:] = handlers
+    root.setLevel(level)
+
+
+def test_initialize_logging_defaults_to_root_logger(
+    monkeypatch, no_vector_listener, restore_root_logger
+):
+    monkeypatch.delenv("LOGSTASH_HOST", raising=False)
+    monkeypatch.delenv("VECTOR_HOST", raising=False)
+
+    log = initialize_logging()
+
+    assert log is restore_root_logger
+    assert log.level == logging.INFO
+    assert any(type(h) is logging.StreamHandler for h in log.handlers)
+
+
+@pytest.mark.parametrize("port, expected_port", [(None, 5959), ("6000", 6000)])
+def test_initialize_logging_adds_logstash_handler(
+    monkeypatch, mocker, no_vector_listener, port, expected_port
+):
+    monkeypatch.setenv("LOGSTASH_HOST", "logstash.svc")
+    if port is None:
+        monkeypatch.delenv("LOGSTASH_PORT", raising=False)
+    else:
+        monkeypatch.setenv("LOGSTASH_PORT", port)
+    monkeypatch.delenv("VECTOR_HOST", raising=False)
+    mocker.patch("logstash.TCPLogstashHandler.emit")
+    log = logging.getLogger("test-logstash")
+    log.handlers.clear()
+
+    initialize_logging(log)
+
+    handlers = [h for h in log.handlers if isinstance(h, logstash.TCPLogstashHandler)]
+    assert len(handlers) == 1
+    handler = handlers[0]
+    assert (handler.host, handler.port) == ("logstash.svc", expected_port)
+    assert isinstance(handler.formatter, LogstashFormatter)
+    assert handler.level == logging.INFO
     assert any(
         isinstance(f, transformer_logging.RequestIdFilter) for f in handler.filters
     )
