@@ -1,4 +1,4 @@
-from flask import request, session, current_app, jsonify
+from flask import request, current_app, jsonify
 
 from servicex_app.models import UserModel
 from .utils import load_oauth_client
