@@ -19,7 +19,7 @@ class TestTransformCancel(ResourceTestBase):
     @pytest.fixture
     def mock_transform_manager(self, mocker) -> MagicMock:
         mock_transform_manager = mocker.MagicMock()
-        mock_transform_manager.get_deployment_status.return_value = None
+        mock_transform_manager.get_transformer_job_status.return_value = None
         return mock_transform_manager
 
     @pytest.fixture
