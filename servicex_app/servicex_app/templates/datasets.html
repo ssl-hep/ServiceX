@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% from 'dataset_table.html' import datasets_table, datasets_table_scripts with context %}
+{% from 'sort_dropdown.html' import sort_dropdown %}
+
+{% block content %}
+
+  <div class="col-12">
+    <div class="content-section">
+      <div class="row justify-content-between align-items-center">
+        <h4 class="mb-3 col-auto">Datasets</h4>
+        <div class="col-auto d-flex align-items-center">
+          <form method="get" class="form-inline mr-3">
+            <input type="hidden" name="sort" value="{{ active_sort }}">
+            <input type="hidden" name="order" value="{{ active_order }}">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="show_deleted" value="true"
+                     id="show_deleted" {% if show_deleted %}checked{% endif %}
+                     onchange="this.form.submit()">
+              <label class="form-check-label" for="show_deleted">
+                Show flushed
+              </label>
+            </div>
+          </form>
+          {{ sort_dropdown(dropdown_options, active_sort, active_order) }}
+        </div>
+      </div>
+      {{ datasets_table(pagination, humanize) }}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {{ datasets_table_scripts() }}
+{% endblock %}

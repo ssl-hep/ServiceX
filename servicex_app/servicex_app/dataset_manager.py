@@ -123,6 +123,7 @@ class DatasetManager:
                 DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
                 for file in file_list
             ]
+            dataset.n_files = len(file_list)
 
             logger.info(
                 f"Upserted dataset for file list. Dataset Id is {dataset.id}",
