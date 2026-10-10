@@ -92,6 +92,21 @@ class TestBearerTokenExchange(ResourceTestBase):
         assert response.status_code == 200
         assert response.json == {"jwt": "Qaaaa", "pending": False}
 
+        # Path with admin user
+        client = self._test_client(
+            extra_config={
+                "OAUTH_DEVICE_FLOW_CLIENT_ID": "oidc",
+                "OAUTH_METADATA_URL": "https://auth.site/.conf",
+                "OAUTH_CLIENT_ID": "oidc-secret",
+                "OAUTH_CLIENT_SECRET": "secret",
+                "OAUTH_ALLOW_ALL_AFTER_AUTH": False,
+                "JWT_ADMIN": "user@fancy.place",
+            }
+        )
+        response = client.get("/bearer-token-exchange", headers=auth_header)
+        assert response.status_code == 200
+        assert response.json == {"jwt": "Qaaaa", "pending": False}
+
         # Weird Globus path
         requests_mock.get(
             "https://auth.site/userinfo",
