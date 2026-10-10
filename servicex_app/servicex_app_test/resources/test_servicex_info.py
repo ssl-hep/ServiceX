@@ -51,7 +51,7 @@ class TestServicexInfo(ResourceTestBase):
         }  # noqa: E501
 
     def test_get_info_extended(self, mock_app_version):
-        client = self._test_client(extra_config={"OAUTH_DEVICE_FLOW_CLIENT_ID": True})
+        client = self._test_client(extra_config={"OAUTH_DEVICE_FLOW_CLIENT_ID": "oidc"})
         response = client.get("/servicex")
         assert response.status_code == 200
         print(response.json)
