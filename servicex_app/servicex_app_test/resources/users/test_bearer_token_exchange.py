@@ -144,9 +144,11 @@ class TestBearerTokenExchange(ResourceTestBase):
         auth_header = {"Authorization": "Bearer xxx"}
         response = client.get("/bearer-token-exchange", headers=auth_header)
         assert response.status_code == 403
-        
+
         # call with bad token will fail
-        requests_mock.get("https://auth.site/userinfo", status_code=401, text="Unauthorized")
+        requests_mock.get(
+            "https://auth.site/userinfo", status_code=401, text="Unauthorized"
+        )
         response = client.get("/bearer-token-exchange", headers=auth_header)
         assert "provided token not valid" in response.text
         assert response.status_code == 401
