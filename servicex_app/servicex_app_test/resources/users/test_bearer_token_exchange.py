@@ -63,14 +63,14 @@ class TestBearerTokenExchange(ResourceTestBase):
         )
 
         requests_mock.get(
-                "https://auth.site/.conf",
-                json={"userinfo_endpoint": "https://auth.site/userinfo"}
-            )
+            "https://auth.site/.conf",
+            json={"userinfo_endpoint": "https://auth.site/userinfo"},
+        )
 
         requests_mock.get(
-                "https://auth.site/userinfo",
-                json={"email": "user@fancy.place", "sub": "unique"},
-            )
+            "https://auth.site/userinfo",
+            json={"email": "user@fancy.place", "sub": "unique"},
+        )
 
         # Path without automatic user acceptance
         auth_header = {"Authorization": "Bearer xxx"}
