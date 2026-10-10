@@ -53,7 +53,7 @@ class TestBearerTokenExchange(ResourceTestBase):
             "servicex_app.resources.users.bearer_token_exchange.create_refresh_token",
             return_value="Qaaaa",
         )
-        client = self._test_client(
+        lclient = self._test_client(
             extra_config={
                 "OAUTH_DEVICE_FLOW_CLIENT_ID": "oidc",
                 "OAUTH_METADATA_URL": "https://auth.site/.conf",
@@ -63,17 +63,18 @@ class TestBearerTokenExchange(ResourceTestBase):
         )
 
         requests_mock.get(
-            "https://auth.site/.conf",
-            json={"userinfo_endpoint": "https://auth.site/userinfo"},
-        )
+                "https://auth.site/.conf",
+                json={"userinfo_endpoint": "https://auth.site/userinfo"}
+            )
+
         requests_mock.get(
-            "https://auth.site/userinfo",
-            json={"email": "user@fancy.place", "sub": "unique"},
-        )
+                "https://auth.site/userinfo",
+                json={"email": "user@fancy.place", "sub": "unique"},
+            )
 
         # Path without automatic user acceptance
         auth_header = {"Authorization": "Bearer xxx"}
-        response = client.get("/bearer-token-exchange", headers=auth_header)
+        response = lclient.get("/bearer-token-exchange", headers=auth_header)
         assert response.status_code == 200
         assert response.json == {"jwt": "Qaaaa", "pending": True}
 
