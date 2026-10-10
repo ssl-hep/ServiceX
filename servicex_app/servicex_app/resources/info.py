@@ -32,12 +32,12 @@ from servicex_app.resources.servicex_resource import ServiceXResource
 class Info(ServiceXResource):
     def get(self):
         capabilities = [
-                "poll_local_transformation_results",
-                "long_sample_titles_10240",
-                "cancel_transform_post_method",
-                "generate_file_urls",
-                "bearer_exchange",
-            ]
+            "poll_local_transformation_results",
+            "long_sample_titles_10240",
+            "cancel_transform_post_method",
+            "generate_file_urls",
+            "bearer_exchange",
+        ]
         if current_app.config.get("OAUTH_DEVICE_FLOW_CLIENT_ID"):
             capabilities.append("oauth_device_flow")
 
