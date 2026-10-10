@@ -64,6 +64,8 @@ def bearer_token_exchange():
         oauth.oauth.load_server_metadata()["userinfo_endpoint"],
         headers={"Authorization": request.headers["Authorization"]},
     )
+    if res.status_code != 200:
+        return "Authentication failed: provided token not valid", 401
 
     id_token = res.json()
 
