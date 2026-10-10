@@ -60,9 +60,10 @@ def bearer_token_exchange():
         return "No bearer token provided", 403
 
     oauth = load_oauth_client()
-    res = _get_userinfo(oauth.oauth.load_server_metadata()["userinfo_endpoint"],
-                        headers={"Authorization": request.headers["Authorization"]},
-                        )
+    res = _get_userinfo(
+        oauth.oauth.load_server_metadata()["userinfo_endpoint"],
+        headers={"Authorization": request.headers["Authorization"]},
+    )
 
     id_token = res.json()
 
