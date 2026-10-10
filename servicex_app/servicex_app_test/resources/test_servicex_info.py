@@ -46,5 +46,29 @@ class TestServicexInfo(ResourceTestBase):
                 "long_sample_titles_10240",
                 "cancel_transform_post_method",
                 "generate_file_urls",
+                "bearer_exchange",
+            ],
+        }  # noqa: E501
+
+    def test_get_info_extended(self, mock_app_version):
+        client = self._test_client(extra_config={"OAUTH_DEVICE_FLOW_CLIENT_ID": "oidc"})
+        response = client.get("/servicex")
+        assert response.status_code == 200
+        print(response.json)
+        assert response.json == {
+            "app-version": "3.14.15",
+            "code-gen-image": {
+                "atlasxaod": "sslhep/servicex_code_gen_func_adl_xaod:develop",
+                "cms": "sslhep/servicex_code_gen_cms_aod:develop",
+                "python": "sslhep/servicex_code_gen_python:develop",
+                "uproot": "sslhep/servicex_code_gen_func_adl_uproot:develop",
+            },
+            "capabilities": [
+                "poll_local_transformation_results",
+                "long_sample_titles_10240",
+                "cancel_transform_post_method",
+                "generate_file_urls",
+                "bearer_exchange",
+                "oauth_device_flow",
             ],
         }  # noqa: E501
