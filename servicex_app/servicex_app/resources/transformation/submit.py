@@ -33,6 +33,7 @@ from typing import Optional, List
 
 from flask import current_app
 from flask_restful import reqparse
+from kubernetes.client.rest import ApiException
 
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.decorators import auth_required
@@ -172,6 +173,39 @@ class SubmitTransformationRequest(ServiceXResource):
         self.rabbitmq_adaptor.bind_queue_to_exchange(
             exchange="transformation_failures", queue=request_id + "_errors"
         )
+
+    def _fail_transformer_start(self, request_rec: TransformRequest, error: Exception):
+        """
+        The request is already committed, so record that it can never run and clean
+        up what was created for it. Only the status and reason of a Kubernetes error
+        go back to the user, not its response headers and body.
+        """
+        request_id = request_rec.request_id
+        if isinstance(error, ApiException):
+            reason = f"{error.status} {error.reason}"
+        else:
+            reason = str(error)
+        msg = f"Could not start transformers: {reason}"
+        current_app.logger.exception(msg, extra={"request_id": request_id})
+
+        request_rec.status = TransformStatus.fatal
+        request_rec.failure_description = msg
+        request_rec.finish_time = datetime.now(tz=timezone.utc)
+        db.session.commit()
+
+        try:
+            self.transformer_manager.shutdown_transformer_job(
+                request_id,
+                current_app.config["TRANSFORMER_NAMESPACE"],
+                quiet_errors=True,
+            )
+        except Exception:
+            current_app.logger.exception(
+                "Cleanup after failed transformer start did not complete",
+                extra={"request_id": request_id},
+            )
+
+        return {"message": msg}, 500
 
     @auth_required
     def post(self):
@@ -314,9 +348,12 @@ class SubmitTransformationRequest(ServiceXResource):
             # start transformers independently of the state of dataset.
             if current_app.config["TRANSFORMER_MANAGER_ENABLED"]:
                 print(f"-----------> files: {request_rec.files}")
-                self.transformer_manager.start_transformers(
-                    current_app.config, request_rec
-                )
+                try:
+                    self.transformer_manager.start_transformers(
+                        current_app.config, request_rec
+                    )
+                except Exception as start_error:
+                    return self._fail_transformer_start(request_rec, start_error)
 
             current_app.logger.info(
                 "Transformation request submitted!", extra={"request_id": request_id}

@@ -29,6 +29,7 @@ from datetime import datetime, timezone
 from unittest.mock import ANY
 
 from celery import Celery
+from kubernetes.client.rest import ApiException
 from pytest import fixture
 import pytest
 from pytest import MonkeyPatch
@@ -423,6 +424,40 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
             mock_transform_manager.start_transformers.assert_called_with(
                 ANY, submitted_request
+            )
+
+    def test_submit_transformation_start_transformers_fails(
+        self,
+        mock_dataset_manager_from_did,
+        mock_transform_manager,
+        mock_codegen,
+        mock_app_version,
+    ):
+        mock_transform_manager.start_transformers.side_effect = ApiException(
+            status=403, reason="Forbidden"
+        )
+        client = self._test_client(
+            extra_config={"TRANSFORMER_MANAGER_ENABLED": True},
+            transformation_manager=mock_transform_manager,
+            code_gen_service=mock_codegen,
+        )
+
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 500
+            message = "Could not start transformers: 403 Forbidden"
+            assert response.json == {"message": message}
+
+            saved_obj = TransformRequest.query.one()
+            assert saved_obj.status == TransformStatus.fatal
+            assert saved_obj.failure_description == message
+            assert saved_obj.finish_time is not None
+
+            mock_transform_manager.shutdown_transformer_job.assert_called_once_with(
+                saved_obj.request_id, "my-ws", quiet_errors=True
             )
 
     def test_submit_transformation_request_no_docker_check(

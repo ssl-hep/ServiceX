@@ -122,6 +122,61 @@ class TestTransformerManager(ResourceTestBase):
             mock_kubernetes.config.load_incluster_config.assert_not_called()
             mock_kubernetes.config.load_kube_config.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "workers, files, status, expected_workers, expected_max_workers",
+        [
+            # fresh lookup: the file count is still 0, keep what was requested
+            (5, 0, TransformStatus.lookup, 5, 17),
+            # never more replicas than the site allows
+            (50, 0, TransformStatus.lookup, 17, 17),
+            # cached dataset: the file count is known and bounds the replicas
+            (5, 3, TransformStatus.running, 3, 3),
+            (0, 0, TransformStatus.lookup, 1, 17),
+        ],
+    )
+    def test_start_transformers_worker_count(
+        self,
+        mocker,
+        workers,
+        files,
+        status,
+        expected_workers,
+        expected_max_workers,
+    ):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        cfg = make_config(
+            TRANSFORMER_AUTOSCALE_ENABLED=False,
+            TRANSFORMER_MAX_REPLICAS=17,
+            TRANSFORMER_RABBIT_MQ_URL="amqp://trans.rabbit",
+            TRANSFORMER_NAMESPACE="my-ns",
+            TRANSFORMER_X509_SECRET="my-x509-secret",
+        )
+        transformer = TransformerManager("external-kubernetes")
+        transformer.launch_transformer_jobs = mocker.Mock()
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        client = self._test_client(transformation_manager=transformer, extra_config=cfg)
+
+        request_rec = SimpleNamespace(
+            request_id="1234",
+            image="sslhep/servicex-transformer:pytest",
+            workers=workers,
+            files=files,
+            status=status,
+            generated_code_cm="1234-generated-source",
+            result_destination="object-store",
+            result_format="parquet",
+            transformer_language="python",
+            transformer_command="echo",
+        )
+        with client.application.app_context():
+            transformer.start_transformers(client.application.config, request_rec)
+
+        kwargs = transformer.launch_transformer_jobs.call_args.kwargs
+        assert kwargs["workers"] == expected_workers
+        assert kwargs["max_workers"] == expected_max_workers
+
     @pytest.mark.skip(reason="Needs to be updated to work with sidecar")
     def test_launch_transformer_jobs(self, mocker):
         import kubernetes
@@ -239,6 +294,83 @@ class TestTransformerManager(ResourceTestBase):
             requests = container.resources.requests
             assert requests["cpu"] == "500m"
             assert requests["memory"] == "512Mi"
+
+    def test_launch_transformer_jobs_custom_sidecar_volume_path(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
+
+        mocker.patch.object(kubernetes.client, "AutoscalingV1Api", mocker.Mock())
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                TRANSFORMER_AUTOSCALE_ENABLED=False,
+                TRANSFORMER_SIDECAR_VOLUME_PATH="/shared/scratch",
+            ),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="arrow",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_deployment = mock_api.mock_calls[1][2]["body"]
+            sidecar, science = called_deployment.spec.template.spec.containers
+
+            assert _arg_value(sidecar.args, "--shared-dir") == "/shared/scratch"
+            assert "/shared/scratch/scripts/proxy-exporter.sh" in science.args[0]
+            assert "/servicex/output" not in sidecar.args[0]
+            assert "/servicex/output" not in science.args[0]
+
+    def test_launch_transformer_jobs_deployment_failure(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.create_namespaced_deployment.side_effect = (
+            kubernetes.client.rest.ApiException(status=403)
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(TRANSFORMER_AUTOSCALE_ENABLED=False),
+            transformation_manager=transformer,
+        )
+
+        with client.application.app_context():
+            with pytest.raises(kubernetes.client.rest.ApiException):
+                transformer.launch_transformer_jobs(
+                    image="sslhep/servicex-transformer:pytest",
+                    request_id="1234",
+                    workers=17,
+                    max_workers=17,
+                    rabbitmq_uri="ampq://test.com",
+                    namespace="my-ns",
+                    result_destination="object-store",
+                    result_format="arrow",
+                    x509_secret="x509",
+                    generated_code_cm=None,
+                    transformer_language="scala",
+                    transformer_command="echo",
+                )
 
     def test_launch_transformer_with_hostpath(self, mocker):
         import kubernetes
@@ -660,13 +792,13 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         mock_autoscaling = mocker.Mock()
@@ -674,7 +806,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException()
+            kubernetes.client.rest.ApiException(status=403)
         )
 
         transformer = TransformerManager("external-kubernetes")
@@ -701,6 +833,8 @@ class TestTransformerManager(ResourceTestBase):
             transformer.celery_app.control.cancel_consumer.assert_called_with(
                 "transformer-1234"
             )
+            # a 403 is not worth retrying
+            assert mock_api.delete_namespaced_deployment.call_count == 1
         assert client.application.logger.exception.call_count == 4
 
         # now check quiet mode
@@ -720,7 +854,8 @@ class TestTransformerManager(ResourceTestBase):
             )
         client.application.logger.exception.assert_not_called()
 
-    def test_shutdown_transformer_jobs_exceptions_once(self, mocker):
+    @pytest.mark.parametrize("status", [500, 429])
+    def test_shutdown_transformer_jobs_exceptions_once(self, mocker, status):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
@@ -728,14 +863,14 @@ class TestTransformerManager(ResourceTestBase):
         mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
         mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
         mock_api.delete_namespaced_deployment.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
         mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
         mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
         mock_core_api.delete_namespaced_config_map.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
@@ -744,7 +879,7 @@ class TestTransformerManager(ResourceTestBase):
             kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
         )
         mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
-            kubernetes.client.rest.ApiException(),
+            kubernetes.client.rest.ApiException(status=status),
             None,
         )
 
@@ -765,6 +900,49 @@ class TestTransformerManager(ResourceTestBase):
                 == 2
             )
             assert client.application.logger.exception.call_count == 0
+
+    def test_shutdown_transformer_jobs_already_gone(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        not_found = kubernetes.client.rest.ApiException(status=404)
+
+        mock_api = mocker.MagicMock(kubernetes.client.AppsV1Api)
+        mocker.patch.object(kubernetes.client, "AppsV1Api", return_value=mock_api)
+        mock_api.delete_namespaced_deployment.side_effect = not_found
+
+        mock_core_api = mocker.MagicMock(kubernetes.client.CoreV1Api)
+        mocker.patch.object(kubernetes.client, "CoreV1Api", return_value=mock_core_api)
+        mock_core_api.delete_namespaced_config_map.side_effect = not_found
+
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+        mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.side_effect = (
+            not_found
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+        transformer.celery_app.control.cancel_consumer = mocker.MagicMock()
+
+        client = self._test_client(transformation_manager=transformer)
+        client.application.logger = mocker.MagicMock()
+
+        # a resource that is already gone is what we wanted: no retry, no error
+        with client.application.app_context():
+            transformer.shutdown_transformer_job("1234", "my-ns")
+            assert mock_api.delete_namespaced_deployment.call_count == 1
+            assert mock_core_api.delete_namespaced_config_map.call_count == 1
+            assert (
+                mock_autoscaling.delete_namespaced_horizontal_pod_autoscaler.call_count
+                == 1
+            )
+            transformer.celery_app.control.cancel_consumer.assert_called_with(
+                "transformer-1234"
+            )
+        client.application.logger.exception.assert_not_called()
 
     def test_shutdown_transformer_jobs_no_autoscaler(self, mocker):
         import kubernetes
@@ -815,9 +993,7 @@ class TestTransformerManager(ResourceTestBase):
         mock_zip_ext = mocker.Mock()
         mock_zip_ext.filename = "foo.sh"
         mock_zip.filelist = [mock_zip_ext]
-        mock_open = mocker.Mock()
-        mock_open.read = mocker.Mock(return_value=b"hi there")
-        mock_zip.open = mocker.Mock(return_value=mock_open)
+        mock_zip.read = mocker.Mock(return_value=b"hi there")
 
         transformer.create_configmap_from_zip(mock_zip, "my-request", "servicex")
 
@@ -1174,15 +1350,15 @@ class TestTransformerManager(ResourceTestBase):
                 "key": "gpu",
                 "operator": "Exists",
                 "effect": "NoExecute",
-                "toleration_seconds": 3600,
+                "tolerationSeconds": 3600,
             },
         ]
         affinity = {
-            "node_affinity": {
-                "required_during_scheduling_ignored_during_execution": {
-                    "node_selector_terms": [
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
                         {
-                            "match_expressions": [
+                            "matchExpressions": [
                                 {
                                     "key": "topology.kubernetes.io/zone",
                                     "operator": "In",
@@ -1234,20 +1410,15 @@ class TestTransformerManager(ResourceTestBase):
             # Verify node selector
             assert template.spec.node_selector == node_selector
 
-            # Verify tolerations
-            assert len(template.spec.tolerations) == 2
-            assert template.spec.tolerations[0].key == "dedicated"
-            assert template.spec.tolerations[0].operator == "Equal"
-            assert template.spec.tolerations[0].value == "servicex"
-            assert template.spec.tolerations[0].effect == "NoSchedule"
-            assert template.spec.tolerations[1].key == "gpu"
-            assert template.spec.tolerations[1].operator == "Exists"
-            assert template.spec.tolerations[1].effect == "NoExecute"
-            assert template.spec.tolerations[1].toleration_seconds == 3600
-
-            # Verify affinity
-            assert template.spec.affinity is not None
-            assert template.spec.affinity.node_affinity is not None
+            # Verify the manifest which actually gets sent to Kubernetes keeps
+            # the standard camelCase spelling of these settings
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_deployment
+            )
+            pod_spec = manifest["spec"]["template"]["spec"]
+            assert pod_spec["tolerations"] == tolerations
+            assert pod_spec["affinity"] == affinity
+            assert pod_spec["nodeSelector"] == node_selector
 
     def test_launch_transformer_with_empty_pod_scheduling_options(self, mocker):
         import kubernetes
@@ -1300,13 +1471,29 @@ class TestTransformerManager(ResourceTestBase):
             assert template.spec.affinity is None
 
     @pytest.mark.parametrize(
-        "volume",
+        "volume, mount_propagation",
         [
-            {"hostPath": {"path": "/cvmfs"}},
-            {"persistentVolumeClaim": {"claimName": "cvmfs"}},
+            ({"hostPath": {"path": "/cvmfs"}}, "HostToContainer"),
+            ({"persistentVolumeClaim": {"claimName": "cvmfs"}}, None),
+            (
+                {"persistentVolumeClaim": {"claimName": "cvmfs", "readOnly": True}},
+                None,
+            ),
+            (
+                {
+                    "csi": {
+                        "driver": "cvmfs.csi.cern.ch",
+                        "readOnly": True,
+                        "volumeAttributes": {"repository": "atlas.cern.ch"},
+                    }
+                },
+                None,
+            ),
         ],
     )
-    def test_launch_transformer_jobs_with_cvmfs(self, mocker, volume):
+    def test_launch_transformer_jobs_with_cvmfs(
+        self, mocker, volume, mount_propagation
+    ):
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
@@ -1341,34 +1528,24 @@ class TestTransformerManager(ResourceTestBase):
             called_job = mock_kubernetes.mock_calls[1][2]["body"]
             container = called_job.spec.template.spec.containers[0]
 
+            manifest = kubernetes.client.ApiClient().sanitize_for_serialization(
+                called_job
+            )
             cvmfs_vol = next(
                 filter(
-                    lambda v: v.name == "cvmfs",
-                    called_job.spec.template.spec.volumes,
+                    lambda v: v["name"] == "cvmfs",
+                    manifest["spec"]["template"]["spec"]["volumes"],
                 )
             )
-            # check that one volume type exists
-            assert (
-                len(
-                    [
-                        _
-                        for _ in cvmfs_vol.to_dict().items()
-                        if _[1] is not None and _[0] != "name"
-                    ]
-                )
-                == 1
-            )
-            # check that all the keys have been snake cased
-            for key, subdict in cvmfs_vol.to_dict().items():
-                if key == "name":
-                    continue
-                if subdict is not None:
-                    assert all(_.islower() for _ in subdict.keys())
+            # the volume definition is passed through verbatim, apart from the name
+            assert cvmfs_vol == {**volume, "name": "cvmfs"}
 
             cvmfs_vol_mount = next(
                 filter(lambda m: m.name == "cvmfs", container.volume_mounts)
             )
             assert cvmfs_vol_mount.mount_path == "/cvmfs"
+            assert cvmfs_vol_mount.read_only is True
+            assert cvmfs_vol_mount.mount_propagation == mount_propagation
 
 
 @pytest.fixture
@@ -1433,38 +1610,3 @@ class TestShutdownPod:
         req = self._make_req(TransformStatus.lookup)
         manager.cancel_transform(req)
         manager.shutdown_transformer_job.assert_called_once_with("test-123", "test-ns")
-
-    def test_404_swallowed(self, app_context, mocker):
-        import kubernetes
-
-        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-
-        mocker.patch(
-            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
-        )
-        manager = TransformerManager("internal-kubernetes")
-        manager.shutdown_transformer_job = Mock()
-        manager.shutdown_transformer_job.side_effect = (
-            kubernetes.client.exceptions.ApiException(status=404)
-        )
-        req = self._make_req(TransformStatus.running)
-        manager.cancel_transform(req)
-
-    def test_non_404_logs_and_reraises(self, app_context, mocker):
-        import kubernetes
-
-        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
-
-        mocker.patch(
-            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
-        )
-        manager = TransformerManager("internal-kubernetes")
-        manager.shutdown_transformer_job = Mock()
-        mock_error = mocker.patch.object(app_context.logger, "error")
-        manager.shutdown_transformer_job.side_effect = (
-            kubernetes.client.exceptions.ApiException(status=403, reason="Forbidden")
-        )
-        with pytest.raises(kubernetes.client.exceptions.ApiException):
-            req = self._make_req(TransformStatus.running)
-            manager.cancel_transform(req)
-        mock_error.assert_called_once()

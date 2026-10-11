@@ -27,7 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
 
-import kubernetes
 from flask import current_app
 
 from servicex_app.decorators import auth_required
@@ -66,10 +65,7 @@ class CancelTransform(ServiceXResource):
             current_app.logger.warning(msg, extra={"request_id": request_id})
             return {"message": msg}, 400
 
-        try:
-            self.transformer_manager.cancel_transform(transform_req)
-        except kubernetes.client.exceptions.ApiException as exc:
-            return {"message": exc.reason}, exc.status
+        self.transformer_manager.cancel_transform(transform_req)
 
         transform_req.status = TransformStatus.canceled
         transform_req.finish_time = datetime.now(tz=timezone.utc)
