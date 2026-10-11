@@ -24,9 +24,9 @@ Log in with
     username: user
     password: rabbitmq-password from {{ .Values.secrets }} secret that you set up
 {{ else }}
-{{ if and .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password }}
+{{ if .Values.rabbitmq.auth.password }}
 Log in with
-    username: {{ .Values.rabbitmq.auth.username }}
+    username: user
     password: {{ .Values.rabbitmq.auth.password }}
 {{ end }}
 {{ end }}
@@ -37,16 +37,16 @@ You can also connect to the deployed postgres server with your favorite SQL clie
 
 and connect with this JDBC Connection String:
 {{ if .Values.secrets }}
-    postgresql://{{  .Values.postgresql.postgresqlUsername }}:[postgresql-password from {{.Values.secrets}} ]@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+    postgresql://postgres:[postgresql-password from {{.Values.secrets}} ]@localhost:5432/{{ .Values.postgresql.global.postgresql.auth.database }}
 {{ else }}
-    postgresql://{{  .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@localhost:5432/{{ .Values.postgresql.postgresqlDatabase }}
+    postgresql://postgres:{{ .Values.postgresql.global.postgresql.auth.postgresPassword }}@localhost:5432/{{ .Values.postgresql.global.postgresql.auth.database }}
 {{ end }}
 {{ end }}
 
 {{ if .Values.objectStore.enabled }}
   {{ if not .Values.objectStore.internal }}
 Using an external minio object store at {{ .Values.objectStore.publicURL }}
-    {{ if .Values.objectStore.usetls }}
+    {{ if .Values.objectStore.useTLS }}
 with a https connection.
     {{ else }}
 with a http connection.

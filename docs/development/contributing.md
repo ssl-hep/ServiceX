@@ -122,9 +122,6 @@ x509Secrets:
 app:
   ingress:
     host: localhost:5000
-
-transformer:
-  cachePrefix: '""'
 ```
 
 ### Making Changes
