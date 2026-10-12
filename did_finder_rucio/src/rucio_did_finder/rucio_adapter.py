@@ -99,7 +99,6 @@ class RucioAdapter:
             self.logger.error(msg)
             raise BadDatasetNameException(msg) from e
 
-
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
         if not parsed_did:
