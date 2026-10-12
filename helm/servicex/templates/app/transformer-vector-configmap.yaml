@@ -28,6 +28,15 @@ data:
         address: 0.0.0.0:{{ .Values.logging.vector.transformer.port }}
         decoding:
           codec: json
+      # Left on Vector's default fingerprint, a checksum of each file's first
+      # line. That is only safe because watch.sh writes a unique header as
+      # the first line of every chunk (dropped again in science_events).
+      # Without it, chunks that start with the same output share one
+      # fingerprint, and Vector skips the start of the new chunk with no
+      # error. device_and_inode is not a substitute. Chunks are created
+      # while old ones are being deleted, so a new chunk can get a deleted
+      # chunk's inode while Vector still has that chunk's read position and
+      # lose its first lines.
       science_logs:
         type: file
         include:
@@ -40,6 +49,15 @@ data:
         inputs: [science_logs]
         source: |
           msg = to_string(.message) ?? ""
+          # watch.sh starts every chunk with a "servicex-chunk <name>" line.
+          # The line has no log content. It is there so that each chunk's
+          # first line, which is what science_logs fingerprints by default, is
+          # unique, so Vector never confuses two chunks that start with the
+          # same output. Abort here so the line never reaches the sink; remap
+          # drops aborted events by default (drop_on_abort).
+          if starts_with(msg, "servicex-chunk ") {
+            abort
+          }
           # Science stdout is unstructured, so severity is a guess. Ordinary
           # lines are DEBUG so they stay out of the way at the default filter.
           # No leading word boundary, so PascalCase exception names

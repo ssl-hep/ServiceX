@@ -316,7 +316,10 @@ rather than a socket. `transformer_manager.py` gives each pod a `vector` contain
 - **the science container's stdout**, which `watch.sh` tees into `science.*.log` chunks on
   the shared output volume for Vector to tail (`component = "science"`). Vector deletes each
   chunk once it has read it, which is what keeps that volume from growing for the life of
-  the pod.
+  the pod. Each chunk starts with a `servicex-chunk <name>` header that the transformer
+  Vector drops. Vector tells files apart by a checksum of their first line, and runs of the
+  same science image often start with the same output, so without the header Vector would
+  confuse two chunks and silently skip the start of the newer one.
 
 That container's only sink is the aggregator, over Vector's native protocol. It never talks
 to Postgres, which is what keeps database credentials out of pods that also run
