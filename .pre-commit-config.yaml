@@ -27,7 +27,7 @@ repos:
           # To also require extra= on every log call, uncomment:
           # - --require-extras
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.10.0
+    rev: 26.10.1
     hooks:
       -   id: black
 
