@@ -75,6 +75,11 @@ def find_files(
         case [release, did, skim]:
             pass
 
+    __log.info(
+        f"DID Lookup request received for release {release}, skim {skim}.",
+        extra={"dataset_id": info["dataset-id"], "dataset_name": did_name},
+    )
+
     try:
         atom.set_release(release)
     except ValueError as e:

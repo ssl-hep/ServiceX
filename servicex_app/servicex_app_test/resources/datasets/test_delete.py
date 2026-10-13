@@ -59,8 +59,9 @@ class TestDatasetsDelete(ResourceTestBase):
         ]
         return dataset
 
+    @patch("servicex_app.models.LogMessage.delete_by_dataset_id")
     @patch("servicex_app.models.Dataset.find_by_id")
-    def test_delete_dataset(self, mock_get, dataset, mocker):
+    def test_delete_dataset(self, mock_get, mock_purge_logs, dataset, mocker):
         dataset.stale = False
         mock_get.return_value = dataset
         dataset.save_to_db = mocker.Mock()
@@ -69,21 +70,26 @@ class TestDatasetsDelete(ResourceTestBase):
         mock_get.assert_called()
         assert dataset.stale
         dataset.save_to_db.assert_called()
+        mock_purge_logs.assert_called_once_with("123")
         assert response.status_code == 200
 
+    @patch("servicex_app.models.LogMessage.delete_by_dataset_id")
     @patch("servicex_app.models.Dataset.find_by_id")
-    def test_delete_dataset_not_found(self, mock_get):
+    def test_delete_dataset_not_found(self, mock_get, mock_purge_logs):
         mock_get.return_value = None
         client = self._test_client()
         response = client.delete("/servicex/datasets/123")
         mock_get.assert_called()
+        assert not mock_purge_logs.called
         assert response.status_code == 404
 
+    @patch("servicex_app.models.LogMessage.delete_by_dataset_id")
     @patch("servicex_app.models.Dataset.find_by_id")
-    def test_delete_dataset_already_deleted(self, mock_get, dataset):
+    def test_delete_dataset_already_deleted(self, mock_get, mock_purge_logs, dataset):
         dataset.stale = True
         mock_get.return_value = dataset
         client = self._test_client()
         response = client.delete("/servicex/datasets/123")
         mock_get.assert_called()
+        assert not mock_purge_logs.called
         assert response.status_code == 400

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="content-section col-12">
+  <div class="row justify-content-between align-items-center">
+    <h4 class="mb-3 col-auto">Dataset</h4>
+    <div class="col-auto">
+      {% if not ds.stale %}
+      <button id="delete-{{ ds.id }}"
+        onclick="deleteDataset({{ ds.id }})"
+        type="button" class="btn btn-danger btn-sm">
+        Flush
+      </button>
+      {% elif ds.lookup_status and ds.lookup_status.value in ('bad_name', 'does_not_exist', 'internal_failure') %}
+      <span class="badge badge-danger">{{ ds.lookup_status.value }}</span>
+      {% else %}
+      <span class="badge badge-secondary">Flushed</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <dl class="row">
+    <dt class="col-sm-3">ID</dt>
+    <dd class="col-sm-9">{{ ds.id }}</dd>
+
+    <dt class="col-sm-3">Name</dt>
+    <dd class="col-sm-9" style="word-break: break-all">
+      {% if ds.did_finder == "user" %}
+        (file list)
+        <div class="text-muted small">{{ ds.name }}</div>
+      {% else %}
+        {{ ds.name }}
+      {% endif %}
+    </dd>
+
+    <dt class="col-sm-3">DID Finder</dt>
+    <dd class="col-sm-9">{{ ds.did_finder }}</dd>
+
+    <dt class="col-sm-3">Lookup Status</dt>
+    <dd class="col-sm-9">{{ ds.lookup_status.value if ds.lookup_status else '-' }}</dd>
+
+    <dt class="col-sm-3">Files</dt>
+    <dd class="col-sm-9">{{ humanize.intcomma(ds.n_files or 0) }}</dd>
+
+    <dt class="col-sm-3">Total Events</dt>
+    <dd class="col-sm-9">{{ humanize.intcomma(ds.events or 0) }}</dd>
+
+    <dt class="col-sm-3">Total Size</dt>
+    <dd class="col-sm-9">{{ humanize.naturalsize(ds.size or 0) }}</dd>
+
+    <dt class="col-sm-3">Last Used</dt>
+    <dd class="col-sm-9">
+      {{ moment(ds.last_used).format("YYYY-MM-DD HH:mm:ss") if ds.last_used else "-" }}
+      <span class="tz"></span>
+    </dd>
+
+    <dt class="col-sm-3">Last Updated</dt>
+    <dd class="col-sm-9">
+      {{ moment(ds.last_updated).format("YYYY-MM-DD HH:mm:ss") if ds.last_updated else "-" }}
+      <span class="tz"></span>
+    </dd>
+
+    <dt class="col-sm-3">Transform Requests</dt>
+    <dd class="col-sm-9">
+      {% if ds.transform_requests %}
+        <ul class="list-unstyled mb-0">
+          {% for req in ds.transform_requests %}
+          <li>
+            <a href="{{ url_for('transformation_request', id_=req.id) }}">
+              {{ req.title or "Untitled" }}
+            </a>
+            <span class="text-muted small">({{ req.request_id }})</span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        -
+      {% endif %}
+    </dd>
+  </dl>
+
+  <h5 class="mt-4">Files ({{ humanize.intcomma(ds.files|length) }})</h5>
+  {% if ds.files %}
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Path(s)</th>
+          <th scope="col">Events</th>
+          <th scope="col">Size</th>
+          <th scope="col">adler32</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in ds.files %}
+        <tr>
+          <th scope="row">{{ f.id }}</th>
+          <td style="word-break: break-all">{{ f.paths }}</td>
+          <td>{{ humanize.intcomma(f.file_events or 0) }}</td>
+          <td>{{ humanize.naturalsize(f.file_size or 0) }}</td>
+          <td><code>{{ f.adler32 or '-' }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-muted">No files.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function deleteDataset(datasetId) {
+    if (!confirm(`Flush dataset ${datasetId}?\n\nThis marks it stale so a future request will refetch the file list.`)) {
+      return;
+    }
+    fetch(`/servicex/datasets/${datasetId}`, { method: 'DELETE' })
+      .then(async (res) => {
+        if (res.ok) {
+          location.reload();
+        } else {
+          const body = await res.json().catch(() => ({}));
+          alert(body.message || `Failed to flush dataset ${datasetId}`);
+        }
+      })
+      .catch((err) => alert(`Failed to flush dataset ${datasetId}: ${err}`));
+  }
+
+  $(document).ready(function () {
+    $(".tz").text(moment.tz(moment.tz.guess()).format("z"));
+  });
+</script>
+{% endblock %}
