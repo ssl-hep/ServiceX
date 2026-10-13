@@ -91,7 +91,6 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
         try:
             verify_jwt_in_request(locations=["headers"])
         except NoAuthorizationError as exc:
-            assert "NoAuthorizationError"
             return make_response({"message": str(exc)}, 401)
 
         # Explicitly start a transaction here to avoid unexpected in_transaction() b
@@ -129,7 +128,7 @@ def is_admin_user() -> bool:
         verify_jwt_in_request(locations=["headers"])
         user = get_jwt_user()
         return user is not None and user.admin
-    except (NoAuthorizationError, Exception):
+    except Exception:
         return False
 
 
