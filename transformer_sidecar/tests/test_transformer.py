@@ -301,7 +301,7 @@ def test_transformer_root_to_parquet_failed(
         mock_science_container.return_value.await_response.return_value = "success."
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -376,6 +376,7 @@ def test_transformer_parquet(
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "parquet"
+        assert mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status == "success"
 
 
 def test_transformer_output_dir(
@@ -513,7 +514,7 @@ def test_transform_file(
         ]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site2:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site2_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -531,6 +532,10 @@ def test_transform_file(
         mock_science_container.assert_called_once()
 
         mock_servicex_adapter.assert_called_with(test_service_endpoint)
+        assert (
+            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+            == "success"
+        )
 
 
 def test_transform_file_hard_failure(
@@ -644,7 +649,7 @@ def test_transform_file_object_store_error(
         mock_science_container.return_value.await_response.side_effect = ["success."]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
