@@ -194,6 +194,7 @@ def test_transformer_root_to_parquet(
 
         def patch_convert(x):
             import shutil
+
             if not success:
                 return None
 
@@ -221,13 +222,17 @@ def test_transformer_root_to_parquet(
         if success:
             mock_object_store_manager.return_value.upload_file.assert_called_once()
             assert (
-                mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
                 == "success"
             )
         else:
             mock_object_store_manager.return_value.upload_file.assert_not_called()
             assert (
-                mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
                 == "failure"
             )
 
@@ -264,6 +269,7 @@ def test_transformer_root_to_rntuple(
 
         def patch_convert(x):
             import shutil
+
             if not success:
                 return None
 
@@ -291,13 +297,17 @@ def test_transformer_root_to_rntuple(
         if success:
             mock_object_store_manager.return_value.upload_file.assert_called_once()
             assert (
-                mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
                 == "success"
             )
         else:
             mock_object_store_manager.return_value.upload_file.assert_not_called()
             assert (
-                mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
                 == "failure"
             )
 
