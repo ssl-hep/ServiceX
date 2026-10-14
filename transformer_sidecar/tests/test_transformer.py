@@ -376,7 +376,10 @@ def test_transformer_parquet(
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "parquet"
-        assert mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status == "success"
+        assert (
+            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+            == "success"
+        )
 
 
 def test_transformer_output_dir(
