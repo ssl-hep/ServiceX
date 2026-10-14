@@ -60,6 +60,6 @@ You install this secret in the cluster with
 
 ## Users Creating Accounts by Logging into Dashboard
 Users can just visit the deployment's dashboard and log in with the OAuth flow.
-If they have been created in the database using any of the above methods, their
-account will immediatly be approved. If not, the account will be set to pending
+If they have been created in the database using any of the above methods, or if `app.allowAllAfterAuth` is set, their
+account will immediately be approved. If not, the account will be set to pending
 and they will need to be approved with the slack integration.
