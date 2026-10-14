@@ -183,7 +183,7 @@ def test_transformer_root_to_parquet(
         mock_science_container.return_value.await_response.return_value = "success."
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -242,7 +242,7 @@ def test_transformer_root_to_rntuple(
         mock_science_container.return_value.await_response.return_value = "success."
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -358,7 +358,7 @@ def test_transformer_parquet(
         ]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site2:file.root.parquet"
+            Path(temp_dir) / test_request_id / "scratch" / "site2_file.root.parquet"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -406,7 +406,7 @@ def test_transformer_output_dir(
         ]
 
         result_file_path = os.path.join(
-            temp_dir, "local", "results", "site2:file.root.parquet"
+            temp_dir, "local", "results", "site2_file.root.parquet"
         )
         with open(result_file_path, "w") as f:
             f.write("test")
