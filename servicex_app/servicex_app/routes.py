@@ -100,6 +100,10 @@ def add_routes(
     from servicex_app.web.transformation_request import transformation_request
     from servicex_app.web.transformation_results import transformation_results
     from servicex_app.web.multiple_codegen_list import multiple_codegen_list
+    from servicex_app.resources.users.bearer_token_exchange import (
+        bearer_token_exchange,
+        device_flow_info,
+    )
     from servicex_app.web.datasets import datasets as datasets_page
     from servicex_app.web.dataset import dataset as dataset_page
 
@@ -129,6 +133,10 @@ def add_routes(
     app.add_url_rule("/.servicex", "servicex-file", servicex_file)
     app.add_url_rule("/dashboard", "user-dashboard", user_dashboard)
     app.add_url_rule("/profile", "profile", view_profile)
+    app.add_url_rule(
+        "/bearer-token-exchange", "bearer_token_exchange", bearer_token_exchange
+    )
+    app.add_url_rule("/device-flow-info", "device_flow_info", device_flow_info)
     app.add_url_rule(
         "/profile/new", "create_profile", create_profile, methods=["GET", "POST"]
     )

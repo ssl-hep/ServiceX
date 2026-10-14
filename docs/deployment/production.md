@@ -240,8 +240,10 @@ app:
 ```
 
 
-### Setting up Globus Auth
-Globus Auth requires your deployment to be served over HTTPS,
+### Setting up Open ID Connect Auth
+We will illustrate setting up Open ID Connect (OIDC) authentication with the specific example of Globus as the provider, but other providers (such as the Indigo IAM used  by ATLAS and CMS, or Keycloak) will have analogous steps. In all cases you will need to obtain a Client ID and corresponding client secret, and a ``well-known configuration URL'' which ServiceX will use to configure all relevant endpoints.
+
+OIDC Auth requires your deployment to be served over HTTPS,
 so make sure you have completed the TLS section above.
 
 Visit [developers.globus.org](https://developers.globus.org)
@@ -294,12 +296,15 @@ app:
 
 The system works as follows:
 - New users will be required to create accounts with their Globus logins.
-- Unless `allowAllAfterAuth` is enabled, new accounts will be pending, and cannot make requests until approved by a ServiceX admin.
+- Unless `allowAllAfterAuth` is enabled, new accounts will be pending, and cannot make requests until approved by a ServiceX admin. If you are using an auth provider where successful authentication implies that the user should be allowed access, it is strongly recommended to use this option, since it will significantly reduce administrator workload.
 - To bootstrap the initial admin account, you must set `app.adminEmail`
 to the email address associated with the administrator's Globus account.
 
+### Enabling the Device Flow
+OIDC providers may support the [device authorization grant](https://oauth.net/2/device-flow/) which enables a seamless login experience for users: all necessary token exchanges are handled in the background and user profiles are populated automatically. This is the same flow that is used by, for example, smart TVs to log into services without having to enter passwords on the device. It is *highly recommended* to set up this workflow if possible; this is possible to do on the Indigo IAM and Keycloak, but unfortunately *not* on Globus. This requires obtaining a second, "public" OIDC client ID from the same provider, which does not have a secret, and with the device authorization grant enabled (the type is known as `urn:ietf:params:oauth:grant-type:device_code`). Once this is available, set `app.oauthDeviceFlowClientID` to this client ID and the device flow will be enabled automatically. (**NOTE**: due to an issue with the Indigo IAM software, when using that please ensure that the public client has `Code challenge is accepted but not required` for `Proof key for code exchange (PKCE) challenge method` under the `Crypto` tab.) This is best paired with `allowAllAfterAuth` for completely hands-off user registration.
+
 ### Approving new accounts from Slack
-ServiceX can send notifications of new user registrations to the Slack channel
+If `allowAllAfterAuth` is not set and users have to be approved manually, ServiceX can send notifications of new user registrations to the Slack channel
 of your choice and allow administrators to approve pending users directly from
 Slack.
 This is strongly recommended for convenience, as currently the only other way

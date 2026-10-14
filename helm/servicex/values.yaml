@@ -9,6 +9,7 @@ app:
   oauthMetadataURL: null
   oauthClientID: null
   oauthClientSecret: null
+  oauthDeviceFlowClientID: null
   allowAllAfterAuth: false
   defaultUsers:
   image: sslhep/servicex_app
