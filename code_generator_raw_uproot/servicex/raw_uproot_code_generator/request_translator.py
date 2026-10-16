@@ -184,11 +184,10 @@ def run_single_query(file_path, query):
                         raise
                     else:
                         continue
-                arrfound = False
-                for subarr in t.iterate(language=lang, **sanitized_args):
-                    arrfound = True
-                    yield ('tree', outtreename, subarr)
-                if not arrfound:  # need this branch if the original tree has no entries
+                if t.num_entries > 0:
+                    for subarr in t.iterate(language=lang, **sanitized_args):
+                        yield ('tree', outtreename, subarr)
+                else:  # need this branch if the original tree has no entries
                     if 'cut' in sanitized_args:
                         sanitized_args.pop('cut')
                     arr = t.arrays(language=lang, entry_stop=0, **sanitized_args)
