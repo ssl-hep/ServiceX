@@ -141,8 +141,22 @@ data:
     TRANSFORMER_CVMFS_VOLUME = None
     {{- end }}
 
-    {{ if .Values.objectStore.enabled }}
+    {{- if and .Values.objectStore.enabled .Values.xrootdStore.enabled }}
+    {{- fail "objectStore.enabled and xrootdStore.enabled are mutually exclusive: transform results can only be written to one store" }}
+    {{- end }}
+
+    {{ if .Values.xrootdStore.enabled }}
+    # Transform results go to an xrootd storage element. The object-store
+    # result destination is still what clients ask for - only the store behind
+    # it differs.
     OBJECT_STORE_ENABLED = True
+    RESULT_STORE_BACKEND = 'xrootd'
+    XROOTD_STORE_URL = '{{ required "xrootdStore.rootURL is required when xrootdStore.enabled is true" .Values.xrootdStore.rootURL }}'
+    XROOTD_PUBLIC_URL = {{ if .Values.xrootdStore.publicURL }}'{{ .Values.xrootdStore.publicURL }}'{{ else }}None{{ end }}
+
+    {{ else if .Values.objectStore.enabled }}
+    OBJECT_STORE_ENABLED = True
+    RESULT_STORE_BACKEND = 'minio'
     # default to using a https connection to the client unless explicitly
     # turned off
       {{ if .Values.objectStore.publicClientUseTLS  }}

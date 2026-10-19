@@ -282,26 +282,39 @@ class TransformerManager:
                 ]
 
         if result_destination == "object-store":
-            env = env + [
-                client.V1EnvVar(
-                    name="MINIO_URL", value=current_app.config["MINIO_URL_TRANSFORMER"]
-                ),
-                client.V1EnvVar(
-                    name="MINIO_ACCESS_KEY",
-                    value=current_app.config["MINIO_ACCESS_KEY"],
-                ),
-                client.V1EnvVar(
-                    name="MINIO_SECRET_KEY",
-                    value=current_app.config["MINIO_SECRET_KEY"],
-                ),
-            ]
-            if "MINIO_ENCRYPT" in current_app.config:
-                env += [
+            if current_app.config.get("RESULT_STORE_BACKEND", "minio") == "xrootd":
+                # The sidecar writes results to the storage element using the
+                # X509 proxy that is already mounted into the pod, so all it
+                # needs to be told is where to put them.
+                env = env + [
+                    client.V1EnvVar(name="RESULT_STORE_BACKEND", value="xrootd"),
                     client.V1EnvVar(
-                        name="MINIO_ENCRYPT",
-                        value=str(current_app.config["MINIO_ENCRYPT"]),
-                    )
+                        name="XROOTD_STORE_URL",
+                        value=current_app.config["XROOTD_STORE_URL"],
+                    ),
                 ]
+            else:
+                env = env + [
+                    client.V1EnvVar(
+                        name="MINIO_URL",
+                        value=current_app.config["MINIO_URL_TRANSFORMER"],
+                    ),
+                    client.V1EnvVar(
+                        name="MINIO_ACCESS_KEY",
+                        value=current_app.config["MINIO_ACCESS_KEY"],
+                    ),
+                    client.V1EnvVar(
+                        name="MINIO_SECRET_KEY",
+                        value=current_app.config["MINIO_SECRET_KEY"],
+                    ),
+                ]
+                if "MINIO_ENCRYPT" in current_app.config:
+                    env += [
+                        client.V1EnvVar(
+                            name="MINIO_ENCRYPT",
+                            value=str(current_app.config["MINIO_ENCRYPT"]),
+                        )
+                    ]
 
         if result_destination == "volume":
             TransformerManager.create_posix_volume(volumes, volume_mounts)

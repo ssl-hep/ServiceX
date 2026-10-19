@@ -368,6 +368,54 @@ class TestTransformerManager(ResourceTestBase):
             assert _env_value(env, "MINIO_ACCESS_KEY") == "itsame"
             assert _env_value(env, "MINIO_SECRET_KEY") == "shhh"
 
+    def test_launch_transformer_jobs_with_xrootd_store(self, mocker):
+        import kubernetes
+
+        mocker.patch.object(kubernetes.config, "load_kube_config")
+        mock_kubernetes = mocker.patch.object(kubernetes.client, "AppsV1Api")
+        mock_autoscaling = mocker.Mock()
+        mocker.patch.object(
+            kubernetes.client, "AutoscalingV1Api", return_value=mock_autoscaling
+        )
+
+        transformer = TransformerManager("external-kubernetes")
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
+        client = self._test_client(
+            extra_config=make_config(
+                RESULT_STORE_BACKEND="xrootd",
+                XROOTD_STORE_URL="root://my.storage.org:1094//servicex/outputs",
+            ),
+            transformation_manager=transformer,
+            object_store=Mock(),
+        )
+
+        with client.application.app_context():
+            transformer.launch_transformer_jobs(
+                image="sslhep/servicex-transformer:pytest",
+                request_id="1234",
+                workers=17,
+                max_workers=17,
+                rabbitmq_uri="ampq://test.com",
+                namespace="my-ns",
+                result_destination="object-store",
+                result_format="parquet",
+                x509_secret="x509",
+                generated_code_cm=None,
+                transformer_language="scala",
+                transformer_command="echo",
+            )
+            called_job = mock_kubernetes.mock_calls[1][2]["body"]
+            container = called_job.spec.template.spec.containers[0]
+
+            env = container.env
+            assert _env_value(env, "RESULT_STORE_BACKEND") == "xrootd"
+            assert (
+                _env_value(env, "XROOTD_STORE_URL")
+                == "root://my.storage.org:1094//servicex/outputs"
+            )
+            assert not [x for x in env if x.name.startswith("MINIO_")]
+
     def test_launch_transformer_jobs_with_object_store_and_xcache(self, mocker):
         import kubernetes
 

@@ -353,6 +353,20 @@ objectStore:
   publicClientUseTLS: true
   publicURL: null
   useTLS: false
+# Write transform results to an xRootD storage element instead of an object
+# store. This is mutually exclusive with objectStore.enabled, and requires the
+# x509 proxy (so noCerts must be false) since that is what grants ServiceX
+# access to the storage server.
+xrootdStore:
+  enabled: false
+  # Top level xrootd URL that all transform outputs are written under. Each
+  # transform writes into a subdirectory named after its request id.
+  # e.g. root://my.storage.org:1094//servicex/outputs
+  rootURL: null
+  # The same top level path served over HTTPS. This is what clients are handed
+  # to download their results, so leaving it unset limits them to root:// URLs.
+  # e.g. https://my.storage.org:1094/servicex/outputs
+  publicURL: null
 postgres:
   enabled: false
 postgresql:

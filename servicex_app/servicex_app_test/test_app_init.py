@@ -3,6 +3,7 @@ import pytest
 
 import servicex_app
 from servicex_app import strtobool
+from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestStrToBool:
@@ -49,6 +50,33 @@ class TestAppInit:
         monkeypatch.delenv("ALLOWED_IMAGE_PREFIXES", raising=False)
         with pytest.raises(ValueError, match="must be configured"):
             servicex_app.create_app()
+
+
+class TestResultStoreBackend(ResourceTestBase):
+    def test_unknown_backend_raises(self):
+        with pytest.raises(ValueError, match="Result store backend"):
+            self._test_client(extra_config={"RESULT_STORE_BACKEND": "gluster"})
+
+    def test_xrootd_backend_requires_url(self):
+        with pytest.raises(ValueError, match="XROOTD_STORE_URL"):
+            self._test_client(
+                extra_config={
+                    "OBJECT_STORE_ENABLED": True,
+                    "RESULT_STORE_BACKEND": "xrootd",
+                }
+            )
+
+    def test_xrootd_backend(self, mocker):
+        mock_manager = mocker.patch("servicex_app.XRootDStoreManager")
+        store_url = "root://my.storage.org:1094//servicex/outputs"
+        self._test_client(
+            extra_config={
+                "OBJECT_STORE_ENABLED": True,
+                "RESULT_STORE_BACKEND": "xrootd",
+                "XROOTD_STORE_URL": store_url,
+            }
+        )
+        mock_manager.assert_called_once_with(store_url)
 
 
 class TestUserCli:

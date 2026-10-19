@@ -39,6 +39,7 @@ from pytest import fixture
 from transformer_sidecar.object_store_manager import ObjectStoreError
 from transformer_sidecar.transformer import (
     init,
+    make_result_store,
     transform_file,
     prioritize_replicas,
     prepend_xcache,
@@ -792,3 +793,20 @@ def test_rntuple_conversion():
         with open(source_file, "w") as source:
             source.write("abcd")
         assert convert_to_rntuple(source_file) is None
+
+
+class TestMakeResultStore:
+    def test_defaults_to_object_store(self, mocker):
+        mock_object_store = mocker.patch(
+            "transformer_sidecar.transformer.ObjectStoreManager"
+        )
+        mocker.patch.dict(os.environ, clear=False)
+        os.environ.pop("RESULT_STORE_BACKEND", None)
+        assert make_result_store() == mock_object_store.return_value
+
+    def test_xrootd_backend(self, mocker):
+        mock_xrootd_store = mocker.patch(
+            "transformer_sidecar.transformer.XRootDStoreManager"
+        )
+        mocker.patch.dict(os.environ, {"RESULT_STORE_BACKEND": "xrootd"})
+        assert make_result_store() == mock_xrootd_store.return_value

@@ -56,6 +56,7 @@ from servicex_app.object_store_manager import ObjectStoreManager
 from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
 from servicex_app.transformer_manager import TransformerManager
+from servicex_app.xrootd_store_manager import XRootDStoreManager
 from flask_migrate import Migrate
 from flask_moment import Moment
 from servicex_app.models import db
@@ -63,6 +64,10 @@ from servicex_app.models import db
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 migrate = Migrate()
 moment = Moment()
+
+# Backends that can hold the results of a transform whose result-destination is
+# object-store
+VALID_RESULT_STORE_BACKENDS = ["minio", "xrootd"]
 
 
 class StreamFormatter(logging.Formatter):
@@ -304,21 +309,38 @@ def create_app(
         if app.config["DID_FINDER_DEFAULT_SCHEME"] not in schemes:
             raise ValueError(f"Default DID Finder Scheme not listed in {schemes}")
 
+        # Validate the result store backend. The object store code paths are
+        # shared by both backends - only the manager behind them differs.
+        result_store_backend = app.config.get("RESULT_STORE_BACKEND", "minio")
+        if result_store_backend not in VALID_RESULT_STORE_BACKENDS:
+            raise ValueError(
+                f"Result store backend {result_store_backend} not listed in "
+                f"{VALID_RESULT_STORE_BACKENDS}"
+            )
+
         if app.config["OBJECT_STORE_ENABLED"]:
             if not provided_object_store:
-                if "MINIO_ENCRYPT" in app.config:
-                    if isinstance(app.config["MINIO_ENCRYPT"], bool):
-                        use_https = app.config["MINIO_ENCRYPT"]
-                    else:
-                        use_https = strtobool(app.config["MINIO_ENCRYPT"])
+                if result_store_backend == "xrootd":
+                    if not app.config.get("XROOTD_STORE_URL"):
+                        raise ValueError(
+                            "XROOTD_STORE_URL must be configured when the "
+                            "result store backend is xrootd"
+                        )
+                    object_store = XRootDStoreManager(app.config["XROOTD_STORE_URL"])
                 else:
-                    use_https = False
-                object_store = ObjectStoreManager(
-                    app.config["MINIO_URL"],
-                    username=app.config["MINIO_ACCESS_KEY"],
-                    password=app.config["MINIO_SECRET_KEY"],
-                    use_https=use_https,
-                )
+                    if "MINIO_ENCRYPT" in app.config:
+                        if isinstance(app.config["MINIO_ENCRYPT"], bool):
+                            use_https = app.config["MINIO_ENCRYPT"]
+                        else:
+                            use_https = strtobool(app.config["MINIO_ENCRYPT"])
+                    else:
+                        use_https = False
+                    object_store = ObjectStoreManager(
+                        app.config["MINIO_URL"],
+                        username=app.config["MINIO_ACCESS_KEY"],
+                        password=app.config["MINIO_SECRET_KEY"],
+                        use_https=use_https,
+                    )
             else:
                 object_store = provided_object_store
         else:

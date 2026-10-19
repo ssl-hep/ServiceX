@@ -26,10 +26,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime
-from unittest.mock import patch, PropertyMock
+from unittest.mock import MagicMock, patch, PropertyMock
 from freezegun import freeze_time
 
 from servicex_app_test.resource_test_base import ResourceTestBase
+
+XROOTD_CONFIG = {
+    "OBJECT_STORE_ENABLED": True,
+    "RESULT_STORE_BACKEND": "xrootd",
+    "XROOTD_STORE_URL": "root://my.storage.org:1094//servicex/outputs",
+    "XROOTD_PUBLIC_URL": "https://my.storage.org:1094/servicex/outputs",
+}
 
 
 class TestFileURLGenerator(ResourceTestBase):
@@ -73,6 +80,65 @@ class TestFileURLGenerator(ResourceTestBase):
                     ]
                 }
             }
+
+    @freeze_time("2026-05-13 15:57:00")
+    def test_file_urls_xrootd(self, mocker):
+        "An xrootd store hands out plain URLs - there is nothing to sign"
+        client = self._test_client(extra_config=XROOTD_CONFIG, object_store=MagicMock())
+        with patch("servicex_app.models.TransformRequest.lookup") as mock_lookup:
+            mock_lookup.return_value = self._generate_transform_request()
+            response = client.post(
+                "/servicex/transformation/file-urls",
+                json={"request_id": 1234, "file_list": ["abc"]},
+            )
+
+        assert response.status_code == 200
+        assert response.json == {
+            "uris": {
+                "abc": [
+                    "https://my.storage.org:1094/servicex/outputs/1234/abc",
+                    {},
+                    1810223820,
+                ]
+            }
+        }
+
+    @freeze_time("2026-05-13 15:57:00")
+    def test_file_urls_xrootd_scheme(self, mocker):
+        "Clients can ask for root:// URLs instead"
+        client = self._test_client(extra_config=XROOTD_CONFIG, object_store=MagicMock())
+        with patch("servicex_app.models.TransformRequest.lookup") as mock_lookup:
+            mock_lookup.return_value = self._generate_transform_request()
+            response = client.post(
+                "/servicex/transformation/file-urls",
+                json={"request_id": 1234, "file_list": ["abc"], "scheme": "xrootd"},
+            )
+
+        assert response.status_code == 200
+        assert response.json == {
+            "uris": {
+                "abc": [
+                    "root://my.storage.org:1094//servicex/outputs/1234/abc",
+                    {},
+                    1810223820,
+                ]
+            }
+        }
+
+    def test_file_urls_xrootd_without_public_url(self, mocker):
+        "Can't offer an HTTPS download if the deployment didn't configure one"
+        client = self._test_client(
+            extra_config={**XROOTD_CONFIG, "XROOTD_PUBLIC_URL": None},
+            object_store=MagicMock(),
+        )
+        with patch("servicex_app.models.TransformRequest.lookup") as mock_lookup:
+            mock_lookup.return_value = self._generate_transform_request()
+            response = client.post(
+                "/servicex/transformation/file-urls",
+                json={"request_id": 1234, "file_list": ["abc"]},
+            )
+
+        assert response.status_code == 400
 
     def test_get_status_404(self, mocker, client):
         "If no transform in DB, return a 404"

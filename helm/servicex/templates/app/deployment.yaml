@@ -68,6 +68,15 @@ spec:
           value: "{{ .Values.app.logLevel | upper }}"
         - name: ALLOWED_IMAGE_PREFIXES
           value: {{ .Values.app.allowedImagePrefixes | toJson | quote }}
+        {{- if and .Values.xrootdStore.enabled (not .Values.noCerts) }}
+        # The app creates and cleans up the per-transform output directories on
+        # the storage element, which it authenticates to with the x509 proxy.
+        # The proxy is copied out of its read-only mount to this path.
+        - name: X509_USER_PROXY
+          value: "/tmp/grid-security/x509up"
+        - name: X509_CERT_DIR
+          value: "/etc/grid-security/certificates"
+        {{- end }}
         {{- if .Values.logging.logstash.enabled }}
         - name: LOGSTASH_HOST
           value: "{{ .Values.logging.logstash.host }}"
@@ -178,6 +187,11 @@ spec:
           - name: users
             mountPath: /default_users
           {{ end }}
+          {{- if and .Values.xrootdStore.enabled (not .Values.noCerts) }}
+          - name: x509-secret
+            mountPath: /etc/grid-security-ro
+            readOnly: true
+          {{- end }}
 
 
         ports:
@@ -202,3 +216,9 @@ spec:
           secret:
             secretName: users
         {{ end }}
+        {{- if and .Values.xrootdStore.enabled (not .Values.noCerts) }}
+        - name: x509-secret
+          secret:
+            defaultMode: 292
+            secretName: x509-proxy
+        {{- end }}

@@ -62,6 +62,7 @@ from transformer_sidecar.transformer_stats.raw_uproot_stats import (  # noqa: F4
 )
 from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
 from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
+from transformer_sidecar.xrootd_store_manager import XRootDStoreManager
 
 # Module globals
 shared_dir: Optional[str] = None
@@ -404,10 +405,21 @@ def convert_to_rntuple(source_path: Path) -> Optional[Path]:
     return rntuple_file
 
 
+def make_result_store() -> Union[ObjectStoreManager, XRootDStoreManager]:
+    """
+    Build a manager for whichever result store this deployment is configured
+    with. Both present the same bucket/object interface, where the bucket is
+    the request id.
+    """
+    if os.environ.get("RESULT_STORE_BACKEND", "minio") == "xrootd":
+        return XRootDStoreManager()
+    return ObjectStoreManager()
+
+
 def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
-    object_store = ObjectStoreManager()
+    object_store = make_result_store()
     object_name = rec.s3_object_name
 
     logger.info(
@@ -496,7 +508,7 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
 
     if args.result_destination == "object-store":
         posix_path = args.shared_dir
-        object_store = ObjectStoreManager()
+        object_store = make_result_store()
     elif args.output_dir:
         object_store = None
         posix_path = args.output_dir

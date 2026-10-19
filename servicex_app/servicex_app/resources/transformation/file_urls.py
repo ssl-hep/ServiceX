@@ -40,20 +40,29 @@ import boto3
 class FileURLGeneratorInsecure(ServiceXResource):
     def __init__(self):
         super().__init__()
-        # Add branches for different backends when relevant
-        # set up S3 client
-        endpoint_url = (
-            "https://"
-            if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
-            else "http://"
-        ) + current_app.config["MINIO_PUBLIC_URL"]
-        self.s3client = boto3.client(
-            "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
-            aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
-            use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
-        )
+        self.backend = current_app.config.get("RESULT_STORE_BACKEND", "minio")
+        if self.backend == "xrootd":
+            # Results live under a top level path on the storage element, one
+            # subdirectory per transform. Nothing needs to be signed: access is
+            # granted by the storage element itself.
+            self.xrootd_url = current_app.config["XROOTD_STORE_URL"].rstrip("/")
+            self.xrootd_public_url = (
+                current_app.config.get("XROOTD_PUBLIC_URL") or ""
+            ).rstrip("/")
+        else:
+            # set up S3 client
+            endpoint_url = (
+                "https://"
+                if current_app.config.get("MINIO_ENCRYPT_PUBLIC", True)
+                else "http://"
+            ) + current_app.config["MINIO_PUBLIC_URL"]
+            self.s3client = boto3.client(
+                "s3",
+                endpoint_url=endpoint_url,
+                aws_access_key_id=current_app.config["MINIO_ACCESS_KEY"],
+                aws_secret_access_key=current_app.config["MINIO_SECRET_KEY"],
+                use_ssl=current_app.config.get("MINIO_ENCRYPT_PUBLIC", True),
+            )
 
     def post(self):
         parser = reqparse.RequestParser()
@@ -79,19 +88,35 @@ class FileURLGeneratorInsecure(ServiceXResource):
         expirydelta = 365 * 24 * 60 * 60
         expiry = int(datetime.datetime.now().timestamp() + expirydelta)
 
-        # Add branches for other backends when relevant
-        rv = {
-            f: (
-                self.s3client.generate_presigned_url(
-                    "get_object",
-                    Params={"Bucket": request_id, "Key": f},
-                    ExpiresIn=expirydelta,
-                ),
-                {},
-                expiry,
-            )
-            for f in args["file_list"]
-        }
+        if self.backend == "xrootd":
+            # Clients download over HTTPS unless they explicitly ask for
+            # xrootd. These URLs carry no credentials of their own, so the
+            # header dict is empty until macaroon support lands.
+            if args["scheme"] == "xrootd":
+                prefix = self.xrootd_url
+            elif not self.xrootd_public_url:
+                msg = "No HTTPS endpoint is configured for the xrootd result store"
+                current_app.logger.error(msg, extra={"request_id": request_id})
+                return {"message": msg}, 400
+            else:
+                prefix = self.xrootd_public_url
+
+            rv = {
+                f: (f"{prefix}/{request_id}/{f}", {}, expiry) for f in args["file_list"]
+            }
+        else:
+            rv = {
+                f: (
+                    self.s3client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": request_id, "Key": f},
+                        ExpiresIn=expirydelta,
+                    ),
+                    {},
+                    expiry,
+                )
+                for f in args["file_list"]
+            }
 
         return {"uris": rv}
 

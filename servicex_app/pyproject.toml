@@ -43,6 +43,7 @@ requests = "^2.33"
 authlib = "^1.6.9"
 flask-moment = "^1.0.6"
 boto3 = ">=1.42.94"
+fsspec-xrootd = "^0.5.5"
 flask-admin = "^2.0.2"
 
 [tool.poetry.group.test]

@@ -46,8 +46,11 @@ class TransformationRequest(ServiceXResource):
             return {"message": msg}, 404
 
         transform_json = transform.to_json()
+        # An xrootd result store has no credentials to hand out - clients reach
+        # those results through the file-urls endpoint instead.
         if (
             current_app.config["OBJECT_STORE_ENABLED"]
+            and current_app.config.get("RESULT_STORE_BACKEND", "minio") == "minio"
             and transform_json["result-destination"]
             == TransformRequest.OBJECT_STORE_DEST
         ):

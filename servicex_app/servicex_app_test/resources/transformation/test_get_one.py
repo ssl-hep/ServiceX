@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -45,6 +45,28 @@ class TestTransformationRequest(ResourceTestBase):
         transform = response.json
         assert transform["request_id"] == "BR549"
         mock_lookup.assert_called_with("1234")
+
+    def test_get_single_request_with_xrootd_store(self, mocker):
+        """An xrootd store has no credentials to hand out"""
+        with patch("servicex_app.models.TransformRequest.lookup") as mock_lookup:
+            fake_transform_request = self._generate_transform_request()
+            fake_transform_request.result_destination = "object-store"
+            mock_lookup.return_value = fake_transform_request
+
+            local_config = {
+                "OBJECT_STORE_ENABLED": True,
+                "RESULT_STORE_BACKEND": "xrootd",
+                "XROOTD_STORE_URL": "root://my.storage.org:1094//servicex/outputs",
+            }
+
+            client = self._test_client(
+                extra_config=local_config, object_store=MagicMock()
+            )
+            response = client.get("/servicex/transformation/1234")
+        assert response.status_code == 200
+        transform = response.json
+        assert transform["request_id"] == "BR549"
+        assert not [key for key in transform if key.startswith("minio-")]
 
     def test_get_single_request_404(self, mocker, client):
         with patch("servicex_app.models.TransformRequest.lookup") as mock_lookup:
