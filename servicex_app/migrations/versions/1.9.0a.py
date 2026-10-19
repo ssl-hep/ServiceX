@@ -2,16 +2,16 @@
 - add output_path column to TransformRequest
 - widen TransformRequest.did to match Dataset.name
 
-Revision ID: v1_9_0
-Revises: v1_8_4
+Revision ID: v1_9_0a
+Revises: v1_9_0
 Create Date: 2026-08-20 00:00:00.000000
 """
 
 from alembic import op
 import sqlalchemy as sa
 
-revision = "v1_9_0"
-down_revision = "v1_8_4"
+revision = "v1_9_0a"
+down_revision = "v1_9_0"
 branch_labels = None
 depends_on = None
 
