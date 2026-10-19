@@ -68,8 +68,14 @@ def add_routes(
     from servicex_app.resources.transformation.get_all import AllTransformationRequests
     from servicex_app.resources.transformation.get_one import TransformationRequest
     from servicex_app.resources.transformation.deployment import DeploymentStatus
-    from servicex_app.resources.transformation.results import TransformationResults
-    from servicex_app.resources.transformation.file_urls import FileURLGenerator
+    from servicex_app.resources.transformation.results import (
+        TransformationResultsInsecure,
+        TransformationResultsSecure,
+    )
+    from servicex_app.resources.transformation.file_urls import (
+        FileURLGeneratorInsecure,
+        FileURLGeneratorSecure,
+    )
 
     from servicex_app.resources.users.all_users import AllUsers
     from servicex_app.resources.users.token_refresh import TokenRefresh
@@ -94,6 +100,12 @@ def add_routes(
     from servicex_app.web.transformation_request import transformation_request
     from servicex_app.web.transformation_results import transformation_results
     from servicex_app.web.multiple_codegen_list import multiple_codegen_list
+    from servicex_app.resources.users.bearer_token_exchange import (
+        bearer_token_exchange,
+        device_flow_info,
+    )
+    from servicex_app.web.datasets import datasets as datasets_page
+    from servicex_app.web.dataset import dataset as dataset_page
 
     # Must be its own module to allow patching
     from servicex_app.web.create_profile import create_profile
@@ -122,6 +134,10 @@ def add_routes(
     app.add_url_rule("/dashboard", "user-dashboard", user_dashboard)
     app.add_url_rule("/profile", "profile", view_profile)
     app.add_url_rule(
+        "/bearer-token-exchange", "bearer_token_exchange", bearer_token_exchange
+    )
+    app.add_url_rule("/device-flow-info", "device_flow_info", device_flow_info)
+    app.add_url_rule(
         "/profile/new", "create_profile", create_profile, methods=["GET", "POST"]
     )
     app.add_url_rule(
@@ -140,6 +156,8 @@ def add_routes(
     app.add_url_rule(
         "/multiple-codegen-list", "multiple_codegen_list", multiple_codegen_list
     )
+    app.add_url_rule("/datasets", "datasets", datasets_page)
+    app.add_url_rule("/datasets/<int:id_>", "dataset", dataset_page)
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, "/token/refresh")
@@ -162,10 +180,10 @@ def add_routes(
     CancelAllTransforms.make_api(transformer_manager)
     api.add_resource(CancelAllTransforms, prefix + "/cancel-all")
 
-    api.add_resource(FileURLGenerator, prefix + "/file-urls")
+    api.add_resource(FileURLGeneratorSecure, prefix + "/file-urls")
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
-    api.add_resource(TransformationResults, prefix + "/results")
+    api.add_resource(TransformationResultsSecure, prefix + "/results")
 
     DeleteTransform.make_api(object_store)
     api.add_resource(DeleteTransform, prefix)
@@ -215,4 +233,12 @@ def add_routes(
     CleanupKubernetesResources.make_api(transformer_manager)
     api.add_resource(
         CleanupKubernetesResources, "/servicex/internal/kubernetes-cleanup"
+    )
+
+    api.add_resource(
+        TransformationResultsInsecure,
+        "/servicex/internal/transformation/<string:request_id>/results",
+    )
+    api.add_resource(
+        FileURLGeneratorInsecure, "/servicex/internal/transformation/file-urls"
     )

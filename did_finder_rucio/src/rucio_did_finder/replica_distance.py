@@ -25,11 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import socket
+
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 import os
 
 from typing import List, Mapping, Optional, Tuple
-from socket import gethostbyname
 import math
 from functools import lru_cache
 import tempfile
@@ -65,12 +66,21 @@ def _get_distance(
     if database is None:
         return math.pi
     try:
-        loc_data = database.city(gethostbyname(fqdn)).location
+        # getaddrinfo contract: result cannot be empty list;
+        # failed lookup raises exception
+        ipdata: str = socket.getaddrinfo(fqdn, None)[0][4][0]
+        loc_data = database.city(ipdata).location
     except geoip2.errors.AddressNotFoundError as e:
         logger.warning(
             f"Cannot geolocate {fqdn}, returning maximum distance.\nError: {e}"
         )
         return math.pi
+    except socket.gaierror as e:
+        logger.warning(
+            f"Error looking up {fqdn}, returning maximum distance.\nError: {e.strerror}"
+        )
+        return math.pi
+
     site_lat, site_lon = loc_data.latitude, loc_data.longitude
     if site_lat is None or site_lon is None:
         return math.pi

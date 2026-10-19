@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'bootstrap5/pagination.html' import render_pagination %}
 {% block content %}
 <style>
   .selection-content {
@@ -10,6 +11,15 @@
   }
   .selection-content.collapsed {
     max-height: 7.5em;
+  }
+  .log-message-preview, .log-message-full {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .log-message-full {
+    margin-bottom: 0;
+    white-space: pre-wrap;
+    font-size: 0.875rem;
   }
 </style>
 <div class="content-section">
@@ -84,6 +94,97 @@
 
   </dl>
 </div>
+
+{% set level_badges = {"CRITICAL": "danger", "ERROR": "danger", "WARNING": "warning", "INFO": "info"} %}
+<div class="content-section" id="logs">
+  <div class="row justify-content-between align-items-center mb-3">
+    <h4 class="col-auto mb-0">Log Messages</h4>
+    <div class="dropdown col-auto">
+      <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="logLevelDropdown"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Level: <b>{{ active_level or "All" }}</b>
+      </button>
+      <div class="dropdown-menu dropdown-menu-right" aria-labelledby="logLevelDropdown">
+        <a href="?#logs" class="dropdown-item">All</a>
+        {% for level in log_levels %}
+        <a href="?log_level={{ level }}#logs" class="dropdown-item">{{ level }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <table class="table table-sm table-bordered table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Time</th>
+        <th scope="col">Level</th>
+        <th scope="col">Component</th>
+        <th scope="col">Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for msg in logs.items %}
+      <tr>
+        <td style="white-space: nowrap">{{ moment(msg.timestamp).format("YYYY-MM-DD HH:mm:ss") }}</td>
+        <td>
+          <span class="badge badge-{{ level_badges.get(msg.level, 'secondary') }}">{{ msg.level }}</span>
+        </td>
+        <td>{{ msg.component }}</td>
+        <td class="log-message-cell">
+          <span class="log-message-preview">{{ (msg.message or "") | truncate(160, killwords=False, end="…", leeway=0) }}</span>
+          <a href="#" class="log-message-view text-nowrap ml-1"
+             data-toggle="modal" data-target="#logMessageModal"
+             data-message="{{ msg.message or '' }}"
+             data-level="{{ msg.level }}"
+             data-component="{{ msg.component or '' }}"
+             data-logger="{{ msg.logger or '' }}"
+             {% if msg.extra %}data-extra="{{ msg.extra | tojson | forceescape }}"{% endif %}>View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if logs.items %}
+  {{ render_pagination(logs, align='center', fragment='#logs') }}
+  {% else %}
+  <div>No log messages found.</div>
+  {% endif %}
+
+  <!-- Full log message dialog, shared by every row in the grid -->
+  <div class="modal fade" id="logMessageModal" tabindex="-1" role="dialog"
+       aria-labelledby="logMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logMessageModalLabel">Log Message</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <dl class="row small mb-3">
+            <dt class="col-sm-3">Time</dt>
+            <dd class="col-sm-9" id="logMessageTime"></dd>
+            <dt class="col-sm-3">Level</dt>
+            <dd class="col-sm-9" id="logMessageLevel"></dd>
+            <dt class="col-sm-3">Component</dt>
+            <dd class="col-sm-9" id="logMessageComponent"></dd>
+            <dt class="col-sm-3">Logger</dt>
+            <dd class="col-sm-9" id="logMessageLogger"></dd>
+          </dl>
+          <pre class="log-message-full" id="logMessageText"></pre>
+          <div id="logMessageExtraSection" class="mt-3 d-none">
+            <h6 class="small text-muted mb-1">Extra</h6>
+            <pre class="log-message-full" id="logMessageExtra"></pre>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -103,6 +204,31 @@
         });
       } else {
         $content.removeClass("collapsed");
+      }
+    });
+
+    // Fill the shared dialog from the View link that opened it. Read the full
+    // message with .attr() rather than .data(), which would try to parse a
+    // JSON-looking message, and write it with .text() so the <pre> reproduces
+    // the original whitespace verbatim.
+    $("#logMessageModal").on("show.bs.modal", function (event) {
+      var $link = $(event.relatedTarget);
+      var $row = $link.closest("tr");
+      $("#logMessageTime").text($row.children("td").first().text().trim());
+      $("#logMessageLevel").text($link.attr("data-level"));
+      $("#logMessageComponent").text($link.attr("data-component"));
+      $("#logMessageLogger").text($link.attr("data-logger"));
+      $("#logMessageText").text($link.attr("data-message"));
+
+      // `extra` is always rendered through Jinja's `tojson`, so it parses.
+      var extra = $link.attr("data-extra");
+      var $section = $("#logMessageExtraSection");
+      if (extra) {
+        $("#logMessageExtra").text(JSON.stringify(JSON.parse(extra), null, 2));
+        $section.removeClass("d-none");
+      } else {
+        $("#logMessageExtra").text("");
+        $section.addClass("d-none");
       }
     });
   })

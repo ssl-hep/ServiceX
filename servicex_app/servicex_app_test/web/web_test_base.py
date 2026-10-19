@@ -250,6 +250,9 @@ class WebTestBase:
 
     @fixture
     def oauth_client(self, mocker):
+        from servicex_app.web import utils
+
+        utils.oauth = None
         client_cls = mocker.patch("authlib.integrations.flask_client.FlaskOAuth2App")
         client = client_cls.return_value
         auth_url = self._auth_url()

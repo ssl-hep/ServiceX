@@ -7,8 +7,7 @@ from servicex_app.models import TransformationResult
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 
-class TransformationResults(ServiceXResource):
-    @auth_required
+class TransformationResultsInsecure(ServiceXResource):
     def get(self, request_id):
         if not request_id:
             return {"message": "Missing required transformation request_id"}, 400
@@ -43,3 +42,9 @@ class TransformationResults(ServiceXResource):
         ]
 
         return {"results": results}
+
+
+class TransformationResultsSecure(TransformationResultsInsecure):
+    @auth_required
+    def get(self, request_id):
+        return super().get(request_id)

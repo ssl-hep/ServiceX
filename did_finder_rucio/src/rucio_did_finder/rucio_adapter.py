@@ -30,8 +30,8 @@ import os
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 import requests
 import xmltodict
-from rucio.common.exception import DataIdentifierNotFound
-from rucio.client.scopeclient import ScopeClient
+from rucio.common.exception import DataIdentifierNotFound, RucioException
+from rucio.common.utils import extract_scope
 from servicex_did_finder_lib.exceptions import (
     BadDatasetNameException,
     NoSuchDatasetException,
@@ -65,7 +65,7 @@ class RucioAdapter:
                 response = requests.post(
                     "https://location.cern.workers.dev",
                     json={"site": "servicex"},
-                    timeout=1,
+                    timeout=(1.5, None),
                 )
                 if (
                     response.status_code == 200
@@ -73,7 +73,7 @@ class RucioAdapter:
                 ):
                     client_location = response.json()
             except Exception as ex:
-                self.logger.exception(ex)
+                self.logger.exception(ex, extra={"error_message": str(ex)})
         return client_location
 
     def parse_did(self, did):
@@ -84,28 +84,20 @@ class RucioAdapter:
         :return: Dictionary with keys "scope" and "name"
         """
         d = dict()
-        if ":" in did:
-            d["scope"], d["name"] = did.split(":")
+        try:
+            d["scope"], d["name"] = extract_scope(did)
             return d
-
-        if not self.all_scopes:
-            try:
-                uns_scopes = ScopeClient().list_scopes()
-            except Exception as e:
-                raise LookupFailureException(
-                    f"Failure listing scopes looking up {did}: {e}"
+        except RucioException as e:
+            # catch a common user error and be a little more helpful
+            if did.startswith("rucio://"):
+                msg = (
+                    f"Provided dataset {did} incorrectly specified, "
+                    'must not start with "rucio://"'
                 )
-            self.all_scopes = sorted(uns_scopes, key=len, reverse=True)
-
-        for sc in self.all_scopes:
-            if did.startswith(sc):
-                d["scope"], d["name"] = sc, did
-                return d
-
-        self.logger.error(f"Scope of the dataset {did} could not be determined.")
-        raise BadDatasetNameException(
-            f"Scope of the dataset {did} could not be determined."
-        )
+            else:
+                msg = f"Scope of the dataset {did} could not be determined."
+            self.logger.error(msg)
+            raise BadDatasetNameException(msg) from e
 
     def list_datasets_for_did(self, did):
         parsed_did = self.parse_did(did)
@@ -116,7 +108,8 @@ class RucioAdapter:
             did_info = self.did_client.get_did(parsed_did["scope"], parsed_did["name"])
             if did_info["type"] == "CONTAINER":
                 self.logger.info(
-                    f"{did} is a container of {did_info['length']} datasets."
+                    f"{did} is a container of {did_info['length']} datasets.",
+                    extra={"dataset_name": did},
                 )
                 content = self.did_client.list_content(
                     parsed_did["scope"], parsed_did["name"]
@@ -125,13 +118,21 @@ class RucioAdapter:
                     datasets.append([c["scope"], c["name"]])
             elif did_info["type"] == "DATASET":
                 datasets.append([parsed_did["scope"], parsed_did["name"]])
-                self.logger.info(f"{did} is a dataset with {did_info['length']} files.")
+                self.logger.info(
+                    f"{did} is a dataset with {did_info['length']} files.",
+                    extra={"dataset_name": did, "num_files": did_info["length"]},
+                )
             else:
-                self.logger.info(f"{did} is a file: {did_info}.")
+                self.logger.info(
+                    f"{did} is a file: {did_info}.", extra={"dataset_name": did}
+                )
                 datasets.append([parsed_did["scope"], parsed_did["name"]])
             return datasets
         except DataIdentifierNotFound:
-            self.logger.warning(f"{did} not found")
+            self.logger.warning(
+                f"{did} not found",
+                extra={"dataset_name": did, "error_type": "does_not_exist"},
+            )
             raise NoSuchDatasetException(f"{did} not found")
         except Exception as e:
             raise LookupFailureException(f"Problem in lookup of {did}: {e}")

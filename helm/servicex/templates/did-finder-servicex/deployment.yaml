@@ -1,0 +1,70 @@
+---
+{{ if .Values.didFinder.servicex.enabled}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-did-finder-servicex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-did-finder-servicex
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-did-finder-servicex
+      {{- with .Values.didFinder.servicex.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.didFinder.servicex.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.servicex.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.servicex.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: check-url
+          image: {{ .Values.app.checksImage }}
+          env:
+          - name: URL
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
+      containers:
+      - name: {{ .Release.Name }}-did-finder-servicex
+        image: {{ .Values.didFinder.servicex.image }}:{{ .Values.didFinder.servicex.tag }}
+        imagePullPolicy: {{ .Values.didFinder.servicex.pullPolicy }}
+        {{- if .Values.didFinder.servicex.resources }}
+        resources:
+{{ toYaml .Values.didFinder.servicex.resources | indent 10 }}
+        {{- end }}
+        env:
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+          - name: SERVICEX_ENDPOINT
+            value: "http://{{ .Release.Name }}-servicex-app:8000"
+        {{- if .Values.secrets }}
+          - name: RMQ_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: rabbitmq-password
+          - name: BROKER_URL
+            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
+        {{- else }}
+          - name: BROKER_URL
+            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
+        {{- end }}
+        {{- if .Values.logging.logstash.enabled }}
+          - name: LOGSTASH_HOST
+            value: "{{ .Values.logging.logstash.host }}"
+          - name: LOGSTASH_PORT
+            value: "{{ .Values.logging.logstash.port }}"
+        {{- end }}
+{{ end }}
