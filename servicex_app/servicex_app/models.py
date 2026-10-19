@@ -184,7 +184,7 @@ class TransformRequest(db.Model):
     title = db.Column(db.String(10240), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
-    did = db.Column(db.String(512), unique=False, nullable=False)
+    did = db.Column(db.String(1024), unique=False, nullable=False)
     did_id = db.Column(
         db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False
     )
