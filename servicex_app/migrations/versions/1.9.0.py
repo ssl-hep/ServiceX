@@ -1,5 +1,6 @@
 """
-add output_path column to TransformRequest
+- add output_path column to TransformRequest
+- widen TransformRequest.did to match Dataset.name
 
 Revision ID: v1_9_0
 Revises: v1_8_4
@@ -26,6 +27,22 @@ def upgrade():
         "WHERE output_path IS NULL AND result_destination = 'object-store'"
     )
 
+    op.alter_column(
+        "requests",
+        "did",
+        existing_type=sa.String(length=512),
+        type_=sa.String(length=1024),
+        existing_nullable=False,
+    )
+
 
 def downgrade():
     op.drop_column("requests", "output_path")
+
+    op.alter_column(
+        "requests",
+        "did",
+        existing_type=sa.String(length=1024),
+        type_=sa.String(length=512),
+        existing_nullable=False,
+    )
