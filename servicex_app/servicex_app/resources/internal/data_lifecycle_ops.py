@@ -38,7 +38,6 @@ from servicex_app.models import (
     Dataset,
     db,
     LogMessage,
-    TransformationResult,
     DatasetFile,
 )
 from servicex_app.resources.servicex_resource import ServiceXResource
