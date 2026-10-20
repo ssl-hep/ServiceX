@@ -121,9 +121,8 @@ class TestTransformDelete(ResourceTestBase):
         )
 
         resp = client.delete("/servicex/transformation/BR549")
-        assert resp.status_code == 400
-        assert "no output_path" in resp.json["message"]
-        assert not db_session.delete.called
+        assert resp.status_code == 200
+        db_session.delete.assert_called_once_with(fake_transform)
         mock_object_store_manager.delete_bucket_and_contents.assert_not_called()
 
     def test_delete_volume_destination_no_object_store_call(

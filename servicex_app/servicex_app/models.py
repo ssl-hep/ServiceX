@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Iterable, List, Optional, Union
@@ -42,6 +43,7 @@ from sqlalchemy import text
 from servicex_app.mailgun_adaptor import MailgunAdaptor
 
 db = SQLAlchemy()
+logger = logging.getLogger(__name__)
 max_string_size = 10485760
 
 
@@ -417,8 +419,18 @@ class TransformRequest(db.Model):
 
         purged_logs = LogMessage.delete_by_request_id(self.request_id, session=session)
 
-        if object_store:
-            object_store.delete_bucket_and_contents(self.request_id)
+        if (
+            object_store
+            and self.result_destination == TransformRequest.OBJECT_STORE_DEST
+        ):
+            if self.output_path:
+                object_store.delete_bucket_and_contents(self.output_path)
+            else:
+                logger.warning(
+                    f"Transform request {self.request_id} has no output_path "
+                    "recorded; skipping bucket cleanup",
+                    extra={"request_id": self.request_id},
+                )
 
         session.delete(self)
         return purged_logs

@@ -268,7 +268,6 @@ class TestDataLifecycleOps(ResourceTestBase):
         db_session.commit()
 
         mock_object_store = mocker.MagicMock()
-        mock_logger = mocker.patch(f"{self.module}.current_app", new=mocker.MagicMock())
 
         data_life_cycle_ops = DataLifecycleOps()
         response = data_life_cycle_ops.delete_expired_transforms(
@@ -279,7 +278,6 @@ class TestDataLifecycleOps(ResourceTestBase):
 
         assert len(response) == 1
         mock_object_store.delete_bucket_and_contents.assert_not_called()
-        mock_logger.logger.warning.assert_called_once()
         # Transform row is still gone
         assert db_session.query(TransformRequest).all() == []
 

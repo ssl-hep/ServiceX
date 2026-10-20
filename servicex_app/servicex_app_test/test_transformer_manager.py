@@ -675,6 +675,7 @@ class TestTransformerManager(ResourceTestBase):
                 namespace="my-ns",
                 result_destination="object-store",
                 result_format="arrow",
+                output_path="1234",
                 x509_secret=None,
                 generated_code_cm=None,
                 transformer_language="python",
