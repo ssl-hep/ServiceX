@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Iterable, List, Optional, Union
@@ -42,6 +43,7 @@ from sqlalchemy import text
 from servicex_app.mailgun_adaptor import MailgunAdaptor
 
 db = SQLAlchemy()
+logger = logging.getLogger(__name__)
 max_string_size = 10485760
 
 
@@ -184,7 +186,7 @@ class TransformRequest(db.Model):
     title = db.Column(db.String(10240), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     finish_time = db.Column(db.DateTime, nullable=True)
-    did = db.Column(db.String(512), unique=False, nullable=False)
+    did = db.Column(db.String(1024), unique=False, nullable=False)
     did_id = db.Column(
         db.Integer, ForeignKey("datasets.id"), unique=False, nullable=False
     )
@@ -194,6 +196,7 @@ class TransformRequest(db.Model):
     workers = db.Column(db.Integer, nullable=True)
     result_destination = db.Column(db.String(32), nullable=False)
     result_format = db.Column(db.String(32), nullable=False)
+    output_path = db.Column(db.Text, nullable=True)
     submitted_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
 
     files = db.Column(db.Integer, default=0, nullable=False)
@@ -416,8 +419,18 @@ class TransformRequest(db.Model):
 
         purged_logs = LogMessage.delete_by_request_id(self.request_id, session=session)
 
-        if object_store:
-            object_store.delete_bucket_and_contents(self.request_id)
+        if (
+            object_store
+            and self.result_destination == TransformRequest.OBJECT_STORE_DEST
+        ):
+            if self.output_path:
+                object_store.delete_bucket_and_contents(self.output_path)
+            else:
+                logger.warning(
+                    f"Transform request {self.request_id} has no output_path "
+                    "recorded; skipping bucket cleanup",
+                    extra={"request_id": self.request_id},
+                )
 
         session.delete(self)
         return purged_logs
