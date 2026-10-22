@@ -97,6 +97,7 @@ spec:
         - name: LOGSTASH_PROTOCOL
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
+        {{- include "servicex.vector.env" . | trim | nindent 8 }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
           valueFrom:
@@ -113,6 +114,11 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: oauthClientSecret
+        - name: OAUTH_DEVICE_FLOW_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets }}
+              key: oauthDeviceFlowClientID
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
@@ -199,7 +205,6 @@ spec:
           - name: users
             mountPath: /default_users
           {{ end }}
-
 
         ports:
           - containerPort: 5000

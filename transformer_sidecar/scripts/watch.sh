@@ -53,10 +53,39 @@ while [[ $nc_PID ]] ; do
     output_format=$(echo $line | jq -r '."result-format"')
 
     echo "Attempting $download_path -> $output_file with $output_format format"
-    $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 | tee $path/abc.log
+    # abc.log is truncated per input file - the sidecar parses it for transform
+    # stats after every file. science.*.log is one chunk per file for the Vector
+    # sidecar to tail; Vector deletes each chunk once it has read it, which is
+    # what keeps the shared volume from growing for the life of the pod. The
+    # output also goes to stdout so it still shows up in the container log.
+    #
+    # Each chunk starts with a header line naming the chunk. Vector identifies
+    # a file by a checksum of its first line, not by its path, and every chunk
+    # is a run of the same science image, so many would otherwise start with
+    # the same line (a banner, a warning). Vector treats chunks with the same
+    # first line as one file: it reads the new chunk from where it stopped in
+    # the old one and silently skips everything before that point. The nanosecond
+    # stamp makes the header unique, so every chunk gets its own fingerprint.
+    # The science_events transform in the Vector config drops this line by its
+    # "servicex-chunk " prefix - keep the two in step.
+    #
+    # The header is written before the run, so tee has to append (-a) to keep
+    # it - which means it also appends to abc.log, so abc.log is truncated here
+    # explicitly instead.
+    chunk="$path/science.$(date +%s%N).log"
+    chunk_header="servicex-chunk $(basename "$chunk")"
+    printf '%s\n' "$chunk_header" > "$chunk"
+    : > "$path/abc.log"
+    $lang "$cmd" "$download_path" "$output_file" "$output_format" 2>&1 \
+        | tee -a "$path/abc.log" "$chunk"
+    status=${PIPESTATUS[0]}
+    # A chunk holding only its header came from a silent run. Delete it here
+    # so the shared volume doesn't fill with header-only files. Vector may have
+    # already found it; it then just sees the file vanish.
+    [ "$(wc -l < "$chunk")" -gt 1 ] || rm -f "$chunk"
 
     # sending status back
-    if [ "${PIPESTATUS[0]}" == 0 ]; then
+    if [ "$status" == 0 ]; then
       echo "Success. skipping rest of input_files"
       printf >&${nc[1]} '%s\n' "success."
     else

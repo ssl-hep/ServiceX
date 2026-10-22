@@ -10,6 +10,8 @@ from pytest import fixture
 
 import servicex_app
 from servicex_app.models import (
+    Dataset,
+    LogMessage,
     TransformationResult,
     TransformRequest,
     UserModel,
@@ -95,7 +97,7 @@ class TestTransformRequest:
         request.files = None
         assert request.files_remaining is None
 
-    def test_total_cache_size(self, app_context, mocker):
+    def test_total_cache_size(self, mocker):
         with patch("servicex_app.models.db") as mock_db:
             q = mocker.MagicMock()
             q.scalar.return_value = 1000
@@ -164,3 +166,144 @@ class TestTransformRequest:
             # Assert
             assert result is None
             mock_conn.execute.assert_called_once()
+
+
+class TestTransformRequestPurge:
+    """
+    purge() is the whole teardown for a transform, shared by the delete endpoint
+    and the expiry sweep. It must never commit: both callers wrap it in their own
+    transaction so the results, the log records and the request go together.
+    """
+
+    @fixture
+    def transform(self):
+        request = TransformRequest()
+        request.request_id = "BR549"
+        return request
+
+    def test_purge(self, transform, mocker):
+        session = mocker.MagicMock()
+        object_store = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=7)
+
+        assert transform.purge(session, object_store) == 7
+
+        session.query.assert_called_once_with(TransformationResult)
+        session.query.return_value.filter_by.assert_called_once_with(request_id="BR549")
+        LogMessage.delete_by_request_id.assert_called_once_with(
+            "BR549", session=session
+        )
+        object_store.delete_bucket_and_contents.assert_called_once_with("BR549")
+        session.delete.assert_called_once_with(transform)
+        assert not session.commit.called
+
+    def test_purge_without_object_store(self, transform, mocker):
+        """Object store is optional; the rest of the teardown still runs."""
+        session = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=0)
+
+        assert transform.purge(session) == 0
+        session.delete.assert_called_once_with(transform)
+
+
+class TestLogMessage:
+    def test_delete_by_request_id(self, mocker):
+        with patch("servicex_app.models.db") as mock_db:
+            query = mocker.MagicMock()
+            query.filter_by.return_value.delete.return_value = 3
+            mock_db.session.query.return_value = query
+
+            assert LogMessage.delete_by_request_id("1234") == 3
+
+            mock_db.session.query.assert_called_once_with(LogMessage)
+            query.filter_by.assert_called_once_with(request_id="1234")
+            query.filter_by.return_value.delete.assert_called_once_with(
+                synchronize_session=False
+            )
+
+    def test_delete_by_request_id_explicit_session(self, mocker):
+        """An injected session is used in preference to db.session, which is
+        what the lifecycle ops rely on."""
+        with patch("servicex_app.models.db") as mock_db:
+            session = mocker.MagicMock()
+            session.query.return_value.filter_by.return_value.delete.return_value = 1
+
+            assert LogMessage.delete_by_request_id("1234", session=session) == 1
+
+            session.query.assert_called_once_with(LogMessage)
+            assert not mock_db.session.query.called
+
+    def test_delete_by_request_id_without_id(self, mocker):
+        """Filtering on a null request_id would match every DID finder record,
+        so an empty id must delete nothing."""
+        with patch("servicex_app.models.db") as mock_db:
+            session = mocker.MagicMock()
+
+            assert LogMessage.delete_by_request_id(None, session=session) == 0
+            assert LogMessage.delete_by_request_id("") == 0
+
+            assert not session.query.called
+            assert not mock_db.session.query.called
+
+    def test_delete_by_dataset_id(self, mocker):
+        with patch("servicex_app.models.db") as mock_db:
+            query = mocker.MagicMock()
+            query.filter_by.return_value.delete.return_value = 2
+            mock_db.session.query.return_value = query
+
+            assert LogMessage.delete_by_dataset_id(42) == 2
+
+            mock_db.session.query.assert_called_once_with(LogMessage)
+            query.filter_by.assert_called_once_with(dataset_id=42)
+            query.filter_by.return_value.delete.assert_called_once_with(
+                synchronize_session=False
+            )
+
+    def test_delete_by_dataset_id_without_id(self, mocker):
+        """Filtering on a null dataset_id would match every transform record."""
+        with patch("servicex_app.models.db") as mock_db:
+            session = mocker.MagicMock()
+
+            assert LogMessage.delete_by_dataset_id(None, session=session) == 0
+
+            assert not session.query.called
+            assert not mock_db.session.query.called
+
+
+class TestDatasetDelete:
+    @fixture
+    def dataset(self, mocker):
+        dataset = Dataset(id=42, name="dataset1", stale=False)
+        dataset.save_to_db = mocker.Mock()
+        return dataset
+
+    def test_delete_dataset_purges_logs(self, dataset, mocker):
+        mock_purge = mocker.patch("servicex_app.models.LogMessage.delete_by_dataset_id")
+        mocker.patch("servicex_app.models.Dataset.find_by_id", return_value=dataset)
+
+        # The purge has to land before the commit so that both share a
+        # transaction, so watch the order the two are called in
+        calls = mocker.Mock()
+        calls.attach_mock(mock_purge, "purge_logs")
+        calls.attach_mock(dataset.save_to_db, "save_to_db")
+
+        assert Dataset.delete_dataset(42) is True
+        assert dataset.stale
+        mock_purge.assert_called_once_with(42)
+        assert [_[0] for _ in calls.mock_calls] == ["purge_logs", "save_to_db"]
+
+    def test_delete_dataset_not_found(self, mocker):
+        mock_purge = mocker.patch("servicex_app.models.LogMessage.delete_by_dataset_id")
+        mocker.patch("servicex_app.models.Dataset.find_by_id", return_value=None)
+
+        assert Dataset.delete_dataset(42) is None
+        assert not mock_purge.called
+
+    def test_delete_dataset_already_stale(self, dataset, mocker):
+        dataset.stale = True
+        mock_purge = mocker.patch("servicex_app.models.LogMessage.delete_by_dataset_id")
+        mocker.patch("servicex_app.models.Dataset.find_by_id", return_value=dataset)
+
+        assert Dataset.delete_dataset(42) is False
+        assert not mock_purge.called
+        assert not dataset.save_to_db.called

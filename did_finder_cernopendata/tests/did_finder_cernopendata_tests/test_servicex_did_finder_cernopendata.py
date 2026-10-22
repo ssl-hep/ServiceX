@@ -75,7 +75,7 @@ def mock_cernopendata_client():
 
 def test_working_call(mock_cernopendata_client):
     with mock_cernopendata_client(mock_output="root://root.idiot.it/dude"):
-        iter = find_files("1507", {"request-id": "112233"})
+        iter = find_files("1507", {"dataset-id": "112233"})
         files = [f for f in iter]
 
         assert len(files) == 1
@@ -85,7 +85,7 @@ def test_working_call(mock_cernopendata_client):
 
 def test_exit_code_no_output(mock_cernopendata_client):
     with mock_cernopendata_client(mock_exit_code=10):
-        iter = find_files("1507", {"request-id": "112233"})
+        iter = find_files("1507", {"dataset-id": "112233"})
         with pytest.raises(LookupFailureException) as e:
             [f for f in iter]
 
@@ -94,7 +94,7 @@ def test_exit_code_no_output(mock_cernopendata_client):
 
 def test_non_root_return(mock_cernopendata_client):
     with mock_cernopendata_client(mock_output="http://root.idiot.it/dude"):
-        iter = find_files("1507", {"request-id": "112233"})
+        iter = find_files("1507", {"dataset-id": "112233"})
         with pytest.raises(LookupFailureException) as e:
             [f for f in iter]
 
@@ -103,6 +103,6 @@ def test_non_root_return(mock_cernopendata_client):
 
 def test_invalid_did_alpha():
     with pytest.raises(BadDatasetNameException) as e:
-        [f for f in find_files("dude", {"request-id": "112233"})]
+        [f for f in find_files("dude", {"dataset-id": "112233"})]
 
     assert "number" in str(e)

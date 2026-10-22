@@ -157,8 +157,6 @@ class TestLookupRequest:
             [_ for _ in request.lookup_files()]
 
     def test_lookup_files_no_dataset(self, mocker):
-        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
-        mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_did_client.get_did.side_effect = DataIdentifierNotFound
         mock_replica_client = mocker.MagicMock(ReplicaClient)
@@ -173,8 +171,6 @@ class TestLookupRequest:
             [_ for _ in request.lookup_files()]
 
     def test_rucio_scope_problem(self, mocker):
-        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
-        mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
         request = LookupRequest(
@@ -182,12 +178,23 @@ class TestLookupRequest:
             RucioAdapter(mock_did_client, mock_replica_client),
             TEST_RSE_EXPRESSION,
         )
-        with pytest.raises(BadDatasetNameException):
+        with pytest.raises(BadDatasetNameException) as e:
             [_ for _ in request.lookup_files()]
+        assert "could not be determined" in str(e)
+
+    def test_rucio_extra_rucio(self, mocker):
+        mock_did_client = mocker.MagicMock(DIDClient)
+        mock_replica_client = mocker.MagicMock(ReplicaClient)
+        request = LookupRequest(
+            "rucio://scope:my-did",
+            RucioAdapter(mock_did_client, mock_replica_client),
+            TEST_RSE_EXPRESSION,
+        )
+        with pytest.raises(BadDatasetNameException) as e:
+            [_ for _ in request.lookup_files()]
+        assert "must not start with" in str(e)
 
     def test_rucio_no_dataset(self, mocker):
-        mock_scope_client = mocker.patch("rucio_did_finder.rucio_adapter.ScopeClient")
-        mock_scope_client.list_scopes.return_value = ["abc"]
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
         request = LookupRequest(
