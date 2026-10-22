@@ -272,10 +272,8 @@ class TransformerManager:
         poll_interval = current_app.config.get(
             "TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC", 30
         )
-        idle_seconds = current_app.config.get("TRANSFORMER_SHUTDOWN_IDLE_SEC", 60)
         env += [
             client.V1EnvVar("SHUTDOWN_POLL_INTERVAL_SEC", value=str(poll_interval)),
-            client.V1EnvVar("SHUTDOWN_IDLE_SEC", value=str(idle_seconds)),
         ]
 
         # provide each pod with an environment var holding cache prefix path
@@ -738,7 +736,7 @@ class TransformerManager:
 
     def cancel_transform(self, request: TransformRequest):
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        if request.status in (TransformStatus.running, TransformStatus.lookup):
+        if not request.status.is_complete:
             try:
                 self.shutdown_transformer_job(request.request_id, namespace)
             except kubernetes.client.exceptions.ApiException as exc:

@@ -412,8 +412,6 @@ transformer:
   backoffLimit: 4
   # How often a transformer Job asks whether there is still work left.
   shutdownPollIntervalSec: 30
-  # How long a transformer must idle before it shuts itself down
-  shutdownIdleSec: 60
   cpuLimit: 1
   memoryLimit: 2Gi
   cpuRequest: 500m

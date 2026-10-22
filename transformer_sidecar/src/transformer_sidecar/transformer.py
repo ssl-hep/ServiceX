@@ -542,10 +542,9 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
         extra={"request_id": request_id, "place": PLACE},
     )
 
-    # Start the shutdown watchdog. It polls the ServiceX server to find out
-    # whether this request has any work left; once no more will arrive and
-    # this worker has been idle long enough, it shuts this worker down so
-    # the pod (and eventually its Job) can exit cleanly.
+    # Start the shutdown watchdog. Once the request's queue is empty and the
+    # ServiceX server says no more work will arrive, it shuts this worker
+    # down so the pod (and eventually its Job) can exit cleanly.
     instance_name = os.environ.get("INSTANCE_NAME")
     if instance_name:
         status_url = (
@@ -556,10 +555,9 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             status_url=status_url,
             request_id=request_id,
             place=PLACE,
+            celery_app=app,
             poll_interval=float(os.environ.get("SHUTDOWN_POLL_INTERVAL_SEC", "30")),
-            idle_shutdown_seconds=float(os.environ.get("SHUTDOWN_IDLE_SEC", "60")),
         )
-        watchdog.register_activity_signals()
         watchdog.start()
     else:
         logger.warning(

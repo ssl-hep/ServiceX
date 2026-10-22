@@ -1092,8 +1092,8 @@ class TestTransformerManager(ResourceTestBase):
 
     def test_shutdown_watchdog_tuning_from_config(self, mocker):
         """
-        The watchdog's poll interval and idle threshold are chart values, so they
-        have to reach the pod as env vars for an operator's setting to take.
+        The watchdog's poll interval is a chart value, so it
+        has to reach the pod as an env var for an operator's setting to take.
         """
         import kubernetes
 
@@ -1106,7 +1106,6 @@ class TestTransformerManager(ResourceTestBase):
         client = self._test_client(
             extra_config=make_config(
                 TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC=5,
-                TRANSFORMER_SHUTDOWN_IDLE_SEC=15,
                 TRANSFORMER_BACKOFF_LIMIT=2,
             ),
             transformation_manager=transformer,
@@ -1116,7 +1115,6 @@ class TestTransformerManager(ResourceTestBase):
             called_job = self._launch_and_get_job(transformer, mock_batch_api)
             container = called_job.spec.template.spec.containers[0]
             assert _env_value(container.env, "SHUTDOWN_POLL_INTERVAL_SEC") == "5"
-            assert _env_value(container.env, "SHUTDOWN_IDLE_SEC") == "15"
             assert called_job.spec.backoff_limit == 2
 
     def test_shutdown_watchdog_tuning_defaults(self, mocker):
@@ -1140,7 +1138,6 @@ class TestTransformerManager(ResourceTestBase):
             called_job = self._launch_and_get_job(transformer, mock_batch_api)
             container = called_job.spec.template.spec.containers[0]
             assert _env_value(container.env, "SHUTDOWN_POLL_INTERVAL_SEC") == "30"
-            assert _env_value(container.env, "SHUTDOWN_IDLE_SEC") == "60"
             assert called_job.spec.backoff_limit == 4
 
     def test_mount_local_in_dev(self, mocker):

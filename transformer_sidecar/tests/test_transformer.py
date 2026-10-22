@@ -176,7 +176,6 @@ def test_transformer_init_starts_shutdown_watchdog(
     """
     monkeypatch.setenv("INSTANCE_NAME", "rolling-snail")
     monkeypatch.setenv("SHUTDOWN_POLL_INTERVAL_SEC", "5")
-    monkeypatch.setenv("SHUTDOWN_IDLE_SEC", "15")
     mock_watchdog_cls = mocker.patch("transformer_sidecar.transformer.ShutdownWatchdog")
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -196,11 +195,10 @@ def test_transformer_init_starts_shutdown_watchdog(
         ),
         request_id="1234",
         place=mocker.ANY,
+        celery_app=mock_celery,
         poll_interval=5.0,
-        idle_shutdown_seconds=15.0,
     )
     watchdog = mock_watchdog_cls.return_value
-    watchdog.register_activity_signals.assert_called_once()
     watchdog.start.assert_called_once()
 
 

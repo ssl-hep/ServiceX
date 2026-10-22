@@ -59,8 +59,6 @@ TRANSFORMER_BACKOFF_LIMIT = 4
 
 # How often a transformer checks for remaining work
 TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC = 30
-# How long a transformer must be idle before it may shut itself down
-TRANSFORMER_SHUTDOWN_IDLE_SEC = 60
 
 # Use one core per transformer
 TRANSFORMER_CPU_LIMIT = 1

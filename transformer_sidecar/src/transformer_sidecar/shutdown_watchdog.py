@@ -29,21 +29,22 @@ import logging
 import os
 import signal
 import threading
-import time
 from typing import Optional
 
 import requests
-from celery.signals import task_postrun, task_prerun
+from amqp.exceptions import NotFound
+from celery import Celery
 
 logger = logging.getLogger(__name__)
 
 
 class ShutdownWatchdog:
     """
-    Poll the ServiceX status endpoint; once the server reports that this
-    request has no work left and this worker has been idle for
-    `idle_shutdown_seconds`, ask the worker to shut down warmly so the pod
-    exits and its Job can complete naturally.
+    Periodically check whether this request has any work left. Once the
+    request's queue is empty and the ServiceX server reports that no more
+    files will arrive, ask the worker to shut down warmly so the pod exits
+    and its Job can complete naturally. A warm shutdown lets a file that is
+    already being transformed finish first.
 
     All state lives on the instance: constructing a new watchdog for tests
     is safe and does not touch other instances.
@@ -54,47 +55,18 @@ class ShutdownWatchdog:
         status_url: str,
         request_id: str,
         place: dict,
+        celery_app: Celery,
         poll_interval: float = 30.0,
-        idle_shutdown_seconds: float = 60.0,
     ):
         self.status_url = status_url
         self.request_id = request_id
         self.place = place
+        self.celery_app = celery_app
+        self.queue_name = f"transformer-{request_id}"
         self.poll_interval = poll_interval
-        self.idle_shutdown_seconds = idle_shutdown_seconds
 
-        self._lock = threading.Lock()
-        self._last_activity = time.time()
-        self._connections: list = []
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
-
-    def register_activity_signals(self) -> None:
-        """Bind to Celery task lifecycle signals so activity is tracked."""
-        # weak=False keeps Celery from garbage-collecting bound methods.
-        task_prerun.connect(self._on_task_event, weak=False)
-        task_postrun.connect(self._on_task_event, weak=False)
-        self._connections = [
-            (task_prerun, self._on_task_event),
-            (task_postrun, self._on_task_event),
-        ]
-
-    def disconnect_signals(self) -> None:
-        for sig, handler in self._connections:
-            sig.disconnect(handler)
-        self._connections = []
-
-    def _on_task_event(self, *args, **kwargs) -> None:
-        with self._lock:
-            self._last_activity = time.time()
-
-    @property
-    def last_activity(self) -> float:
-        with self._lock:
-            return self._last_activity
-
-    def idle_seconds(self) -> float:
-        return time.time() - self.last_activity
 
     def start(self) -> None:
         if self._thread is not None:
@@ -105,9 +77,8 @@ class ShutdownWatchdog:
         self._thread.start()
 
     def stop(self) -> None:
-        """Ask the watchdog thread to exit and unregister its signal handlers."""
+        """Ask the watchdog thread to exit."""
         self._stop_event.set()
-        self.disconnect_signals()
 
     def _run(self) -> None:
         # wait() returns True if the stop event fires, False on timeout.
@@ -116,8 +87,7 @@ class ShutdownWatchdog:
                 continue
 
             logger.info(
-                "No work left for this request and worker idle for "
-                f"{self.idle_seconds():.1f}s; requesting shutdown.",
+                "No work left for this request; requesting shutdown.",
                 extra={"request_id": self.request_id, "place": self.place},
             )
             self._request_shutdown()
@@ -134,11 +104,13 @@ class ShutdownWatchdog:
 
     def _should_shutdown(self) -> bool:
         """
-        A worker may only exit once the server says no more work is coming for
-        this request: the DID finder has finished (`lookup_complete`) *and*
-        every file it found has been accounted for (`files_remaining` is 0).
+        First make sure there is no work waiting on the queue, then ask the
+        server whether more is coming. A worker may only exit once the
+        transform has reached a terminal state, or the DID finder has
+        finished (`lookup_complete`) *and* every file it found has been
+        accounted for (`files_remaining` is 0).
         """
-        if self.idle_seconds() < self.idle_shutdown_seconds:
+        if not self._queue_is_empty():
             return False
         payload = self._poll()
         if payload is None:
@@ -149,6 +121,23 @@ class ShutdownWatchdog:
             return False
         files_remaining = payload.get("files_remaining")
         return files_remaining is not None and files_remaining <= 0
+
+    def _queue_is_empty(self) -> bool:
+        try:
+            with self.celery_app.connection_for_read() as conn:
+                _, message_count, _ = conn.default_channel.queue_declare(
+                    queue=self.queue_name, passive=True
+                )
+        except NotFound:
+            # The queue has been auto-deleted, so nothing is left to consume.
+            return True
+        except Exception as exc:
+            logger.debug(
+                f"Shutdown watchdog: queue check failed: {exc}",
+                extra={"request_id": self.request_id, "place": self.place},
+            )
+            return False
+        return message_count == 0
 
     def _poll(self) -> Optional[dict]:
         try:
