@@ -37,6 +37,7 @@ The transformer pod is identified by the ``pod``/``service`` labels Prometheus
 attaches during discovery, so the request id is only carried on the ``_info``
 gauge rather than on every series.
 """
+
 import logging
 import os
 

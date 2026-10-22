@@ -105,7 +105,9 @@ def test_record_transform_failure_truncates_log(exporter):
     attached = finished.events[0].attributes["servicex.science_log"]
     assert attached.startswith("[... truncated ...]\n")
     assert attached.endswith("END")
-    assert len(attached) <= tracing.SCIENCE_LOG_TAIL_BYTES + len("[... truncated ...]\n")
+    assert len(attached) <= tracing.SCIENCE_LOG_TAIL_BYTES + len(
+        "[... truncated ...]\n"
+    )
 
 
 def test_record_transform_failure_without_span_is_noop():

@@ -41,6 +41,7 @@ diagnosed from Tempo without hunting for the pod's logs.
 Tracing is on precisely when ``OTEL_EXPORTER_OTLP_ENDPOINT`` is set, which the
 app does when launching transformer pods with tracing enabled.
 """
+
 import logging
 import os
 import socket
