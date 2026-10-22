@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-import subprocess
 import shutil
 import generated_transformer
 
@@ -32,7 +31,7 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
         )
 
     generated_transformer.runTop_el()
-    subprocess.run(["mv", "output.root", output_path])
+    shutil.move("output.root", output_path)
 
 
 if __name__ == "__main__":

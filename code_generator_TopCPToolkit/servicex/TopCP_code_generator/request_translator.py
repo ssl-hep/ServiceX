@@ -65,7 +65,14 @@ class TopCPTranslator(CodeGenerator):
             "CAPABILITIES_PATH", "/home/servicex/transformer_capabilities.json"
         )
 
-        jquery = json.loads(query)
+        try:
+            jquery = json.loads(query)
+        except json.JSONDecodeError as e:
+            raise GenerateCodeException(f"Provided query is not valid JSON: {e}")
+
+        if not isinstance(jquery, dict):
+            raise GenerateCodeException("Provided query is not a dictionary")
+
         query_translate.generate_files_from_query(jquery, query_file_path)
 
         shutil.copyfile(
