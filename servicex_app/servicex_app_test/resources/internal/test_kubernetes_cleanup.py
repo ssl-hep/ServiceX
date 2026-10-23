@@ -36,8 +36,8 @@ from kubernetes.client import models
 class TestKubernetesCleanup(ResourceTestBase):
     def test_cleanup(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.get_all_transformer_deployments.return_value = [
-            models.V1Deployment(
+        mock_transformer_manager.get_all_transformer_jobs.return_value = [
+            models.V1Job(
                 metadata=models.V1ObjectMeta(
                     name="abc",
                     creation_timestamp=datetime(
@@ -46,7 +46,7 @@ class TestKubernetesCleanup(ResourceTestBase):
                 )
             ),
             # Next is too new, will not call
-            models.V1Deployment(
+            models.V1Job(
                 metadata=models.V1ObjectMeta(
                     name="jkl", creation_timestamp=datetime.now(timezone.utc)
                 )
@@ -77,31 +77,6 @@ class TestKubernetesCleanup(ResourceTestBase):
                 )
             ),
         ]
-        mock_transformer_manager.get_all_transformer_hpas.return_value = [
-            models.V1HorizontalPodAutoscaler(
-                metadata=models.V1ObjectMeta(
-                    name="ghi",
-                    creation_timestamp=datetime(
-                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
-                    ),
-                )
-            ),
-            # Next is too new, will not call
-            models.V1HorizontalPodAutoscaler(
-                metadata=models.V1ObjectMeta(
-                    name="pqr", creation_timestamp=datetime.now(timezone.utc)
-                )
-            ),
-            # Next is a repeat transform ID, will not call
-            models.V1HorizontalPodAutoscaler(
-                metadata=models.V1ObjectMeta(
-                    name="def",
-                    creation_timestamp=datetime(
-                        2000, 1, 1, 0, 0, 0, tzinfo=timezone.utc
-                    ),
-                )
-            ),
-        ]
 
         client = self._test_client(
             transformation_manager=mock_transformer_manager,
@@ -115,22 +90,20 @@ class TestKubernetesCleanup(ResourceTestBase):
             )
             assert response.json is None
 
-        mock_transformer_manager.get_all_transformer_deployments.assert_called_once()
+        mock_transformer_manager.get_all_transformer_jobs.assert_called_once()
         mock_transformer_manager.get_all_transformer_configmaps.assert_called_once()
-        mock_transformer_manager.get_all_transformer_hpas.assert_called_once()
         mock_transformer_manager.shutdown_transformer_job.assert_has_calls(
             [
                 call("abc", "my-ws", True),
                 call("def", "my-ws", True),
-                call("ghi", "my-ws", True),
             ]
         )
-        assert mock_transformer_manager.shutdown_transformer_job.call_count == 3
+        assert mock_transformer_manager.shutdown_transformer_job.call_count == 2
 
     def test_error(self, mocker):
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
-        mock_transformer_manager.get_all_transformer_deployments.return_value = [
-            models.V1Deployment(
+        mock_transformer_manager.get_all_transformer_jobs.return_value = [
+            models.V1Job(
                 metadata=models.V1ObjectMeta(
                     name="abc",
                     creation_timestamp=datetime(
