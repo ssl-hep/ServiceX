@@ -44,6 +44,7 @@ authlib = "^1.6.9"
 flask-moment = "^1.0.6"
 boto3 = ">=1.42.94"
 flask-admin = "^2.0.2"
+prometheus-flask-exporter = "^0.23.2"
 
 [tool.poetry.group.test]
 optional = true

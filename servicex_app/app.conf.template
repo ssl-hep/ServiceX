@@ -10,6 +10,9 @@ DOCS_BASE_URL = 'https://servicex-frontend.readthedocs.io/en/stable/'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
+# Serve Prometheus metrics on /metrics
+ENABLE_METRICS=True
+
 # OAuth configuration
 OAUTH_METADATA_URL='https://auth.globus.org/.well-known/openid-configuration'
 OAUTH_CLIENT_ID='globus-client-id'
