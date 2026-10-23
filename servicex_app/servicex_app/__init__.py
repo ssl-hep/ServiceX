@@ -55,7 +55,6 @@ from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.metrics import init_metrics
-from servicex_app.tracing import instrument_flask_app
 from servicex_app.object_store_manager import ObjectStoreManager
 from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
@@ -372,9 +371,6 @@ def create_app(
         moment.init_app(app)
 
         init_metrics(app)
-
-        if instrument_flask_app(app):
-            app.logger.info("OpenTelemetry tracing active for this Flask app")
 
         # Validate did-finder scheme
         schemes = app.config["VALID_DID_SCHEMES"]

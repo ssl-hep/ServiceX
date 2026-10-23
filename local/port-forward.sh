@@ -18,20 +18,17 @@ while [[ $# -gt 0 ]]; do
             HELM_NAME="$2"
             shift 2
             ;;
-        app|minio|db|prometheus|grafana|tempo)
+        app|minio|db)
             SERVICE_TYPE="$1"
             shift
             ;;
         -h|--help)
-            echo "Usage: $0 [app|minio|db|prometheus|grafana|tempo] [OPTIONS]"
+            echo "Usage: $0 [app|minio|db] [OPTIONS]"
             echo ""
             echo "Services:"
             echo "  app   - Port forward to ServiceX app (8000)"
             echo "  minio - Port forward to Minio (9000)"
             echo "  db    - Port forward to PostgreSQL (5432)"
-            echo "  prometheus - Port forward to Prometheus (9090)"
-            echo "  grafana    - Port forward to Grafana (3000)"
-            echo "  tempo      - Port forward to Tempo (3200)"
             echo ""
             echo "Options:"
             echo "  --namespace NAMESPACE    Kubernetes namespace (default: default)"
@@ -50,7 +47,7 @@ done
 # Validate service type is provided
 if [ -z "$SERVICE_TYPE" ]; then
     echo "Error: Service type is required"
-    echo "Usage: $0 [app|minio|db|prometheus|grafana|tempo] [OPTIONS]"
+    echo "Usage: $0 [app|minio|db] [OPTIONS]"
     echo "Run '$0 --help' for more information"
     exit 1
 fi
@@ -68,18 +65,6 @@ case "$SERVICE_TYPE" in
     db)
         SERVICE="${HELM_NAME}-postgresql"
         PORT="5432"
-        ;;
-    prometheus)
-        SERVICE="${HELM_NAME}-prometheus"
-        PORT="9090"
-        ;;
-    grafana)
-        SERVICE="${HELM_NAME}-grafana"
-        PORT="3000"
-        ;;
-    tempo)
-        SERVICE="${HELM_NAME}-tempo"
-        PORT="3200"
         ;;
 esac
 
