@@ -597,7 +597,6 @@ class TestTransformerManager(ResourceTestBase):
                 image="sslhep/servicex-transformer:pytest",
                 request_id="1234",
                 workers=2,
-                max_workers=2,
                 rabbitmq_uri="ampq://test.com",
                 namespace="my-ns",
                 result_destination="object-store",
