@@ -579,12 +579,11 @@ class TestTransformerManager(ResourceTestBase):
             assert not args[0].startswith("/servicex/proxy-exporter.sh & sleep 5 && ")
 
     def _launch_with(self, mocker, extra_config):
-        """Launch a transform and return the V1Deployment handed to kubernetes."""
+        """Launch a transform and return the V1Job handed to kubernetes."""
         import kubernetes
 
         mocker.patch.object(kubernetes.config, "load_kube_config")
-        mock_api = mocker.patch.object(kubernetes.client, "AppsV1Api")
-        mocker.patch.object(kubernetes.client, "AutoscalingV1Api")
+        mock_api = mocker.patch.object(kubernetes.client, "BatchV1Api")
 
         transformer = TransformerManager("external-kubernetes")
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -606,26 +605,22 @@ class TestTransformerManager(ResourceTestBase):
                 transformer_language="python",
                 transformer_command="echo",
             )
-            return mock_api.mock_calls[1][2]["body"]
+            return mock_api.return_value.create_namespaced_job.call_args.kwargs["body"]
 
     @pytest.fixture
-    def vector_deployment(self, mocker):
+    def vector_job(self, mocker):
         """A transform launched with the vector sidecar turned on."""
-        return self._launch_with(
-            mocker, make_config(TRANSFORMER_AUTOSCALE_ENABLED=False, **VECTOR_CONFIG)
-        )
+        return self._launch_with(mocker, make_config(**VECTOR_CONFIG))
 
     def test_vector_sidecar_disabled_by_default(self, mocker):
         """No vector container, and nothing bolted onto the shared volumes."""
-        deployment = self._launch_with(
-            mocker, make_config(TRANSFORMER_AUTOSCALE_ENABLED=False)
-        )
-        spec = deployment.spec.template.spec
+        job = self._launch_with(mocker, make_config())
+        spec = job.spec.template.spec
         assert [c.name for c in spec.containers] == ["sidecar", "transformer"]
         assert not [v for v in spec.volumes if v.name.startswith("vector-")]
 
-    def test_vector_sidecar_added_when_enabled(self, vector_deployment):
-        spec = vector_deployment.spec.template.spec
+    def test_vector_sidecar_added_when_enabled(self, vector_job):
+        spec = vector_job.spec.template.spec
 
         # Appended last, so the existing sidecar/science indices are unchanged.
         assert [c.name for c in spec.containers] == [
@@ -646,14 +641,14 @@ class TestTransformerManager(ResourceTestBase):
         )
 
     def test_vector_sidecar_does_not_leak_into_other_containers(
-        self, vector_deployment
+        self, vector_job
     ):
         """
         The science and sidecar containers share one mount list object, so
         building Vector's mounts by appending to it would silently mount
         /etc/vector into both of them.
         """
-        sidecar, science, vector = vector_deployment.spec.template.spec.containers
+        sidecar, science, vector = vector_job.spec.template.spec.containers
 
         for container in (sidecar, science):
             assert [m.name for m in container.volume_mounts] == ["sidecar-volume"]
@@ -665,8 +660,8 @@ class TestTransformerManager(ResourceTestBase):
         ]
         assert vector.volume_mounts[0].read_only is True
 
-    def test_vector_sidecar_env(self, vector_deployment):
-        sidecar, _, vector = vector_deployment.spec.template.spec.containers
+    def test_vector_sidecar_env(self, vector_job):
+        sidecar, _, vector = vector_job.spec.template.spec.containers
 
         # The python sidecar talks to vector over the pod's loopback.
         assert _env_value(sidecar.env, "VECTOR_HOST") == "127.0.0.1"
@@ -681,13 +676,13 @@ class TestTransformerManager(ResourceTestBase):
         # carried credentials would hand them to every user-supplied science image.
         assert not [e for e in vector.env if e.name.startswith("PG_")]
 
-    def test_vector_sidecar_has_cpu_request(self, vector_deployment):
+    def test_vector_sidecar_has_cpu_request(self, vector_job):
         """
-        The transformer HPA is autoscaling/v1 and averages CPU utilization over
-        every container in the pod. A vector container with no cpu request makes
-        utilization unknown and silently stops transformer autoscaling.
+        The scheduler sizes the pod from the sum of every container's requests.
+        A vector container with no cpu request would be packed onto nodes with
+        no headroom for it.
         """
-        science, vector = vector_deployment.spec.template.spec.containers[1:]
+        science, vector = vector_job.spec.template.spec.containers[1:]
 
         assert vector.resources.requests["cpu"] == "50m"
         # And it must not inherit the science container's much larger limits.
