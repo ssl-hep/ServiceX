@@ -1656,7 +1656,19 @@ class TestShutdownPod:
         req.status = status
         return req
 
-    def test_skips_shutdown_for_non_active_status(self, app_context, mocker):
+    def test_skips_shutdown_for_complete_status(self, app_context, mocker):
+        app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
+
+        mocker.patch(
+            "servicex_app.transformer_manager.kubernetes.config.load_incluster_config"
+        )
+        manager = TransformerManager("internal-kubernetes")
+        manager.shutdown_transformer_job = Mock()
+        req = self._make_req(TransformStatus.complete)
+        manager.cancel_transform(req)
+        manager.shutdown_transformer_job.assert_not_called()
+
+    def test_calls_shutdown_for_submitted(self, app_context, mocker):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
 
         mocker.patch(
@@ -1666,7 +1678,7 @@ class TestShutdownPod:
         manager.shutdown_transformer_job = Mock()
         req = self._make_req(TransformStatus.submitted)
         manager.cancel_transform(req)
-        manager.shutdown_transformer_job.assert_not_called()
+        manager.shutdown_transformer_job.assert_called_once_with("test-123", "test-ns")
 
     def test_calls_shutdown_for_running(self, app_context, mocker):
         app_context.config["TRANSFORMER_NAMESPACE"] = "test-ns"
