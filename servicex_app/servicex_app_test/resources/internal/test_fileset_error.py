@@ -62,19 +62,16 @@ class TestFilesetError(ResourceTestBase):
         dataset = mock_find_dataset_by_id.return_value
 
         pending_request = TransformRequest()
+        pending_request.request_id = "222-222"
         pending_request.status = TransformStatus.pending_lookup
-        mock_lookup_pending = mocker.patch.object(
-            TransformRequest,
-            "lookup_pending_on_dataset",
-            return_value=[pending_request],
-        )
 
         lookup_request = TransformRequest()
+        lookup_request.request_id = "111-111"
         lookup_request.status = TransformStatus.lookup
-        mock_lookup_running = mocker.patch.object(
+        mock_lock_awaiting = mocker.patch.object(
             TransformRequest,
-            "lookup_running_by_dataset_id",
-            return_value=[lookup_request],
+            "lock_awaiting_dataset",
+            return_value=[lookup_request, pending_request],
         )
         mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_transformer_manager = mocker.MagicMock(TransformerManager)
@@ -94,27 +91,61 @@ class TestFilesetError(ResourceTestBase):
         assert dataset.lookup_status == DatasetStatus(error)
         assert dataset.stale
 
-        mock_lookup_pending.assert_called_once_with(1234)
-        mock_lookup_running.assert_called_once_with(1234)
+        mock_lock_awaiting.assert_called_once_with(1234)
         assert pending_request.status == TransformStatus.bad_dataset
         assert lookup_request.status == TransformStatus.bad_dataset
+        assert pending_request.finish_time is not None
+        assert lookup_request.finish_time is not None
         assert mock_transformer_manager.shutdown_transformer_job.call_count == 2
+        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+            "111-111", "my-ws"
+        )
+        mock_transformer_manager.shutdown_transformer_job.assert_any_call(
+            "222-222", "my-ws"
+        )
+
+    def test_put_fileset_error_shutdown_failure(self, mocker, mock_find_dataset_by_id):
+        lookup_request = TransformRequest()
+        lookup_request.request_id = "111-111"
+        lookup_request.status = TransformStatus.lookup
+        mocker.patch.object(
+            TransformRequest, "lock_awaiting_dataset", return_value=[lookup_request]
+        )
+        mock_db = mocker.patch("servicex_app.resources.internal.fileset_error.db")
+        mock_transformer_manager = mocker.MagicMock(TransformerManager)
+        mock_transformer_manager.shutdown_transformer_job = mocker.Mock(
+            side_effect=ConnectionError("kubernetes api unreachable")
+        )
+
+        client = self._test_client(
+            lookup_result_processor=mocker.MagicMock(LookupResultProcessor),
+            transformation_manager=mock_transformer_manager,
+        )
+
+        response = client.put(
+            "/servicex/internal/transformation/1234/error",
+            json={"elapsed-time": 0, "error-type": "bad_name", "message": "honk"},
+        )
+        # The status is committed before the shutdown, which only logs its failure
+        assert response.status_code == 200
+        assert lookup_request.status == TransformStatus.bad_dataset
+        assert mock_db.session.commit.call_count == 2
+        mock_transformer_manager.shutdown_transformer_job.assert_called_once_with(
+            "111-111", "my-ws"
+        )
 
     def test_put_fileset_error_invalid_did(self, mocker):
         pending_request = TransformRequest()
+        pending_request.request_id = "222-222"
         pending_request.status = TransformStatus.pending_lookup
-        mock_lookup_pending = mocker.patch.object(
-            TransformRequest,
-            "lookup_pending_on_dataset",
-            return_value=[pending_request],
-        )
 
         lookup_request = TransformRequest()
+        lookup_request.request_id = "111-111"
         lookup_request.status = TransformStatus.lookup
-        mock_lookup_running = mocker.patch.object(
+        mock_lock_awaiting = mocker.patch.object(
             TransformRequest,
-            "lookup_running_by_dataset_id",
-            return_value=[lookup_request],
+            "lock_awaiting_dataset",
+            return_value=[lookup_request, pending_request],
         )
 
         mock_find_dataset_by_id = mocker.patch.object(
@@ -136,5 +167,4 @@ class TestFilesetError(ResourceTestBase):
         assert response.status_code == 422
         mock_find_dataset_by_id.assert_called_once_with(1234)
 
-        mock_lookup_pending.assert_not_called()
-        mock_lookup_running.assert_not_called()
+        mock_lock_awaiting.assert_not_called()
