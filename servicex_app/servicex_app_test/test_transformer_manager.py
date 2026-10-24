@@ -640,9 +640,7 @@ class TestTransformerManager(ResourceTestBase):
             config_volume.config_map.name == "rolling-snail-transformer-vector-config"
         )
 
-    def test_vector_sidecar_does_not_leak_into_other_containers(
-        self, vector_job
-    ):
+    def test_vector_sidecar_does_not_leak_into_other_containers(self, vector_job):
         """
         The science and sidecar containers share one mount list object, so
         building Vector's mounts by appending to it would silently mount
