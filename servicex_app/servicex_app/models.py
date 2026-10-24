@@ -678,8 +678,9 @@ class LogMessage(db.Model):
         # deliberately not in here: as a key column it would break that
         # ordering, and as an INCLUDE it buys nothing measurable, because the
         # grid selects whole rows and so visits the heap either way.
-        # dataset_id needs no second column at all: those records are only ever
-        # matched and purged.
+        # dataset_id needs no second column: the dataset page also reads its
+        # records newest first, but a DID lookup logs few enough of them that
+        # sorting the matched rows in memory is cheap.
         db.Index(
             "ix_log_messages_request_id",
             request_id,
