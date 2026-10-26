@@ -74,3 +74,22 @@ class TestAuthCallback(WebTestBase):
         assert mock_session.get("sub") == id_token["sub"]
         assert response.status_code == 302
         assert response.location == url_for("profile")
+
+    def test_auth_callback_error_without_description(self, client, mock_flash):
+        response: Response = client.get(
+            url_for("auth_callback"), query_string={"error": "access_denied"}
+        )
+        assert response.status_code == 302
+        mock_flash.assert_called_once_with(
+            "You could not be logged into the portal: access_denied", "access_denied"
+        )
+
+    def test_auth_callback_error_with_description(self, client, mock_flash):
+        response: Response = client.get(
+            url_for("auth_callback"),
+            query_string={"error": "access_denied", "error_description": "Go away"},
+        )
+        assert response.status_code == 302
+        mock_flash.assert_called_once_with(
+            "You could not be logged into the portal: Go away", "access_denied"
+        )
