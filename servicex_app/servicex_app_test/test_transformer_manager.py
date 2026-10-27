@@ -82,7 +82,7 @@ VECTOR_CONFIG = {
         "requests": {"cpu": "50m", "memory": "64Mi"},
         "limits": {"memory": "128Mi"},
     },
-    "TRANSFORMER_MAX_REPLICAS": 20,
+    "TRANSFORMER_MAX_WORKERS": 20,
 }
 
 
@@ -154,7 +154,7 @@ class TestTransformerManager(ResourceTestBase):
         transformer = TransformerManager("external-kubernetes")
         cfg = make_config(
             TRANSFORMER_CPU_LIMIT=4,
-            TRANSFORMER_MAX_REPLICAS=17,
+            TRANSFORMER_MAX_WORKERS=17,
         )
 
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -549,7 +549,7 @@ class TestTransformerManager(ResourceTestBase):
             transformation_manager=transformer,
             extra_config=make_config(
                 TRANSFORMER_CPU_LIMIT=4,
-                TRANSFORMER_MAX_REPLICAS=17,
+                TRANSFORMER_MAX_WORKERS=17,
                 TRANSFORMER_X509_SECRET=None,
             ),
         )
@@ -1917,7 +1917,7 @@ class TestStartTransformers:
             "TRANSFORMER_RABBIT_MQ_URL": "amqp://rabbit",
             "TRANSFORMER_NAMESPACE": "test-ns",
             "TRANSFORMER_X509_SECRET": "x509",
-            "TRANSFORMER_MAX_REPLICAS": 17,
+            "TRANSFORMER_MAX_WORKERS": 17,
         }
         cfg.update(overrides)
         return cfg

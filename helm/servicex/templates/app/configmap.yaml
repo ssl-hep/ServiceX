@@ -106,8 +106,8 @@ data:
     TRANSFORMER_MEMORY_LIMIT = "{{ .Values.transformer.memoryLimit }}"
     TRANSFORMER_CPU_REQUEST = "{{ .Values.transformer.cpuRequest }}"
     TRANSFORMER_MEMORY_REQUEST = "{{ .Values.transformer.memoryRequest }}"
-    TRANSFORMER_MAX_REPLICAS = {{ .Values.transformer.maxReplicas }}
-    TRANSFORMER_INITIAL_REPLICAS = {{ .Values.transformer.initialReplicas }}
+    TRANSFORMER_MAX_WORKERS = {{ .Values.transformer.maxWorkers }}
+    TRANSFORMER_INITIAL_WORKERS = {{ .Values.transformer.initialWorkers }}
     TRANSFORMER_BACKOFF_LIMIT = {{ .Values.transformer.backoffLimit }}
     TRANSFORMER_SHUTDOWN_POLL_INTERVAL_SEC = {{ .Values.transformer.shutdownPollIntervalSec }}
     TRANSFORMER_MANAGER_MODE = 'internal-kubernetes'

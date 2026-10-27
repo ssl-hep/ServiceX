@@ -77,10 +77,10 @@ class AddFileToDataset(ServiceXResource):
             db.session.commit()
 
             namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-            max_replicas = current_app.config["TRANSFORMER_MAX_REPLICAS"]
+            max_workers = current_app.config["TRANSFORMER_MAX_WORKERS"]
             scaled = False
             for req in running_requests:
-                desired = min(max(1, req.files), max_replicas)
+                desired = min(max(1, req.files), max_workers)
                 if desired > (req.workers or 0):
                     if self.transformer_manager.patch_transformer_parallelism(
                         req.request_id, namespace, desired

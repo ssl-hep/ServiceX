@@ -49,10 +49,10 @@ ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 TRANSFORMER_MANAGER_ENABLED = True
 
 # Maximum number of transformer pods (parallelism) to run in parallel
-TRANSFORMER_MAX_REPLICAS = 20
+TRANSFORMER_MAX_WORKERS = 20
 
 # Parallelism the transformer Job starts with, before the file count is known
-TRANSFORMER_INITIAL_REPLICAS = 1
+TRANSFORMER_INITIAL_WORKERS = 1
 
 # How many times k8s retries a failing transformer pod before failing the Job
 TRANSFORMER_BACKOFF_LIMIT = 4

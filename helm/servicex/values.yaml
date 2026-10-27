@@ -469,9 +469,9 @@ transformer:
 
 
   # Max number of transformer pods k8s will run in parallel per request
-  maxReplicas: 20
+  maxWorkers: 20
   # Number of pods the transformer Job starts with
-  initialReplicas: 1
+  initialWorkers: 1
   # How many times k8s will retry a failing transformer pod before giving up
   backoffLimit: 4
   # How often a transformer Job asks whether there is still work left.

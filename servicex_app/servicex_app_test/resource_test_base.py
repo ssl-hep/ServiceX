@@ -61,7 +61,7 @@ class ResourceTestBase:
             "TRANSFORMER_RABBIT_MQ_URL": "amqp://trans.rabbit",
             "TRANSFORMER_NAMESPACE": "my-ws",
             "TRANSFORMER_MANAGER_ENABLED": False,
-            "TRANSFORMER_MAX_REPLICAS": 5,
+            "TRANSFORMER_MAX_WORKERS": 5,
             "ADVERTISED_HOSTNAME": "cern.analysis.ch:5000",
             "TRANSFORMER_PULL_POLICY": "Always",
             "TRANSFORMER_VALIDATE_DOCKER_IMAGE": True,

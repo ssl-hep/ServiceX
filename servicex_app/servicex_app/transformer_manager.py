@@ -97,13 +97,13 @@ class TransformerManager:
         x509_secret = config["TRANSFORMER_X509_SECRET"]
         generated_code_cm = request_rec.generated_code_cm
 
-        max_replicas = config["TRANSFORMER_MAX_REPLICAS"]
+        max_workers = config["TRANSFORMER_MAX_WORKERS"]
 
         if request_rec.status == TransformStatus.running:
-            replicas = min(max(1, request_rec.files), max_replicas)
+            replicas = min(max(1, request_rec.files), max_workers)
         else:
             initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
-            replicas = min(max(1, initial), max_replicas)
+            replicas = min(max(1, initial), max_workers)
 
         request_rec.workers = replicas
 

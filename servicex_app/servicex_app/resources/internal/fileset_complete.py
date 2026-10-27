@@ -78,7 +78,7 @@ class FilesetComplete(ServiceXResource):
             # Now time to pick up any transform requests for this dataset that came in
             # while we were still looking up files and send the dataset to them
             namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-            max_replicas = current_app.config["TRANSFORMER_MAX_REPLICAS"]
+            max_workers = current_app.config["TRANSFORMER_MAX_WORKERS"]
             dataset_manager = DatasetManager(dataset, current_app.logger, db)
             for transform_request in TransformRequest.lookup_pending_on_dataset(
                 int(dataset_id)
@@ -87,14 +87,14 @@ class FilesetComplete(ServiceXResource):
                     transform_request, self.lookup_result_processor
                 )
                 transform_request.status = TransformStatus.running
-                self.scale_transformers(transform_request, namespace, max_replicas)
+                self.scale_transformers(transform_request, namespace, max_workers)
 
             # also resolve the status of whatever transform prompted this lookup
             for transform_request in TransformRequest.lookup_running_by_dataset_id(
                 int(dataset_id)
             ):
                 transform_request.status = TransformStatus.running
-                self.scale_transformers(transform_request, namespace, max_replicas)
+                self.scale_transformers(transform_request, namespace, max_workers)
 
         else:
             current_app.logger.info(

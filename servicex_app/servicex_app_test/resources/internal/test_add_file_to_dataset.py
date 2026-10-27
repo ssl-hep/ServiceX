@@ -230,7 +230,7 @@ class TestAddFileToDataset(ResourceTestBase):
         assert running_transform_list[0].workers == 1
         assert running_transform_list[1].workers == 1
 
-    def test_put_file_does_not_scale_past_max_replicas(
+    def test_put_file_does_not_scale_past_max_workers(
         self,
         mocker,
         mock_transformer_lookup,
