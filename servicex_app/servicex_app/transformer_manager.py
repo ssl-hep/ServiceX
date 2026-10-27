@@ -100,22 +100,22 @@ class TransformerManager:
         max_workers = config["TRANSFORMER_MAX_WORKERS"]
 
         if request_rec.status == TransformStatus.running:
-            replicas = min(max(1, request_rec.files), max_workers)
+            workers = min(max(1, request_rec.files), max_workers)
         else:
-            initial = config.get("TRANSFORMER_INITIAL_REPLICAS", 1)
-            replicas = min(max(1, initial), max_workers)
+            initial = config.get("TRANSFORMER_INITIAL_WORKERS", 1)
+            workers = min(max(1, initial), max_workers)
 
-        request_rec.workers = replicas
+        request_rec.workers = workers
 
         current_app.logger.info(
-            f"Launching {replicas} transformers ",
+            f"Launching {workers} transformers ",
             extra={"request_id": request_rec.request_id},
         )
 
         self.launch_transformer_jobs(
             image=request_rec.image,
             request_id=request_rec.request_id,
-            workers=replicas,
+            workers=workers,
             rabbitmq_uri=rabbitmq_uri,
             namespace=namespace,
             x509_secret=x509_secret,

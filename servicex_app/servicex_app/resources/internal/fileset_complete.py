@@ -47,12 +47,12 @@ class FilesetComplete(ServiceXResource):
         cls.transformer_manager = transformer_manager
         return cls
 
-    def scale_transformers(self, transform_request, namespace, max_replicas):
+    def scale_transformers(self, transform_request, namespace, max_workers):
         """
         Grow this request's transformer Job to match its now-known file count.
         Only patches when the pool actually needs to grow.
         """
-        desired = min(max(1, transform_request.files), max_replicas)
+        desired = min(max(1, transform_request.files), max_workers)
         if desired <= (transform_request.workers or 0):
             return
         if self.transformer_manager.patch_transformer_parallelism(

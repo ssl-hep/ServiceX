@@ -1930,7 +1930,7 @@ class TestStartTransformers:
         assert req.workers == 10
         assert manager.launch_transformer_jobs.call_args.kwargs["workers"] == 10
 
-    def test_running_status_clamps_to_max_replicas(self, app_context, manager):
+    def test_running_status_clamps_to_max_workers(self, app_context, manager):
         req = self._make_request(TransformStatus.running, files=100)
 
         manager.start_transformers(self._base_config(), req)
@@ -1957,7 +1957,7 @@ class TestStartTransformers:
         req = self._make_request(TransformStatus.submitted, files=50)
 
         manager.start_transformers(
-            self._base_config(TRANSFORMER_INITIAL_REPLICAS=5), req
+            self._base_config(TRANSFORMER_INITIAL_WORKERS=5), req
         )
 
         assert req.workers == 5
@@ -1966,7 +1966,7 @@ class TestStartTransformers:
         req = self._make_request(TransformStatus.submitted, files=50)
 
         manager.start_transformers(
-            self._base_config(TRANSFORMER_INITIAL_REPLICAS=99), req
+            self._base_config(TRANSFORMER_INITIAL_WORKERS=99), req
         )
 
         assert req.workers == 17
