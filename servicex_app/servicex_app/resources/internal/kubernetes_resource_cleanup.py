@@ -41,26 +41,25 @@ class CleanupKubernetesResources(ServiceXResource):
         return cls
 
     def post(self):
-        # We first consider transformer deployments and reap those that are too old.
-        # We then look at remaining configmaps and hpas, and if those are too old
-        # delete the corresponding transform ID and hope that cleans up everything,
-        # including lingering RabbitMQ queues.
+        # We first consider transformer jobs and reap those that are too old.
+        # We then look at remaining configmaps, and if those are too old
+        # delete the corresponding transform ID and hope that cleans up
+        # everything, including lingering RabbitMQ queues.
         maxage = float(request.get_json().get("maxAge", 24))
 
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
 
         deleted: set[str] = set()  # list of request IDs we have tried to delete
-        deployments = self.transformer_manager.get_all_transformer_deployments()
+        jobs = self.transformer_manager.get_all_transformer_jobs()
         configmaps = self.transformer_manager.get_all_transformer_configmaps()
-        hpas = self.transformer_manager.get_all_transformer_hpas()
         now = datetime.now(tz=timezone.utc)
         delta = timedelta(hours=maxage)
         logging_message = ["Kubernetes reaper report"]
         try:
-            for deployment in deployments:
-                age = now - deployment.metadata.creation_timestamp
+            for job in jobs:
+                age = now - job.metadata.creation_timestamp
                 if age > delta:
-                    id = deployment.metadata.name.replace("transformer-", "")
+                    id = job.metadata.name.replace("transformer-", "")
                     logging_message.append(f"Shutting down {id}, age {age}")
                     self.transformer_manager.shutdown_transformer_job(
                         id, namespace, True
@@ -70,16 +69,6 @@ class CleanupKubernetesResources(ServiceXResource):
                 age = now - map.metadata.creation_timestamp
                 if age > delta:
                     id = map.metadata.name.replace("-generated-source", "")
-                    if id not in deleted:
-                        logging_message.append(f"Shutting down {id}, age {age}")
-                        self.transformer_manager.shutdown_transformer_job(
-                            id, namespace, True
-                        )
-                        deleted.add(id)
-            for hpa in hpas:
-                age = now - hpa.metadata.creation_timestamp
-                if age > delta:
-                    id = hpa.metadata.name.replace("transformer-", "")
                     if id not in deleted:
                         logging_message.append(f"Shutting down {id}, age {age}")
                         self.transformer_manager.shutdown_transformer_job(

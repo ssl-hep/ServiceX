@@ -65,7 +65,7 @@
             </div>
 
       </td>
-      <td id="replicas-{{ req.request_id }}">-</td>
+      <td id="workers-{{ req.request_id }}">-</td>
       <td>
         {% if not req.status.is_complete %}
         <button id="cancel-{{ req.request_id }}"
@@ -126,7 +126,7 @@
             watched.delete(req_id);
             $(`#progress-${req_id}`).remove();
             $(`#cancel-${req_id}`).remove();
-            $(`#replicas-${req_id}`).text("-");
+            $(`#workers-${req_id}`).text("-");
             const [d, t] = data["finish-time"].split("T");
             $(`#finish-time-${req_id}`).text(`${d} ${t.split(".")[0]}`)
           }
@@ -134,10 +134,10 @@
         })
         .then((status) => {
           if (status === "Running") {
-            fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
+            fetch(document.location.origin + `/servicex/transformation/${req_id}/job-status`)
               .then((resp) => resp.json())
               .then((data) => {
-                $(`#replicas-${req_id}`).text(data["replicas"]);
+                $(`#workers-${req_id}`).text(data["active"] ?? "-");
               });
           }
         })
