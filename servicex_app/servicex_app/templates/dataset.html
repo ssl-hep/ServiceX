@@ -1,5 +1,20 @@
 {% extends "base.html" %}
+{% from 'log_messages.html' import log_level_dropdown, log_message_table, log_message_modal, log_message_modal_script with context %}
 {% block content %}
+<style>
+  .log-grid {
+    max-height: 24rem;
+    overflow-y: auto;
+  }
+  .log-grid table {
+    margin-bottom: 0;
+  }
+  .log-grid thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+</style>
 <div class="content-section col-12">
   <div class="row justify-content-between align-items-center">
     <h4 class="mb-3 col-auto">Dataset</h4>
@@ -78,6 +93,24 @@
     </dd>
   </dl>
 
+  <div id="logs">
+    <div class="row justify-content-between align-items-center mt-4 mb-2">
+      <h5 class="col-auto mb-0">Log Messages</h5>
+      {{ log_level_dropdown(log_levels, active_level) }}
+    </div>
+    {% if logs %}
+    <div class="log-grid border mb-2">
+      {{ log_message_table(logs) }}
+    </div>
+    {% if logs|length >= max_logs %}
+    <p class="text-muted small">Showing the newest {{ humanize.intcomma(max_logs) }} messages.</p>
+    {% endif %}
+    {% else %}
+    <p class="text-muted">No log messages.</p>
+    {% endif %}
+    {{ log_message_modal() }}
+  </div>
+
   <h5 class="mt-4">Files ({{ humanize.intcomma(ds.files|length) }})</h5>
   {% if ds.files %}
   <div class="table-responsive">
@@ -111,6 +144,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ log_message_modal_script() }}
 <script>
   function deleteDataset(datasetId) {
     if (!confirm(`Flush dataset ${datasetId}?\n\nThis marks it stale so a future request will refetch the file list.`)) {
