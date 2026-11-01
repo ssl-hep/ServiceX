@@ -35,6 +35,7 @@ from types import SimpleNamespace
 from pathlib import Path
 
 from pytest import fixture
+import pytest
 
 from transformer_sidecar.object_store_manager import ObjectStoreError
 from transformer_sidecar.transformer import (
@@ -161,6 +162,7 @@ def test_transformer_init(
         )
 
 
+@pytest.mark.parametrize("success", [True, False])
 def test_transformer_root_to_parquet(
     args,
     mock_celery,
@@ -169,6 +171,7 @@ def test_transformer_root_to_parquet(
     mock_object_store_manager,
     mock_science_container,
     mocker,
+    success,
 ):
     with tempfile.TemporaryDirectory() as temp_dir:
         init_test(
@@ -183,7 +186,7 @@ def test_transformer_root_to_parquet(
         mock_science_container.return_value.await_response.return_value = "success."
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -191,6 +194,9 @@ def test_transformer_root_to_parquet(
 
         def patch_convert(x):
             import shutil
+
+            if not success:
+                return None
 
             rv = x.with_suffix(".parquet")
             shutil.copy(x, rv)
@@ -213,13 +219,25 @@ def test_transformer_root_to_parquet(
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "root-file"
-        mock_object_store_manager.return_value.upload_file.assert_called_once()
-        assert (
-            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
-            == "success"
-        )
+        if success:
+            mock_object_store_manager.return_value.upload_file.assert_called_once()
+            assert (
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
+                == "success"
+            )
+        else:
+            mock_object_store_manager.return_value.upload_file.assert_not_called()
+            assert (
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
+                == "failure"
+            )
 
 
+@pytest.mark.parametrize("success", [True, False])
 def test_transformer_root_to_rntuple(
     args,
     mock_celery,
@@ -228,6 +246,7 @@ def test_transformer_root_to_rntuple(
     mock_object_store_manager,
     mock_science_container,
     mocker,
+    success,
 ):
     with tempfile.TemporaryDirectory() as temp_dir:
         init_test(
@@ -242,7 +261,7 @@ def test_transformer_root_to_rntuple(
         mock_science_container.return_value.await_response.return_value = "success."
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -250,6 +269,9 @@ def test_transformer_root_to_rntuple(
 
         def patch_convert(x):
             import shutil
+
+            if not success:
+                return None
 
             rv = x.with_suffix(".rntuple.root")
             shutil.copy(x, rv)
@@ -272,66 +294,22 @@ def test_transformer_root_to_rntuple(
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "root-file"
-        mock_object_store_manager.return_value.upload_file.assert_called_once()
-        assert (
-            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
-            == "success"
-        )
-
-
-def test_transformer_root_to_parquet_failed(
-    args,
-    mock_celery,
-    transformer_capabilities,
-    mock_servicex_adapter,
-    mock_object_store_manager,
-    mock_science_container,
-    mocker,
-):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        init_test(
-            args,
-            mock_celery,
-            transformer_capabilities,
-            temp_dir,
-            ["root-file"],
-            "parquet",
-        )
-
-        mock_science_container.return_value.await_response.return_value = "success."
-
-        result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
-        )
-        result_file_path.parent.mkdir(parents=True)
-        with open(result_file_path, "w") as f:
-            f.write("test")
-
-        def patch_convert(x):
-            return None
-
-        mocker.patch(
-            "transformer_sidecar.transformer.convert_to_parquet",
-            side_effect=patch_convert,
-        )
-
-        # Call the task
-        transform_file(
-            request_id=test_request_id,
-            file_id=test_file_id,
-            paths=test_paths,
-            service_endpoint=test_service_endpoint,
-            result_destination=test_result_destination,
-            result_format="parquet",
-        )
-
-        science_request = mock_science_container.return_value.send.call_args[0][0]
-        assert science_request["result-format"] == "root-file"
-        mock_object_store_manager.return_value.upload_file.assert_not_called()
-        assert (
-            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
-            == "failure"
-        )
+        if success:
+            mock_object_store_manager.return_value.upload_file.assert_called_once()
+            assert (
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
+                == "success"
+            )
+        else:
+            mock_object_store_manager.return_value.upload_file.assert_not_called()
+            assert (
+                mock_servicex_adapter.return_value.put_file_complete.call_args[0][
+                    0
+                ].status
+                == "failure"
+            )
 
 
 def test_transformer_parquet(
@@ -358,7 +336,7 @@ def test_transformer_parquet(
         ]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site2:file.root.parquet"
+            Path(temp_dir) / test_request_id / "scratch" / "site2_file.root.parquet"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -376,6 +354,10 @@ def test_transformer_parquet(
 
         science_request = mock_science_container.return_value.send.call_args[0][0]
         assert science_request["result-format"] == "parquet"
+        assert (
+            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+            == "success"
+        )
 
 
 def test_transformer_output_dir(
@@ -406,7 +388,7 @@ def test_transformer_output_dir(
         ]
 
         result_file_path = os.path.join(
-            temp_dir, "local", "results", "site2:file.root.parquet"
+            temp_dir, "local", "results", "site2_file.root.parquet"
         )
         with open(result_file_path, "w") as f:
             f.write("test")
@@ -513,7 +495,7 @@ def test_transform_file(
         ]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site2:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site2_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
@@ -531,6 +513,10 @@ def test_transform_file(
         mock_science_container.assert_called_once()
 
         mock_servicex_adapter.assert_called_with(test_service_endpoint)
+        assert (
+            mock_servicex_adapter.return_value.put_file_complete.call_args[0][0].status
+            == "success"
+        )
 
 
 def test_transform_file_hard_failure(
@@ -644,7 +630,7 @@ def test_transform_file_object_store_error(
         mock_science_container.return_value.await_response.side_effect = ["success."]
 
         result_file_path = (
-            Path(temp_dir) / test_request_id / "scratch" / "site1:file.root"
+            Path(temp_dir) / test_request_id / "scratch" / "site1_file.root"
         )
         result_file_path.parent.mkdir(parents=True)
         with open(result_file_path, "w") as f:
