@@ -35,9 +35,9 @@ from servicex_app.models import (
     DatasetStatus,
 )
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.transformer_manager import shutdown_finished_transformers
 
 from datetime import datetime, timezone
-import itertools
 
 
 class FilesetError(ServiceXResource):
@@ -77,18 +77,14 @@ class FilesetError(ServiceXResource):
         dataset.stale = True  # Repeat lookup if we try again
         db.session.commit()
 
-        # shut down related running and pending transformations. Nothing good can
-        # come of letting them continue to run
-        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-        for t_request in itertools.chain(
-            TransformRequest.lookup_running_by_dataset_id(int(dataset_id)),
-            TransformRequest.lookup_pending_on_dataset(int(dataset_id)),
-        ):
+        # Shut down related running and pending transformations. Nothing good can
+        # come of letting them continue to run. The rows stay locked until the
+        # commit, so a concurrent callback or cancel cannot interleave.
+        finished_requests = []
+        for t_request in TransformRequest.lock_awaiting_dataset(int(dataset_id)):
             t_request.status = TransformStatus.bad_dataset
             t_request.finish_time = datetime.now(tz=timezone.utc)
-            self.transformer_manager.shutdown_transformer_job(
-                t_request.request_id, namespace
-            )
+            finished_requests.append(t_request.request_id)
             current_app.logger.info(
                 "Shutting down transformer because of dataset lookup problem",
                 extra={
@@ -101,3 +97,9 @@ class FilesetError(ServiceXResource):
             )
 
         db.session.commit()
+
+        shutdown_finished_transformers(
+            self.transformer_manager,
+            finished_requests,
+            current_app.config["TRANSFORMER_NAMESPACE"],
+        )

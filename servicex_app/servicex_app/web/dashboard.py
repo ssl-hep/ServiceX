@@ -32,10 +32,11 @@ parser.add_argument(
 def dashboard(template_name: str, user_specific=False):
     args = parser.parse_args()
     sort, order = args["sort"], args["order"]
-    query = TransformRequest.query.filter_by()
+    query = TransformRequest.query
 
-    if user_specific:
-        query = query.filter_by(submitted_by=session["user_id"])
+    user_id = session.get("user_id")
+    if user_specific and user_id is not None:
+        query = query.filter_by(submitted_by=user_id)
 
     sort_column = model_attributes[sort]
     sort_order = sort_column.asc() if order == "asc" else sort_column.desc()

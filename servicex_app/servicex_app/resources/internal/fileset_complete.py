@@ -36,6 +36,7 @@ from servicex_app.models import (
 )
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.transformer_manager import shutdown_finished_transformers
 
 from datetime import datetime, timezone
 
@@ -61,23 +62,40 @@ class FilesetComplete(ServiceXResource):
         dataset.lookup_status = DatasetStatus.complete
         db.session.commit()
 
+        # Lock the transform requests waiting for this lookup. Until we commit, a
+        # file-complete callback for one of them waits, so it cannot finish its last
+        # file between our reading the counters and writing the status, and a
+        # cancel that committed first removes the request from this list.
+        waiting_requests = TransformRequest.lock_awaiting_dataset(int(dataset_id))
+        finished_requests = []
+
         if summary["files"] > 0:
-            # Now time to pick up any transform requests for this dataset that came in
-            # while we were still looking up files and send the dataset to them
             dataset_manager = DatasetManager(dataset, current_app.logger, db)
-            for transform_request in TransformRequest.lookup_pending_on_dataset(
-                int(dataset_id)
-            ):
-                dataset_manager.publish_files(
-                    transform_request, self.lookup_result_processor
-                )
+            for transform_request in waiting_requests:
+                if transform_request.status == TransformStatus.pending_lookup:
+                    # This request came in while we were still looking up files,
+                    # so send it the dataset now
+                    dataset_manager.publish_files(
+                        transform_request, self.lookup_result_processor
+                    )
                 transform_request.status = TransformStatus.running
 
-            # also resolve the status of whatever transform prompted this lookup
-            for transform_request in TransformRequest.lookup_running_by_dataset_id(
-                int(dataset_id)
-            ):
-                transform_request.status = TransformStatus.running
+            # A request whose files were all transformed before the lookup finished
+            # gets no more file-complete callbacks, so it has to be completed here.
+            # Re-read the counters after writing the status so the decision also
+            # counts callbacks that committed before the write on a database that
+            # does not lock rows (such as SQLite).
+            db.session.flush()
+            for transform_request in waiting_requests:
+                db.session.refresh(transform_request)
+                if transform_request.files_remaining == 0:
+                    current_app.logger.info(
+                        "All files already transformed. Shutting down transformers",
+                        extra={"request_id": transform_request.request_id},
+                    )
+                    transform_request.status = TransformStatus.complete
+                    transform_request.finish_time = datetime.now(tz=timezone.utc)
+                    finished_requests.append(transform_request.request_id)
 
         else:
             current_app.logger.info(
@@ -85,24 +103,17 @@ class FilesetComplete(ServiceXResource):
                 extra={"dataset_id": dataset_id},
             )
 
-            # find running requests that needed this dataset and shut them down
-            # there will never be any files
-            namespace = current_app.config["TRANSFORMER_NAMESPACE"]
-            for running_request in TransformRequest.lookup_running_by_dataset_id(
-                int(dataset_id)
-            ):
-                running_request.status = TransformStatus.complete
-                running_request.finish_time = datetime.now(tz=timezone.utc)
-                self.transformer_manager.shutdown_transformer_job(
-                    running_request.request_id, namespace
-                )
-
-            # Tell any other transform that was waiting for the lookup to complete
-            # not to expect to run
-            for pending_transform in TransformRequest.lookup_pending_on_dataset(
-                int(dataset_id)
-            ):
-                pending_transform.status = TransformStatus.complete
-                pending_transform.finish_time = datetime.now(tz=timezone.utc)
+            # There will never be any files, so neither the transform that prompted
+            # this lookup nor any transform waiting for it will run
+            for transform_request in waiting_requests:
+                transform_request.status = TransformStatus.complete
+                transform_request.finish_time = datetime.now(tz=timezone.utc)
+                finished_requests.append(transform_request.request_id)
 
         db.session.commit()
+
+        shutdown_finished_transformers(
+            self.transformer_manager,
+            finished_requests,
+            current_app.config["TRANSFORMER_NAMESPACE"],
+        )
