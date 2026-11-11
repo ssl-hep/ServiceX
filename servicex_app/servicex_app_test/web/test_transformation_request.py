@@ -101,9 +101,7 @@ class TestTransformationRequest(WebTestBase):
         # The hash is still shown, just de-emphasised under the label.
         assert f'<div class="text-muted small">{file_hash}</div>' in html
 
-    def test_no_dataset_link_without_did_id(
-        self, client, mock_tr: TransformRequest
-    ):
+    def test_no_dataset_link_without_did_id(self, client, mock_tr: TransformRequest):
         resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
         assert resp.status_code == 200
         assert 'href="/datasets/' not in resp.get_data(as_text=True)
@@ -114,9 +112,7 @@ class TestTransformationRequest(WebTestBase):
     ):
         resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
         assert resp.status_code == 200
-        href = url_for(
-            "transformation_results", id_=mock_tr.request_id, status=status
-        )
+        href = url_for("transformation_results", id_=mock_tr.request_id, status=status)
         assert f'href="{escape(href)}"' in resp.get_data(as_text=True)
 
     def test_logs_for_request(
