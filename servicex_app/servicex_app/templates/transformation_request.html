@@ -48,7 +48,19 @@
     <dd class="col-sm-9">{{ moment(req.submit_time).format("YYYY-MM-DD HH:mm:ss") }} <span class="tz"></span></dd>
 
     <dt class="col-sm-3">Data ID</dt>
-    <dd class="col-sm-9" style="word-break: break-all">{{ req.did }}</dd>
+    <dd class="col-sm-9" style="word-break: break-all">
+      {# File-list requests are named by a SHA-256 of the paths; show a readable label instead #}
+      {% set is_file_list = req.dataset is not none and req.dataset.did_finder == "user" %}
+      {% set did_label = "(file list)" if is_file_list else req.did %}
+      {% if req.did_id is not none %}
+      <a href="{{ url_for('dataset', id_=req.did_id) }}">{{ did_label }}</a>
+      {% else %}
+      {{ did_label }}
+      {% endif %}
+      {% if is_file_list %}
+      <div class="text-muted small">{{ req.did }}</div>
+      {% endif %}
+    </dd>
 
     <dt class="col-sm-3">Selection</dt>
     <dd class="col-sm-9">
@@ -66,13 +78,22 @@
     <dd class="col-sm-9">{{ req.result_format }}</dd>
 
     <dt class="col-sm-3">Files</dt>
-    <dd class="col-sm-9">{{ humanize.intcomma(req.files) }}</dd>
+    <dd class="col-sm-9">
+      <a href="{{ url_for('transformation_results', id_=req.request_id, status=None) }}">{{ humanize.intcomma(req.files) }}</a>
+    </dd>
 
     <dt class="col-sm-3">Files Remaining</dt>
     <dd class="col-sm-9">{{ humanize.intcomma(req.files_remaining) }}</dd>
 
+    <dt class="col-sm-3">Files Succeeded</dt>
+    <dd class="col-sm-9">
+      <a href="{{ url_for('transformation_results', id_=req.request_id, status='success') }}">{{ humanize.intcomma(req.files_completed) }}</a>
+    </dd>
+
     <dt class="col-sm-3">Files Failed</dt>
-    <dd class="col-sm-9">{{ humanize.intcomma(req.files_failed) }}</dd>
+    <dd class="col-sm-9">
+      <a href="{{ url_for('transformation_results', id_=req.request_id, status='failure') }}">{{ humanize.intcomma(req.files_failed) }}</a>
+    </dd>
 
     <dt class="col-sm-3">Total Events</dt>
     <dd class="col-sm-9">{{ humanize.intcomma(req.total_events) }}</dd>

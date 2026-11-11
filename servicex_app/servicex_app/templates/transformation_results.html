@@ -11,6 +11,13 @@
       Results for Transformation
       <a href="/transformation-request/{{ treq.request_id }}">{{ treq.request_id }}</a>
     </h4>
+    {% set active_status = request.args.get('status') %}
+    <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Filter by status">
+      {% for label, value in [("All", None), ("Succeeded", "success"), ("Failed", "failure")] %}
+      <a href="{{ url_for('transformation_results', id_=treq.request_id, status=value) }}"
+         class="btn {{ 'btn-dark' if active_status == value else 'btn-outline-dark' }}">{{ label }}</a>
+      {% endfor %}
+    </div>
     <table class="table table-sm table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
