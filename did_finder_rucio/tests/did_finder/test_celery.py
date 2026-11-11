@@ -108,6 +108,17 @@ class TestModuleConfiguration:
         celery = import_celery(RUCIO_IGNORE_AVAILABILITY=value, **MINIMAL_ENV)
         assert celery.ignore_availability is expected
 
+    def test_report_logical_files(self, import_celery):
+        # if nothing in the environment, should be false
+        celery = import_celery(**MINIMAL_ENV)
+        assert not celery.rucio_adapter.report_logical_files
+        # if set to 1 then should be true
+        celery = import_celery(REPORT_LOGICAL_FILES="1", **MINIMAL_ENV)
+        assert celery.rucio_adapter.report_logical_files
+        # if set to something other than 1 then should be false
+        celery = import_celery(REPORT_LOGICAL_FILES="", **MINIMAL_ENV)
+        assert not celery.rucio_adapter.report_logical_files
+
 
 class TestReplicaSorterConfiguration:
     SORTER_ENV = {

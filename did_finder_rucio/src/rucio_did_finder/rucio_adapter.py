@@ -177,7 +177,6 @@ class RucioAdapter:
         for ds in datasets:
             nfiles = 0
             try:
-                nfiles = len(list(self.did_client.list_files(ds[0], ds[1])))
                 reps = self.replica_client.list_replicas(
                     [{"scope": ds[0], "name": ds[1]}],
                     schemes=["davs", "root", "http", "https"],
@@ -200,6 +199,7 @@ class RucioAdapter:
                     mfile = [d["metalink"]["file"]]
                 else:
                     mfile = d["metalink"]["file"]
+                nfiles = len(mfile)
                 for f in mfile:
                     # Path is either a list of replicas or a single logical name
                     if "url" not in f:
@@ -208,7 +208,7 @@ class RucioAdapter:
                     path = (
                         self.get_paths(f["url"])
                         if not self.report_logical_files
-                        else [f["identity"].strip("cms:")]
+                        else [f["identity"].split(":")[1]]  # remove scope
                     )
 
                     g_files.append(

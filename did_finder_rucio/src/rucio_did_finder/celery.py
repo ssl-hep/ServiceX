@@ -36,10 +36,11 @@ from servicex_did_finder_lib import DIDFinderApp
 from .replica_distance import ReplicaSorter
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
+report_logical_files = (os.environ.get("REPORT_LOGICAL_FILES", "0") == "1")
 # Initialize the finder
 did_client = DIDClient()
 replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client, False)
+rucio_adapter = RucioAdapter(did_client, replica_client, report_logical_files)
 
 if (
     "RUCIO_LATITUDE" in os.environ
