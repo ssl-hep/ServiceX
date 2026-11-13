@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "code_generator_funcadl_xaod" }]
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 func-adl-xAOD = "~2.2"
 servicex-code-gen-lib = "^1.3"
 

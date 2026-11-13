@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "code_generator_funcadl_uproot"}]
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 func-adl = "3.2.7"
 func-adl-uproot = "2.1.1"
 qastle = "0.17.0"
