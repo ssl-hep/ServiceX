@@ -380,6 +380,9 @@ class TestDatasetManager(ResourceTestBase):
                 )
             first_request.did_id = d.id
             second_request.did_id = d.id
+            db.session.add(first_request)
+            db.session.add(second_request)
+            db.session.flush()
 
             newfiles = [
                 DatasetFile(
