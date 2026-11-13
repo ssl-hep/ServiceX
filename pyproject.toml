@@ -6,7 +6,7 @@ authors = ["Ben Galewsky <ben@peartreestudio.net>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 servicex-app = {path = "servicex_app", develop = true}
 did-finder-cernopendata = {path = "did_finder_cernopendata", develop = true}
 did-finder-xrootd = {path = "did_finder_xrootd", develop = true}
