@@ -1,6 +1,6 @@
 FROM gcr.io/go-containerregistry/crane:latest AS crane
 
-FROM python:3.10
+FROM python:3.11
 
 COPY --from=crane /ko-app/crane /usr/local/bin/crane
 
