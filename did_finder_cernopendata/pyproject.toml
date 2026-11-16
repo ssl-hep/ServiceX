@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "did_finder_cernopendata", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 cernopendata-client = "1.0.0"
 servicex-did-finder-lib = "^3.2.1-rc.1"
 

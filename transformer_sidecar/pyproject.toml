@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "transformer_sidecar"}]
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "~3.11"
 Celery= "^5.4"
 urllib3 = "^2.6.3"
 psutil = "^5.9.3"

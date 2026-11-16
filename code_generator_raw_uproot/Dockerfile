@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11
 
 RUN useradd -ms /bin/bash -g 0 servicex && chmod 0750 /home/servicex
 RUN apt-get update && apt-get install -y netcat-traditional && rm -rf /var/lib/apt/lists/*

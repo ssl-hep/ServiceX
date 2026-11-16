@@ -128,6 +128,20 @@ class TestLookupRequest:
         assert kwargs["rse_expression"] == "tier=1"
         assert kwargs["ignore_availability"] is True
 
+    def test_lookup_files_logical_files(self, mocker):
+        mock_did_client, mock_replica_client = _mock_clients(mocker)
+
+        request = LookupRequest(
+            "my-did",
+            RucioAdapter(mock_did_client, mock_replica_client, True),
+            rse_expression="tier=1",
+            ignore_availability=True,
+        )
+        rv = [_ for _ in request.lookup_files()]
+        assert len(sum(rv, [])) == 1
+        assert len(rv[0][0]["paths"]) == 1
+        assert rv[0][0]["paths"][0] == "ghi"
+
     def test_lookup_files_no_replica(self, mocker):
         mock_did_client = mocker.MagicMock(DIDClient)
         mock_replica_client = mocker.MagicMock(ReplicaClient)
