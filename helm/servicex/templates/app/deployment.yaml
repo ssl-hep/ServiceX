@@ -98,6 +98,7 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: oauthDeviceFlowClientID
+              optional: true
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
@@ -113,16 +114,19 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: slackSigningSecret
+              optional: true
         - name: SIGNUP_WEBHOOK_URL
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: slackSignupWebhook
+              optional: true
         - name: MAILGUN_API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ .Values.secrets }}
               key: mailgunAPIKey
+              optional: true
         - name: RMQ_PASS
           valueFrom:
             secretKeyRef:
