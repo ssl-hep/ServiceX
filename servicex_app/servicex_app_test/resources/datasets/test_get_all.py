@@ -55,7 +55,7 @@ class TestDatasetsGetAll(ResourceTestBase):
         mock_get_by_did_finder.return_value = datasets
         client = self._test_client()
         response = client.get("/servicex/datasets?did-finder=rucio")
-        mock_get_by_did_finder.assert_called_with("rucio", None)
+        mock_get_by_did_finder.assert_called_with("rucio", False)
         assert response.status_code == 200
 
         assert response.json == {
@@ -80,5 +80,18 @@ class TestDatasetsGetAll(ResourceTestBase):
         mock_get.return_value = datasets
         client = self._test_client()
         response = client.get("/servicex/datasets")
-        mock_get.assert_called()
+        mock_get.assert_called_with(False)
+        assert response.status_code == 200
+
+    @patch("servicex_app.models.Dataset.get_all")
+    def test_get_all_show_deleted(self, mock_get, datasets):
+        mock_get.return_value = datasets
+        client = self._test_client()
+
+        response = client.get("/servicex/datasets?show-deleted=false")
+        mock_get.assert_called_with(False)
+        assert response.status_code == 200
+
+        response = client.get("/servicex/datasets?show-deleted=true")
+        mock_get.assert_called_with(True)
         assert response.status_code == 200
