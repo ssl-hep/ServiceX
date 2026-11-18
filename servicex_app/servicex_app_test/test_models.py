@@ -179,6 +179,8 @@ class TestTransformRequestPurge:
     def transform(self):
         request = TransformRequest()
         request.request_id = "BR549"
+        request.result_destination = TransformRequest.OBJECT_STORE_DEST
+        request.output_path = "BR549-output"
         return request
 
     def test_purge(self, transform, mocker):
@@ -193,7 +195,7 @@ class TestTransformRequestPurge:
         LogMessage.delete_by_request_id.assert_called_once_with(
             "BR549", session=session
         )
-        object_store.delete_bucket_and_contents.assert_called_once_with("BR549")
+        object_store.delete_bucket_and_contents.assert_called_once_with("BR549-output")
         session.delete.assert_called_once_with(transform)
         assert not session.commit.called
 
@@ -203,6 +205,35 @@ class TestTransformRequestPurge:
         mocker.patch.object(LogMessage, "delete_by_request_id", return_value=0)
 
         assert transform.purge(session) == 0
+        session.delete.assert_called_once_with(transform)
+
+    def test_purge_volume_destination(self, transform, mocker):
+        """Volume results have no bucket, even when an object store is configured."""
+        session = mocker.MagicMock()
+        object_store = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=0)
+        mock_logger = mocker.patch("servicex_app.models.logger")
+        transform.result_destination = TransformRequest.VOLUME_DEST
+
+        transform.purge(session, object_store)
+
+        object_store.delete_bucket_and_contents.assert_not_called()
+        assert not mock_logger.warning.called
+        session.delete.assert_called_once_with(transform)
+
+    def test_purge_missing_output_path(self, transform, mocker):
+        """No output_path means no bucket to name; warn and finish the teardown."""
+        session = mocker.MagicMock()
+        object_store = mocker.MagicMock()
+        mocker.patch.object(LogMessage, "delete_by_request_id", return_value=0)
+        mock_logger = mocker.patch("servicex_app.models.logger")
+        transform.output_path = None
+
+        transform.purge(session, object_store)
+
+        object_store.delete_bucket_and_contents.assert_not_called()
+        mock_logger.warning.assert_called_once()
+        assert "skipping bucket cleanup" in mock_logger.warning.call_args[0][0]
         session.delete.assert_called_once_with(transform)
 
 
