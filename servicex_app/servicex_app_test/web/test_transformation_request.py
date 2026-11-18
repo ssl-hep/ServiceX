@@ -8,7 +8,7 @@ from markupsafe import escape
 
 from pytest import fixture, mark
 
-from servicex_app.models import TransformRequest, LogMessage, db
+from servicex_app.models import Dataset, TransformRequest, LogMessage, db
 from .web_test_base import WebTestBase
 
 
@@ -74,6 +74,46 @@ class TestTransformationRequest(WebTestBase):
         mock_tr_cls.lookup.return_value = None
         resp: Response = client.get(url_for(self.endpoint, id_=1))
         assert resp.status_code == 404
+
+    def test_links_to_dataset(self, client, mock_tr_cls):
+        req = self._test_transformation_req(did_id=42)
+        mock_tr_cls.lookup.return_value = req
+        resp: Response = client.get(url_for(self.endpoint, id_=req.id))
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert f'href="{url_for("dataset", id_=42)}"' in html
+
+    def test_file_list_dataset_shows_readable_label(self, client, mock_tr_cls):
+        file_hash = "a" * 64
+        req = self._test_transformation_req(
+            did=file_hash,
+            did_id=42,
+            dataset=Dataset(id=42, name=file_hash, did_finder="user"),
+        )
+        mock_tr_cls.lookup.return_value = req
+        resp: Response = client.get(url_for(self.endpoint, id_=req.id))
+        assert resp.status_code == 200
+        html = resp.get_data(as_text=True)
+        assert re.search(
+            rf'<a href="{url_for("dataset", id_=42)}">\s*\(file list\)\s*</a>',
+            html,
+        )
+        # The hash is still shown, just de-emphasised under the label.
+        assert f'<div class="text-muted small">{file_hash}</div>' in html
+
+    def test_no_dataset_link_without_did_id(self, client, mock_tr: TransformRequest):
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        assert 'href="/datasets/' not in resp.get_data(as_text=True)
+
+    @mark.parametrize("status", ["success", "failure"])
+    def test_links_to_file_results_by_status(
+        self, client, mock_tr: TransformRequest, status
+    ):
+        resp: Response = client.get(url_for(self.endpoint, id_=mock_tr.id))
+        assert resp.status_code == 200
+        href = url_for("transformation_results", id_=mock_tr.request_id, status=status)
+        assert f'href="{escape(href)}"' in resp.get_data(as_text=True)
 
     def test_logs_for_request(
         self, client, mock_tr: TransformRequest, captured_templates
