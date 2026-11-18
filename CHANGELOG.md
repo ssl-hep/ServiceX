@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### 1.9.0
+November 18, 2026
+
+### Added
+- New logging display right in the ServiceX dashboard
+- A datasets page to see details about each resolved dataset
+- ServiceX DID Finder to chain ServiceX requests (use output of a previous request as an input)
+- OIDC Device Flow
+
+### Changed
+- Rucio RSE is no longer hard coded and can be set in the helm chart
+- Increased remote REST connect timeouts
+- Remove colons from output file names
+- Change how we detect empty tree
+- Changes to work with CMS Rucio
+- Mark certain secrets as optional to allow app to start without them
+
+### Fixed
+- Error handling in the replica_distance module by adding logic to handle unresolvable hostnames
+- request_id key in the Kibana log links
+- Catch extra rucio:// at start of Rucio DID expressions if they fail to parse
+- Use Rucio library logic to parse scope
+- Honor compressionLevel 0 in CodeGen
+
 ### 1.8.6
 September 22, 2026
 
