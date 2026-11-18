@@ -64,8 +64,44 @@ def test_exception_no_files():
         [f for f in iter]
 
 
+def test_exception_missing_directory():
+    iter = find_files(
+        (
+            "root://eospublic.cern.ch//eos/opendata/atlas/"
+            "OutreachDatasets/2020-01-22/4lepTYPO/MC/*"
+        ),
+        {"dataset-id": "112233"},
+    )
+    with pytest.raises(NoSuchDatasetException):
+        [f for f in iter]
+
+
+def _mock_stat(mocker, ok, errno):
+    status = mocker.Mock(ok=ok, errno=errno)
+    filesystem = mocker.patch("XRootD.client.FileSystem")
+    filesystem.return_value.stat.return_value = (status, None)
+    return filesystem
+
+
+def test_missing_directory_mocked(mocker):
+    mocker.patch(
+        "XRootD.client.glob",
+        side_effect=RuntimeError("[ERROR] Server responded with an error: [3011]"),
+    )
+    filesystem = _mock_stat(mocker, ok=False, errno=3011)
+    iter = find_files("root://host//data/a*/b/*.root", {"dataset-id": "112233"})
+    with pytest.raises(NoSuchDatasetException):
+        [f for f in iter]
+    filesystem.assert_called_once_with("root://host/")
+    filesystem.return_value.stat.assert_called_once_with("//data")
+
+
 def test_exception_io(mocker):
-    mocker.patch("XRootD.client.glob", side_effect=Exception)
+    glob = mocker.patch(
+        "XRootD.client.glob",
+        side_effect=RuntimeError("[ERROR] Operation expired for path 'root://foo'"),
+    )
+    filesystem = _mock_stat(mocker, ok=False, errno=0)
     iter = find_files(
         (
             "root://eospublic.cern.ch//eos/opendata/atlas/"
@@ -75,3 +111,7 @@ def test_exception_io(mocker):
     )
     with pytest.raises(LookupFailureException):
         [f for f in iter]
+    assert glob.call_args.kwargs["raise_error"] is True
+    filesystem.return_value.stat.assert_called_once_with(
+        "//eos/opendata/atlas/OutreachDatasets/2020-01-22/4lep/MC"
+    )
