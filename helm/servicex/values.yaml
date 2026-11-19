@@ -20,6 +20,31 @@ app:
     limits:
       cpu: 1
       memory: 2.5Gi
+  # GET /servicex doesn't need auth or hit the db, so it just tells us whether
+  # gunicorn is answering. Startup covers the db migrations in boot.sh.
+  # Liveness gives gunicorn's own --timeout 120 a chance to recover first.
+  # Set any of these to null to turn it off.
+  startupProbe:
+    httpGet:
+      path: /servicex
+      port: 5000
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
+  readinessProbe:
+    httpGet:
+      path: /servicex
+      port: 5000
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  livenessProbe:
+    httpGet:
+      path: /servicex
+      port: 5000
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 5
   nodeSelector: {}
   tolerations: []
   affinity: {}
