@@ -13,6 +13,10 @@ do
 done
 
 mkdir instance
+
+export PROMETHEUS_MULTIPROC_DIR="${PROMETHEUS_MULTIPROC_DIR:-/tmp/prometheus_multiproc}"
+rm -rf "$PROMETHEUS_MULTIPROC_DIR"
+mkdir -p "$PROMETHEUS_MULTIPROC_DIR"
 # SQLite doesn't handle migrations, so rely on SQLAlchmy table creation
 if grep "sqlite://" $APP_CONFIG_FILE; then
   echo "SQLLite DB, so skipping db migrations";
@@ -28,5 +32,5 @@ while true; do
          --concurrency=5 ;
 done &
 
-exec gunicorn -b [::]:5000 $RELOAD --workers=5 --threads=1 --timeout 120 --log-level=warning --access-logfile /tmp/gunicorn.log --error-logfile - "servicex_app:create_app()"
+exec gunicorn -c gunicorn.conf.py -b [::]:5000 $RELOAD --workers=5 --threads=1 --timeout 120 --log-level=warning --access-logfile /tmp/gunicorn.log --error-logfile - "servicex_app:create_app()"
 # to log requests to stdout  --access-logfile -

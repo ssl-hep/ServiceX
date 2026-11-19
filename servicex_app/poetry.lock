@@ -1714,6 +1714,39 @@ pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
 
 [[package]]
+name = "prometheus-client"
+version = "0.26.0"
+description = "Python client for the Prometheus monitoring system."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "prometheus_client-0.26.0-py3-none-any.whl", hash = "sha256:fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6"},
+    {file = "prometheus_client-0.26.0.tar.gz", hash = "sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b"},
+]
+
+[package.extras]
+aiohttp = ["aiohttp"]
+django = ["django"]
+twisted = ["twisted"]
+
+[[package]]
+name = "prometheus-flask-exporter"
+version = "0.23.2"
+description = "Prometheus metrics exporter for Flask"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "prometheus_flask_exporter-0.23.2-py3-none-any.whl", hash = "sha256:94922a636d4c1d8b68e1ee605c30a23e9bbb0b21756df8222aa919634871784c"},
+    {file = "prometheus_flask_exporter-0.23.2.tar.gz", hash = "sha256:41fc9bbd7d48cc958ed8384aacf60c3621d9e903768be61c4e7f0c63872eaf1a"},
+]
+
+[package.dependencies]
+flask = "*"
+prometheus_client = "*"
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.53"
 description = "Library for building powerful interactive command lines in Python"

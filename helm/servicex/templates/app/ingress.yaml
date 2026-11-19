@@ -29,6 +29,16 @@ spec:
             name: {{ .Values.app.ingress.defaultBackend }}
             port:
               number: 8000
+      {{- if .Values.app.metrics.enabled }}
+      # Prometheus scrapes the pods directly; never expose /metrics publicly
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: {{ .Values.app.ingress.defaultBackend }}
+            port:
+              number: 8000
+      {{- end }}
       - path: /
         pathType: Prefix
         backend:

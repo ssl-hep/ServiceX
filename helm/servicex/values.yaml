@@ -24,6 +24,8 @@ app:
   tolerations: []
   affinity: {}
   podAnnotations: {}
+  metrics:
+    enabled: true
   ingress:
     class: nginx
     defaultBackend: default-http-backend
