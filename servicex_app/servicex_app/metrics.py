@@ -179,8 +179,8 @@ def _refresh_domain_metrics(app):
 def init_metrics(app):
     """Attach the Prometheus exporter and ``/metrics`` endpoint to ``app``.
 
-    Returns the exporter, or ``None`` when metrics are disabled or the
-    ``prometheus_flask_exporter`` dependency is unavailable.
+    Returns the exporter, or ``None`` when metrics are disabled by
+    ``ENABLE_METRICS``.
     """
     global _gauges
 

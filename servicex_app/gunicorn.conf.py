@@ -16,9 +16,6 @@ def child_exit(server, worker):
         or os.environ.get("prometheus_multiproc_dir")
     ):
         return
-    try:
-        from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
+    from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
-        GunicornPrometheusMetrics.mark_process_dead_on_child_exit(worker.pid)
-    except ImportError:
-        pass
+    GunicornPrometheusMetrics.mark_process_dead_on_child_exit(worker.pid)
