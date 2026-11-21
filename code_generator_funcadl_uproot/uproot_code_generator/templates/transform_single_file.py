@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 import generated_transformer
 import awkward as ak
+import pyarrow as pa
 import pyarrow.parquet as pq
 import uproot
 
@@ -21,8 +22,14 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
     try:
         stime = time.time()
 
-        awkward_array = generated_transformer.run_query(file_path)
-        total_events = ak.num(awkward_array, axis=0)
+        try:
+            awkward_array = generated_transformer.run_query(file_path)
+        except getattr(generated_transformer, "NoMatchingTreeError", ()):
+            awkward_array = None
+            missing_tree = True
+        else:
+            missing_tree = False
+        total_events = 0 if missing_tree else ak.num(awkward_array, axis=0)
 
         ttime = time.time()
 
@@ -30,27 +37,28 @@ def transform_single_file(file_path: str, output_path: Path, output_format: str)
             etime = time.time()
             with open(output_path, "b+w") as wfile:
                 with uproot.recreate(wfile) as writer:
-                    if output_format == "root-file":
-                        writer.mktree(
-                            default_tree_name,
-                            {
-                                field: awkward_array[field]
-                                for field in awkward_array.fields
-                            },
-                        )
-                    else:  # root-rntuple
-                        writer.mkrntuple(default_tree_name, awkward_array)
+                    if not missing_tree:
+                        if output_format == "root-file":
+                            writer.mktree(
+                                default_tree_name,
+                                {
+                                    field: awkward_array[field]
+                                    for field in awkward_array.fields
+                                },
+                            )
+                        else:  # root-rntuple
+                            writer.mkrntuple(default_tree_name, awkward_array)
             wtime = time.time()
 
         else:
-            arrow = ak.to_arrow_table(awkward_array)
-
-            etime = time.time()
-
-            writer = pq.ParquetWriter(output_path, arrow.schema)
-            writer.write_table(table=arrow)
-            writer.close()
-
+            if missing_tree:
+                etime = time.time()
+                pq.write_table(pa.table({}), output_path)
+            else:
+                arrow = ak.to_arrow_table(awkward_array)
+                etime = time.time()
+                with pq.ParquetWriter(output_path, arrow.schema) as writer:
+                    writer.write_table(table=arrow)
             wtime = time.time()
 
         output_size = os.stat(output_path).st_size
