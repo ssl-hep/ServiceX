@@ -24,3 +24,18 @@ def test_from_env():
         task_queue="other-queue",
         log_level="DEBUG",
     )
+
+
+def test_vector_settings():
+    settings = Settings.from_env(
+        {
+            "VECTOR_HOST": "servicex-vector-aggregator",
+            "VECTOR_PORT": "9000",
+            "INSTANCE_NAME": "servicex-ben",
+        }
+    )
+    assert settings.vector_host == "servicex-vector-aggregator"
+    assert settings.vector_port == 9000
+    assert settings.instance_name == "servicex-ben"
+    assert Settings.from_env({}).vector_host is None
+    assert Settings.from_env({}).vector_port is None

@@ -48,6 +48,13 @@ ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 
 TRANSFORMER_MANAGER_ENABLED = True
 
+# Who runs a submitted request: 'temporal' starts TransformRequestWorkflow on the
+# orchestrator; 'celery' launches transformer Deployments the old way.
+ORCHESTRATOR = 'temporal'
+TEMPORAL_ADDRESS = 'localhost:7233'
+TEMPORAL_NAMESPACE = 'default'
+TEMPORAL_TASK_QUEUE = 'servicex-orchestrator'
+
 # Set to True to use transformer pod autoscaling. If False then it will always
 # start the requested number of transformers
 TRANSFORMER_AUTOSCALE_ENABLED = True

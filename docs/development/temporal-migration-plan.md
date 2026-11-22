@@ -83,6 +83,11 @@ New deployable: **`servicex-orchestrator`**. It is a Temporal worker that import
 plus the activities that touch Postgres, Kubernetes and MinIO. The Flask app only starts,
 cancels, signals and queries workflows; it no longer drives any work itself.
 
+> Implemented so far: `servicex_orchestrator/` is its own Poetry project (it doesn't import
+> `servicex_app`) with all four workflows below. Every side-effect activity is a logging
+> stub. The app starts `TransformRequestWorkflow` by name with a JSON input when
+> `ORCHESTRATOR = 'temporal'` (`servicex_app/temporal_adaptor.py`).
+
 ### Task queues
 
 | Queue | Pollers | Concurrency |

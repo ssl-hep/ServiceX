@@ -29,7 +29,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from flask import current_app
 from flask_restful import reqparse
@@ -71,8 +71,10 @@ class SubmitTransformationRequest(ServiceXResource):
         docker_repo_adapter,
         transformer_manager,
         celery_app,
+        temporal_adaptor=None,
     ):
         cls.rabbitmq_adaptor = rabbitmq_adaptor
+        cls.temporal_adaptor = temporal_adaptor
         cls.object_store = object_store
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
@@ -126,7 +128,9 @@ class SubmitTransformationRequest(ServiceXResource):
         file_list: Optional[List[str]],
         request_id: str,
         config: dict,
-    ) -> DatasetManager:
+    ) -> Tuple[DatasetManager, str]:
+        """Find or create the dataset. Returns it with its DID scheme ("user" for a
+        file list)."""
 
         # did xor file_list
         if bool(did) == bool(file_list):
@@ -140,18 +144,24 @@ class SubmitTransformationRequest(ServiceXResource):
                 msg = f"DID scheme is not supported: {parsed_did.scheme}"
                 raise BadRequest(msg)
 
-            return DatasetManager.from_did(
-                parsed_did,
-                logger=current_app.logger,
-                db=db,
-                extras={"request_id": request_id},
+            return (
+                DatasetManager.from_did(
+                    parsed_did,
+                    logger=current_app.logger,
+                    db=db,
+                    extras={"request_id": request_id},
+                ),
+                parsed_did.scheme,
             )
         else:  # no dataset, only a list of files given
-            return DatasetManager.from_file_list(
-                file_list,
-                logger=current_app.logger,
-                db=db,
-                extras={"request_id": request_id},
+            return (
+                DatasetManager.from_file_list(
+                    file_list,
+                    logger=current_app.logger,
+                    db=db,
+                    extras={"request_id": request_id},
+                ),
+                "user",
             )
 
     def _setup_rabbit_queues(self, request_id: str):
@@ -244,7 +254,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 # This is flushed before the TransformRequest is created so that the
                 # auto-increment dataset.id is assigned by the database.
                 try:
-                    dataset_manager = self._initialize_dataset_manager(
+                    dataset_manager, did_scheme = self._initialize_dataset_manager(
                         did, file_list, request_id, config
                     )
                 except BadRequest as bad_request:
@@ -311,12 +321,17 @@ class SubmitTransformationRequest(ServiceXResource):
                     )
                     request_rec.status = TransformStatus.pending_lookup
 
-            # start transformers independently of the state of dataset.
-            if current_app.config["TRANSFORMER_MANAGER_ENABLED"]:
-                print(f"-----------> files: {request_rec.files}")
-                self.transformer_manager.start_transformers(
-                    current_app.config, request_rec
+            # Start the work independently of the state of the dataset.
+            if config.get("ORCHESTRATOR", "temporal") == "temporal":
+                run_id = self.temporal_adaptor.start_transform_request(
+                    request_rec, did_scheme, config["TRANSFORMER_MAX_REPLICAS"]
                 )
+                current_app.logger.info(
+                    f"Started workflow transform-{request_id} (run {run_id})",
+                    extra={"request_id": request_id},
+                )
+            elif config["TRANSFORMER_MANAGER_ENABLED"]:
+                self.transformer_manager.start_transformers(config, request_rec)
 
             current_app.logger.info(
                 "Transformation request submitted!", extra={"request_id": request_id}

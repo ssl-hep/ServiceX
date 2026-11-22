@@ -52,4 +52,5 @@ spec:
             value: {{ .Values.orchestrator.logLevel | quote }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+          {{- include "servicex.vector.env" . | trim | nindent 10 }}
 {{- end }}

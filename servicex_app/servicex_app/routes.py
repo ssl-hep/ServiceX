@@ -44,6 +44,7 @@ def add_routes(
     lookup_result_processor,
     docker_repo_adapter,
     celery_app,
+    temporal_adaptor=None,
 ):
 
     from servicex_app.resources.info import Info
@@ -118,6 +119,7 @@ def add_routes(
         docker_repo_adapter=docker_repo_adapter,
         transformer_manager=transformer_manager,
         celery_app=celery_app,
+        temporal_adaptor=temporal_adaptor,
     )
 
     # Web Frontend Routes

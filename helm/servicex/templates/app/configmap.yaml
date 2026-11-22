@@ -94,6 +94,13 @@ data:
 
     TRANSFORMER_MANAGER_ENABLED = True
 
+    # 'temporal' starts each request as a workflow on the orchestrator; 'celery'
+    # launches transformer Deployments the old way.
+    ORCHESTRATOR = '{{ ternary "temporal" "celery" .Values.orchestrator.enabled }}'
+    TEMPORAL_ADDRESS = '{{ include "servicex.temporal.address" . }}'
+    TEMPORAL_NAMESPACE = '{{ .Values.orchestrator.temporal.namespace }}'
+    TEMPORAL_TASK_QUEUE = '{{ .Values.orchestrator.temporal.taskQueue }}'
+
     {{- if .Values.transformer.cachePrefix }}
     TRANSFORMER_CACHE_PREFIX = {{ .Values.transformer.cachePrefix }}
     {{- else }}

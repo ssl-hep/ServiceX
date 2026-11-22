@@ -22,6 +22,7 @@ start_all() {
   start_port_forward "servicex-ben-minio" "9000:9000"
   start_port_forward "servicex-ben-rabbitmq" "5672:5672"
   start_port_forward "servicex-ben-servicex-app" "8000:8000"
+  start_port_forward "servicex-ben-temporal-web" "8080:8080"
 
   echo "All port forwards started. Press Ctrl+C to stop."
 }

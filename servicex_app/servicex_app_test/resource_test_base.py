@@ -39,6 +39,7 @@ from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import TransformRequest, Dataset, DatasetFile, TransformStatus
 from servicex_app.rabbit_adaptor import RabbitAdaptor
+from servicex_app.temporal_adaptor import TemporalAdaptor
 
 
 class ResourceTestBase:
@@ -103,6 +104,7 @@ class ResourceTestBase:
         docker_repo_adapter=None,
         celery_app=MagicMock(Celery),
         allowed_image_prefixes='["sslhep/"]',
+        temporal_adaptor=None,
     ) -> FlaskClient:
         os.environ["ALLOWED_IMAGE_PREFIXES"] = allowed_image_prefixes
 
@@ -114,6 +116,10 @@ class ResourceTestBase:
 
         if extra_config is not None:
             config.update(extra_config)
+
+        if temporal_adaptor is None:
+            temporal_adaptor = MagicMock(TemporalAdaptor)
+            temporal_adaptor.start_transform_request.return_value = "run-1"
 
         if docker_repo_adapter is None:
             docker_repo_adapter = MagicMock(DockerRepoAdapter)
@@ -128,6 +134,7 @@ class ResourceTestBase:
             lookup_result_processor,
             docker_repo_adapter,
             celery_app,
+            temporal_adaptor,
         )
 
         return app.test_client()

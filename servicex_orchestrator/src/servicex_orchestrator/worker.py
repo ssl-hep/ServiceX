@@ -8,8 +8,9 @@ from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import Worker
 
-from servicex_orchestrator.activities import ACTIVITIES
+from servicex_orchestrator.activities import build_activities
 from servicex_orchestrator.config import Settings
+from servicex_orchestrator.log_config import configure_logging
 from servicex_orchestrator.workflows import WORKFLOWS
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ def build_worker(client: Client, settings: Settings) -> Worker:
         client,
         task_queue=settings.task_queue,
         workflows=WORKFLOWS,
-        activities=ACTIVITIES,
+        activities=build_activities(settings),
         graceful_shutdown_timeout=timedelta(seconds=20),
     )
 
@@ -96,11 +97,25 @@ async def run(settings: Settings) -> None:
 
 def main() -> None:
     settings = Settings.from_env()
-    logging.basicConfig(
-        level=settings.log_level,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    vector = configure_logging(
+        settings.log_level,
+        vector_host=settings.vector_host,
+        vector_port=settings.vector_port,
+        instance=settings.instance_name,
     )
-    asyncio.run(run(settings))
+    if vector:
+        logger.info(
+            "Shipping logs to Vector at %s:%s",
+            settings.vector_host,
+            settings.vector_port,
+        )
+    try:
+        asyncio.run(run(settings))
+    finally:
+        if vector:
+            vector.stop()  # flushes what is still queued
+            for handler in vector.handlers:
+                handler.close()
 
 
 if __name__ == "__main__":

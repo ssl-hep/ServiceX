@@ -40,6 +40,7 @@ from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.dataset_manager import DatasetManager
 from servicex_app.models import Dataset
 from servicex_app.models import TransformRequest, DatasetStatus, TransformStatus
+from servicex_app.temporal_adaptor import TemporalAdaptor
 from servicex_app.transformer_manager import TransformerManager
 from servicex_app_test.resource_test_base import ResourceTestBase
 
@@ -387,7 +388,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_app_version,
     ):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_temporal = mocker.MagicMock(TemporalAdaptor)
         cfg = {
+            "ORCHESTRATOR": "celery",
             "TRANSFORMER_MANAGER_ENABLED": True,
             "TRANSFORMER_X509_SECRET": "my-x509-secret",
         }
@@ -397,6 +400,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             lookup_result_processor=mock_processor,
             transformation_manager=mock_transform_manager,
             code_gen_service=mock_codegen,
+            temporal_adaptor=mock_temporal,
         )
 
         with client.application.app_context():
@@ -424,6 +428,70 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             mock_transform_manager.start_transformers.assert_called_with(
                 ANY, submitted_request
             )
+            mock_temporal.start_transform_request.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "use_file_list, scheme", [(False, "rucio"), (True, "user")]
+    )
+    def test_submit_transformation_starts_workflow(
+        self,
+        mocker,
+        mock_dataset_manager_from_did,
+        mock_dataset_manager_from_files,
+        mock_transform_manager,
+        mock_codegen,
+        file_list,
+        use_file_list,
+        scheme,
+    ):
+        mock_temporal = mocker.MagicMock(TemporalAdaptor)
+        mock_temporal.start_transform_request.return_value = "run-123"
+        client = self._test_client(
+            extra_config={
+                "ORCHESTRATOR": "temporal",
+                "TRANSFORMER_MANAGER_ENABLED": True,
+            },
+            transformation_manager=mock_transform_manager,
+            code_gen_service=mock_codegen,
+            temporal_adaptor=mock_temporal,
+        )
+
+        with client.application.app_context():
+            request = self._generate_transformation_request()
+            if use_file_list:
+                request["did"] = None
+                request["file-list"] = file_list
+
+            response = client.post(
+                "/servicex/transformation", json=request, headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            submitted_request = TransformRequest.lookup(response.json["request_id"])
+
+            mock_temporal.start_transform_request.assert_called_once_with(
+                submitted_request, scheme, 5
+            )
+            mock_transform_manager.start_transformers.assert_not_called()
+
+    def test_submit_transformation_workflow_start_fails(
+        self, mocker, mock_dataset_manager_from_did, mock_codegen
+    ):
+        mock_temporal = mocker.MagicMock(TemporalAdaptor)
+        mock_temporal.start_transform_request.side_effect = RuntimeError(
+            "temporal down"
+        )
+        client = self._test_client(
+            code_gen_service=mock_codegen, temporal_adaptor=mock_temporal
+        )
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/transformation",
+                json=self._generate_transformation_request(),
+                headers=self.fake_header(),
+            )
+            assert response.status_code == 500
+            assert "temporal down" in response.json["message"]
 
     def test_submit_transformation_request_no_docker_check(
         self,

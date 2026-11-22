@@ -3,7 +3,7 @@ from datetime import timedelta
 from temporalio import workflow
 
 with workflow.unsafe.imports_passed_through():
-    from servicex_orchestrator.activities import ping
+    from servicex_orchestrator.activities.health import ping
 
 
 @workflow.defn
@@ -22,6 +22,3 @@ class PingWorkflow:
             message,
             start_to_close_timeout=timedelta(seconds=30),
         )
-
-
-WORKFLOWS = [PingWorkflow]

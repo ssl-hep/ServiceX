@@ -10,6 +10,3 @@ async def ping(message: str) -> str:
     Used by PingWorkflow to check that the orchestrator is polling its task queue.
     """
     return f"pong from {socket.gethostname()}: {message}"
-
-
-ACTIVITIES = [ping]

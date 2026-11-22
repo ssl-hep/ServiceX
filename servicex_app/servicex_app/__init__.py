@@ -57,6 +57,7 @@ from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.object_store_manager import ObjectStoreManager
 from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
+from servicex_app.temporal_adaptor import TemporalAdaptor
 from servicex_app.transformer_manager import TransformerManager
 from flask_migrate import Migrate
 from flask_moment import Moment
@@ -224,6 +225,7 @@ def create_app(
     provided_lookup_result_processor=None,
     provided_docker_repo_adapter=None,
     provided_celery_app=None,
+    provided_temporal_adaptor=None,
 ):
     # validate ALLOWED_IMAGE_PREFIXES
     allowed_image_prefixes_json = os.environ.get("ALLOWED_IMAGE_PREFIXES")
@@ -435,6 +437,18 @@ def create_app(
         else:
             lookup_result_processor = provided_lookup_result_processor
 
+        if not provided_temporal_adaptor:
+            # Connects lazily, on the first workflow start
+            temporal_adaptor = TemporalAdaptor(
+                app.config.get("TEMPORAL_ADDRESS", "localhost:7233"),
+                namespace=app.config.get("TEMPORAL_NAMESPACE", "default"),
+                task_queue=app.config.get(
+                    "TEMPORAL_TASK_QUEUE", "servicex-orchestrator"
+                ),
+            )
+        else:
+            temporal_adaptor = provided_temporal_adaptor
+
         if not provided_docker_repo_adapter:
             docker_repo_adapter = DockerRepoAdapter()
         else:
@@ -477,6 +491,7 @@ def create_app(
             lookup_result_processor,
             docker_repo_adapter,
             celery_app,
+            temporal_adaptor,
         )
 
         # Inject useful Python modules to make them available in all templates
