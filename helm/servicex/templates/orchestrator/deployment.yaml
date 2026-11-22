@@ -1,0 +1,55 @@
+{{- if .Values.orchestrator.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-orchestrator
+  labels:
+    app: {{ .Release.Name }}-orchestrator
+spec:
+  replicas: {{ .Values.orchestrator.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-orchestrator
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-orchestrator
+      {{- with .Values.orchestrator.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.orchestrator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.orchestrator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.orchestrator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # The worker drains in-flight tasks for up to 20s on SIGTERM.
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: orchestrator
+        image: {{ .Values.orchestrator.image }}:{{ .Values.orchestrator.tag }}
+        imagePullPolicy: {{ .Values.orchestrator.pullPolicy }}
+        {{- with .Values.orchestrator.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          - name: TEMPORAL_ADDRESS
+            value: {{ include "servicex.temporal.address" . | quote }}
+          - name: TEMPORAL_NAMESPACE
+            value: {{ .Values.orchestrator.temporal.namespace | quote }}
+          - name: TEMPORAL_TASK_QUEUE
+            value: {{ .Values.orchestrator.temporal.taskQueue | quote }}
+          - name: LOG_LEVEL
+            value: {{ .Values.orchestrator.logLevel | quote }}
+          - name: INSTANCE_NAME
+            value: {{ .Release.Name }}
+{{- end }}

@@ -75,3 +75,16 @@ Log in with
 {{ end }}
 
 {{ end }}
+
+{{- if .Values.temporal.enabled }}
+{{- if .Values.temporal.web.enabled }}
+
+To see the Temporal Web UI, run a Port-Forward:
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ .Release.Name }}-temporal-web 8080:8080
+and visit http://localhost:8080/namespaces/{{ .Values.orchestrator.temporal.namespace }}/workflows
+{{- end }}
+
+The Temporal frontend is at {{ include "servicex.temporal.address" . }} inside the cluster.
+Temporal comes up a minute or two after Postgres: its schema Job waits for
+Postgres, and the server pods restart until the schema is in place.
+{{- end }}

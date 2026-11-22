@@ -88,3 +88,19 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Temporal frontend host:port that ServiceX components connect to: the explicit
+orchestrator.temporal.address, else the frontend Service of the temporal
+subchart. The subchart names it <release>-temporal-frontend unless the release
+name already contains "temporal".
+*/}}
+{{- define "servicex.temporal.address" -}}
+{{- if .Values.orchestrator.temporal.address -}}
+{{ .Values.orchestrator.temporal.address }}
+{{- else if contains "temporal" .Release.Name -}}
+{{ .Release.Name }}-frontend:7233
+{{- else -}}
+{{ .Release.Name }}-temporal-frontend:7233
+{{- end -}}
+{{- end -}}

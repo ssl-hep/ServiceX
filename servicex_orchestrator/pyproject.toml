@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "servicex-orchestrator"
+version = "0.1.0"
+description = "Temporal worker that orchestrates ServiceX transform requests"
+authors = ["Ben Galewsky <ben@peartreestudio.net>"]
+readme = "README.md"
+packages = [{include = "servicex_orchestrator", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "~3.11"
+temporalio = "^1.36.1"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest = "^9.2.0"
+pytest-asyncio = "^1.5.0"
+flake8 = "^7.5.0"
+coverage = "^7.17.4"
+
+[tool.poetry.scripts]
+servicex-orchestrator = "servicex_orchestrator.worker:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

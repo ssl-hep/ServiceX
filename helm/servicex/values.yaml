@@ -453,6 +453,119 @@ rabbitmq:
   extraConfiguration: |-
     consumer_timeout = 3600000
 
+# Temporal server, Web UI and admin tools, from the temporalio/temporal subchart.
+# This will replace RabbitMQ/Celery; see docs/development/temporal-migration-plan.md.
+#
+# Persistence defaults to the ServiceX Postgres (needs postgres.enabled=true), in two
+# extra databases, `temporal` and `temporal_visibility`. ServiceX's own
+# <release>-temporal-db-setup Job creates them and keeps their schema up to date.
+#
+# Subchart values can't contain the release name, so the server finds Postgres at run
+# time instead: each server pod reads its release name from its
+# app.kubernetes.io/instance label (SERVICEX_RELEASE below), and the Temporal server
+# expands the {{ env }} in connectAddr when it loads its config. Any release name works.
+#
+# To use your own Postgres instead, set both connectAddr values to its host:port, and
+# drop createDatabase/manageSchema (or set them true) so the subchart manages the schema.
+# With `secrets` set, replace `password` with
+#   existingSecret: <your secrets name>
+#   secretKey: postgresql-password
+#
+# There is no auth or TLS: the frontend and the UI are ClusterIP services, reachable
+# only from inside the cluster. To see the UI:
+#   kubectl port-forward svc/<release>-temporal-web 8080:8080
+temporal:
+  enabled: false
+  server:
+    additionalEnv:
+      - name: SERVICEX_RELEASE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['app.kubernetes.io/instance']
+      - name: SERVICEX_POSTGRES_HOST
+        value: $(SERVICEX_RELEASE)-postgresql
+    config:
+      logLevel: info
+      persistence:
+        datastores:
+          default:
+            sql:
+              # Done by <release>-temporal-db-setup, which knows the release name.
+              createDatabase: false
+              manageSchema: false
+              pluginName: postgres12
+              databaseName: temporal
+              connectAddr: '{{ env "SERVICEX_POSTGRES_HOST" }}:5432'
+              connectProtocol: tcp
+              user: postgres
+              password: leftfoot1
+              maxConns: 20
+              maxIdleConns: 20
+              maxConnLifetime: 1h
+          visibility:
+            sql:
+              createDatabase: false
+              manageSchema: false
+              pluginName: postgres12
+              databaseName: temporal_visibility
+              connectAddr: '{{ env "SERVICEX_POSTGRES_HOST" }}:5432'
+              connectProtocol: tcp
+              user: postgres
+              password: leftfoot1
+              maxConns: 10
+              maxIdleConns: 10
+              maxConnLifetime: 1h
+      namespaces:
+        create: true
+        # A plain Job rather than a post-install hook, so `helm install` doesn't block
+        # on it. It retries until the frontend is up.
+        useHelmHooks: false
+        namespace:
+          - name: servicex
+            retention: 7d
+  schema:
+    # Matters only with your own Postgres. A pre-install hook would run before the
+    # postgres subchart exists and block the install forever.
+    useHelmHooks: false
+  admintools:
+    # A pod with the `temporal` CLI and tctl, already pointed at the frontend:
+    #   kubectl exec -it deploy/<release>-temporal-admintools -- temporal workflow list -n servicex
+    enabled: true
+  web:
+    enabled: true
+    image:
+      # The subchart's default (2.56.1) renders a blank page in Chrome 158+: its CSP
+      # blocks the app's entry scripts. Fixed in 2.58.1 (temporalio/ui#4126). Drop
+      # this override once the subchart ships 2.58.1 or later.
+      tag: 2.58.1
+
+# The ServiceX orchestrator: a Temporal worker that hosts the transform request
+# workflows and the activities that touch Postgres, Kubernetes and the object store.
+orchestrator:
+  enabled: false
+  image: sslhep/servicex-orchestrator
+  tag: develop
+  pullPolicy: Always
+  replicas: 1
+  logLevel: INFO
+  temporal:
+    # Frontend host:port. Leave null to use the frontend of the temporal subchart.
+    # Set it for a site that already runs its own Temporal (with temporal.enabled=false).
+    address: null
+    namespace: servicex
+    taskQueue: servicex-orchestrator
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+
 rbacEnabled: true
 secrets: null
 transformer:

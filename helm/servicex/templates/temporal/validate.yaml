@@ -1,0 +1,15 @@
+{{- /*
+Install-time checks for the Temporal settings. Renders nothing.
+*/ -}}
+{{- if .Values.temporal.enabled }}
+{{- $stores := .Values.temporal.server.config.persistence.datastores }}
+{{- range $name := list "default" "visibility" }}
+{{- $addr := (index $stores $name).sql.connectAddr | default "" }}
+{{- if and (contains "SERVICEX_POSTGRES_HOST" $addr) (not $.Values.postgres.enabled) }}
+{{- fail (printf "temporal.enabled needs a Postgres: set postgres.enabled=true, or point temporal.server.config.persistence.datastores.%s.sql.connectAddr at your own" $name) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and .Values.orchestrator.enabled (not .Values.temporal.enabled) (not .Values.orchestrator.temporal.address) }}
+{{- fail "orchestrator.enabled needs a Temporal server: set temporal.enabled=true, or orchestrator.temporal.address" }}
+{{- end }}

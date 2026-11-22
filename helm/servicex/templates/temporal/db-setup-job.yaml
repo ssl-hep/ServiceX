@@ -1,0 +1,66 @@
+{{- /*
+Creates Temporal's two databases on the ServiceX Postgres and brings their schema up
+to date. This replaces the subchart's schema Job, which can't find a Postgres whose
+name depends on the release. Every step is idempotent, so a new Job runs on every
+install and upgrade (the name carries the revision) to apply schema updates that come
+with a new Temporal server version.
+*/ -}}
+{{- if and .Values.temporal.enabled .Values.postgres.enabled }}
+{{- $stores := .Values.temporal.server.config.persistence.datastores }}
+{{- $schemaRoot := "/etc/temporal/schema/postgresql/v12" }}
+{{- $databases := list (list "default" $stores.default.sql.databaseName "temporal") (list "visibility" $stores.visibility.sql.databaseName "visibility") }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-temporal-db-setup-{{ .Release.Revision }}
+  labels:
+    app: {{ .Release.Name }}-temporal-db-setup
+spec:
+  # Postgres may still be starting; keep retrying until it's up.
+  backoffLimit: 100
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-temporal-db-setup
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      {{- range $databases }}
+      {{- $store := index . 0 }}
+      {{- $dbName := index . 1 }}
+      {{- $schemaDir := index . 2 }}
+        - name: {{ $store }}-store
+          image: "{{ $.Values.temporal.admintools.image.repository | default "temporalio/admin-tools" }}:{{ $.Values.temporal.admintools.image.tag | default "1.32.2" }}"
+          command: ['sh', '-c']
+          args:
+            - >-
+              temporal-sql-tool create-database &&
+              temporal-sql-tool setup-schema -v 0.0 &&
+              temporal-sql-tool update-schema --schema-dir {{ $schemaRoot }}/{{ $schemaDir }}/versioned
+          env:
+            - name: SQL_PLUGIN
+              value: postgres12
+            - name: SQL_HOST
+              value: {{ $.Release.Name }}-postgresql
+            - name: SQL_PORT
+              value: "5432"
+            - name: SQL_DATABASE
+              value: {{ $dbName }}
+            - name: SQL_USER
+              value: postgres
+            - name: SQL_PASSWORD
+            {{- if $.Values.secrets }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.secrets }}
+                  key: postgresql-password
+            {{- else }}
+              value: {{ $.Values.postgresql.global.postgresql.auth.postgresPassword | quote }}
+            {{- end }}
+      {{- end }}
+      containers:
+        - name: done
+          image: "{{ .Values.temporal.admintools.image.repository | default "temporalio/admin-tools" }}:{{ .Values.temporal.admintools.image.tag | default "1.32.2" }}"
+          command: ['sh', '-c', 'echo "Temporal databases are ready"']
+{{- end }}
