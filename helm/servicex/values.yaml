@@ -554,6 +554,9 @@ orchestrator:
     address: null
     namespace: servicex
     taskQueue: servicex-orchestrator
+  # DID schemes (e.g. [rucio]) whose did-finder-<scheme> queue the orchestrator
+  # serves with a stub lookup, for deployments without that DID finder.
+  stubDidFinderSchemes: []
   resources:
     requests:
       cpu: 100m

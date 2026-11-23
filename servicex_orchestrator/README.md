@@ -22,9 +22,14 @@ The ServiceX app starts `TransformRequestWorkflow` on submit when its config has
 it would do (`STUB launch_pilots: would create Jobs [...]`) and returns fake
 data: every DID lookup "finds" `STUB_DATASET_FILES` files, and every transform
 succeeds. The exception is `start_dataset_lookup`, which really starts or joins
-the lookup workflow. The DID-finder and transform activities run on the
-orchestrator's own queue until DID finders and transformer pilots poll
-`did-finder-<scheme>` and `transform-<request_id>`.
+the lookup workflow. The transform activities run on the orchestrator's own queue
+until transformer pilots poll `transform-<request_id>`.
+
+`DatasetLookupWorkflow` schedules `lookup_dataset` on `did-finder-<scheme>`
+(`did-finder-rucio`, ...), where the DID finder for that scheme polls. Where no
+real DID finder runs for a scheme, list it in `STUB_DID_FINDER_SCHEMES`: the
+worker then also polls `did-finder-<scheme>` with the stub lookup. Without
+either, a lookup times out after 15 minutes waiting to be picked up.
 
 ## Configuration
 
@@ -38,6 +43,7 @@ orchestrator's own queue until DID finders and transformer pilots poll
 | `INSTANCE_NAME` | `Unknown` | Release name, written to each log row's `instance` |
 | `STUB_DATASET_FILES` | `25` | Files every stub DID lookup "finds" |
 | `STUB_ACTIVITY_DELAY_SECONDS` | `0.5` | How long each stub lookup chunk and stub transform takes |
+| `STUB_DID_FINDER_SCHEMES` | empty | Comma-separated DID schemes (e.g. `rucio,cernopendata`) whose `did-finder-<scheme>` queue this worker serves with the stub lookup. Leave a scheme out once its real DID finder runs. The chart sets it from `orchestrator.stubDidFinderSchemes` |
 
 On startup the worker retries until the frontend is reachable and the namespace
 exists, so it can start before the Temporal server is ready.
@@ -64,7 +70,7 @@ To run against a local dev server:
 
 ```bash
 temporal server start-dev
-poetry run servicex-orchestrator
+STUB_DID_FINDER_SCHEMES=rucio poetry run servicex-orchestrator
 temporal workflow execute --type PingWorkflow --task-queue servicex-orchestrator --input '"hello"'
 ```
 

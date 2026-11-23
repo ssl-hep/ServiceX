@@ -52,5 +52,9 @@ spec:
             value: {{ .Values.orchestrator.logLevel | quote }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+          {{- with .Values.orchestrator.stubDidFinderSchemes }}
+          - name: STUB_DID_FINDER_SCHEMES
+            value: {{ join "," . | quote }}
+          {{- end }}
           {{- include "servicex.vector.env" . | trim | nindent 10 }}
 {{- end }}

@@ -7,6 +7,7 @@ from temporalio.common import RetryPolicy
 from temporalio.exceptions import ActivityError
 
 with workflow.unsafe.imports_passed_through():
+    from servicex_orchestrator.config import did_finder_task_queue
     from servicex_orchestrator.models import (
         AUTH_FAILED,
         BAD_DID,
@@ -94,8 +95,7 @@ class DatasetLookupWorkflow:
                 "lookup_dataset",
                 input,
                 result_type=LookupSummary,
-                # TODO: task_queue=f"did-finder-{input.did_scheme}" once the DID
-                # finders run a Temporal worker. The stub runs on the orchestrator.
+                task_queue=did_finder_task_queue(input.did_scheme),
                 start_to_close_timeout=timedelta(hours=6),
                 heartbeat_timeout=timedelta(minutes=2),
                 schedule_to_start_timeout=timedelta(minutes=15),

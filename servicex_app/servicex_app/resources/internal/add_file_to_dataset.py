@@ -43,7 +43,8 @@ class AddFileToDataset(ServiceXResource):
     def put(self, dataset_id):
         try:
             # this request can be a single file dictionary
-            # or a list of file dictionaries.
+            # or a list of file dictionaries. A file_key field (sent by the Temporal
+            # DID finder worker) is ignored until the files table gains that column.
             add_file_request = request.get_json()
             dataset_manager = DatasetManager.from_dataset_id(
                 dataset_id, current_app.logger, db
@@ -76,7 +77,10 @@ class AddFileToDataset(ServiceXResource):
             )
             db.session.commit()
 
-            return {"dataset_id": str(dataset_id)}
+            # The Temporal DID finder worker signals this to the dataset lookup
+            # workflow as the high-water mark of files available to transform.
+            max_file_id = max((f.id for f in new_files if f.id is not None), default=0)
+            return {"dataset_id": str(dataset_id), "max_file_id": max_file_id}
         except Exception as e:
             current_app.logger.exception(
                 "Exception occurred when adding file to dataset",

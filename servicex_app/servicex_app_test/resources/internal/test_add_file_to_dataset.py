@@ -89,7 +89,7 @@ class TestAddFileToDataset(ResourceTestBase):
                 },
             )
             assert response.status_code == 200
-            assert response.json == {"dataset_id": "1234"}
+            assert response.json == {"dataset_id": "1234", "max_file_id": 0}
 
             mock_dataset_manager_from_id.assert_called_with("1234", ANY, ANY)
             mock_add_files.assert_called()
@@ -135,7 +135,34 @@ class TestAddFileToDataset(ResourceTestBase):
         assert len(running_transform_list) == 2
         assert running_transform_list[0].request_id == "first_request"
         assert running_transform_list[1].request_id == "second_request"
-        assert response.json == {"dataset_id": "1234"}
+        assert response.json == {"dataset_id": "1234", "max_file_id": 0}
+
+    def test_put_new_file_reports_max_file_id(
+        self, mocker, mock_transformer_lookup, mock_dataset_manager_from_id
+    ):
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_add_files = mock_dataset_manager_from_id.return_value.add_files
+
+        def assign_ids(files, requests, processor):
+            for file_id, f in zip([17, 19], files):
+                f.id = file_id
+
+        mock_add_files.side_effect = assign_ids
+
+        client = self._test_client(lookup_result_processor=mock_processor)
+        file_record = {
+            "paths": ["/foo/bar1.root"],
+            "adler32": "12345",
+            "file_size": 1024,
+            "file_events": 500,
+            "file_key": "scope:bar1.root",
+        }
+        response = client.put(
+            "/servicex/internal/transformation/1234/files",
+            json=[file_record, dict(file_record, paths=["/foo/bar2.root"])],
+        )
+        assert response.status_code == 200
+        assert response.json == {"dataset_id": "1234", "max_file_id": 19}
 
     def test_put_new_file_with_exception(
         self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup

@@ -306,13 +306,13 @@ class StubActivities:
         self._live_pilots.pop(spec.request_id, None)
 
     def all(self) -> list:
+        """The activities the orchestrator's own queue serves."""
         return [
             self.get_or_create_dataset,
             self.start_dataset_lookup,
             self.mark_dataset_looking,
             self.mark_dataset_complete,
             self.mark_dataset_failed,
-            self.lookup_dataset,
             self.claim_file_batch,
             self.record_file_result,
             self.finalize_request,
@@ -322,3 +322,7 @@ class StubActivities:
             self.launch_pilots,
             self.delete_pool,
         ]
+
+    def did_finder(self) -> list:
+        """What a stub DID-finder worker on `did-finder-<scheme>` serves."""
+        return [self.lookup_dataset]

@@ -1,6 +1,8 @@
 import asyncio
+import contextlib
 import logging
 import signal
+from collections.abc import AsyncIterator
 from datetime import timedelta
 
 from temporalio.api.workflowservice.v1 import DescribeNamespaceRequest
@@ -8,8 +10,8 @@ from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import Worker
 
-from servicex_orchestrator.activities import build_activities
-from servicex_orchestrator.config import Settings
+from servicex_orchestrator.activities import build_activities, build_stubs
+from servicex_orchestrator.config import Settings, did_finder_task_queue
 from servicex_orchestrator.log_config import configure_logging
 from servicex_orchestrator.workflows import WORKFLOWS
 
@@ -56,14 +58,56 @@ async def connect(settings: Settings) -> Client:
         backoff = min(backoff * 2, MAX_CONNECT_BACKOFF_SECONDS)
 
 
+GRACEFUL_SHUTDOWN = timedelta(seconds=20)
+
+
 def build_worker(client: Client, settings: Settings) -> Worker:
     return Worker(
         client,
         task_queue=settings.task_queue,
         workflows=WORKFLOWS,
         activities=build_activities(settings),
-        graceful_shutdown_timeout=timedelta(seconds=20),
+        graceful_shutdown_timeout=GRACEFUL_SHUTDOWN,
     )
+
+
+def build_stub_did_finder_worker(
+    client: Client, settings: Settings, scheme: str
+) -> Worker:
+    """Serves the stub `lookup_dataset` where no real DID finder for `scheme` runs."""
+    return Worker(
+        client,
+        task_queue=did_finder_task_queue(scheme),
+        activities=build_stubs(settings).did_finder(),
+        graceful_shutdown_timeout=GRACEFUL_SHUTDOWN,
+    )
+
+
+def build_workers(client: Client, settings: Settings) -> list[Worker]:
+    """The orchestrator worker, then one stub DID finder per configured scheme."""
+    return [
+        build_worker(client, settings),
+        *(
+            build_stub_did_finder_worker(client, settings, scheme)
+            for scheme in settings.stub_did_finder_schemes
+        ),
+    ]
+
+
+@contextlib.asynccontextmanager
+async def running(workers: list[Worker]) -> AsyncIterator[list[Worker]]:
+    """Run the workers for the duration of the block, then shut them down together.
+
+    If any worker fails fatally, the block is canceled and that error is raised.
+    """
+    async with contextlib.AsyncExitStack() as stack:
+        for worker in workers:
+            await stack.enter_async_context(worker)
+        try:
+            yield workers
+        finally:
+            # Drain in parallel; the exit stack's own shutdowns then return at once.
+            await asyncio.gather(*(worker.shutdown() for worker in workers))
 
 
 async def run(settings: Settings) -> None:
@@ -84,13 +128,19 @@ async def run(settings: Settings) -> None:
     stopping.cancel()
     client = connecting.result()
 
+    workers = build_workers(client, settings)
     logger.info(
-        "Polling task queue %r in namespace %r at %s",
-        settings.task_queue,
+        "Polling task queues %s in namespace %r at %s",
+        ", ".join(repr(worker.task_queue) for worker in workers),
         settings.temporal_namespace,
         settings.temporal_address,
     )
-    async with build_worker(client, settings):
+    if settings.stub_did_finder_schemes:
+        logger.warning(
+            "Serving STUB dataset lookups for DID schemes %s",
+            ", ".join(settings.stub_did_finder_schemes),
+        )
+    async with running(workers):
         await stop.wait()
         logger.info("Shutdown requested, draining in-flight tasks")
 

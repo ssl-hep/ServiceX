@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import dataclasses
 import uuid
 from collections import defaultdict
@@ -11,6 +12,7 @@ from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from servicex_orchestrator.activities import StubActivities, ping
+from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.models import (
     DATASET_NOT_FOUND,
     LOOKUP_DOES_NOT_EXIST,
@@ -47,6 +49,7 @@ class RecordingStubs(StubActivities):
     @activity.defn
     async def lookup_dataset(self, input: LookupInput) -> LookupSummary:
         self.calls["lookup_dataset"].append(input)
+        self.calls["lookup_task_queue"].append(activity.info().task_queue)
         if self.lookup_error:
             raise self.lookup_error
         return await super().lookup_dataset(input)
@@ -96,15 +99,32 @@ async def local_env():
         yield env
 
 
-def _worker(env, stubs: StubActivities) -> tuple[Worker, str]:
+@contextlib.asynccontextmanager
+async def _workers(env, stubs: StubActivities, did_schemes=("rucio",)):
+    """The orchestrator worker plus a stub DID finder per scheme; yields its queue.
+
+    Each test gets its own server, so the fixed `did-finder-<scheme>` queues are
+    not shared between tests.
+    """
     task_queue = f"test-{uuid.uuid4()}"
-    worker = Worker(
+    orchestrator = Worker(
         env.client,
         task_queue=task_queue,
         workflows=WORKFLOWS,
         activities=[ping, *stubs.all()],
     )
-    return worker, task_queue
+    did_finders = [
+        Worker(
+            env.client,
+            task_queue=did_finder_task_queue(scheme),
+            activities=stubs.did_finder(),
+        )
+        for scheme in did_schemes
+    ]
+    async with contextlib.AsyncExitStack() as stack:
+        for worker in [orchestrator, *did_finders]:
+            await stack.enter_async_context(worker)
+        yield task_queue
 
 
 SMALL = TransformRequestTuning(
@@ -140,8 +160,7 @@ async def _run_request(env, task_queue, request):
 
 async def test_did_request_runs_end_to_end(env):
     stubs = RecordingStubs(stub_files=23)
-    worker, task_queue = _worker(env, stubs)
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         request = _request()
         result = await _run_request(env, task_queue, request)
 
@@ -154,13 +173,24 @@ async def test_did_request_runs_end_to_end(env):
     assert stubs.calls["launch_pilots"], "the pool should have launched pilots"
 
 
+async def test_lookup_is_scheduled_on_the_did_finder_queue(env):
+    """`lookup_dataset` goes to `did-finder-<scheme>`, not the orchestrator queue."""
+    stubs = RecordingStubs(stub_files=4)
+    async with _workers(env, stubs, did_schemes=("cernopendata",)) as task_queue:
+        result = await _run_request(
+            env, task_queue, _request(did="1507", scheme="cernopendata")
+        )
+
+    assert result.status == REQUEST_COMPLETE
+    assert stubs.calls["lookup_task_queue"] == ["did-finder-cernopendata"]
+
+
 async def test_request_accepts_app_payload_as_plain_dict(env):
     """The app sends the input as JSON with no state or tuning arguments."""
     stubs = RecordingStubs(stub_files=3)
-    worker, task_queue = _worker(env, stubs)
     payload = dataclasses.asdict(_request())
     del payload["tuning"], payload["state"]
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         result = await env.client.execute_workflow(
             "TransformRequestWorkflow",
             payload,
@@ -173,8 +203,7 @@ async def test_request_accepts_app_payload_as_plain_dict(env):
 
 async def test_file_list_request_skips_lookup(env):
     stubs = RecordingStubs(stub_files=7)
-    worker, task_queue = _worker(env, stubs)
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         result = await _run_request(
             env, task_queue, _request(did="file-list-hash", scheme="user")
         )
@@ -187,8 +216,7 @@ async def test_file_list_request_skips_lookup(env):
 async def test_concurrent_requests_share_one_lookup(local_env):
     # A slow lookup, so the second request subscribes while it is still running.
     stubs = RecordingStubs(stub_files=30, stub_delay=0.2)
-    worker, task_queue = _worker(local_env, stubs)
-    async with worker:
+    async with _workers(local_env, stubs) as task_queue:
         first, second = _request(), _request()
         results = await asyncio.gather(
             _run_request(local_env, task_queue, first),
@@ -201,12 +229,11 @@ async def test_concurrent_requests_share_one_lookup(local_env):
 
 async def test_continue_as_new_keeps_counts(env):
     stubs = RecordingStubs(stub_files=23)
-    worker, task_queue = _worker(env, stubs)
     tuning = TransformRequestTuning(
         batch_size=3, max_concurrent_batches=2, batches_per_run=2
     )
     request = _request(tuning=tuning)
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         handle = await env.client.start_workflow(
             TransformRequestWorkflow.run,
             request,
@@ -227,9 +254,8 @@ async def test_continue_as_new_keeps_counts(env):
 async def test_cancel_cleans_up(local_env):
     env = local_env
     stubs = RecordingStubs(stub_files=40, stub_delay=0.5)
-    worker, task_queue = _worker(env, stubs)
     request = _request()
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         handle = await env.client.start_workflow(
             TransformRequestWorkflow.run,
             request,
@@ -263,8 +289,7 @@ async def test_dataset_not_found_ends_bad_dataset(env):
             "no such dataset", type=DATASET_NOT_FOUND, non_retryable=True
         )
     )
-    worker, task_queue = _worker(env, stubs)
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         result = await _run_request(env, task_queue, _request())
 
     assert result.status == REQUEST_BAD_DATASET
@@ -278,9 +303,8 @@ async def test_dataset_not_found_ends_bad_dataset(env):
 async def test_pool_manager_tops_up_without_overshooting(local_env):
     env = local_env
     stubs = RecordingStubs()
-    worker, task_queue = _worker(env, stubs)
     spec = PoolSpec("req-1", "img", "cm", "python", "cmd", "object-store", "parquet")
-    async with worker:
+    async with _workers(env, stubs) as task_queue:
         handle = await env.client.start_workflow(
             PoolManagerWorkflow.run,
             PoolInput(spec=spec, max_workers=3, reconcile_seconds=0.2),

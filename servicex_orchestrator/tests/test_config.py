@@ -39,3 +39,9 @@ def test_vector_settings():
     assert settings.instance_name == "servicex-ben"
     assert Settings.from_env({}).vector_host is None
     assert Settings.from_env({}).vector_port is None
+
+
+def test_stub_did_finder_schemes():
+    assert Settings.from_env({}).stub_did_finder_schemes == ()
+    settings = Settings.from_env({"STUB_DID_FINDER_SCHEMES": " rucio, ,cernopendata "})
+    assert settings.stub_did_finder_schemes == ("rucio", "cernopendata")
