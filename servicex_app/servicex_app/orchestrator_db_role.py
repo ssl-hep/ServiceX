@@ -92,6 +92,8 @@ ORCHESTRATOR_TABLES: dict[str, TableGrant] = {
         update=(
             "status",
             "finish_time",
+            # The request's file count once its dataset is known (Temporal mode).
+            "files",
             "files_completed",
             "files_failed",
             "workflow_id",

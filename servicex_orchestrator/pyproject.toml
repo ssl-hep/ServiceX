@@ -26,9 +26,13 @@ servicex-orchestrator = "servicex_orchestrator.worker:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Shared test helpers (fakes.py, pg_seed.py), importable from every test directory
+pythonpath = ["tests"]
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "contract: needs a Postgres migrated by the app (scripts/schema-contract-test.sh)",
+    "db: runs the DB activities on a Postgres migrated by the app (scripts/schema-contract-test.sh)",
+    "e2e: app, orchestrator and a DID finder on a real Postgres (scripts/lookup-e2e-test.sh)",
 ]
 
 [build-system]

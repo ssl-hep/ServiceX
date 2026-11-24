@@ -25,7 +25,7 @@ def test_grant_statements_reset_then_grant():
     assert f"GRANT USAGE, SELECT ON SEQUENCE transform_result_id_seq TO {r}" in grants
     requests = [g for g in grants if "ON TABLE requests" in g]
     assert len(requests) == 1
-    assert 'UPDATE ("status", "finish_time"' in requests[0]
+    assert 'UPDATE ("status", "finish_time", "files", "files_completed"' in requests[0]
     assert '"title"' not in requests[0]
     assert not any("DELETE" in g or "TRUNCATE" in g for g in grants)
 

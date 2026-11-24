@@ -12,18 +12,29 @@ LOOKUP_COMPLETE = "complete"
 LOOKUP_DOES_NOT_EXIST = "does_not_exist"
 LOOKUP_BAD_NAME = "bad_name"
 LOOKUP_INTERNAL_FAILURE = "internal_failure"
+# The app's DatasetStatus values for a lookup that ended without files
+LOOKUP_FAILURE_STATUSES = (
+    LOOKUP_DOES_NOT_EXIST,
+    LOOKUP_BAD_NAME,
+    LOOKUP_INTERNAL_FAILURE,
+)
 
 # Error types a DID finder raises that must not be retried (plan §5.1)
 DATASET_NOT_FOUND = "DatasetNotFound"
 BAD_DID = "BadDID"
 AUTH_FAILED = "AuthFailed"
 
+# Raised (non-retryable) by the dataset activities when the request's dataset row is
+# gone. The app never deletes datasets, so this means someone did by hand.
+DATASET_MISSING = "DatasetMissing"
+
 # Error types a transform worker raises (plan §5.2)
 TRANSIENT_IO = "TransientIO"
 FILE_FAILED = "FileFailed"
 TRANSFORM_CODE_ERROR = "TransformCodeError"
 
-# Final request statuses, matching servicex_app.models.TransformStatus names
+# Request statuses, matching servicex_app.models.TransformStatus names
+REQUEST_RUNNING = "running"
 REQUEST_COMPLETE = "complete"
 REQUEST_FATAL = "fatal"
 REQUEST_BAD_DATASET = "bad_dataset"
@@ -78,6 +89,20 @@ class MarkDatasetFailedInput:
     dataset_id: int
     status: str
     message: str
+
+
+@dataclass
+class RecordWorkflowInput:
+    request_id: str
+    workflow_id: str
+    workflow_run_id: str
+
+
+@dataclass
+class MarkRequestRunningInput:
+    request_id: str
+    # How many files the request will transform: the dataset's file count
+    files: int
 
 
 @dataclass
@@ -202,6 +227,9 @@ class TransformRequestState:
     hwm: int = 0
     lookup_status: Optional[str] = None
     pool_started: bool = False
+    # Set once the request's file count is recorded (mark_request_running), or
+    # known to be zero, so it is done once across continue-as-new
+    files_recorded: bool = False
     backlog_seq: int = 0
     batches_started: int = 0
     files_dispatched: int = 0

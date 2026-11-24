@@ -150,6 +150,11 @@ Signals, queries and updates:
 
 ### 4.2 `DatasetLookupWorkflow` (one per dataset row; id `dataset-<dataset_id>`)
 
+> Status: implemented with real dataset activities. The PUT files endpoint upserts on
+> `(dataset_id, file_key)`, `mark_dataset_complete` counts `n_files`/`size`/`events`
+> from `files`, and the workflow first re-reads the row and skips the lookup if it is
+> already `complete`.
+
 1. Activity `mark_dataset_looking(dataset_id)`.
 2. Activity `lookup_dataset(did, dataset_id)` on the `did-finder-<scheme>` queue (§5.1).
    It is long-running and heartbeats `{files_written, last_file_key}`. Each time it

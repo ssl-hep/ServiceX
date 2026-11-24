@@ -2,7 +2,9 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from servicex_orchestrator.activities.datasets import DatasetActivities
 from servicex_orchestrator.activities.health import ping
+from servicex_orchestrator.activities.request_status import RequestActivities
 from servicex_orchestrator.activities.stubs import StubActivities
 from servicex_orchestrator.config import Settings
 
@@ -14,13 +16,35 @@ def build_stubs(settings: Settings) -> StubActivities:
     )
 
 
-def build_activities(settings: Settings, engine: Optional[AsyncEngine] = None) -> list:
+def build_db_activities(engine: AsyncEngine) -> list:
+    """The activities that read and write the ServiceX Postgres."""
+    return [*DatasetActivities(engine).all(), *RequestActivities(engine).all()]
+
+
+def build_activities(
+    settings: Settings,
+    engine: Optional[AsyncEngine] = None,
+    *,
+    db_activities: Optional[list] = None,
+) -> list:
     """Every activity the orchestrator's own queue serves.
 
-    `engine` is the ServiceX Postgres pool, for the DB activities that replace the
-    stubs. None when DATABASE_URL is unset; nothing uses it yet.
+    The DB activities are built on `engine` (the ServiceX Postgres pool) unless
+    `db_activities` is given, as tests do with in-memory fakes.
     """
-    return [ping, *build_stubs(settings).all()]
+    if db_activities is None:
+        if engine is None:
+            raise ValueError("build_activities needs a database engine")
+        db_activities = build_db_activities(engine)
+    return [ping, *db_activities, *build_stubs(settings).all()]
 
 
-__all__ = ["StubActivities", "build_activities", "build_stubs", "ping"]
+__all__ = [
+    "DatasetActivities",
+    "RequestActivities",
+    "StubActivities",
+    "build_activities",
+    "build_db_activities",
+    "build_stubs",
+    "ping",
+]

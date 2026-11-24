@@ -84,7 +84,9 @@ requests = Table(
     Column("id", Integer, primary_key=True),
     Column("request_id", String(48), nullable=False),
     Column("did_id", Integer, nullable=False),
-    Column("files", Integer, nullable=False),
+    # The app sets 0 at submit (and keeps it in Celery mode); in Temporal mode the
+    # orchestrator writes the file count once the dataset is known.
+    Column("files", Integer, nullable=False, info=WRITES),
     # Nullable in the database although the app's model says otherwise.
     Column("status", TRANSFORM_STATUS, nullable=True, info=WRITES),
     Column("finish_time", DateTime, nullable=True, info=WRITES),

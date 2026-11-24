@@ -1,8 +1,9 @@
-"""Stand-ins for every activity with a side effect.
+"""Stand-ins for the activities with a side effect that aren't real yet.
 
-Each one logs what the real activity would do and returns plausible fake data, so the
-workflows can run end to end before the Postgres, Kubernetes, object-store, DID-finder
-and transform-worker pieces exist. Replace them one by one; keep the names and
+The dataset activities are real (`datasets.py`, `request_status.py`). Each stub here
+logs what the real activity would do and returns plausible fake data, so the workflows
+can run end to end before the Kubernetes, object-store, DID-finder and
+transform-worker pieces exist. Replace them one by one; keep the names and
 signatures, since the workflows call them by name.
 
 The fake dataset has `stub_files` files with ids 1..stub_files, whatever the DID.
@@ -15,18 +16,14 @@ from temporalio import activity
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from servicex_orchestrator.models import (
-    LOOKUP_COMPLETE,
     FILE_SUCCESS,
     ClaimBatchInput,
-    DatasetInfo,
     FileRef,
     FileResult,
     FinalizeInput,
-    GetDatasetInput,
     LaunchPilotsInput,
     LookupInput,
     LookupSummary,
-    MarkDatasetFailedInput,
     PoolSpec,
     RecordFileResultInput,
     StartLookupInput,
@@ -61,36 +58,7 @@ class StubActivities:
         # Process memory only: fine for a stub with one orchestrator replica.
         self._live_pilots: dict[str, int] = {}
 
-    # ----- dataset cache ---------------------------------------------------------
-
-    @activity.defn
-    async def get_or_create_dataset(self, input: GetDatasetInput) -> DatasetInfo:
-        if input.did_scheme == "user":
-            activity.logger.info(
-                "STUB get_or_create_dataset: would find file-list dataset %s "
-                "(did_hash %s) already complete and link request %s to it",
-                input.dataset_id,
-                input.did_hash,
-                input.request_id,
-            )
-            return DatasetInfo(
-                dataset_id=input.dataset_id,
-                lookup_status=LOOKUP_COMPLETE,
-                n_files_known=self.stub_files,
-                max_file_id=self.stub_files,
-            )
-        activity.logger.info(
-            "STUB get_or_create_dataset: would look up did_hash %s (%s://%s), "
-            "find dataset %s not yet complete, and link request %s to it",
-            input.did_hash,
-            input.did_scheme,
-            input.did,
-            input.dataset_id,
-            input.request_id,
-        )
-        return DatasetInfo(
-            dataset_id=input.dataset_id, lookup_status="created", n_files_known=0
-        )
+    # ----- dataset lookup -------------------------------------------------------
 
     @activity.defn
     async def start_dataset_lookup(self, input: StartLookupInput) -> None:
@@ -122,38 +90,6 @@ class StubActivities:
             await client.get_workflow_handle(workflow_id).signal(
                 "subscribe", input.subscriber_workflow_id
             )
-
-    @activity.defn
-    async def mark_dataset_looking(self, dataset_id: int) -> None:
-        activity.logger.info(
-            "STUB mark_dataset_looking: would set dataset %s status to 'looking'",
-            dataset_id,
-            extra={"dataset_id": dataset_id},
-        )
-
-    @activity.defn
-    async def mark_dataset_complete(
-        self, dataset_id: int, summary: LookupSummary
-    ) -> None:
-        activity.logger.info(
-            "STUB mark_dataset_complete: would set dataset %s to 'complete' with "
-            "%d files, %d bytes, %d events",
-            dataset_id,
-            summary.n_files,
-            summary.size_bytes,
-            summary.events,
-            extra={"dataset_id": dataset_id},
-        )
-
-    @activity.defn
-    async def mark_dataset_failed(self, input: MarkDatasetFailedInput) -> None:
-        activity.logger.info(
-            "STUB mark_dataset_failed: would set dataset %s to %r (%s)",
-            input.dataset_id,
-            input.status,
-            input.message,
-            extra={"dataset_id": input.dataset_id},
-        )
 
     # ----- DID finder ------------------------------------------------------------
 
@@ -310,11 +246,7 @@ class StubActivities:
     def all(self) -> list:
         """The activities the orchestrator's own queue serves."""
         return [
-            self.get_or_create_dataset,
             self.start_dataset_lookup,
-            self.mark_dataset_looking,
-            self.mark_dataset_complete,
-            self.mark_dataset_failed,
             self.claim_file_batch,
             self.record_file_result,
             self.finalize_request,

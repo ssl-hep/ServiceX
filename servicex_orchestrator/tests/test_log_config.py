@@ -10,6 +10,7 @@ from temporalio import activity, workflow
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
+from fakes import FakeDatabase
 from servicex_orchestrator.activities import StubActivities, ping
 from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.log_config import (
@@ -213,7 +214,7 @@ async def test_every_request_record_carries_its_request_id(restore_logging):
                 env.client,
                 task_queue=task_queue,
                 workflows=WORKFLOWS,
-                activities=[ping, *stubs.all()],
+                activities=[ping, *FakeDatabase().all(), *stubs.all()],
             ),
             Worker(
                 env.client,

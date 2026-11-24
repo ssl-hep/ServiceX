@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime, timezone
 from unittest.mock import ANY
 
 from pytest import fixture
@@ -33,7 +34,31 @@ from servicex_app_test.resource_test_base import ResourceTestBase
 
 from servicex_app.dataset_manager import DatasetManager
 
-from servicex_app.models import TransformRequest
+from servicex_app.models import (
+    Dataset,
+    DatasetFile,
+    DatasetStatus,
+    TransformRequest,
+    TransformStatus,
+    db,
+)
+
+CELERY = {"ORCHESTRATOR": "celery"}
+TEMPORAL = {"ORCHESTRATOR": "temporal"}
+
+FILE_URL = "/servicex/internal/transformation/{}/files"
+
+
+def _record(name, size=1024, file_key=None):
+    record = {
+        "paths": [f"/foo/{name}", f"/bar/{name}"],
+        "adler32": "12345",
+        "file_size": size,
+        "file_events": 500,
+    }
+    if file_key:
+        record["file_key"] = file_key
+    return record
 
 
 class TestAddFileToDataset(ResourceTestBase):
@@ -63,117 +88,105 @@ class TestAddFileToDataset(ResourceTestBase):
         mock_dataset_manager.id = 42
         mock_dataset_manager.dataset = mocker.Mock()
         mock_dataset_manager.dataset.id = 42
+        mock_dataset_manager.add_files.return_value = []
+        mock_dataset_manager.upsert_files.return_value = []
 
         mock_dataset_manager_find = mocker.patch.object(
             DatasetManager, "from_dataset_id", return_value=mock_dataset_manager
         )
         return mock_dataset_manager_find
 
-    def test_put_new_file(
+    # --- mocked DatasetManager ---------------------------------------------------
+
+    def test_put_new_file_celery(
         self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup
     ):
         mock_add_files = mock_dataset_manager_from_id.return_value.add_files
-
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(
+            extra_config=CELERY, lookup_result_processor=mock_processor
+        )
         with client.application.app_context():
-
-            response = client.put(
-                "/servicex/internal/transformation/1234/files",
-                json={
-                    "paths": ["/foo/bar1.root", "/foo/bar2.root"],
-                    "adler32": "12345",
-                    "file_size": 1024,
-                    "file_events": 500,
-                },
-            )
+            response = client.put(FILE_URL.format(1234), json=_record("bar1.root"))
             assert response.status_code == 200
             assert response.json == {"dataset_id": "1234", "max_file_id": 0}
 
             mock_dataset_manager_from_id.assert_called_with("1234", ANY, ANY)
-            mock_add_files.assert_called()
-            dataset_file_list = mock_add_files.call_args[0][0]
-            running_transform_list = mock_add_files.call_args[0][1]
-            assert len(dataset_file_list) == 1
-            assert dataset_file_list[0].paths == "/foo/bar1.root,/foo/bar2.root"
-            assert len(running_transform_list) == 2
+            mock_add_files.assert_called_once()
+            records, running_requests, processor = mock_add_files.call_args[0]
+            assert records == [_record("bar1.root")]
+            assert len(running_requests) == 2
+            assert processor is mock_processor
+            mock_dataset_manager_from_id.return_value.upsert_files.assert_not_called()
 
-    def test_put_new_file_bulk(
+    def test_put_new_file_bulk_celery(
         self, mocker, mock_transformer_lookup, mock_dataset_manager_from_id
     ):
-        mock_processor = mocker.MagicMock(LookupResultProcessor)
         mock_add_files = mock_dataset_manager_from_id.return_value.add_files
-
-        client = self._test_client(lookup_result_processor=mock_processor)
+        client = self._test_client(
+            extra_config=CELERY,
+            lookup_result_processor=mocker.MagicMock(LookupResultProcessor),
+        )
 
         response = client.put(
-            "/servicex/internal/transformation/1234/files",
-            json=[
-                {
-                    "paths": ["/foo/bar1.root", "/foo/bar2.root"],
-                    "adler32": "12345",
-                    "file_size": 1024,
-                    "file_events": 500,
-                },
-                {
-                    "paths": ["/foo1/bar1.root", "/foo1/bar2.root"],
-                    "adler32": "12345",
-                    "file_size": 2048,
-                    "file_events": 500,
-                },
-            ],
+            FILE_URL.format(1234),
+            json=[_record("bar1.root"), _record("bar2.root", size=2048)],
         )
         assert response.status_code == 200
-        mock_dataset_manager_from_id.assert_called_with("1234", ANY, ANY)
-        mock_add_files.assert_called()
-        dataset_file_list = mock_add_files.call_args[0][0]
-        running_transform_list = mock_add_files.call_args[0][1]
-        assert len(dataset_file_list) == 2
-        assert dataset_file_list[0].paths == "/foo/bar1.root,/foo/bar2.root"
-        assert dataset_file_list[1].paths == "/foo1/bar1.root,/foo1/bar2.root"
-        assert len(running_transform_list) == 2
-        assert running_transform_list[0].request_id == "first_request"
-        assert running_transform_list[1].request_id == "second_request"
         assert response.json == {"dataset_id": "1234", "max_file_id": 0}
+        records, running_requests, _ = mock_add_files.call_args[0]
+        assert [r["paths"][0] for r in records] == ["/foo/bar1.root", "/foo/bar2.root"]
+        assert [r.request_id for r in running_requests] == [
+            "first_request",
+            "second_request",
+        ]
+
+    def test_put_new_file_temporal(
+        self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup
+    ):
+        dataset_manager = mock_dataset_manager_from_id.return_value
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+
+        client = self._test_client(
+            extra_config=TEMPORAL, lookup_result_processor=mock_processor
+        )
+        response = client.put(
+            FILE_URL.format(1234), json=[_record("bar1.root"), _record("bar2.root")]
+        )
+        assert response.status_code == 200
+        assert response.json == {"dataset_id": "1234", "max_file_id": 0}
+
+        dataset_manager.upsert_files.assert_called_once_with(
+            [_record("bar1.root"), _record("bar2.root")]
+        )
+        dataset_manager.add_files.assert_not_called()
+        mock_transformer_lookup.assert_not_called()
+        mock_processor.add_files_to_processing_queue.assert_not_called()
 
     def test_put_new_file_reports_max_file_id(
         self, mocker, mock_transformer_lookup, mock_dataset_manager_from_id
     ):
-        mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_add_files = mock_dataset_manager_from_id.return_value.add_files
+        dataset_manager = mock_dataset_manager_from_id.return_value
+        dataset_manager.upsert_files.return_value = [
+            DatasetFile(id=19),
+            DatasetFile(id=17),
+        ]
 
-        def assign_ids(files, requests, processor):
-            for file_id, f in zip([17, 19], files):
-                f.id = file_id
-
-        mock_add_files.side_effect = assign_ids
-
-        client = self._test_client(lookup_result_processor=mock_processor)
-        file_record = {
-            "paths": ["/foo/bar1.root"],
-            "adler32": "12345",
-            "file_size": 1024,
-            "file_events": 500,
-            "file_key": "scope:bar1.root",
-        }
+        client = self._test_client(extra_config=TEMPORAL)
         response = client.put(
-            "/servicex/internal/transformation/1234/files",
-            json=[file_record, dict(file_record, paths=["/foo/bar2.root"])],
+            FILE_URL.format(1234),
+            json=[_record("bar1.root", file_key="scope:bar1.root")],
         )
         assert response.status_code == 200
         assert response.json == {"dataset_id": "1234", "max_file_id": 19}
 
-    def test_put_new_file_with_exception(
-        self, mocker, mock_dataset_manager_from_id, mock_transformer_lookup
-    ):
-        mock_processor = mocker.MagicMock(LookupResultProcessor)
-        mock_processor.add_files_to_processing_queue.side_effect = Exception("Test")
-
-        client = self._test_client(lookup_result_processor=mock_processor)
+    def test_put_new_file_with_exception(self, client):
+        with client.application.app_context():
+            dataset = self._make_dataset()
 
         response = client.put(
-            "/servicex/internal/transformation/1234/files",
+            FILE_URL.format(dataset),
             json={
                 "paths": [123, 123],
                 "adler32": "12345",
@@ -185,3 +198,99 @@ class TestAddFileToDataset(ResourceTestBase):
         assert response.json == {
             "message": "Something went wrong: sequence item 0: expected str instance, int found"
         }
+
+    # --- real database ------------------------------------------------------------
+
+    @staticmethod
+    def _make_dataset() -> int:
+        dataset = Dataset(
+            name="rucio://scope:my-did",
+            did_finder="rucio",
+            lookup_status=DatasetStatus.looking,
+            last_used=datetime.now(tz=timezone.utc),
+            last_updated=datetime.now(tz=timezone.utc),
+        )
+        db.session.add(dataset)
+        db.session.commit()
+        return dataset.id
+
+    def _make_lookup_request(self, dataset_id: int, request_id: str) -> None:
+        request = self._generate_transform_request()
+        request.request_id = request_id
+        request.did_id = dataset_id
+        request.status = TransformStatus.lookup
+        request.files = 0
+        db.session.add(request)
+        db.session.commit()
+
+    def test_put_celery_dispatches_to_running_requests(self, mocker):
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        client = self._test_client(
+            extra_config=CELERY, lookup_result_processor=mock_processor
+        )
+        with client.application.app_context():
+            dataset_id = self._make_dataset()
+            self._make_lookup_request(dataset_id, "req-1")
+
+            response = client.put(
+                FILE_URL.format(dataset_id),
+                json=[
+                    _record("a.root", file_key="scope:a.root"),
+                    _record("b.root", file_key="scope:b.root"),
+                ],
+            )
+            assert response.status_code == 200
+            files = DatasetFile.query.filter_by(dataset_id=dataset_id).all()
+            assert response.json == {
+                "dataset_id": str(dataset_id),
+                "max_file_id": max(f.id for f in files),
+            }
+
+            assert TransformRequest.lookup("req-1").files == 2
+            mock_processor.add_files_to_processing_queue.assert_called_once()
+            (request,) = mock_processor.add_files_to_processing_queue.call_args[0]
+            sent = mock_processor.add_files_to_processing_queue.call_args[1]["files"]
+            assert request.request_id == "req-1"
+            assert sorted(f.file_key for f in sent) == ["scope:a.root", "scope:b.root"]
+
+    def test_put_temporal_only_records_files(self, mocker):
+        mock_server_tasks = mocker.patch(
+            "servicex_app.lookup_result_processor.server_tasks"
+        )
+        lookup_running = mocker.spy(TransformRequest, "lookup_running_by_dataset_id")
+        client = self._test_client(
+            extra_config=TEMPORAL, lookup_result_processor=LookupResultProcessor()
+        )
+        with client.application.app_context():
+            dataset_id = self._make_dataset()
+            self._make_lookup_request(dataset_id, "req-1")
+
+            batch = [
+                _record("a.root", file_key="scope:a.root"),
+                _record("b.root", file_key="scope:b.root"),
+            ]
+            response = client.put(FILE_URL.format(dataset_id), json=batch)
+            assert response.status_code == 200
+            files = DatasetFile.query.filter_by(dataset_id=dataset_id).all()
+            max_id = max(f.id for f in files)
+            assert response.json == {
+                "dataset_id": str(dataset_id),
+                "max_file_id": max_id,
+            }
+
+            # A retry that re-sends only files already stored updates them in place
+            # and still reports the high-water mark.
+            response = client.put(
+                FILE_URL.format(dataset_id),
+                json=[_record("b.root", size=4096, file_key="scope:b.root")],
+            )
+            assert response.status_code == 200
+            assert response.json["max_file_id"] == max_id
+            db.session.expire_all()
+            files = DatasetFile.query.filter_by(dataset_id=dataset_id).all()
+            assert len(files) == 2
+            assert {f.file_key: f.file_size for f in files}["scope:b.root"] == 4096
+
+            assert TransformRequest.lookup("req-1").files == 0
+            lookup_running.assert_not_called()
+            mock_server_tasks.add_files_to_processing_queue.delay.assert_not_called()

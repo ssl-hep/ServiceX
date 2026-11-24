@@ -32,6 +32,7 @@ from typing import List
 
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.dialects.postgresql import insert
 from servicex_app.did_parser import DIDParser
 from servicex_app.lookup_result_processor import LookupResultProcessor
@@ -119,10 +120,22 @@ class DatasetManager:
             dataset = Dataset.find_by_name_with_lock(name)
             assert dataset is not None, f"Dataset {name} should exist"
 
-            dataset.files = [
-                DatasetFile(paths=file, adler32="xxx", file_events=0, file_size=0)
-                for file in file_list
-            ]
+            # The path is the file's key. A path listed twice keys only its first
+            # row (as the v1_10_0 backfill does); the repeat keeps NULL so it does
+            # not violate UNIQUE(dataset_id, file_key).
+            seen = set()
+            dataset.files = []
+            for file in file_list:
+                dataset.files.append(
+                    DatasetFile(
+                        paths=file,
+                        file_key=None if file in seen else file,
+                        adler32="xxx",
+                        file_events=0,
+                        file_size=0,
+                    )
+                )
+                seen.add(file)
             dataset.n_files = len(file_list)
 
             logger.info(
@@ -203,18 +216,70 @@ class DatasetManager:
             request, files=[file for file in self.dataset.files]
         )
 
+    def upsert_files(self, records: List[dict]) -> List[DatasetFile]:
+        """Insert DID finder file records into this dataset, or update the row with
+        the same file_key. Returns the inserted and updated rows, so a retried lookup
+        that re-sends only existing files still reports their ids.
+
+        Each record has paths (list of replicas), adler32, file_size, file_events and
+        optionally file_key; a record without a key is keyed by its first path, as
+        the DID finder lib and the v1_10_0 backfill do."""
+        rows_by_key: dict = {}
+        for record in records:
+            file_key = record.get("file_key") or record["paths"][0]
+            # Last one wins: Postgres refuses an ON CONFLICT DO UPDATE that would
+            # touch the same row twice in one statement.
+            rows_by_key[file_key] = {
+                "dataset_id": self.dataset.id,
+                "file_key": file_key,
+                "paths": ",".join(record["paths"]),
+                "adler32": record["adler32"],
+                "file_size": record["file_size"],
+                "file_events": record["file_events"],
+            }
+        if not rows_by_key:
+            return []
+
+        dialect = self.db.engine.dialect.name
+        if dialect == "postgresql":
+            dialect_insert = postgresql.insert
+        elif dialect == "sqlite":
+            dialect_insert = sqlite.insert
+        else:
+            raise RuntimeError(f"No upsert for database dialect {dialect}")
+
+        statement = dialect_insert(DatasetFile).values(list(rows_by_key.values()))
+        statement = statement.on_conflict_do_update(
+            index_elements=["dataset_id", "file_key"],
+            set_={
+                column: statement.excluded[column]
+                for column in ("paths", "adler32", "file_size", "file_events")
+            },
+        ).returning(DatasetFile)
+        rows = list(
+            self.db.session.scalars(
+                statement, execution_options={"populate_existing": True}
+            )
+        )
+        # The relationship collection does not see rows written by a Core-style
+        # insert; reload it on next access.
+        self.db.session.expire(self.dataset, ["files"])
+        return rows
+
     def add_files(
         self,
-        files: List[DatasetFile],
+        records: List[dict],
         requests: List[TransformRequest],
         lookup_result_processor: LookupResultProcessor,
-    ) -> None:
-        self.dataset.files.extend(files)
-        self.dataset.save_to_db()
+    ) -> List[DatasetFile]:
+        """Celery mode: upsert the files, then queue them for every running request."""
+        files = self.upsert_files(records)
+        # Commit before queueing, as before the upsert: a transformer must be able to
+        # see a file's row by the time it reports on it.
+        self.db.session.commit()
 
         for request in requests:
             request.files += len(files)
-            lookup_result_processor.add_files_to_processing_queue(
-                request, files=[file for file in files]
-            )
+            lookup_result_processor.add_files_to_processing_queue(request, files=files)
             request.save_to_db()
+        return files

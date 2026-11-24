@@ -11,19 +11,22 @@ from temporalio.exceptions import ApplicationError, CancelledError
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
+from fakes import FakeDatabase
 from servicex_orchestrator.activities import StubActivities, ping
 from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.models import (
     DATASET_NOT_FOUND,
+    LOOKUP_COMPLETE,
     LOOKUP_DOES_NOT_EXIST,
     REQUEST_BAD_DATASET,
     REQUEST_CANCELED,
     REQUEST_COMPLETE,
+    REQUEST_FATAL,
     FinalizeInput,
     LaunchPilotsInput,
     LookupInput,
     LookupSummary,
-    MarkDatasetFailedInput,
+    MarkRequestRunningInput,
     PoolInput,
     PoolSpec,
     PoolState,
@@ -39,12 +42,17 @@ from servicex_orchestrator.workflows import (
 
 
 class RecordingStubs(StubActivities):
-    """The stubs, plus a record of the calls the tests care about."""
+    """The stubs and an in-memory dataset DB, plus a record of the calls the tests
+    care about (the DB's calls included)."""
 
     def __init__(self, stub_files=23, stub_delay=0.0, lookup_error=None):
         super().__init__(stub_files=stub_files, stub_delay=stub_delay)
         self.lookup_error = lookup_error
         self.calls: dict[str, list] = defaultdict(list)
+        self.db = FakeDatabase(self.calls)
+
+    def all(self) -> list:
+        return [*self.db.all(), *super().all()]
 
     @activity.defn
     async def lookup_dataset(self, input: LookupInput) -> LookupSummary:
@@ -53,11 +61,6 @@ class RecordingStubs(StubActivities):
         if self.lookup_error:
             raise self.lookup_error
         return await super().lookup_dataset(input)
-
-    @activity.defn
-    async def mark_dataset_failed(self, input: MarkDatasetFailedInput) -> None:
-        self.calls["mark_dataset_failed"].append(input)
-        await super().mark_dataset_failed(input)
 
     @activity.defn
     async def finalize_request(self, input: FinalizeInput) -> None:
@@ -171,6 +174,11 @@ async def test_did_request_runs_end_to_end(env):
     assert (final.status, final.files_completed) == (REQUEST_COMPLETE, 23)
     assert stubs.calls["cleanup_request"] == [request.request_id]
     assert stubs.calls["launch_pilots"], "the pool should have launched pilots"
+    [recorded] = stubs.calls["record_request_workflow"]
+    assert recorded.workflow_id == f"transform-{request.request_id}"
+    assert stubs.calls["mark_request_running"] == [
+        MarkRequestRunningInput(request.request_id, 23)
+    ]
 
 
 async def test_lookup_is_scheduled_on_the_did_finder_queue(env):
@@ -203,14 +211,18 @@ async def test_request_accepts_app_payload_as_plain_dict(env):
 
 async def test_file_list_request_skips_lookup(env):
     stubs = RecordingStubs(stub_files=7)
+    # The app creates a file-list dataset complete, with its files.
+    stubs.db.preset(42, LOOKUP_COMPLETE, n_files=7)
     async with _workers(env, stubs) as task_queue:
-        result = await _run_request(
-            env, task_queue, _request(did="file-list-hash", scheme="user")
-        )
+        request = _request(did="file-list-hash", scheme="user")
+        result = await _run_request(env, task_queue, request)
 
     assert result.status == REQUEST_COMPLETE
     assert result.files_completed == 7
     assert stubs.calls["lookup_dataset"] == []
+    assert stubs.calls["mark_request_running"] == [
+        MarkRequestRunningInput(request.request_id, 7)
+    ]
 
 
 async def test_concurrent_requests_share_one_lookup(local_env):
@@ -298,6 +310,48 @@ async def test_dataset_not_found_ends_bad_dataset(env):
     assert failed.status == LOOKUP_DOES_NOT_EXIST
     assert stubs.calls["launch_pilots"] == [], "no pods for a missing dataset"
     assert stubs.calls["cleanup_request"]
+    assert stubs.calls["mark_request_running"] == []
+
+
+async def test_second_request_for_a_complete_dataset_starts_no_lookup(env):
+    stubs = RecordingStubs(stub_files=6)
+    async with _workers(env, stubs) as task_queue:
+        first = await _run_request(env, task_queue, _request())
+        second = await _run_request(env, task_queue, _request())
+
+    assert [r.files_completed for r in (first, second)] == [6, 6]
+    assert len(stubs.calls["lookup_dataset"]) == 1
+    assert [m.files for m in stubs.calls["mark_request_running"]] == [6, 6]
+
+
+async def test_lookup_of_a_complete_dataset_finishes_without_looking(env):
+    """A request that saw `looking` just before the lookup finished starts a new
+    lookup workflow; it must find the row complete and not run the DID finder."""
+    stubs = RecordingStubs(stub_files=6)
+    stubs.db.preset(42, LOOKUP_COMPLETE, n_files=6)
+    async with _workers(env, stubs) as task_queue:
+        status = await env.client.execute_workflow(
+            "DatasetLookupWorkflow",
+            LookupInput("hash", "mc23:some.dataset", "rucio", 42),
+            id="dataset-42",
+            task_queue=task_queue,
+        )
+
+    assert status == LOOKUP_COMPLETE
+    assert stubs.calls["lookup_dataset"] == []
+    assert stubs.calls["mark_dataset_looking"] == []
+
+
+async def test_missing_dataset_row_ends_fatal(env):
+    stubs = RecordingStubs()
+    stubs.db.missing.add(42)
+    async with _workers(env, stubs) as task_queue:
+        result = await _run_request(env, task_queue, _request())
+
+    assert result.status == REQUEST_FATAL
+    assert stubs.calls["lookup_dataset"] == []
+    [final] = stubs.calls["finalize_request"]
+    assert "internal_failure" in final.message
 
 
 async def test_pool_manager_tops_up_without_overshooting(local_env):

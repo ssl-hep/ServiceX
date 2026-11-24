@@ -9,7 +9,12 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: ["--pytest-test-first"]
-        exclude: ^transformer_sidecar/tests/sandbox/
+        # Test helpers that aren't tests themselves
+        exclude: |
+          (?x)^(
+            transformer_sidecar/tests/sandbox/|
+            servicex_orchestrator/tests/(fakes|pg_seed|e2e/fake_finder)\.py$
+          )
       - id: trailing-whitespace
   - repo: https://github.com/pycqa/flake8
     rev: "7.5.0"

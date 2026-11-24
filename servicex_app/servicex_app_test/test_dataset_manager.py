@@ -368,6 +368,171 @@ class TestDatasetManager(ResourceTestBase):
                 files=[_.to_json() for _ in d.dataset.files],
             )
 
+    @staticmethod
+    def _record(name, size=100, events=10, file_key=None, replicas=1):
+        record = {
+            "paths": [f"root://site{i}.cern.ch/{name}" for i in range(replicas)],
+            "adler32": f"adler-{size}",
+            "file_size": size,
+            "file_events": events,
+        }
+        if file_key is not None:
+            record["file_key"] = file_key
+        return record
+
+    @staticmethod
+    def _new_did_dataset(client):
+        with db.session.begin():
+            dm = DatasetManager.from_did(
+                DIDParser("rucio://my-did"), logger=client.application.logger, db=db
+            )
+        return dm
+
+    def test_upsert_files_inserts(self, client):
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            rows = dm.upsert_files(
+                [
+                    self._record("a.root", file_key="scope:a.root", replicas=2),
+                    self._record("b.root", file_key="scope:b.root"),
+                ]
+            )
+            db.session.commit()
+
+            assert len(rows) == 2
+            assert all(r.id is not None for r in rows)
+            stored = {f.file_key: f for f in dm.dataset.files}
+            assert set(stored) == {"scope:a.root", "scope:b.root"}
+            assert stored["scope:a.root"].paths == (
+                "root://site0.cern.ch/a.root,root://site1.cern.ch/a.root"
+            )
+            assert stored["scope:a.root"].dataset_id == dm.id
+
+    def test_upsert_files_updates_resent_file_in_place(self, client):
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            [first] = dm.upsert_files(
+                [self._record("a.root", size=100, events=10, file_key="scope:a.root")]
+            )
+            db.session.commit()
+            first_id = first.id
+
+            [again] = dm.upsert_files(
+                [
+                    self._record(
+                        "a.root",
+                        size=200,
+                        events=20,
+                        file_key="scope:a.root",
+                        replicas=2,
+                    )
+                ]
+            )
+            db.session.commit()
+
+            assert again.id == first_id
+            rows = DatasetFile.query.filter_by(dataset_id=dm.id).all()
+            assert len(rows) == 1
+            assert rows[0].file_size == 200
+            assert rows[0].file_events == 20
+            assert rows[0].adler32 == "adler-200"
+            assert rows[0].paths == (
+                "root://site0.cern.ch/a.root,root://site1.cern.ch/a.root"
+            )
+
+    def test_upsert_files_retry_of_existing_files_reports_their_ids(self, client):
+        """A retried PUT that re-sends only files already stored must still return
+        them, so max_file_id is not reported as 0."""
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            batch = [
+                self._record(name, file_key=f"scope:{name}")
+                for name in ("a.root", "b.root", "c.root")
+            ]
+            first_ids = [r.id for r in dm.upsert_files(batch)]
+            db.session.commit()
+
+            retry_ids = [r.id for r in dm.upsert_files(batch[1:])]
+            db.session.commit()
+
+            assert sorted(retry_ids) == sorted(first_ids[1:])
+            assert max(retry_ids) == max(first_ids)
+            assert DatasetFile.query.filter_by(dataset_id=dm.id).count() == 3
+
+    def test_upsert_files_keys_by_first_path_without_file_key(self, client):
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            [row] = dm.upsert_files([self._record("a.root", replicas=2)])
+            db.session.commit()
+            assert row.file_key == "root://site0.cern.ch/a.root"
+
+            # Re-sent without a key, it still lands on the same row.
+            [again] = dm.upsert_files([self._record("a.root", size=7, replicas=2)])
+            db.session.commit()
+            assert again.id == row.id
+            assert DatasetFile.query.filter_by(dataset_id=dm.id).count() == 1
+
+    def test_upsert_files_dedupes_batch_last_wins(self, client):
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            rows = dm.upsert_files(
+                [
+                    self._record("a.root", size=1, file_key="scope:a.root"),
+                    self._record("b.root", file_key="scope:b.root"),
+                    self._record("a.root", size=2, file_key="scope:a.root"),
+                ]
+            )
+            db.session.commit()
+
+            assert len(rows) == 2
+            stored = {
+                f.file_key: f
+                for f in DatasetFile.query.filter_by(dataset_id=dm.id).all()
+            }
+            assert len(stored) == 2
+            assert stored["scope:a.root"].file_size == 2
+
+    def test_upsert_files_empty(self, client):
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            assert dm.upsert_files([]) == []
+
+    def test_upsert_files_scoped_to_dataset(self, client):
+        """The same key in two datasets is two rows."""
+        with client.application.app_context():
+            dm = self._new_did_dataset(client)
+            with db.session.begin():
+                other = DatasetManager.from_did(
+                    DIDParser("rucio://other-did"),
+                    logger=client.application.logger,
+                    db=db,
+                )
+            [a] = dm.upsert_files([self._record("a.root", file_key="scope:a.root")])
+            [b] = other.upsert_files([self._record("a.root", file_key="scope:a.root")])
+            db.session.commit()
+            assert a.id != b.id
+            assert (a.dataset_id, b.dataset_id) == (dm.id, other.id)
+
+    def test_from_file_list_sets_file_keys(self, client):
+        file_list = [
+            "root://eospublic.cern.ch/1.root",
+            "root://eospublic.cern.ch/2.root",
+            "root://eospublic.cern.ch/1.root",
+        ]
+        with client.application.app_context():
+            with db.session.begin():
+                dm = DatasetManager.from_file_list(
+                    file_list, logger=client.application.logger, db=db
+                )
+            keys = [f.file_key for f in sorted(dm.dataset.files, key=lambda f: f.id)]
+            # A repeated path keys only its first row, like the v1_10_0 backfill.
+            assert keys == [
+                "root://eospublic.cern.ch/1.root",
+                "root://eospublic.cern.ch/2.root",
+                None,
+            ]
+            assert dm.dataset.n_files == 3
+
     def test_add_files(self, mocker, client, celery_worker):
         mock_publisher = mocker.patch(
             "servicex_app.celery.server_tasks.add_files_to_processing_queue"
@@ -395,21 +560,22 @@ class TestDatasetManager(ResourceTestBase):
             first_request.did_id = d.id
             second_request.did_id = d.id
 
-            newfiles = [
-                DatasetFile(
-                    paths="root://eospublic.cern.ch/3.root",
-                    adler32="xxx",
-                    file_events=0,
-                    file_size=0,
-                )
-            ]
-
-            d.add_files(
-                files=newfiles,
+            newfiles = d.add_files(
+                records=[
+                    {
+                        "paths": ["root://eospublic.cern.ch/3.root"],
+                        "adler32": "xxx",
+                        "file_events": 0,
+                        "file_size": 0,
+                    }
+                ],
                 requests=[first_request, second_request],
                 lookup_result_processor=LookupResultProcessor(),
             )
 
+            assert len(newfiles) == 1
+            assert newfiles[0].file_key == "root://eospublic.cern.ch/3.root"
+            assert len(d.dataset.files) == 3
             assert first_request.files == 3
             assert second_request.files == 3
             mock_publisher.delay.assert_any_call(

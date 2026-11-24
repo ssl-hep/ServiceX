@@ -183,6 +183,7 @@ async def test_updates_its_request_columns(orchestrator, seeded):
             .values(
                 status="complete",
                 finish_time=datetime.now(),
+                files=2,
                 files_completed=2,
                 files_failed=0,
                 workflow_id=f"transform-{seeded['request_id']}",
@@ -231,7 +232,9 @@ REFUSED = {
     # App-owned columns
     "update requests.title": "UPDATE requests SET title = 'x' WHERE request_id = :r",
     "update requests.did_id": "UPDATE requests SET did_id = did_id WHERE request_id = :r",
-    "update requests.files": "UPDATE requests SET files = 0 WHERE request_id = :r",
+    "update requests.submit_time": (
+        "UPDATE requests SET submit_time = now() WHERE request_id = :r"
+    ),
     "update datasets.name": "UPDATE datasets SET name = 'x' WHERE id = :d",
     "update datasets.stale": "UPDATE datasets SET stale = true WHERE id = :d",
     "read requests.selection": "SELECT selection FROM requests WHERE request_id = :r",

@@ -27,7 +27,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import request, current_app
 
-from servicex_app.models import DatasetFile, TransformRequest, db
+from servicex_app.models import TransformRequest, db
+from servicex_app.orchestrator_mode import use_temporal
 from servicex_app.resources.servicex_resource import ServiceXResource
 
 from servicex_app.dataset_manager import DatasetManager
@@ -42,16 +43,14 @@ class AddFileToDataset(ServiceXResource):
 
     def put(self, dataset_id):
         try:
-            # this request can be a single file dictionary
-            # or a list of file dictionaries. A file_key field (sent by the Temporal
-            # DID finder worker) is ignored until the files table gains that column.
+            # this request can be a single file dictionary or a list of file
+            # dictionaries. Files are upserted on file_key (the Temporal DID finder
+            # worker sends the Rucio scope:name; without one the first path is the
+            # key), so a retried lookup updates rows instead of duplicating them.
             add_file_request = request.get_json()
             dataset_manager = DatasetManager.from_dataset_id(
                 dataset_id, current_app.logger, db
             )
-
-            # find running requests that need this ds.
-            running_requests = TransformRequest.lookup_running_by_dataset_id(dataset_id)
 
             # check if the response is bulk or single file
             if type(add_file_request) is dict:
@@ -62,24 +61,25 @@ class AddFileToDataset(ServiceXResource):
                 extra={"dataset_id": dataset_id},
             )
 
-            new_files = [
-                DatasetFile(
-                    dataset_id=dataset_id,
-                    paths=",".join(file["paths"]),
-                    adler32=file["adler32"],
-                    file_events=file["file_events"],
-                    file_size=file["file_size"],
+            if use_temporal(current_app.config):
+                # The request workflows dispatch files and keep requests.files; the
+                # app only records them.
+                files = dataset_manager.upsert_files(add_file_request)
+            else:
+                # find running requests that need this ds.
+                running_requests = TransformRequest.lookup_running_by_dataset_id(
+                    dataset_id
                 )
-                for file in add_file_request
-            ]
-            dataset_manager.add_files(
-                new_files, running_requests, self.lookup_result_processor
-            )
-            db.session.commit()
-
+                files = dataset_manager.add_files(
+                    add_file_request, running_requests, self.lookup_result_processor
+                )
             # The Temporal DID finder worker signals this to the dataset lookup
             # workflow as the high-water mark of files available to transform.
-            max_file_id = max((f.id for f in new_files if f.id is not None), default=0)
+            # Updated rows count too, so a retry that re-sends only existing files
+            # still reports the right mark.
+            max_file_id = max((f.id for f in files), default=0)
+            db.session.commit()
+
             return {"dataset_id": str(dataset_id), "max_file_id": max_file_id}
         except Exception as e:
             current_app.logger.exception(

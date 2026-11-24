@@ -190,5 +190,6 @@ async def test_startup_check_reports_unreachable_database():
     assert "hunter2" not in str(err.value)
 
 
-async def test_open_database_without_url_is_none():
-    assert await open_database(Settings.from_env({})) is None
+async def test_open_database_requires_url():
+    with pytest.raises(DatabaseUnavailable, match="DATABASE_URL is not set"):
+        await open_database(Settings.from_env({}))

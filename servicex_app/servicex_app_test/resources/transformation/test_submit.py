@@ -266,6 +266,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_processor = mocker.MagicMock(LookupResultProcessor)
 
         client = self._test_client(
+            extra_config={"ORCHESTRATOR": "celery"},
             rabbit_adaptor=mock_rabbit_adaptor,
             lookup_result_processor=mock_processor,
             code_gen_service=mock_codegen,
@@ -299,6 +300,75 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             mock_dataset_manager_from_did.return_value.publish_files.assert_called_with(
                 ANY, mock_processor
             )
+            assert saved_obj.status == TransformStatus.running
+
+    def test_submit_transformation_existing_dataset_temporal(
+        self,
+        mocker,
+        mock_dataset_manager_from_did,
+        mock_codegen,
+        mock_celery_app,
+    ):
+        """Under Temporal the request workflow dispatches a cached dataset's files;
+        submit only marks the request running."""
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        client = self._test_client(
+            extra_config={"ORCHESTRATOR": "temporal"},
+            lookup_result_processor=mock_processor,
+            code_gen_service=mock_codegen,
+            celery_app=mock_celery_app,
+        )
+        dataset_manager = mock_dataset_manager_from_did.return_value
+        dataset_manager.is_lookup_required = False
+        dataset_manager.is_complete = True
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/transformation",
+                json=self._generate_transformation_request(),
+                headers=self.fake_header(),
+            )
+            assert response.status_code == 200
+            saved_obj = TransformRequest.lookup(response.json["request_id"])
+            assert saved_obj.status == TransformStatus.running
+            assert saved_obj.files == 0
+
+            dataset_manager.publish_files.assert_not_called()
+            mock_processor.add_files_to_processing_queue.assert_not_called()
+            mock_celery_app.send_task.assert_not_called()
+
+    def test_submit_cached_file_list_temporal_sends_no_celery_task(
+        self, mocker, mock_codegen, mock_celery_app, file_list
+    ):
+        """A file list is a dataset that is complete on arrival. With a real
+        DatasetManager and LookupResultProcessor, no Celery task leaves submit."""
+        mock_server_tasks = mocker.patch(
+            "servicex_app.lookup_result_processor.server_tasks"
+        )
+        publish_files = mocker.spy(DatasetManager, "publish_files")
+        client = self._test_client(
+            extra_config={"ORCHESTRATOR": "temporal"},
+            lookup_result_processor=LookupResultProcessor(),
+            code_gen_service=mock_codegen,
+            celery_app=mock_celery_app,
+        )
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/transformation",
+                json=self._generate_transformation_request(
+                    did=None, **{"file-list": file_list}
+                ),
+                headers=self.fake_header(),
+            )
+            assert response.status_code == 200
+            saved_obj = TransformRequest.lookup(response.json["request_id"])
+            assert saved_obj.status == TransformStatus.running
+            assert saved_obj.files == 0
+
+            publish_files.assert_not_called()
+            mock_server_tasks.add_files_to_processing_queue.delay.assert_not_called()
+            mock_celery_app.send_task.assert_not_called()
 
     def test_submit_transformation_incomplete_existing_dataset(
         self,

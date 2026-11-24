@@ -13,9 +13,11 @@ with workflow.unsafe.imports_passed_through():
         BAD_DID,
         DATASET_NOT_FOUND,
         LOOKUP_BAD_NAME,
+        DATASET_MISSING,
         LOOKUP_COMPLETE,
         LOOKUP_DOES_NOT_EXIST,
         LOOKUP_INTERNAL_FAILURE,
+        DatasetInfo,
         LookupInput,
         LookupSummary,
         MarkDatasetFailedInput,
@@ -89,6 +91,42 @@ class DatasetLookupWorkflow:
 
     @workflow.run
     async def run(self, input: LookupInput) -> str:
+        status = await self._lookup_unless_complete(input)
+        self._status = status
+        await self._broadcast("lookup_finished", status, self._hwm)
+        # Let any subscribe that raced the end get its reply before we close.
+        await workflow.wait_condition(workflow.all_handlers_finished)
+        return status
+
+    async def _lookup_unless_complete(self, input: LookupInput) -> str:
+        """Run the lookup, unless the dataset row is already complete.
+
+        A request that read the row as `looking` just before the previous lookup
+        finished would otherwise start a second lookup of a complete dataset.
+        """
+        try:
+            info: DatasetInfo = await orchestrator_activity(
+                "read_dataset", input.dataset_id, result_type=DatasetInfo
+            )
+        except ActivityError as err:
+            kind, message = error_type(err)
+            if kind != DATASET_MISSING:
+                raise
+            workflow.logger.error(
+                "Dataset row is gone: %s", message, extra=self._log_extra
+            )
+            return LOOKUP_INTERNAL_FAILURE
+        if info.lookup_status == LOOKUP_COMPLETE:
+            workflow.logger.info(
+                "Dataset already complete with %d files; no lookup needed",
+                info.n_files_known,
+                extra=self._log_extra,
+            )
+            self._hwm = max(self._hwm, info.max_file_id)
+            return LOOKUP_COMPLETE
+        return await self._lookup(input)
+
+    async def _lookup(self, input: LookupInput) -> str:
         await orchestrator_activity("mark_dataset_looking", input.dataset_id)
         try:
             summary: LookupSummary = await workflow.execute_activity(
@@ -116,18 +154,10 @@ class DatasetLookupWorkflow:
                 "mark_dataset_failed",
                 MarkDatasetFailedInput(input.dataset_id, status, f"{kind}: {message}"),
             )
-        else:
-            await orchestrator_activity(
-                "mark_dataset_complete", input.dataset_id, summary
-            )
-            self._hwm = max(self._hwm, summary.max_file_id)
-            status = LOOKUP_COMPLETE
-
-        self._status = status
-        await self._broadcast("lookup_finished", status, self._hwm)
-        # Let any subscribe that raced the end get its reply before we close.
-        await workflow.wait_condition(workflow.all_handlers_finished)
-        return status
+            return status
+        await orchestrator_activity("mark_dataset_complete", input.dataset_id, summary)
+        self._hwm = max(self._hwm, summary.max_file_id)
+        return LOOKUP_COMPLETE
 
     async def _broadcast(self, signal: str, *args) -> None:
         await asyncio.gather(

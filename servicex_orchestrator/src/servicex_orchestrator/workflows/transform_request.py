@@ -4,14 +4,16 @@ import hashlib
 from typing import Optional
 
 from temporalio import workflow
-from temporalio.exceptions import ChildWorkflowError, FailureError
+from temporalio.exceptions import ActivityError, ChildWorkflowError, FailureError
 from temporalio.workflow import ParentClosePolicy
 
 with workflow.unsafe.imports_passed_through():
     from servicex_orchestrator.models import (
+        DATASET_MISSING,
         LOOKUP_BAD_NAME,
         LOOKUP_COMPLETE,
         LOOKUP_DOES_NOT_EXIST,
+        LOOKUP_INTERNAL_FAILURE,
         REQUEST_BAD_DATASET,
         REQUEST_CANCELED,
         REQUEST_COMPLETE,
@@ -24,8 +26,10 @@ with workflow.unsafe.imports_passed_through():
         FinalizeInput,
         GetDatasetInput,
         LookupInput,
+        MarkRequestRunningInput,
         PoolInput,
         PoolSpec,
+        RecordWorkflowInput,
         StartLookupInput,
         TransformRequestInput,
         TransformRequestResult,
@@ -34,6 +38,7 @@ with workflow.unsafe.imports_passed_through():
         TransformSpec,
     )
     from servicex_orchestrator.workflows.common import (
+        error_type,
         orchestrator_activity,
         signal_workflow,
     )
@@ -113,6 +118,13 @@ class TransformRequestWorkflow:
         s = self._state
         try:
             if not s.initialized:
+                info = workflow.info()
+                await orchestrator_activity(
+                    "record_request_workflow",
+                    RecordWorkflowInput(
+                        input.request_id, info.workflow_id, info.run_id
+                    ),
+                )
                 await self._find_dataset(input)
                 s.initialized = True
 
@@ -160,17 +172,27 @@ class TransformRequestWorkflow:
         """Check the dataset cache, and join (or start) its lookup if it is needed."""
         s = self._state
         key = did_hash(input.did_scheme, input.did)
-        info: DatasetInfo = await orchestrator_activity(
-            "get_or_create_dataset",
-            GetDatasetInput(
-                input.request_id, key, input.did, input.did_scheme, input.dataset_id
-            ),
-            result_type=DatasetInfo,
-        )
+        try:
+            info: DatasetInfo = await orchestrator_activity(
+                "get_or_create_dataset",
+                GetDatasetInput(
+                    input.request_id, key, input.did, input.did_scheme, input.dataset_id
+                ),
+                result_type=DatasetInfo,
+            )
+        except ActivityError as err:
+            kind, message = error_type(err)
+            if kind != DATASET_MISSING:
+                raise
+            workflow.logger.error("Dataset row is gone: %s", message)
+            s.dataset_id = input.dataset_id
+            s.lookup_status = LOOKUP_INTERNAL_FAILURE
+            return
         s.dataset_id = info.dataset_id
         if info.lookup_status == LOOKUP_COMPLETE:
             s.hwm = max(s.hwm, info.max_file_id)
             s.lookup_status = LOOKUP_COMPLETE
+            await self._record_files(input, info.n_files_known)
             return
         await orchestrator_activity(
             "start_dataset_lookup",
@@ -179,6 +201,18 @@ class TransformRequestWorkflow:
                 subscriber_workflow_id=workflow.info().workflow_id,
             ),
         )
+
+    async def _record_files(self, input: TransformRequestInput, n_files: int) -> None:
+        """Mark the request running with its file count, once the count is known.
+
+        A dataset without files leaves the request as it is; finalize_request ends it.
+        """
+        if n_files > 0:
+            await orchestrator_activity(
+                "mark_request_running",
+                MarkRequestRunningInput(input.request_id, n_files),
+            )
+        self._state.files_recorded = True
 
     async def _dispatch(self, input: TransformRequestInput) -> bool:
         """Start batch children until the request is done.
@@ -198,6 +232,9 @@ class TransformRequestWorkflow:
                 self._batches_this_run > 0
                 and workflow.info().is_continue_as_new_suggested()
             )
+
+        def needs_file_count() -> bool:
+            return s.lookup_status == LOOKUP_COMPLETE and not s.files_recorded
 
         def finished() -> bool:
             if self._in_flight:
@@ -219,8 +256,18 @@ class TransformRequestWorkflow:
 
         while True:
             await workflow.wait_condition(
-                lambda: can_dispatch() or finished() or drained_for_continue_as_new()
+                lambda: needs_file_count()
+                or can_dispatch()
+                or finished()
+                or drained_for_continue_as_new()
             )
+            if needs_file_count():
+                # Before finishing: the request is running with the dataset's files.
+                info: DatasetInfo = await orchestrator_activity(
+                    "read_dataset", s.dataset_id, result_type=DatasetInfo
+                )
+                await self._record_files(input, info.n_files_known)
+                continue
             if finished():
                 return True
             if drained_for_continue_as_new():

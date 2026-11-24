@@ -2,6 +2,8 @@ import uuid
 
 from temporalio.testing import WorkflowEnvironment
 
+from fakes import FakeDatabase
+
 from servicex_orchestrator.config import Settings
 from servicex_orchestrator.models import REQUEST_COMPLETE, TransformRequestInput
 from servicex_orchestrator.worker import build_worker, build_workers, connect, running
@@ -21,7 +23,9 @@ def _settings(env: WorkflowEnvironment, **kwargs) -> Settings:
 async def test_ping_workflow_runs_on_worker():
     async with await WorkflowEnvironment.start_time_skipping() as env:
         settings = _settings(env)
-        async with build_worker(env.client, settings):
+        async with build_worker(
+            env.client, settings, db_activities=FakeDatabase().all()
+        ):
             result = await env.client.execute_workflow(
                 PingWorkflow.run,
                 "hello",
@@ -46,7 +50,9 @@ async def test_stub_did_finders_serve_lookups():
             stub_activity_delay_seconds=0.0,
             stub_did_finder_schemes=("rucio", "cernopendata"),
         )
-        workers = build_workers(env.client, settings)
+        workers = build_workers(
+            env.client, settings, db_activities=FakeDatabase().all()
+        )
         assert [w.task_queue for w in workers] == [
             settings.task_queue,
             "did-finder-rucio",

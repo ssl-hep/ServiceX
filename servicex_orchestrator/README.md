@@ -9,7 +9,7 @@ It polls the `servicex-orchestrator` task queue and hosts:
 | Workflow | Id | Role |
 |---|---|---|
 | `TransformRequestWorkflow` | `transform-<request_id>` | One per request: dataset cache check, joins the lookup, dispatches files by cursor in batches, finalizes and cleans up |
-| `DatasetLookupWorkflow` | `dataset-<sha256(scheme://did)>` | One DID-finder lookup shared by every request for the dataset; forwards progress to its subscribers |
+| `DatasetLookupWorkflow` | `dataset-<dataset_id>` | One DID-finder lookup shared by every request for the dataset row; forwards progress to its subscribers |
 | `FileBatchWorkflow` | `transform-<request_id>-batch-<n>` | Transforms one batch of files and records each result |
 | `PoolManagerWorkflow` | `pool-<request_id>` | Tops up transformer pilots to `min(backlog, max_workers)` |
 | `PingWorkflow` | any | Smoke test: returns `pong from <pod>: <message>` |
@@ -18,12 +18,23 @@ The ServiceX app starts `TransformRequestWorkflow` on submit when its config has
 `ORCHESTRATOR = 'temporal'`. It sends a plain JSON object whose keys must match
 `models.TransformRequestInput`.
 
-**The activities are stubs for now** (`activities/stubs.py`). Each one logs what
-it would do (`STUB launch_pilots: would create Jobs [...]`) and returns fake
-data: every DID lookup "finds" `STUB_DATASET_FILES` files, and every transform
-succeeds. The exception is `start_dataset_lookup`, which really starts or joins
-the lookup workflow. The transform activities run on the orchestrator's own queue
-until transformer pilots poll `transform-<request_id>`.
+**The dataset activities are real**, on the ServiceX Postgres:
+`activities/datasets.py` (`get_or_create_dataset`, `read_dataset`,
+`mark_dataset_looking`, `mark_dataset_complete`, `mark_dataset_failed`) and
+`activities/request_status.py` (`record_request_workflow`, `mark_request_running`).
+A complete dataset row is a cache hit: the request starts no lookup.
+`mark_dataset_complete` counts `n_files`, `size` and `events` from the dataset's
+`files` rows, which is what the request transforms, rather than trusting the DID
+finder's summary of its last attempt. A failed lookup's message goes to the dataset's
+log records (shown on the dataset page); the app has no column for it.
+
+**The rest are stubs for now** (`activities/stubs.py`). Each one logs what it would
+do (`STUB launch_pilots: would create Jobs [...]`) and returns fake data: the stub DID
+lookup "finds" `STUB_DATASET_FILES` files (it writes no `files` rows, so its dataset
+ends `complete` with 0 files), `claim_file_batch` makes up files by id, and every
+transform succeeds. `start_dataset_lookup` is real: it starts or joins the lookup
+workflow. The transform activities run on the orchestrator's own queue until
+transformer pilots poll `transform-<request_id>`.
 
 `DatasetLookupWorkflow` schedules `lookup_dataset` on `did-finder-<scheme>`
 (`did-finder-rucio`, ...), where the DID finder for that scheme polls. Where no
@@ -44,11 +55,10 @@ either, a lookup times out after 15 minutes waiting to be picked up.
 | `STUB_DATASET_FILES` | `25` | Files every stub DID lookup "finds" |
 | `STUB_ACTIVITY_DELAY_SECONDS` | `0.5` | How long each stub lookup chunk and stub transform takes |
 | `STUB_DID_FINDER_SCHEMES` | empty | Comma-separated DID schemes (e.g. `rucio,cernopendata`) whose `did-finder-<scheme>` queue this worker serves with the stub lookup. Leave a scheme out once its real DID finder runs. The chart sets it from `orchestrator.stubDidFinderSchemes` |
-| `DATABASE_URL` | unset | The ServiceX Postgres, as the orchestrator's own role (`postgresql://` or `postgresql+asyncpg://`). Unset: no database, and a warning (fine while the DB activities are stubs). The chart builds it from `orchestrator.database` |
+| `DATABASE_URL` | required | The ServiceX Postgres, as the orchestrator's own role (`postgresql://` or `postgresql+asyncpg://`). The worker exits if it is unset. The chart builds it from `orchestrator.database` |
 | `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | `5`, `5` | Connection pool per replica |
 
-On startup the worker first checks the database (when `DATABASE_URL` is set) and
-exits with a clear error if it can't connect, or if the schema or the role's grants
+On startup the worker first checks the database and exits with a clear error if it can't connect, or if the schema or the role's grants
 fall short of what `db/tables.py` declares. It then retries until the Temporal
 frontend is reachable and the namespace exists, so it can start before the Temporal
 server is ready.
@@ -75,8 +85,8 @@ orchestrator needs `postgres.enabled=true`; the chart refuses to render it on SQ
 | | App writes | Orchestrator writes | Orchestrator reads |
 |---|---|---|---|
 | `datasets` | creates rows, `name`, `did_finder`, `last_used`, `stale` | `lookup_status`, `n_files`, `size`, `events`, `last_updated` | all |
-| `files` | all inserts (DID finders PUT them to the app) | nothing | all |
-| `requests` | creates rows, every user-facing field | `status`, `finish_time`, `files_completed`, `files_failed`, `workflow_id`, `workflow_run_id` | those, plus `id`, `request_id`, `did_id`, `files` |
+| `files` | all inserts, as an upsert on `(dataset_id, file_key)` (DID finders PUT them to the app) | nothing | all |
+| `requests` | creates rows, every user-facing field (`status` and `files` at submit; in Celery mode it keeps writing them) | `status`, `files` (Temporal mode, once the dataset's file count is known), `finish_time`, `files_completed`, `files_failed`, `workflow_id`, `workflow_run_id` | those, plus `id`, `request_id`, `did_id` |
 | `transform_result` | nothing | all inserts and updates | all |
 
 Nothing else (users, log records, ...) is visible to the orchestrator.
@@ -120,15 +130,18 @@ To give the orchestrator a new column:
 3. Declare it in `db/tables.py`, and bump `REQUIRED_SCHEMA_REVISION` if it is new.
 4. Run the contract test.
 
-### Schema contract test
+### Schema contract and DB tests
 
 `scripts/schema-contract-test.sh` needs docker and both poetry envs. It:
 
-1. starts a throwaway `postgres:14`;
+1. starts a throwaway `postgres:14` (`scripts/throwaway-postgres.sh`);
 2. runs the app's migrations up, down one revision and up again, checking the
    `file_key` backfill;
 3. creates the role twice;
-4. runs `pytest -m contract`.
+4. runs `pytest -m "contract or db"`: the contract tests and `tests/db`, which run
+   the dataset and request activities as the role, and requests with their lookup
+   on the time-skipping server (complete, does-not-exist, a retried lookup leaving
+   no duplicate files, and a cache hit starting no lookup).
 
 The tests check that every orchestrator column exists with a compatible type,
 nullability and enum labels, and that the role holds the privileges it needs. They
@@ -137,6 +150,17 @@ refused UPDATE on app-owned columns, DELETE, TRUNCATE, writes to `files`, other
 tables, and DDL. Renaming a column on either side fails it. CI runs it in the
 `schema-contract` job against a service container. Without
 `CONTRACT_ADMIN_URL`/`CONTRACT_ORCHESTRATOR_URL`, a plain `pytest` skips them.
+
+### Lookup e2e test
+
+`scripts/lookup-e2e-test.sh` runs lookups end to end on a throwaway Postgres: the
+real app in Temporal mode (`flask run`), the orchestrator worker, and the real
+`DIDFinderWorker` from a ServiceX_DID_Finder_lib checkout (`DID_FINDER_LIB_DIR`,
+default `../ServiceX_DID_Finder_lib`) over a fake catalog (`tests/e2e/fake_finder.py`),
+on a local Temporal dev server. It runs a lookup twice on one dataset, then a request
+that must hit the cache, and a lookup that fails halfway and is retried. It checks
+that there are no duplicate `files` rows and that the dataset and requests are right.
+It needs docker and all three poetry envs, so CI doesn't run it.
 
 ### Rules for DB activities
 
@@ -159,13 +183,15 @@ poetry install --with test
 poetry run pytest
 poetry run flake8
 scripts/schema-contract-test.sh   # needs docker and servicex_app's poetry env
+scripts/lookup-e2e-test.sh        # also needs the DID finder lib's poetry env
 ```
 
 To run against a local dev server:
 
 ```bash
 temporal server start-dev
-STUB_DID_FINDER_SCHEMES=rucio poetry run servicex-orchestrator
+DATABASE_URL=postgresql://servicex_orchestrator:<password>@localhost:5432/servicex \
+  STUB_DID_FINDER_SCHEMES=rucio poetry run servicex-orchestrator
 temporal workflow execute --type PingWorkflow --task-queue servicex-orchestrator --input '"hello"'
 ```
 
@@ -183,7 +209,8 @@ temporal workflow execute --type TransformRequestWorkflow --task-queue servicex-
             "max_workers": 5}'
 ```
 
-`tests/test_workflows.py` runs most scenarios on the time-skipping test server.
+`tests/test_workflows.py` runs most scenarios on the time-skipping test server, with
+the DB activities replaced by an in-memory fake (`tests/fakes.py`).
 Signal-with-start and cancel-during-timer tests use a real dev server
 (`WorkflowEnvironment.start_local`), because the test server mishandles both.
 

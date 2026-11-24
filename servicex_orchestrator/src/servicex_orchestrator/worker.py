@@ -65,13 +65,19 @@ GRACEFUL_SHUTDOWN = timedelta(seconds=20)
 
 
 def build_worker(
-    client: Client, settings: Settings, engine: Optional[AsyncEngine] = None
+    client: Client,
+    settings: Settings,
+    engine: Optional[AsyncEngine] = None,
+    *,
+    db_activities: Optional[list] = None,
 ) -> Worker:
+    """The orchestrator's own worker. `db_activities` replaces the activities built
+    on `engine` (tests pass in-memory fakes); one of the two is needed."""
     return Worker(
         client,
         task_queue=settings.task_queue,
         workflows=WORKFLOWS,
-        activities=build_activities(settings, engine),
+        activities=build_activities(settings, engine, db_activities=db_activities),
         graceful_shutdown_timeout=GRACEFUL_SHUTDOWN,
     )
 
@@ -89,11 +95,15 @@ def build_stub_did_finder_worker(
 
 
 def build_workers(
-    client: Client, settings: Settings, engine: Optional[AsyncEngine] = None
+    client: Client,
+    settings: Settings,
+    engine: Optional[AsyncEngine] = None,
+    *,
+    db_activities: Optional[list] = None,
 ) -> list[Worker]:
     """The orchestrator worker, then one stub DID finder per configured scheme."""
     return [
-        build_worker(client, settings, engine),
+        build_worker(client, settings, engine, db_activities=db_activities),
         *(
             build_stub_did_finder_worker(client, settings, scheme)
             for scheme in settings.stub_did_finder_schemes
@@ -117,7 +127,7 @@ async def running(workers: list[Worker]) -> AsyncIterator[list[Worker]]:
             await asyncio.gather(*(worker.shutdown() for worker in workers))
 
 
-async def open_database(settings: Settings) -> Optional[AsyncEngine]:
+async def open_database(settings: Settings) -> AsyncEngine:
     """The Postgres pool, checked against the schema and grants we expect.
 
     Raises db.DatabaseUnavailable or db.SchemaMismatch, which end the process: the
@@ -125,11 +135,9 @@ async def open_database(settings: Settings) -> Optional[AsyncEngine]:
     has migrated the database and created our role.
     """
     if not settings.database_url:
-        logger.warning(
-            "DATABASE_URL is not set: running without the ServiceX database "
-            "(fine while every DB activity is a stub)"
+        raise db.DatabaseUnavailable(
+            "DATABASE_URL is not set; the orchestrator needs the ServiceX Postgres"
         )
-        return None
     engine = db.create_engine(settings)
     try:
         revision = await db.startup_check(engine)
@@ -151,11 +159,10 @@ async def run(settings: Settings) -> None:
     try:
         await _run(settings, engine)
     finally:
-        if engine is not None:
-            await engine.dispose()
+        await engine.dispose()
 
 
-async def _run(settings: Settings, engine: Optional[AsyncEngine]) -> None:
+async def _run(settings: Settings, engine: AsyncEngine) -> None:
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):

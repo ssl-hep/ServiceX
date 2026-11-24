@@ -38,6 +38,7 @@ from servicex_app.dataset_manager import DatasetManager
 from servicex_app.decorators import auth_required
 from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
+from servicex_app import orchestrator_mode
 from servicex_app.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
@@ -248,7 +249,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
-            use_temporal = config.get("ORCHESTRATOR", "temporal") == "temporal"
+            use_temporal = orchestrator_mode.use_temporal(config)
             session = db.session
             with session.begin():
                 # persist the Dataset record and obtain a committed DB ID.
@@ -317,9 +318,12 @@ class SubmitTransformationRequest(ServiceXResource):
                         "dataset already complete",
                         extra={"request_id": str(request_id)},
                     )
-                    dataset_manager.publish_files(
-                        request_rec, self.lookup_result_processor
-                    )
+                    if not use_temporal:
+                        # Under Temporal the request workflow dispatches the
+                        # cached files and writes requests.files.
+                        dataset_manager.publish_files(
+                            request_rec, self.lookup_result_processor
+                        )
                     request_rec.status = TransformStatus.running
                 else:
                     current_app.logger.info(
