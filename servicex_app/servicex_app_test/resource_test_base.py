@@ -38,7 +38,6 @@ from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
 from servicex_app.models import TransformRequest, Dataset, DatasetFile, TransformStatus
-from servicex_app.rabbit_adaptor import RabbitAdaptor
 
 
 class ResourceTestBase:
@@ -96,7 +95,6 @@ class ResourceTestBase:
     def _test_client(
         extra_config=None,
         transformation_manager=None,
-        rabbit_adaptor=MagicMock(RabbitAdaptor),
         object_store=None,
         code_gen_service=MagicMock(CodeGenAdapter),
         lookup_result_processor=MagicMock(LookupResultProcessor),
@@ -122,7 +120,6 @@ class ResourceTestBase:
         app = create_app(
             config,
             transformation_manager,
-            rabbit_adaptor,
             object_store,
             code_gen_service,
             lookup_result_processor,
@@ -190,10 +187,6 @@ class ResourceTestBase:
         dataset.size = 1203
         dataset.events = 10000
         return dataset
-
-    @fixture
-    def mock_rabbit_adaptor(self, mocker):
-        return mocker.MagicMock(RabbitAdaptor)
 
     @fixture
     def mock_celery_app(self, mocker):
