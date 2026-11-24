@@ -52,6 +52,15 @@ spec:
             value: {{ .Values.orchestrator.logLevel | quote }}
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
+          # Its own restricted role, never the postgres superuser. The password must
+          # be URL-safe: it is substituted into DATABASE_URL as is.
+          {{- include "servicex.orchestrator.dbEnv" . | trim | nindent 10 }}
+          - name: DATABASE_URL
+            value: "postgresql+asyncpg://{{ .Values.orchestrator.database.user }}:$(ORCHESTRATOR_DB_PASSWORD)@{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.global.postgresql.auth.database }}"
+          - name: DB_POOL_SIZE
+            value: {{ .Values.orchestrator.database.poolSize | quote }}
+          - name: DB_MAX_OVERFLOW
+            value: {{ .Values.orchestrator.database.maxOverflow | quote }}
           {{- with .Values.orchestrator.stubDidFinderSchemes }}
           - name: STUB_DID_FINDER_SCHEMES
             value: {{ join "," . | quote }}

@@ -62,6 +62,7 @@ from servicex_app.transformer_manager import TransformerManager
 from flask_migrate import Migrate
 from flask_moment import Moment
 from servicex_app.models import db
+from servicex_app import orchestrator_db_role
 
 instance = os.environ.get("INSTANCE_NAME", "Unknown")
 migrate = Migrate()
@@ -284,6 +285,19 @@ def create_app(
         set_user_admin(email, False)
 
     app.cli.add_command(user_cli)
+
+    @app.cli.command("orchestrator-db-role")
+    def orchestrator_db_role_command():
+        """Create the Temporal orchestrator's Postgres role and reset its grants.
+
+        Run by boot.sh after `flask db upgrade`. Reads ORCHESTRATOR_DB_USER (default
+        servicex_orchestrator) and ORCHESTRATOR_DB_PASSWORD."""
+        password = os.environ.get("ORCHESTRATOR_DB_PASSWORD")
+        if not password:
+            raise click.ClickException("ORCHESTRATOR_DB_PASSWORD is not set")
+        role = os.environ.get("ORCHESTRATOR_DB_USER", orchestrator_db_role.DEFAULT_ROLE)
+        orchestrator_db_role.apply(db.engine, role, password)
+        click.echo(f"Orchestrator role {role!r} is up to date")
 
     Bootstrap5(app)
     CORS(app)

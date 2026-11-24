@@ -210,6 +210,9 @@ class TransformRequest(db.Model):
     code_gen_image = db.Column(db.String(256), nullable=True)
     transformer_language = db.Column(db.String(256), nullable=True)
     transformer_command = db.Column(db.String(256), nullable=True)
+    # The Temporal workflow that owns the request. Written by the orchestrator.
+    workflow_id = db.Column(db.String(255), nullable=True)
+    workflow_run_id = db.Column(db.String(64), nullable=True)
 
     dataset = relationship("Dataset", back_populates="transform_requests")
 
@@ -611,7 +614,16 @@ class DatasetFile(db.Model):
     file_size = db.Column(db.BigInteger, nullable=True)
     file_events = db.Column(db.BigInteger, nullable=True)
     paths = db.Column(db.Text(), unique=False, nullable=False)
+    # Stable identity from the DID finder (e.g. Rucio scope:name). Nullable until
+    # every DID finder sends one; see migration v1_10_0.
+    file_key = db.Column(db.Text(), nullable=True)
     dataset = relationship("Dataset", back_populates="files")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "dataset_id", "file_key", name="uix_files_dataset_file_key"
+        ),
+    )
 
     def to_json(self):
         return {

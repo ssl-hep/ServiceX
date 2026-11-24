@@ -18,6 +18,11 @@ if grep "sqlite://" $APP_CONFIG_FILE; then
   echo "SQLLite DB, so skipping db migrations";
 else
   FLASK_APP=servicex_app/app.py flask db upgrade;
+  # The Temporal orchestrator connects as its own restricted role. Its grants are
+  # re-applied after every upgrade, so they always match the current schema.
+  if [ -n "$ORCHESTRATOR_DB_PASSWORD" ]; then
+    FLASK_APP=servicex_app/app.py flask orchestrator-db-role || exit 1;
+  fi
 fi
 [ -d "/default_users" ] && python3 servicex/cli/create_default_users.py
 

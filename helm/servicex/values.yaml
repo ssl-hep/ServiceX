@@ -560,6 +560,21 @@ orchestrator:
   # DID schemes (e.g. [rucio]) whose did-finder-<scheme> queue the orchestrator
   # serves with a stub lookup, for deployments without that DID finder.
   stubDidFinderSchemes: []
+  # The orchestrator reads and writes the ServiceX Postgres directly, so it needs
+  # postgres.enabled=true. It connects as its own restricted role, which the app
+  # creates (and re-grants) at every boot after migrating; see
+  # servicex_orchestrator/README.md, "Database access".
+  database:
+    user: servicex_orchestrator
+    # Used only when `secrets` is unset (the chart then renders
+    # <release>-orchestrator-db). With `secrets` set, add the password to that
+    # Secret under the key orchestrator-db-password. Must be URL-safe.
+    password: rightfoot2
+    # Connections per orchestrator replica: poolSize, plus up to maxOverflow more
+    # under load. Keep replicas * (poolSize + maxOverflow) well under Postgres's
+    # max_connections (100 by default).
+    poolSize: 5
+    maxOverflow: 5
   resources:
     requests:
       cpu: 100m

@@ -104,3 +104,32 @@ name already contains "temporal".
 {{ .Release.Name }}-temporal-frontend:7233
 {{- end -}}
 {{- end -}}
+
+{{/*
+The Secret and key holding the orchestrator's Postgres password: the site's
+`secrets` Secret when set (key orchestrator-db-password), otherwise the
+<release>-orchestrator-db Secret this chart renders from
+orchestrator.database.password.
+*/}}
+{{- define "servicex.orchestrator.dbSecretName" -}}
+{{- if .Values.secrets -}}
+{{ .Values.secrets }}
+{{- else -}}
+{{ .Release.Name }}-orchestrator-db
+{{- end -}}
+{{- end -}}
+
+{{/*
+The orchestrator role's name and password, for the orchestrator (which connects
+as it) and for the app (whose boot.sh creates it after migrating). Render with
+`trim | nindent` under a container's `env:`.
+*/}}
+{{- define "servicex.orchestrator.dbEnv" -}}
+- name: ORCHESTRATOR_DB_USER
+  value: {{ .Values.orchestrator.database.user | quote }}
+- name: ORCHESTRATOR_DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "servicex.orchestrator.dbSecretName" . }}
+      key: orchestrator-db-password
+{{- end -}}

@@ -37,8 +37,10 @@ LOOKUP_WORKFLOW_TYPE = "DatasetLookupWorkflow"
 LOOKUP_CHUNK = 10
 
 
-def lookup_workflow_id(did_hash: str) -> str:
-    return f"dataset-{did_hash}"
+def lookup_workflow_id(dataset_id: int) -> str:
+    """One lookup per dataset row, not per DID: a request for a DID whose old row went
+    stale gets a new row, and must not join the old row's lookup."""
+    return f"dataset-{dataset_id}"
 
 
 def pilot_job_name(request_id: str, generation: int, index: int) -> str:
@@ -97,7 +99,7 @@ class StubActivities:
         Not a stub: signal-with-start on a deterministic workflow id is what makes N
         concurrent requests for one DID share a single lookup (plan §4.1 step 3).
         """
-        workflow_id = lookup_workflow_id(input.lookup.did_hash)
+        workflow_id = lookup_workflow_id(input.lookup.dataset_id)
         activity.logger.info(
             "Subscribing %s to dataset lookup %s",
             input.subscriber_workflow_id,

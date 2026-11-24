@@ -27,6 +27,48 @@ jobs:
           cat deploy-config.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+  # The app's migrations vs. the Temporal orchestrator's view of the schema and its
+  # Postgres role. See servicex_orchestrator/README.md, "Database access".
+  schema-contract:
+    runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: contract-admin
+          POSTGRES_DB: servicex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.11"
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v4.0.0
+        with:
+          poetry-version: 2.2.1
+
+      - name: Install dependencies
+        run: |
+          (cd servicex_app && poetry install --no-root --with=test)
+          (cd servicex_orchestrator && poetry install --no-root --with=test)
+
+      - name: Migrate, create the orchestrator role, run the contract tests
+        env:
+          CONTRACT_PG_HOSTPORT: 127.0.0.1:5432
+          CONTRACT_PG_ADMIN_PASSWORD: contract-admin
+        run: servicex_orchestrator/scripts/schema-contract-test.sh -r sx
+
   test:
     needs: build-matrix
     strategy:

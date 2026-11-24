@@ -45,7 +45,7 @@ FAILURE_STATUS = {
 class DatasetLookupWorkflow:
     """One DID-finder lookup, shared by every request for the dataset (plan §4.2).
 
-    Its id is `dataset-<did_hash>`. Requests start it, or join the one already
+    Its id is `dataset-<dataset_id>`. Requests start it, or join the one already
     running, with signal-with-start of `subscribe(<their workflow id>)`. It forwards
     the lookup's progress to every subscriber as `files_available(hwm)` and ends with
     `lookup_finished(status, hwm)`. The dataset row is the cache, so the workflow ends

@@ -61,7 +61,7 @@ flowchart LR
   App[Flask app<br/>submit / cancel / status] -- start / cancel / query --> T[(Temporal)]
   subgraph Orchestrator worker  (task queue: servicex-orchestrator)
     TRW[TransformRequestWorkflow<br/>id = transform-&lt;request_id&gt;]
-    DLW[DatasetLookupWorkflow<br/>id = dataset-&lt;did_hash&gt;]
+    DLW[DatasetLookupWorkflow<br/>id = dataset-&lt;dataset_id&gt;]
     BW[FileBatchWorkflow children]
     PMW[PoolManagerWorkflow<br/>id = pool-&lt;request_id&gt;]
     DBA[DB / k8s / object-store activities]
@@ -106,14 +106,15 @@ generated code, so no worker can pick up another request's file.
 Input: `request_id`, the parsed DID (or file list), image, generated-code reference,
 result destination/format, the user's `workers` hint.
 
-1. **Hash the DID.** Pure, deterministic code inside the workflow:
-   `did_hash = sha256(f"{scheme}://{normalized_did}")`. For a file list, use the existing
-   `DatasetManager.file_list_hash`.
-2. **Check the dataset cache** (activity `get_or_create_dataset(did_hash, did, scheme)`).
-   It returns `{dataset_id, lookup_status, n_files_known}` and links the request
-   (`requests.did_id`).
+1. **The dataset row is already chosen.** At submit the app finds the non-stale
+   `datasets` row by name (the full DID, or `DatasetManager.file_list_hash` for a file
+   list), creating it if needed, links the request (`requests.did_id`), and passes
+   `dataset_id` in the workflow input. The partial unique index on `name` where
+   `stale = false` makes that row the cache key; there is no separate DID hash.
+2. **Read the dataset** (activity `get_or_create_dataset(dataset_id, ...)`). It returns
+   `{dataset_id, lookup_status, n_files_known}`.
 3. **Make sure a lookup is running if one is needed.** If the status is not `complete`,
-   an activity starts `DatasetLookupWorkflow` with id `dataset-<did_hash>` and
+   an activity starts `DatasetLookupWorkflow` with id `dataset-<dataset_id>` and
    `WorkflowIdConflictPolicy.USE_EXISTING`. Temporal's workflow-ID uniqueness replaces the
    `pending_lookup` bookkeeping: N concurrent requests for one DID start exactly one
    lookup. The request then subscribes to that lookup by signal:
@@ -147,7 +148,7 @@ Signals, queries and updates:
 - `status` query: cursor, batches in flight, counts. The DB stays the source of truth
   for the UI and REST API; the query is for debugging.
 
-### 4.2 `DatasetLookupWorkflow` (one per dataset; id `dataset-<did_hash>`)
+### 4.2 `DatasetLookupWorkflow` (one per dataset row; id `dataset-<dataset_id>`)
 
 1. Activity `mark_dataset_looking(dataset_id)`.
 2. Activity `lookup_dataset(did, dataset_id)` on the `did-finder-<scheme>` queue (§5.1).
@@ -304,7 +305,7 @@ or API-server blip stalls the request rather than failing it.
 
 | Side effect | Why it is safe to repeat |
 |---|---|
-| Starting the dataset lookup | Workflow ID `dataset-<did_hash>` + `USE_EXISTING` |
+| Starting the dataset lookup | Workflow ID `dataset-<dataset_id>` + `USE_EXISTING` |
 | Starting the request workflow | Workflow ID `transform-<request_id>`; the app retries the start freely |
 | Inserting dataset files | **New** `UNIQUE(dataset_id, file_key)`, insert `ON CONFLICT DO UPDATE` (refresh replicas) |
 | Writing an output object | **New** name derived from `file_id` (or `file_key`), not the replica, so any attempt on any replica overwrites the same key. S3 PUT/multipart-complete is atomic |
@@ -312,9 +313,14 @@ or API-server blip stalls the request rather than failing it.
 | A zombie worker finishing after its attempt timed out | Temporal rejects the stale completion; its upload overwrites the identical object key |
 | Scaling the pool | `scale_pool(n)` sets an absolute replica count; it never adds to the current one |
 
-### 6.1 Schema changes (Alembic)
-- `datasets.did_hash` (CHAR(64)), indexed and unique where `stale = false`. This becomes
-  the cache key in place of the 1024-char `name`.
+### 6.1 Schema changes (Alembic, migration `v1_10_0`)
+- No `datasets.did_hash`. The app already picks the dataset row by `name` (partial
+  unique index where `stale = false`) and passes its id to the workflow, so the row id
+  is the cache key and the lookup workflow id. Keying the lookup on a DID hash would
+  also be wrong: when a dataset goes stale mid-lookup, the next request gets a new row,
+  and it must not join the old row's lookup, which writes files into the old row.
+  `did_hash` stays on the `LookupInput` wire format for the DID finders, informational
+  only.
 - `files.file_key`: a stable identity from the DID finder (Rucio `scope:name`, the URL
   for xrootd/opendata, the path for user lists), plus `UNIQUE(dataset_id, file_key)`.
 - `requests.workflow_id` and `requests.workflow_run_id`, for debugging and the UI's link
@@ -374,7 +380,7 @@ replicas.
 ## 10. Phased delivery
 
 1. **Foundations.** Temporal in Helm and local dev; orchestrator skeleton; Alembic
-   migration (`did_hash`, `file_key` + unique, `workflow_id`); output naming by
+   migration (`file_key` + unique, `workflow_id`); output naming by
    `file_key` (this can ship on its own under Celery).
 2. **Lookup path.** `DatasetLookupWorkflow` + `DIDFinderWorker` in the lib (RC); Rucio
    finder first, then the other four.

@@ -23,7 +23,7 @@ from temporalio import activity, workflow
 COMPONENT = "servicex_orchestrator"
 
 # transform-<request_id>, transform-<request_id>-batch-<n>, pool-<request_id>.
-# dataset-<did_hash> is shared by every request for the dataset, so it has none.
+# dataset-<dataset_id> is shared by every request for the dataset, so it has none.
 _REQUEST_WORKFLOW_ID = re.compile(
     r"^(?:transform|pool)-(?P<request_id>.+?)(?:-batch-\d+)?$"
 )

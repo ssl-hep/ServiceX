@@ -77,6 +77,10 @@ spec:
           value: "{{ .Values.logging.logstash.protocol }}"
         {{- end }}
         {{- include "servicex.vector.env" . | trim | nindent 8 }}
+        {{- if .Values.orchestrator.enabled }}
+        # boot.sh creates the orchestrator's Postgres role after migrating
+        {{- include "servicex.orchestrator.dbEnv" . | trim | nindent 8 }}
+        {{- end }}
     {{- if .Values.secrets }}
         - name: OAUTH_METADATA_URL
           valueFrom:

@@ -42,7 +42,13 @@ with workflow.unsafe.imports_passed_through():
 
 
 def did_hash(scheme: str, did: str) -> str:
-    """The dataset cache key (plan §4.1 step 1)."""
+    """A digest of the DID, passed to `get_or_create_dataset` and the DID finders.
+
+    Informational only: it is not a cache key. The app picks (or creates) the dataset
+    row by name at submit, and the lookup workflow is keyed on that row's id. Note
+    `did` already carries its scheme, so this hashes `rucio://rucio://...`; it is kept
+    as is because the DID finders receive it.
+    """
     return hashlib.sha256(f"{scheme}://{did}".encode()).hexdigest()
 
 

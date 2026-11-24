@@ -4,12 +4,15 @@ import logging
 import signal
 from collections.abc import AsyncIterator
 from datetime import timedelta
+from typing import Optional
 
 from temporalio.api.workflowservice.v1 import DescribeNamespaceRequest
 from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import Worker
+from sqlalchemy.ext.asyncio import AsyncEngine
 
+from servicex_orchestrator import db
 from servicex_orchestrator.activities import build_activities, build_stubs
 from servicex_orchestrator.config import Settings, did_finder_task_queue
 from servicex_orchestrator.log_config import configure_logging
@@ -61,12 +64,14 @@ async def connect(settings: Settings) -> Client:
 GRACEFUL_SHUTDOWN = timedelta(seconds=20)
 
 
-def build_worker(client: Client, settings: Settings) -> Worker:
+def build_worker(
+    client: Client, settings: Settings, engine: Optional[AsyncEngine] = None
+) -> Worker:
     return Worker(
         client,
         task_queue=settings.task_queue,
         workflows=WORKFLOWS,
-        activities=build_activities(settings),
+        activities=build_activities(settings, engine),
         graceful_shutdown_timeout=GRACEFUL_SHUTDOWN,
     )
 
@@ -83,10 +88,12 @@ def build_stub_did_finder_worker(
     )
 
 
-def build_workers(client: Client, settings: Settings) -> list[Worker]:
+def build_workers(
+    client: Client, settings: Settings, engine: Optional[AsyncEngine] = None
+) -> list[Worker]:
     """The orchestrator worker, then one stub DID finder per configured scheme."""
     return [
-        build_worker(client, settings),
+        build_worker(client, settings, engine),
         *(
             build_stub_did_finder_worker(client, settings, scheme)
             for scheme in settings.stub_did_finder_schemes
@@ -110,7 +117,45 @@ async def running(workers: list[Worker]) -> AsyncIterator[list[Worker]]:
             await asyncio.gather(*(worker.shutdown() for worker in workers))
 
 
+async def open_database(settings: Settings) -> Optional[AsyncEngine]:
+    """The Postgres pool, checked against the schema and grants we expect.
+
+    Raises db.DatabaseUnavailable or db.SchemaMismatch, which end the process: the
+    pod restarts with backoff, and on a fresh install the check passes once the app
+    has migrated the database and created our role.
+    """
+    if not settings.database_url:
+        logger.warning(
+            "DATABASE_URL is not set: running without the ServiceX database "
+            "(fine while every DB activity is a stub)"
+        )
+        return None
+    engine = db.create_engine(settings)
+    try:
+        revision = await db.startup_check(engine)
+    except BaseException:
+        await engine.dispose()
+        raise
+    logger.info(
+        "Connected to Postgres %s (schema revision %s, pool %d+%d)",
+        db.describe(engine),
+        revision,
+        settings.db_pool_size,
+        settings.db_max_overflow,
+    )
+    return engine
+
+
 async def run(settings: Settings) -> None:
+    engine = await open_database(settings)
+    try:
+        await _run(settings, engine)
+    finally:
+        if engine is not None:
+            await engine.dispose()
+
+
+async def _run(settings: Settings, engine: Optional[AsyncEngine]) -> None:
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -128,7 +173,7 @@ async def run(settings: Settings) -> None:
     stopping.cancel()
     client = connecting.result()
 
-    workers = build_workers(client, settings)
+    workers = build_workers(client, settings, engine)
     logger.info(
         "Polling task queues %s in namespace %r at %s",
         ", ".join(repr(worker.task_queue) for worker in workers),
@@ -161,6 +206,9 @@ def main() -> None:
         )
     try:
         asyncio.run(run(settings))
+    except (db.DatabaseUnavailable, db.SchemaMismatch) as err:
+        logger.critical("Orchestrator database check failed: %s", err)
+        raise SystemExit(1) from None
     finally:
         if vector:
             vector.stop()  # flushes what is still queued

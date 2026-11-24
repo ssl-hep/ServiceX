@@ -1,0 +1,6 @@
+{{- /*
+Install-time checks for the orchestrator. Renders nothing.
+*/ -}}
+{{- if and .Values.orchestrator.enabled (not .Values.postgres.enabled) }}
+{{- fail "orchestrator.enabled needs postgres.enabled=true: the orchestrator writes to the ServiceX Postgres directly and can't use SQLite" }}
+{{- end }}

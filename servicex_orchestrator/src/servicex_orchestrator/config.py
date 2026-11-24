@@ -1,6 +1,6 @@
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 DEFAULT_TASK_QUEUE = "servicex-orchestrator"
@@ -34,6 +34,13 @@ class Settings:
     # DID schemes whose `did-finder-<scheme>` queue this worker serves with the stub
     # lookup, for setups without a real DID finder. A tuple keeps Settings hashable.
     stub_did_finder_schemes: tuple[str, ...] = ()
+    # The ServiceX Postgres, as the orchestrator's own restricted role. Kept out of
+    # repr() because it holds the password. Optional while every DB activity is
+    # still a stub.
+    database_url: Optional[str] = field(default=None, repr=False)
+    # Connection pool per replica: at most pool size + overflow connections each.
+    db_pool_size: int = 5
+    db_max_overflow: int = 5
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] = os.environ) -> "Settings":
@@ -50,4 +57,7 @@ class Settings:
             vector_port=int(env["VECTOR_PORT"]) if env.get("VECTOR_PORT") else None,
             instance_name=env.get("INSTANCE_NAME", "Unknown"),
             stub_did_finder_schemes=_split_list(env.get("STUB_DID_FINDER_SCHEMES", "")),
+            database_url=env.get("DATABASE_URL") or None,
+            db_pool_size=int(env.get("DB_POOL_SIZE", "5")),
+            db_max_overflow=int(env.get("DB_MAX_OVERFLOW", "5")),
         )
