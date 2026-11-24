@@ -39,6 +39,7 @@ from servicex_app.decorators import auth_required
 from servicex_app.did_parser import DIDParser
 from servicex_app.models import TransformRequest, db, TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.transformer_manager import TransformerManager
 from werkzeug.exceptions import BadRequest
 
 
@@ -119,6 +120,22 @@ class SubmitTransformationRequest(ServiceXResource):
             default="parquet",
         )
         return cls
+
+    @staticmethod
+    def _compute_output_path(request_id: str, result_destination: str) -> str:
+        """Return the destination the transformer will write results to.
+
+        For ``object-store`` this is the S3 bucket name; for ``volume`` this
+        is the on-disk directory the sidecar writes files into.
+        """
+        if result_destination == TransformRequest.OBJECT_STORE_DEST:
+            return request_id
+        if result_destination == TransformRequest.VOLUME_DEST:
+            return os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config["TRANSFORMER_PERSISTENCE_SUBDIR"],
+            )
+        raise ValueError(f"Unknown result_destination: {result_destination}")
 
     def _initialize_dataset_manager(
         self,
@@ -228,13 +245,17 @@ class SubmitTransformationRequest(ServiceXResource):
                     current_app.logger.error(msg, extra={"request_id": request_id})
                     return {"message": msg}, 500
 
+            output_path = self._compute_output_path(
+                request_id, args["result-destination"]
+            )
+
             # If the user has requested an object store destination, now is the time
-            # to create a bucket named after the request id
+            # to create the bucket at the computed output path.
             if (
                 self.object_store
                 and args["result-destination"] == TransformRequest.OBJECT_STORE_DEST
             ):
-                self.object_store.create_bucket(request_id)
+                self.object_store.create_bucket(output_path)
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
@@ -271,6 +292,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     tree_name=args["tree-name"],
                     result_destination=args["result-destination"],
                     result_format=args["result-format"],
+                    output_path=output_path,
                     workers=args["workers"],
                     status=TransformStatus.submitted,
                     app_version=self._get_app_version(),
