@@ -172,6 +172,18 @@ spec:
         resources:
 {{ toYaml .Values.app.resources | indent 10 }}
         {{- end }}
+        {{- with .Values.app.startupProbe }}
+        startupProbe:
+{{ toYaml . | indent 10 }}
+        {{- end }}
+        {{- with .Values.app.readinessProbe }}
+        readinessProbe:
+{{ toYaml . | indent 10 }}
+        {{- end }}
+        {{- with .Values.app.livenessProbe }}
+        livenessProbe:
+{{ toYaml . | indent 10 }}
+        {{- end }}
 
         volumeMounts:
           {{- if eq .Values.app.environment "dev" }}
