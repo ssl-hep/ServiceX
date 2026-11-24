@@ -25,21 +25,6 @@ docker command:
 
 You can now make queries against port 5000.
 
-### Translating a `qastle` into code
-For debugging purposes you sometimes want to translate an `ast` into a zip file.
-This container will also do that for you:
-
-```
-AST="(Select (call EventDataset) (lambda (list event) (dict (list 'pt' 'eta') (list (attr event 'Muon_pt') (attr event 'Muon_eta')))))"
-echo $AST | docker run -i --rm -v ${PWD}:/zip sslhep/servicex_code_gen_func_adl_uproot:latest translate -z /zip/junk.zip
-```
-
-After running, that will leave a `zip` file in your home directory that contains
-the 6 or so files necessary to run the requested transform. The only thing
-missing are the input files.
-
-
-
 Development
 -----------
 - Note that this service requires Python 3.7 or above
@@ -55,9 +40,4 @@ docker run --rm -it \
   --mount type=bind,source=$(pwd)/generated,target=/generated \
   --entrypoint bash \
   sslhep/servicex_code_gen_func_adl_uproot:develop
-```
-
-Then cd to /code and run the script as
-```bash
- echo $AST | PYTHONPATH=/code python scripts/from_ast_to_zip.py -z /generated/foo.zip --uproot
 ```

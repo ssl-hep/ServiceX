@@ -38,6 +38,10 @@ ALLOWED_COMPRESSION_ALGORITHMS = {"ZLIB", "LZMA", "LZ4", "ZSTD"}
 ALLOWED_COMPRESSION_LEVELS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 
+def _reject_constant(constant):
+    raise GenerateCodeException(f"Query contains an unsupported value: {constant}")
+
+
 class RawUprootTranslator(CodeGenerator):
     # Generate the code. Ignoring caching for now
     def generate_code(self, query, cache_path: str):
@@ -48,12 +52,19 @@ class RawUprootTranslator(CodeGenerator):
 
         import json
 
-        jquery = json.loads(query)
+        try:
+            jquery = json.loads(query, parse_constant=_reject_constant)
+        except json.JSONDecodeError as e:
+            raise GenerateCodeException(f"Provided query is not valid JSON: {e}")
 
         if not isinstance(jquery, list):
             raise GenerateCodeException("Provided query is not a list")
 
         for subquery in jquery:
+            if not isinstance(subquery, dict):
+                raise GenerateCodeException(
+                    f"Provided query {subquery} is not a dictionary"
+                )
             if ("treename" not in subquery or not subquery["treename"]) and (
                 "copy_histograms" not in subquery or not subquery["copy_histograms"]
             ):
