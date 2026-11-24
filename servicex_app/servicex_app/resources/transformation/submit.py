@@ -248,6 +248,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
+            use_temporal = config.get("ORCHESTRATOR", "temporal") == "temporal"
             session = db.session
             with session.begin():
                 # persist the Dataset record and obtain a committed DB ID.
@@ -298,12 +299,18 @@ class SubmitTransformationRequest(ServiceXResource):
 
                 # If this request has a fresh DID then submit the lookup request to the DID Finder
                 if dataset_manager.is_lookup_required:
-                    dataset_manager.submit_lookup_request(
-                        self._generate_advertised_endpoint(
-                            "servicex/internal/transformation/"
-                        ),
-                        self.celery_app,
-                    )
+                    if use_temporal:
+                        # The request workflow's DatasetLookupWorkflow runs the lookup
+                        # on the DID finder's Temporal worker; a Celery task here would
+                        # sit unconsumed in RabbitMQ.
+                        dataset_manager.mark_lookup_started()
+                    else:
+                        dataset_manager.submit_lookup_request(
+                            self._generate_advertised_endpoint(
+                                "servicex/internal/transformation/"
+                            ),
+                            self.celery_app,
+                        )
                     request_rec.status = TransformStatus.lookup
                 elif dataset_manager.is_complete:
                     current_app.logger.info(
@@ -322,7 +329,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     request_rec.status = TransformStatus.pending_lookup
 
             # Start the work independently of the state of the dataset.
-            if config.get("ORCHESTRATOR", "temporal") == "temporal":
+            if use_temporal:
                 run_id = self.temporal_adaptor.start_transform_request(
                     request_rec, did_scheme, config["TRANSFORMER_MAX_REPLICAS"]
                 )

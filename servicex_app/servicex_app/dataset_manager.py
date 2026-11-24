@@ -188,6 +188,11 @@ class DatasetManager:
         self.logger.debug(
             f"Submitted lookup request for {self.did.did} taskID {task_id} "
         )
+        self.mark_lookup_started()
+
+    def mark_lookup_started(self) -> None:
+        """Record that a DID finder lookup is under way, so later requests for this
+        dataset wait for it instead of starting another."""
         self.dataset.lookup_status = DatasetStatus.looking
 
     def publish_files(

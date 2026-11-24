@@ -8,10 +8,43 @@ For a given RUCIO DID finds optimal access paths.
 ## Overview
 
 This service is intended to run as part of a [ServiceX](https://github.com/ssl-hep/ServiceX)
-deployment. In that role it listens for Dataset Lookup requests on the
-`rucio_did_requests` RabbitMQ queue. Upon receipt, it asks Rucio to resolve the
-dataset and return the files that make it up. The server selects a replica and
-passes it back to the ServiceX app to request transformation.
+deployment. It receives Dataset Lookup requests, asks Rucio to resolve the
+dataset and return the files that make it up, selects replicas, and passes the
+files back to the ServiceX app for transformation.
+
+It runs in one of two modes, sharing the same lookup code
+(`rucio_did_finder.finder.find_files`):
+
+* **Temporal** (`scripts/start_temporal_worker.sh`, `python -m rucio_did_finder.temporal_worker`):
+  a `DIDFinderWorker` from the DID finder lib hosts the `lookup_dataset` activity on
+  the `did-finder-rucio` task queue, scheduled by the ServiceX orchestrator. The Helm
+  chart uses this mode when `orchestrator.enabled` is true.
+* **Celery** (`scripts/start_celery_worker.sh`, the image's default entrypoint):
+  listens on the `did_finder_rucio` RabbitMQ queue. Kept for one release while
+  ServiceX moves to Temporal.
+
+The Temporal worker reads these environment variables:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TEMPORAL_ADDRESS` | `localhost:7233` | Temporal frontend |
+| `TEMPORAL_NAMESPACE` | `default` | Temporal namespace |
+| `TEMPORAL_TASK_QUEUE` | `did-finder-rucio` | Task queue to poll |
+| `SERVICEX_INTERNAL_ENDPOINT` | (required) | e.g. `http://servicex-app:8000/servicex/internal/transformation/` |
+| `DID_FINDER_MAX_CONCURRENT` | `4` | Lookups run at once (the chart sets `didFinder.rucio.maxConcurrentLookups`) |
+
+Each file carries a `file_key` of its Rucio `scope:name`, which ServiceX uses to
+dedupe files when a lookup is retried.
+
+## DID finder library version
+
+`servicex-did-finder-lib` is a git dependency on the library's `temporal` branch
+until that work is released. `poetry.lock` pins the commit, so pick up a newer
+head of the branch with:
+
+```bash
+poetry update servicex-did-finder-lib
+```
 
 ## Build Image
 

@@ -1,0 +1,95 @@
+# Copyright (c) 2024, IRIS-HEP
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the copyright holder nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""Rucio lookup shared by the Celery app (celery.py) and the Temporal worker
+(temporal_worker.py).
+
+Configuration is read from the environment and the Rucio clients are built at import
+time, so the x509 proxy must be in place before this module is imported.
+"""
+
+import os
+
+from rucio.client.didclient import DIDClient
+from rucio.client.replicaclient import ReplicaClient
+
+from rucio_did_finder.lookup_request import LookupRequest
+from rucio_did_finder.rucio_adapter import RucioAdapter
+from .replica_distance import ReplicaSorter
+
+cache_prefix = os.environ.get("CACHE_PREFIX", "")
+report_logical_files = os.environ.get("REPORT_LOGICAL_FILES", "0") == "1"
+# Initialize the finder
+did_client = DIDClient()
+replica_client = ReplicaClient()
+rucio_adapter = RucioAdapter(did_client, replica_client, report_logical_files)
+
+if (
+    "RUCIO_LATITUDE" in os.environ
+    and "RUCIO_LONGITUDE" in os.environ
+    and "USE_REPLICA_SORTER" in os.environ
+):
+    location = {
+        "latitude": float(os.environ["RUCIO_LATITUDE"]),
+        "longitude": float(os.environ["RUCIO_LONGITUDE"]),
+    }
+    replica_sorter = ReplicaSorter()
+else:
+    location = None
+    replica_sorter = None
+
+rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION")
+if not rse_expression:
+    raise ValueError(
+        "RUCIO_RSE_EXPRESSION environment variable must be set to a Rucio RSE "
+        "expression appropriate for this experiment's Rucio instance"
+    )
+
+ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+
+
+def find_files(did_name, info, did_finder_args):
+    """Yield lists of file dicts for a DID, one list per Rucio dataset.
+
+    Used as the user_did_finder by both DIDFinderApp and DIDFinderWorker. A Temporal
+    retry starts over rather than using info["resume"]; ServiceX dedupes on file_key.
+    """
+    lookup_request = LookupRequest(
+        did=did_name,
+        rucio_adapter=did_finder_args["rucio_adapter"],
+        dataset_id=info["dataset-id"],
+        replica_sorter=replica_sorter,
+        location=location,
+        rse_expression=rse_expression,
+        ignore_availability=ignore_availability,
+    )
+    for file in lookup_request.lookup_files():
+        yield file

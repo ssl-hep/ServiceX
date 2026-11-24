@@ -171,6 +171,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_celery_app,
     ):
         client = self._test_client(
+            extra_config={"ORCHESTRATOR": "celery"},
             rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
@@ -221,6 +222,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         mock_celery_app,
     ):
         client = self._test_client(
+            extra_config={"ORCHESTRATOR": "celery"},
             rabbit_adaptor=mock_rabbit_adaptor,
             code_gen_service=mock_codegen,
             celery_app=mock_celery_app,
@@ -472,6 +474,43 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                 submitted_request, scheme, 5
             )
             mock_transform_manager.start_transformers.assert_not_called()
+
+    def test_submit_transformation_temporal_skips_celery_lookup(
+        self,
+        mocker,
+        mock_dataset_manager_from_did,
+        mock_codegen,
+        mock_celery_app,
+    ):
+        """In temporal mode the DatasetLookupWorkflow runs the lookup, so submit only
+        marks the dataset as being looked up and sends no Celery task."""
+        mock_temporal = mocker.MagicMock(TemporalAdaptor)
+        mock_temporal.start_transform_request.return_value = "run-123"
+        client = self._test_client(
+            extra_config={"ORCHESTRATOR": "temporal"},
+            code_gen_service=mock_codegen,
+            celery_app=mock_celery_app,
+            temporal_adaptor=mock_temporal,
+        )
+        dataset_manager = mock_dataset_manager_from_did.return_value
+        dataset_manager.is_lookup_required = True
+
+        with client.application.app_context():
+            response = client.post(
+                "/servicex/transformation",
+                json=self._generate_transformation_request(),
+                headers=self.fake_header(),
+            )
+            assert response.status_code == 200
+            submitted_request = TransformRequest.lookup(response.json["request_id"])
+
+            dataset_manager.submit_lookup_request.assert_not_called()
+            dataset_manager.mark_lookup_started.assert_called_once_with()
+            mock_celery_app.send_task.assert_not_called()
+            assert submitted_request.status == TransformStatus.lookup
+            mock_temporal.start_transform_request.assert_called_once_with(
+                submitted_request, "rucio", 5
+            )
 
     def test_submit_transformation_workflow_start_fails(
         self, mocker, mock_dataset_manager_from_did, mock_codegen

@@ -33,6 +33,10 @@ from servicex_did_finder_lib.exceptions import (
     NoSuchDatasetException,
 )
 
+from servicex_did_finder_lib.accumulator import Accumulator
+from servicex_did_finder_lib.did_summary import DIDSummary
+from servicex_did_finder_lib.servicex_adaptor import ServiceXAdapter
+
 from rucio_did_finder.rucio_adapter import RucioAdapter
 
 
@@ -119,3 +123,101 @@ class TestListDatasetsForDid:
 
         with pytest.raises(LookupFailureException, match="boom"):
             adapter.list_datasets_for_did("abc:broken")
+
+
+TWO_FILE_METALINK = """<?xml version="1.0" encoding="UTF-8"?>
+<metalink xmlns="urn:ietf:params:xml:ns:metalink">
+ <file name="f0">
+ <identity>user.x:f0</identity>
+ <hash type="adler32">430cf1b4</hash>
+ <size>100</size>
+ <url location="A" priority="1">root://a/f0</url>
+ <url location="B" priority="2">root://b/f0</url>
+ </file>
+ <file name="f1">
+ <identity>user.x:f1</identity>
+ <hash type="adler32">0000aaaa</hash>
+ <size>200</size>
+ <url location="A" priority="1">root://a/f1</url>
+ </file>
+</metalink>"""
+
+
+class TestListFilesForDid:
+    @pytest.fixture
+    def replica_adapter(self, adapter, mocker):
+        mocker.patch.object(
+            adapter, "list_datasets_for_did", return_value=[["user.x", "ds"]]
+        )
+        mocker.patch.object(adapter, "client_location", return_value={})
+        adapter.did_client.list_files.return_value = [{"name": "f0"}, {"name": "f1"}]
+        adapter.replica_client.list_replicas.return_value = TWO_FILE_METALINK
+        return adapter
+
+    def test_file_key_is_scope_and_name(self, replica_adapter):
+        (files,) = list(replica_adapter.list_files_for_did("user.x:ds", "cloud=CERN"))
+
+        assert files == [
+            {
+                "adler32": "430cf1b4",
+                "file_size": 100,
+                "file_events": 0,
+                "paths": ["root://a/f0", "root://b/f0"],
+                "file_key": "user.x:f0",
+            },
+            {
+                "adler32": "0000aaaa",
+                "file_size": 200,
+                "file_events": 0,
+                "paths": ["root://a/f1"],
+                "file_key": "user.x:f1",
+            },
+        ]
+
+    def test_file_key_keeps_scope_for_logical_files(self, replica_adapter):
+        replica_adapter.report_logical_files = True
+
+        (files,) = list(replica_adapter.list_files_for_did("user.x:ds", "cloud=CERN"))
+
+        assert [f["paths"] for f in files] == [["f0"], ["f1"]]
+        assert [f["file_key"] for f in files] == ["user.x:f0", "user.x:f1"]
+
+
+class TestCeleryPathIgnoresFileKey:
+    def test_accumulator_drops_file_key_from_put(self, mocker):
+        """The Celery DIDFinderApp PUTs files through Accumulator and
+        put_file_add_bulk; an extra file_key must not break it or reach the app."""
+        put = mocker.patch("servicex_did_finder_lib.servicex_adaptor.requests.put")
+        sx = ServiceXAdapter(
+            endpoint="http://sx/servicex/internal/transformation/", dataset_id=7
+        )
+        summary = DIDSummary("user.x:ds")
+        acc = Accumulator(sx, summary)
+        acc.add(
+            [
+                {
+                    "adler32": "1",
+                    "file_size": 100,
+                    "file_events": 0,
+                    "paths": ["root://a/f0"],
+                    "file_key": "user.x:f0",
+                },
+                {
+                    "adler32": "2",
+                    "file_size": 200,
+                    "file_events": 0,
+                    "paths": ["root://a/f1"],
+                    "file_key": "user.x:f1",
+                },
+            ]
+        )
+
+        acc.send_on(-1)
+
+        (call,) = put.call_args_list
+        assert call.args == ("http://sx/servicex/internal/transformation/7/files",)
+        body = call.kwargs["json"]
+        assert [f["paths"] for f in body] == [["root://a/f0"], ["root://a/f1"]]
+        assert all("file_key" not in f for f in body)
+        assert summary.file_count == 2
+        assert summary.total_bytes == 300

@@ -25,65 +25,13 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os
+"""Celery entrypoint, kept for one release while ServiceX moves to Temporal."""
 
-from rucio.client.didclient import DIDClient
-from rucio.client.replicaclient import ReplicaClient
-
-from rucio_did_finder.lookup_request import LookupRequest
-from rucio_did_finder.rucio_adapter import RucioAdapter
 from servicex_did_finder_lib import DIDFinderApp
-from .replica_distance import ReplicaSorter
 
-cache_prefix = os.environ.get("CACHE_PREFIX", "")
-report_logical_files = os.environ.get("REPORT_LOGICAL_FILES", "0") == "1"
-# Initialize the finder
-did_client = DIDClient()
-replica_client = ReplicaClient()
-rucio_adapter = RucioAdapter(did_client, replica_client, report_logical_files)
-
-if (
-    "RUCIO_LATITUDE" in os.environ
-    and "RUCIO_LONGITUDE" in os.environ
-    and "USE_REPLICA_SORTER" in os.environ
-):
-    location = {
-        "latitude": float(os.environ["RUCIO_LATITUDE"]),
-        "longitude": float(os.environ["RUCIO_LONGITUDE"]),
-    }
-    replica_sorter = ReplicaSorter()
-else:
-    location = None
-    replica_sorter = None
-
-rse_expression = os.environ.get("RUCIO_RSE_EXPRESSION")
-if not rse_expression:
-    raise ValueError(
-        "RUCIO_RSE_EXPRESSION environment variable must be set to a Rucio RSE "
-        "expression appropriate for this experiment's Rucio instance"
-    )
-
-ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower() in (
-    "true",
-    "1",
-    "yes",
-)
+from rucio_did_finder.finder import find_files, rucio_adapter
 
 app = DIDFinderApp("rucio", did_finder_args={"rucio_adapter": rucio_adapter})
-
-
-def find_files(did_name, info, did_finder_args):
-    lookup_request = LookupRequest(
-        did=did_name,
-        rucio_adapter=did_finder_args["rucio_adapter"],
-        dataset_id=info["dataset-id"],
-        replica_sorter=replica_sorter,
-        location=location,
-        rse_expression=rse_expression,
-        ignore_availability=ignore_availability,
-    )
-    for file in lookup_request.lookup_files():
-        yield file
 
 
 @app.did_lookup_task(name="did_finder_rucio.lookup_dataset")

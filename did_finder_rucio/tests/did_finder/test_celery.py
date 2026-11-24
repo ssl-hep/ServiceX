@@ -25,148 +25,30 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import importlib
-import os
-import sys
 from unittest.mock import patch
 
 import pytest
 
-from rucio_did_finder.replica_distance import ReplicaSorter
-
-MODULE_NAME = "rucio_did_finder.celery"
-
-TEST_RSE_EXPRESSION = "cloud=CERN"
-MINIMAL_ENV = {"RUCIO_RSE_EXPRESSION": TEST_RSE_EXPRESSION}
+from .conftest import MINIMAL_ENV
 
 
 @pytest.fixture
-def import_celery():
-    """Import the celery module under a controlled environment.
-
-    The module does all of its configuration at import time and builds live
-    Rucio clients, so it is imported afresh for each test with those clients
-    patched out and `os.environ` replaced by exactly what the test asks for.
-    """
-
-    def _import(**env):
-        sys.modules.pop(MODULE_NAME, None)
-        with patch("rucio.client.didclient.DIDClient"), patch(
-            "rucio.client.replicaclient.ReplicaClient"
-        ), patch.dict(os.environ, env, clear=True):
-            return importlib.import_module(MODULE_NAME)
-
-    yield _import
-    # Don't leave a module built from a synthetic environment behind for
-    # anything else that imports it.
-    sys.modules.pop(MODULE_NAME, None)
+def import_celery(import_finder_module):
+    return lambda **env: import_finder_module("rucio_did_finder.celery", **env)
 
 
-class TestModuleConfiguration:
-    def test_defaults(self, import_celery):
-        celery = import_celery(**MINIMAL_ENV)
-
-        assert celery.cache_prefix == ""
-        assert celery.rse_expression == TEST_RSE_EXPRESSION
-        assert celery.ignore_availability is False
-        assert celery.location is None
-        assert celery.replica_sorter is None
-
+class TestApp:
     def test_rucio_adapter_wired_into_app(self, import_celery):
         celery = import_celery(**MINIMAL_ENV)
+        from rucio_did_finder import finder
 
-        adapter = celery.app.did_finder_args["rucio_adapter"]
-        assert adapter is celery.rucio_adapter
-        assert adapter.did_client is celery.did_client
-        assert adapter.replica_client is celery.replica_client
-        assert adapter.report_logical_files is False
         assert celery.app.name == "rucio"
+        assert celery.app.did_finder_args["rucio_adapter"] is finder.rucio_adapter
+        assert celery.find_files is finder.find_files
 
-    def test_cache_prefix(self, import_celery):
-        celery = import_celery(CACHE_PREFIX="root://cache/", **MINIMAL_ENV)
-        assert celery.cache_prefix == "root://cache/"
-
-    @pytest.mark.parametrize("missing", [{}, {"RUCIO_RSE_EXPRESSION": ""}])
-    def test_rse_expression_is_required(self, import_celery, missing):
+    def test_rse_expression_is_required(self, import_celery):
         with pytest.raises(ValueError, match="RUCIO_RSE_EXPRESSION"):
-            import_celery(**missing)
-
-    @pytest.mark.parametrize(
-        "value, expected",
-        [
-            ("true", True),
-            ("True", True),
-            ("1", True),
-            ("yes", True),
-            ("YES", True),
-            ("false", False),
-            ("no", False),
-            ("", False),
-        ],
-    )
-    def test_ignore_availability(self, import_celery, value, expected):
-        celery = import_celery(RUCIO_IGNORE_AVAILABILITY=value, **MINIMAL_ENV)
-        assert celery.ignore_availability is expected
-
-    def test_report_logical_files(self, import_celery):
-        # if nothing in the environment, should be false
-        celery = import_celery(**MINIMAL_ENV)
-        assert not celery.rucio_adapter.report_logical_files
-        # if set to 1 then should be true
-        celery = import_celery(REPORT_LOGICAL_FILES="1", **MINIMAL_ENV)
-        assert celery.rucio_adapter.report_logical_files
-        # if set to something other than 1 then should be false
-        celery = import_celery(REPORT_LOGICAL_FILES="", **MINIMAL_ENV)
-        assert not celery.rucio_adapter.report_logical_files
-
-
-class TestReplicaSorterConfiguration:
-    SORTER_ENV = {
-        "RUCIO_LATITUDE": "41.88",
-        "RUCIO_LONGITUDE": "-88.25",
-        "USE_REPLICA_SORTER": "1",
-    }
-
-    def test_enabled(self, import_celery):
-        celery = import_celery(**self.SORTER_ENV, **MINIMAL_ENV)
-
-        assert celery.location == {"latitude": 41.88, "longitude": -88.25}
-        assert isinstance(celery.replica_sorter, ReplicaSorter)
-
-    @pytest.mark.parametrize("omitted", sorted(SORTER_ENV))
-    def test_disabled_unless_fully_configured(self, import_celery, omitted):
-        env = {k: v for k, v in self.SORTER_ENV.items() if k != omitted}
-        celery = import_celery(**env, **MINIMAL_ENV)
-
-        assert celery.location is None
-        assert celery.replica_sorter is None
-
-
-class TestFindFiles:
-    def test_passes_configuration_to_lookup_request(self, import_celery):
-        celery = import_celery(RUCIO_IGNORE_AVAILABILITY="true", **MINIMAL_ENV)
-        files = [{"paths": ["root://site/ghi"]}, {"paths": ["root://site/jkl"]}]
-
-        with patch.object(celery, "LookupRequest") as lookup_request:
-            lookup_request.return_value.lookup_files.return_value = iter(files)
-            found = list(
-                celery.find_files(
-                    "rucio://my-did",
-                    {"dataset-id": 42},
-                    celery.app.did_finder_args,
-                )
-            )
-
-        assert found == files
-        lookup_request.assert_called_once_with(
-            did="rucio://my-did",
-            rucio_adapter=celery.rucio_adapter,
-            dataset_id=42,
-            replica_sorter=None,
-            location=None,
-            rse_expression=TEST_RSE_EXPRESSION,
-            ignore_availability=True,
-        )
+            import_celery()
 
 
 class TestLookupDatasetTask:

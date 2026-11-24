@@ -324,6 +324,20 @@ class TestDatasetManager(ResourceTestBase):
             args=["my-did?files=1", 1, "http://hit-me/here"],
         )
 
+    def test_mark_lookup_started(self, client):
+        with client.application.app_context():
+            with db.session.begin():
+                d = DatasetManager.from_did(
+                    did=DIDParser("rucio://my-did"),
+                    logger=client.application.logger,
+                    db=db,
+                )
+            assert d.is_lookup_required
+            d.mark_lookup_started()
+
+            assert d.dataset.lookup_status == DatasetStatus.looking
+            assert not d.is_lookup_required
+
     def test_publish_files(self, mocker, client, celery_worker):
         with client.application.app_context():
             mock_publisher = mocker.patch(

@@ -217,6 +217,9 @@ class RucioAdapter:
                             "file_size": int(f["size"], 10),
                             "file_events": 0,
                             "paths": path,
+                            # Rucio scope:name, a stable identity ServiceX
+                            # dedupes on when a lookup is retried
+                            "file_key": f["identity"],
                         }
                     )
             no_replica_files += nfiles - len(g_files)
