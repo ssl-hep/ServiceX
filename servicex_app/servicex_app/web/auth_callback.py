@@ -7,9 +7,9 @@ from .utils import load_oauth_client
 def auth_callback():
     """Handles the interaction with OIDC Auth."""
     if "error" in request.args:
+        description = request.args.get("error_description") or request.args["error"]
         flash(
-            "You could not be logged into the portal: "
-            + request.args.get("error_description"),
+            "You could not be logged into the portal: " + description,
             request.args["error"],
         )
         return redirect("/")
