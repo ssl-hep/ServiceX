@@ -259,6 +259,6 @@ async def test_every_request_record_carries_its_request_id(restore_logging):
     assert {r.request_id for r in lookup} == {None}
     assert {r.dataset_id for r in lookup if r.getMessage().startswith("STUB")} == {42}
     messages = [r.getMessage() for r in request]
-    assert any(m.startswith("STUB finalize_request") for m in messages)
+    assert any(m.startswith("STUB cleanup_request") for m in messages)
     assert any(m.startswith("STUB transform_file") for m in messages)
     assert any(m.startswith("STUB launch_pilots") for m in messages)

@@ -18,21 +18,36 @@ The ServiceX app starts `TransformRequestWorkflow` on submit when its config has
 `ORCHESTRATOR = 'temporal'`. It sends a plain JSON object whose keys must match
 `models.TransformRequestInput`.
 
-**The dataset activities are real**, on the ServiceX Postgres:
-`activities/datasets.py` (`get_or_create_dataset`, `read_dataset`,
-`mark_dataset_looking`, `mark_dataset_complete`, `mark_dataset_failed`) and
-`activities/request_status.py` (`record_request_workflow`, `mark_request_running`).
+**The dataset and request bookkeeping activities are real**, on the ServiceX
+Postgres: `activities/datasets.py` (`get_or_create_dataset`, `read_dataset`,
+`mark_dataset_looking`, `mark_dataset_complete`, `mark_dataset_failed`),
+`activities/request_status.py` (`record_request_workflow`, `mark_request_running`,
+`record_request_progress`, `finalize_request`) and `activities/files.py`
+(`claim_file_batch`, `record_file_result`).
 A complete dataset row is a cache hit: the request starts no lookup.
 `mark_dataset_complete` counts `n_files`, `size` and `events` from the dataset's
 `files` rows, which is what the request transforms, rather than trusting the DID
 finder's summary of its last attempt. A failed lookup's message goes to the dataset's
 log records (shown on the dataset page); the app has no column for it.
 
+`claim_file_batch` reads the dataset's files past the request's cursor, up to the
+high-water mark the lookup signalled; it locks nothing, since the workflow's cursor is
+what hands each file to one batch. A file with no `file_key` (a duplicate row from
+before the v1_10_0 migration) gets its first replica as its key, the rule that
+migration's backfill used, so it writes the same output object as the file it
+duplicates. `record_file_result` upserts `transform_result` on `(file_id,
+request_id)` with the columns the Celery-mode file-complete endpoint fills; a failed
+file's reason goes to the request's log records. The request's counters and totals
+are written by the request workflow, as absolute values: after each batch
+(`record_request_progress`), so the UI's progress moves a batch at a time, and at
+the end (`finalize_request`, with `failure_description` when the request didn't
+complete).
+
 **The rest are stubs for now** (`activities/stubs.py`). Each one logs what it would
 do (`STUB launch_pilots: would create Jobs [...]`) and returns fake data: the stub DID
 lookup "finds" `STUB_DATASET_FILES` files (it writes no `files` rows, so its dataset
-ends `complete` with 0 files), `claim_file_batch` makes up files by id, and every
-transform succeeds. `start_dataset_lookup` is real: it starts or joins the lookup
+ends `complete` with 0 files, and its requests complete with nothing to transform),
+and every transform succeeds. `start_dataset_lookup` is real: it starts or joins the lookup
 workflow. The transform activities run on the orchestrator's own queue until
 transformer pilots poll `transform-<request_id>`.
 
@@ -86,7 +101,7 @@ orchestrator needs `postgres.enabled=true`; the chart refuses to render it on SQ
 |---|---|---|---|
 | `datasets` | creates rows, `name`, `did_finder`, `last_used`, `stale` | `lookup_status`, `n_files`, `size`, `events`, `last_updated` | all |
 | `files` | all inserts, as an upsert on `(dataset_id, file_key)` (DID finders PUT them to the app) | nothing | all |
-| `requests` | creates rows, every user-facing field (`status` and `files` at submit; in Celery mode it keeps writing them) | `status`, `files` (Temporal mode, once the dataset's file count is known), `finish_time`, `files_completed`, `files_failed`, `workflow_id`, `workflow_run_id` | those, plus `id`, `request_id`, `did_id` |
+| `requests` | creates rows, every user-facing field (`status` and `files` at submit; in Celery mode it keeps writing them) | `status`, `files` (Temporal mode, once the dataset's file count is known), `finish_time`, `files_completed`, `files_failed`, `total_events`, `total_bytes`, `failure_description`, `workflow_id`, `workflow_run_id` | those, plus `id`, `request_id`, `did_id` |
 | `transform_result` | nothing | all inserts and updates | all |
 
 Nothing else (users, log records, ...) is visible to the orchestrator.
@@ -139,9 +154,10 @@ To give the orchestrator a new column:
    `file_key` backfill;
 3. creates the role twice;
 4. runs `pytest -m "contract or db"`: the contract tests and `tests/db`, which run
-   the dataset and request activities as the role, and requests with their lookup
-   on the time-skipping server (complete, does-not-exist, a retried lookup leaving
-   no duplicate files, and a cache hit starting no lookup).
+   the dataset, request and file activities as the role, and requests with their
+   lookup on the time-skipping server (complete with its counts and results,
+   does-not-exist ending `bad_dataset`, a retried lookup leaving no duplicate
+   files, and a cache hit starting no lookup).
 
 The tests check that every orchestrator column exists with a compatible type,
 nullability and enum labels, and that the role holds the privileges it needs. They
@@ -159,7 +175,8 @@ real app in Temporal mode (`flask run`), the orchestrator worker, and the real
 default `../ServiceX_DID_Finder_lib`) over a fake catalog (`tests/e2e/fake_finder.py`),
 on a local Temporal dev server. It runs a lookup twice on one dataset, then a request
 that must hit the cache, and a lookup that fails halfway and is retried. It checks
-that there are no duplicate `files` rows and that the dataset and requests are right.
+that there are no duplicate `files` rows, that the dataset is right, and that each
+request ends `complete` with its counts, totals and `transform_result` rows.
 It needs docker and all three poetry envs, so CI doesn't run it.
 
 ### Rules for DB activities
@@ -168,7 +185,11 @@ It needs docker and all three poetry envs, so CI doesn't run it.
   attempt can finish late. Write upserts (`INSERT ... ON CONFLICT DO UPDATE`) and
   absolute values (`SET files_completed = :n`), never increments
   (`SET files_completed = files_completed + 1`). Then running it twice is the same as
-  running it once.
+  running it once. Counters written while the request runs
+  (`record_request_progress`) are absolute but never go down
+  (`SET files_completed = GREATEST(files_completed, :n)`): batches finish
+  concurrently, so their writes can land out of order. Writes to a request that has
+  finished are skipped, so a late one can't undo `finalize_request`.
 - **Decisions stay in the workflow.** An activity does not read state, decide, and
   write. The workflow holds the counters and the status, decides, and passes the
   result to the activity to record. The database is the record, not the source of the

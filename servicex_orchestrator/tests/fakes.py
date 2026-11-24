@@ -10,12 +10,17 @@ from temporalio.exceptions import ApplicationError
 from servicex_orchestrator.models import (
     DATASET_MISSING,
     LOOKUP_COMPLETE,
+    ClaimBatchInput,
     DatasetInfo,
+    FileRef,
+    FinalizeInput,
     GetDatasetInput,
     LookupSummary,
     MarkDatasetFailedInput,
     MarkRequestRunningInput,
+    RecordFileResultInput,
     RecordWorkflowInput,
+    RequestProgressInput,
 )
 
 
@@ -23,13 +28,16 @@ class FakeDatabase:
     """Dataset rows and request bookkeeping kept in a dict.
 
     A dataset id that was never preset reads as `looking` with no files, the way
-    submit leaves a new dataset. `calls` records every call by activity name.
+    submit leaves a new dataset. Every dataset's files have ids 1..n, whatever the
+    DID, so `claim_file_batch` serves any range. `calls` records every call by
+    activity name; `results` holds the transform results by (request, file id).
     """
 
     def __init__(self, calls: Optional[dict] = None):
         self.datasets: dict[int, DatasetInfo] = {}
         self.missing: set[int] = set()
         self.calls: dict[str, list] = calls if calls is not None else defaultdict(list)
+        self.results: dict[tuple[str, int], RecordFileResultInput] = {}
 
     def preset(self, dataset_id: int, status: str, n_files: int = 0) -> None:
         self.datasets[dataset_id] = DatasetInfo(
@@ -85,6 +93,34 @@ class FakeDatabase:
     async def mark_request_running(self, input: MarkRequestRunningInput) -> None:
         self.calls["mark_request_running"].append(input)
 
+    @activity.defn
+    async def claim_file_batch(self, input: ClaimBatchInput) -> list[FileRef]:
+        self.calls["claim_file_batch"].append(input)
+        last = min(input.after + input.limit, input.up_to)
+        return [
+            FileRef(
+                file_id=file_id,
+                file_key=f"fake:dataset-{input.dataset_id}/file-{file_id}.root",
+                replicas=[
+                    f"root://fake-se//dataset-{input.dataset_id}/file-{file_id}.root"
+                ],
+            )
+            for file_id in range(input.after + 1, last + 1)
+        ]
+
+    @activity.defn
+    async def record_file_result(self, input: RecordFileResultInput) -> None:
+        self.calls["record_file_result"].append(input)
+        self.results[(input.request_id, input.result.file_id)] = input
+
+    @activity.defn
+    async def record_request_progress(self, input: RequestProgressInput) -> None:
+        self.calls["record_request_progress"].append(input)
+
+    @activity.defn
+    async def finalize_request(self, input: FinalizeInput) -> None:
+        self.calls["finalize_request"].append(input)
+
     def all(self) -> list:
         return [
             self.get_or_create_dataset,
@@ -94,4 +130,8 @@ class FakeDatabase:
             self.mark_dataset_failed,
             self.record_request_workflow,
             self.mark_request_running,
+            self.claim_file_batch,
+            self.record_file_result,
+            self.record_request_progress,
+            self.finalize_request,
         ]

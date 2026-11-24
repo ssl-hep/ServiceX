@@ -112,6 +112,10 @@ class Seeder:
         async with self.admin.connect() as conn:
             return (await conn.execute(text(sql), params)).one()
 
+    async def rows(self, sql: str, **params):
+        async with self.admin.connect() as conn:
+            return (await conn.execute(text(sql), params)).all()
+
     async def scalar(self, sql: str, **params):
         async with self.admin.connect() as conn:
             return await conn.scalar(text(sql), params)
@@ -120,10 +124,22 @@ class Seeder:
         async with self.admin.begin() as conn:
             for request_id in self.requests:
                 await conn.execute(
+                    text("DELETE FROM transform_result WHERE request_id = :r"),
+                    {"r": request_id},
+                )
+                await conn.execute(
                     text("DELETE FROM requests WHERE request_id = :r"),
                     {"r": request_id},
                 )
             for dataset_id in self.datasets:
+                # transform_result.file_id references files
+                await conn.execute(
+                    text(
+                        "DELETE FROM transform_result WHERE file_id IN "
+                        "(SELECT id FROM files WHERE dataset_id = :d)"
+                    ),
+                    {"d": dataset_id},
+                )
                 await conn.execute(
                     text("DELETE FROM requests WHERE did_id = :d"), {"d": dataset_id}
                 )

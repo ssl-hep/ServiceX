@@ -55,6 +55,8 @@ class FileBatchWorkflow:
         for r in results:
             if r.status == FILE_SUCCESS:
                 batch.files_completed += 1
+                batch.events += r.events
+                batch.bytes += r.bytes
             else:
                 batch.files_failed += 1
                 if r.error_type == TRANSFORM_CODE_ERROR:

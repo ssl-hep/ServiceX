@@ -3,7 +3,8 @@ dataset and request activities on a real Postgres.
 
 The DID finder is a fake `lookup_dataset` that writes files the way the app's PUT
 endpoint does (an upsert on file_key) and signals progress like DIDFinderWorker.
-Transforms are still the stubs.
+Transforms are still the stubs; claiming files, recording their results and
+finishing the request are real.
 """
 
 import contextlib
@@ -21,6 +22,7 @@ from servicex_orchestrator.activities import (
     build_db_activities,
     ping,
 )
+from servicex_orchestrator.activities.stubs import STUB_FILE_BYTES, STUB_FILE_EVENTS
 from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.models import (
     DATASET_NOT_FOUND,
@@ -152,8 +154,27 @@ async def _dataset(seed, dataset_id):
 
 async def _request(seed, request_id):
     return await seed.row(
-        "SELECT status, files, workflow_id FROM requests WHERE request_id = :r",
+        "SELECT status, files, files_completed, files_failed, total_events, "
+        "total_bytes, failure_description, finish_time IS NOT NULL AS finished, "
+        "(SELECT count(*) FROM transform_result t WHERE t.request_id = r.request_id "
+        "AND t.transform_status = 'success') AS results, "
+        "workflow_id FROM requests r WHERE request_id = :r",
         r=request_id,
+    )
+
+
+def _completed(n):
+    """The request row once all n files transformed (minus the workflow id)."""
+    return (
+        REQUEST_COMPLETE,
+        n,
+        n,
+        0,
+        n * STUB_FILE_EVENTS,
+        n * STUB_FILE_BYTES,
+        None,
+        True,
+        n,
     )
 
 
@@ -177,7 +198,7 @@ async def test_lookup_completes_the_dataset_and_runs_the_request(
         10,
     )
     request = await _request(seed, request_id)
-    assert tuple(request) == ("running", 10, f"transform-{request_id}")
+    assert tuple(request) == (*_completed(10), f"transform-{request_id}")
 
 
 async def test_dataset_not_found(env, orchestrator, seed):
@@ -196,8 +217,18 @@ async def test_dataset_not_found(env, orchestrator, seed):
     assert result.status == REQUEST_BAD_DATASET
     assert finder.attempts == 1
     assert (await _dataset(seed, dataset_id)).lookup_status == LOOKUP_DOES_NOT_EXIST
-    # Never ran; finalize_request (still a stub) will record bad_dataset.
-    assert (await _request(seed, request_id)).status == "lookup"
+    # Never ran: no file count, no results, and the reason on the request.
+    assert tuple(await _request(seed, request_id))[:-1] == (
+        REQUEST_BAD_DATASET,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "dataset lookup failed: does_not_exist",
+        True,
+        0,
+    )
 
 
 async def test_retried_lookup_leaves_no_duplicate_files(env, orchestrator, seed):
@@ -218,7 +249,7 @@ async def test_retried_lookup_leaves_no_duplicate_files(env, orchestrator, seed)
         12,
         12,
     )
-    assert tuple(await _request(seed, request_id))[:2] == ("running", 12)
+    assert tuple(await _request(seed, request_id))[:-1] == _completed(12)
 
 
 async def test_second_request_for_a_complete_dataset_skips_the_lookup(
@@ -235,5 +266,6 @@ async def test_second_request_for_a_complete_dataset_skips_the_lookup(
 
     assert result.status == REQUEST_COMPLETE
     assert finder.attempts == 1
-    assert tuple(await _request(seed, second))[:2] == ("running", 5)
+    assert tuple(await _request(seed, first))[:-1] == _completed(5)
+    assert tuple(await _request(seed, second))[:-1] == _completed(5)
     assert (await _dataset(seed, dataset_id)).rows == 5

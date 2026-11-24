@@ -153,6 +153,8 @@ class FileResult:
     bytes: int = 0
     error_type: Optional[str] = None
     error_message: Optional[str] = None
+    # Wall time the transform took; 0 when unknown (e.g. a file that failed for good)
+    transform_seconds: float = 0.0
 
 
 @dataclass
@@ -167,6 +169,20 @@ class BatchResult:
     files_completed: int = 0
     files_failed: int = 0
     code_errors: int = 0
+    # Summed over the batch's successful files
+    events: int = 0
+    bytes: int = 0
+
+
+@dataclass
+class RequestProgressInput:
+    """The request's running totals, as absolute values the workflow holds."""
+
+    request_id: str
+    files_completed: int
+    files_failed: int
+    total_events: int = 0
+    total_bytes: int = 0
 
 
 @dataclass
@@ -176,6 +192,8 @@ class FinalizeInput:
     files_completed: int
     files_failed: int
     message: Optional[str] = None
+    total_events: int = 0
+    total_bytes: int = 0
 
 
 @dataclass
@@ -235,6 +253,8 @@ class TransformRequestState:
     files_dispatched: int = 0
     files_completed: int = 0
     files_failed: int = 0
+    total_events: int = 0
+    total_bytes: int = 0
 
 
 @dataclass

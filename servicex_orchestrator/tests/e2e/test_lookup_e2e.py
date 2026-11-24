@@ -1,6 +1,7 @@
 """Dataset lookups end to end on a real Postgres: the real app's PUT files endpoint,
 the real orchestrator worker and the real DIDFinderWorker (with a fake catalog,
-fake_finder.py). Transforms are still stubs.
+fake_finder.py). Transforms are still stubs; claiming files, recording their results
+and finishing the request are real.
 
 Run it with scripts/lookup-e2e-test.sh, which sets up the database and the env:
 CONTRACT_ADMIN_URL, CONTRACT_ORCHESTRATOR_URL, E2E_APP_DIR (servicex_app) and
@@ -22,6 +23,7 @@ import pytest_asyncio
 from temporalio.testing import WorkflowEnvironment
 
 from pg_seed import ADMIN_URL, ORCHESTRATOR_URL, Seeder, engine
+from servicex_orchestrator.activities.stubs import STUB_FILE_BYTES, STUB_FILE_EVENTS
 from servicex_orchestrator.config import Settings
 from servicex_orchestrator.models import (
     REQUEST_COMPLETE,
@@ -214,7 +216,27 @@ async def _dataset(seed, dataset_id):
 
 async def _request(seed, request_id):
     return await seed.row(
-        "SELECT status, files FROM requests WHERE request_id = :r", r=request_id
+        "SELECT status, files, files_completed, files_failed, total_events, "
+        "total_bytes, failure_description, finish_time IS NOT NULL AS finished, "
+        "(SELECT count(*) FROM transform_result t WHERE t.request_id = r.request_id "
+        "AND t.transform_status = 'success') AS results "
+        "FROM requests r WHERE request_id = :r",
+        r=request_id,
+    )
+
+
+def _finished(n):
+    """The request row once its n files transformed."""
+    return (
+        REQUEST_COMPLETE,
+        n,
+        n,
+        0,
+        n * STUB_FILE_EVENTS,
+        n * STUB_FILE_BYTES,
+        None,
+        True,
+        n,
     )
 
 
@@ -230,7 +252,7 @@ async def test_lookup_twice_then_cache_hit(temporal, task_queue, finder, seed):
     result = await _run(temporal, task_queue, first, dataset_id, did)
     assert result.status == REQUEST_COMPLETE
     assert tuple(await _dataset(seed, dataset_id)) == _complete(10)
-    assert tuple(await _request(seed, first)) == ("running", 10)
+    assert tuple(await _request(seed, first)) == _finished(10)
     assert _lookups(finder, dataset_id) == 1
 
     # The lookup runs again on the same row (as after a failed lookup, which submit
@@ -243,13 +265,14 @@ async def test_lookup_twice_then_cache_hit(temporal, task_queue, finder, seed):
     assert result.status == REQUEST_COMPLETE
     assert _lookups(finder, dataset_id) == 2
     assert tuple(await _dataset(seed, dataset_id)) == _complete(10)
+    assert tuple(await _request(seed, again)) == _finished(10)
 
     # A request for the complete dataset (submit marks it running) skips the lookup.
     cached = await seed.request(dataset_id, status="running")
     result = await _run(temporal, task_queue, cached, dataset_id, did)
     assert result.status == REQUEST_COMPLETE
     assert _lookups(finder, dataset_id) == 2
-    assert tuple(await _request(seed, cached)) == ("running", 10)
+    assert tuple(await _request(seed, cached)) == _finished(10)
 
 
 async def test_forced_retry_leaves_no_duplicates(temporal, task_queue, finder, seed):
@@ -263,4 +286,4 @@ async def test_forced_retry_leaves_no_duplicates(temporal, task_queue, finder, s
     assert result.status == REQUEST_COMPLETE
     assert _lookups(finder, dataset_id) == 2, "the first attempt fails and is retried"
     assert tuple(await _dataset(seed, dataset_id)) == _complete(12)
-    assert tuple(await _request(seed, request_id)) == ("running", 12)
+    assert tuple(await _request(seed, request_id)) == _finished(12)

@@ -13,6 +13,7 @@ from temporalio.worker import Worker
 
 from fakes import FakeDatabase
 from servicex_orchestrator.activities import StubActivities, ping
+from servicex_orchestrator.activities.stubs import STUB_FILE_BYTES, STUB_FILE_EVENTS
 from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.models import (
     DATASET_NOT_FOUND,
@@ -22,7 +23,6 @@ from servicex_orchestrator.models import (
     REQUEST_CANCELED,
     REQUEST_COMPLETE,
     REQUEST_FATAL,
-    FinalizeInput,
     LaunchPilotsInput,
     LookupInput,
     LookupSummary,
@@ -61,11 +61,6 @@ class RecordingStubs(StubActivities):
         if self.lookup_error:
             raise self.lookup_error
         return await super().lookup_dataset(input)
-
-    @activity.defn
-    async def finalize_request(self, input: FinalizeInput) -> None:
-        self.calls["finalize_request"].append(input)
-        await super().finalize_request(input)
 
     @activity.defn
     async def cleanup_request(self, request_id: str) -> None:
@@ -171,7 +166,22 @@ async def test_did_request_runs_end_to_end(env):
     assert (result.files_completed, result.files_failed) == (23, 0)
     assert len(stubs.calls["lookup_dataset"]) == 1
     [final] = stubs.calls["finalize_request"]
-    assert (final.status, final.files_completed) == (REQUEST_COMPLETE, 23)
+    assert (final.status, final.files_completed, final.files_failed) == (
+        REQUEST_COMPLETE,
+        23,
+        0,
+    )
+    assert (final.total_events, final.total_bytes) == (
+        23 * STUB_FILE_EVENTS,
+        23 * STUB_FILE_BYTES,
+    )
+    assert final.message is None
+    # Every file recorded once, and the totals written after each batch of 5.
+    assert sorted(f for _, f in stubs.db.results) == list(range(1, 24))
+    progress = stubs.calls["record_request_progress"]
+    assert len(progress) == 5
+    assert {p.files_completed for p in progress} == {5, 10, 15, 20, 23}
+    assert all(p.total_events == p.files_completed * STUB_FILE_EVENTS for p in progress)
     assert stubs.calls["cleanup_request"] == [request.request_id]
     assert stubs.calls["launch_pilots"], "the pool should have launched pilots"
     [recorded] = stubs.calls["record_request_workflow"]
@@ -311,6 +321,14 @@ async def test_dataset_not_found_ends_bad_dataset(env):
     assert stubs.calls["launch_pilots"] == [], "no pods for a missing dataset"
     assert stubs.calls["cleanup_request"]
     assert stubs.calls["mark_request_running"] == []
+    [final] = stubs.calls["finalize_request"]
+    assert (final.status, final.files_completed, final.files_failed) == (
+        REQUEST_BAD_DATASET,
+        0,
+        0,
+    )
+    assert final.message == "dataset lookup failed: does_not_exist"
+    assert stubs.calls["record_request_progress"] == []
 
 
 async def test_second_request_for_a_complete_dataset_starts_no_lookup(env):

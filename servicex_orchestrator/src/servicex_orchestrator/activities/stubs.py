@@ -1,6 +1,7 @@
 """Stand-ins for the activities with a side effect that aren't real yet.
 
-The dataset activities are real (`datasets.py`, `request_status.py`). Each stub here
+The dataset and request bookkeeping activities are real (`datasets.py`,
+`request_status.py`, `files.py`). Each stub here
 logs what the real activity would do and returns plausible fake data, so the workflows
 can run end to end before the Kubernetes, object-store, DID-finder and
 transform-worker pieces exist. Replace them one by one; keep the names and
@@ -11,27 +12,27 @@ The fake dataset has `stub_files` files with ids 1..stub_files, whatever the DID
 
 import asyncio
 import hashlib
+import time
 
 from temporalio import activity
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from servicex_orchestrator.models import (
     FILE_SUCCESS,
-    ClaimBatchInput,
-    FileRef,
     FileResult,
-    FinalizeInput,
     LaunchPilotsInput,
     LookupInput,
     LookupSummary,
     PoolSpec,
-    RecordFileResultInput,
     StartLookupInput,
     TransformFileInput,
 )
 
 LOOKUP_WORKFLOW_TYPE = "DatasetLookupWorkflow"
 LOOKUP_CHUNK = 10
+# What the stub transform_file reports for every file
+STUB_FILE_EVENTS = 10_000
+STUB_FILE_BYTES = 1_000_000
 
 
 def lookup_workflow_id(dataset_id: int) -> str:
@@ -125,54 +126,6 @@ class StubActivities:
     # ----- request bookkeeping ---------------------------------------------------
 
     @activity.defn
-    async def claim_file_batch(self, input: ClaimBatchInput) -> list[FileRef]:
-        last = min(input.after + input.limit, input.up_to)
-        files = [
-            FileRef(
-                file_id=file_id,
-                file_key=f"stub:dataset-{input.dataset_id}/file-{file_id}.root",
-                replicas=[
-                    f"root://stub-se-1//dataset-{input.dataset_id}/file-{file_id}.root"
-                ],
-            )
-            for file_id in range(input.after + 1, last + 1)
-        ]
-        activity.logger.info(
-            "STUB claim_file_batch: would select files of dataset %s with "
-            "%d < id <= %d (limit %d) for request %s: got %d",
-            input.dataset_id,
-            input.after,
-            input.up_to,
-            input.limit,
-            input.request_id,
-            len(files),
-        )
-        return files
-
-    @activity.defn
-    async def record_file_result(self, input: RecordFileResultInput) -> None:
-        r = input.result
-        activity.logger.info(
-            "STUB record_file_result: would upsert transform_result "
-            "(file %s, request %s) = %s and update the request counters",
-            r.file_id,
-            input.request_id,
-            r.status,
-        )
-
-    @activity.defn
-    async def finalize_request(self, input: FinalizeInput) -> None:
-        activity.logger.info(
-            "STUB finalize_request: would set request %s to %r "
-            "(%d files completed, %d failed)%s",
-            input.request_id,
-            input.status,
-            input.files_completed,
-            input.files_failed,
-            f": {input.message}" if input.message else "",
-        )
-
-    @activity.defn
     async def cleanup_request(self, request_id: str) -> None:
         activity.logger.info(
             "STUB cleanup_request: would delete ConfigMap, leftover transformer "
@@ -185,6 +138,7 @@ class StubActivities:
     @activity.defn
     async def transform_file(self, input: TransformFileInput) -> FileResult:
         replica = input.file.replicas[0]
+        started = time.monotonic()
         activity.heartbeat()
         await asyncio.sleep(self.stub_delay)
         object_name = output_object_name(input.file.file_key, input.spec.result_format)
@@ -201,8 +155,9 @@ class StubActivities:
             status=FILE_SUCCESS,
             object_name=object_name,
             replica_used=replica,
-            events=10_000,
-            bytes=1_000_000,
+            events=STUB_FILE_EVENTS,
+            bytes=STUB_FILE_BYTES,
+            transform_seconds=time.monotonic() - started,
         )
 
     # ----- worker pool -----------------------------------------------------------
@@ -247,9 +202,6 @@ class StubActivities:
         """The activities the orchestrator's own queue serves."""
         return [
             self.start_dataset_lookup,
-            self.claim_file_batch,
-            self.record_file_result,
-            self.finalize_request,
             self.cleanup_request,
             self.transform_file,
             self.count_live_pilots,

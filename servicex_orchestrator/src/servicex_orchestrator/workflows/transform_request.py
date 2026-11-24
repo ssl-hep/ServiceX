@@ -30,6 +30,7 @@ with workflow.unsafe.imports_passed_through():
         PoolInput,
         PoolSpec,
         RecordWorkflowInput,
+        RequestProgressInput,
         StartLookupInput,
         TransformRequestInput,
         TransformRequestResult,
@@ -136,14 +137,7 @@ class TransformRequestWorkflow:
 
             status, message = self._final_status()
             await orchestrator_activity(
-                "finalize_request",
-                FinalizeInput(
-                    input.request_id,
-                    status,
-                    s.files_completed,
-                    s.files_failed,
-                    message,
-                ),
+                "finalize_request", self._finalize_input(input, status, message)
             )
             await self._stop_pool(input)
             await orchestrator_activity("cleanup_request", input.request_id)
@@ -157,13 +151,7 @@ class TransformRequestWorkflow:
             await self._stop_pool(input)
             await orchestrator_activity(
                 "finalize_request",
-                FinalizeInput(
-                    input.request_id,
-                    REQUEST_CANCELED,
-                    s.files_completed,
-                    s.files_failed,
-                    "canceled by user",
-                ),
+                self._finalize_input(input, REQUEST_CANCELED, "canceled by user"),
             )
             await orchestrator_activity("cleanup_request", input.request_id)
             raise
@@ -315,19 +303,35 @@ class TransformRequestWorkflow:
             input.request_id, input.result_destination, input.result_format
         )
         try:
-            result: BatchResult = await workflow.execute_child_workflow(
-                FileBatchWorkflow.run,
-                FileBatchInput(spec=spec, batch_number=number, files=files),
-                id=f"{request_workflow_id(input.request_id)}-batch-{number}",
+            try:
+                result: BatchResult = await workflow.execute_child_workflow(
+                    FileBatchWorkflow.run,
+                    FileBatchInput(spec=spec, batch_number=number, files=files),
+                    id=f"{request_workflow_id(input.request_id)}-batch-{number}",
+                )
+                s.files_completed += result.files_completed
+                s.files_failed += result.files_failed
+                s.total_events += result.events
+                s.total_bytes += result.bytes
+                # TODO: fail fast (plan §7) when code errors pile up. The stubs
+                # never fail.
+            except ChildWorkflowError as err:
+                # Should not happen: the batch records every file. Count the batch
+                # as failed so the request still finishes.
+                workflow.logger.error("Batch %d failed: %s", number, err)
+                s.files_failed += len(files)
+            # Before the batch stops counting as in flight, so the request doesn't
+            # finish (or continue as new) with this write still pending.
+            await orchestrator_activity(
+                "record_request_progress",
+                RequestProgressInput(
+                    input.request_id,
+                    s.files_completed,
+                    s.files_failed,
+                    s.total_events,
+                    s.total_bytes,
+                ),
             )
-            s.files_completed += result.files_completed
-            s.files_failed += result.files_failed
-            # TODO: fail fast (plan §7) when code errors pile up. The stubs never fail.
-        except ChildWorkflowError as err:
-            # Should not happen: the batch records every file. Count the batch as
-            # failed so the request still finishes.
-            workflow.logger.error("Batch %d failed: %s", number, err)
-            s.files_failed += len(files)
         finally:
             self._in_flight -= 1
         await self._send_backlog(input)
@@ -375,6 +379,20 @@ class TransformRequestWorkflow:
             ).cancel()
         except FailureError as err:  # the pool already ended
             workflow.logger.info("Could not cancel pool: %s", err)
+
+    def _finalize_input(
+        self, input: TransformRequestInput, status: str, message: Optional[str]
+    ) -> FinalizeInput:
+        s = self._state
+        return FinalizeInput(
+            input.request_id,
+            status,
+            s.files_completed,
+            s.files_failed,
+            message,
+            total_events=s.total_events,
+            total_bytes=s.total_bytes,
+        )
 
     def _final_status(self) -> tuple[str, Optional[str]]:
         lookup = self._state.lookup_status

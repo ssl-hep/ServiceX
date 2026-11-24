@@ -3,6 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from servicex_orchestrator.activities.datasets import DatasetActivities
+from servicex_orchestrator.activities.files import FileActivities
 from servicex_orchestrator.activities.health import ping
 from servicex_orchestrator.activities.request_status import RequestActivities
 from servicex_orchestrator.activities.stubs import StubActivities
@@ -18,7 +19,11 @@ def build_stubs(settings: Settings) -> StubActivities:
 
 def build_db_activities(engine: AsyncEngine) -> list:
     """The activities that read and write the ServiceX Postgres."""
-    return [*DatasetActivities(engine).all(), *RequestActivities(engine).all()]
+    return [
+        *DatasetActivities(engine).all(),
+        *RequestActivities(engine).all(),
+        *FileActivities(engine).all(),
+    ]
 
 
 def build_activities(
@@ -41,6 +46,7 @@ def build_activities(
 
 __all__ = [
     "DatasetActivities",
+    "FileActivities",
     "RequestActivities",
     "StubActivities",
     "build_activities",

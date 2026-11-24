@@ -92,6 +92,10 @@ requests = Table(
     Column("finish_time", DateTime, nullable=True, info=WRITES),
     Column("files_completed", Integer, nullable=False, info=WRITES),
     Column("files_failed", Integer, nullable=False, info=WRITES),
+    # Summed over the successful files; NULL until the first one (Celery mode).
+    Column("total_events", BigInteger, nullable=True, info=WRITES),
+    Column("total_bytes", BigInteger, nullable=True, info=WRITES),
+    Column("failure_description", String(10485760), nullable=True, info=WRITES),
     Column("workflow_id", String(255), nullable=True, info=WRITES),
     Column("workflow_run_id", String(64), nullable=True, info=WRITES),
 )

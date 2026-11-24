@@ -186,6 +186,9 @@ async def test_updates_its_request_columns(orchestrator, seeded):
                 files=2,
                 files_completed=2,
                 files_failed=0,
+                total_events=20_000,
+                total_bytes=2_000_000,
+                failure_description="dataset lookup failed: does_not_exist",
                 workflow_id=f"transform-{seeded['request_id']}",
                 workflow_run_id=str(uuid.uuid4()),
             )
@@ -234,6 +237,12 @@ REFUSED = {
     "update requests.did_id": "UPDATE requests SET did_id = did_id WHERE request_id = :r",
     "update requests.submit_time": (
         "UPDATE requests SET submit_time = now() WHERE request_id = :r"
+    ),
+    "update requests.did_lookup_time": (
+        "UPDATE requests SET did_lookup_time = 1 WHERE request_id = :r"
+    ),
+    "update requests.app_version": (
+        "UPDATE requests SET app_version = 'x' WHERE request_id = :r"
     ),
     "update datasets.name": "UPDATE datasets SET name = 'x' WHERE id = :d",
     "update datasets.stale": "UPDATE datasets SET stale = true WHERE id = :d",
