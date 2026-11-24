@@ -51,6 +51,11 @@ and every transform succeeds. `start_dataset_lookup` is real: it starts or joins
 workflow. The transform activities run on the orchestrator's own queue until
 transformer pilots poll `transform-<request_id>`.
 
+The worker-pool activities (`count_live_pilots`, `launch_pilots`, `delete_pool`,
+`cleanup_request`, in `activities/pool.py`) run on a **`WorkerBackend`**
+(`backends/base.py`), chosen by `WORKER_BACKEND`. `stub` (the default) only logs
+what it would launch. `kubernetes` is real; see [Transformer pilots](#transformer-pilots).
+
 `DatasetLookupWorkflow` schedules `lookup_dataset` on `did-finder-<scheme>`
 (`did-finder-rucio`, ...), where the DID finder for that scheme polls. Where no
 real DID finder runs for a scheme, list it in `STUB_DID_FINDER_SCHEMES`: the
@@ -72,11 +77,70 @@ either, a lookup times out after 15 minutes waiting to be picked up.
 | `STUB_DID_FINDER_SCHEMES` | empty | Comma-separated DID schemes (e.g. `rucio,cernopendata`) whose `did-finder-<scheme>` queue this worker serves with the stub lookup. Leave a scheme out once its real DID finder runs. The chart sets it from `orchestrator.stubDidFinderSchemes` |
 | `DATABASE_URL` | required | The ServiceX Postgres, as the orchestrator's own role (`postgresql://` or `postgresql+asyncpg://`). The worker exits if it is unset. The chart builds it from `orchestrator.database` |
 | `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | `5`, `5` | Connection pool per replica |
+| `WORKER_BACKEND` | `stub` | What runs transformer pilots: `stub` or `kubernetes`. The chart sets it from `orchestrator.workerBackend` |
+| `TRANSFORMER_CONFIG_FILE` | unset | The pilot pod settings (JSON). Required with `WORKER_BACKEND=kubernetes`; the chart mounts its `<release>-orchestrator-transformer` ConfigMap there |
+| `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` | unset | Object-store credentials, passed on to the pilots |
 
 On startup the worker first checks the database and exits with a clear error if it can't connect, or if the schema or the role's grants
 fall short of what `db/tables.py` declares. It then retries until the Temporal
 frontend is reachable and the namespace exists, so it can start before the Temporal
 server is ready.
+
+## Transformer pilots
+
+With `WORKER_BACKEND=kubernetes`, `KubernetesJobBackend` (`backends/kubernetes_job.py`)
+runs each pilot as a single-pod Kubernetes Job named
+`transformer-<request_id>-<generation>-<index>` in the transformer namespace, labelled
+`servicex/request-id`. The pod is the one the app's `TransformerManager` builds for its
+Deployment (science container, sidecar, Vector, x509, CVMFS and output volumes), with
+the request's generated code mounted at `/generated` from the
+`<request_id>-generated-source` ConfigMap the app's code generator creates at submit.
+As a Job it runs once (`backoffLimit: 0`, `restartPolicy: Never`): Temporal retries the
+file a dead pilot held, and the pool manager replaces the pilot.
+
+- `launch_pilots` creates the Jobs; one that already exists (a retried launch) counts
+  as created, so a retry never adds pilots.
+- `count_live_pilots` counts the request's Jobs that have no `Complete`/`Failed`
+  condition. A pilot still `Pending` on a full cluster counts as live.
+- `delete_pool` deletes the request's Jobs (propagation `Background`, so pods get
+  their grace period); `cleanup_request` does that too and deletes the
+  generated-code ConfigMap. Nothing to delete is success.
+- Finished Jobs are removed by Kubernetes after `ttlSecondsAfterFinished` (300 s).
+
+The pod settings come from `TRANSFORMER_CONFIG_FILE` (`backends/pod_config.py`), which
+the chart renders from the same `transformer.*` and `logging.vector.*` values as the
+app's `TRANSFORMER_*` settings. One difference: the xCache prefix is the static
+`transformer.cachePrefix` only. The VPS liveness lookup (`transformer.cacheVPSSite`)
+isn't ported.
+
+Vector runs as a native sidecar (an init container with `restartPolicy: Always`), so
+Kubernetes stops it once the other containers exit and the Job can complete. That
+needs Kubernetes 1.29 or later.
+
+The orchestrator's ServiceAccount needs `create`, `list`, `delete` and
+`deletecollection` on `batch/jobs` and `get`/`delete` on ConfigMaps in that
+namespace; the chart's `orchestrator/rbac.yaml` grants them. Outside a cluster the
+backend uses `~/.kube/config`.
+
+### The pilot contract
+
+The sidecar container runs `transformer_sidecar/pilot.py` (or
+`orchestrator.pilot.sidecarCommand`) and gets its settings from the environment:
+
+| Env var | Value |
+|---|---|
+| `TEMPORAL_ADDRESS`, `TEMPORAL_NAMESPACE` | Where to reach Temporal |
+| `TEMPORAL_TASK_QUEUE` | `transform-<request_id>`, the queue to poll for `transform_file` |
+| `REQUEST_ID`, `RESULT_DESTINATION`, `RESULT_FORMAT` | From the request |
+| `SHARED_DIR` | The volume shared with the science container (`transformer.outputDir`) |
+| `OUTPUT_DIR` | Volume destination only: where to write the output files |
+| `WORKER_IDLE_TIMEOUT_SECONDS` | Exit after this long with no file (`orchestrator.pilot.idleTimeoutSeconds`) |
+
+The sidecar and science containers also share `LOG_LEVEL`, `INSTANCE_NAME`,
+`POD_NAME`, `HOST_NAME`, `CACHE_PREFIX`, the `MINIO_*` settings and, with Vector,
+`VECTOR_HOST`/`VECTOR_PORT`, as today. The pilot doesn't exist yet: until the sidecar
+runs as a Temporal pilot and `FileBatchWorkflow` schedules `transform_file` on
+`transform-<request_id>`, keep `WORKER_BACKEND=stub`.
 
 ## Logs
 

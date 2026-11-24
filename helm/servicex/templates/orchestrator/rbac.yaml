@@ -1,0 +1,42 @@
+{{- if and .Values.orchestrator.enabled .Values.rbacEnabled }}
+# The orchestrator launches transformer pilots as Jobs (orchestrator.workerBackend:
+# kubernetes) and cleans up after each request. It needs no Deployments or HPAs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-orchestrator
+  labels:
+    app: {{ .Release.Name }}-orchestrator
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-orchestrator
+  labels:
+    app: {{ .Release.Name }}-orchestrator
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "delete", "deletecollection"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+# The generated-code ConfigMap the app creates at submit
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "delete"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-orchestrator
+  labels:
+    app: {{ .Release.Name }}-orchestrator
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-orchestrator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-orchestrator
+{{- end }}

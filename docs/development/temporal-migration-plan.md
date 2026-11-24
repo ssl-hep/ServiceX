@@ -188,6 +188,12 @@ and history warnings around 10k events / 10 MB, with a hard cap of 50k events / 
 
 ### 4.4 `PoolManagerWorkflow` (child; id `pool-<request_id>`)
 
+> Status: `KubernetesJobBackend` is implemented (`servicex_orchestrator/backends/`),
+> along with a real `cleanup_request`, behind `WORKER_BACKEND=kubernetes`
+> (`orchestrator.workerBackend`). It defines the pilot's environment contract (see the
+> orchestrator README); the sidecar doesn't run as a pilot yet, so the default stays
+> `stub`.
+
 Workers are **pilots**. Each one is a single-pod Kubernetes Job. It polls
 `transform-<request_id>`, processes files one at a time, and exits 0 once the queue has
 been idle for `WORKER_IDLE_TIMEOUT` (e.g. 2 min). The pool manager only ever *adds*

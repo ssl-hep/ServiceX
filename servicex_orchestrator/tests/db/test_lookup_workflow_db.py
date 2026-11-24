@@ -18,7 +18,9 @@ from temporalio.worker import Worker
 
 from pg_seed import NEEDS_DB
 from servicex_orchestrator.activities import (
+    PoolActivities,
     StubActivities,
+    StubPoolBackend,
     build_db_activities,
     ping,
 )
@@ -101,7 +103,12 @@ async def _workers(env, orchestrator, finder):
             env.client,
             task_queue=task_queue,
             workflows=WORKFLOWS,
-            activities=[ping, *build_db_activities(orchestrator), *stubs.all()],
+            activities=[
+                ping,
+                *build_db_activities(orchestrator),
+                *stubs.all(),
+                *PoolActivities(StubPoolBackend()).all(),
+            ],
         ),
         Worker(
             env.client,

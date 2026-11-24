@@ -12,7 +12,12 @@ from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from fakes import FakeDatabase
-from servicex_orchestrator.activities import StubActivities, ping
+from servicex_orchestrator.activities import (
+    PoolActivities,
+    StubActivities,
+    StubPoolBackend,
+    ping,
+)
 from servicex_orchestrator.activities.stubs import STUB_FILE_BYTES, STUB_FILE_EVENTS
 from servicex_orchestrator.config import did_finder_task_queue
 from servicex_orchestrator.models import (
@@ -41,26 +46,12 @@ from servicex_orchestrator.workflows import (
 )
 
 
-class RecordingStubs(StubActivities):
-    """The stubs and an in-memory dataset DB, plus a record of the calls the tests
-    care about (the DB's calls included)."""
+class RecordingPool(PoolActivities):
+    """The pool activities on the stub backend, recording their inputs."""
 
-    def __init__(self, stub_files=23, stub_delay=0.0, lookup_error=None):
-        super().__init__(stub_files=stub_files, stub_delay=stub_delay)
-        self.lookup_error = lookup_error
-        self.calls: dict[str, list] = defaultdict(list)
-        self.db = FakeDatabase(self.calls)
-
-    def all(self) -> list:
-        return [*self.db.all(), *super().all()]
-
-    @activity.defn
-    async def lookup_dataset(self, input: LookupInput) -> LookupSummary:
-        self.calls["lookup_dataset"].append(input)
-        self.calls["lookup_task_queue"].append(activity.info().task_queue)
-        if self.lookup_error:
-            raise self.lookup_error
-        return await super().lookup_dataset(input)
+    def __init__(self, calls: dict[str, list]):
+        super().__init__(StubPoolBackend())
+        self.calls = calls
 
     @activity.defn
     async def cleanup_request(self, request_id: str) -> None:
@@ -76,6 +67,29 @@ class RecordingStubs(StubActivities):
     async def delete_pool(self, spec: PoolSpec) -> None:
         self.calls["delete_pool"].append(spec)
         await super().delete_pool(spec)
+
+
+class RecordingStubs(StubActivities):
+    """The stubs, the stub pool and an in-memory dataset DB, plus a record of the
+    calls the tests care about (the DB's calls included)."""
+
+    def __init__(self, stub_files=23, stub_delay=0.0, lookup_error=None):
+        super().__init__(stub_files=stub_files, stub_delay=stub_delay)
+        self.lookup_error = lookup_error
+        self.calls: dict[str, list] = defaultdict(list)
+        self.db = FakeDatabase(self.calls)
+        self.pool = RecordingPool(self.calls)
+
+    def all(self) -> list:
+        return [*self.db.all(), *super().all(), *self.pool.all()]
+
+    @activity.defn
+    async def lookup_dataset(self, input: LookupInput) -> LookupSummary:
+        self.calls["lookup_dataset"].append(input)
+        self.calls["lookup_task_queue"].append(activity.info().task_queue)
+        if self.lookup_error:
+            raise self.lookup_error
+        return await super().lookup_dataset(input)
 
 
 @pytest.fixture

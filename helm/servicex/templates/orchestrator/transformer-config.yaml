@@ -1,0 +1,74 @@
+{{- if .Values.orchestrator.enabled }}
+{{- /*
+Transformer pilot pod settings for the orchestrator's KubernetesJobBackend
+(servicex_orchestrator/backends/pod_config.py). Rendered from the same values as the
+app's TRANSFORMER_* settings in app/configmap.yaml; keep the two in step. The
+object-store credentials are not here: the orchestrator gets them as env.
+*/ -}}
+{{- $t := .Values.transformer }}
+{{- $cfg := dict
+  "namespace" .Release.Namespace
+  "instance_name" .Release.Name
+  "log_level" (.Values.app.logLevel | upper)
+  "temporal" (dict
+    "address" (include "servicex.temporal.address" .)
+    "namespace" .Values.orchestrator.temporal.namespace)
+  "sidecar" (dict
+    "image" (printf "%s:%v" $t.sidecarImage $t.sidecarTag)
+    "pull_policy" $t.sidecarPullPolicy
+    "command" .Values.orchestrator.pilot.sidecarCommand)
+  "science" (dict "pull_policy" $t.scienceContainerPullPolicy)
+  "resources" (dict
+    "limits" (dict "cpu" (toString $t.cpuLimit) "memory" (toString $t.memoryLimit))
+    "requests" (dict "cpu" (toString $t.cpuRequest) "memory" (toString $t.memoryRequest)))
+  "output_dir" $t.outputDir
+  "x509_secret" (ternary nil "x509-proxy" .Values.noCerts)
+  "cvmfs_volume" $t.cvmfsVolume
+  "host_mount" .Values.hostMount
+  "mount_local" (and (eq .Values.app.environment "dev") .Values.app.mountLocal)
+  "persistence" (dict
+    "existing_claim" $t.persistence.existingClaim
+    "subdir" $t.persistence.subdir)
+  "cache_prefix" $t.cachePrefix
+  "node_selector" $t.nodeSelector
+  "tolerations" $t.tolerations
+  "affinity" $t.affinity
+  "pod_annotations" $t.podAnnotations
+  "priority_class" $t.priorityClassName
+  "pilot" (dict
+    "idle_timeout_seconds" .Values.orchestrator.pilot.idleTimeoutSeconds
+    "active_deadline_seconds" .Values.orchestrator.pilot.activeDeadlineSeconds)
+}}
+{{- if and .Values.logging.vector.enabled .Values.logging.vector.transformer.enabled }}
+{{- $v := .Values.logging.vector }}
+{{- $_ := set $cfg "vector" (dict
+  "image" (printf "%s:%v" $v.image $v.tag)
+  "pull_policy" .Values.app.pullPolicy
+  "port" $v.transformer.port
+  "log_level" $v.logLevel
+  "threads" $v.transformer.threads
+  "config_map" (printf "%s-transformer-vector-config" .Release.Name)
+  "resources" $v.transformer.resources) }}
+{{- end }}
+{{- if .Values.objectStore.enabled }}
+{{- $os := dict }}
+{{- if not .Values.objectStore.internal }}
+{{- $os = dict "url" .Values.objectStore.publicURL "encrypt" .Values.objectStore.useTLS }}
+{{- else }}
+{{- $_ := set $os "url" (printf "%s-minio:%v" .Release.Name .Values.minio.service.ports.api) }}
+{{- if .Values.minio.apiIngress.enabled }}
+{{- $_ := set $os "encrypt" .Values.objectStore.useTLS }}
+{{- end }}
+{{- end }}
+{{- $_ := set $cfg "object_store" $os }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-orchestrator-transformer
+  labels:
+    app: {{ .Release.Name }}-orchestrator
+data:
+  transformer.json: |
+{{ toPrettyJson $cfg | indent 4 }}
+{{- end }}

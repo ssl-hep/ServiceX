@@ -14,11 +14,16 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-orchestrator
-      {{- with .Values.orchestrator.podAnnotations }}
       annotations:
+        # Restart on a change to the pilot pod settings, which are read at start-up
+        checksum/transformer-config: {{ include (print $.Template.BasePath "/orchestrator/transformer-config.yaml") . | sha256sum }}
+        {{- with .Values.orchestrator.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
+      {{- if .Values.rbacEnabled }}
+      serviceAccountName: {{ .Release.Name }}-orchestrator
+      {{- end }}
       {{- with .Values.orchestrator.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -66,4 +71,37 @@ spec:
             value: {{ join "," . | quote }}
           {{- end }}
           {{- include "servicex.vector.env" . | trim | nindent 10 }}
+          # What runs transformer pilots, and the pod settings for the kubernetes one
+          - name: WORKER_BACKEND
+            value: {{ .Values.orchestrator.workerBackend | quote }}
+          - name: TRANSFORMER_CONFIG_FILE
+            value: /etc/servicex-orchestrator/transformer.json
+          {{- if .Values.objectStore.enabled }}
+          # Passed on to the pilots, which write their output to the object store
+          {{- if .Values.secrets }}
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: accesskey
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets }}
+                key: secretkey
+          {{- else }}
+          - name: MINIO_ACCESS_KEY
+            value: {{ .Values.minio.auth.rootUser | quote }}
+          - name: MINIO_SECRET_KEY
+            value: {{ .Values.minio.auth.rootPassword | quote }}
+          {{- end }}
+          {{- end }}
+        volumeMounts:
+          - name: transformer-config
+            mountPath: /etc/servicex-orchestrator
+            readOnly: true
+      volumes:
+        - name: transformer-config
+          configMap:
+            name: {{ .Release.Name }}-orchestrator-transformer
 {{- end }}

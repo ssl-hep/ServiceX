@@ -5,10 +5,20 @@ from typing import Optional
 
 DEFAULT_TASK_QUEUE = "servicex-orchestrator"
 
+# What runs transformer pilots (WORKER_BACKEND)
+STUB_BACKEND = "stub"
+KUBERNETES_BACKEND = "kubernetes"
+WORKER_BACKENDS = (STUB_BACKEND, KUBERNETES_BACKEND)
+
 
 def did_finder_task_queue(scheme: str) -> str:
     """The queue the DID finder for `scheme` polls for `lookup_dataset`."""
     return f"did-finder-{scheme}"
+
+
+def transform_task_queue(request_id: str) -> str:
+    """The queue a request's transformer pilots poll for `transform_file`."""
+    return f"transform-{request_id}"
 
 
 def _split_list(value: str) -> tuple[str, ...]:
@@ -41,6 +51,10 @@ class Settings:
     # Connection pool per replica: at most pool size + overflow connections each.
     db_pool_size: int = 5
     db_max_overflow: int = 5
+    # `stub` logs pilot launches; `kubernetes` creates a Job per pilot, with the pod
+    # settings read from `transformer_config_file`.
+    worker_backend: str = STUB_BACKEND
+    transformer_config_file: Optional[str] = None
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] = os.environ) -> "Settings":
@@ -60,4 +74,6 @@ class Settings:
             database_url=env.get("DATABASE_URL") or None,
             db_pool_size=int(env.get("DB_POOL_SIZE", "5")),
             db_max_overflow=int(env.get("DB_MAX_OVERFLOW", "5")),
+            worker_backend=env.get("WORKER_BACKEND", STUB_BACKEND).strip().lower(),
+            transformer_config_file=env.get("TRANSFORMER_CONFIG_FILE") or None,
         )

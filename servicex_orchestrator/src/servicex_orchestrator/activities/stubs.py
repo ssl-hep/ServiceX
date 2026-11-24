@@ -5,7 +5,8 @@ The dataset and request bookkeeping activities are real (`datasets.py`,
 logs what the real activity would do and returns plausible fake data, so the workflows
 can run end to end before the Kubernetes, object-store, DID-finder and
 transform-worker pieces exist. Replace them one by one; keep the names and
-signatures, since the workflows call them by name.
+signatures, since the workflows call them by name. `StubPoolBackend` stands in for
+the WorkerBackend when WORKER_BACKEND=stub.
 
 The fake dataset has `stub_files` files with ids 1..stub_files, whatever the DID.
 """
@@ -17,10 +18,10 @@ import time
 from temporalio import activity
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
+from servicex_orchestrator.backends.base import pilot_job_name
 from servicex_orchestrator.models import (
     FILE_SUCCESS,
     FileResult,
-    LaunchPilotsInput,
     LookupInput,
     LookupSummary,
     PoolSpec,
@@ -41,10 +42,6 @@ def lookup_workflow_id(dataset_id: int) -> str:
     return f"dataset-{dataset_id}"
 
 
-def pilot_job_name(request_id: str, generation: int, index: int) -> str:
-    return f"transformer-{request_id}-{generation}-{index}"
-
-
 def output_object_name(file_key: str, result_format: str) -> str:
     """Output names come from the file's identity, not the replica (plan §6.2)."""
     suffix = ".parquet" if result_format == "parquet" else ".root"
@@ -55,9 +52,6 @@ class StubActivities:
     def __init__(self, stub_files: int = 25, stub_delay: float = 0.5):
         self.stub_files = stub_files
         self.stub_delay = stub_delay
-        # Pilots "launched" per request, so count_live_pilots has something to report.
-        # Process memory only: fine for a stub with one orchestrator replica.
-        self._live_pilots: dict[str, int] = {}
 
     # ----- dataset lookup -------------------------------------------------------
 
@@ -123,16 +117,6 @@ class StubActivities:
             events=written * 10_000,
         )
 
-    # ----- request bookkeeping ---------------------------------------------------
-
-    @activity.defn
-    async def cleanup_request(self, request_id: str) -> None:
-        activity.logger.info(
-            "STUB cleanup_request: would delete ConfigMap, leftover transformer "
-            "Jobs and temp secrets of request %s",
-            request_id,
-        )
-
     # ----- transform worker ------------------------------------------------------
 
     @activity.defn
@@ -160,9 +144,29 @@ class StubActivities:
             transform_seconds=time.monotonic() - started,
         )
 
-    # ----- worker pool -----------------------------------------------------------
+    def all(self) -> list:
+        """The activities the orchestrator's own queue serves."""
+        return [
+            self.start_dataset_lookup,
+            self.transform_file,
+        ]
 
-    @activity.defn
+    def did_finder(self) -> list:
+        """What a stub DID-finder worker on `did-finder-<scheme>` serves."""
+        return [self.lookup_dataset]
+
+
+class StubPoolBackend:
+    """A WorkerBackend that only logs, for setups without real pilots.
+
+    It counts the pilots it "launched" per request in process memory, so
+    count_live_pilots has something to report: fine with one orchestrator replica.
+    Stub pilots never exit, so the pool tops up once and then holds.
+    """
+
+    def __init__(self) -> None:
+        self._live_pilots: dict[str, int] = {}
+
     async def count_live_pilots(self, request_id: str) -> int:
         live = self._live_pilots.get(request_id, 0)
         activity.logger.info(
@@ -173,42 +177,30 @@ class StubActivities:
         )
         return live
 
-    @activity.defn
-    async def launch_pilots(self, input: LaunchPilotsInput) -> None:
-        names = [
-            pilot_job_name(input.spec.request_id, input.generation, i)
-            for i in range(input.count)
-        ]
+    async def launch_pilots(self, spec: PoolSpec, count: int, generation: int) -> None:
+        names = [pilot_job_name(spec.request_id, generation, i) for i in range(count)]
         activity.logger.info(
             "STUB launch_pilots: would create Jobs %s running %s "
             "(AlreadyExists counts as success)",
             names,
-            input.spec.image,
+            spec.image,
         )
-        self._live_pilots[input.spec.request_id] = (
-            self._live_pilots.get(input.spec.request_id, 0) + input.count
+        self._live_pilots[spec.request_id] = (
+            self._live_pilots.get(spec.request_id, 0) + count
         )
 
-    @activity.defn
-    async def delete_pool(self, spec: PoolSpec) -> None:
+    async def delete_pool(self, request_id: str) -> None:
         activity.logger.info(
             "STUB delete_pool: would delete every Job labelled "
             "servicex/request-id=%s (propagation Background)",
-            spec.request_id,
+            request_id,
         )
-        self._live_pilots.pop(spec.request_id, None)
+        self._live_pilots.pop(request_id, None)
 
-    def all(self) -> list:
-        """The activities the orchestrator's own queue serves."""
-        return [
-            self.start_dataset_lookup,
-            self.cleanup_request,
-            self.transform_file,
-            self.count_live_pilots,
-            self.launch_pilots,
-            self.delete_pool,
-        ]
-
-    def did_finder(self) -> list:
-        """What a stub DID-finder worker on `did-finder-<scheme>` serves."""
-        return [self.lookup_dataset]
+    async def cleanup_request(self, request_id: str) -> None:
+        activity.logger.info(
+            "STUB cleanup_request: would delete the ConfigMap and leftover "
+            "transformer Jobs of request %s",
+            request_id,
+        )
+        self._live_pilots.pop(request_id, None)

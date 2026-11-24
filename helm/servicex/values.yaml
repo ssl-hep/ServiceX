@@ -560,6 +560,20 @@ orchestrator:
   # DID schemes (e.g. [rucio]) whose did-finder-<scheme> queue the orchestrator
   # serves with a stub lookup, for deployments without that DID finder.
   stubDidFinderSchemes: []
+  # What runs transformer pilots. `stub` only logs what it would launch.
+  # `kubernetes` creates one Job per pilot in the release namespace, built from the
+  # `transformer` values and mounting the request's generated-code ConfigMap. It
+  # needs Kubernetes 1.29+ when logging.vector.transformer is enabled (Vector runs
+  # as a native sidecar), and a sidecar image that runs as a Temporal pilot.
+  workerBackend: stub
+  pilot:
+    # A pilot exits after this long with no file to transform
+    idleTimeoutSeconds: 120
+    # Backstop on a pilot's whole life (Job activeDeadlineSeconds)
+    activeDeadlineSeconds: 86400
+    # The sidecar container's command, as a list. null runs
+    # /servicex/transformer_sidecar/pilot.py.
+    sidecarCommand: null
   # The orchestrator reads and writes the ServiceX Postgres directly, so it needs
   # postgres.enabled=true. It connects as its own restricted role, which the app
   # creates (and re-grants) at every boot after migrating; see

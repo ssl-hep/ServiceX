@@ -4,3 +4,6 @@ Install-time checks for the orchestrator. Renders nothing.
 {{- if and .Values.orchestrator.enabled (not .Values.postgres.enabled) }}
 {{- fail "orchestrator.enabled needs postgres.enabled=true: the orchestrator writes to the ServiceX Postgres directly and can't use SQLite" }}
 {{- end }}
+{{- if and .Values.orchestrator.enabled (not (has .Values.orchestrator.workerBackend (list "stub" "kubernetes"))) }}
+{{- fail (printf "orchestrator.workerBackend must be stub or kubernetes, not %q" (toString .Values.orchestrator.workerBackend)) }}
+{{- end }}
