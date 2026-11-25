@@ -13,7 +13,23 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-did-finder-atlasopenmagic
+      {{- with .Values.didFinder.atlasopenmagic.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.didFinder.atlasopenmagic.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.atlasopenmagic.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.didFinder.atlasopenmagic.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: check-url
           image: {{ .Values.app.checksImage }}
@@ -24,9 +40,9 @@ spec:
       - name: {{ .Release.Name }}-did-finder-atlasopenmagic
         image: {{ .Values.didFinder.atlasopenmagic.image }}:{{ .Values.didFinder.atlasopenmagic.tag }}
         imagePullPolicy: {{ .Values.didFinder.atlasopenmagic.pullPolicy }}
-        {{- if .Values.didFinder.CERNOpenData.resources }}
+        {{- if .Values.didFinder.atlasopenmagic.resources }}
         resources:
-{{ toYaml .Values.didFinder.CERNOpenData.resources | indent 10 }}
+{{ toYaml .Values.didFinder.atlasopenmagic.resources | indent 10 }}
         {{- end }}
 
         env:
