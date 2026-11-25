@@ -6,19 +6,26 @@ logs what the real activity would do and returns plausible fake data, so the wor
 can run end to end before the Kubernetes, object-store, DID-finder and
 transform-worker pieces exist. Replace them one by one; keep the names and
 signatures, since the workflows call them by name. `StubPoolBackend` stands in for
-the WorkerBackend when WORKER_BACKEND=stub.
+the WorkerBackend when WORKER_BACKEND=stub: in place of pilot Jobs it runs a stub pilot
+in this process, which serves the stub `transform_file` on the request's
+`transform-<request_id>` queue, where FileBatchWorkflow schedules it.
 
 The fake dataset has `stub_files` files with ids 1..stub_files, whatever the DID.
 """
 
 import asyncio
 import hashlib
+import logging
 import time
+from datetime import timedelta
+from typing import Optional
 
 from temporalio import activity
 from temporalio.exceptions import WorkflowAlreadyStartedError
+from temporalio.worker import Worker
 
 from servicex_orchestrator.backends.base import pilot_job_name
+from servicex_orchestrator.config import transform_task_queue
 from servicex_orchestrator.models import (
     FILE_SUCCESS,
     FileResult,
@@ -34,6 +41,8 @@ LOOKUP_CHUNK = 10
 # What the stub transform_file reports for every file
 STUB_FILE_EVENTS = 10_000
 STUB_FILE_BYTES = 1_000_000
+
+logger = logging.getLogger(__name__)
 
 
 def lookup_workflow_id(dataset_id: int) -> str:
@@ -118,6 +127,8 @@ class StubActivities:
         )
 
     # ----- transform worker ------------------------------------------------------
+    # Served by StubPoolBackend's in-process pilot on `transform-<request_id>`, as
+    # the transformer sidecar serves the real one.
 
     @activity.defn
     async def transform_file(self, input: TransformFileInput) -> FileResult:
@@ -146,10 +157,7 @@ class StubActivities:
 
     def all(self) -> list:
         """The activities the orchestrator's own queue serves."""
-        return [
-            self.start_dataset_lookup,
-            self.transform_file,
-        ]
+        return [self.start_dataset_lookup]
 
     def did_finder(self) -> list:
         """What a stub DID-finder worker on `did-finder-<scheme>` serves."""
@@ -157,15 +165,21 @@ class StubActivities:
 
 
 class StubPoolBackend:
-    """A WorkerBackend that only logs, for setups without real pilots.
+    """A WorkerBackend for setups without real pilots.
+
+    In place of the pilot Jobs, the first launch for a request starts one stub pilot
+    in this process: a Temporal worker on `transform-<request_id>` serving the stub
+    `transform_file` of `stubs`. delete_pool and cleanup_request shut it down.
 
     It counts the pilots it "launched" per request in process memory, so
     count_live_pilots has something to report: fine with one orchestrator replica.
-    Stub pilots never exit, so the pool tops up once and then holds.
+    Stub pilots never exit by themselves, so the pool tops up once and then holds.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, stubs: Optional[StubActivities] = None) -> None:
+        self.stubs = stubs or StubActivities()
         self._live_pilots: dict[str, int] = {}
+        self._pilots: dict[str, Worker] = {}
 
     async def count_live_pilots(self, request_id: str) -> int:
         live = self._live_pilots.get(request_id, 0)
@@ -188,6 +202,8 @@ class StubPoolBackend:
         self._live_pilots[spec.request_id] = (
             self._live_pilots.get(spec.request_id, 0) + count
         )
+        if spec.request_id not in self._pilots:
+            self._start_pilot(spec.request_id)
 
     async def delete_pool(self, request_id: str) -> None:
         activity.logger.info(
@@ -196,6 +212,7 @@ class StubPoolBackend:
             request_id,
         )
         self._live_pilots.pop(request_id, None)
+        await self._stop_pilot(request_id)
 
     async def cleanup_request(self, request_id: str) -> None:
         activity.logger.info(
@@ -204,3 +221,33 @@ class StubPoolBackend:
             request_id,
         )
         self._live_pilots.pop(request_id, None)
+        await self._stop_pilot(request_id)
+
+    async def close(self) -> None:
+        """Stop every stub pilot, when the orchestrator shuts down."""
+        await asyncio.gather(*(self._stop_pilot(r) for r in list(self._pilots)))
+
+    def _start_pilot(self, request_id: str) -> None:
+        task_queue = transform_task_queue(request_id)
+        worker = Worker(
+            activity.client(),
+            task_queue=task_queue,
+            activities=[self.stubs.transform_file],
+            graceful_shutdown_timeout=timedelta(seconds=5),
+        )
+        self._pilots[request_id] = worker
+        # Outlives this activity: it runs on the orchestrator's event loop until
+        # delete_pool, cleanup_request or close stops it.
+        task = asyncio.create_task(worker.run(), name=f"stub-pilot-{request_id}")
+        task.add_done_callback(_log_pilot_exit)
+        activity.logger.info("STUB pilot polling %s in this process", task_queue)
+
+    async def _stop_pilot(self, request_id: str) -> None:
+        worker = self._pilots.pop(request_id, None)
+        if worker is not None:
+            await worker.shutdown()
+
+
+def _log_pilot_exit(task: asyncio.Task) -> None:
+    if not task.cancelled() and task.exception() is not None:
+        logger.error("Stub pilot %s failed", task.get_name(), exc_info=task.exception())

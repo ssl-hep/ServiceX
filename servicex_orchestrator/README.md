@@ -48,13 +48,19 @@ do (`STUB launch_pilots: would create Jobs [...]`) and returns fake data: the st
 lookup "finds" `STUB_DATASET_FILES` files (it writes no `files` rows, so its dataset
 ends `complete` with 0 files, and its requests complete with nothing to transform),
 and every transform succeeds. `start_dataset_lookup` is real: it starts or joins the lookup
-workflow. The transform activities run on the orchestrator's own queue until
-transformer pilots poll `transform-<request_id>`.
+workflow.
+
+`FileBatchWorkflow` schedules `transform_file` on the request's own
+`transform-<request_id>` queue, which only that request's pilots poll.
 
 The worker-pool activities (`count_live_pilots`, `launch_pilots`, `delete_pool`,
 `cleanup_request`, in `activities/pool.py`) run on a **`WorkerBackend`**
-(`backends/base.py`), chosen by `WORKER_BACKEND`. `stub` (the default) only logs
-what it would launch. `kubernetes` is real; see [Transformer pilots](#transformer-pilots).
+(`backends/base.py`), chosen by `WORKER_BACKEND`. `stub` (the default) logs the Jobs
+it would launch and, in their place, starts one stub pilot per request inside the
+orchestrator process: a Temporal worker on `transform-<request_id>` serving the stub
+`transform_file`. `delete_pool` and `cleanup_request` stop it. Its bookkeeping is in
+process memory, so it is meant for one orchestrator replica. `kubernetes` is real; see
+[Transformer pilots](#transformer-pilots).
 
 `DatasetLookupWorkflow` schedules `lookup_dataset` on `did-finder-<scheme>`
 (`did-finder-rucio`, ...), where the DID finder for that scheme polls. Where no
@@ -138,9 +144,13 @@ The sidecar container runs `transformer_sidecar/pilot.py` (or
 
 The sidecar and science containers also share `LOG_LEVEL`, `INSTANCE_NAME`,
 `POD_NAME`, `HOST_NAME`, `CACHE_PREFIX`, the `MINIO_*` settings and, with Vector,
-`VECTOR_HOST`/`VECTOR_PORT`, as today. The pilot doesn't exist yet: until the sidecar
-runs as a Temporal pilot and `FileBatchWorkflow` schedules `transform_file` on
-`transform-<request_id>`, keep `WORKER_BACKEND=stub`.
+`VECTOR_HOST`/`VECTOR_PORT`, as today. The pilot (`transformer_sidecar/pilot.py`) serves
+`transform_file` one file at a time, reports each result as the activity's return value
+(or a typed `ApplicationError`: non-retryable `FileFailed`, retryable `TransientIO`), and
+exits 0 once idle for `WORKER_IDLE_TIMEOUT_SECONDS`; see the
+[sidecar README](../transformer_sidecar/README.md#the-temporal-pilot). Its
+`temporal_models.py` mirrors `TransformFileInput` and `FileResult` from `models.py`:
+change both together.
 
 ## Logs
 

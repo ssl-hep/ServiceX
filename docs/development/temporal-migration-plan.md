@@ -191,8 +191,9 @@ and history warnings around 10k events / 10 MB, with a hard cap of 50k events / 
 > Status: `KubernetesJobBackend` is implemented (`servicex_orchestrator/backends/`),
 > along with a real `cleanup_request`, behind `WORKER_BACKEND=kubernetes`
 > (`orchestrator.workerBackend`). It defines the pilot's environment contract (see the
-> orchestrator README); the sidecar doesn't run as a pilot yet, so the default stays
-> `stub`.
+> orchestrator README), which the sidecar's `pilot.py` implements (§5.2).
+> `FileBatchWorkflow` schedules `transform_file` on `transform-<request_id>`; with the
+> default `stub` backend an in-process stub pilot serves that queue.
 
 Workers are **pilots**. Each one is a single-pod Kubernetes Job. It polls
 `transform-<request_id>`, processes files one at a time, and exits 0 once the queue has
@@ -262,6 +263,12 @@ if live < desired:
   the duplicates.
 
 ### 5.2 Worker: `transform_file`
+
+> Status: implemented in `transformer_sidecar/pilot.py`, with the plain-Python core in
+> `file_transformer.py` and the Celery task left in place for the cutover. Not done yet:
+> `TransformCodeError` (the science container's `failure.` doesn't tell a code error from
+> a data error, so every all-replicas failure is `FileFailed`), and the optional
+> `WORKER_MAX_FILES` / `WORKER_MAX_LIFETIME`.
 
 The sidecar's Celery task becomes a Temporal activity with the same body (replica
 prioritization, science-container socket handshake, stats parsing, format conversion,

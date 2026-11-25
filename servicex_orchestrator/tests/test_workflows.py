@@ -28,6 +28,7 @@ from servicex_orchestrator.models import (
     REQUEST_CANCELED,
     REQUEST_COMPLETE,
     REQUEST_FATAL,
+    FileResult,
     LaunchPilotsInput,
     LookupInput,
     LookupSummary,
@@ -35,6 +36,7 @@ from servicex_orchestrator.models import (
     PoolInput,
     PoolSpec,
     PoolState,
+    TransformFileInput,
     TransformRequestInput,
     TransformRequestState,
     TransformRequestTuning,
@@ -49,8 +51,8 @@ from servicex_orchestrator.workflows import (
 class RecordingPool(PoolActivities):
     """The pool activities on the stub backend, recording their inputs."""
 
-    def __init__(self, calls: dict[str, list]):
-        super().__init__(StubPoolBackend())
+    def __init__(self, calls: dict[str, list], stubs: StubActivities):
+        super().__init__(StubPoolBackend(stubs))
         self.calls = calls
 
     @activity.defn
@@ -78,7 +80,7 @@ class RecordingStubs(StubActivities):
         self.lookup_error = lookup_error
         self.calls: dict[str, list] = defaultdict(list)
         self.db = FakeDatabase(self.calls)
-        self.pool = RecordingPool(self.calls)
+        self.pool = RecordingPool(self.calls, self)
 
     def all(self) -> list:
         return [*self.db.all(), *super().all(), *self.pool.all()]
@@ -90,6 +92,11 @@ class RecordingStubs(StubActivities):
         if self.lookup_error:
             raise self.lookup_error
         return await super().lookup_dataset(input)
+
+    @activity.defn
+    async def transform_file(self, input: TransformFileInput) -> FileResult:
+        self.calls["transform_task_queue"].append(activity.info().task_queue)
+        return await super().transform_file(input)
 
 
 @pytest.fixture
@@ -198,6 +205,10 @@ async def test_did_request_runs_end_to_end(env):
     assert all(p.total_events == p.files_completed * STUB_FILE_EVENTS for p in progress)
     assert stubs.calls["cleanup_request"] == [request.request_id]
     assert stubs.calls["launch_pilots"], "the pool should have launched pilots"
+    # Every file went to the request's own queue, where its pilots poll
+    assert (
+        stubs.calls["transform_task_queue"] == [f"transform-{request.request_id}"] * 23
+    )
     [recorded] = stubs.calls["record_request_workflow"]
     assert recorded.workflow_id == f"transform-{request.request_id}"
     assert stubs.calls["mark_request_running"] == [

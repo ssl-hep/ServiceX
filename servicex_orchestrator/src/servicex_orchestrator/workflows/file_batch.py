@@ -19,6 +19,7 @@ with workflow.unsafe.imports_passed_through():
         TransformFileInput,
         TransformSpec,
     )
+    from servicex_orchestrator.config import transform_task_queue
     from servicex_orchestrator.workflows.common import (
         error_type,
         orchestrator_activity,
@@ -69,8 +70,9 @@ class FileBatchWorkflow:
                 "transform_file",
                 TransformFileInput(spec=spec, file=file),
                 result_type=FileResult,
-                # TODO: task_queue=f"transform-{spec.request_id}" once the sidecar
-                # runs as a Temporal pilot. The stub runs on the orchestrator.
+                # The request's pilots poll this queue: the transformer sidecar
+                # (pilot.py) in a Job, or the stub backend's in-process stub pilot.
+                task_queue=transform_task_queue(spec.request_id),
                 # No schedule_to_start: files wait legitimately while the pool grows.
                 start_to_close_timeout=TRANSFORM_FILE_TIMEOUT,
                 schedule_to_close_timeout=TRANSFORM_SCHEDULE_TO_CLOSE,

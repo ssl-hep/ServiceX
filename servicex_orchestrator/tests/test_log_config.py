@@ -223,7 +223,7 @@ async def test_every_request_record_carries_its_request_id(restore_logging):
                     ping,
                     *FakeDatabase().all(),
                     *stubs.all(),
-                    *PoolActivities(StubPoolBackend()).all(),
+                    *PoolActivities(StubPoolBackend(stubs)).all(),
                 ],
             ),
             Worker(

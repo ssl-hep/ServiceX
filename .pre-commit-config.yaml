@@ -13,6 +13,7 @@ repos:
         exclude: |
           (?x)^(
             transformer_sidecar/tests/sandbox/|
+            transformer_sidecar/tests/fake_science\.py$|
             servicex_orchestrator/tests/(fakes|pg_seed|e2e/fake_finder)\.py$
           )
       - id: trailing-whitespace

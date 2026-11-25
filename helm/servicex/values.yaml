@@ -564,7 +564,8 @@ orchestrator:
   # `kubernetes` creates one Job per pilot in the release namespace, built from the
   # `transformer` values and mounting the request's generated-code ConfigMap. It
   # needs Kubernetes 1.29+ when logging.vector.transformer is enabled (Vector runs
-  # as a native sidecar), and a sidecar image that runs as a Temporal pilot.
+  # as a native sidecar), and a sidecar image with transformer_sidecar/pilot.py.
+  # `stub` serves each request's transforms from a stub pilot inside the orchestrator.
   workerBackend: stub
   pilot:
     # A pilot exits after this long with no file to transform

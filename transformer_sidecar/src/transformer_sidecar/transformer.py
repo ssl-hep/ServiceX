@@ -26,21 +26,17 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import json
 import os
 import shutil
 import sys
 import time
 import timeit
-import re
 from argparse import Namespace
-from hashlib import sha1, sha256
 from pathlib import Path
 from types import SimpleNamespace
-from typing import NamedTuple, Optional, Union
+from typing import Optional, Union
 
 import kombu
-import psutil as psutil
 from celery import Celery, shared_task
 from celery.signals import after_setup_logger
 
@@ -56,12 +52,24 @@ from transformer_sidecar.servicex_adapter import FileCompleteRecord, ServiceXAda
 from transformer_sidecar.transformer_argument_parser import TransformerArgumentParser
 from transformer_sidecar.transformer_logging import initialize_logging, set_request_id
 from transformer_sidecar.transformer_stats import TransformerStats
-from transformer_sidecar.transformer_stats.aod_stats import AODStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.raw_uproot_stats import (  # noqa: F401
-    RawUprootStats,
+
+# The helpers are shared with the Temporal pilot (pilot.py). They are imported by
+# name so this module's callers and the tests' patches still find them here.
+from transformer_sidecar.transform_helpers import (  # noqa: F401
+    MAX_PATH_LEN,
+    TimeTuple,
+    change_davs_to_https,
+    convert_to_parquet,
+    convert_to_rntuple,
+    fill_stats_parser,
+    get_process_info,
+    hash_path,
+    prepend_xcache,
+    prioritize_replicas,
 )
-from transformer_sidecar.transformer_stats.uproot_stats import UprootStats  # NOQA: 401
-from transformer_sidecar.transformer_stats.topcp_stats import TopCPStats  # NOQA: 401
+from transformer_sidecar.transform_helpers import (
+    read_capabilities_file as _read_capabilities_file,
+)
 
 # Module globals
 shared_dir: Optional[str] = None
@@ -76,9 +84,6 @@ transformer_capabilities: dict = {}
 celery_app: Optional[Celery] = None
 
 request_id: str = ""
-
-# Use this to make sure we don't generate output file names that are crazy long
-MAX_PATH_LEN = 255
 
 PLACE = {
     "host": os.getenv("HOST_NAME", "unknown"),
@@ -330,86 +335,6 @@ def transform_file(
         servicex.put_file_complete(rec)
 
 
-def convert_to_parquet(source_path: Path) -> Optional[Path]:
-    """
-    Convert a ROOT file to Parquet.  Returns the path to the Parquet file if successful,
-    """
-    import uproot
-    import awkward as ak
-
-    logger.info(
-        "Converting ROOT to Parquet.",
-        extra={"request_id": request_id, "input_path": str(source_path)},
-    )
-    try:
-        with open(source_path, "rb") as datafile:
-            data = uproot.open(datafile)
-            if len(data.keys(cycle=False)) != 1:
-                logger.error(
-                    f"Expected one tree found {data.keys()}",
-                    extra={"request_id": request_id},
-                )
-                return None
-            tree_name = data.keys()[0]
-            all_data = data[tree_name].arrays(library="ak")
-
-            parquet_file = source_path.with_suffix(".parquet")
-
-            # Save to temp file in same directory as parquet_file. The to_parquet
-            # method doesn't plqy well with long paths.
-            temp_file = Path(parquet_file.parent, "temp.parquet")
-            ak.to_parquet(all_data, temp_file.as_posix())
-            temp_file.rename(parquet_file)
-
-    except Exception as e:
-        logger.error(
-            f"Failed to convert ROOT to Parquet: {e}", extra={"request_id": request_id}
-        )
-        return None
-
-    return parquet_file
-
-
-def convert_to_rntuple(source_path: Path) -> Optional[Path]:
-    """
-    Convert a ROOT TTree file to RNTuple.  Returns the path to the output ROOT file if successful
-    """
-    import uproot
-
-    logger.info(
-        "Converting ROOT TTree to RNTuple.",
-        extra={"request_id": request_id, "input_path": source_path},
-    )
-
-    rntuple_file = source_path.with_suffix(".rntuple.root")
-
-    try:
-        with open(source_path, "rb") as datafile:
-            data = uproot.open(datafile)
-            with open(rntuple_file, "b+w") as wfile:
-                with uproot.recreate(wfile) as writer:
-                    for key in data.keys(cycle=False):
-                        obj = data[key]
-                        match obj.classname:
-                            case "TTree" | "ROOT::RNTuple":
-                                for all_data in obj.iterate(library="ak"):
-                                    if key not in writer:
-                                        writer.mkrntuple(key, all_data)
-                                    else:
-                                        writer[key].extend(all_data)
-                            case _:
-                                writer[key] = obj
-
-    except Exception as e:
-        logger.error(
-            f"Failed to convert ROOT TTree to RNTuple: {e}",
-            extra={"request_id": request_id},
-        )
-        return None
-
-    return rntuple_file
-
-
 def upload_file(
     source_path: Path, servicex: ServiceXAdapter, rec: FileCompleteRecord
 ) -> None:
@@ -455,40 +380,9 @@ def upload_file(
         servicex.put_file_complete(rec)
 
 
-class TimeTuple(NamedTuple):
-    """
-    Named tuple to store process time information.
-    Immutable so values can't be accidentally altered after creation
-    """
-
-    user: float
-    system: float
-    iowait: float
-
-    @property
-    def total_time(self):
-        """
-        Return total time spent by process
-
-        :return: sum of user, system, iowait times
-        """
-        return self.user + self.system + self.iowait
-
-
 def read_capabilities_file() -> dict[str, str]:
-    """
-    The capabilities file is mounted in the pod at startup. It's possible for
-    the code to start before the file is available. We'll wait for it here.
-    """
-    logger.debug("Waiting for capabilities file", extra={"request_id": request_id})
-    capabilities_file_path = Path(
-        os.path.join(shared_dir, "transformer_capabilities.json")
-    )
-    while not capabilities_file_path.is_file():
-        time.sleep(1)
-
-    with open(capabilities_file_path) as capabilities_file:
-        return json.load(capabilities_file)
+    """Wait for the capabilities file in the shared dir, and read it."""
+    return _read_capabilities_file(shared_dir)
 
 
 def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
@@ -566,109 +460,6 @@ def init(args: Union[Namespace, SimpleNamespace], app: Celery) -> None:
             f"transformer-{args.request_id}@%h",
         ]
     )
-
-
-def prioritize_replicas(replicas: list[str]) -> list[str]:
-    """
-    Prioritizes a list of replicas by placing root replicas (those not starting
-    with "http") before HTTP replicas.
-
-    Args:
-        replicas (list[str]): A list of replica URLs or paths.
-
-    Returns:
-        list[str]: The prioritized list of replicas, with root replicas first and
-                    HTTP replicas second.
-    """
-    http_replicas = [replica for replica in replicas if replica.startswith("http")]
-    root_replicas = [replica for replica in replicas if not replica.startswith("http")]
-    return root_replicas + http_replicas
-
-
-def change_davs_to_https(replicas: list[str]) -> list[str]:
-    """
-    Converts all replica URLs in the provided list that start with "davs" to use
-    "https" instead.
-
-    Args:
-        replicas (list[str]): A list of replica URLs or paths.
-
-    Returns:
-        list[str]: A list of replica URLs with "davs" replaced by "https" at the
-        start of each string.
-    """
-    return [re.sub("^davs", "https", _) for _ in replicas]
-
-
-def get_process_info():
-    """
-    Get process information (just cpu, sys, iowait times right now) and
-    return it
-
-    :return: TimeTuple with timing information
-    """
-    process_info = psutil.Process()
-    time_stats = process_info.cpu_times()
-    iowait = time_stats.iowait if hasattr(time_stats, "iowait") else -1
-    return TimeTuple(
-        user=time_stats.user + time_stats.children_user,
-        system=time_stats.system + time_stats.children_system,
-        iowait=iowait,
-    )
-
-
-def hash_path(file_name: str) -> str:
-    """
-    Make the path safe for object store or POSIX, by keeping the length
-    less than MAX_PATH_LEN. Replace the leading (less interesting) characters with a
-    forty character hash.
-    :param file_name: Input filename
-    :return: Safe path string
-    """
-    if len(file_name) > MAX_PATH_LEN:
-        hashed_value = sha1(file_name.encode("utf-8")).hexdigest()
-        return "".join(
-            [
-                "_",
-                hashed_value,
-                file_name[-1 * (MAX_PATH_LEN - len(hashed_value) - 1) :],  # noqa: E203
-            ]
-        )
-    else:
-        return file_name
-
-
-def fill_stats_parser(stats_parser_name: str, logfile_path: Path) -> TransformerStats:
-    # Assume that the stats parser class has been imported
-    return globals()[stats_parser_name](logfile_path)
-
-
-def prepend_xcache(file_paths: list[str]) -> list[str]:
-    """
-    If a CACHE_PREFIX is given, prepend the file paths with the xcache. If there
-    are multiple xcaches, the same file will always be prepended with the same
-    xcache. We do this by hashing the file path and then calculating modulo of the
-    value.
-    """
-    prefix = os.environ.get("CACHE_PREFIX", "")
-
-    if not prefix:
-        return file_paths
-
-    prefix_list = [p.strip() for p in prefix.split(",")]
-
-    prefixed_paths = []
-    for f in file_paths:
-        # for each path we get unique hash value
-        hex_digest = sha256(f.encode()).hexdigest()
-
-        # we turn file hex_digest into an integer then calculate modulo of the
-        # value.
-        pinned_xcache_index = int(hex_digest, 16) % len(prefix_list)
-
-        # Construct the path
-        prefixed_paths.append(f"root://{prefix_list[pinned_xcache_index]}//{f}")
-    return prefixed_paths
 
 
 @after_setup_logger.connect

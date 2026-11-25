@@ -107,7 +107,7 @@ async def _workers(env, orchestrator, finder):
                 ping,
                 *build_db_activities(orchestrator),
                 *stubs.all(),
-                *PoolActivities(StubPoolBackend()).all(),
+                *PoolActivities(StubPoolBackend(stubs)).all(),
             ],
         ),
         Worker(

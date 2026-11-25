@@ -28,7 +28,7 @@ def build_backend(settings: Settings) -> WorkerBackend:
     """The WorkerBackend WORKER_BACKEND names. Raises ValueError on a bad setting,
     so a misconfigured orchestrator fails at start-up, not on its first request."""
     if settings.worker_backend == STUB_BACKEND:
-        return StubPoolBackend()
+        return StubPoolBackend(build_stubs(settings))
     if settings.worker_backend == KUBERNETES_BACKEND:
         if not settings.transformer_config_file:
             raise ValueError(

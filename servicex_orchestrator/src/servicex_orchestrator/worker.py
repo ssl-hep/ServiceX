@@ -13,7 +13,13 @@ from temporalio.worker import Worker
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from servicex_orchestrator import db
-from servicex_orchestrator.activities import build_activities, build_stubs
+from servicex_orchestrator.activities import (
+    StubPoolBackend,
+    build_activities,
+    build_backend,
+    build_stubs,
+)
+from servicex_orchestrator.backends.base import WorkerBackend
 from servicex_orchestrator.config import Settings, did_finder_task_queue
 from servicex_orchestrator.log_config import configure_logging
 from servicex_orchestrator.workflows import WORKFLOWS
@@ -70,14 +76,18 @@ def build_worker(
     engine: Optional[AsyncEngine] = None,
     *,
     db_activities: Optional[list] = None,
+    backend: Optional[WorkerBackend] = None,
 ) -> Worker:
     """The orchestrator's own worker. `db_activities` replaces the activities built
-    on `engine` (tests pass in-memory fakes); one of the two is needed."""
+    on `engine` (tests pass in-memory fakes); one of the two is needed. The pool
+    activities run on `backend`, or the one the settings name."""
     return Worker(
         client,
         task_queue=settings.task_queue,
         workflows=WORKFLOWS,
-        activities=build_activities(settings, engine, db_activities=db_activities),
+        activities=build_activities(
+            settings, engine, db_activities=db_activities, backend=backend
+        ),
         graceful_shutdown_timeout=GRACEFUL_SHUTDOWN,
     )
 
@@ -100,10 +110,13 @@ def build_workers(
     engine: Optional[AsyncEngine] = None,
     *,
     db_activities: Optional[list] = None,
+    backend: Optional[WorkerBackend] = None,
 ) -> list[Worker]:
     """The orchestrator worker, then one stub DID finder per configured scheme."""
     return [
-        build_worker(client, settings, engine, db_activities=db_activities),
+        build_worker(
+            client, settings, engine, db_activities=db_activities, backend=backend
+        ),
         *(
             build_stub_did_finder_worker(client, settings, scheme)
             for scheme in settings.stub_did_finder_schemes
@@ -180,7 +193,8 @@ async def _run(settings: Settings, engine: AsyncEngine) -> None:
     stopping.cancel()
     client = connecting.result()
 
-    workers = build_workers(client, settings, engine)
+    backend = build_backend(settings)
+    workers = build_workers(client, settings, engine, backend=backend)
     logger.info(
         "Polling task queues %s in namespace %r at %s",
         ", ".join(repr(worker.task_queue) for worker in workers),
@@ -192,9 +206,14 @@ async def _run(settings: Settings, engine: AsyncEngine) -> None:
             "Serving STUB dataset lookups for DID schemes %s",
             ", ".join(settings.stub_did_finder_schemes),
         )
-    async with running(workers):
-        await stop.wait()
-        logger.info("Shutdown requested, draining in-flight tasks")
+    try:
+        async with running(workers):
+            await stop.wait()
+            logger.info("Shutdown requested, draining in-flight tasks")
+    finally:
+        if isinstance(backend, StubPoolBackend):
+            # Its in-process stub pilots
+            await backend.close()
 
 
 def main() -> None:
