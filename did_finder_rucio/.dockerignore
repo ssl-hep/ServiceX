@@ -1,3 +1,9 @@
 kube
 .gitignore
 config
+
+# Local dev artifacts. A host .venv copied over the image's venv breaks the entrypoint.
+.venv
+.pytest_cache
+**/__pycache__
+.coverage

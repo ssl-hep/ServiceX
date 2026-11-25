@@ -12,18 +12,13 @@ deployment. It receives Dataset Lookup requests, asks Rucio to resolve the
 dataset and return the files that make it up, selects replicas, and passes the
 files back to the ServiceX app for transformation.
 
-It runs in one of two modes, sharing the same lookup code
-(`rucio_did_finder.finder.find_files`):
+It runs as a Temporal worker (`scripts/start_temporal_worker.sh`, the image's
+entrypoint, which runs `python -m rucio_did_finder.temporal_worker`): a
+`DIDFinderWorker` from the DID finder lib hosts the `lookup_dataset` activity on the
+`did-finder-rucio` task queue, scheduled by the ServiceX orchestrator. The lookup
+itself is `rucio_did_finder.finder.find_files`.
 
-* **Temporal** (`scripts/start_temporal_worker.sh`, `python -m rucio_did_finder.temporal_worker`):
-  a `DIDFinderWorker` from the DID finder lib hosts the `lookup_dataset` activity on
-  the `did-finder-rucio` task queue, scheduled by the ServiceX orchestrator. The Helm
-  chart uses this mode when `orchestrator.enabled` is true.
-* **Celery** (`scripts/start_celery_worker.sh`, the image's default entrypoint):
-  listens on the `did_finder_rucio` RabbitMQ queue. Kept for one release while
-  ServiceX moves to Temporal.
-
-The Temporal worker reads these environment variables:
+The worker reads these environment variables:
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -67,13 +62,7 @@ environment variable.
 
 2. Rucio config file in `/opt/rucio/etc/`
 
-## Command Line Arguments
-
-The server accepts the following arguments when it is launched
-
-|Argument       |Description                                                                |Default   |
-|---------------|---------------------------------------------------------------------------|----------|
-|`--rabbit-uri` | A valid URI to the RabbitMQ Broker                                        | None     |
+## Configuration
 
 ### Rucio Config
 

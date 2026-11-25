@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
 from unittest.mock import patch
 
 import pytest
@@ -53,10 +52,6 @@ class TestTemporalEntrypoint:
             did_finder_args={"rucio_adapter": finder.rucio_adapter},
         )
         worker_cls.return_value.run.assert_called_once_with()
-
-    def test_does_not_build_celery_app(self, import_temporal_worker):
-        import_temporal_worker(**MINIMAL_ENV)
-        assert "rucio_did_finder.celery" not in sys.modules
 
     def test_worker_settings_from_helm_env(self, import_temporal_worker, monkeypatch):
         """Build the real worker from the env the Helm chart sets, without

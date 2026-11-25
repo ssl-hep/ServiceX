@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Run the Rucio DID finder as a Temporal worker (ServiceX with orchestrator.enabled).
-# start_celery_worker.sh is the Celery equivalent.
+# Run the Rucio DID finder as a Temporal worker; the image's entrypoint.
 /opt/servicex/proxy-exporter.sh &
 
 while true; do

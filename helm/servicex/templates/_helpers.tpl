@@ -60,7 +60,7 @@ Renders empty when vector is disabled. Render with `trim | nindent` under an
 {{- end -}}
 
 {{/*
-Log shipping env vars, shared by all four DID finder deployments: the legacy
+Log shipping env vars, shared by the DID finder deployments: the legacy
 logstash path to the external Elastic cluster, plus the vector aggregator.
 
 Render with `nindent 10` under a container's `env:`. INSTANCE_NAME is
@@ -74,6 +74,25 @@ deliberately not here: the finders place it in different spots in their lists.
   value: "{{ .Values.logging.logstash.port }}"
 {{- end }}
 {{- include "servicex.vector.env" . }}
+{{- end -}}
+
+{{/*
+Temporal worker env for a DID finder: where Temporal and the app's internal endpoint
+are, and how many lookups to run at once. Called as
+`include "servicex.didFinder.temporalEnv" (list . <maxConcurrentLookups>)`.
+
+Render with `nindent 10` under a container's `env:`.
+*/}}
+{{- define "servicex.didFinder.temporalEnv" -}}
+{{- $root := index . 0 -}}
+- name: TEMPORAL_ADDRESS
+  value: {{ include "servicex.temporal.address" $root | quote }}
+- name: TEMPORAL_NAMESPACE
+  value: {{ $root.Values.orchestrator.temporal.namespace | quote }}
+- name: SERVICEX_INTERNAL_ENDPOINT
+  value: "http://{{ $root.Release.Name }}-servicex-app:8000/servicex/internal/transformation/"
+- name: DID_FINDER_MAX_CONCURRENT
+  value: {{ index . 1 | quote }}
 {{- end -}}
 
 {{/*

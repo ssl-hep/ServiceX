@@ -33,10 +33,9 @@ from unittest.mock import patch
 import pytest
 
 # finder.py builds Rucio clients and reads its configuration at import time, and
-# every entrypoint imports it, so all of them are re-imported together.
+# the Temporal entrypoint imports it, so both are re-imported together.
 FINDER_MODULES = (
     "rucio_did_finder.finder",
-    "rucio_did_finder.celery",
     "rucio_did_finder.temporal_worker",
 )
 

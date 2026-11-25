@@ -25,8 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""Rucio lookup shared by the Celery app (celery.py) and the Temporal worker
-(temporal_worker.py).
+"""Rucio lookup run by the Temporal worker (temporal_worker.py).
 
 Configuration is read from the environment and the Rucio clients are built at import
 time, so the x509 proxy must be in place before this module is imported.
@@ -79,8 +78,8 @@ ignore_availability = os.environ.get("RUCIO_IGNORE_AVAILABILITY", "false").lower
 def find_files(did_name, info, did_finder_args):
     """Yield lists of file dicts for a DID, one list per Rucio dataset.
 
-    Used as the user_did_finder by both DIDFinderApp and DIDFinderWorker. A Temporal
-    retry starts over rather than using info["resume"]; ServiceX dedupes on file_key.
+    The user_did_finder DIDFinderWorker runs. A Temporal retry starts over rather
+    than using info["resume"]; ServiceX dedupes on file_key.
     """
     lookup_request = LookupRequest(
         did=did_name,

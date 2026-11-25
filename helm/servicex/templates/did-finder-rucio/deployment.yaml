@@ -37,37 +37,12 @@ spec:
       - name: did-finder
         image: {{ .Values.didFinder.rucio.image }}:{{ .Values.didFinder.rucio.tag }}
         imagePullPolicy: {{ .Values.didFinder.rucio.pullPolicy }}
-        {{- if .Values.orchestrator.enabled }}
-        # Temporal mode: serve the orchestrator's did-finder-rucio task queue.
-        # Otherwise the image's default entrypoint runs the Celery worker.
-        command: ["scripts/start_temporal_worker.sh"]
-        {{- end }}
         {{- if .Values.didFinder.rucio.resources }}
         resources:
 {{ toYaml .Values.didFinder.rucio.resources | indent 10 }}
         {{- end }}
         env:
-          {{- if .Values.orchestrator.enabled }}
-          - name: TEMPORAL_ADDRESS
-            value: {{ include "servicex.temporal.address" . | quote }}
-          - name: TEMPORAL_NAMESPACE
-            value: {{ .Values.orchestrator.temporal.namespace | quote }}
-          - name: SERVICEX_INTERNAL_ENDPOINT
-            value: "http://{{ .Release.Name }}-servicex-app:8000/servicex/internal/transformation/"
-          - name: DID_FINDER_MAX_CONCURRENT
-            value: {{ .Values.didFinder.rucio.maxConcurrentLookups | quote }}
-          {{- else if .Values.secrets }}
-          - name: RMQ_PASS
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets }}
-                key: rabbitmq-password
-          - name: BROKER_URL
-            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
-          {{- else }}
-          - name: BROKER_URL
-            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
-          {{- end }}
+          {{- include "servicex.didFinder.temporalEnv" (list . .Values.didFinder.rucio.maxConcurrentLookups) | nindent 10 }}
           {{- if .Values.didFinder.rucio.reportLogicalFiles }}
           - name: REPORT_LOGICAL_FILES
             value: "1"

@@ -46,9 +46,7 @@ ENV X509_USER_PROXY=/tmp/grid-security/x509up
 ENV X509_CERT_DIR=/etc/grid-security/certificates
 ENV PYTHONPATH=/opt/servicex/src
 
-ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
-
 # Switch to celery user
 USER celery
 
-ENTRYPOINT [ "scripts/start_celery_worker.sh"]
+ENTRYPOINT [ "scripts/start_temporal_worker.sh"]

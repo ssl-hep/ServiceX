@@ -33,10 +33,6 @@ from servicex_did_finder_lib.exceptions import (
     NoSuchDatasetException,
 )
 
-from servicex_did_finder_lib.accumulator import Accumulator
-from servicex_did_finder_lib.did_summary import DIDSummary
-from servicex_did_finder_lib.servicex_adaptor import ServiceXAdapter
-
 from rucio_did_finder.rucio_adapter import RucioAdapter
 
 
@@ -181,43 +177,3 @@ class TestListFilesForDid:
 
         assert [f["paths"] for f in files] == [["f0"], ["f1"]]
         assert [f["file_key"] for f in files] == ["user.x:f0", "user.x:f1"]
-
-
-class TestCeleryPathIgnoresFileKey:
-    def test_accumulator_drops_file_key_from_put(self, mocker):
-        """The Celery DIDFinderApp PUTs files through Accumulator and
-        put_file_add_bulk; an extra file_key must not break it or reach the app."""
-        put = mocker.patch("servicex_did_finder_lib.servicex_adaptor.requests.put")
-        sx = ServiceXAdapter(
-            endpoint="http://sx/servicex/internal/transformation/", dataset_id=7
-        )
-        summary = DIDSummary("user.x:ds")
-        acc = Accumulator(sx, summary)
-        acc.add(
-            [
-                {
-                    "adler32": "1",
-                    "file_size": 100,
-                    "file_events": 0,
-                    "paths": ["root://a/f0"],
-                    "file_key": "user.x:f0",
-                },
-                {
-                    "adler32": "2",
-                    "file_size": 200,
-                    "file_events": 0,
-                    "paths": ["root://a/f1"],
-                    "file_key": "user.x:f1",
-                },
-            ]
-        )
-
-        acc.send_on(-1)
-
-        (call,) = put.call_args_list
-        assert call.args == ("http://sx/servicex/internal/transformation/7/files",)
-        body = call.kwargs["json"]
-        assert [f["paths"] for f in body] == [["root://a/f0"], ["root://a/f1"]]
-        assert all("file_key" not in f for f in body)
-        assert summary.file_count == 2
-        assert summary.total_bytes == 300
