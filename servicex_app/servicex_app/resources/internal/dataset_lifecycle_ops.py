@@ -28,9 +28,10 @@
 from datetime import datetime, timedelta, timezone
 
 from flask import request, current_app
+from sqlalchemy import select
 
 from servicex_app.resources.servicex_resource import ServiceXResource
-from servicex_app.models import Dataset
+from servicex_app.models import Dataset, LogMessage, db
 
 
 class DatasetLifecycleOps(ServiceXResource):
@@ -44,17 +45,26 @@ class DatasetLifecycleOps(ServiceXResource):
         except Exception:
             return {"message": "Invalid age parameter"}, 422
         delta = timedelta(hours=age)
-        datasets = (
-            Dataset.get_all()
-        )  # by default this will only give non-stale datasets
-        todelete = [
-            _.id for _ in datasets if _.last_updated and (now - _.last_updated) > delta
-        ]
+        cutoff = now - delta
+        expired = (
+            Dataset.stale.is_(False),
+            Dataset.last_updated.isnot(None),
+            Dataset.last_updated < cutoff,
+        )
+        # Drop the DID finder log records of these datasets in the same
+        # transaction that sets the stale flag
+        db.session.query(LogMessage).filter(
+            LogMessage.dataset_id.in_(select(Dataset.id).where(*expired))
+        ).delete(synchronize_session=False)
+        obsoleted = (
+            db.session.query(Dataset)
+            .filter(*expired)
+            .update({Dataset.stale: True}, synchronize_session=False)
+        )
+        db.session.commit()
         current_app.logger.info(
             f"Obsoletion called for datasets older than {delta}. "
-            f"Obsoleting {len(todelete)} datasets."
+            f"Obsoleting {obsoleted} datasets."
         )
-        for dataset_id in todelete:
-            Dataset.delete_dataset(dataset_id)
 
         return {"message": "Success"}, 200
