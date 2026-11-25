@@ -31,6 +31,7 @@ from typing import Any, Coroutine, Optional
 
 from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy
+from temporalio.service import RPCError, RPCStatusCode
 
 from servicex_app.models import TransformRequest
 
@@ -83,6 +84,16 @@ class TemporalAdaptor:
         )
         return self._run(self._start(workflow_input))
 
+    def cancel_transform_request(self, request_id: str) -> bool:
+        """Ask TransformRequestWorkflow for this request to cancel.
+
+        Returns True if a cancel was requested, False if there is no open workflow
+        (never started, or already closed). The workflow cleans up on its own
+        (cancels its batches and pool, deletes the pilots, finalizes the row), so
+        this returns before that is done. Other errors propagate.
+        """
+        return self._run(self._cancel(request_id))
+
     @staticmethod
     def transform_request_input(
         request_rec: TransformRequest, did_scheme: str, max_workers: int
@@ -111,6 +122,19 @@ class TemporalAdaptor:
             id_conflict_policy=WorkflowIDConflictPolicy.USE_EXISTING,
         )
         return handle.result_run_id
+
+    async def _cancel(self, request_id: str) -> bool:
+        client = await self._get_client()
+        # No run id: the workflow continues-as-new, so target whichever run is
+        # current.
+        handle = client.get_workflow_handle(transform_workflow_id(request_id))
+        try:
+            await handle.cancel()
+        except RPCError as err:
+            if err.status == RPCStatusCode.NOT_FOUND:
+                return False
+            raise
+        return True
 
     async def _get_client(self) -> Client:
         # Only ever runs on the adaptor's own loop thread, so no lock is needed.

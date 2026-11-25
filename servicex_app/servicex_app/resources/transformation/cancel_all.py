@@ -26,20 +26,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from datetime import datetime, timezone
+from typing import Optional
 
 import kubernetes
 from flask import current_app, session
 
+from servicex_app import orchestrator_mode
 from servicex_app.decorators import auth_required
 from servicex_app.models import TransformRequest, db, TransformStatus, UserModel
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.temporal_adaptor import TemporalAdaptor
 from servicex_app.transformer_manager import TransformerManager
 
 
 class CancelAllTransforms(ServiceXResource):
     @classmethod
-    def make_api(cls, transformer_manager: TransformerManager):
+    def make_api(
+        cls,
+        transformer_manager: TransformerManager,
+        temporal_adaptor: Optional[TemporalAdaptor] = None,
+    ):
         cls.transformer_manager = transformer_manager
+        cls.temporal_adaptor = temporal_adaptor
 
     @auth_required
     def post(self):
@@ -58,12 +66,27 @@ class CancelAllTransforms(ServiceXResource):
 
         canceled_ids = []
         now = datetime.now(tz=timezone.utc)
+        use_temporal = orchestrator_mode.use_temporal(current_app.config)
 
         for transform_req in transform_reqs:
-            try:
-                self.transformer_manager.cancel_transform(transform_req)
-            except kubernetes.client.exceptions.ApiException:
-                pass
+            if use_temporal:
+                try:
+                    self.temporal_adaptor.cancel_transform_request(
+                        transform_req.request_id
+                    )
+                except Exception:
+                    # Leave it as it is, so it doesn't read canceled while its
+                    # workflow and pilots keep running. The user can retry.
+                    current_app.logger.exception(
+                        "Could not cancel the request's workflow; skipping it",
+                        extra={"request_id": transform_req.request_id},
+                    )
+                    continue
+            else:
+                try:
+                    self.transformer_manager.cancel_transform(transform_req)
+                except kubernetes.client.exceptions.ApiException:
+                    pass
 
             transform_req.status = TransformStatus.canceled
             transform_req.finish_time = now

@@ -30,6 +30,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from temporalio.common import WorkflowIDConflictPolicy
+from temporalio.service import RPCError, RPCStatusCode
 
 from servicex_app.temporal_adaptor import TemporalAdaptor
 
@@ -54,6 +55,9 @@ def mock_connect(mocker):
     client = MagicMock()
     client.start_workflow = AsyncMock(
         return_value=SimpleNamespace(result_run_id="run-1")
+    )
+    client.get_workflow_handle = MagicMock(
+        return_value=SimpleNamespace(cancel=AsyncMock())
     )
     return mocker.patch(
         "servicex_app.temporal_adaptor.Client.connect",
@@ -111,3 +115,33 @@ def test_connection_error_propagates(mocker, request_rec):
     adaptor = TemporalAdaptor("temporal:7233", "servicex", "servicex-orchestrator")
     with pytest.raises(RuntimeError, match="unreachable"):
         adaptor.start_transform_request(request_rec, "rucio", 20)
+
+
+def test_cancel_transform_request(mock_connect):
+    adaptor = TemporalAdaptor("temporal:7233", "servicex", "servicex-orchestrator")
+
+    assert adaptor.cancel_transform_request("1234") is True
+
+    client = mock_connect.return_value
+    # No run id: the cancel goes to whichever run is current.
+    client.get_workflow_handle.assert_called_once_with("transform-1234")
+    client.get_workflow_handle.return_value.cancel.assert_awaited_once_with()
+
+
+def test_cancel_with_no_open_workflow(mock_connect):
+    handle = mock_connect.return_value.get_workflow_handle.return_value
+    handle.cancel.side_effect = RPCError(
+        "workflow execution already completed", RPCStatusCode.NOT_FOUND, b""
+    )
+    adaptor = TemporalAdaptor("temporal:7233", "servicex", "servicex-orchestrator")
+
+    assert adaptor.cancel_transform_request("1234") is False
+
+
+def test_cancel_other_rpc_error_propagates(mock_connect):
+    handle = mock_connect.return_value.get_workflow_handle.return_value
+    handle.cancel.side_effect = RPCError("nope", RPCStatusCode.PERMISSION_DENIED, b"")
+    adaptor = TemporalAdaptor("temporal:7233", "servicex", "servicex-orchestrator")
+
+    with pytest.raises(RPCError, match="nope"):
+        adaptor.cancel_transform_request("1234")

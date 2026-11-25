@@ -5,11 +5,18 @@ import pytest
 
 from servicex_app.models import TransformStatus
 from servicex_app.resources.servicex_resource import ServiceXResource
+from servicex_app.temporal_adaptor import TemporalAdaptor
 from servicex_app_test.resource_test_base import ResourceTestBase
 
 
 class TestCancelAllTransform(ResourceTestBase):
     module = "servicex_app.resources.transformation.cancel_all"
+
+    @staticmethod
+    def _test_client(extra_config=None, **kwargs):
+        # The Celery-era path; the Temporal one is tested below.
+        config = {"ORCHESTRATOR": "celery", **(extra_config or {})}
+        return ResourceTestBase._test_client(extra_config=config, **kwargs)
 
     @pytest.fixture
     def mock_transform_manager(self, mocker) -> MagicMock:
@@ -214,3 +221,98 @@ class TestCancelAllTransform(ResourceTestBase):
             )
         assert resp.status_code == 400
         assert resp.json["message"] == "No user found"
+
+
+class TestCancelAllTransformTemporal(ResourceTestBase):
+    module = "servicex_app.resources.transformation.cancel_all"
+    URL = "/servicex/transformation/cancel-all"
+
+    @pytest.fixture
+    def mock_transform_manager(self, mocker) -> MagicMock:
+        return mocker.MagicMock()
+
+    @pytest.fixture
+    def mock_temporal(self) -> MagicMock:
+        adaptor = MagicMock(TemporalAdaptor)
+        adaptor.cancel_transform_request.return_value = True
+        return adaptor
+
+    @pytest.fixture
+    def mock_transform_request_cls(self, mocker):
+        return mocker.patch(f"{self.module}.TransformRequest")
+
+    @pytest.fixture
+    def client(
+        self,
+        mock_jwt_extended,
+        mock_requesting_user,
+        mock_transform_manager,
+        mock_temporal,
+    ):
+        return self._test_client(
+            transformation_manager=mock_transform_manager,
+            extra_config={"ENABLE_AUTH": True, "ORCHESTRATOR": "temporal"},
+            temporal_adaptor=mock_temporal,
+        )
+
+    def _transforms(self, mock_cls, *ids):
+        transforms = []
+        for request_id in ids:
+            t = self._generate_transform_request()
+            t.request_id = request_id
+            t.status = TransformStatus.running
+            transforms.append(t)
+        mock_cls.active_user_transformations.return_value = transforms
+        return transforms
+
+    def test_cancels_each_workflow(
+        self,
+        client,
+        mock_temporal,
+        mock_transform_manager,
+        mock_transform_request_cls,
+    ):
+        t1, t2 = self._transforms(mock_transform_request_cls, "aaa-111", "bbb-222")
+
+        with client.application.app_context():
+            resp = client.post(self.URL, headers=self.fake_header())
+
+        assert resp.status_code == 200
+        assert set(resp.json["canceled"]) == {"aaa-111", "bbb-222"}
+        mock_temporal.cancel_transform_request.assert_has_calls(
+            [call("aaa-111"), call("bbb-222")]
+        )
+        mock_transform_manager.cancel_transform.assert_not_called()
+        assert t1.status == TransformStatus.canceled
+        assert t2.status == TransformStatus.canceled
+        assert t1.finish_time is not None
+
+    def test_no_open_workflow_still_cancels(
+        self, client, mock_temporal, mock_transform_request_cls
+    ):
+        (t1,) = self._transforms(mock_transform_request_cls, "aaa-111")
+        mock_temporal.cancel_transform_request.return_value = False
+
+        with client.application.app_context():
+            resp = client.post(self.URL, headers=self.fake_header())
+
+        assert resp.json["canceled"] == ["aaa-111"]
+        assert t1.status == TransformStatus.canceled
+
+    def test_temporal_error_skips_that_request(
+        self, client, mock_temporal, mock_transform_request_cls
+    ):
+        t1, t2 = self._transforms(mock_transform_request_cls, "aaa-111", "bbb-222")
+        mock_temporal.cancel_transform_request.side_effect = [
+            RuntimeError("unreachable"),
+            True,
+        ]
+
+        with client.application.app_context():
+            resp = client.post(self.URL, headers=self.fake_header())
+
+        assert resp.status_code == 200
+        assert resp.json["canceled"] == ["bbb-222"]
+        assert t1.status == TransformStatus.running
+        assert t1.finish_time is None
+        assert t2.status == TransformStatus.canceled

@@ -179,7 +179,7 @@ def add_routes(
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
 
-    CancelAllTransforms.make_api(transformer_manager)
+    CancelAllTransforms.make_api(transformer_manager, temporal_adaptor)
     api.add_resource(CancelAllTransforms, prefix + "/cancel-all")
 
     api.add_resource(FileURLGeneratorSecure, prefix + "/file-urls")
@@ -195,7 +195,7 @@ def add_routes(
     DeploymentStatus.make_api(transformer_manager)
     api.add_resource(DeploymentStatus, prefix + "/deployment-status")
 
-    CancelTransform.make_api(transformer_manager)
+    CancelTransform.make_api(transformer_manager, temporal_adaptor)
     api.add_resource(CancelTransform, prefix + "/cancel")
 
     # Internal service endpoints
