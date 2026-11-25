@@ -54,6 +54,7 @@ from servicex_app.cli.user_commands import (
 from servicex_app.code_gen_adapter import CodeGenAdapter
 from servicex_app.docker_repo_adapter import DockerRepoAdapter
 from servicex_app.lookup_result_processor import LookupResultProcessor
+from servicex_app.metrics import init_metrics
 from servicex_app.object_store_manager import ObjectStoreManager
 from servicex_app.rabbit_adaptor import RabbitAdaptor
 from servicex_app.routes import add_routes
@@ -368,6 +369,8 @@ def create_app(
 
         init_admin(app)
         moment.init_app(app)
+
+        init_metrics(app)
 
         # Validate did-finder scheme
         schemes = app.config["VALID_DID_SCHEMES"]
