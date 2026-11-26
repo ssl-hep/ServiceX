@@ -244,6 +244,10 @@ data:
     DID_SERVICEX_FINDER_TAG = '{{ .Values.didFinder.servicex.tag }}'
       {{- $didFinders = append $didFinders "servicex" }}
     {{- end }}
+    {{- if .Values.didFinder.atlasopenmagic.enabled }}
+    DID_ATLASOPENMAGIC_FINDER_TAG = '{{ .Values.didFinder.atlasopenmagic.tag }}'
+      {{- $didFinders = append $didFinders "atlasopenmagic" }}
+    {{- end }}
 
     {{- $defaultScheme := .Values.app.defaultDIDFinderScheme }}
     {{- if and (not $defaultScheme) .Values.didFinder.rucio.enabled }}
@@ -257,6 +261,9 @@ data:
     {{- end }}
     {{- if and (not $defaultScheme) .Values.didFinder.servicex.enabled }}
     {{- $defaultScheme = "servicex" }}
+    {{- end }}
+    {{- if and (not $defaultScheme) .Values.didFinder.atlasopenmagic.enabled }}
+    {{- $defaultScheme = "atlasopenmagic" }}
     {{- end }}
     DID_FINDER_DEFAULT_SCHEME = '{{ $defaultScheme }}'
     VALID_DID_SCHEMES = [ "{{ join "\",\"" $didFinders }}" ]
