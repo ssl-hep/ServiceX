@@ -11,36 +11,31 @@ On the web page you can quickly see what type of output supplied by looking at t
 
 Once you've figured this part out, you can specify the dataset with a DID: `cernopendata://1507`. The finder will translate the `1507` into the list of files that will be fed to ServiceX transformers as long as this DID finder is running inside the transformer.
 
-## Deploying the DID Finder
+## Running
 
-You'll need to create a k8 deployment file in order to run this DID finder. Here is a (tested) sample, built to be part of the `ServiceX` distribution:
+This DID finder runs as a Temporal worker, deployed by the ServiceX Helm chart
+(`helm/servicex/templates/did-finder-cernopendata/deployment.yaml`). The image's entrypoint,
+`scripts/start_temporal_worker.sh`, runs `python -m did_finder_cernopendata.temporal_worker`: a
+`DIDFinderWorker` from the DID finder lib hosts the `lookup_dataset` activity on the
+`did-finder-cernopendata` task queue, scheduled by the ServiceX orchestrator. The lookup
+itself is `did_finder_cernopendata.finder.find_files`.
 
-```yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ .Release.Name }}-did-finder-cernopendata
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: {{ .Release.Name }}-did-finder-cernopendata
-  template:
-    metadata:
-      labels:
-        app: {{ .Release.Name }}-did-finder-cernopendata
-    spec:
-      containers:
-      - name: {{ .Release.Name }}-did-finder-cernopendata
-        image: {{ .Values.didFinderCERNOpenData.image }}:{{ .Values.didFinderCERNOpenData.tag }}
-        imagePullPolicy: {{ .Values.didFinderCERNOpenData.pullPolicy }}
-        env:
-          - name: INSTANCE_NAME
-            value: {{ .Release.Name }}
-        args:
-          - --rabbit-uri
-          - amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672
+The worker reads these environment variables:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TEMPORAL_ADDRESS` | `localhost:7233` | Temporal frontend |
+| `TEMPORAL_NAMESPACE` | `default` | Temporal namespace |
+| `TEMPORAL_TASK_QUEUE` | `did-finder-cernopendata` | Task queue to poll |
+| `SERVICEX_INTERNAL_ENDPOINT` | (required) | e.g. `http://servicex-app:8000/servicex/internal/transformation/` |
+| `DID_FINDER_MAX_CONCURRENT` | `4` | Lookups run at once (the chart sets `didFinder.CERNOpenData.maxConcurrentLookups`) |
+
+## DID finder library version
+
+`servicex-did-finder-lib` is a git dependency on the library's `temporal` branch
+until that work is released. `poetry.lock` pins the commit, so pick up a newer
+head of the branch with:
+
+```bash
+poetry update servicex-did-finder-lib
 ```
-
-The last argument to `--rabbit-uri` is perhaps the most crucial - it defines the rabbit queue this DID finder listens on.

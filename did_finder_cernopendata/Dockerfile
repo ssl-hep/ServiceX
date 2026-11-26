@@ -36,6 +36,4 @@ USER celery
 ENV PYTHONUNBUFFERED=1
 
 ENV PYTHONPATH=/opt/servicex/src
-ENV BROKER_URL="amqp://guest:guest@localhost:5672//"
-
-ENTRYPOINT [ "scripts/start_celery_worker.sh"]
+ENTRYPOINT [ "scripts/start_temporal_worker.sh"]

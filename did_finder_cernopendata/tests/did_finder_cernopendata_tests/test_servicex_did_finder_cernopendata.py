@@ -31,7 +31,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from did_finder_cernopendata.celery import find_files
+from did_finder_cernopendata.finder import find_files
 from servicex_did_finder_lib.exceptions import (
     BadDatasetNameException,
     LookupFailureException,

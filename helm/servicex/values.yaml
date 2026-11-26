@@ -232,6 +232,8 @@ didFinder:
     image: sslhep/servicex-did-finder-cernopendata
     pullPolicy: Always
     tag: develop
+    # Lookups the Temporal worker runs at once
+    maxConcurrentLookups: 1
     resources:
       requests:
         cpu: 100m
