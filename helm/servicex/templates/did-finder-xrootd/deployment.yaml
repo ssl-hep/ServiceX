@@ -47,18 +47,7 @@ spec:
         env:
           - name: INSTANCE_NAME
             value: {{ .Release.Name }}
-        {{- if .Values.secrets }}
-          - name: RMQ_PASS
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets }}
-                key: rabbitmq-password
-          - name: BROKER_URL
-            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
-        {{- else }}
-          - name: BROKER_URL
-            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
-        {{- end }}
+        {{- include "servicex.didFinder.temporalEnv" (list . .Values.didFinder.xrootd.maxConcurrentLookups) | nindent 10 }}
         {{- include "servicex.didFinder.loggingEnv" . | trim | nindent 10 }}
         {{ if not .Values.noCerts}}
         volumeMounts:

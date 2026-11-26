@@ -25,12 +25,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""XRootD lookup run by the Temporal worker (temporal_worker.py).
+
+Each file's path is a stable xrootd URL, so the worker's default
+file_key (the first path) identifies it across retries.
+"""
+
 import os
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 from typing import Any, Dict, Generator
 from XRootD import client as xrd
 
-from servicex_did_finder_lib import DIDFinderApp
 from servicex_did_finder_lib.exceptions import (
     NoSuchDatasetException,
     LookupFailureException,
@@ -39,14 +44,6 @@ from servicex_did_finder_lib.exceptions import (
 __log = initialize_logging(component_name="xrootd_did_finder")
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
-app = DIDFinderApp("xrootd")
-
-
-@app.did_lookup_task(name="did_finder_xrootd.lookup_dataset")
-def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
-    self.do_lookup(
-        did=did, dataset_id=dataset_id, endpoint=endpoint, user_did_finder=find_files
-    )
 
 
 def find_files(
