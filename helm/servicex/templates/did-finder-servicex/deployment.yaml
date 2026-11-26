@@ -49,18 +49,7 @@ spec:
             value: {{ .Release.Name }}
           - name: SERVICEX_ENDPOINT
             value: "http://{{ .Release.Name }}-servicex-app:8000"
-        {{- if .Values.secrets }}
-          - name: RMQ_PASS
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets }}
-                key: rabbitmq-password
-          - name: BROKER_URL
-            value: amqp://user:$(RMQ_PASS)@{{ .Release.Name }}-rabbitmq:5672/?heartbeat=9000
-        {{- else }}
-          - name: BROKER_URL
-            value: amqp://user:{{ .Values.rabbitmq.auth.password }}@{{ .Release.Name }}-rabbitmq:5672/%2F
-        {{- end }}
+        {{- include "servicex.didFinder.temporalEnv" (list . .Values.didFinder.servicex.maxConcurrentLookups) | nindent 10 }}
         {{- if .Values.logging.logstash.enabled }}
           - name: LOGSTASH_HOST
             value: "{{ .Values.logging.logstash.host }}"

@@ -38,7 +38,7 @@ import httpx
 @respx.mock
 def test_working_call(monkeypatch):
     monkeypatch.setenv("SERVICEX_ENDPOINT", "http://funtimes")
-    from servicex_did_finder_servicex.celery import find_files
+    from servicex_did_finder_servicex.finder import find_files
 
     (
         respx.get(
@@ -131,12 +131,17 @@ def test_working_call(monkeypatch):
     assert sorted_files[0]["paths"][0] == (
         "http://funtimes:32095/4313b658-646b-4483-87be-7fa72dd5ae9c/root%3A__192.170.240.191%3A1094__root%3A__ccxrootdatlas.in2p3.fr%3A1094__atlasdatadisk_rucio_data25_13p6TeV_01_31_DAOD_PHYSLITE.46959278._000664.pool.root.1?AWSAccessKeyId=ABAOJZ4XMLKWO5H0PZJ3&Signature=xMHPJ0GUBj8zGqfAPkSTwLPfTso%3D&Expires=1821039798"  # noqa: E501
     )
+    # file_key is the S3 object name, stable across lookups unlike the presigned URL
+    assert sorted_files[0]["file_key"] == (
+        "root:__192.170.240.191:1094__root:__ccxrootdatlas.in2p3.fr:1094__atlasdatadisk_rucio_data25_13p6TeV_01_31_DAOD_PHYSLITE.46959278._000664.pool.root.1"  # noqa: E501
+    )
+    assert sorted_files[0]["file_size"] == 96525
 
 
 @respx.mock
 def test_exception_no_files(monkeypatch):
     monkeypatch.setenv("SERVICEX_ENDPOINT", "http://funtimes")
-    from servicex_did_finder_servicex.celery import find_files
+    from servicex_did_finder_servicex.finder import find_files
 
     (
         respx.get(
@@ -167,7 +172,7 @@ def test_exception_no_files(monkeypatch):
 @respx.mock
 def test_exception_io(monkeypatch):
     monkeypatch.setenv("SERVICEX_ENDPOINT", "http://funtimes")
-    from servicex_did_finder_servicex.celery import find_files
+    from servicex_did_finder_servicex.finder import find_files
 
     respx.get(
         "http://funtimes/servicex/internal/transformation/4313b658-646b-4483-87be-7fa72dd5ae9c/results"  # noqa: E501

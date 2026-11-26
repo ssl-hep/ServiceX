@@ -25,6 +25,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""ServiceX lookup run by the Temporal worker (temporal_worker.py).
+
+Paths are presigned S3 URLs that change on every call, so each file
+carries a file_key of its S3 object name instead.
+"""
+
 import os
 from servicex_did_finder_lib.logstash_logging import initialize_logging
 from typing import Any, Dict, Generator
@@ -32,7 +38,6 @@ from typing import Any, Dict, Generator
 from httpx import Client, Timeout
 from httpx_retries import RetryTransport, Retry
 
-from servicex_did_finder_lib import DIDFinderApp
 from servicex_did_finder_lib.exceptions import (
     NoSuchDatasetException,
     LookupFailureException,
@@ -42,15 +47,6 @@ __log = initialize_logging(component_name="servicex_did_finder")
 
 cache_prefix = os.environ.get("CACHE_PREFIX", "")
 servicex_endpoint = os.environ["SERVICEX_ENDPOINT"]
-
-app = DIDFinderApp("servicex")
-
-
-@app.did_lookup_task(name="did_finder_servicex.lookup_dataset")
-def lookup_dataset(self, did: str, dataset_id: int, endpoint: str) -> None:
-    self.do_lookup(
-        did=did, dataset_id=dataset_id, endpoint=endpoint, user_did_finder=find_files
-    )
 
 
 def find_files(
@@ -112,6 +108,7 @@ def find_files(
                 _file = (
                     url_data[f][0],
                     size,
+                    f,
                 )
                 res.append(_file)
     except NoSuchDatasetException as e:
@@ -125,4 +122,6 @@ def find_files(
             "adler32": 0,  # No clue
             "file_size": data[1],  # We could look up the size but that would be slow
             "file_events": 0,  # And this we do not know
+            # The S3 object name; the presigned URL changes on every lookup
+            "file_key": data[2],
         }
