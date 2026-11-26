@@ -63,9 +63,11 @@ process memory, so it is meant for one orchestrator replica. `kubernetes` is rea
 [Transformer pilots](#transformer-pilots).
 
 `DatasetLookupWorkflow` schedules `lookup_dataset` on `did-finder-<scheme>`
-(`did-finder-rucio`, ...), where the DID finder for that scheme polls. Where no
-real DID finder runs for a scheme, list it in `STUB_DID_FINDER_SCHEMES`: the
-worker then also polls `did-finder-<scheme>` with the stub lookup. Without
+(`did-finder-rucio`, `did-finder-cernopendata`, `did-finder-atlasopenmagic`,
+`did-finder-xrootd`, `did-finder-servicex`), where the DID finder for that scheme
+runs as a Temporal worker. For a deployment that disables a scheme's finder, list
+the scheme in `STUB_DID_FINDER_SCHEMES`: the worker then also polls
+`did-finder-<scheme>` with the stub lookup. Without
 either, a lookup times out after 15 minutes waiting to be picked up.
 
 ## Configuration

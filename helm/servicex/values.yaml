@@ -428,7 +428,7 @@ objectStore:
   publicURL: null
   useTLS: false
 postgres:
-  enabled: false
+  enabled: true
 postgresql:
   image:
     repository: bitnamilegacy/postgresql
@@ -485,7 +485,7 @@ rabbitmq:
 # only from inside the cluster. To see the UI:
 #   kubectl port-forward svc/<release>-temporal-web 8080:8080
 temporal:
-  enabled: false
+  enabled: true
   server:
     additionalEnv:
       - name: SERVICEX_RELEASE
@@ -552,7 +552,7 @@ temporal:
 # The ServiceX orchestrator: a Temporal worker that hosts the transform request
 # workflows and the activities that touch Postgres, Kubernetes and the object store.
 orchestrator:
-  enabled: false
+  enabled: true
   image: sslhep/servicex-orchestrator
   tag: develop
   pullPolicy: Always
